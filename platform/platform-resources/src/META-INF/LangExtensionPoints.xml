@@ -115,7 +115,8 @@
                     interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
 
     <extensionPoint name="implicitUsageProvider"
-                    interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
+                    interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="templateParameterTraversalPolicy"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
