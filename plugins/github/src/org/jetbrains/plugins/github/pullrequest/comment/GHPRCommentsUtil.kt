@@ -212,8 +212,8 @@ object GHPRCommentsUtil {
   }
 
   private fun createChangeFromDiff(project: Project, repository: GitRepository, diff: TextFilePatch): Change {
-    val beforePath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(diff.beforeFileName))
-    val afterPath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(diff.afterFileName))
+    val beforePath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(diff.beforeName))
+    val afterPath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(diff.afterName))
 
     val beforeRev = GitRevisionNumber(diff.beforeVersionId)
     val afterRev = GitRevisionNumber(diff.afterVersionId)
