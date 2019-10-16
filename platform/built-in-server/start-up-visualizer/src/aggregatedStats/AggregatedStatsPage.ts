@@ -17,6 +17,13 @@ export default class AggregatedStatsPage extends Vue {
     // @ts-ignore
     // noinspection JSConstantReassignment
     this.helper = new AggregatedStatComponent()
+
+    if (module.hot != null) {
+      module.hot.dispose(() => {
+        console.log("dispose charts on hot reload")
+        this.helper.dispose()
+      })
+    }
   }
 
   chartSettings = this.dataModule.chartSettings
@@ -191,7 +198,8 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   beforeDestroy() {
-    this.helper.dispose()
+    const helper = this.helper
+    helper.dispose()
   }
 }
 

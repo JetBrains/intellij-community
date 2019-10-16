@@ -64,7 +64,9 @@ export class LineChartManager {
     // DurationAxis doesn't work due to some unclear bug
     const valueAxis = chart.yAxes.push(new am4charts.ValueAxis())
     // const durationAxis = chart.yAxes.push(new am4charts.DurationAxis())
-    valueAxis.logarithmic = true
+
+    // do not use logarithmic scale for line chart of duration events - better looking and more clear charts, if height will be a problem, then chart height can be increased
+    valueAxis.logarithmic = this.isInstantEvents
     //
     // valueAxis.baseUnit = "millisecond"
     valueAxis.durationFormatter.baseUnit = "millisecond"
@@ -188,14 +190,7 @@ export class LineChartManager {
           return
         }
 
-        let handler = {
-          set: (target: any, prop: any, value: any) => {
-            console.log('new prop:', new Error().stack);
-            target[prop] = value;
-          }
-        };
-        let proxy = new Proxy(data, handler as any)
-        this.render(new LineChartDataManager(proxy, info, this.isInstantEvents, reportUrlPrefix))
+        this.render(new LineChartDataManager(data, info, this.isInstantEvents, reportUrlPrefix))
       })
   }
 }
