@@ -7,6 +7,11 @@ import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcs.commit.CommitWorkflowHandler
 
+fun AnActionEvent.getAmendCommitModePrefix(): String {
+  val isAmend = getContextCommitWorkflowHandler()?.amendCommitHandler?.isAmendCommitMode == true
+  return if (isAmend) "Amend " else ""
+}
+
 abstract class BaseCommitExecutorAction : DumbAwareAction() {
   init {
     isEnabledInModalContext = true
