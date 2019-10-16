@@ -51,7 +51,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   fun setEnabledGlobally(enabled: Boolean) = synchronized(lock) {
     if (myState.isEnabled != enabled) {
       myState.isEnabled = enabled
-      listener.didStatusChanged(enabled)
+      listener.didGlobalEnabledStatusChanged(enabled)
     }
   }
 
@@ -135,9 +135,9 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
 
   interface SettingsListener {
     /**
-     * @param newStatus whether inlay hints are globally switched on or off now
+     * @param newEnabled whether inlay hints are globally switched on or off now
      */
-    fun didStatusChanged(newStatus: Boolean)
+    fun didGlobalEnabledStatusChanged(newEnabled: Boolean)
   }
 }
 
