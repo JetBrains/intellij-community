@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -22,7 +23,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -45,6 +45,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.invokeLater;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refreshProject;
 
 /**
  * GoF builder for external system backed projects.
@@ -237,15 +240,15 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     myExternalProjectNode = null;
 
     // resolve dependencies
-    final Runnable resolveDependenciesTask = () -> ExternalSystemUtil.refreshProject(
-      project, myExternalSystemId, projectSettings.getExternalProjectPath(),
-      createFinalImportCallback(project, projectSettings), false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, true);
+    final Runnable resolveDependenciesTask = () -> refreshProject(projectSettings.getExternalProjectPath(),
+                                                                  new ImportSpecBuilder(project, myExternalSystemId)
+                                                                    .callback(createFinalImportCallback(project, projectSettings)));
     if (!isFromUI) {
       resolveDependenciesTask.run();
     }
     else {
       // execute when current dialog is closed
-      ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
+      invokeLater(project, ModalityState.NON_MODAL, () -> {
         final Module[] committedModules = ModuleManager.getInstance(project).getModules();
         if (Arrays.asList(committedModules).containsAll(modules)) {
           resolveDependenciesTask.run();
@@ -322,14 +325,11 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final Ref<ConfigurationException> exRef = new Ref<>();
     executeAndRestoreDefaultProjectSettings(project, () -> {
       try {
-        ExternalSystemUtil.refreshProject(
-          project,
-          myExternalSystemId,
-          externalProjectPath,
-          callback,
-          true,
-          ProgressExecutionMode.MODAL_SYNC
-        );
+        refreshProject(externalProjectPath,
+                       new ImportSpecBuilder(project, myExternalSystemId)
+                         .use(ProgressExecutionMode.MODAL_SYNC)
+                         .usePreviewMode()
+                         .callback(callback));
       }
       catch (IllegalArgumentException e) {
         exRef.set(
