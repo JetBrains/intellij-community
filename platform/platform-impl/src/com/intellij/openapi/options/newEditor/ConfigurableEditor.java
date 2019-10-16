@@ -93,7 +93,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setEnabled(enableError);
     myErrorLabel.setVisible(false);
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
-    myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
+    myErrorLabel.setBorder(JBUI.Borders.empty(10, 15, 15, 15));
     myErrorLabel.setBackground(LightColors.RED);
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
@@ -276,7 +276,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
-    content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    content.setBorder(JBUI.Borders.empty(10));
     String key = configurable == null ? null : ConfigurableVisitor.ByID.getID(configurable) + ".settings.description";
     String description = key == null ? null : getString(configurable, key);
     if (description == null) {
@@ -295,7 +295,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         panel.add(Box.createVerticalStrut(10));
         for (Configurable current : composite.getConfigurables()) {
           LinkLabel label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
-          label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
+          label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
           panel.add(label);
         }
       }
