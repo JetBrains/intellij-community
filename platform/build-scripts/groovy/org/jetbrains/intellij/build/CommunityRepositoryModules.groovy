@@ -12,6 +12,12 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
  */
 @CompileStatic
 class CommunityRepositoryModules {
+  public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = [
+    "intellij.xml.dom.impl",
+    "intellij.platform.testFramework",
+    "intellij.tools.testsBootstrap"
+  ]
+
   /**
    * @deprecated use {@link ProductModulesLayout#productApiModules} instead of {@link ProductModulesLayout#platformApiModules} to avoid
    * using this property

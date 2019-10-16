@@ -21,7 +21,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.stream.Collectors
-
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -119,9 +118,25 @@ class DistributionJARsBuilder {
       getProductApiModules(productLayout).each {
         withModule(it, "openapi.jar")
       }
-      getProductImplModules(productLayout).each {
-        withModule(it, productLayout.mainJarName)
+
+      Map<String, Boolean> usedCommunityModules = new HashMap<>()
+      for (name in CommunityRepositoryModules.JAVA_IDE_IMPLEMENTATION_MODULES) {
+        usedCommunityModules.put(name, false)
       }
+      getProductImplModules(productLayout).each {
+        if (usedCommunityModules.containsKey(it)) {
+          usedCommunityModules.put(it, true)
+        }
+        else {
+          withModule(it, productLayout.mainJarName)
+        }
+      }
+      usedCommunityModules.forEach({ name, isUsed ->
+        if (isUsed) {
+          withModule(name)
+        }
+      })
+
       productLayout.moduleExcludes.entrySet().each {
         layout.moduleExcludes.putAll(it.key, it.value)
       }
