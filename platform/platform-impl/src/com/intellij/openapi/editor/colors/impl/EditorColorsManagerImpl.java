@@ -284,11 +284,25 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
   }
 
-  public void handleThemeAdded(UITheme theme) {
+  public void handleThemeAdded(@NotNull UITheme theme) {
     String editorScheme = theme.getEditorScheme();
     if (editorScheme != null) {
       getSchemeManager().loadBundledScheme(editorScheme, theme);
       initEditableBundledSchemesCopies();
+    }
+  }
+
+  public void handleThemeRemoved(@NotNull UITheme theme) {
+    String editorSchemeName = theme.getEditorSchemeName();
+    if (editorSchemeName != null) {
+      EditorColorsScheme scheme = mySchemeManager.findSchemeByName(editorSchemeName);
+      if (scheme != null) {
+        mySchemeManager.removeScheme(scheme);
+        String editableCopyName = getEditableCopyName(scheme);
+        if (editableCopyName != null) {
+          mySchemeManager.removeScheme(editableCopyName);
+        }
+      }
     }
   }
 
