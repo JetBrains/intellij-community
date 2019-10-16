@@ -18,20 +18,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Git stash action
- */
 public class GitStash extends GitRepositoryAction {
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
-  protected void perform(@NotNull final Project project,
-                         @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot) {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if (changeListManager.isFreezedWithNotification("Can not stash changes now")) return;
+  protected void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not stash changes now")) return;
     GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
     if (!d.showAndGet()) {
       return;
@@ -42,23 +33,17 @@ public class GitStash extends GitRepositoryAction {
       public void run(@NotNull ProgressIndicator indicator) {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
-          if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("stashing.title"),
-                                                         result.getErrorOutputAsHtmlString());
+          if (result.success()) {
+            VfsUtil.markDirtyAndRefresh(false, true, false, d.getGitRoot());
+          }
+          else {
+            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString());
           }
         }
-      }
-
-      @Override
-      public void onFinished() {
-        VfsUtil.markDirtyAndRefresh(false, true, false, d.getGitRoot());
       }
     }.queue();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   protected String getActionName() {
