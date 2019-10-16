@@ -1220,6 +1220,7 @@ public class PluginManagerCore {
     Set<PluginId> explicitlyEnabled = null;
     if (selectedIds != null) {
       HashSet<String> set = new HashSet<>(StringUtil.split(selectedIds, ","));
+      set.addAll(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds());
       explicitlyEnabled = JBIterable.from(allDescriptors)
         .map(IdeaPluginDescriptor::getPluginId)
         .filter(o -> set.contains(o.getIdString())).addAllTo(new LinkedHashSet<>());
@@ -1245,9 +1246,11 @@ public class PluginManagerCore {
       }
       else if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor.getPluginId())) {
-          errorSuffix = selectedIds != null
-                        ? "is not in 'idea.load.plugins.id' system property"
-                        : "category doesn't match 'idea.load.plugins.category' system property";
+          errorSuffix = "";
+          getLogger().info("Plugin " + toPresentableName(descriptor) + " " +
+                           (selectedIds != null
+                            ? "is not in 'idea.load.plugins.id' system property"
+                            : "category doesn't match 'idea.load.plugins.category' system property"));
         }
         else {
           errorSuffix = null;
