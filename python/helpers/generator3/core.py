@@ -608,7 +608,7 @@ def trace(msg):
     log(msg, level='trace')
 
 
-def process_builtin_modules(sdk_skeletons_dir, name_pattern=None):
+def process_builtin_modules(sdk_skeletons_dir, name_pattern=None, state_json=None):
     names = list(sys.builtin_module_names)
     if BUILTIN_MOD_NAME not in names:
         names.append(BUILTIN_MOD_NAME)
@@ -619,7 +619,7 @@ def process_builtin_modules(sdk_skeletons_dir, name_pattern=None):
         name_pattern = '*'
     for name in names:
         if fnmatch.fnmatchcase(name, name_pattern):
-            status = process_one_with_results_reporting(name, None, True, sdk_skeletons_dir)
+            status = process_one_with_results_reporting(name, None, True, sdk_skeletons_dir, state_json)
             # Assume that if a skeleton for one built-in module was copied, all of them were copied.
             if status == GenerationStatus.COPIED:
                 break
@@ -634,7 +634,7 @@ def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
 
     interpreter = collapse_user(sys.executable)
     progress("Updating skeletons of builtins for {}...".format(interpreter))
-    process_builtin_modules(sdk_skeletons_dir, name_pattern)
+    process_builtin_modules(sdk_skeletons_dir, name_pattern, state_json)
     progress("Querying skeleton generator for {}...".format(interpreter))
     binaries = collect_binaries(roots)
     progress("Updating skeletons for {}...".format(interpreter))

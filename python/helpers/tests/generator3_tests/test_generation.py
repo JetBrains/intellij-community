@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import collections
+import errno
 import json
 import os
 import subprocess
@@ -16,8 +17,8 @@ from generator3.constants import (
     ENV_STANDALONE_MODE_FLAG,
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
-)
-from generator3.util_methods import mkdir
+    STATE_FILE_NAME)
+from generator3.util_methods import mkdir, ignored_os_errors
 from generator3_tests import GeneratorTestCase, python3_only, python2_only, test_data_dir
 
 # Such version implies that skeletons are always regenerated
@@ -27,7 +28,14 @@ _helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__fil
 ProcessResult = collections.namedtuple('GeneratorResults', ('exit_code', 'stdout', 'stderr'))
 
 
-class GeneratorResult(ProcessResult):
+class GeneratorResult(object):
+    def __init__(self, process_result, skeletons_dir):
+        self.skeletons_dir = skeletons_dir
+        # self.__dict__.update(process_result._as_dict())
+        self.exit_code = process_result.exit_code
+        self.stdout = process_result.stdout
+        self.stderr = process_result.stderr
+
     @property
     def control_messages(self):
         result = []
@@ -35,6 +43,14 @@ class GeneratorResult(ProcessResult):
             if line.startswith('{'):
                 result.append(json.loads(line))
         return result
+
+    @property
+    def state_json(self):
+        with ignored_os_errors(errno.ENOENT):
+            with open(os.path.join(self.skeletons_dir, STATE_FILE_NAME)) as f:
+                return json.load(f)
+        # noinspection PyUnreachableCode
+        return None
 
 
 class FunctionalGeneratorTestCase(GeneratorTestCase):
@@ -128,7 +144,7 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
 
         self.log.info('Launching generator3 as: ' + ' '.join(args))
         result = self.run_process(args, input=input, env=env)
-        return GeneratorResult(*result)
+        return GeneratorResult(result, skeletons_dir=output_dir)
 
     def run_process(self, args, input=None, env=None):
         process = subprocess.Popen(args,
@@ -510,3 +526,9 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
 
     def test_only_leaving_state_file_no_read(self):
         self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod?'])
+
+    def test_state_indication_for_builtin_module(self):
+        result = self.run_generator(extra_args=['--write-state-file', '--name-pattern', '_ast'])
+        self.assertIsNotNone(result.state_json)
+        self.assertIn('_ast', result.state_json['sdk_skeletons'])
+        self.assertEqual('GENERATED', result.state_json['sdk_skeletons']['_ast']['status'])
