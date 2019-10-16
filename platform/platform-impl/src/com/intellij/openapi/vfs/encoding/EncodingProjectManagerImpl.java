@@ -242,12 +242,15 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     return result;
   }
 
+  /**
+   * @return readonly map of current mappings. to modify mappings use {@link #setMapping(Map)}
+   */
   @NotNull
   public Map<VirtualFile, Charset> getAllMappings() {
     return myMapping;
   }
 
-  public void setMapping(@NotNull final Map<VirtualFile, Charset> mapping) {
+  public void setMapping(@NotNull final Map<? extends VirtualFile, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFile, Charset> newMap = new THashMap<>(mapping.size());
@@ -256,7 +259,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      for (Map.Entry<VirtualFile, Charset> entry : mapping.entrySet()) {
+      for (Map.Entry<? extends VirtualFile, ? extends Charset> entry : mapping.entrySet()) {
         VirtualFile virtualFile = entry.getKey();
         Charset charset = entry.getValue();
         if (charset == null) throw new IllegalArgumentException("Null charset for " + virtualFile + "; mapping: " + mapping);
@@ -310,7 +313,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     changed.remove(null);
 
     if (!changed.isEmpty()) {
-      final Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor();
+      Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor();
       tryStartReloadWithProgress(() -> {
         Set<VirtualFile> processed = new THashSet<>();
         next:
@@ -327,11 +330,20 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myModificationTracker.incModificationCount();
   }
 
+  @NotNull
   private static Processor<VirtualFile> createChangeCharsetProcessor() {
     return file -> {
+      if (file.isDirectory()) {
+        return true;
+      }
       if (!(file instanceof VirtualFileSystemEntry)) return false;
       Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (cachedDocument == null) return true;
+      if (cachedDocument == null) {
+        if (file.isCharsetSet()) {
+          file.setCharset(null, null, false);
+        }
+        return true;
+      }
       ProgressManager.progress("Reloading files...", file.getPresentableUrl());
       TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> clearAndReload(file));
       return true;
