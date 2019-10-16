@@ -43,7 +43,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
-    public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = false;
+    public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = true;
     public int TOOLTIPS_DELAY_MS = TOOLTIPS_DELAY_RANGE.initial;
     public boolean SHOW_INTENTION_BULB = true;
     public boolean IS_CARET_BLINKING = true;
