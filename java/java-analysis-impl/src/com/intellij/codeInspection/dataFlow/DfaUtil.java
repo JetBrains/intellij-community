@@ -20,7 +20,6 @@ import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,16 +59,6 @@ public class DfaUtil {
       RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
       return CachedValueProvider.Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
     });
-  }
-
-  /**
-   * @deprecated for removal; use {@link #checkNullability(PsiVariable, PsiElement)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @NotNull
-  public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
-    return Nullness.fromNullability(checkNullability(variable, context));
   }
 
   @NotNull
@@ -135,15 +124,6 @@ public class DfaUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated for removal; use {@link #inferMethodNullability(PsiMethod)}
-   */
-  @Deprecated
-  @NotNull
-  public static Nullness inferMethodNullity(PsiMethod method) {
-    return Nullness.fromNullability(inferMethodNullability(method));
   }
 
   @NotNull
