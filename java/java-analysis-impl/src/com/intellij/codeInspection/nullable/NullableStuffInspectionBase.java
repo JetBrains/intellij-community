@@ -620,7 +620,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                           @Nullable PsiModifierListOwner listOwner) {
     holder.registerProblem(!annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
                            InspectionsBundle.message("inspection.nullable.problems.primitive.type.annotation"),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation, listOwner));
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation, listOwner) {
+        @Override
+        protected boolean shouldRemoveInheritors() {
+          return true;
+        }
+      });
   }
 
   @Override

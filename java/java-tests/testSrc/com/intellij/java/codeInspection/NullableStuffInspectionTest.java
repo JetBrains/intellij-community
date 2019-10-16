@@ -287,6 +287,20 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testRemoveMethodAnnotationRemovesOverriders() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Remove annotation"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testRemoveParameterAnnotationRemovesOverriders() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Remove annotation"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   public void testNullPassedToNullableParameter() {
     doTest();
   }
