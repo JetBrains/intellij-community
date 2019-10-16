@@ -54,6 +54,11 @@
     <idea-version since-build="1.0" until-build="1.111111"/>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
+  <idea-plugin url="file://incompatible0-alt.xml">
+    <id>incompatible0-alt</id>
+    <idea-version since-build="1.111" until-build="1.111"/>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
   <idea-plugin url="file://incompatible1.xml">
     <id>incompatible1</id>
     <idea-version since-build="2001.0"/>

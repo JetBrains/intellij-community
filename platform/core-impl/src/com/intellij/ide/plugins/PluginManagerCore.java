@@ -1270,9 +1270,11 @@ public class PluginManagerCore {
         errorSuffix = "";
       }
       else if (isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null) {
-        errorSuffix = "is incompatible (target build range is " +
-                      StringUtil.notNullize(descriptor.getSinceBuild(), "0.0") + " to " +
-                      StringUtil.notNullize(descriptor.getUntilBuild(), "*.*") + ")";
+        String since = StringUtil.notNullize(descriptor.getSinceBuild(), "0.0");
+        String until = StringUtil.notNullize(descriptor.getUntilBuild(), "*.*");
+        errorSuffix = "is incompatible (target build " +
+                      (since.equals(until) ? "is " + since
+                                           : "range is " + since + " to " + until) + ")";
       }
       else if (isBrokenPlugin(descriptor)) {
         errorSuffix = "version was marked as incompatible";
