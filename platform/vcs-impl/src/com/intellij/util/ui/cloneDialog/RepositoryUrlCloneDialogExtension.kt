@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -95,9 +94,8 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       return this
     }
 
-    override fun doClone() {
-      val listener = ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener
-      getCurrentVcsComponent()?.doClone(project, listener)
+    override fun doClone(checkoutListener: CheckoutProvider.Listener) {
+      getCurrentVcsComponent()?.doClone(project, checkoutListener)
     }
 
     override fun doValidateAll(): List<ValidationInfo> {
