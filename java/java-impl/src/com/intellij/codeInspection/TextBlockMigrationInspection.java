@@ -22,7 +22,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  public boolean mySuggestLiteralReplacement = true;
+  public boolean mySuggestLiteralReplacement = false;
 
   @Nullable
   @Override

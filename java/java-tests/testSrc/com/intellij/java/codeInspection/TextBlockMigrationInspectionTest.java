@@ -14,7 +14,9 @@ public class TextBlockMigrationInspectionTest extends LightQuickFixParameterized
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new TextBlockMigrationInspection()};
+    TextBlockMigrationInspection inspection = new TextBlockMigrationInspection();
+    inspection.mySuggestLiteralReplacement = true;
+    return new LocalInspectionTool[]{inspection};
   }
 
   @Override
