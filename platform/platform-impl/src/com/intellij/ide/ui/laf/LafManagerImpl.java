@@ -236,11 +236,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         UIManager.LookAndFeelInfo switchLafTo = null;
         List<UIManager.LookAndFeelInfo> list = new ArrayList<>();
         for (UIManager.LookAndFeelInfo lookAndFeel : getInstalledLookAndFeels()) {
-          if (lookAndFeel instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme().getId().equals(provider.id)) {
-            if (lookAndFeel == getCurrentLookAndFeel()) {
-              switchLafTo = ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme().isDark() ? myDefaultDarkTheme : myDefaultLightTheme;
+          if (lookAndFeel instanceof UIThemeBasedLookAndFeelInfo) {
+            UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme();
+            if (theme.getId().equals(provider.id)) {
+              if (lookAndFeel == getCurrentLookAndFeel()) {
+                switchLafTo = theme.isDark() ? myDefaultDarkTheme : myDefaultLightTheme;
+              }
+              ((EditorColorsManagerImpl) EditorColorsManager.getInstance()).handleThemeRemoved(theme);
+              continue;
             }
-            continue;
           }
           list.add(lookAndFeel);
         }
