@@ -86,7 +86,8 @@
     </extensionPoint>
 
     <extensionPoint name="cutElementMarker"
-                    interface="com.intellij.openapi.ide.CutElementMarker"/>
+                    interface="com.intellij.openapi.ide.CutElementMarker"
+                    dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
