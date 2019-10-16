@@ -1171,48 +1171,48 @@
                      implementationClass="com.siyeh.ig.internationalization.ImplicitDefaultCharsetUsageInspection"/>
 
     <!--group.names.j2me.issues-->
-    <localInspection groupPath="Java" language="JAVA" shortName="AbstractClassWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="AbstractClassWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="abstract.class.with.only.one.direct.inheritor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.AbstractClassWithOnlyOneDirectInheritorInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ArrayLengthInLoopCondition" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="ArrayLengthInLoopCondition" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="array.length.in.loop.condition.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.ArrayLengthInLoopConditionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CheckForOutOfMemoryOnLargeArrayAllocation" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="CheckForOutOfMemoryOnLargeArrayAllocation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="large.array.allocation.no.outofmemoryerror.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.CheckForOutOfMemoryOnLargeArrayAllocationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="ConnectionOpenedButNotSafelyClosed" shortName="ConnectionResource"
+    <localInspection groupPath="Java,Performance" language="JAVA" suppressId="ConnectionOpenedButNotSafelyClosed" shortName="ConnectionResource"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="connection.opened.not.safely.closed.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.ConnectionResourceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="InterfaceWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="InterfaceWithOnlyOneDirectInheritor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="interface.one.inheritor.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.InterfaceWithOnlyOneDirectInheritorInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MethodCallInLoopCondition" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="MethodCallInLoopCondition" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="method.call.in.loop.condition.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.MethodCallInLoopConditionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MultiplyOrDivideByPowerOfTwo" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="MultiplyOrDivideByPowerOfTwo" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="multiply.or.divide.by.power.of.two.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.MultiplyOrDivideByPowerOfTwoInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="OverlyLargePrimitiveArrayInitializer" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="OverlyLargePrimitiveArrayInitializer" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="large.initializer.primitive.type.array.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.OverlyLargePrimitiveArrayInitializerInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="SyntheticAccessorCall" alternativeId="PrivateMemberAccessBetweenOuterAndInnerClass"
+    <localInspection groupPath="Java,Performance" language="JAVA" suppressId="SyntheticAccessorCall" alternativeId="PrivateMemberAccessBetweenOuterAndInnerClass"
                      shortName="PrivateMemberAccessBetweenOuterAndInnerClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="private.member.access.between.outer.and.inner.classes.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.PrivateMemberAccessBetweenOuterAndInnerClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="RecordStoreOpenedButNotSafelyClosed" shortName="RecordStoreResource"
+    <localInspection groupPath="Java,Performance" language="JAVA" suppressId="RecordStoreOpenedButNotSafelyClosed" shortName="RecordStoreResource"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="recordstore.opened.not.safely.closed.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.RecordStoreResourceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SingleCharacterStartsWith" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java,Performance" language="JAVA" shortName="SingleCharacterStartsWith" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="single.character.startswith.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.SingleCharacterStartsWithInspection"/>
