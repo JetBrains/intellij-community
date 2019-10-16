@@ -10,13 +10,15 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
 
@@ -27,41 +29,27 @@ public abstract class NullableNotNullManager {
   protected static final Logger LOG = Logger.getInstance(NullableNotNullManager.class);
   protected final Project myProject;
 
-  protected static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
-  protected static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
-
-  static final String[] DEFAULT_NULLABLES = {
-    NULLABLE,
-    JAVAX_ANNOTATION_NULLABLE,
-    "javax.annotation.CheckForNull",
-    "edu.umd.cs.findbugs.annotations.Nullable",
-    "android.support.annotation.Nullable",
-    "androidx.annotation.Nullable",
-    "androidx.annotation.RecentlyNullable",
-    "org.checkerframework.checker.nullness.qual.Nullable",
-    "org.checkerframework.checker.nullness.compatqual.NullableDecl",
-    "org.checkerframework.checker.nullness.compatqual.NullableType",
-    "com.android.annotations.Nullable",
-  };
-  static final String[] DEFAULT_NOT_NULLS = {
-    NOT_NULL,
-    JAVAX_ANNOTATION_NONNULL,
-    "edu.umd.cs.findbugs.annotations.NonNull",
-    "android.support.annotation.NonNull",
-    "androidx.annotation.NonNull",
-    "androidx.annotation.RecentlyNonNull",
-    "org.checkerframework.checker.nullness.qual.NonNull",
-    "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
-    "org.checkerframework.checker.nullness.compatqual.NonNullType",
-    "com.android.annotations.NonNull",
-  };
-  private static final List<String> DEFAULT_ALL = Arrays.asList(
-    ArrayUtil.append(ArrayUtil.mergeArrays(DEFAULT_NULLABLES, DEFAULT_NOT_NULLS), 
-                     "org.checkerframework.checker.nullness.qual.MonotonicNonNull"));
-
   protected NullableNotNullManager(Project project) {
     myProject = project;
   }
+
+  /**
+   * @return list of default non-container annotations that apply to the nullable element
+   */
+  @NotNull
+  abstract List<String> getDefaultNullables();
+
+  /**
+   * @return list of default non-container annotations that apply to the not-null element
+   */
+  @NotNull
+  abstract List<String> getDefaultNotNulls();
+
+  /**
+   * @return list of all default non-container annotations that affect nullability (including nullable, not-null and unknown)
+   */
+  @NotNull
+  abstract List<String> getAllDefaultAnnotations();
 
   public static NullableNotNullManager getInstance(Project project) {
     return ServiceManager.getService(project, NullableNotNullManager.class);
@@ -179,7 +167,7 @@ public abstract class NullableNotNullManager {
     if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
     // even if javax.annotation.Nullable is not configured, it should still take precedence over ByDefault annotations
-    List<String> annotations = Arrays.asList(nullable ? DEFAULT_NOT_NULLS : DEFAULT_NULLABLES);
+    List<String> annotations = nullable ? getDefaultNotNulls() : getDefaultNullables();
     int flags = (checkBases ? CHECK_HIERARCHY : 0) | CHECK_EXTERNAL | CHECK_INFERRED | CHECK_TYPE;
     if (isAnnotated(owner, annotations, flags)) {
       return null;
@@ -260,7 +248,7 @@ public abstract class NullableNotNullManager {
   @Nullable
   private NullabilityAnnotationInfo doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
     Set<String> annotationNames = getAllNullabilityAnnotationsWithNickNames();
-    Set<String> extraAnnotations = new HashSet<>(DEFAULT_ALL);
+    Set<String> extraAnnotations = new HashSet<>(getAllDefaultAnnotations());
     extraAnnotations.addAll(annotationNames);
 
     PsiAnnotation annotation = findPlainAnnotation(owner, true, extraAnnotations);

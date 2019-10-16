@@ -574,13 +574,13 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
                                                   "Async Schedule",
                                                   "",
                                                   getAsyncAnnotations(mySettings, true),
-                                                  new String[]{getAnnotationName(true)},
+                                                  Collections.singletonList(getAnnotationName(true)),
                                                   Collections.emptySet(), false, false);
       myAsyncExecutePanel = new AnnotationsPanel(project,
                                                  "Async Execute",
                                                  "",
                                                  getAsyncAnnotations(mySettings, false),
-                                                 new String[]{getAnnotationName(false)},
+                                                 Collections.singletonList(getAnnotationName(false)),
                                                  Collections.emptySet(), false, false);
       init();
       setTitle("Async Annotations Configuration");

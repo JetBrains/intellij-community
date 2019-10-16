@@ -22,8 +22,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 public class AnnotationsPanel {
   private final Project myProject;
@@ -37,13 +39,13 @@ public class AnnotationsPanel {
                           String name,
                           String defaultAnnotation,
                           List<String> annotations,
-                          String[] defaultAnnotations,
+                          List<String> defaultAnnotations,
                           Set<String> checkedAnnotations,
                           boolean showInstrumentationOptions,
                           boolean showDefaultActions) {
     myProject = project;
     myDefaultAnnotation = defaultAnnotation;
-    myDefaultAnnotations = new HashSet<>(Arrays.asList(defaultAnnotations));
+    myDefaultAnnotations = new HashSet<>(defaultAnnotations);
     myTableModel = new DefaultTableModel() {
       @Override
       public boolean isCellEditable(int row, int column) {
