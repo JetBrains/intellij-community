@@ -159,14 +159,21 @@ private fun startApp(app: ApplicationImpl,
         MacOSApplicationProvider.initApplication()
       }
 
-      // ensure that TouchBarsManager is loaded before WelcomeFrame/project
-      // do not wait completion - it is thread safe and not required for application start
-      NonUrgentExecutor.getInstance().execute {
+      registerFuture.thenRunAsync(Runnable {
+        // ensure that TouchBarsManager is loaded before WelcomeFrame/project
+        // do not wait completion - it is thread safe and not required for application start
         runActivity("mac touchbar") {
+          if (app.isDisposeInProgress) {
+            return@Runnable
+          }
           Foundation.init()
+
+          if (!app.isDisposeInProgress) {
+            return@Runnable
+          }
           TouchBarsManager.initialize()
         }
-      }
+      }, NonUrgentExecutor.getInstance())
     }
 
     WeakFocusStackManager.getInstance()
