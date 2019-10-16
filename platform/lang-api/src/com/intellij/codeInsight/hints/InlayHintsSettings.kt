@@ -55,6 +55,10 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     }
   }
 
+  fun hintsEnabledGlobally() : Boolean = synchronized(lock) {
+    return myState.isEnabled
+  }
+
   /**
    * @param createSettings is a setting, that was obtained from createSettings method of provider
    */
@@ -80,6 +84,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   }
 
   fun hintsEnabled(key: SettingsKey<*>, language: Language) : Boolean = synchronized(lock) {
+    if (!hintsEnabledGlobally()) return false
     var lang: Language? = language
     while (lang != null) {
       if (key.getFullId(lang) in myState.disabledHintProviderIds) return false
