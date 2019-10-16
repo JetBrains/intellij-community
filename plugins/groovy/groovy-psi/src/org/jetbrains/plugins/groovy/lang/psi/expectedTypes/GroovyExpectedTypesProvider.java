@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
@@ -170,6 +171,22 @@ public class GroovyExpectedTypesProvider {
       final GrStatement[] statements = block.getStatements();
       if (statements.length > 0 && myExpression.equals(statements[statements.length - 1])) {
         checkExitPoint();
+      }
+    }
+
+    @Override
+    public void visitCastExpression(@NotNull GrTypeCastExpression typeCastExpression) {
+      myResult = createSimpleSubTypeResult(TypesUtil.getJavaLangObject(typeCastExpression));
+    }
+
+    @Override
+    public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
+      if (myExpression.equals(assertStatement.getAssertion())) {
+        myResult = createSimpleSubTypeResult(PsiType.BOOLEAN);
+      }
+
+      if (myExpression.equals(assertStatement.getErrorMessage())) {
+        myResult = createSimpleSubTypeResult(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, assertStatement));
       }
     }
 
