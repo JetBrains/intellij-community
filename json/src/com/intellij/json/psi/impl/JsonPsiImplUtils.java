@@ -176,7 +176,7 @@ public class JsonPsiImplUtils {
               pos = i;
               break;
             case 'x':
-              Language language = JsonDialectUtil.getLanguage(literal);
+              Language language = JsonDialectUtil.getLanguageOrDefaultJson(literal);
               if (language instanceof JsonLanguage && ((JsonLanguage)language).hasPermissiveStrings()) {
                 int i2 = pos + 2;
                 for (; i2 < pos + 4; i2++) {

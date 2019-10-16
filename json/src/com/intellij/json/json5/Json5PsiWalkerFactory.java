@@ -25,7 +25,7 @@ public class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
   @Override
   public boolean handles(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
-    return parent != null && JsonDialectUtil.getLanguage(parent) == Json5Language.INSTANCE;
+    return parent != null && JsonDialectUtil.getLanguageOrDefaultJson(parent) == Json5Language.INSTANCE;
   }
 
   @NotNull

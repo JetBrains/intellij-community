@@ -4,19 +4,23 @@ package com.intellij.json;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JsonDialectUtil {
   public static boolean isStandardJson(@NotNull PsiElement element) {
-    return isStandardJson(getLanguage(element));
+    return isStandardJson(getLanguageOrDefaultJson(element));
   }
 
-  public static Language getLanguage(@NotNull PsiElement element) {
+  @NotNull
+  public static Language getLanguageOrDefaultJson(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (file == null) return JsonLanguage.INSTANCE;
-    Language language = file.getLanguage();
-    return language instanceof JsonLanguage ? language : JsonLanguage.INSTANCE;
+    if (file != null) {
+      Language language = file.getLanguage();
+      if (language instanceof JsonLanguage) return language;
+    }
+    return ObjectUtils.coalesce(ObjectUtils.tryCast(element.getLanguage(), JsonLanguage.class), JsonLanguage.INSTANCE);
   }
 
   public static boolean isStandardJson(@Nullable Language language) {
