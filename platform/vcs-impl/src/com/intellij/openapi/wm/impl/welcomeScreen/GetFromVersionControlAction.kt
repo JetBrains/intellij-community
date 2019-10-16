@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
 open class GetFromVersionControlAction : DumbAwareAction() {
@@ -32,7 +33,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
     val project = e.getData(CommonDataKeys.PROJECT) ?: ProjectManager.getInstance().defaultProject
     val cloneDialog = VcsCloneDialog.Builder(project).forExtension()
     if (cloneDialog.showAndGet()) {
-      cloneDialog.doClone()
+      cloneDialog.doClone(ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener)
     }
   }
 }
