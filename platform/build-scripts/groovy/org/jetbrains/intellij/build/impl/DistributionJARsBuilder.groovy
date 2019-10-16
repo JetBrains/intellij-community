@@ -174,7 +174,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
 
       if (allProductDependencies.contains("intellij.platform.coverage")) {
-        withModule("intellij.platform.coverage", productLayout.mainJarName)
+        withModule("intellij.platform.coverage")
       }
 
       projectLibrariesUsedByPlugins.each {
