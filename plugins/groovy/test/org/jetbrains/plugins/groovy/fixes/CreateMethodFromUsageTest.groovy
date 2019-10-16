@@ -76,7 +76,7 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void _testAssertDescription() {
+  void testAssertDescription() {
     doTest()
   }
 
@@ -128,7 +128,7 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest(CREATE_METHOD, 1)
   }
 
-  void _testIntegerCast() {
+  void testIntegerCast() {
     doTest()
   }
 
