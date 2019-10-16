@@ -474,19 +474,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         return actualScheme;
       }
 
-      public synchronized void queueToUpdateIncrementally() {
+      public void queueToUpdateIncrementally() {
         for (int i = queued; i < size(); i++) {
           HighlightInfo info = get(i);
           queueInfoToUpdateIncrementally(info);
         }
         queued = size();
-      }
-
-      // now that annotators run concurrently, we must protect holder from races
-      // see DefaultHighlightVisitor.runAnnotators
-      @Override
-      public synchronized boolean add(@Nullable HighlightInfo info) {
-        return super.add(info);
       }
     };
   }
