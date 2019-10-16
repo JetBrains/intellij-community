@@ -37,7 +37,7 @@ public class JCEFHtmlPanel implements Disposable {
   private @Nullable String myHtml;
 
   // workaround for the UI garbage issue: keep the browser component min until the browser loads html
-  private static final boolean USE_SIZE_WORKAROUND = !SystemInfo.isMac;
+  private static final boolean USE_SIZE_WORKAROUND = SystemInfo.isWindows;
 
   static {
     ourCefClient = JBCefApp.getCefClient();
