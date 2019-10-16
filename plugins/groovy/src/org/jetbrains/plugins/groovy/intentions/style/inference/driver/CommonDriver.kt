@@ -114,7 +114,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     val parameterMapping = setUpParameterMapping(method, targetMethod)
     val typeParameters = mutableListOf<PsiTypeParameter>()
     for (parameter in targetParameters) {
-      val newParameter = parameterMapping.getValue(parameter)
+      val newParameter = parameterMapping[parameter] ?: continue
       val newType = manager.createDeeplyParameterizedType(substitutor.substitute(parameter.type).forceWildcardsAsTypeArguments())
       newType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
       typeParameters.addAll(newType.typeParameters)

@@ -10,6 +10,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
@@ -308,12 +309,10 @@ fun PsiElement.properResolve(): GroovyResolveResult? {
 
 @Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
-  return method.containingFile?.originalFile?.run {
-    if (method.containingFile == this) {
-      method
+  return when (val originalFile = method.containingFile?.originalFile) {
+      null -> method
+      method.containingFile -> method
+      is GroovyFileBase -> originalFile.methods.find { methodsAgree(it, method) } ?: method
+      else -> originalFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()?.takeIf { it.name == method.name } ?: method
     }
-    else {
-      findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: method
-    }
-  } ?: method
 }

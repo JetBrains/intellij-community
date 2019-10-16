@@ -536,4 +536,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testRequiredBoxingForPrimitiveType() {
     doTest(true)
   }
+
+  void testOffsetSensitiveMethodCreating() {
+    doTest(true)
+  }
 }
