@@ -1704,6 +1704,6 @@ java_library(
 java_library(
     name = "layoutinspector-proto",
     visibility = ["//visibility:public"],
-    exports = ["//tools/base/dynamic-layout-inspector/proto:layout_inspector_java_proto"],
-    runtime_deps = ["//tools/base/dynamic-layout-inspector/proto:layout_inspector_java_proto"],
+    exports = ["//tools/base/dynamic-layout-inspector/proto:java_proto"],
+    runtime_deps = ["//tools/base/dynamic-layout-inspector/proto:java_proto"],
 )

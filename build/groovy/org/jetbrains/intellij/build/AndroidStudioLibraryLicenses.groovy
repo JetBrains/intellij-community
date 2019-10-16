@@ -110,7 +110,6 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Layout Inspector Protos", libraryName: "layoutinspector-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Layoutlib", libraryName: "layoutlib.jar", version: "1.0", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Layoutlib Native", libraryName: "layoutlib_native.jar", version: "1.0", license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "Layout Inspector protos", libraryName: "layout_inspector_java_proto.jar", version: "1.0", license: "Apache 2.0", url: "http://source.android.com/"),
     // for moshi module library in intellij.android.core
     new LibraryLicense(name: "Moshi", libraryName: "moshi", version: "1.6.0", license: "Apache 2.0",
                        url: "https://github.com/square/moshi"),
