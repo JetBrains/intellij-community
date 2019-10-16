@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -62,6 +63,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
@@ -569,6 +571,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
+      })
+      .append(() -> {
+        StartMarkAction.checkCleared(project);
+        InplaceRefactoring.checkCleared();
       })
       .append(() -> {
         JarFileSystemImpl.cleanupForNextTest();

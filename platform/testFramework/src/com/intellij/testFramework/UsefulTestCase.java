@@ -317,8 +317,6 @@ public abstract class UsefulTestCase extends TestCase {
           currentCodeStyleSettings.clearCodeStyleSettings();
         }
       })
-      .append(() -> InplaceRefactoring.checkCleared())
-      .append(() -> StartMarkAction.checkCleared())
       .run();
   }
 
