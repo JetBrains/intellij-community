@@ -213,8 +213,12 @@ class GitBranchPopupActions {
             }
 
             //git checkout -B for current branch conflict and execute git branch -f for others
-            brancher.checkoutNewBranchStartingFrom(name, HEAD, true, currentBranchOfSameName, null);
-            brancher.createBranch(name, StreamEx.of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
+            if (!currentBranchOfSameName.isEmpty()) {
+              brancher.checkoutNewBranchStartingFrom(name, HEAD, true, currentBranchOfSameName, null);
+            }
+            if (!currentBranchOfDifferentName.isEmpty()) {
+              brancher.createBranch(name, StreamEx.of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
+            }
           }
           else {
             brancher.createBranch(name, StreamEx.of(myRepositories).filter(r -> r.getBranches().findLocalBranch(name) == null)
@@ -656,6 +660,7 @@ class GitBranchPopupActions {
 
   static void checkoutNewOrExistingBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                           @NotNull String startPoint, GitNewBranchOptions newBranchOptions) {
+    if (repositories.isEmpty()) return;
     String name = newBranchOptions.getName();
     if (!newBranchOptions.shouldReset()) {
       checkout(project, repositories, startPoint, name, false);
@@ -689,14 +694,18 @@ class GitBranchPopupActions {
       }
     }
     //checkout/rebase existing branch
-    if (withRebase) {
-      brancher.rebase(reposWithLocalBranch, startPoint, name);
-    }
-    else {
-      brancher.checkout(name, false, reposWithLocalBranch, null);
+    if (!reposWithLocalBranch.isEmpty()) {
+      if (withRebase) {
+        brancher.rebase(reposWithLocalBranch, startPoint, name);
+      }
+      else {
+        brancher.checkout(name, false, reposWithLocalBranch, null);
+      }
     }
     //checkout new
-    brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null);
+    if (!reposWithoutLocalBranch.isEmpty()) {
+      brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null);
+    }
   }
 
   private static class CompareAction extends DumbAwareAction {
