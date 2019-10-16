@@ -130,7 +130,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   private ElementManipulator<T> getManipulator() {
     ElementManipulator<T> manipulator = ElementManipulators.getManipulator(myElement);
     if (manipulator == null) {
-      LOG.error(PluginException.createByClass("Cannot find manipulator for " + myElement + " in " + this + " class " + getClass(), null, getClass()));
+      LOG.error(PluginException.createByClass("Cannot find manipulator for " + myElement + " in " + this + " class " + getClass(), null, myElement.getClass()));
     }
     return manipulator;
   }
