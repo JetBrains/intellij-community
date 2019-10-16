@@ -246,11 +246,17 @@ open class UpdateIdeFromSourcesAction
       // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
       return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
     }
-    val command = arrayOf(
+
+    val command = if (SystemInfo.isMac) arrayOf(
       "rm -rf \"$workIdeHome\"/lib",
       "rm -rf \"$workIdeHome\"/plugins",
       "cp -r \"$builtDistPath\"/* \"$workIdeHome\""
     )
+    else arrayOf(
+      "rm -rf \"$workIdeHome\"/*",
+      "cp -r \"$builtDistPath\"/* \"$workIdeHome\""
+    )
+
     return arrayOf("/bin/sh", "-c", command.joinToString(" && "))
   }
 
