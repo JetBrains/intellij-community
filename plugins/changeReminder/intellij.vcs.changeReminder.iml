@@ -15,6 +15,17 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.vcs.git" />
-    <orderEntry type="library" name="change-reminder-prediction-model" level="project" />
+    <orderEntry type="module-library">
+      <library name="change-reminder-prediction-model" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.changeReminder.prediction:randomForestRegressor:0.0.11" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0.0.11/randomForestRegressor-0.0.11.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0.0.11/randomForestRegressor-0.0.11-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
