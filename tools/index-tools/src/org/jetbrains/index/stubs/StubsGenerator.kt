@@ -26,6 +26,8 @@ import java.util.*
 /**
  * Generates stubs and stores them in one persistent hash map
  */
+private val STUB_EXTERNALIZER = StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer()
+
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
@@ -48,7 +50,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
       return null
     }
 
-    return SerializedStubTree(stub, serializationManager, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER)
+    return SerializedStubTree(stub, serializationManager, STUB_EXTERNALIZER)
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
@@ -109,14 +111,14 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
           val value = fromStorage.get(key)
 
           // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-          val newStubTree = value.reSerialize(serializationManager, newSerializationManager, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER)
+          val newStubTree = value.reSerialize(serializationManager, newSerializationManager, STUB_EXTERNALIZER, STUB_EXTERNALIZER)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
               storage.get(key).getStub(false, newSerializationManager)
 
               val stub = value.getStub(false, serializationManager)
-              val newStubTree2 = SerializedStubTree(stub, newSerializationManager, FILE_LOCAL_STUB_FORWARD_INDEX_EXTERNALIZER)
+              val newStubTree2 = SerializedStubTree(stub, newSerializationManager, STUB_EXTERNALIZER)
 
               TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
             }
