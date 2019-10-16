@@ -286,10 +286,10 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModuleLibrary("precompiled-repository", "android.sdktools.repository", "")
 
-//      withModuleLibrary("precompiled-db-baseLibrary", "android.sdktools.db-baseLibrary", "")
-//      withModuleLibrary("precompiled-db-baseLibrarySupport", "android.sdktools.db-baseLibrarySupport", "")
-//      withModuleLibrary("precompiled-db-compilerCommon", "android.sdktools.db-compilerCommon", "")
-//      withModuleLibrary("precompiled-db-compiler", "android.sdktools.db-compiler", "")
+      withModuleLibrary("precompiled-db-baseLibrary", "android.sdktools.db-baseLibrary", "")
+      withModuleLibrary("precompiled-db-baseLibrarySupport", "android.sdktools.db-baseLibrarySupport", "")
+      withModuleLibrary("precompiled-db-compilerCommon", "android.sdktools.db-compilerCommon", "")
+      withModuleLibrary("precompiled-db-compiler", "android.sdktools.db-compiler", "")
 
       withModuleLibrary("precompiled-sdklib", "android.sdktools.sdklib", "")
       withModuleLibrary("precompiled-sdk-common", "android.sdktools.sdk-common", "")
