@@ -431,8 +431,7 @@
 
     <projectService serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
     <statistics.projectUsagesCollector implementation="com.intellij.compiler.CompilerSettingsCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.pom.java.JavaLanguageLevelCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.pom.java.JdkVersionCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.pom.java.JavaLanguageVersionsCollector"/>
 
     <changesGroupingPolicy key="module" id="module"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
