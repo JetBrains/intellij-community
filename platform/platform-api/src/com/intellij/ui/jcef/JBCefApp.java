@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.scale.JBUIScale;
 import org.cef.CefApp;
 import org.cef.CefClient;
 import org.cef.CefSettings;
@@ -36,6 +37,10 @@ public class JBCefApp {
       settings.resources_dir_path = JCEF_PATH;
       settings.locales_dir_path = JCEF_PATH + "/locales";
       settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
+
+      CefApp.addAppHandler(new CefAppHandlerAdapter(new String[] {
+        "--force-device-scale-factor=" + JBUIScale.sysScale()
+      }) {});
     }
     ourCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), () -> {
