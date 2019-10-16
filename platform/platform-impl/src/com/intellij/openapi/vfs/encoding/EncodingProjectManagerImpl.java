@@ -331,7 +331,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     return file -> {
       if (!(file instanceof VirtualFileSystemEntry)) return false;
       Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (cachedDocument == null) return true;
+      if (cachedDocument == null) {
+        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> file.setCharset(null, null, false));
+        return true;
+      }
       ProgressManager.progress("Reloading files...", file.getPresentableUrl());
       TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> clearAndReload(file));
       return true;
