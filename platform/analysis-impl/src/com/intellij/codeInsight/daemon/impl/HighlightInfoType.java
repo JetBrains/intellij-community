@@ -16,7 +16,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,28 +64,24 @@ public interface HighlightInfoType {
    * The field will be removed in version 17.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.METHOD_CALL or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   HighlightInfoType METHOD_CALL = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.METHOD_CALL_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.STATIC_METHOD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   HighlightInfoType STATIC_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.CLASS_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   HighlightInfoType CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CLASS_NAME_ATTRIBUTES);
 
   HighlightInfoType TODO = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);  // these are default attributes, can be configured differently for specific patterns
@@ -196,6 +191,7 @@ public interface HighlightInfoType {
   }
 
   class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
+    @SuppressWarnings("unused")
     static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeSeverityByKey");
 
     private final TextAttributesKey myAttributesKey;
