@@ -30,7 +30,7 @@ public abstract class DaemonCodeAnalyzer {
    * @deprecated Does nothing, unused, keeping alive for outdated plugins sake only. Please use {@code} (nothing) instead.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion="2020.2")
   public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DeprecatedMethodException.report("Please remove usages of this method deprecated eons ago");
