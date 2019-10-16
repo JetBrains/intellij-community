@@ -4,17 +4,9 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
 
-class KeymapPluginsBuilder {
-  final BuildContext buildContext
-  final String targetDir
-
-  KeymapPluginsBuilder(BuildContext buildContext, String targetDir) {
-    this.targetDir = targetDir
-    this.buildContext = buildContext
-  }
+final class KeymapPluginsBuilder {
 
   static void buildKeymapPlugins(BuildContext buildContext, String targetDir) {
-    def builder = new KeymapPluginsBuilder(buildContext, targetDir)
     [["Default for GNOME"],
      ["Default for KDE"],
      ["Default for XWin"],
@@ -25,11 +17,11 @@ class KeymapPluginsBuilder {
      ["Sublime Text", "Sublime Text (Mac OS X)"],
      ["Visual Studio"],
      ["Xcode"]].forEach {
-      builder.keymapPlugin(targetDir, it)
+      keymapPlugin(buildContext, targetDir, it)
     }
   }
 
-  void keymapPlugin(String targetDir, List<String> keymaps) {
+  static void keymapPlugin(BuildContext buildContext, String targetDir, List<String> keymaps) {
     def keymapPath = "$buildContext.paths.communityHome/platform/platform-resources/src/keymaps"
     def longName = keymaps[0].replaceAll("Default for ", "")
     def shortName = keymaps[0].replaceAll("[.0-9 ]|Default for ", "")
