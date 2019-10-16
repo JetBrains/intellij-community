@@ -353,9 +353,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return myLaFs.getValue().toArray(new UIManager.LookAndFeelInfo[0]);
   }
 
+  @Override
   public CollectionComboBoxModel<UIManager.LookAndFeelInfo> getLafComboBoxModel() {
     if (myLafComboBoxModel == null) {
-      myLafComboBoxModel = new CollectionComboBoxModel<UIManager.LookAndFeelInfo>(myLaFs.getValue());
+      myLafComboBoxModel = new CollectionComboBoxModel<>(myLaFs.getValue());
     }
     return myLafComboBoxModel;
   }

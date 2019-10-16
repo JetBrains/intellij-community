@@ -65,7 +65,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myFontSizeCombo.setEditable(true);
     myComponent.myPresentationModeFontSize.setEditable(true);
 
-    myComponent.myLafComboBox.setModel(((LafManagerImpl)LafManager.getInstance()).getLafComboBoxModel());
+    myComponent.myLafComboBox.setModel(LafManager.getInstance().getLafComboBoxModel());
     myComponent.myLafComboBox.setRenderer(SimpleListCellRenderer.create("", UIManager.LookAndFeelInfo::getName));
 
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
