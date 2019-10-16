@@ -262,17 +262,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.60-dev-3052:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.60-dev-3052:jar",
     ],
 )
 
@@ -280,8 +280,8 @@ java_library(
 java_library(
     name = "kotlin-reflect",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.60-dev-3052:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.60-dev-3052:jar"],
 )
 
 # managed by go/iml_to_build
@@ -742,13 +742,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.60-dev-3052:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.60-dev-3052:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.60-dev-3052:jar",
     ],
 )
 
@@ -1528,8 +1528,8 @@ java_library(
 java_library(
     name = "kotlin-gradle-plugin-model",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.60-dev-3052:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.60-dev-3052:jar"],
 )
 
 # managed by go/iml_to_build
