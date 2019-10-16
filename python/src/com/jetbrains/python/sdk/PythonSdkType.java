@@ -396,7 +396,7 @@ public final class PythonSdkType extends SdkType {
 
     Notifications.Bus.notify(
       new Notification(
-        SKELETONS_TOPIC, "Couldn't refresh skeletons for remote interpreter",
+        SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"),
         notificationMessage,
         NotificationType.WARNING,
         notificationListener
