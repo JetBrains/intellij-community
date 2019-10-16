@@ -39,7 +39,7 @@ class DistributionJARsBuilder {
    */
   private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
   private static final String PLUGINS_DIRECTORY = "/plugins"
-  
+
   private final BuildContext buildContext
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
@@ -165,7 +165,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.boot", "bootstrap.jar")
       withModule("intellij.platform.resources", "resources.jar")
       withModule("intellij.platform.colorSchemes", "resources.jar")
-      withModule("intellij.platform.resources.en", productLayout.mainJarName)
+      withModule("intellij.platform.resources.en", "resources.jar")
       withModule("intellij.platform.jps.model.serialization", "jps-model.jar")
       withModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
@@ -196,7 +196,7 @@ class DistributionJARsBuilder {
   private static Set<String> getLibsToRemoveVersion() {
     return ["Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM"].toSet()
   }
-  
+
   private Set<String> getEnabledPluginModules() {
     buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.keySet().
       collect { it.mainModule } as Set<String>
@@ -268,7 +268,7 @@ class DistributionJARsBuilder {
 
   /**
    * Creates files with modules and class loading order.
-   * The files are used in {@link #processOrderFiles} for creating the "classpath-order.txt" and "order.txt"  
+   * The files are used in {@link #processOrderFiles} for creating the "classpath-order.txt" and "order.txt"
    */
   void buildOrderFiles() {
     buildContext.executeStep("Build jar order file", BuildOptions.GENERATE_JAR_ORDER_STEP, {
@@ -490,7 +490,7 @@ class DistributionJARsBuilder {
     }
     return pathToModuleName
   }
-  
+
   private Map<String, String> getLibraryPathToJarName() {
     def libWithoutVersion = new HashSet(platform.projectLibrariesWithRemovedVersionFromJarNames)
     def libraryJarPathToJarName = new HashMap()
@@ -510,7 +510,7 @@ class DistributionJARsBuilder {
     }
     return libraryJarPathToJarName
   }
-  
+
   private void addJarOrderFile(LayoutBuilder layoutBuilder,
                                Map<String, String> pathToModuleName,
                                Map<String, String> pathToToJarName,
@@ -562,7 +562,7 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
-    
+
     processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)
     SVGPreBuilder.addGeneratedResources(buildContext, layoutBuilder)
