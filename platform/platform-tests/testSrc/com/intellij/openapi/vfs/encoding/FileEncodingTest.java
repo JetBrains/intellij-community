@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
@@ -1042,5 +1043,21 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     finally {
       fileTypeManager.unregisterFileType(foo);
     }
+  }
+
+  public void testSetMappingMustResetEncodingOfNotYetLoadedFiles() {
+    VirtualFile dir = getTempDir().createTempVDir();
+    ModuleRootModificationUtil.addContentRoot(getModule(), dir);
+    VirtualFile file = createChildData(dir, "my.txt");
+    setFileText(file, "xxx");
+    file.setCharset(US_ASCII);
+    FileDocumentManager.getInstance().saveAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
+
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
+    assertEquals(US_ASCII, file.getCharset());
+
+    ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).setMapping(Collections.singletonMap(dir, WINDOWS_1251));
+    assertEquals(WINDOWS_1251, file.getCharset());
   }
 }
