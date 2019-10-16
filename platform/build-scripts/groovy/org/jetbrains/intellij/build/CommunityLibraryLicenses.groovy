@@ -164,7 +164,6 @@ class CommunityLibraryLicenses {
                        url: "http://bouncycastle.org", licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
-    new LibraryLicense(libraryName: "change-reminder-prediction-model", license: "Apache 2.0"),
     new LibraryLicense(name: "classworlds", libraryName: "Maven", transitiveDependency: true, version: "1.1", license: "codehaus",
                        url: "https://github.com/codehaus/classworlds",
                        licenseUrl: "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
@@ -581,6 +580,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
 
+    jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-kotlin"),
     jetbrainsLibrary("completion-ranking-python"),
