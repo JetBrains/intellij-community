@@ -1,5 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui
+
 import com.intellij.openapi.rd.paint2DLine
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
@@ -13,7 +14,7 @@ import javax.swing.LookAndFeel
 import javax.swing.SwingConstants
 import javax.swing.plaf.basic.BasicSliderUI
 
-public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
+public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
@@ -66,7 +67,7 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
         area
       }
 
-     // g2d.clip(clip)
+      // g2d.clip(clip)
 
       if (slider.hasFocus()) {
         g2d.stroke = BasicStroke((focusBorderThickness + borderThickness).toFloat())
@@ -74,19 +75,21 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
         g2d.draw(path)
       }
 
-      g2d.paint = if(slider.isEnabled) buttonColor else disabledButtonColor
+      g2d.paint = if (slider.isEnabled) buttonColor else disabledButtonColor
       g2d.fill(path)
 
       g2d.paint = if (slider.hasFocus()) {
         focusedBorderColor
-      } else if(slider.isEnabled) {
+      }
+      else if (slider.isEnabled) {
         buttonBorderColor
-      } else {
+      }
+      else {
         disabledButtonColor
       }
 
       g2d.stroke = BasicStroke(borderThickness.toFloat())
-      g2d.paint = if(slider.isEnabled) buttonBorderColor else disabledButtonBorderColor
+      g2d.paint = if (slider.isEnabled) buttonBorderColor else disabledButtonBorderColor
       g2d.draw(path)
     }
     finally {
@@ -104,13 +107,13 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
     path.moveTo((x1 + arc).toDouble(), y1.toDouble())
     path.lineTo((x2 - arc).toDouble(), y1.toDouble())
     path.lineTo(x2.toDouble(), (y1 + arc).toDouble())
-   // path.quadTo(path.currentPoint.x, path.currentPoint.y, x2.toDouble(), (y1 + arc).toDouble())
+    // path.quadTo(path.currentPoint.x, path.currentPoint.y, x2.toDouble(), (y1 + arc).toDouble())
     path.lineTo(x2.toDouble(), y2.toDouble())
     path.lineTo(x3.toDouble(), y3.toDouble())
     path.lineTo(x1.toDouble(), y2.toDouble())
     path.lineTo(x1.toDouble(), (y1 + arc).toDouble())
     path.lineTo(x1 + arc.toDouble(), y1.toDouble())
-  //  path.quadTo(path.currentPoint.x, path.currentPoint.y, x1 + arc.toDouble(), y1.toDouble())
+    //  path.quadTo(path.currentPoint.x, path.currentPoint.y, x1 + arc.toDouble(), y1.toDouble())
     path.closePath()
     return path
   }
@@ -128,7 +131,7 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
     path.lineTo(x2.toDouble(), y3.toDouble())
     path.lineTo((x1 + arc).toDouble(), y3.toDouble())
     path.lineTo(x1.toDouble(), (y3 - arc).toDouble())
-   // path.quadTo(path.currentPoint.x, path.currentPoint.y, x1.toDouble(), (y3 - arc).toDouble())
+    // path.quadTo(path.currentPoint.x, path.currentPoint.y, x1.toDouble(), (y3 - arc).toDouble())
     path.lineTo(x1.toDouble(), (y1 + arc).toDouble())
     path.lineTo((x1 + arc).toDouble(), y1.toDouble())
     //path.quadTo(path.currentPoint.x, path.currentPoint.y, (x1 + arc).toDouble(), y1.toDouble())
@@ -155,16 +158,17 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
       super.setThumbLocation(x - 1, y)
     }
     else {
-      super.setThumbLocation(x, y -1 )
+      super.setThumbLocation(x, y - 1)
     }
 
     slider.repaint()
   }
 
   override fun getBaseline(c: JComponent?, width: Int, height: Int): Int {
-    if(slider.orientation ==  SwingConstants.HORIZONTAL) {
-      return thumbOverhang + (2*focusBorderThickness) + slider.insets.top + borderThickness
-    } else {
+    if (slider.orientation == SwingConstants.HORIZONTAL) {
+      return thumbOverhang + (2 * focusBorderThickness) + slider.insets.top + borderThickness
+    }
+    else {
       return super.getBaseline(c, width, height)
     }
   }
@@ -172,7 +176,7 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
   override fun paintTrack(g: Graphics) {
     val g2d = g.create() as Graphics2D
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2d.paint = if(slider.isEnabled) trackColor else disabledTrackColor
+    g2d.paint = if (slider.isEnabled) trackColor else disabledTrackColor
     try {
       if (slider.orientation == SwingConstants.HORIZONTAL) {
         val y = thumbRect.y + focusBorderThickness + thumbOverhang - trackThickness
@@ -223,6 +227,17 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
     }
   }
 
+  override fun calculateLabelRect() {
+    super.calculateLabelRect()
+
+    if (slider.orientation == JSlider.HORIZONTAL) {
+      labelRect.y += tickBottom
+    }
+    else {
+      labelRect.x += tickBottom
+    }
+  }
+
   override fun calculateTickRect() {
     if (slider.orientation == JSlider.HORIZONTAL) {
       tickRect.x = trackRect.x + 1
@@ -244,7 +259,7 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
   }
 
   override fun getTickLength(): Int {
-    return majorTickHeight + tickBottom
+    return majorTickHeight
   }
 
   override fun installDefaults(slider: JSlider?) {
@@ -255,25 +270,25 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
 
   override fun paintMinorTickForHorizSlider(g: Graphics, tickBounds: Rectangle, x: Int) {
     g as Graphics2D
-    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    val color = if (slider.isEnabled) tickColor else disabledTickColor
     g.paint2DLine(Point(x, 0), Point(x, minorTickHeight), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
   override fun paintMajorTickForHorizSlider(g: Graphics, tickBounds: Rectangle, x: Int) {
     g as Graphics2D
-    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    val color = if (slider.isEnabled) tickColor else disabledTickColor
     g.paint2DLine(Point(x, 0), Point(x, majorTickHeight), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
   override fun paintMinorTickForVertSlider(g: Graphics, tickBounds: Rectangle, y: Int) {
     g as Graphics2D
-    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    val color = if (slider.isEnabled) tickColor else disabledTickColor
     g.paint2DLine(Point(0, y), Point(minorTickHeight, y), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
   override fun paintMajorTickForVertSlider(g: Graphics, tickBounds: Rectangle, y: Int) {
     g as Graphics2D
-    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    val color = if (slider.isEnabled) tickColor else disabledTickColor
     g.paint2DLine(Point(0, y), Point(majorTickHeight, y), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
