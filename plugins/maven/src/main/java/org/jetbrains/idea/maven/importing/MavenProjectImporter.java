@@ -140,6 +140,9 @@ public class MavenProjectImporter {
         float count = 0;
         for (MavenProject mavenProject : myAllProjects) {
           Module module = myMavenProjectToModule.get(mavenProject);
+          if(module == null) {
+            continue;
+          }
           indicator.setFraction(count++ / myAllProjects.size());
           indicator.setText2("Configuring module " + module.getName());
           for (MavenModuleConfigurer configurer : configurers) {
