@@ -52,7 +52,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
    * @deprecated use {@link #ListSpeedSearch(JList, Function)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public ListSpeedSearch(final JList<T> list, @Nullable Convertor<? super T, String> convertor) {
     super(list);

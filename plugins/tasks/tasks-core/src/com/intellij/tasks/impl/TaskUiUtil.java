@@ -174,7 +174,7 @@ public class TaskUiUtil {
    * @deprecated Use {@link com.intellij.ui.SimpleListCellRenderer#create(String, Function)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static class SimpleComboBoxRenderer<T> extends ListCellRendererWrapper<T> {
     private final String myNullDescription;
     public SimpleComboBoxRenderer(@NotNull String nullDescription) {
