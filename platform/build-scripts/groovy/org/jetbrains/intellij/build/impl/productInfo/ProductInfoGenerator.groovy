@@ -43,6 +43,7 @@ class ProductInfoGenerator {
     def json = new ProductInfoData(
       name: context.applicationInfo.productName,
       version: context.applicationInfo.fullVersion,
+      versionSuffix: context.applicationInfo.versionSuffix,
       buildNumber: context.buildNumber,
       productCode: context.applicationInfo.productCode,
       svgIconPath: context.applicationInfo.svgRelativePath != null ? "$relativePathToBin/${context.productProperties.baseFileName}.svg" : null,
