@@ -157,6 +157,10 @@ public final class TouchBarsManager {
   }
 
   public static void initialize() {
+    if (isInitialized) {
+      return;
+    }
+
     synchronized (ourLoadNstSync) {
       if (isInitialized) {
         return;
@@ -165,13 +169,14 @@ public final class TouchBarsManager {
       NST.initialize();
 
       // calculate isEnabled
-        final String appId = Utils.getAppId();
-        if (appId == null || appId.isEmpty()) {
-          LOG.debug("can't obtain application id from NSBundle");
-        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-          LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
-          isEnabled = false;
-        }
+      String appId = Utils.getAppId();
+      if (appId == null || appId.isEmpty()) {
+        LOG.debug("can't obtain application id from NSBundle");
+      }
+      else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+        LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
+        isEnabled = false;
+      }
 
       isInitialized = true;
     }
