@@ -212,7 +212,7 @@ public class ProcessPopup  {
 
     ActiveContent() {
       super(new BorderLayout());
-      setBorder(DialogWrapper.ourDefaultBorder);
+      setBorder(DialogWrapper.createDefaultBorder());
       setFocusable(true);
     }
 

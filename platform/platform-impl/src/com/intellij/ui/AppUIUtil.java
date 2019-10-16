@@ -465,7 +465,7 @@ public final class AppUIUtil {
       protected JComponent createSouthPanel() {
         JComponent southPanel = super.createSouthPanel();
         if (southPanel != null) {
-          southPanel.setBorder(ourDefaultBorder);
+          southPanel.setBorder(createDefaultBorder());
         }
         return southPanel;
       }

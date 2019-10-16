@@ -135,7 +135,10 @@ public abstract class DialogWrapper {
   /**
    * The shared instance of default border for dialog's content pane.
    */
-  public static final Border ourDefaultBorder = new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
+  @NotNull
+  public static Border createDefaultBorder() {
+    return new JBEmptyBorder(UIUtil.getRegularPanelInsets());
+  }
 
   private static final String NO_AUTO_RESIZE = "NoAutoResizeAndFit";
 
@@ -458,7 +461,7 @@ public abstract class DialogWrapper {
     if (getStyle() == DialogStyle.COMPACT) {
       return JBUI.Borders.empty();
     }
-    return ourDefaultBorder;
+    return createDefaultBorder();
   }
 
   protected static boolean isMoveHelpButtonLeft() {
