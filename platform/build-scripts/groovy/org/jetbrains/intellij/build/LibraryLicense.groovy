@@ -6,7 +6,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 
 /**
- * @author nik
+ * Describes a library which is included into distribution of an IntelliJ-based IDE. This information is used to show list of Third-party
+ * software in About popup and on the product download page.
  */
 @CompileStatic
 @Immutable
@@ -67,6 +68,10 @@ class LibraryLicense {
    */
   final String licenseUrl
 
+  /**
+   * Use this method only for JetBrains's own libraries which are available as part of IntelliJ-based IDEs only so there is no way to
+   * give link to their sites. For other libraries please fill all necessary fields of {@link LibraryLicense} instead of using this method.
+   */
   static jetbrainsLibrary(String libraryName) {
     new LibraryLicense(libraryName: libraryName, license: JETBRAINS_OWN)
   }
