@@ -267,7 +267,7 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Instant run protos", libraryName: "deploy-java-proto",
                        license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "Instant run version", libraryName: "libjava_version.jar",
+    new LibraryLicense(name: "Instant run version", libraryName: "deploy-java-version",
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "ISO RELAX", libraryName: "isorelax", license: "MIT License",
                        url: "http://sourceforge.net/projects/iso-relax/",
