@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -9,11 +9,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Iterator;
 
 public abstract class Location<E extends PsiElement> {
@@ -59,14 +57,6 @@ public abstract class Location<E extends PsiElement> {
       }
     }
     return null;
-  }
-
-  /** @deprecated trivial; use {@link #getAncestors} and {@link com.intellij.util.containers.ContainerUtil#getFirstItem(Collection)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public <T extends PsiElement> Location<T> getAncestorOrSelf(Class<T> ancestorClass) {
-    Iterator<Location<T>> ancestors = getAncestors(ancestorClass, false);
-    return ancestors.hasNext() ? ancestors.next() : null;
   }
 
   @Nullable
