@@ -109,7 +109,7 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
       // Fail-fast check
       val simplePattern = SIMPLE_NAMES[callee.name] ?: return false
-      if (simplePattern.isBuiltin) return true
+      if (simplePattern.isBuiltin && argList.arguments.indexOf(expr) == simplePattern.position) return true
 
       val pattern = PyResolveUtil.resolveImportedElementQNameLocally(callee).map { QUALIFIED_NAMES[it] }.firstOrNull() ?: return false
       return argList.arguments.getOrNull(pattern.position) == expr
