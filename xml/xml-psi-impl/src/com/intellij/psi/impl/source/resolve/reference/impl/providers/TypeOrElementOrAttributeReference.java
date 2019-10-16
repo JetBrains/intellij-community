@@ -268,8 +268,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final String canonicalText = getCanonicalText();
 
-    final PsiElement element = ElementManipulators.getManipulator(myElement)
-      .handleContentChange(myElement, getRangeInElement(), newElementName);
+    final PsiElement element = ElementManipulators.handleContentChange(myElement, getRangeInElement(), newElementName);
     myRange = new TextRange(myRange.getStartOffset(),myRange.getEndOffset() - (canonicalText.length() - newElementName.length()));
     return element;
   }

@@ -387,7 +387,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
             }
           }
           else {
-            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
+            TextRange textRange = ElementManipulators.getValueTextRange(curHost);
             TextRange.assertProperRange(textRange, injection);
             result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
                                       textRange));

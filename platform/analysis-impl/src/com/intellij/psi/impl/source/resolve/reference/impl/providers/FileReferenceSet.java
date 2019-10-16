@@ -121,9 +121,7 @@ public class FileReferenceSet {
                                            boolean endingSlashNotAllowed,
                                            final boolean urlEncoded) {
 
-    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-    assert manipulator != null;
-    final TextRange range = manipulator.getRangeInElement(element);
+    final TextRange range = ElementManipulators.getValueTextRange(element);
     int offset = range.getStartOffset();
     String text = range.substring(element.getText());
     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {

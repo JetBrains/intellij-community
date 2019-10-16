@@ -86,7 +86,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
         workingRange = remainingRange
         getInjectionHostAtRange(hostPsiFile, remainingRange)?.let { host ->
           myHostEditor.caretModel.moveToOffset(
-            ElementManipulators.getManipulator(host).getRangeInElement(host).startOffset + host.textRange.startOffset
+            ElementManipulators.getOffsetInElement(host) + host.textRange.startOffset
           )
         }
       }

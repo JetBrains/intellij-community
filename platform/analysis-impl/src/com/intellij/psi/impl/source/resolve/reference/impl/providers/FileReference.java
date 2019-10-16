@@ -515,7 +515,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   protected PsiElement fixRefText(String name) {
-    return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), name);
+    return ElementManipulators.handleContentChange(getElement(), getRangeInElement(), name);
   }
 
   /* Happens when it's been moved to another folder */

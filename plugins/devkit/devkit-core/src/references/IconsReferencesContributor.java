@@ -290,7 +290,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
 
           private PsiElement replace(String newElementName, String fqn, String packageName) {
             String newValue = fqn.substring(packageName.length()) + "." + newElementName;
-            return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
+            return ElementManipulators.handleContentChange(getElement(), newValue);
           }
         }
       }), PsiReferenceRegistrar.HIGHER_PRIORITY);
