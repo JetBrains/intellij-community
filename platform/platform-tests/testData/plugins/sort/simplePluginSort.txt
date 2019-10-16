@@ -7,6 +7,7 @@
   cycle5
 + duplicate0
   incompatible0
+  incompatible0-alt
   incompatible1
   incompatible2
   missing1
@@ -25,6 +26,7 @@
 "com.intellij.modules.duplicate" module is declared by plugins "duplicate", "duplicate", "duplicate0".
 No id is provided by "missing0.xml".
 Plugin "incompatible0" is incompatible (target build range is 1.0 to 1.111111).
+Plugin "incompatible0-alt" is incompatible (target build is 1.111).
 Plugin "incompatible1" is incompatible (target build range is 2001.0 to *.*).
 Plugin "incompatible2" is incompatible (target build range is 0.0 to 1.111111).
 Plugin "missing4" defines no module dependencies (supported only in IntelliJ IDEA).
