@@ -18,6 +18,7 @@ import org.junit.Ignore
 import org.junit.Test
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_NUMBER
 import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType
 
 @CompileStatic
@@ -169,6 +170,12 @@ interface Producer<T> {}
 static <T> T ppp(Producer<T> p) {}
 <caret>ppp({} as Producer<String>)
 ''', GrMethodCall, 'java.lang.String')
+  }
+
+  @Test
+  void 'non-closure safe cast'() {
+    def expression = elementUnderCaret '"hi" <caret>as Number', GrSafeCastExpression
+    assertSubstitutor(expression.reference.advancedResolve(), JAVA_LANG_NUMBER)
   }
 
   @Test
