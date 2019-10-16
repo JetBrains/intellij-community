@@ -16,6 +16,7 @@ import com.intellij.util.io.jackson.obj
 import java.io.CharArrayWriter
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
@@ -41,8 +42,10 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
     writer.use {
       writer.obj {
         writer.writeStringField("version", StartUpPerformanceReporter.VERSION)
-        writer.writeStringField("build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
-        writer.writeStringField("productCode", ApplicationInfo.getInstance().build.productCode)
+        val appInfo = ApplicationInfo.getInstance()
+        writer.writeStringField("build", appInfo.build.asStringWithoutProductCode())
+        writer.writeStringField("buildDate", ZonedDateTime.ofInstant(appInfo.buildDate.toInstant(), ZoneId.systemDefault()).format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        writer.writeStringField("productCode", appInfo.build.productCode)
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
         writer.writeStringField("os", SystemInfo.getOsNameAndVersion())
         writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
