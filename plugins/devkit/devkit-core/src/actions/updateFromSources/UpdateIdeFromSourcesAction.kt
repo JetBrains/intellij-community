@@ -105,7 +105,8 @@ open class UpdateIdeFromSourcesAction
     if (!homeDir.exists()) return null
 
     if (homeDir.isFile) return "it is not a directory"
-    for (name in listOf("bin", "build.txt")) {
+    val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt"
+    for (name in listOf("bin", buildTxt)) {
       if (!File(homeDir, name).exists()) {
         return "'$name' doesn't exist"
       }
