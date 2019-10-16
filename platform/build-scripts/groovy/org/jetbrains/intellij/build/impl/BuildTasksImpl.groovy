@@ -334,13 +334,14 @@ idea.fatal.error.notification=disabled
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
         def mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
-        def moduleNames
+        def ideModuleNames
         if (mavenArtifacts.forIdeModules) {
           def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
-          moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
+          ideModuleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
         } else {
-          moduleNames = mavenArtifacts.additionalModules
+          ideModuleNames = []
         }
+        def moduleNames = ideModuleNames + mavenArtifacts.additionalModules
         if (!moduleNames.isEmpty()) {
           mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
         }
