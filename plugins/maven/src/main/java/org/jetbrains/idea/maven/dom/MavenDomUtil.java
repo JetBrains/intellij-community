@@ -425,6 +425,19 @@ public class MavenDomUtil {
     return createDomDependency(model.getDependencies(), editor, id);
   }
 
+
+  @Deprecated
+  /*
+   *  @deprecated leavy for plugin binary compatilibity
+   */
+  @NotNull
+  public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
+                                                       @Nullable Editor editor,
+                                                       @NotNull final MavenId id) {
+
+    return createDomDependency(dependencies, editor, (MavenCoordinate)id);
+  }
+
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
                                                        @Nullable Editor editor,

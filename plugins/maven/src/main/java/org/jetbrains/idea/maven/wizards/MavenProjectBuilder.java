@@ -24,6 +24,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import icons.MavenIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -243,6 +244,18 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
         readMavenProjectTree(indicator);
 
         indicator.setText("");
+        indicator.setText2("");
+      }
+    });
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+      @Override
+      public void run(MavenProgressIndicator indicator) {
+        readMavenProjectTree(indicator);
         indicator.setText2("");
       }
     });
