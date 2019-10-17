@@ -89,12 +89,20 @@ def zip_sources(zip_path):
                     # /.../dist-packages/setuptools/script template (dev).py setuptools/script template (dev).py
                     split_items = line.split()
                     if len(split_items) > 2:
+                        # Currently it doesn't work for remote files like
+                        # /System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/setuptools/script (dev).tmpl
+                        # TODO handle paths containing whitespaces more robustly
                         match_two_files = re.match(r'^(.+\.py)\s+(.+\.py)$', line)
                         if not match_two_files:
                             report("Error(zip_sources): invalid line '%s'" % line)
                             continue
                         split_items = match_two_files.group(1, 2)
                     (path, arcpath) = split_items
+
+                    # An attempt to recursively pack an archive leads to unlimited explosion of its size
+                    if os.path.samefile(path, zip_filename):
+                        continue
+
                     zip.write(path, arcpath)
             say('OK: ' + zip_filename)
             sys.stdout.flush()
