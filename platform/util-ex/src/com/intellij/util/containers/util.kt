@@ -143,6 +143,10 @@ inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
   }
 }
 
+fun <T> MutableList<T>.addIfNotNull(e: T?) {
+  e?.let { add(it) }
+}
+
 inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
   return when (val size = size) {
     1 -> SmartList(transform(this[0]))
