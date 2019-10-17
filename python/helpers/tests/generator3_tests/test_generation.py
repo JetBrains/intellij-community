@@ -147,6 +147,8 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         return GeneratorResult(result, skeletons_dir=output_dir)
 
     def run_process(self, args, input=None, env=None):
+        # Remove possible (NAME: None) pairs
+        env = {k: v for k, v in env.items() if v is not None}
         process = subprocess.Popen(args,
                                    env=env,
                                    stdin=subprocess.PIPE,
@@ -532,3 +534,9 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
         self.assertIsNotNone(result.state_json)
         self.assertIn('_ast', result.state_json['sdk_skeletons'])
         self.assertEqual('GENERATED', result.state_json['sdk_skeletons']['_ast']['status'])
+
+    def test_modification_time_left_in_state_json_for_new_binaries(self):
+        result = self.run_generator(extra_args=['--write-state-file', '--name-pattern', 'mod'],
+                                    extra_env={ENV_TEST_MODE_FLAG: None})
+        self.assertIsNotNone(result.state_json)
+        self.assertIn('bin_mtime', result.state_json['sdk_skeletons']['mod'])

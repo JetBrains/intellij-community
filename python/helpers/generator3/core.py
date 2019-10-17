@@ -476,10 +476,10 @@ def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_
         if status != GenerationStatus.UP_TO_DATE:
             # TODO use the actual generator version when a skeleton was copied from the cache
             # TODO don't update state_json inplace
-            sdk_skeleton_state.update(
-                gen_version=version(),
-                status=status,
-            )
+            sdk_skeleton_state['gen_version'] = version()
+            sdk_skeleton_state['status'] = status
+            if mod_file_name:
+                sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_file_name)
         if is_test_mode():
             sdk_skeleton_state.pop('bin_mtime', None)
     return status
