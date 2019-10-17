@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+/**
+ * @deprecated use {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog}
+ */
+@Deprecated
 public class CheckoutActionGroup extends ComputableActionGroup.Simple {
   protected final String myIdPrefix;
 

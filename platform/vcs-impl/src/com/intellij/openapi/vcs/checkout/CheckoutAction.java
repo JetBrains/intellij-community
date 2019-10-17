@@ -12,6 +12,10 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated use {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog}
+ */
+@Deprecated
 public class CheckoutAction extends AnAction implements DumbAware, ActionIdProvider {
   private final CheckoutProvider myProvider;
   private final String myIdPrefix;
