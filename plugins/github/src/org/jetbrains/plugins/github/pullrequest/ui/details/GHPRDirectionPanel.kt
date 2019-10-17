@@ -6,12 +6,11 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.ui.WrapLayout
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
-internal class GHPRDirectionPanel : NonOpaquePanel(WrapLayout(FlowLayout.LEFT, 0, UIUtil.DEFAULT_VGAP)) {
+internal class GHPRDirectionPanel : NonOpaquePanel(FlowLayout(FlowLayout.LEFT, 0, UIUtil.DEFAULT_VGAP)) {
   private val from = createLabel()
   private val to = createLabel()
 
