@@ -56,12 +56,15 @@ public class TreeTest implements Disposable {
   }
 
   public void invokeAfterProcessing(@NotNull Runnable runnable) {
-    if (TreeTestUtil.isProcessing(tree)) {
-      invokeLater(() -> invokeAfterProcessing(runnable));
+    TreeModel model = tree.getModel();
+    if (model instanceof AsyncTreeModel) {
+      AsyncTreeModel async = (AsyncTreeModel)model;
+      if (async.isProcessing()) {
+        invokeLater(() -> invokeAfterProcessing(runnable));
+        return; // do nothing if delayed
+      }
     }
-    else {
-      invokeSafely(runnable);
-    }
+    invokeSafely(runnable);
   }
 
   public void invokeLater(@NotNull Runnable runnable) {

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.function.Function;
@@ -75,15 +74,6 @@ public class TreeTestUtil {
       return action;
     });
     return sb.toString();
-  }
-
-  public static boolean isProcessing(@NotNull JTree tree) {
-    TreeModel model = tree.getModel();
-    if (model instanceof AsyncTreeModel) {
-      AsyncTreeModel async = (AsyncTreeModel)model;
-      return async.isProcessing();
-    }
-    return false;
   }
 
   @NotNull
