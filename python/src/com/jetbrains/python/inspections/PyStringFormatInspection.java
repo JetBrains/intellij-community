@@ -110,7 +110,7 @@ public class PyStringFormatInspection extends PyInspection {
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
-          if (PyNames.DICT.equals(rightExpression.getName())) return -1;
+          if (PyNames.DUNDER_DICT.equals(rightExpression.getName())) return -1;
 
           final List<QualifiedRatedResolveResult> resolveResults =
             ((PyReferenceExpression)rightExpression).multiFollowAssignmentsChain(resolveContext);

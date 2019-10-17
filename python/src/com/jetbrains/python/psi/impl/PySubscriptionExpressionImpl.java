@@ -79,9 +79,15 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     if (type instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)type;
       return Optional
-        .ofNullable(new PyEvaluator().evaluate(indexExpression))
-        .map(value -> PyUtil.as(value, Integer.class))
+        .ofNullable(PyEvaluator.evaluate(indexExpression, Integer.class))
         .map(tupleType::getElementType)
+        .orElse(null);
+    }
+    if (type instanceof PyTypedDictType) {
+      final PyTypedDictType typedDictType = (PyTypedDictType)type;
+      return Optional
+        .ofNullable(PyEvaluator.evaluate(indexExpression, String.class))
+        .map(typedDictType::getElementType)
         .orElse(null);
     }
     for (PsiElement resolved : PyUtil.multiResolveTopPriority(reference)) {

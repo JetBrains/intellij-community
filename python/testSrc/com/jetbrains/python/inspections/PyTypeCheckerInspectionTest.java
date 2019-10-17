@@ -757,4 +757,94 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       )
     );
   }
+
+  // PY-36008
+  public void testTypedDictDefinitionAlternativeSyntax() {
+    doTestByText("from typing import TypedDict\n" +
+                 "\n" +
+                 "Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)\n" +
+                 "movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, Union[str, int]]' instead\">{'name': 'Blade Runner', 'lo': 1234}</warning> # type: Movie\n" +
+                 "movie['year'] = '1984'\n");
+  }
+
+  // PY-36008
+  public void testTypedDictAsArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class Movie(TypedDict):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "def record_movie(movie: Movie) -> None: ...\n" +
+                         "record_movie({'name': 'Blade Runner', 'year': 1982})\n" +
+                         "record_movie(<warning descr=\"Expected type 'Movie', got 'Dict[str, int]' instead\">{'name': 1984}</warning>)")
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionAsArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class Movie(TypedDict):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "m1: Movie = dict(name='Alien', year=1979)\n" +
+                         "m2 = Movie(name='Garden State', year=2004)\n" +
+                         "def foo(p: int):\n" +
+                         "  pass\n" +
+                         "foo(m2[\"year\"])\n" +
+                         "foo(<warning descr=\"Expected type 'int', got 'str' instead\">m2[\"name\"]</warning>)\n" +
+                         "foo(<warning descr=\"Expected type 'int', got 'str' instead\">m1[\"name\"]</warning>)")
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionAssignment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class X(TypedDict):\n" +
+                         "    x: int\n" +
+                         "f = X(x=12)\n" +
+                         "f['x'] = 13\n" +
+                         "f['x'] = <weak_warning descr=\"Expected type 'int' (matched generic type '_VT'), got 'str' instead\">'14'</weak_warning>\n" +
+                         "g: X = {'x': 12}\n" +
+                         "g['x'] = 13\n" +
+                         "g['x'] = <weak_warning descr=\"Expected type 'int' (matched generic type '_VT'), got 'str' instead\">'14'</weak_warning>"));
+  }
+
+  // PY-36008
+  public void testTypedDictAssignment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class Movie(TypedDict):\n" +
+                         "    name: str\n" +
+                         "    year: int\n" +
+                         "m1: Movie = dict(name='Alien', year=1979)\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m5 = Movie(name='Garden State', year=2004)"));
+  }
+
+  // PY-36008
+  public void testTypedDictDefinition() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class Employee(TypedDict):\n" +
+                         "    name: str\n" +
+                         "    id: int\n" +
+                         "class Employee2(Employee, total=False):\n" +
+                         "    director: str\n" +
+                         "em = Employee2(name='John Dorian', id=1234, <warning descr=\"Expected type 'str', got 'int' instead\">director=3</warning>)\n" +
+                         "Movie = TypedDict(<warning descr=\"Expected type 'str', got 'int' instead\">3</warning>, <warning descr=\"Expected type 'dict', got 'List[int]' instead\">[1, 2, 3]</warning>)"));
+  }
+
+  // PY-36008
+  public void testTypedDictConsistency() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
 }

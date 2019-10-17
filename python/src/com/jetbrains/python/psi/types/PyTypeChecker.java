@@ -269,6 +269,18 @@ public class PyTypeChecker {
       return match((PyTupleType)expected, (PyTupleType)actual, context);
     }
 
+    if (actual instanceof PyTypedDictType) {
+      if (!((PyTypedDictType)actual).isInferred()) {
+        Optional<Boolean> match = PyTypedDictType.Companion.checkStructuralCompatibility(expected, (PyTypedDictType)actual, context.context);
+        if (match.isPresent()) {
+          return match;
+        }
+      }
+      if (expected instanceof PyTypedDictType) {
+        return Optional.of(PyTypedDictType.Companion.match((PyTypedDictType)expected, (PyTypedDictType)actual, context.context));
+      }
+    }
+
     final PyClass superClass = expected.getPyClass();
     final PyClass subClass = actual.getPyClass();
     final boolean matchClasses = matchClasses(superClass, subClass, context.context);

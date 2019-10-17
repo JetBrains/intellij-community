@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider;
 import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -66,6 +67,7 @@ public class PyClassHasNoInitInspection extends PyInspection {
         return;
       }
       final List<PyClassLikeType> types = node.getAncestorTypes(myTypeEvalContext);
+      if (PyTypedDictTypeProvider.Companion.isTypingTypedDictInheritor(node, myTypeEvalContext)) return;
       for (PyClassLikeType type : types) {
         if (type == null) return;
         final String qName = type.getClassQName();

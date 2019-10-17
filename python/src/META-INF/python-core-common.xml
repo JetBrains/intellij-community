@@ -90,6 +90,8 @@
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStructuralTypeAttributesCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDataclassCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyTypedDictCompletionContributor"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStringFormatCompletionContributor" />
@@ -431,6 +433,7 @@
     <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser" displayName="Stub packages advertiser" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility" displayName="Stub packages compatibility inspection" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection"/>
     <localInspection language="Python" shortName="PyFinalInspection" suppressId="PyFinal" displayName="Final classes, methods and variables" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyFinalInspection"/>
+    <localInspection language="Python" shortName="PyTypedDictInspection" suppressId="PyTypedDict" displayName="TypedDict definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypedDictInspection"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
@@ -751,6 +754,8 @@
     <!-- typing -->
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictOverridingTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyForwardReferenceResolveProvider"/>

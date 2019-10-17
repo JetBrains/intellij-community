@@ -381,4 +381,9 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testPositionalOnlyParameters() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
+
+  // PY-36008
+  public void testTypedDict() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
 }
