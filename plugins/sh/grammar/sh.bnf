@@ -298,7 +298,10 @@ literal ::= word | string | number | variable {
 }
 private not_lvalue ::= '!' | vars | '$' | brace_expansion | 'file descriptor'
 brace_expansion ::= '{' (word | brace_expansion)* '}'
-variable ::= var {extends=literal}
+variable ::= var {
+  methods=[getReferences]
+  extends=literal
+}
 
 number ::= int | hex | octal {extends=literal}
 string ::= (OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING {

@@ -3,8 +3,10 @@ package com.intellij.sh.psi.impl;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShLiteral;
 import com.intellij.sh.psi.ShString;
+import com.intellij.sh.psi.ShVariable;
 import org.jetbrains.annotations.NotNull;
 
 public class ShPsiImplUtil {
@@ -13,5 +15,10 @@ public class ShPsiImplUtil {
     return o instanceof ShString || o.getWord() != null
            ? ReferenceProvidersRegistry.getReferencesFromProviders(o)
            : PsiReference.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  static PsiReference[] getReferences(@NotNull ShVariable o) {
+    return ShSupport.getInstance().getVariableReferences(o);
   }
 }
