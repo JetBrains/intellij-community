@@ -244,6 +244,7 @@ public class HgStatusCommand {
 
   @NotNull
   public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
+    //noinspection RedundantTypeArguments incorrect inspection, javac fails
     return getFiles(repo, files != null ? ContainerUtil.<VirtualFile, FilePath>map(files, VcsUtil::getFilePath) : null);
   }
 
