@@ -8,18 +8,11 @@
   <xi:include href="/META-INF/core-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/projectModel-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/projectModel-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
-<!--  <xi:include href="/META-INF/editor-ui-api.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
-<!--  <xi:include href="/META-INF/editor-ui-ex.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
   <xi:include href="/META-INF/analysis-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/analysis-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/indexing-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
-<!--    <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"-->
-<!--                    serviceImplementation="com.intellij.openapi.roots.impl.DummyModifiableModelCommitterService"-->
-<!--                    overrides="true"/>-->
-<!--    <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"-->
-<!--                        serviceImplementation="com.jetbrains.python.module.MockPyModuleService"/>-->
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.openapi.components.impl.stores.MockPsiComponentStore"/>
     <projectService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
@@ -36,6 +29,18 @@
                     serviceImplementation="com.intellij.psi.search.MockPsiProjectScopeBuilder"/>
     <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
                     serviceImplementation="com.intellij.openapi.roots.impl.DummyPushedFilePropertiesUpdater"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
+                        serviceImplementation="com.intellij.codeInsight.completion.SingleCompletionService"/>
+    <projectService serviceInterface="com.intellij.openapi.project.DumbService"
+                        serviceImplementation="com.intellij.mock.MockDumbService"/>
+    <applicationService serviceInterface="com.intellij.openapi.command.CommandProcessor"
+                        serviceImplementation="com.intellij.openapi.command.impl.CoreCommandProcessor"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.TransactionGuard"
+                        serviceImplementation="com.intellij.openapi.application.TransactionGuardImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
+                    serviceImplementation="com.intellij.codeInsight.MockAutoPopupController"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.editorActions.TabOutScopesTracker"
+                        serviceImplementation="com.intellij.openapi.editorActions.MockTabOutScopesTracker"/>
   </extensions>
 
   <project-components>

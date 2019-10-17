@@ -21,7 +21,7 @@ public final class CompletionParameters {
   private final CompletionProcess myProcess;
   private boolean isTestingMode = false;
 
-  CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
+  public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
                        @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
                        @NotNull CompletionProcess process) {
     PsiUtilCore.ensureValid(position);

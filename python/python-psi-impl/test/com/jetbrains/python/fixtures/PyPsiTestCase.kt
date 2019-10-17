@@ -30,6 +30,8 @@ import java.io.IOException
 
 @NonNls
 internal const val MARKER = "<ref>"
+@NonNls
+internal const val CARET = "<caret>"
 
 fun getTestName(name: String, lowercaseFirstLetter: Boolean): String {
   val trimmedName = StringUtil.trimStart(name, "test")
@@ -69,7 +71,7 @@ open class PyPsiTestCase : TestCase() {
   private val myApplication: MockPsiApplication = MockPsiApplication(myParentDisposable)
     .also { ApplicationManager.setApplication(it, Getter { myFileTypeManager }, myParentDisposable) }
   protected val myProject: MockPsiProject = MockPsiProject(myApplication)
-  private val myFileSystem = TestLocalVirtualFileSystem()
+  protected val myFileSystem = TestLocalVirtualFileSystem()
   protected var myFile: VirtualFile? = null
   protected var myPsiFile: PsiFile? = null
 
@@ -100,18 +102,9 @@ open class PyPsiTestCase : TestCase() {
   }
 
   protected fun configureByFileAndFindReference(filePath: String): PsiReference? {
-    val testDataRoot = myFileSystem.refreshAndFindFileByPath(PythonTestUtil.getTestDataPath())
-
-    myFile = testDataRoot!!.findFileByRelativePath(filePath)
+    myFile = getFile(filePath)
     val file = requireNotNull(myFile) { "File by path $filePath not found" }
-
-    val fileText: String =
-      try {
-        StringUtil.convertLineSeparators(VfsUtilCore.loadText(myFile!!))
-      }
-      catch (e: IOException) {
-        throw RuntimeException(e)
-      }
+    val fileText = readFileText(file)
 
     val offset = fileText.indexOf(MARKER)
     assertTrue(offset >= 0)
@@ -121,10 +114,8 @@ open class PyPsiTestCase : TestCase() {
     return myPsiFile?.findReferenceAt(offset)
   }
 
-  protected fun configureByFile(filePath: String): PsiFile? {
-    val testDataRoot = myFileSystem.refreshAndFindFileByPath(PythonTestUtil.getTestDataPath())
-
-    myFile = testDataRoot!!.findFileByRelativePath(filePath)
+  protected open fun configureByFile(filePath: String): PsiFile? {
+    myFile = getFile(filePath)
     val file = requireNotNull(myFile) { "File by path $filePath not found" }
     myPsiFile = PsiManager.getInstance(myProject).findFile(file)
     return myPsiFile
@@ -138,6 +129,19 @@ open class PyPsiTestCase : TestCase() {
     myPsiFile = PsiManager.getInstance(myProject).findFile(file)
     return myPsiFile
   }
+
+  protected fun getFile(filePath: String): VirtualFile? {
+    val testDataRoot = myFileSystem.refreshAndFindFileByPath(PythonTestUtil.getTestDataPath())
+    return testDataRoot!!.findFileByRelativePath(filePath)
+  }
+
+  protected fun readFileText(file: VirtualFile): String =
+    try {
+      StringUtil.convertLineSeparators(VfsUtilCore.loadText(file))
+    }
+    catch (e: IOException) {
+      throw RuntimeException(e)
+    }
 
   private fun findMarkerOffset(psiFile: PsiFile): Int {
     val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile)!!

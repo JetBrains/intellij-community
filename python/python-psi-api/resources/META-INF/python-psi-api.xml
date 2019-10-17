@@ -6,6 +6,10 @@
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.pyClassMembersProvider" interface="com.jetbrains.python.psi.types.PyClassMembersProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
+    <extensionPoint qualifiedName="Pythonid.keywordArgumentProvider" interface="com.jetbrains.python.psi.impl.PyKeywordArgumentProvider"/>
+    <extensionPoint qualifiedName="Pythonid.customPackageIdentifier" interface="com.jetbrains.python.psi.PyCustomPackageIdentifier"/>
+    <extensionPoint qualifiedName="Pythonid.pyModuleMembersProvider" interface="com.jetbrains.python.psi.types.PyModuleMembersProvider"/>
+    <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Python"

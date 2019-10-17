@@ -6,6 +6,7 @@
     <extensionPoint name="psi.treeChangePreprocessor"
                     interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"

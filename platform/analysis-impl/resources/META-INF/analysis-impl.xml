@@ -2,6 +2,10 @@
   <extensionPoints>
     <extensionPoint name="severitiesProvider"
                     interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
+    <extensionPoint name="completionData"
+                    beanClass="com.intellij.codeInsight.completion.CompletionDataEP">
+      <with attribute="className" implements="com.intellij.codeInsight.completion.CompletionData"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
@@ -9,5 +13,7 @@
     <postStartupActivity implementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager$ProjectInspectionProfileStartUpActivity"/>
     <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                     serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"
+                            order="last"/>
   </extensions>
 </idea-plugin>
