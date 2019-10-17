@@ -19,5 +19,6 @@
     <orderEntry type="library" name="kotlin-script-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.pycharm.community.build" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
   </component>
 </module>
