@@ -14,10 +14,13 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 import javax.swing.border.Border
 import javax.swing.tree.DefaultTreeModel
 
@@ -45,6 +48,18 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel, project: 
   }
 
   override fun getEmptyText() = myViewer.emptyText
+
+  override fun createTreeList(project: Project, showCheckboxes: Boolean, highlightProblems: Boolean): ChangesBrowserTreeList {
+    return super.createTreeList(project, showCheckboxes, highlightProblems).also {
+      it.addFocusListener(object : FocusListener {
+        override fun focusGained(e: FocusEvent?) {
+          if (it.isSelectionEmpty && !it.isEmpty) TreeUtil.selectFirstNode(it)
+        }
+
+        override fun focusLost(e: FocusEvent?) {}
+      })
+    }
+  }
 
   override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
 
