@@ -52,8 +52,16 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void _testSimple4() {
+  void testSimple4() {
     doTest()
+  }
+
+  void testApplicationStatement() {
+    doTest(CREATE_METHOD, 1, BEFORE)
+  }
+
+  void testInapplicableApplicationStatement() {
+    doTest(CREATE_METHOD, 1, BEFORE)
   }
 
   void testAbstract() {

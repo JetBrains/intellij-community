@@ -1,1 +1,2 @@
-new A().te<caret>st()
+new A().test<caret>()
+

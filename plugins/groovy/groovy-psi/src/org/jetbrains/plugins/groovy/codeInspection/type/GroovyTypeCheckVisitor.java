@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
@@ -18,6 +20,7 @@ import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.BinaryExpre
 import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrConstructorInvocationHighlighter;
 import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrEnumConstantHighlighter;
 import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrNewExpressionHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.CreateMethodFromUsageKt;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -64,6 +67,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import java.util.*;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
+import static java.util.Arrays.asList;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
@@ -459,10 +463,21 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         message = GroovyBundle.message("cannot.apply.method1", method.getName(), canonicalText, typesString);
       }
     }
+
+    LocalQuickFix[] castFixes =
+      genCastFixes(GrClosureSignatureUtil.createSignature(methodResolveResult), argumentTypes, info.getArgumentList());
+    List<LocalQuickFix> fixes = new ArrayList<>(asList(castFixes));
+
+    GroovyPsiElement call = info.getCall();
+    if (call instanceof GrMethodCall){
+      List<IntentionAction> actions = CreateMethodFromUsageKt.generateCreateMethodActions((GrMethodCall)call);
+      fixes.addAll(asList(QuickfixUtil.intentionsToFixes(call, actions)));
+    }
+
     registerError(
       info.getElementToHighlight(),
       message,
-      genCastFixes(GrClosureSignatureUtil.createSignature(methodResolveResult), argumentTypes, info.getArgumentList()),
+      fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
       ProblemHighlightType.GENERIC_ERROR
     );
   }
