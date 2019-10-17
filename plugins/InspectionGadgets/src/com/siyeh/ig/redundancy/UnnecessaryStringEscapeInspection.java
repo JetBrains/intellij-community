@@ -5,6 +5,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.siyeh.InspectionGadgetsBundle;
@@ -73,14 +74,21 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       final String text = literalExpression.getText();
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         final StringBuilder newExpression = new StringBuilder();
-        if (((PsiLiteralExpressionImpl)literalExpression).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+        final PsiLiteralExpressionImpl literal = (PsiLiteralExpressionImpl)literalExpression;
+        if (literal.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
           int offset = 0;
           int start = findUnnecessarilyEscapedChars(text, 4);
           while (start >= 0) {
             newExpression.append(text, offset, start);
             offset = start + 2;
             final String escape = text.substring(start, offset);
-            newExpression.append("\\n".equals(escape) ? '\n' : escape.charAt(1));
+            if ("\\n".equals(escape)) {
+              final int indent = literal.getTextBlockIndent();
+              newExpression.append('\n').append(StringUtil.repeatSymbol(' ', indent));
+            }
+            else {
+              newExpression.append(escape.charAt(1));
+            }
             start = findUnnecessarilyEscapedChars(text, offset);
           }
           newExpression.append(text.substring(offset));

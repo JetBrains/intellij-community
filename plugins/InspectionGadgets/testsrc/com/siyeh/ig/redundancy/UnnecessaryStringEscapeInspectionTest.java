@@ -3,7 +3,6 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,7 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
 
   protected void doQuickFixTest() {
     super.doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("unnecessary.string.escape.quickfix"));
+    checkQuickFix("Fix all 'Unnecessarily escaped character' problems in file");
   }
 
   @Nullable
