@@ -69,6 +69,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
   public static final String COROUTINE = "typing.Coroutine";
   public static final String NAMEDTUPLE = "typing.NamedTuple";
+  public static final String TYPED_DICT = "typing.TypedDict";
+  public static final String TYPED_DICT_EXT = "typing_extensions.TypedDict";
   public static final String GENERIC = "typing.Generic";
   public static final String PROTOCOL = "typing.Protocol";
   public static final String PROTOCOL_EXT = "typing_extensions.Protocol";
@@ -76,6 +78,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String ANY = "typing.Any";
   public static final String NEW_TYPE = "typing.NewType";
   public static final String CALLABLE = "typing.Callable";
+  public static final String MAPPING = "typing.Mapping";
   private static final String LIST = "typing.List";
   private static final String DICT = "typing.Dict";
   private static final String DEFAULT_DICT = "typing.DefaultDict";
@@ -161,6 +164,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(NO_RETURN)
     .add(FINAL, FINAL_EXT)
     .add(LITERAL, LITERAL_EXT)
+    .add(TYPED_DICT, TYPED_DICT_EXT)
     .build();
 
   @Nullable
@@ -851,6 +855,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           return aliasedType;
         }
       }
+      final PyType typedDictType = PyTypedDictTypeProvider.Companion.getTypedDictTypeForResolvedElement(resolved, context.getTypeContext());
+      if (typedDictType != null) {
+        return Ref.create(typedDictType);
+      }
       final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
       if (classType != null) {
         return classType;
@@ -997,6 +1005,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  public static boolean isTypedDict(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    Collection<String> qualifiedNames = resolveToQualifiedNames(expression, context);
+    return qualifiedNames.stream().anyMatch(name -> TYPED_DICT.equals(name) || TYPED_DICT_EXT.equals(name));
+  }
+
   public static boolean isFinal(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
     return ContainerUtil.exists(PyKnownDecoratorUtil.getKnownDecorators(decoratable, context),
                                 d -> d == TYPING_FINAL || d == TYPING_FINAL_EXT);
@@ -1006,7 +1019,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return PyUtil.getParameterizedCachedValue(owner, context, p -> isFinalImpl(owner, p));
   }
 
-  private static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean isFinalImpl(@NotNull T owner, @NotNull TypeEvalContext context) {
+  private static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean isFinalImpl(@NotNull T owner,
+                                                                                        @NotNull TypeEvalContext context) {
     final PyExpression annotation = getAnnotationValue(owner, context);
     if (annotation instanceof PySubscriptionExpression) {
       return eventuallyResolvesToFinal(((PySubscriptionExpression)annotation).getOperand(), context);
@@ -1457,7 +1471,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  public static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final Set<String> names = Sets.newLinkedHashSet();
     for (PsiElement resolved : tryResolving(expression, context)) {
       final String name = getQualifiedName(resolved);

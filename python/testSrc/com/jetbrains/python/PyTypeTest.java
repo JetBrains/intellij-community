@@ -3560,6 +3560,21 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-36008
+  public void testTypedDict() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("A",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a");
+      }
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

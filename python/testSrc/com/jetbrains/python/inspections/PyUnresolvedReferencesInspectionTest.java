@@ -802,6 +802,26 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-36008
+  public void testTypedDict() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class X(TypedDict):\n" +
+                         "    x: str\n" +
+                         "x = X(x='str')\n" +
+                         "x.clear()\n" +
+                         "x['x'] = 'rts'\n" +
+                         "x.<warning descr=\"Unresolved attribute reference 'clea' for class 'X'\">clea</warning>()\n" +
+                         "x.<warning descr=\"Unresolved attribute reference 'x' for class 'X'\">x</warning>()\n" +
+                         "x1: X = {'x1': 'str'}\n" +
+                         "x1['x1'] = 'rts'\n" +
+                         "x1.clear()\n" +
+                         "x1.<warning descr=\"Unresolved attribute reference 'clea' for class 'X'\">clea</warning>()\n" +
+                         "x1.<warning descr=\"Unresolved attribute reference 'x' for class 'X'\">x</warning>()")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

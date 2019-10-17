@@ -1560,6 +1560,32 @@ public class PythonCompletionTest extends PyTestCase {
     );
   }
 
+  // PY-36008
+  public void testTypedDictHasDictMethods() {
+    final List<String> suggested = doTestByText("from typing import TypedDict\n" +
+                                                "class A(TypedDict):\n" +
+                                                "    pass\n" +
+                                                "A().<caret>");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "update", "clear", "pop", "popitem", "setdefault");
+  }
+
+  // PY-36008
+  public void testTypedDictDefinition() {
+    final List<String> suggested = doTestByText("from typing import TypedDict\n" +
+                                                "class A(TypedDict, total=<caret>):\n");
+
+    final List<String> suggestedInAlternativeSyntax = doTestByText("from typing import TypedDict\n" +
+                                                                   "A = TypedDict('A', {}, total=<caret>):\n");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "True", "False");
+
+    assertNotNull(suggestedInAlternativeSyntax);
+    assertContainsElements(suggestedInAlternativeSyntax, "True", "False");
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");

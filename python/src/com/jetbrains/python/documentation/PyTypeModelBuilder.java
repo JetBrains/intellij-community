@@ -152,6 +152,19 @@ public class PyTypeModelBuilder {
     }
   }
 
+  static class InferredTypedDictType extends TypeModel {
+    private final List<TypeModel> members;
+
+    InferredTypedDictType(List<TypeModel> members) {
+      this.members = members;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.typedDict(this);
+    }
+  }
+
   static class FunctionType extends TypeModel {
     @NotNull private final TypeModel returnType;
     @Nullable private final Collection<TypeModel> parameters;
@@ -181,7 +194,7 @@ public class PyTypeModelBuilder {
       visitor.param(this);
     }
   }
-  
+
   static class ClassObjectType extends TypeModel {
     private final TypeModel classType;
 
@@ -193,8 +206,8 @@ public class PyTypeModelBuilder {
     void accept(@NotNull TypeVisitor visitor) {
       visitor.classObject(this);
     }
-  } 
-  
+  }
+
   static class GenericType extends TypeModel {
     private final String name;
 
@@ -227,7 +240,14 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+    if (type instanceof PyTypedDictType) {
+      if (((PyTypedDictType)type).isInferred()) {
+        result = new InferredTypedDictType(Collections.singletonList(build(((PyTypedDictType)type).getValuesType(), true)));
+      } else {
+        result = NamedType.nameOrAny(type);
+      }
+    }
+    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
       final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
       // Special case: render Type[type] as just type
       if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
@@ -343,6 +363,8 @@ public class PyTypeModelBuilder {
     void optional(OptionalType type);
 
     void tuple(TupleType type);
+
+    void typedDict(InferredTypedDictType type);
 
     void classObject(ClassObjectType type);
 
@@ -589,6 +611,24 @@ public class PyTypeModelBuilder {
         processList(type.members);
         if (type.homogeneous) {
           add(", ...");
+        }
+        add("]");
+      }
+    }
+
+    @Override
+    public void typedDict(InferredTypedDictType type) {
+      add("Dict[str, ");
+      boolean first = true;
+      if (!type.members.isEmpty()) {
+        for (TypeModel member : type.members) {
+          if (!first) {
+            add(", ");
+          }
+          else {
+            first = false;
+          }
+          member.accept(this);
         }
         add("]");
       }
