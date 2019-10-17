@@ -4,13 +4,18 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
+import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
@@ -57,17 +62,28 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
   class RemoteUrlsListener(private val project: Project)
     : VcsRepositoryMappingListener, GitRepositoryChangeListener {
 
-    override fun mappingChanged() = updateRemotes()
-    override fun repositoryChanged(repository: GitRepository) = updateRemotes()
+    override fun mappingChanged() = runInEdt(project) { updateRemotes(project) }
+    override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRemotes(project) }
+  }
 
-    private fun updateRemotes() {
-      val application = ApplicationManager.getApplication()
-      if (application.isDispatchThread) {
-        project.service<GHPRToolWindowTabsManager>().updateRemoteUrls()
-      }
-      else {
-        application.invokeLater(::updateRemotes) { project.isDisposedOrDisposeInProgress }
+  class AccountsListener : AccountRemovedListener, AccountTokenChangedListener {
+    override fun accountRemoved(removedAccount: GithubAccount) = updateRemotes()
+    override fun tokenChanged(account: GithubAccount) = updateRemotes()
+
+    private fun updateRemotes() = runInEdt {
+      for (project in ProjectManager.getInstance().openProjects) {
+        updateRemotes(project)
       }
     }
+  }
+
+  companion object {
+    private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
+      val application = ApplicationManager.getApplication()
+      if (application.isDispatchThread) runnable()
+      else application.invokeLater({ runnable() }) { project.isDisposedOrDisposeInProgress }
+    }
+
+    private fun updateRemotes(project: Project) = project.service<GHPRToolWindowTabsManager>().updateRemoteUrls()
   }
 }

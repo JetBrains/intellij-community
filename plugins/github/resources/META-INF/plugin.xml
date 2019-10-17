@@ -50,6 +50,15 @@
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$AccountsListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$AccountsListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+  </applicationListeners>
+
   <projectListeners>
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
