@@ -1060,4 +1060,34 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).setMapping(Collections.singletonMap(dir, WINDOWS_1251));
     assertEquals(WINDOWS_1251, file.getCharset());
   }
+
+  public void testEncodingMappingMustNotContainInvalidFiles() {
+    VirtualFile dir = getTempDir().createTempVDir();
+    VirtualFile root = dir.getParent();
+    ModuleRootModificationUtil.addContentRoot(getModule(), dir);
+    FileDocumentManager.getInstance().saveAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
+
+    ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).setMapping(Collections.singletonMap(dir, WINDOWS_1251));
+    Set<? extends VirtualFile> mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).getAllMappings().keySet();
+    assertTrue(mappings.contains(dir));
+
+    delete(dir);
+    UIUtil.dispatchAllInvocationEvents();
+    assertFalse(dir.isValid());
+
+    mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).getAllMappings().keySet();
+    assertFalse(mappings.contains(dir));
+    for (VirtualFile mapping : mappings) {
+      assertTrue(mapping.isValid());
+    }
+
+    dir = createChildDirectory(root, dir.getName());
+
+    mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).getAllMappings().keySet();
+    assertTrue(mappings.contains(dir));
+    for (VirtualFile mapping : ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject())).getAllMappings().keySet()) {
+      assertTrue(mapping.isValid());
+    }
+  }
 }
