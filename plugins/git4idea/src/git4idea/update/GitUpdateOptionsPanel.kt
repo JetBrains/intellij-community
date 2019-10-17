@@ -24,7 +24,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.config.UpdateMethod
 import git4idea.config.UpdateMethod.BRANCH_DEFAULT
 
-class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
+internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
   val panel = createPanel()
 
   private fun createPanel(): DialogPanel = panel {
