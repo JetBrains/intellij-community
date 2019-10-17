@@ -1199,6 +1199,10 @@
               text="Split to New Tabs" icon="AllIcons.General.Layout"/>
       <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
               text="Split By Type" icon="AllIcons.Modules.Split"/>
+      <separator/>
+      <group id="ServiceView.AddService" popup="true" text="Add Service" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
+             class="com.intellij.execution.services.AddServiceActionGroup">
+      </group>
     </group>
     <group id="ServiceViewItemToolbar">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup" id="ServiceViewItemToolbarGroup"/>
