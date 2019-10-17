@@ -31,6 +31,12 @@ public class ComparableImplementedButEqualsNotOverriddenInspectionTest extends L
   public void testAbstractClass3() { doTest(); }
   public void testNote() { doTest(); }
 
+  public void testNoFixForAnonymousClass() {
+    doTest();
+    assertNotNull(myFixture.findSingleIntention(ComparableImplementedButEqualsNotOverriddenInspection.GENERATE_EQUALS_FIX_NAME));
+    assertEmpty(myFixture.filterAvailableIntentions(ComparableImplementedButEqualsNotOverriddenInspection.ADD_NOTE_FIX_NAME));
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
