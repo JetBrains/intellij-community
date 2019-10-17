@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
@@ -255,14 +256,7 @@ public final class SocketLock {
     }
 
     try {
-      // do not use MultiMap - only JDK classes should be used in this class to reduce class loading
-      int port = Integer.parseInt(FileUtil.loadFile(portFile));
-      List<String> list = portToPath.get(port);
-      if (list == null) {
-        list = new ArrayList<>();
-        portToPath.put(port, list);
-      }
-      list.add(path);
+      ContainerUtilRt.putValue(Integer.parseInt(FileUtil.loadFile(portFile)), path, portToPath);
     }
     catch (Exception e) {
       log(e);  // no need to delete - it would be overwritten
