@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -40,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -54,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstructio
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -405,6 +409,15 @@ public final class ControlFlowUtils {
   @Nullable
   private static GrStatement getContainingStatement(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class);
+  }
+
+  @Nullable
+  public static GrStatement getContainingNonTrivialStatement(@NotNull GroovyPsiElement element) {
+    do {
+      element = getContainingStatement(element);
+    }
+    while (element instanceof GrParenthesizedExpression);
+    return element == null ? null : (GrStatement)element;
   }
 
   @Nullable
@@ -763,6 +776,28 @@ public final class ControlFlowUtils {
     }
 
     return result;
+  }
+
+  public static boolean mayUseResolvedVariable(@NotNull final PsiElement expression, @NotNull final PsiVariable resolved) {
+    if (resolved.hasModifier(JvmModifier.FINAL)) {
+      return true;
+    }
+    else {
+      PsiElement firstOpenBlock = findScope(expression);
+      PsiElement secondOpenBlock = findScope(resolved);
+      return Objects.equals(firstOpenBlock, secondOpenBlock);
+    }
+  }
+
+  @Nullable
+  private static PsiElement findScope(@NotNull PsiElement element) {
+    if (element instanceof ClosureSyntheticParameter) {
+      return ((ClosureSyntheticParameter)element).getClosure();
+    }
+    while (element != null && !(element instanceof GrClosableBlock)) {
+      element = element.getParent();
+    }
+    return element;
   }
 
   @Nullable

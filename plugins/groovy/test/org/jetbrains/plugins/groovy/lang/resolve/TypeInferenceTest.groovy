@@ -1277,4 +1277,102 @@ class C {
 [new C()]*.field.las<caret>t()
 ''', JAVA_LANG_INTEGER
   }
+
+  void 'test no type inference for variables from outer context'() {
+    doTest '''
+def foo(p) {
+  p = 1
+  def closure = {
+    <caret>p
+  }
+}
+''', null
+  }
+
+  void 'test do type inference for outer variables with explicit type'() {
+    doTest '''
+def foo() {
+  Integer x = 1
+  def closure = {
+    <caret>x
+  }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test do type inference for outer final variables'() {
+    doTest '''
+def foo() {
+  final def x = "string"
+  def closure = { <caret>x }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test use outer context for closures passed to DGM'() {
+    doTest '''
+def foo() {
+  def x = 1
+  'q'.with {
+    <caret>x
+  }
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test forbid use of outer context for nested closures'() {
+    doTest '''
+def foo() {
+  def x = 1
+  'q'.with ({
+    def closure = { <caret>x }
+  })
+}''', null
+  }
+
+  void 'test parenthesized expression'() {
+    doTest '''
+def foo(def p) {
+    def x = 1
+    1.with (({ <caret>x }))
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test simple example'() {
+    doTest '''
+  def foo() {
+    def x
+    1.with {
+      x = 1
+    }
+    <caret>x
+  }
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test poly example'() {
+    doTest '''
+class A{}
+class B extends A{}
+class C extends A{}
+def foo() {
+  def x = null as C
+  [1].each {
+    x = null as B
+  }
+  <caret>x
+}
+''', "A"
+  }
+
+  void 'test poly middle'() {
+    doTest '''
+def foo() {
+  def x
+  [1].each {
+      x = 1
+  }
+  <caret>x
+}
+''', null
+  }
 }

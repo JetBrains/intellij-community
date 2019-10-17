@@ -8,9 +8,14 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ClosureFlowUtil;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
@@ -20,7 +25,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -54,6 +61,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else if (instruction instanceof NegatingGotoInstruction) {
       handleNegation(state, (NegatingGotoInstruction)instruction);
+    }
+    else if (instruction.getElement() instanceof GrClosableBlock) {
+      handleNestedCodeBlock(state, (GrClosableBlock)instruction.getElement());
     }
   }
 
@@ -159,6 +169,36 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private static void handleNegation(@NotNull TypeDfaState state, @NotNull NegatingGotoInstruction negation) {
     for (Map.Entry<VariableDescriptor, DFAType> entry : state.getVarTypes().entrySet()) {
       entry.setValue(entry.getValue().negate(negation));
+    }
+  }
+
+
+  private void handleNestedCodeBlock(TypeDfaState state,
+                                     GrClosableBlock element) {
+    GrStatement holder = ClosureFlowUtil.getHolder(element);
+    if (holder instanceof GrMethodCall) {
+      InvocationKind kind = ClosureFlowUtil.getInvocationKind(holder);
+      if (InvocationKind.ONCE.equals(kind)) {
+        Instruction[] flow = element.getControlFlow();
+        Instruction last = flow[flow.length - 1];
+        Set<VariableDescriptor> descriptors = myInteresting.stream()
+          .map((instruction) -> {
+            if (instruction instanceof ReadWriteVariableInstruction) {
+              return ((ReadWriteVariableInstruction)instruction).getDescriptor();
+            }
+            else {
+              return null;
+            }
+          })
+          .filter(Objects::nonNull)
+          .collect(Collectors.toSet());
+        for (VariableDescriptor descriptor : descriptors) {
+          state.putType(descriptor, DFAType.create(TypeInferenceHelper.getInferredType(descriptor, last, element)));
+        }
+      }
+      else if (InvocationKind.MANY.equals(kind)) {
+        // todo: optional block invocation
+      }
     }
   }
 }
