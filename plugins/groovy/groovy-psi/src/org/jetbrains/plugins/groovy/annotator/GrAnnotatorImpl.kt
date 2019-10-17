@@ -1,63 +1,55 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.annotator;
+package org.jetbrains.plugins.groovy.annotator
 
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.Annotator
+import com.intellij.openapi.roots.FileIndexFacade
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
-/**
- * @author Max Medvedev
- */
-public class GrAnnotatorImpl implements Annotator {
+class GrAnnotatorImpl : Annotator {
 
-  private final GroovyStaticTypeCheckVisitor myTypeCheckVisitor = new GroovyStaticTypeCheckVisitor();
+  private val myTypeCheckVisitor = GroovyStaticTypeCheckVisitor()
 
-  @Override
-  public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (FileIndexFacade.getInstance(element.getProject()).isInLibrarySource(element.getContainingFile().getVirtualFile())) return;
-    if (element instanceof GroovyPsiElement) {
-      GroovyPsiElement grElement = (GroovyPsiElement)element;
-      grElement.accept(new GroovyAnnotator(holder));
-      if (PsiUtil.isCompileStatic(grElement)) {
-        myTypeCheckVisitor.accept(grElement, holder);
+  override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (FileIndexFacade.getInstance(element.project).isInLibrarySource(element.containingFile.virtualFile)) return
+    if (element is GroovyPsiElement) {
+      element.accept(GroovyAnnotator(holder))
+      if (PsiUtil.isCompileStatic(element)) {
+        myTypeCheckVisitor.accept(element, holder)
       }
     }
-    else if (element instanceof PsiComment) {
-      String text = element.getText();
-      if (text.startsWith("/*") && !(text.endsWith("*/"))) {
-        TextRange range = element.getTextRange();
-        holder.createErrorAnnotation(TextRange.create(range.getEndOffset() - 1, range.getEndOffset()), GroovyBundle.message("doc.end.expected"));
+    else if (element is PsiComment) {
+      val text = element.getText()
+      if (text.startsWith("/*") && !text.endsWith("*/")) {
+        val range = element.getTextRange()
+        holder.createErrorAnnotation(TextRange.create(range.endOffset - 1, range.endOffset), GroovyBundle.message("doc.end.expected"))
       }
     }
     else {
-      final PsiElement parent = element.getParent();
-      if (parent instanceof GrMethod) {
-        if (element.equals(((GrMethod)parent).getNameIdentifierGroovy()) && ((GrMethod)parent).getReturnTypeElementGroovy() == null) {
-          GroovyAnnotator.checkMethodReturnType((GrMethod)parent, element, holder);
+      val parent = element.parent
+      if (parent is GrMethod) {
+        if (element == parent.nameIdentifierGroovy && parent.returnTypeElementGroovy == null) {
+          GroovyAnnotator.checkMethodReturnType(parent, element, holder)
         }
       }
-      else if (parent instanceof GrField) {
-        final GrField field = (GrField)parent;
-        if (element.equals(field.getNameIdentifierGroovy())) {
-          final GrAccessorMethod[] getters = field.getGetters();
-          for (GrAccessorMethod getter : getters) {
-            GroovyAnnotator.checkMethodReturnType(getter, field.getNameIdentifierGroovy(), holder);
+      else if (parent is GrField) {
+        if (element == parent.nameIdentifierGroovy) {
+          val getters = parent.getters
+          for (getter in getters) {
+            GroovyAnnotator.checkMethodReturnType(getter, parent.nameIdentifierGroovy, holder)
           }
 
-          final GrAccessorMethod setter = field.getSetter();
+          val setter = parent.setter
           if (setter != null) {
-            GroovyAnnotator.checkMethodReturnType(setter, field.getNameIdentifierGroovy(), holder);
+            GroovyAnnotator.checkMethodReturnType(setter, parent.nameIdentifierGroovy, holder)
           }
         }
       }
