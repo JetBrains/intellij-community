@@ -123,7 +123,7 @@ public abstract class AbstractMessage {
     return getIncludedAttachments();
   }
 
-  protected String getAppInfo() {
+  protected @Nullable String getAppInfo() {
     return myAppInfo;
   }
 

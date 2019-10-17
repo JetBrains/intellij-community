@@ -13,7 +13,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.security.CompositeX509TrustManager;
@@ -191,38 +195,27 @@ class ITNProxy {
     }
   }
 
-  @Nullable
-  static String getAppInfoString() {
-    try {
-      StringBuilder builder = new StringBuilder();
-      appendAppInfo(builder);
-      return builder.toString();
-    }
-    catch (UnsupportedEncodingException ignored) {
-    }
-    return null;
+  static @NotNull String getAppInfoString() {
+    StringBuilder builder = new StringBuilder();
+    appendAppInfo(builder);
+    return builder.toString();
   }
 
-  private static void appendAppInfo(StringBuilder builder) throws UnsupportedEncodingException {
+  private static void appendAppInfo(StringBuilder builder) {
     for (Map.Entry<String, String> entry : TEMPLATE.getValue().entrySet()) {
       append(builder, entry.getKey(), entry.getValue());
     }
   }
 
-  private static byte[] createRequest(String login, String password, ErrorBean error) throws UnsupportedEncodingException {
+  private static StringBuilder createRequest(String login, String password, ErrorBean error) {
     StringBuilder builder = new StringBuilder(8192);
 
     Object eventData = error.event.getData();
-    boolean customAppInfo = false;
-    if (eventData instanceof AbstractMessage) {
-      String appInfo = ((AbstractMessage)eventData).getAppInfo();
-      if (appInfo != null) {
-        customAppInfo = true;
-        builder.append(appInfo);
-      }
+    String appInfo = eventData instanceof AbstractMessage ? ((AbstractMessage)eventData).getAppInfo() : null;
+    if (appInfo != null) {
+      builder.append(appInfo);
     }
-
-    if (!customAppInfo) {
+    else {
       appendAppInfo(builder);
     }
 
@@ -279,13 +272,17 @@ class ITNProxy {
       }
     }
 
-    return builder.toString().getBytes(StandardCharsets.UTF_8);
+    return builder;
   }
 
-  private static void append(StringBuilder builder, String key, @Nullable String value) throws UnsupportedEncodingException {
-    if (StringUtil.isEmpty(value)) return;
-    if (builder.length() > 0) builder.append('&');
-    builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8.name()));
+  private static void append(StringBuilder builder, String key, @Nullable String value) {
+    if (!StringUtil.isEmpty(value)) {
+      String encoded;
+      try { encoded = URLEncoder.encode(value, StandardCharsets.UTF_8.name()); }
+      catch (UnsupportedEncodingException e) { throw new IllegalStateException(e); }  // not expected to happen
+      if (builder.length() > 0) builder.append('&');
+      builder.append(key).append('=').append(encoded);
+    }
   }
 
   private static String diff(String original, String redacted) {
@@ -296,7 +293,7 @@ class ITNProxy {
     return s.isEmpty() ? "-" : StringUtil.splitByLines(s).length + "/" + s.split("[^\\w']+").length + "/" + s.length();
   }
 
-  private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
+  private static HttpURLConnection post(URL url, CharSequence formData) throws IOException {
     HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
@@ -304,22 +301,22 @@ class ITNProxy {
       connection.setHostnameVerifier(new EaHostnameVerifier());
     }
 
-    ByteArrayOutputStream outputByteStream = new ByteArrayOutputStream(bytes.length);
-    try (GZIPOutputStream gzip = new GZIPOutputStream(outputByteStream)) {
-      gzip.write(bytes);
+    BufferExposingByteArrayOutputStream compressed = new BufferExposingByteArrayOutputStream(formData.length());
+    try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(compressed), StandardCharsets.UTF_8)) {
+      for (int i = 0; i < formData.length(); i++) {
+        writer.write(formData.charAt(i));
+      }
     }
-
-    byte[] compressedBytes = outputByteStream.toByteArray();
 
     connection.setRequestMethod("POST");
     connection.setDoInput(true);
     connection.setDoOutput(true);
     connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name());
-    connection.setRequestProperty("Content-Length", Integer.toString(compressedBytes.length));
+    connection.setRequestProperty("Content-Length", Integer.toString(compressed.size()));
     connection.setRequestProperty("Content-Encoding", "gzip");
 
     try (OutputStream out = connection.getOutputStream()) {
-      out.write(compressedBytes);
+      out.write(compressed.getInternalBuffer(), 0, compressed.size());
     }
 
     return connection;
