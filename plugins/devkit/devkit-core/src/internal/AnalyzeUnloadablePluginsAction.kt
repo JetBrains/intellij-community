@@ -70,14 +70,15 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
 
       val unloadablePlugins = result.filter { it.componentCount == 0 && it.unspecifiedDynamicEPs.isEmpty() && it.nonDynamicEPs.isEmpty() }
-      appendln("Can unload ${unloadablePlugins.size} plugins:")
+      appendln("Can unload ${unloadablePlugins.size} plugins out of ${result.size}")
       for (status in unloadablePlugins) {
         appendln(status.pluginId)
       }
       appendln()
 
-      appendln("Plugins using components:")
-      for (status in result.filter { it.componentCount > 0 }.sortedByDescending { it.componentCount }) {
+      val pluginsUsingComponents = result.filter { it.componentCount > 0 }.sortedByDescending { it.componentCount }
+      appendln("Plugins using components (${pluginsUsingComponents.size}):")
+      for (status in pluginsUsingComponents) {
         appendln("${status.pluginId} (${status.componentCount})")
       }
       appendln()
@@ -88,7 +89,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         it.unspecifiedDynamicEPs.isNotEmpty()
       }
       if (closePlugins.isNotEmpty()) {
-        appendln("Plugins closest to being unloadable:")
+        appendln("Plugins closest to being unloadable (40 out of ${closePlugins.size}):")
         for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }.take(40)) {
           appendln("${status.pluginId} - ${status.unspecifiedDynamicEPs.joinToString()}")
         }
@@ -102,7 +103,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         }
       }
 
-      appendln("EP usage statistics:")
+      appendln("EP usage statistics (${epUsagesMap.size} non-dynamic EPs remaining):")
       val epUsagesList = epUsagesMap.toList().sortedByDescending { it.second }
       for (pair in epUsagesList) {
         appendln("${pair.second}: ${pair.first}")
