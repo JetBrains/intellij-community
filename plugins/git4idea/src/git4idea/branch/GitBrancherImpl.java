@@ -20,12 +20,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -117,20 +119,39 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
+    deleteBranches(Collections.singletonList(branchName), repositories, null);
+  }
+
+  @Override
+  public void deleteBranches(@NotNull List<String> branchNames,
+                             @NotNull List<? extends GitRepository> repositories,
+                             @Nullable Runnable callInAwtAfterExecution) {
+    if (branchNames.isEmpty()) return;
+    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
+    new CommonBackgroundTask(myProject, "Deleting " + branchMsg, callInAwtAfterExecution) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).deleteBranch(branchName, repositories);
+        GitBranchWorker worker = newWorker(indicator);
+        for (String branchName : branchNames) {
+          worker.deleteBranch(branchName, repositories);
+        }
       }
     }.runInBackground();
   }
 
   @Override
   public void deleteRemoteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
+    deleteRemoteBranches(Collections.singletonList(branchName), repositories);
+  }
+
+  @Override
+  public void deleteRemoteBranches(@NotNull List<String> branchNames, @NotNull List<? extends GitRepository> repositories) {
+    if (branchNames.isEmpty()) return;
+    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
+    new CommonBackgroundTask(myProject, "Deleting " + branchMsg, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).deleteRemoteBranch(branchName, repositories);
+        newWorker(indicator).deleteRemoteBranches(branchNames, repositories);
       }
     }.runInBackground();
   }

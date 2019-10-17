@@ -834,7 +834,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     deleteRemoteBranch("origin/feature", DeleteRemoteBranchDecision.DELETE_WITH_TRACKING)
 
-    assertSuccessfulNotification("Deleted remote branch origin/feature")
+    assertSuccessfulNotification("Deleted remote branch origin/feature", "Also deleted local branch: feature")
     myRepositories.forEach { `assert remote branch deleted`(it, "origin/feature") }
     myRepositories.forEach { assertBranchDeleted(it, "feature") }
   }
@@ -844,9 +844,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
     last.git("checkout feature")
 
     GitBranchWorker(project, git, object : TestUiHandler() {
-      override fun confirmRemoteBranchDeletion(branchName: String,
-                                               trackingBranches: MutableCollection<String>,
-                                               repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
+      override fun confirmRemoteBranchDeletion(branchNames: List<String>,
+                                               trackingBranches: Collection<String>,
+                                               repositories: Collection<GitRepository>): DeleteRemoteBranchDecision {
         assertEmpty("No tracking branches should be proposed for deletion", trackingBranches)
         return DeleteRemoteBranchDecision.DELETE
       }
@@ -942,11 +942,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
     }
   }
 
-  private fun deleteRemoteBranch(branchName: String, decision: GitBranchUiHandler.DeleteRemoteBranchDecision) {
+  private fun deleteRemoteBranch(branchName: String, decision: DeleteRemoteBranchDecision) {
     GitBranchWorker(project, git, object : TestUiHandler() {
-      override fun confirmRemoteBranchDeletion(branchName: String,
-                                               trackingBranches: MutableCollection<String>,
-                                               repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
+      override fun confirmRemoteBranchDeletion(branchNames: List<String>,
+                                               trackingBranches: Collection<String>,
+                                               repositories: Collection<GitRepository>): DeleteRemoteBranchDecision {
         return decision
       }
     })
@@ -1006,10 +1006,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
       throw UnsupportedOperationException("$operationName\n$rollbackProposal\n$root\n$relativePaths")
     }
 
-    override fun confirmRemoteBranchDeletion(branchName: String,
-                                             trackingBranches: MutableCollection<String>,
-                                             repositories: MutableCollection<GitRepository>): DeleteRemoteBranchDecision {
-      throw UnsupportedOperationException("$branchName\n$trackingBranches\n$repositories")
+    override fun confirmRemoteBranchDeletion(branchNames: List<String>,
+                                             trackingBranches: Collection<String>,
+                                             repositories: Collection<GitRepository>): DeleteRemoteBranchDecision {
+      throw UnsupportedOperationException("$branchNames\n$trackingBranches\n$repositories")
     }
   }
 
