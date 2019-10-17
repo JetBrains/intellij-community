@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -17,15 +18,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -41,33 +45,34 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
-public final class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element> {
+public final class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element>, Disposable {
   @NonNls private static final String PROJECT_URL = "PROJECT";
-
   private final Project myProject;
   private final EncodingManagerImpl myIdeEncodingManager;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
-
   private BOMForNewUTF8Files myBomForNewUtf8Files = BOMForNewUTF8Files.NEVER;
+  private final Map<VirtualFilePointer, Charset> myMapping = ConcurrentCollectionFactory.createMap(
+    new TObjectHashingStrategy<VirtualFilePointer>() {
+      @Override
+      public int computeHashCode(VirtualFilePointer pointer) {
+        return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
+      }
+
+      @Override
+      public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
+        return FileUtil.PATH_HASHING_STRATEGY.equals(o1.getUrl(), o2.getUrl());
+      }
+    });
+  private volatile Charset myProjectCharset;
 
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-    myMapping = Collections.synchronizedMap(new THashMap<>(new TObjectHashingStrategy<VirtualFile>() {
-      @Override
-      public int computeHashCode(VirtualFile object) {
-        return object.getPath().hashCode();
-      }
-
-      @Override
-      public boolean equals(VirtualFile o1, VirtualFile o2) {
-        return o1.equals(o2) || FileUtil.pathsEqual(o1.getPath(), o2.getPath());
-      }
-    }));
   }
 
   // in EDT
@@ -78,16 +83,18 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
   }
 
-  private final Map<VirtualFile, Charset> myMapping;
-  private volatile Charset myProjectCharset;
+  @Override
+  public void dispose() {
+
+  }
 
   @Override
   public Element getState() {
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
-      List<VirtualFile> files = new ArrayList<>(myMapping.keySet());
-      ContainerUtil.quickSort(files, Comparator.comparing(VirtualFile::getPath));
-      for (VirtualFile file : files) {
+      List<VirtualFilePointer> files = new ArrayList<>(myMapping.keySet());
+      ContainerUtil.quickSort(files, Comparator.comparing(VirtualFilePointer::getUrl));
+      for (VirtualFilePointer file : files) {
         Charset charset = myMapping.get(file);
         Element child = new Element("file");
         element.addContent(child);
@@ -121,7 +128,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myMapping.clear();
     List<Element> files = element.getChildren("file");
     if (!files.isEmpty()) {
-      Map<VirtualFile, Charset> mapping = new THashMap<>();
+      Map<VirtualFilePointer, Charset> mapping = new THashMap<>();
       for (Element fileElement : files) {
         String url = fileElement.getAttributeValue("url");
         String charsetName = fileElement.getAttributeValue("charset");
@@ -134,10 +141,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
           myProjectCharset = charset;
         }
         else if (url != null) {
-          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-          if (file != null) {
-            mapping.put(file, charset);
-          }
+          VirtualFilePointer file = VirtualFilePointerManager.getInstance().create(url, this, null);
+          mapping.put(file, charset);
         }
       }
       myMapping.putAll(mapping);
@@ -156,8 +161,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
 
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    for (VirtualFile file : myMapping.keySet()) {
-      Document cachedDocument = fileDocumentManager.getCachedDocument(file);
+    for (VirtualFilePointer pointer : myMapping.keySet()) {
+      VirtualFile file = pointer.getFile();
+      Document cachedDocument = file == null ? null : fileDocumentManager.getCachedDocument(file);
       if (cachedDocument != null) {
         reload(file); // reload document in the right encoding if someone sneaky (you, BreakpointManager) managed to load the document before project opened
       }
@@ -169,7 +175,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     VirtualFile parent = virtualFile;
     while (parent != null) {
-      Charset charset = myMapping.get(parent);
+      Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
       if (charset != null || !useParentDefaults) return charset;
       parent = parent.getParent();
     }
@@ -190,11 +196,14 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       oldCharset = myProjectCharset;
       myProjectCharset = charset;
     }
-    else if (charset == null) {
-      oldCharset = myMapping.remove(virtualFileOrDir);
-    }
     else {
-      oldCharset = myMapping.put(virtualFileOrDir, charset);
+      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(virtualFileOrDir, this, null);
+      if (charset == null) {
+        oldCharset = myMapping.remove(pointer);
+      }
+      else {
+        oldCharset = myMapping.put(pointer, charset);
+      }
     }
 
     if (!Comparing.equal(oldCharset, charset) || virtualFileOrDir != null && !Comparing.equal(virtualFileOrDir.getCharset(), charset)) {
@@ -246,15 +255,18 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
    * @return readonly map of current mappings. to modify mappings use {@link #setMapping(Map)}
    */
   @NotNull
-  public Map<VirtualFile, Charset> getAllMappings() {
-    return myMapping;
+  public Map<? extends VirtualFile, ? extends Charset> getAllMappings() {
+    return myMapping.entrySet().stream()
+      .map(e -> Pair.create(e.getKey().getFile(), e.getValue()))
+      .filter(e -> e.getFirst() != null)
+      .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
   }
 
-  public void setMapping(@NotNull final Map<? extends VirtualFile, ? extends Charset> mapping) {
+  public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    final Map<VirtualFile, Charset> newMap = new THashMap<>(mapping.size());
-    final Map<VirtualFile, Charset> oldMap = new THashMap<>(myMapping);
+    final Map<VirtualFilePointer, Charset> newMap = new THashMap<>(mapping.size());
+    final Map<VirtualFilePointer, Charset> oldMap = new THashMap<>(myMapping);
 
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
@@ -268,7 +280,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
         }
         else {
           if (!fileIndex.isInContent(virtualFile)) continue;
-          if (!virtualFile.isDirectory() && !Comparing.equal(charset, oldMap.get(virtualFile))) {
+          VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(virtualFile, this, null);
+
+          if (!virtualFile.isDirectory() && !Comparing.equal(charset, oldMap.get(pointer))) {
             Document document;
             byte[] bytes;
             try {
@@ -284,7 +298,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
             if (!changed) continue;
           }
-          newMap.put(virtualFile, charset);
+          newMap.put(pointer, charset);
         }
       }
     });
@@ -292,9 +306,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myMapping.clear();
     myMapping.putAll(newMap);
 
-    final Set<VirtualFile> changed = new HashSet<>(oldMap.keySet());
-    for (Map.Entry<VirtualFile, Charset> entry : newMap.entrySet()) {
-      VirtualFile file = entry.getKey();
+    final Set<VirtualFilePointer> changed = new HashSet<>(oldMap.keySet());
+    for (Map.Entry<VirtualFilePointer, Charset> entry : newMap.entrySet()) {
+      VirtualFilePointer file = entry.getKey();
       Charset charset = entry.getValue();
       Charset oldCharset = oldMap.get(file);
       if (Comparing.equal(oldCharset, charset)) {
@@ -302,10 +316,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       }
     }
 
-    Set<VirtualFile> added = new HashSet<>(newMap.keySet());
+    Set<VirtualFilePointer> added = new HashSet<>(newMap.keySet());
     added.removeAll(oldMap.keySet());
 
-    Set<VirtualFile> removed = new HashSet<>(oldMap.keySet());
+    Set<VirtualFilePointer> removed = new HashSet<>(oldMap.keySet());
     removed.removeAll(newMap.keySet());
 
     changed.addAll(added);
@@ -317,7 +331,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       tryStartReloadWithProgress(() -> {
         Set<VirtualFile> processed = new THashSet<>();
         next:
-        for (VirtualFile changedFile : changed) {
+        for (VirtualFilePointer changedFilePointer : changed) {
+          VirtualFile changedFile = changedFilePointer.getFile();
+          if (changedFile == null) continue;
           for (VirtualFile processedFile : processed) {
             if (VfsUtilCore.isAncestor(processedFile, changedFile, false)) continue next;
           }
