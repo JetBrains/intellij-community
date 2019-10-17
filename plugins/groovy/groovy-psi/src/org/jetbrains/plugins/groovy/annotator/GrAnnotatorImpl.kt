@@ -19,7 +19,10 @@ class GrAnnotatorImpl : Annotator {
   private val myTypeCheckVisitor = GroovyStaticTypeCheckVisitor()
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (FileIndexFacade.getInstance(element.project).isInLibrarySource(element.containingFile.virtualFile)) return
+    val file = holder.currentAnnotationSession.file
+    if (FileIndexFacade.getInstance(file.project).isInLibrarySource(file.virtualFile)) {
+      return
+    }
     if (element is GroovyPsiElement) {
       element.accept(GroovyAnnotator(holder))
       if (PsiUtil.isCompileStatic(element)) {
