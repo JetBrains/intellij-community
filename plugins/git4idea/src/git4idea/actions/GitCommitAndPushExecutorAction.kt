@@ -5,7 +5,6 @@ package git4idea.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.actions.BaseCommitExecutorAction
-import com.intellij.openapi.vcs.changes.actions.getAmendCommitModePrefix
 import git4idea.checkin.GitCommitAndPushExecutor
 
 class GitCommitAndPushExecutorAction : BaseCommitExecutorAction() {

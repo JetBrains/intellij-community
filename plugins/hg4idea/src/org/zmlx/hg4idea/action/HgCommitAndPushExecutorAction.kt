@@ -3,7 +3,6 @@ package org.zmlx.hg4idea.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.actions.BaseCommitExecutorAction
-import com.intellij.openapi.vcs.changes.actions.getAmendCommitModePrefix
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor
 
 class HgCommitAndPushExecutorAction : BaseCommitExecutorAction() {
