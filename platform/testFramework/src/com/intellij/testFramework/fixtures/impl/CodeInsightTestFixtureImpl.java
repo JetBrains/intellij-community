@@ -38,8 +38,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.GotoClassModel2;
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -120,6 +119,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
@@ -134,7 +134,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -168,7 +167,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
-  private SearchEverywhereContributor<Object> myChooseByNamePopup;
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
@@ -1270,7 +1268,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       .append(() -> {
         clearFileAndEditor();
         myPsiManager = null;
-        myChooseByNamePopup = null;
       })
       .append(() -> disposeRootDisposable())
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()))
@@ -1892,7 +1889,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    SearchEverywhereContributor<Object> contributor = createMockContributor(contextForSorting);
+    SearchEverywhereContributor<Object> contributor = createMockContributor(contextForSorting, searchEverywhere);
     final ArrayList<Object> results = new ArrayList<>();
     invokeAndWait(() -> contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results)));
     return results;
@@ -1913,15 +1910,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     catch (Exception e) {}
   }
 
-  private SearchEverywhereContributor<Object> createMockContributor(@Nullable PsiElement contextForSorting) {
+  private SearchEverywhereContributor<Object> createMockContributor(@Nullable PsiElement contextForSorting, boolean everywhere) {
     final Project project = getProject();
-    if (contextForSorting != null) {
-      return new ClassSearchEverywhereContributor(project, contextForSorting);
-    }
-    if (myChooseByNamePopup == null) {
-      myChooseByNamePopup = new ClassSearchEverywhereContributor(project, null);
-    }
-    return myChooseByNamePopup;
+    return new ClassSearchEverywhereContributor(project, contextForSorting) {{
+      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
+    }};
   }
 
   protected void bringRealEditorBack() {
