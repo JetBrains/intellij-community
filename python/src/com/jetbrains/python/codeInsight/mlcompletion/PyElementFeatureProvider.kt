@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
+import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
 
 class PyElementFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "python"
@@ -76,6 +77,17 @@ class PyElementFeatureProvider : ElementFeatureProvider {
       result["receiver_num_matched_tokens"] = MLFeatureValue.numerical(numMatchedTokens)
       result["receiver_tokens_num"] = MLFeatureValue.numerical(receiverTokensNum)
     }}
+
+    contextFeatures.getUserData(PyPrevCallsCompletionFeatures.PREV_CALLS_CONTEXT_INFO_KEY)?.let { contextInfo ->
+      PyPrevCallsCompletionFeatures.getResult(lookupString, contextInfo)?.let { with (it) {
+        when {
+          primaryWeight != null -> result["prev_2_calls_primary_weight"] = MLFeatureValue.numerical(primaryWeight!!)
+          weightOneCall != null -> result["prev_2_calls_weight_one_call"] = MLFeatureValue.numerical(weightOneCall!!)
+          weightSecondaryTwoCalls != null -> result["prev_2_calls_weight_secondary_two_calls"] = MLFeatureValue.numerical(weightSecondaryTwoCalls!!)
+          weightEmptyPrevCalls != null -> result["prev_2_calls_weight_empty_prev_calls"] = MLFeatureValue.numerical(weightEmptyPrevCalls!!)
+        }
+      }}
+    }
 
     return result
   }

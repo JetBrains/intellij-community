@@ -616,6 +616,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-stdlib-jdk8"),
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
+    jetbrainsLibrary("ml-completion-prev-exprs-models"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("rd-core"),
     jetbrainsLibrary("rd-framework"),
