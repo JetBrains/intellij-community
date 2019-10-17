@@ -327,7 +327,7 @@ public class ContainerUtilRt {
   }
 
   // do not use MultiMap (trove lib / SmartList) - only JDK classes should be used to reduce class loading
-  public static <K, V> void putValue(@NotNull K key, @NotNull V value, @NotNull Map<K, List<V>> map) {
+  public static <K, V> void putValue(@Nullable K key, @NotNull V value, @NotNull Map<K, List<V>> map) {
     List<V> list = map.get(key);
     if (list == null) {
       list = new ArrayList<V>();

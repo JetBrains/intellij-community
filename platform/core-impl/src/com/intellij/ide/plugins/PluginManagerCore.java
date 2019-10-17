@@ -1453,17 +1453,19 @@ public class PluginManagerCore {
   @NotNull
   private static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap(@NotNull IdeaPluginDescriptorImpl[] descriptors,
                                                                           @NotNull List<? super String> errors) {
-    LinkedHashMap<PluginId, List<IdeaPluginDescriptorImpl>> idMultiMap = new LinkedHashMap<>();
+    LinkedHashMap<PluginId, List<IdeaPluginDescriptorImpl>> idMultiMap = new LinkedHashMap<>(descriptors.length);
     for (IdeaPluginDescriptorImpl o : descriptors) {
       ContainerUtilRt.putValue(o.getPluginId(), o, idMultiMap);
       for (String module : o.getModules()) {
         ContainerUtilRt.putValue(PluginId.getId(module), o, idMultiMap);
       }
     }
+
     if (idMultiMap.get(PluginId.getId(CORE_PLUGIN_ID)).isEmpty()) {
       String message = SPECIAL_IDEA_PLUGIN + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")";
       throw new EssentialPluginMissingException(Collections.singletonList(message));
     }
+
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = new LinkedHashMap<>();
     for (PluginId id : idMultiMap.keySet()) {
       Collection<IdeaPluginDescriptorImpl> values = idMultiMap.get(id);
