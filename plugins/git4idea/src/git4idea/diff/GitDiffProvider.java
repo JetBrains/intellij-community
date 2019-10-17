@@ -210,6 +210,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
     new GitRevisionContentPreLoader(myProject).preload(root, revisions);
   }
 
+  @Override
   public boolean canCompareWithWorkingDir() {
     return true;
   }
