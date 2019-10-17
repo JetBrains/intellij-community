@@ -14,12 +14,11 @@ import six
 from generator3.constants import (
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
-    ENV_STANDALONE_MODE_FLAG,
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
     STATE_FILE_NAME)
-from generator3.util_methods import mkdir, ignored_os_errors
-from generator3_tests import GeneratorTestCase, python3_only, python2_only, test_data_dir
+from generator3.util_methods import ignored_os_errors, mkdir
+from generator3_tests import GeneratorTestCase, python2_only, python3_only, test_data_dir
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
@@ -161,12 +160,9 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         return ProcessResult(process.returncode, stdout, stderr)
 
     def check_generator_output(self, mod_name=None, mod_path=None, mod_root=None,
-                               custom_required_gen=False, standalone_mode=False,
-                               success=True, **kwargs):
+                               custom_required_gen=False, success=True, **kwargs):
         if custom_required_gen:
             kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
-        if standalone_mode:
-            kwargs.setdefault('extra_env', {})[ENV_STANDALONE_MODE_FLAG] = 'True'
 
         if mod_name and not mod_root:
             mod_root = self.test_data_dir
@@ -295,8 +291,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         # We can't safely updated cache from SDK skeletons (backwards) because of binaries declaring
         # multiple modules. Skeletons for them are scattered across SDK skeletons directory, and we can't
         # collect them reliably.
-        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True,
-                                    standalone_mode=True)
+        self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
 
     def test_cache_skeleton_reused_when_sdk_skeleton_is_missing(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
@@ -315,7 +310,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
 
     def test_cache_skeleton_not_regenerated_when_sdk_skeleton_generation_failed_for_same_version_and_same_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True,
-                                    standalone_mode=True, success=False)
+                                    success=False)
 
     def test_cache_skeleton_regenerated_when_sdk_skeleton_generation_failed_for_modified_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
