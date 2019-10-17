@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +32,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.jps.cache.ui.JpsLoaderNotifications.NONE_NOTIFICATION_GROUP;
+import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
+
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String PROGRESS_TITLE = "Updating Compilation Caches";
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Compile Output Loader",
-                                                                                    NotificationDisplayType.STICKY_BALLOON, true);
   private static final double TOTAL_SEGMENT_SIZE = 0.9;
   private PersistentCachingModuleHashingService myModuleHashingService;
   private final AtomicBoolean hasRunningTask;
@@ -95,7 +95,8 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       String notificationContent = commitInfo.second == 0 ? "Compile server contains caches for the current commit. Do you want to update your data?"
                                                       : "Compile server contains caches for the " + commitInfo.second + "th commit behind of yours. Do you want to update your data?";
       ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = NOTIFICATION_GROUP.createNotification("Compile Output Loader", notificationContent, NotificationType.INFORMATION, null);
+        Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compile Output Loader", notificationContent,
+                                                                                 NotificationType.INFORMATION, null);
         notification.addAction(NotificationAction.createSimple("Update Compile Caches", () -> {
           notification.expire();
           Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
@@ -181,7 +182,10 @@ public class JpsOutputLoaderManager implements ProjectComponent {
               PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
               long endTime = (System.currentTimeMillis() - startTime) / 1000;
               ApplicationManager.getApplication().invokeLater(() -> {
-                WindowManager.getInstance().getStatusBar(myProject).setInfo("Update compilation caches completed successfully in " + endTime + " s");
+                String message = "Update compilation caches completed successfully in " + endTime + " s";
+                Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", message,
+                                                                                       NotificationType.INFORMATION, null);
+                Notifications.Bus.notify(notification);
               });
               LOG.debug("Loading finished");
             } else onFail();
@@ -235,9 +239,11 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     return (Runtime.getRuntime().availableProcessors() / 2) > 3 ? 3 : 1;
   }
 
-  private void onFail() {
+  private static void onFail() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Update compilation caches failed");
+      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", "Update compilation caches failed",
+                                                                             NotificationType.WARNING, null);
+      Notifications.Bus.notify(notification);
     });
   }
 }
