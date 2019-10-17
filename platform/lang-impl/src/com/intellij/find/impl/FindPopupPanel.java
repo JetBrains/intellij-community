@@ -33,6 +33,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -224,9 +226,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       };
       myDialog.setUndecorated(!Registry.is("ide.find.as.popup.decorated"));
 
-      Disposer.register(myProject, new Disposable() {
+      myProject.getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
-        public void dispose() {
+        public void projectClosed(Project project) {
           closeImmediately();
         }
       });
