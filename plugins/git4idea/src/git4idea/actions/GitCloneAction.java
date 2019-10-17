@@ -21,9 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog;
-import git4idea.GitVcs;
 import git4idea.checkout.GitCheckoutProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,15 +36,9 @@ public class GitCloneAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     CheckoutProvider.Listener checkoutListener = ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener();
-    if (Registry.is("vcs.use.new.clone.dialog")) {
-      VcsCloneDialog dialog = new VcsCloneDialog.Builder(project).forVcs(GitCheckoutProvider.class);
-      if (dialog.showAndGet()) {
-        dialog.doClone(checkoutListener);
-      }
-      return;
+    VcsCloneDialog dialog = new VcsCloneDialog.Builder(project).forVcs(GitCheckoutProvider.class);
+    if (dialog.showAndGet()) {
+      dialog.doClone(checkoutListener);
     }
-    GitVcs.getInstance(project)
-      .getCheckoutProvider()
-      .doCheckout(project, checkoutListener);
   }
 }
