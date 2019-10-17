@@ -1003,7 +1003,6 @@
              class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$Providers"/>
       <group id="Vcs.Operations.Popup.NonVcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$NonVcsAware">
         <reference id="Start.Use.Vcs"/>
-        <reference id="Vcs.Checkout"/>
       </group>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
