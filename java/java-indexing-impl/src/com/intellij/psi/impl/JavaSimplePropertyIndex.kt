@@ -42,9 +42,6 @@ private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean)
   val id = JavaStubImplUtil.getMethodStubIndex(method)
   if (id != -1) {
     val virtualFile = method.containingFile.virtualFile
-    if (virtualFile !is VirtualFileWithId) {
-      return null
-    }
     val data = FileBasedIndex.getInstance().getFileData(indexId, virtualFile, method.project)
     return data.values.firstOrNull()?.get(id)?.let { indexValue ->
       if (isGetter != indexValue.getter) return null
