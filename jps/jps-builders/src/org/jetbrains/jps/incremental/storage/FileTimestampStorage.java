@@ -24,8 +24,7 @@ public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPe
   private final File myTimestampsRoot;
 
   public FileTimestampStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), ProjectStamps.PORTABLE_CACHES ? new PortableFileKeyDescriptor() : new FileKeyDescriptor(),
-          new StateExternalizer());
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), new FileKeyDescriptor(), new StateExternalizer());
     myTimestampsRoot = calcStorageRoot(dataStorageRoot);
     myTargetsState = targetsState;
   }
