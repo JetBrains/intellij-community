@@ -47,7 +47,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
 
     PsiElement position = params.getPosition();
 
-    if (!isOfType(position.getParent(), YAMLElementTypes.SCALAR_PLAIN_VALUE)) {
+    if (!isOfType(position.getParent(), YAMLElementTypes.SCALAR_PLAIN_VALUE, YAMLElementTypes.SCALAR_QUOTED_STRING)) {
       //weird, should be filtered by contributor
       return;
     }
@@ -247,8 +247,10 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     //System.err.println(getClass().getSimpleName() + ":" + text);
   }
 
-  private static boolean isOfType(@Nullable PsiElement psi, @NotNull IElementType type) {
-    return psi != null && psi.getNode().getElementType() == type;
+  private static boolean isOfType(@Nullable PsiElement psi, @NotNull IElementType... types) {
+    if (psi == null) return false;
+    IElementType actual = psi.getNode().getElementType();
+    return ContainerUtil.exists(types, actual::equals);
   }
 
   private static class CompletionContextImpl implements CompletionContext {
