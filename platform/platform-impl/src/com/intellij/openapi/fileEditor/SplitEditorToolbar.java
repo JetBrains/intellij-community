@@ -37,16 +37,22 @@ public class SplitEditorToolbar extends JPanel implements Disposable {
     rightToolbar.updateActionsImmediately();
   }
 
+  /**
+   * @deprecated this method is not used anymore since gutter size is not tracked anymore
+   */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void addGutterToTrack(@NotNull EditorGutterComponentEx gutterComponentEx) {}
 
   public void refresh() {
     myRightToolbar.updateActionsImmediately();
   }
 
+  /**
+   * @deprecated this method is not used anymore since gutter size is not tracked anymore
+   */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Override
   public void dispose() {}
 }
