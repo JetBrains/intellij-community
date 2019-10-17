@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -14,7 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.outputStream
@@ -26,19 +27,17 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import kotlin.Comparator
 
-class StartUpPerformanceReporter : StartupActivity.DumbAware {
+class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformanceService {
   private var startUpFinishedCounter = AtomicInteger()
 
-  var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
-    private set
+  private var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
 
-  var lastReport: ByteBuffer? = null
-    private set
+  private var lastReport: ByteBuffer? = null
 
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "13"
+    internal const val VERSION = "14"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -54,28 +53,33 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
     }
   }
 
+  override fun getPluginCostMap() = pluginCostMap!!
+
+  override fun getLastReport() = lastReport
+
   override fun runActivity(project: Project) {
-    reportIfAnotherAlreadySet()
+    reportIfAnotherAlreadySet(project)
   }
 
-  fun lastOptionTopHitProviderFinishedForProject() {
-    reportIfAnotherAlreadySet()
+  override fun lastOptionTopHitProviderFinishedForProject(project: Project) {
+    reportIfAnotherAlreadySet(project)
   }
 
-  private fun reportIfAnotherAlreadySet() {
+  private fun reportIfAnotherAlreadySet(project: Project) {
     val end = StartUpMeasurer.getCurrentTime()
     // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
     if (startUpFinishedCounter.incrementAndGet() == 2) {
       startUpFinishedCounter.set(0)
+      val projectName = project.name
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
-      AppExecutorUtil.getAppExecutorService().execute {
-        logStats(end)
+      NonUrgentExecutor.getInstance().execute {
+        logStats(end, projectName)
       }
     }
   }
 
   @Synchronized
-  private fun logStats(end: Long) {
+  private fun logStats(end: Long, projectName: String) {
     val items = mutableListOf<ActivityImpl>()
     val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
@@ -126,7 +130,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
       StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
     }
 
-    w.write(startTime, items, services, instantEvents, end)
+    w.write(startTime, items, services, instantEvents, end, projectName)
 
     val currentReport = w.toByteBuffer()
     lastReport = currentReport

@@ -13,12 +13,15 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import org.bouncycastle.crypto.generators.Argon2BytesGenerator
+import org.bouncycastle.crypto.params.Argon2Parameters
 import java.io.CharArrayWriter
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 private class ExposingCharArrayWriter : CharArrayWriter(8192) {
@@ -34,7 +37,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 
   private val stringWriter = ExposingCharArrayWriter()
 
-  fun write(timeOffset: Long, items: List<ActivityImpl>, services: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long) {
+  fun write(timeOffset: Long, items: List<ActivityImpl>, services: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
@@ -49,6 +52,9 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
         writer.writeStringField("os", SystemInfo.getOsNameAndVersion())
         writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
+
+        writer.writeStringField("project", safeHashValue(projectName))
+
         writeServiceStats(writer)
         writeIcons(writer)
 
@@ -177,4 +183,13 @@ private fun writeIcons(writer: JsonGenerator) {
       }
     }
   }
+}
+
+private fun safeHashValue(value: String): String {
+  val generator = Argon2BytesGenerator()
+  generator.init(Argon2Parameters.Builder(Argon2Parameters.ARGON2_id).build())
+  // 160 bit is enough for uniqueness
+  val result = ByteArray(20)
+  generator.generateBytes(value.toByteArray(), result, 0, result.size)
+  return Base64.getEncoder().withoutPadding().encodeToString(result)
 }
