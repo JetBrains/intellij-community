@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -31,9 +31,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.*;
 
 @State(
   name = "AcceptedLanguageLevels",
@@ -43,6 +42,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
 
+  private static final NotificationGroup PREVIEW_NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Java Preview Features");
+  private static final String IGNORE_USED_PREVIEW_FEATURES = "ignore.preview.features.used";
+
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
   public List<String> acceptedNames = new ArrayList<>();
 
@@ -50,6 +52,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   public void runActivity(@NotNull Project project) {
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       if (!project.isDisposed()) {
+        TreeSet<LanguageLevel> previewLevels = new TreeSet<>();
         MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
         LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
         if (projectExtension != null) {
@@ -57,13 +60,21 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           if (!isLanguageLevelAccepted(level)) {
             unacceptedLevels.putValue(level, null);
           }
+          if (level.isPreview()) {
+            previewLevels.add(level);
+          }
         }
         for (Module module : ModuleManager.getInstance(project).getModules()) {
           LanguageLevelModuleExtensionImpl moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
           if (moduleExtension != null) {
             LanguageLevel level = moduleExtension.getLanguageLevel();
-            if (level != null && !isLanguageLevelAccepted(level)) {
-              unacceptedLevels.putValue(level, module);
+            if (level != null) {
+              if (!isLanguageLevelAccepted(level)) {
+                unacceptedLevels.putValue(level, module);
+              }
+              if (level.isPreview()) {
+                previewLevels.add(level);
+              }
             }
           }
         }
@@ -84,6 +95,26 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
                 }
               }).notify(project);
           }
+        }
+        if (!previewLevels.isEmpty() &&
+            !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+          Optional<LanguageLevel> languageLevel = previewLevels.stream().min(Comparator.naturalOrder());
+          assert languageLevel.isPresent();
+          int previewFeature = languageLevel.get().toJavaVersion().feature;
+          String content = String
+            .format("When Java %d would be released, support for %d (Preview) language level may be dropped", previewFeature + 1, previewFeature);
+          Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification("Java Preview Features",
+                                                                                    "Newer IDE versions may discontinue support for preview features",
+                                                                                    content,
+                                                                                    NotificationType.WARNING);
+          notification.addAction(new NotificationAction("Do Not Show Again") {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+              PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES,true);
+              notification.expire();
+            }
+          });
+          notification.notify(project);
         }
       }
     });
