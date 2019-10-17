@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -766,9 +767,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public boolean unloadClassLoader() {
+    GCWatcher watcher = GCWatcher.tracking(myLoader);
     myLoader = null;
-    System.gc();
-    return myLoaderRef.get() == null;
+    return watcher.tryCollect();
   }
 
   @Override

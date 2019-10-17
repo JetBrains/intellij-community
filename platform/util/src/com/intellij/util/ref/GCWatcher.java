@@ -23,7 +23,6 @@ import java.util.Set;
  * so, if you pass fields or local variables there, nullify them before calling {@link #tryGc()}.
  *
  */
-@TestOnly
 public class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
   private final Set<Reference<?>> myReferences = ContainerUtil.newConcurrentSet();
@@ -68,10 +67,15 @@ public class GCWatcher {
     }
   }
 
+  public boolean tryCollect() {
+    return GCUtil.allocateTonsOfMemory(new StringBuilder(), this::isEverythingCollected);
+  }
+
   /**
    * Attempt to run garbage collector repeatedly until all the objects passed when creating this GCWatcher are GC-ed. If that's impossible,
    * this method gives up after some time.
    */
+  @TestOnly
   public void tryGc() {
     StringBuilder log = new StringBuilder();
     if (!GCUtil.allocateTonsOfMemory(log, this::isEverythingCollected)) {
