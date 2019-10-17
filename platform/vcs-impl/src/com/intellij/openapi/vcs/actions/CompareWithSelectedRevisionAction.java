@@ -116,7 +116,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     final FilePath filePath = e.getSelectedFilePath();
     if (filePath != null && filePath.isDirectory()) {
       presentation.setVisible(isVisibleForDirectory(e));
-      presentation.setEnabled(isEnabledForDirectory(e));
+      presentation.setEnabled(isEnabledForDirectory(e, filePath));
     }
     else {
       AbstractShowDiffAction.updateDiffAction(presentation, e);
@@ -365,12 +365,10 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     return vcsContext.getProject() != null;
   }
 
-  private static boolean isEnabledForDirectory(@NotNull VcsContext vcsContext) {
-    Project project = vcsContext.getProject();
+  private static boolean isEnabledForDirectory(@NotNull VcsContext vcsContext, @NotNull FilePath filePath) {
+    assert filePath.isDirectory() : "Implementation only for directories!";
+    final Project project = vcsContext.getProject();
     if (project == null) return false;
-    VirtualFile file = vcsContext.getSelectedFile();
-    if (file == null || !file.isDirectory()) return false;
-    FilePath filePath = assertNotNull(vcsContext.getSelectedFilePath());
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(filePath);
     DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
     return diffProvider != null && diffProvider.canCompareWithWorkingDir();
