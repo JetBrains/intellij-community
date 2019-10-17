@@ -2159,4 +2159,8 @@ def usage(Collection<? extends Runnable> cr) {
 }
 '''
   }
+
+  void testIllegalMethodName() {
+    doTest()
+  }
 }
