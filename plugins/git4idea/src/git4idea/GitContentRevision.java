@@ -146,8 +146,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
 
   @NotNull
   public static FilePath createPath(@NotNull VirtualFile vcsRoot, @NotNull String unescapedPath) {
+    return createPath(vcsRoot, unescapedPath, false);
+  }
+
+  @NotNull
+  public static FilePath createPath(@NotNull VirtualFile vcsRoot, @NotNull String unescapedPath, boolean isDirectory) {
     String absolutePath = makeAbsolutePath(vcsRoot, unescapedPath);
-    return VcsUtil.getFilePath(absolutePath, false);
+    return VcsUtil.getFilePath(absolutePath, isDirectory);
   }
 
   @NotNull
