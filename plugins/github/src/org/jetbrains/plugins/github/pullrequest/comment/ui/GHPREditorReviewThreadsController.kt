@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -35,12 +36,14 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
     commentableRanges.addValueChangedListener { updateCommentableRanges() }
     updateCommentableRanges()
 
-    editor.markupModel.addMarkupModelListener((editor as EditorImpl).disposable, object : MarkupModelListener {
+    val listenerDisposable = Disposer.newDisposable()
+    editor.markupModel.addMarkupModelListener(listenerDisposable, object : MarkupModelListener {
       override fun beforeRemoved(highlighter: RangeHighlighterEx) {
         val iconRenderer = highlighter.gutterIconRenderer as? GHPRCreateDiffCommentIconRenderer ?: return
         commentableLines.remove(iconRenderer.line)
       }
     })
+    EditorUtil.disposeWithEditor(editor, listenerDisposable)
   }
 
   private fun updateCommentableRanges() {
