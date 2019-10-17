@@ -145,6 +145,7 @@ iml_project(
         "//tools/adt/idea/observable-demo",
         "//tools/adt/idea/observable-ui:intellij.android.observable.ui",
         "//tools/adt/idea/observable:intellij.android.observable",
+        "//tools/adt/idea/old-agp-tests:intellij.android.old-agp-tests",
         "//tools/adt/idea/profilers-android:intellij.android.profilersAndroid",
         "//tools/adt/idea/profilers-atrace:intellij.android.profilers.atrace",
         "//tools/adt/idea/profilers-ui:intellij.android.profilers.ui",

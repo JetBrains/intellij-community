@@ -476,6 +476,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-ui/intellij.android.observable.ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/old-agp-tests/intellij.android.old-agp-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/old-agp-tests/intellij.android.old-agp-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/intellij.android.plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/intellij.android.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers/intellij.android.profilers.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers/intellij.android.profilers.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-atrace/intellij.android.profilers.atrace.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-atrace/intellij.android.profilers.atrace.iml" />
