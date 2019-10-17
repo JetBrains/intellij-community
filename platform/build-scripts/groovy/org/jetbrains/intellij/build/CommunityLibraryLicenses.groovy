@@ -255,8 +255,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "fluent-hc",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
 
-    new LibraryLicense(name: "TwelveMonkeys ImageIO", libraryName: "imageio-tiff", license: "BSD",
-                       url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr"),
     new LibraryLicense(name: "Inconsolata", attachedTo: "intellij.platform.resources", version: "001.010", license: "OFL",
@@ -541,6 +539,8 @@ class CommunityLibraryLicenses {
                        license: "BSD style (see LICENSE.txt in trilead-ssh2-build213.jar)", url: "http://www.trilead.com/SSH_Library/"),
     new LibraryLicense(name: "Trove4j (JetBrains's fork)", libraryName: "Trove4j", license: "LGPL", url: "https://github.com/JetBrains/intellij-deps-trove4j",
                        licenseUrl: "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
+    new LibraryLicense(name: "TwelveMonkeys ImageIO", libraryName: "imageio-tiff", license: "BSD",
+                       url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "unit-api", libraryName: "javax.measure:unit-api:1.0",
                        license: "BSD", url: "https://github.com/unitsofmeasurement/unit-api",
                        licenseUrl: "https://github.com/unitsofmeasurement/unit-api/blob/master/LICENSE"),
