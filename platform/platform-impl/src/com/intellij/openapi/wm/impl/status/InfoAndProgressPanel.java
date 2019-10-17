@@ -585,7 +585,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     @Override
     public void layoutContainer(final Container parent) {
-      assert parent.getComponentCount() == 2; // 1. info; 2. progress
+      if (parent.getComponentCount() != 2) {
+        return; // e.g. project frame is closed
+      }
 
       Component infoPanel = parent.getComponent(0);
       Component progressPanel = parent.getComponent(1);
