@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -25,7 +25,7 @@ public class TreeTestUtil {
   public static Function<Object, String> getToString(@Nullable Queryable.PrintInfo info) {
     return object -> {
       if (object instanceof AbstractTreeNode) {
-        AbstractTreeNode node = (AbstractTreeNode)object;
+        AbstractTreeNode<?> node = (AbstractTreeNode<?>)object;
         return node.toTestString(info);
       }
       return String.valueOf(object);
