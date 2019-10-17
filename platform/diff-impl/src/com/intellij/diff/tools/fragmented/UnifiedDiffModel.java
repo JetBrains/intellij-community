@@ -52,7 +52,8 @@ public class UnifiedDiffModel {
                          boolean isContentsEqual,
                          @NotNull List<RangeMarker> guardedBlocks,
                          @NotNull LineNumberConvertor convertor1,
-                         @NotNull LineNumberConvertor convertor2) {
+                         @NotNull LineNumberConvertor convertor2,
+                         @NotNull List<HighlightRange> ranges) {
     assert myPresentations.isEmpty() && myGuardedRangeBlocks.isEmpty() && myData == null;
 
     for (UnifiedDiffChange change : changes) {
@@ -63,7 +64,7 @@ public class UnifiedDiffModel {
 
     myGuardedRangeBlocks.addAll(guardedBlocks);
 
-    myData = new ChangedBlockData(changes, convertor1, convertor2);
+    myData = new ChangedBlockData(changes, convertor1, convertor2, ranges);
     myIsContentsEqual = ThreeState.fromBoolean(isContentsEqual);
   }
 
@@ -93,13 +94,16 @@ public class UnifiedDiffModel {
     @NotNull private final List<UnifiedDiffChange> myDiffChanges;
     @NotNull private final LineNumberConvertor myLineNumberConvertor1;
     @NotNull private final LineNumberConvertor myLineNumberConvertor2;
+    @NotNull private final List<HighlightRange> myRanges;
 
     ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
                      @NotNull LineNumberConvertor lineNumberConvertor1,
-                     @NotNull LineNumberConvertor lineNumberConvertor2) {
+                     @NotNull LineNumberConvertor lineNumberConvertor2,
+                     @NotNull List<HighlightRange> ranges) {
       myDiffChanges = diffChanges;
       myLineNumberConvertor1 = lineNumberConvertor1;
       myLineNumberConvertor2 = lineNumberConvertor2;
+      myRanges = ranges;
     }
 
     @NotNull
@@ -110,6 +114,11 @@ public class UnifiedDiffModel {
     @NotNull
     public LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
       return side.select(myLineNumberConvertor1, myLineNumberConvertor2);
+    }
+
+    @NotNull
+    public List<HighlightRange> getRanges() {
+      return myRanges;
     }
   }
 }

@@ -33,26 +33,10 @@ import java.util.List;
 class UnifiedEditorRangeHighlighter {
   @NotNull private final List<Element> myPieces = new ArrayList<>();
 
-  UnifiedEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
-    if (model == null) return;
-
-    model.processRangeHighlightersOverlappingWith(0, document.getTextLength(), marker -> {
-      int newStart = marker.getStartOffset();
-      int newEnd = marker.getEndOffset();
-
-      myPieces.add(new Element(marker, newStart, newEnd));
-
-      return true;
-    });
-  }
-
   UnifiedEditorRangeHighlighter(@Nullable Project project,
-                                       @NotNull Document document1,
-                                       @NotNull Document document2,
-                                       @NotNull List<HighlightRange> ranges) {
+                                @NotNull Document document1,
+                                @NotNull Document document2,
+                                @NotNull List<HighlightRange> ranges) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     MarkupModelEx model1 = (MarkupModelEx)DocumentMarkupModel.forDocument(document1, project, false);
