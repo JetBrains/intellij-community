@@ -8,7 +8,6 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.idea.Bombed
 import com.intellij.lang.java.JavaLanguage
@@ -26,12 +25,11 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
  * @author peter
  */
 class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
-  ChooseByNamePopup myPopup
+
+  static final ELEMENTS_LIMIT = 30
 
   @Override
   protected void tearDown() throws Exception {
-    myPopup?.close(false)
-    myPopup = null
     super.tearDown()
   }
 
@@ -547,11 +545,7 @@ class Intf {
 
   static List<Object> calcContributorElements(SearchEverywhereContributor<?> contributor, String text) {
     def res = new LinkedHashSet<Object>()
-    def consumer = { item ->
-      res.add(item)
-      return true
-    }
-    invokeAdnWait({ -> contributor.fetchElements(text, new MockProgressIndicator(), consumer) })
+    invokeAdnWait({ -> res.addAll(contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items) })
     return res.collect()
   }
 
