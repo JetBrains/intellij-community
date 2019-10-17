@@ -144,7 +144,7 @@ open class DefaultKeymap {
 }
 
 internal val BundledKeymapBean.effectiveFile: String
-  get() = "/keymaps/${file.replace("\$OS\$", osName())}"
+  get() = "keymaps/${file.replace("\$OS\$", osName())}"
 internal val BundledKeymapBean.keymapName: String
   get() = FileUtil.getNameWithoutExtension(file).removePrefix("\$OS\$/")
 

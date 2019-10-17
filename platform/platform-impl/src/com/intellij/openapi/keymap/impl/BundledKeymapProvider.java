@@ -26,7 +26,7 @@ public interface BundledKeymapProvider {
   List<String> getKeymapFileNames();
 
   default <R> R load(@NotNull String key, @NotNull Function<? super InputStream, ? extends R> consumer) throws IOException {
-    try (InputStream stream = getClass().getClassLoader().getResourceAsStream("/keymaps/" + key)) {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream("keymaps/" + key)) {
       return consumer.apply(stream);
     }
   }
