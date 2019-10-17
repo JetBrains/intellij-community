@@ -7,7 +7,6 @@ import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
@@ -197,7 +196,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
-    MultiMap<NestedBinding, Element> data = null;
+    LinkedHashMap<NestedBinding, List<Element>> data = null;
     nextNode:
     for (Content content : element.getContent()) {
       if (content instanceof Comment) {
@@ -216,9 +215,14 @@ public class BeanBinding extends NotNullDeserializeBinding {
         if (binding.isBoundTo(child)) {
           if (binding instanceof MultiNodeBinding && ((MultiNodeBinding)binding).isMulti()) {
             if (data == null) {
-              data = MultiMap.createLinked();
+              data = new LinkedHashMap<>();
             }
-            data.putValue(binding, child);
+            List<Element> list = data.get(binding);
+            if (list == null) {
+              list = new ArrayList<>();
+              data.put(binding, list);
+            }
+            list.add(child);
           }
           else {
             if (accessorNameTracker != null) {
@@ -242,7 +246,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
         if (accessorNameTracker != null) {
           accessorNameTracker.add(binding.getAccessor().getName());
         }
-        ((MultiNodeBinding)binding).deserializeList(result, (List<Element>)data.get(binding));
+        ((MultiNodeBinding)binding).deserializeList(result, data.get(binding));
       }
     }
   }
