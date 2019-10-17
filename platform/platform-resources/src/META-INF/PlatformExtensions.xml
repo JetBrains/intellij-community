@@ -486,6 +486,10 @@
     <applicationService serviceInterface="com.intellij.notification.NotificationsConfiguration"
                         serviceImplementation="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 
+    <applicationService serviceInterface="com.intellij.ide.SaveAndSyncHandler" preload="notHeadless"
+                        serviceImplementation="com.intellij.configurationStore.SaveAndSyncHandlerImpl"
+                        headlessImplementation="com.intellij.configurationStore.HeadlessSaveAndSyncHandler"/>
+
     <projectService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingProjectManager"
                     serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl$EncodingProjectManagerStartUpActivity"/>
