@@ -735,7 +735,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private boolean propagateRangeBack(@NotNull LongRangeSet factValue, @NotNull DfaBinOpValue binOp) {
     boolean isLong = PsiType.LONG.equals(binOp.getType());
-    LongRangeSet appliedRange = isLong ? factValue : factValue.intersect(LongRangeSet.fromType(PsiType.INT));
+    LongRangeSet appliedRange = isLong ? factValue : factValue.intersect(Objects.requireNonNull(LongRangeSet.fromType(PsiType.INT)));
     DfaVariableValue left = binOp.getLeft();
     DfaValue right = binOp.getRight();
     LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);

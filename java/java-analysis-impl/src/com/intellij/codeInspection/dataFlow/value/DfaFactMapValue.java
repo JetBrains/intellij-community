@@ -49,6 +49,9 @@ public class DfaFactMapValue extends DfaValue {
 
     public <T> DfaValue createValue(@NotNull DfaFactType<T> factType, @Nullable T value) {
       if (factType == DfaFactType.RANGE && value instanceof LongRangeSet) {
+        if (((LongRangeSet)value).isEmpty()) {
+          throw new IllegalArgumentException("Empty range is disallowed (a bottom value)");
+        }
         Long constantValue = ((LongRangeSet)value).getConstantValue();
         if (constantValue != null) {
           return myFactory.getConstFactory().createFromValue(constantValue, PsiType.LONG);

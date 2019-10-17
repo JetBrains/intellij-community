@@ -72,4 +72,13 @@ class StringSubstring {
     }
     return fullName;
   }
+
+  void testEmpty(String input) {
+    String s = input.substring(0, 1);
+    String s1 = s.substring(1);
+    if (<warning descr="Condition 's1.equals(\"\")' is always 'true'">s1.equals("")</warning>) {}
+    String s2 = s1.substring(0);
+    if (<warning descr="Condition 's2.equals(\"\")' is always 'true'">s2.equals("")</warning>) {}
+    String s3 = s2.substring(0);
+  }
 }

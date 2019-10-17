@@ -68,7 +68,7 @@ class CustomMethodHandlers {
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
               (args, memState, factory, method) -> mathAbs(args.myArguments, memState, factory, true))
     .register(exactInstanceCall(JAVA_LANG_STRING, "substring"),
-              (args, memState, factory, method) -> substring(args, memState, factory))
+              (args, memState, factory, method) -> substring(args, memState, factory, method.getReturnType()))
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
               (args, memState, factory, method) -> ofNullable(args.myArguments[0], memState, factory))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
@@ -246,7 +246,8 @@ class CustomMethodHandlers {
     return factory.getFactFactory().createValue(facts);
   }
 
-  private static DfaValue substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory) {
+  private static DfaValue substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
+    if (stringType == null || !stringType.equalsToText(JAVA_LANG_STRING)) return null;
     DfaValue qualifier = args.myQualifier;
     DfaValue[] arguments = args.myArguments;
     if (arguments.length < 1 || arguments.length > 2 || arguments[0] == null) return null;
@@ -258,13 +259,24 @@ class CustomMethodHandlers {
     LongRangeSet resultLen = toPos.minus(fromPos, false)
       .intersect(LongRangeSet.point(0).fromRelation(DfaRelationValue.RelationType.GE));
     if (length != null) {
-      resultLen = resultLen.intersect(length.fromRelation(DfaRelationValue.RelationType.LT));
+      resultLen = resultLen.intersect(length.fromRelation(DfaRelationValue.RelationType.LE));
+    }
+    return getStringValue(factory, stringType, resultLen);
+  }
+
+  @NotNull
+  private static DfaValue getStringValue(@NotNull DfaValueFactory factory, @NotNull PsiType stringType, @NotNull LongRangeSet stringLength) {
+    if (Long.valueOf(0).equals(stringLength.getConstantValue())) {
+      return factory.getConstFactory().createFromValue("", stringType);
+    }
+    if (stringLength.isEmpty()) {
+      return factory.getConstFactory().getContractFail();
     }
     return factory.getFactFactory().createValue(
       DfaFactMap.EMPTY
-        .with(DfaFactType.TYPE_CONSTRAINT, state.getValueFact(qualifier, DfaFactType.TYPE_CONSTRAINT))
+        .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(stringType).asConstraint())
         .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
-        .with(DfaFactType.SPECIAL_FIELD_VALUE, STRING_LENGTH.withValue(factory.getFactValue(DfaFactType.RANGE, resultLen))));
+        .with(DfaFactType.SPECIAL_FIELD_VALUE, STRING_LENGTH.withValue(factory.getFactValue(DfaFactType.RANGE, stringLength))));
   }
 
   private static DfaValue ofNullable(DfaValue argument, DfaMemoryState state, DfaValueFactory factory) {

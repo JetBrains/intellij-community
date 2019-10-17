@@ -181,7 +181,7 @@ public abstract class DfaFactType<T> extends Key<T> {
       return fromType == null ? null : LongRangeSet.fromPsiElement(var.getPsiVariable()).intersect(fromType);
     }
 
-    @Nullable
+    @NotNull
     @Override
     LongRangeSet uniteFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
       return left.unite(right);
