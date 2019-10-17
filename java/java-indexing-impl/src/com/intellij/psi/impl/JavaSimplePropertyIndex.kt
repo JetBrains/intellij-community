@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.LighterASTNode
 import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiField
@@ -40,7 +41,11 @@ fun getFieldOfSetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexVa
 private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean): PsiField? {
   val id = JavaStubImplUtil.getMethodStubIndex(method)
   if (id != -1) {
-    val data = FileBasedIndex.getInstance().getFileData(indexId, method.containingFile.virtualFile, method.project)
+    val virtualFile = method.containingFile.virtualFile
+    if (virtualFile !is VirtualFileWithId) {
+      return null
+    }
+    val data = FileBasedIndex.getInstance().getFileData(indexId, virtualFile, method.project)
     return data.values.firstOrNull()?.get(id)?.let { indexValue ->
       if (isGetter != indexValue.getter) return null
       val psiClass = method.containingClass
