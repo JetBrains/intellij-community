@@ -27,8 +27,7 @@ class UpdateFromSourcesDialog(private val project: Project,
 
   override fun createCenterPanel(): DialogPanel {
     panel = panel {
-      row {
-        label("IDE installation:")
+      row("IDE installation:") {
         textFieldWithBrowseButton({ state.workIdePath ?: PathManager.getHomePath() },
                                   { state.workIdePath = it },
                                   "Choose IDE Installation Directory", project,
