@@ -255,8 +255,6 @@ class ChangesViewCommitWorkflowHandler(
 
       workflow.clearCommitContext()
       initCommitHandlers()
-
-      ui.defaultCommitActionName = getCommitActionName() // to remove "Amend" prefix if any
     }
   }
 }
