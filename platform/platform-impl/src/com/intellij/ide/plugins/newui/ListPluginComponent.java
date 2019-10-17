@@ -44,7 +44,6 @@ public class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   public IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
-  private boolean myUninstalledWithoutRestart;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
@@ -518,7 +517,6 @@ public class ListPluginComponent extends JPanel {
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
     myUninstalled = true;
-    myUninstalledWithoutRestart = !needRestartForUninstall;
     updateColors(mySelection);
     if (needRestartForUninstall) {
       enableRestart();

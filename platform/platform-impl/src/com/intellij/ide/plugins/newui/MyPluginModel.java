@@ -55,6 +55,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public boolean needRestart;
   public boolean createShutdownCallback = true;
+  private boolean myInstallsRequiringRestart;
   private final List<PluginDetailsPageComponent> myDetailPanels = new ArrayList<>();
 
   private StatusBarEx myStatusBar;
@@ -155,6 +156,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
+    boolean installsRequiringRestart = myInstallsRequiringRestart;
+
     for (PendingDynamicPluginInstall pendingPluginInstall : myDynamicPluginsToInstall.values()) {
       if (!uninstallsRequiringRestart.contains(pendingPluginInstall.getPluginDescriptor().getPluginId())) {
         PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(), parent,
@@ -163,6 +166,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       else {
         try {
           PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), true, null, pendingPluginInstall.getPluginDescriptor());
+          installsRequiringRestart = true;
         }
         catch (IOException e) {
           LOG.error(e);
@@ -175,7 +179,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(enabledMap);
     myDynamicPluginsToUninstall.clear();
-    return enableDisableAppliedWithoutRestart && uninstallsRequiringRestart.isEmpty();
+    return enableDisableAppliedWithoutRestart && uninstallsRequiringRestart.isEmpty() && !installsRequiringRestart;
   }
 
   public void removePluginsOnCancel() {
@@ -546,6 +550,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (success) {
       needRestart = true;
+      myInstallsRequiringRestart |= restartRequired;
     }
     if (!success && showErrors) {
       Messages.showErrorDialog("Plugin \"" + descriptor.getName() + "\" download or installing failed",
@@ -636,7 +641,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   public void appendOrUpdateDescriptor(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
     super.appendOrUpdateDescriptor(descriptor, restartNeeded);
     if (restartNeeded) {
-      needRestart = true;
+      needRestart = myInstallsRequiringRestart = true;
     }
     if (myDownloaded == null) {
       return;
@@ -879,6 +884,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     boolean needRestartForUninstall = performUninstall(descriptorImpl);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
+    myInstallsRequiringRestart |= needRestartForUninstall;
 
     List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor.getPluginId());
     if (listComponents != null) {
