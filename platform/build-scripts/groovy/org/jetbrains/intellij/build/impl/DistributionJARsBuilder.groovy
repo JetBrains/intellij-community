@@ -146,6 +146,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util.ui")
       withModule("intellij.platform.util.ex")
 
+      withModule("intellij.platform.diagnostic")
       withModule("intellij.platform.ide.util.io")
 
       withModule("intellij.platform.concurrency")
