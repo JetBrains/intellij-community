@@ -46,6 +46,8 @@ import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -116,6 +118,14 @@ internal class GHPRComponentFactory(private val project: Project) {
     val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
       emptyText.clear()
     }.also {
+      it.addFocusListener(object : FocusListener {
+        override fun focusGained(e: FocusEvent?) {
+          if (it.selectedIndex < 0 && !it.isEmpty) it.selectedIndex = 0
+        }
+
+        override fun focusLost(e: FocusEvent?) {}
+      })
+
       installPopup(it)
       installSelectionSaver(it, listSelectionHolder)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
