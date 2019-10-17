@@ -43,7 +43,7 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
 
   @Override
   public boolean accept(@NotNull RemoteServer server) {
-    return getRemoteServerToolWindowId(server) == null;
+    return isDefaultRemoteServer(server);
   }
 
   @Override
@@ -79,8 +79,11 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
     return new DeploymentNodeImpl(serverNode.getProject(), connection, serverNode, deployment, this);
   }
 
-  private static String getRemoteServerToolWindowId(RemoteServer<?> server) {
-    String serverToolWindowId = server.getConfiguration().getCustomToolWindowId();
-    return serverToolWindowId != null ? serverToolWindowId : server.getType().getCustomToolWindowId();
+  private static boolean isDefaultRemoteServer(RemoteServer<?> server) {
+    String toolWindowId = server.getConfiguration().getCustomToolWindowId();
+    if (toolWindowId == null) {
+      toolWindowId = server.getType().getCustomToolWindowId();
+    }
+    return toolWindowId == null;
   }
 }
