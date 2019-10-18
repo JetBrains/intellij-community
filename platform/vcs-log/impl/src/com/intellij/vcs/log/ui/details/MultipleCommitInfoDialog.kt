@@ -33,7 +33,7 @@ import javax.swing.JPanel
 import javax.swing.border.Border
 
 @ApiStatus.Experimental
-abstract class MultipleCommitInfoDialog(private val project: Project, private val commits: List<VcsCommitMetadata>)
+abstract class MultipleCommitInfoDialog(private val project: Project, commits: List<VcsCommitMetadata>)
   : DialogWrapper(project, true) {
   companion object {
     private const val DIALOG_WIDTH = 600
@@ -76,7 +76,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, private va
       if (e.valueIsAdjusting) {
         return@addListSelectionListener
       }
-      val selectedCommits = commitsList.selectedIndices.map { row -> commits[row] }
+      val selectedCommits = commitsList.selectedIndices.map { model.getElementAt(it) }
       commitDetails.setCommits(selectedCommits)
       changesLoadingController.request(selectedCommits)
     }
