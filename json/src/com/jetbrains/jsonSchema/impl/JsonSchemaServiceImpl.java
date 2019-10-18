@@ -83,7 +83,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
         throw e;
       }
       catch (Exception e) {
-        PluginException.logPluginError(Logger.getInstance(JsonSchemaService.class), e.getMessage(), e, factory.getClass());
+        PluginException.logPluginError(Logger.getInstance(JsonSchemaService.class), e.toString(), e, factory.getClass());
       }
     }
     return providers;
