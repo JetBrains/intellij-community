@@ -2,7 +2,7 @@
 <body>
 Reports 'if' statements which can be replaced with condition using '&&', '||' or '?:' operator.
 The result is usually shorter, but not always more clear, so it's not advised to apply it everywhere.
-Also this change may reduce compiled bytecode size which could be useful in some environments like J2ME.
+Also this change may reduce compiled bytecode size which could be useful in some environments like Java ME.
 <p>
   Example: <b>if (<i>condition</i>) return true; else return <i>foo</i>;</b> could be replaced with
   <b>return <i>condition</i> || <i>foo</i>;</b>
