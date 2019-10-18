@@ -57,6 +57,11 @@ public class AnnotationDocGenerator {
     return AnnotationUtil.isExternalAnnotation(myAnnotation);
   }
 
+  @Nullable
+  public PsiClass getTargetClass() {
+    return myTargetClass;
+  }
+
   public boolean isInferred() {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
   }

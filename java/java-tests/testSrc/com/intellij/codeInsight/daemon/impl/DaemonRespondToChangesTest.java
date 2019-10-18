@@ -771,7 +771,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(errors);
 
     List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertSize(3, lineMarkers);
+    assertSize(2, lineMarkers);
 
     backspace();
 
@@ -804,7 +804,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     assertEmpty(highlightErrors());
 
-    assertSize(3, DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
+    assertSize(2, DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
 
     assertEmpty(changed);
   }
