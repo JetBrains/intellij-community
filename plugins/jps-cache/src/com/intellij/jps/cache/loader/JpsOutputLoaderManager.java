@@ -71,6 +71,10 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     }
   }
 
+  public boolean isInitialized() {
+    return myModuleHashingService != null;
+  }
+
   public void load(boolean isForceUpdate) {
     Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
       @Override
