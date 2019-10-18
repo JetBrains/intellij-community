@@ -256,34 +256,44 @@ class SkeletonStatus(object):
 
 def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
     gen_version = version_to_tuple(version())
+    used_version = None
 
-    if sdk_skeleton_state:
-        used_version = sdk_skeleton_state.get('gen_version')
-        if used_version:
-            used_version = version_to_tuple(used_version)
-
-        used_bin_mtime = sdk_skeleton_state.get('bin_mtime')
-        # state.json is normally passed for remote skeletons only. Since we don't have neither cache,
-        # nor physical sdk skeletons there, we have to rely on binary modification time to detect
-        # outdated skeletons.
-        if mod_path and used_bin_mtime and used_bin_mtime < file_modification_timestamp(mod_path):
-            return SkeletonStatus.OUTDATED
-
-        if sdk_skeleton_state.get('status') == GenerationStatus.FAILED:
-            return SkeletonStatus.OUTDATED if used_version < gen_version else SkeletonStatus.FAILING
-
-    else:
+    skeleton_meta = sdk_skeleton_state if sdk_skeleton_state is not None else {}
+    if 'gen_version' not in skeleton_meta:
+        # Such stamps exist only in the cache
         failed_version = read_failed_version_from_stamp(base_dir, mod_qname)
         if failed_version:
-            return SkeletonStatus.OUTDATED if failed_version < gen_version else SkeletonStatus.FAILING
+            used_version = failed_version
+            skeleton_meta['status'] = GenerationStatus.FAILED
 
-        record = read_failed_version_and_mtime_from_legacy_blacklist(base_dir, mod_path)
-        if record:
-            failed_version, mtime = record
-            outdated = failed_version < gen_version or (mod_path and mtime < file_modification_timestamp(mod_path))
-            return SkeletonStatus.OUTDATED if outdated else SkeletonStatus.FAILING
+        # Black list exists only in a per-sdk skeletons directory
+        blacklist_record = read_failed_version_and_mtime_from_legacy_blacklist(base_dir, mod_path)
+        if blacklist_record:
+            used_version, mtime = blacklist_record
+            skeleton_meta['status'] = GenerationStatus.FAILED
+            skeleton_meta['bin_mtime'] = mtime
 
-        used_version = read_used_generator_version_from_skeleton_header(base_dir, mod_qname)
+        existing_skeleton_version = read_used_generator_version_from_skeleton_header(base_dir, mod_qname)
+        if existing_skeleton_version:
+            skeleton_meta['status'] = GenerationStatus.GENERATED
+            used_version = existing_skeleton_version
+
+        if used_version:
+            skeleton_meta['gen_version'] = '.'.join(map(str, used_version))
+
+    used_version = skeleton_meta.get('gen_version')
+    if used_version:
+        used_version = version_to_tuple(used_version)
+
+    used_bin_mtime = skeleton_meta.get('bin_mtime')
+    # state.json is normally passed for remote skeletons only. Since we don't have neither cache,
+    # nor physical sdk skeletons there, we have to rely on binary modification time to detect
+    # outdated skeletons.
+    if mod_path and used_bin_mtime is not None and used_bin_mtime < file_modification_timestamp(mod_path):
+        return SkeletonStatus.OUTDATED
+
+    if skeleton_meta.get('status') == GenerationStatus.FAILED:
+        return SkeletonStatus.OUTDATED if used_version < gen_version else SkeletonStatus.FAILING
 
     required_version = read_required_version(mod_qname)
     if required_version and used_version:
@@ -473,13 +483,16 @@ def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_
         'generation_status': status
     })
     if sdk_skeleton_state is not None:
-        if status != GenerationStatus.UP_TO_DATE:
+        if mod_file_name:
+            sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_file_name)
+
+        if sdk_skeleton_state.pop('skeleton_status') == SkeletonStatus.OUTDATED:
             # TODO use the actual generator version when a skeleton was copied from the cache
             # TODO don't update state_json inplace
             sdk_skeleton_state['gen_version'] = version()
-            sdk_skeleton_state['status'] = status
-            if mod_file_name:
-                sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_file_name)
+
+        sdk_skeleton_state['status'] = status
+
         if is_test_mode():
             sdk_skeleton_state.pop('bin_mtime', None)
     return status
@@ -506,12 +519,18 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_js
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
 
         sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, name, mod_file_name, state_json)
+        if state_json is not None:
+            state_json['skeleton_status'] = sdk_skeleton_status
+
         if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
             return GenerationStatus.UP_TO_DATE
         elif sdk_skeleton_status == SkeletonStatus.FAILING:
             return GenerationStatus.FAILED
 
-        cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name, None)
+        cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name, state_json)
+        if state_json is not None:
+            state_json['skeleton_status'] = cached_skeleton_status
+
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
             return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
                                                        func=generate_skeleton,
