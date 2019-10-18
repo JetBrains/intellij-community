@@ -54,6 +54,7 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 import javax.swing.KeyStroke.getKeyStroke
 import javax.swing.border.Border
+import javax.swing.border.EmptyBorder
 import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
@@ -62,6 +63,11 @@ private val BACKGROUND_COLOR = JBColor { getTreeBackground() }
 private val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
 
 private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
+
+private fun JBOptionButton.getBottomInset(): Int =
+  border?.getBorderInsets(this)?.bottom
+  ?: (components.firstOrNull() as? JComponent)?.insets?.bottom
+  ?: 0
 
 private fun JBPopup.showAbove(component: JComponent) {
   val northWest = RelativePoint(component, Point())
@@ -90,6 +96,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
+  private val buttonPanel = simplePanel()
   private val toolbarPanel = simplePanel().apply { isOpaque = false }
   private var verticalToolbarBorder: Border? = null
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
@@ -106,10 +113,11 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
       setTargetComponent(this@ChangesViewCommitPanel)
       setReservePlaceAutoPopupIcon(false)
       component.isOpaque = false
+      component.border = null
     }
 
   private val commitMessage = CommitMessage(project, false, false, true).apply {
-    editorField.addSettingsProvider { it.setBorder(emptyLeft(3)) }
+    editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
     editorField.setPlaceholder("Commit Message")
   }
   private val defaultCommitAction = object : AbstractAction() {
@@ -164,8 +172,9 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   }
 
   private fun buildLayout() {
-    val buttonPanel = simplePanel().apply {
+    buttonPanel.apply {
       background = BACKGROUND_COLOR
+      border = getButtonPanelBorder()
 
       addToLeft(commitActionToolbar.component)
       addToCenter(
@@ -195,7 +204,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
       toolbar.setReservePlaceAutoPopupIcon(false)
       verticalToolbarBorder = toolbar.component.border
-      toolbar.component.border = empty()
+      toolbar.component.border = null
 
       centerPanel.border = null
       toolbarPanel.addToCenter(toolbar.component)
@@ -209,6 +218,9 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
       addToLeft(toolbar.component)
     }
   }
+
+  private fun getButtonPanelBorder(): Border =
+    EmptyBorder(0, scale(4), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
 
   private fun inclusionChanged() {
     updateLegend()
@@ -230,6 +242,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
     needUpdateCommitOptionsUi = true
+    buttonPanel.border = getButtonPanelBorder()
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
