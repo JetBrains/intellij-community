@@ -486,7 +486,11 @@ def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_
         if mod_file_name:
             sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_file_name)
 
-        if sdk_skeleton_state.pop('skeleton_status') == SkeletonStatus.OUTDATED:
+        # If we skipped generation for already failing module, we can safely set
+        # the current generator version in ".state.json" as skipping means that this
+        # version is not greater (i.e. we don't need to distinguish between "skipped as failing"
+        # and "failed during generation").
+        if status not in (GenerationStatus.UP_TO_DATE, GenerationStatus.COPIED):
             # TODO use the actual generator version when a skeleton was copied from the cache
             # TODO don't update state_json inplace
             sdk_skeleton_state['gen_version'] = version()
@@ -519,18 +523,12 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_js
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
 
         sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, name, mod_file_name, state_json)
-        if state_json is not None:
-            state_json['skeleton_status'] = sdk_skeleton_status
-
         if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
             return GenerationStatus.UP_TO_DATE
         elif sdk_skeleton_status == SkeletonStatus.FAILING:
             return GenerationStatus.FAILED
 
         cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name, state_json)
-        if state_json is not None:
-            state_json['skeleton_status'] = cached_skeleton_status
-
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
             return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
                                                        func=generate_skeleton,
