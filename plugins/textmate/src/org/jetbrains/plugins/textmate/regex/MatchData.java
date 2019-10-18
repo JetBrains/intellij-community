@@ -6,27 +6,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joni.Region;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.Arrays;
 
 public class MatchData {
-  public static final MatchData NOT_MATCHED = new MatchData(false, Collections.emptyList());
+  public static final MatchData NOT_MATCHED = new MatchData(false, TextRange.EMPTY_ARRAY);
 
   private final boolean matched;
-  private final List<TextRange> offsets;
+  @NotNull
+  private final TextRange[] offsets;
 
-  private MatchData(boolean matched, List<TextRange> offsets) {
+  private MatchData(boolean matched, @NotNull TextRange[] offsets) {
     this.matched = matched;
     this.offsets = offsets;
   }
 
   public static MatchData fromRegion(@Nullable Region matchedRegion) {
     if (matchedRegion != null) {
-      List<TextRange> offsets = new ArrayList<>(matchedRegion.numRegs);
+      TextRange[] offsets = new TextRange[matchedRegion.numRegs];
       for (int i = 0; i < matchedRegion.numRegs; i++) {
-        offsets.add(i, TextRange.create(Math.max(matchedRegion.beg[i], 0), Math.max(matchedRegion.end[i], 0)));
+        offsets[i] = TextRange.create(Math.max(matchedRegion.beg[i], 0), Math.max(matchedRegion.end[i], 0));
       }
       return new MatchData(true, offsets);
     }
@@ -34,7 +32,7 @@ public class MatchData {
   }
 
   public int count() {
-    return offsets.size();
+    return offsets.length;
   }
 
   public TextRange byteOffset() {
@@ -43,8 +41,8 @@ public class MatchData {
 
   @NotNull
   public TextRange byteOffset(int group) {
-    Preconditions.checkElementIndex(group, offsets.size());
-    return offsets.get(group);
+    Preconditions.checkElementIndex(group, offsets.length);
+    return offsets[group];
   }
 
   public TextRange charOffset(byte[] stringBytes) {
@@ -68,22 +66,18 @@ public class MatchData {
     MatchData matchData = (MatchData)o;
 
     if (matched != matchData.matched) return false;
-    if (!Objects.equals(offsets, matchData.offsets)) return false;
+    if (!Arrays.equals(offsets, matchData.offsets)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = (matched ? 1 : 0);
-    result = 31 * result + (offsets != null ? offsets.hashCode() : 0);
-    return result;
+    return 31 * (matched ? 1 : 0) + Arrays.hashCode(offsets);
   }
 
   @Override
   public String toString() {
-    return "{ matched=" + matched +
-           ", offsets=" + offsets +
-           '}';
+    return "{ matched=" + matched + ", offsets=" + Arrays.toString(offsets) + '}';
   }
 }
