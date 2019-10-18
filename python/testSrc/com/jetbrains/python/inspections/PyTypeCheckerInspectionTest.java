@@ -1061,4 +1061,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       )
     );
   }
+
+  // PY-38412
+  public void testTypedDictInStub() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
 }

@@ -143,19 +143,23 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
         true
       }
 
-      val argumentList = cls.children.filterIsInstance<PyArgumentList>().firstOrNull()
-      val totalityValue = argumentList?.getKeywordArgument("total")
-      val fieldsRequired = if (totalityValue != null && totalityValue.valueExpression is PyBoolLiteralExpression)
-        (totalityValue.valueExpression as PyBoolLiteralExpression).value
-      else true
-
+      val totality = getTotality(cls)
       val toTDFields = Collectors.toMap<PyTargetExpression, String, PyTypedDictType.FieldTypeAndTotality, TDFields>(
         { it.name },
-        { field -> PyTypedDictType.FieldTypeAndTotality(context.getType(field), fieldsRequired) },
+        { field -> PyTypedDictType.FieldTypeAndTotality(context.getType(field), totality) },
         { _, v2 -> v2 },
         { TDFields() })
 
       return fields.stream().collect(toTDFields)
+    }
+
+    private fun getTotality(cls: PyClass): Boolean {
+      return if (cls.stub != null) {
+        "total=False" !in cls.stub.superClassesText
+      }
+      else {
+        (cls.superClassExpressionList?.getKeywordArgument("total")?.valueExpression as? PyBoolLiteralExpression)?.value ?: true
+      }
     }
 
     private fun getTypedDictTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyTypedDictType? {
@@ -283,7 +287,8 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
                                  PyTypedDictType.DefinitionLevel.INSTANCE,
                                  emptyList())
         }
-      } else if (expression is PyCallExpression) {
+      }
+      else if (expression is PyCallExpression) {
         val resolvedQualifiedNames = if (expression.callee != null) resolveToQualifiedNames(expression.callee!!, context) else return null
         if (resolvedQualifiedNames.any { it == PyNames.DICT }) {
           val arguments = expression.arguments
