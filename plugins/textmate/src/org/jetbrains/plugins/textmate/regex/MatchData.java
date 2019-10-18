@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.regex;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joni.Region;
@@ -9,22 +10,24 @@ import org.joni.Region;
 import java.util.Arrays;
 
 public class MatchData {
-  public static final MatchData NOT_MATCHED = new MatchData(false, TextRange.EMPTY_ARRAY);
+  public static final MatchData NOT_MATCHED = new MatchData(false, ArrayUtil.EMPTY_INT_ARRAY);
 
   private final boolean matched;
   @NotNull
-  private final TextRange[] offsets;
+  private final int[] offsets;
 
-  private MatchData(boolean matched, @NotNull TextRange[] offsets) {
+  private MatchData(boolean matched, @NotNull int[] offsets) {
     this.matched = matched;
     this.offsets = offsets;
   }
 
   public static MatchData fromRegion(@Nullable Region matchedRegion) {
     if (matchedRegion != null) {
-      TextRange[] offsets = new TextRange[matchedRegion.numRegs];
+      int[] offsets = new int[matchedRegion.numRegs * 2];
       for (int i = 0; i < matchedRegion.numRegs; i++) {
-        offsets[i] = TextRange.create(Math.max(matchedRegion.beg[i], 0), Math.max(matchedRegion.end[i], 0));
+        int startIndex = i * 2;
+        offsets[startIndex] = Math.max(matchedRegion.beg[i], 0);
+        offsets[startIndex + 1] = Math.max(matchedRegion.end[i], 0);
       }
       return new MatchData(true, offsets);
     }
@@ -32,7 +35,7 @@ public class MatchData {
   }
 
   public int count() {
-    return offsets.length;
+    return offsets.length / 2;
   }
 
   public TextRange byteOffset() {
@@ -41,8 +44,9 @@ public class MatchData {
 
   @NotNull
   public TextRange byteOffset(int group) {
-    Preconditions.checkElementIndex(group, offsets.length);
-    return offsets[group];
+    int endIndex = group * 2 + 1;
+    Preconditions.checkElementIndex(endIndex, offsets.length);
+    return TextRange.create(offsets[endIndex - 1], offsets[endIndex]);
   }
 
   public TextRange charOffset(byte[] stringBytes) {
