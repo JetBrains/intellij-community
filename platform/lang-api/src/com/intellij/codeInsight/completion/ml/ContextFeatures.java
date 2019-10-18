@@ -5,6 +5,8 @@ import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public interface ContextFeatures extends UserDataHolder {
   @Nullable
   Boolean binaryValue(@NotNull String name);
@@ -14,4 +16,7 @@ public interface ContextFeatures extends UserDataHolder {
 
   @Nullable
   String categoricalValue(@NotNull String name);
+
+  @NotNull
+  Map<String, String> asMap();
 }
