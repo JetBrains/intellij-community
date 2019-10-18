@@ -10,11 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class GraphViewEditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is GraphViewVirtualFile
+    return file is VCSContentVirtualFile
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return GraphViewEditor(file as GraphViewVirtualFile)
+    return VCSContentEditor(file as VCSContentVirtualFile)
   }
 
   override fun disposeEditor(editor: FileEditor) {

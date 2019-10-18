@@ -5,12 +5,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.testFramework.LightVirtualFile
 import javax.swing.JComponent
 
-class GraphViewVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc: () -> String)
+class VCSContentVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc: () -> String)
   : LightVirtualFile(getTabNameFunc(), GraphViewFileType.INSTANCE, "") {
   companion object {
     @JvmField
-    val TabContentId: Key<String> = Key("TabContentId")
-
+    val TabSelector: Key<() -> Unit> = Key("TabContentId")
   }
 
   init {

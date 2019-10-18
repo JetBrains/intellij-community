@@ -2,18 +2,25 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.diff.editor.VCSContentVirtualFile
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorWindowHolder
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.JBUI
@@ -40,11 +47,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDescriptionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
-import org.jetbrains.plugins.github.util.GithubImageResizer
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
@@ -59,6 +64,9 @@ internal class GHPRComponentFactory(private val project: Project) {
   private val copyPasteManager = CopyPasteManager.getInstance()
   private val avatarLoader = CachingGithubUserAvatarLoader.getInstance()
   private val imageResizer = GithubImageResizer.getInstance()
+
+  private var ghprVirtualFile: VCSContentVirtualFile? = null
+  private var ghprEditorContent: JComponent? = null
 
   private val autoPopupController = AutoPopupController.getInstance(project)
   private val projectUiSettings = GithubPullRequestsProjectUISettings.getInstance(project)
@@ -87,7 +95,11 @@ internal class GHPRComponentFactory(private val project: Project) {
       override fun onLoadingCompleted() {
         val dataContext = loadingModel.result
         if (dataContext != null) {
-          val content = createContent(dataContext, uiDisposable)
+          var content = createContent(dataContext, uiDisposable)
+          if (Registry.`is`("show.log.as.editor.tab")) {
+            content = patchContent(content)
+          }
+
           with(contentContainer) {
             layout = BorderLayout()
             add(content, BorderLayout.CENTER)
@@ -106,6 +118,54 @@ internal class GHPRComponentFactory(private val project: Project) {
         loadingModel.future = contextValue.value
       }
     }
+  }
+
+  private fun patchContent(content: JComponent): JComponent {
+    var patchedContent = content
+    val onePixelSplitter = patchedContent as OnePixelSplitter
+    val splitter = onePixelSplitter.secondComponent as Splitter
+    patchedContent = splitter.secondComponent
+
+    onePixelSplitter.secondComponent = splitter.firstComponent
+    installEditor(onePixelSplitter)
+    return patchedContent
+  }
+
+  private fun installEditor(onePixelSplitter: OnePixelSplitter) {
+    ghprEditorContent = onePixelSplitter
+    ApplicationManager.getApplication().invokeLater({ tryOpenGHPREditorTab() }, ModalityState.NON_MODAL)
+  }
+
+  @CalledInAwt
+  private fun getOrCreateGHPRViewFile(): VirtualFile? {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
+    if (ghprEditorContent == null) return null
+
+    if (ghprVirtualFile == null) {
+      val content = ghprEditorContent ?: error("editor content should be created by this time")
+      ghprVirtualFile = VCSContentVirtualFile(content) { "GitHub Pull Requests" }
+      ghprVirtualFile?.putUserData(VCSContentVirtualFile.TabSelector) {
+        GithubUIUtil.findAndSelectGitHubContent(project, true)
+      }
+    }
+
+    Disposer.register(project, Disposable { ghprVirtualFile = null })
+
+    return ghprVirtualFile ?: error("error")
+  }
+  
+  fun tryOpenGHPREditorTab() {
+    val file = getOrCreateGHPRViewFile() ?: return
+
+    val editors = FileEditorManager.getInstance(project).openFile(file, true)
+    assert(editors.size == 1) { "opened multiple log editors for $file" }
+    val editor = editors[0]
+    val component = editor.component
+    val holder = ComponentUtil.getParentOfType(EditorWindowHolder::class.java as Class<out EditorWindowHolder>, component as Component)
+                 ?: return
+    val editorWindow = holder.editorWindow
+    editorWindow.setFilePinned(file, true)
   }
 
   private fun createContent(dataContext: GHPullRequestsDataContext, disposable: Disposable): JComponent {
