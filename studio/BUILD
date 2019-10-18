@@ -46,10 +46,10 @@ java_test(
         "no_windows",
     ],
     deps = [
-        "build-scripts-deps/commons-compress-1.10.jar",
         "//tools/base/testutils:tools.testutils",
         "//tools/base/third_party:com.google.truth_truth",
         "//tools/base/third_party:junit_junit",
+        "//tools/idea/.idea/libraries:commons-compress",
     ],
 )
 
