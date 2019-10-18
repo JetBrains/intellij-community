@@ -809,7 +809,10 @@ idea.fatal.error.notification=disabled
         }
       }
       else {
-        buildContext.ant.exec(command: "/bin/sh -c 'mv \"$jbrTargetDir\"/* \"$targetDirectory\"'")
+        buildContext.ant.exec(executable: '/bin/sh', failOnError: true) {
+          arg(value: '-c')
+          arg(value: "mv \"$jbrTargetDir\"/* \"$targetDirectory\"")
+        }
       }
 
       def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
