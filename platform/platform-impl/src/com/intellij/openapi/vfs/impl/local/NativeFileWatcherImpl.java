@@ -270,6 +270,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     @Override public boolean withSeparators() { return false; }
   };
 
+  @SuppressWarnings("SpellCheckingInspection")
   private enum WatcherOp { GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY }
 
   private class MyProcessHandler extends OSProcessHandler {
@@ -427,7 +428,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   protected boolean isRepetition(String path) {
-    // collapse subsequent change file change notifications that happen once we copy large file,
+    // collapse subsequent change file change notifications that happen once we copy a large file,
     // this allows reduction of path checks at least 20% for Windows
     synchronized (myLastChangedPaths) {
       for (int i = 0; i < myLastChangedPaths.length; ++i) {
