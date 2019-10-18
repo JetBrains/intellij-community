@@ -3885,4 +3885,8 @@ public final class UIUtil {
       throw new RuntimeException(e);
     }
   }
+
+  public static boolean isJreHiDPI() {
+    return StartupUiUtil.isJreHiDPI();
+  }
 }
