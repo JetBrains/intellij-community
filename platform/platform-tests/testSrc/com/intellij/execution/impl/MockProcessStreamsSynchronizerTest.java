@@ -4,6 +4,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class ProcessStreamsSynchronizerTest extends LightPlatformTestCase {
+public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
 
   private static final long AWAIT_SAME_STREAM_TEXT_MILLIS = TimeUnit.NANOSECONDS.toMillis(ProcessStreamsSynchronizer.AWAIT_SAME_STREAM_TEXT_NANO);
 
@@ -64,6 +65,54 @@ public class ProcessStreamsSynchronizerTest extends LightPlatformTestCase {
                         new FlushedChunk("2\n", ProcessOutputType.STDOUT, 14 + AWAIT_SAME_STREAM_TEXT_MILLIS),
                         new FlushedChunk("Process exited", ProcessOutputType.SYSTEM, 14 + AWAIT_SAME_STREAM_TEXT_MILLIS));
     assertNoPendingChunks();
+  }
+
+  public void testPerformanceSingleStream() {
+    PlatformTestUtil.startPerformanceTest("single stream", 30000, () -> {
+      mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
+      long nowTimeMillis = 10;
+      for (int i = 0; i < 10_000_000; i++) {
+        mySynchronizer.doWhenStreamsSynchronized("Std", ProcessOutputType.STDOUT, nowTimeMillis);
+        mySynchronizer.doWhenStreamsSynchronized("Out\n", ProcessOutputType.STDOUT, nowTimeMillis + 5);
+        mySynchronizer.doWhenStreamsSynchronized("#2 Std", ProcessOutputType.STDOUT, nowTimeMillis + 6);
+        mySynchronizer.doWhenStreamsSynchronized("#2 Out\n", ProcessOutputType.STDOUT, nowTimeMillis + 7);
+        mySynchronizer.doWhenStreamsSynchronized("stdout again", ProcessOutputType.STDOUT, nowTimeMillis + 8);
+        mySynchronizer.advanceTimeTo(nowTimeMillis + 8);
+        assertFlushedChunks(
+          new FlushedChunk("Std", ProcessOutputType.STDOUT, nowTimeMillis),
+          new FlushedChunk("Out\n", ProcessOutputType.STDOUT, nowTimeMillis + 5),
+          new FlushedChunk("#2 Std", ProcessOutputType.STDOUT, nowTimeMillis + 6),
+          new FlushedChunk("#2 Out\n", ProcessOutputType.STDOUT, nowTimeMillis + 7),
+          new FlushedChunk("stdout again", ProcessOutputType.STDOUT, nowTimeMillis + 8)
+        );
+        assertNoPendingChunks();
+        nowTimeMillis += 8;
+      }
+    }).assertTiming();
+  }
+
+  public void testPerformanceTwoStreams() {
+    PlatformTestUtil.startPerformanceTest("two streams", 30000, () -> {
+      mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
+      long nowTimeMillis = 10;
+      for (int i = 0; i < 10_000_000; i++) {
+        mySynchronizer.doWhenStreamsSynchronized("Std", ProcessOutputType.STDOUT, nowTimeMillis);
+        mySynchronizer.doWhenStreamsSynchronized("Std", ProcessOutputType.STDERR, nowTimeMillis + 4);
+        mySynchronizer.doWhenStreamsSynchronized("Out\n", ProcessOutputType.STDOUT, nowTimeMillis + 5);
+        mySynchronizer.doWhenStreamsSynchronized("Err\n", ProcessOutputType.STDERR, nowTimeMillis + 7);
+        mySynchronizer.doWhenStreamsSynchronized("stdout again", ProcessOutputType.STDOUT, nowTimeMillis + 6 + AWAIT_SAME_STREAM_TEXT_MILLIS);
+        mySynchronizer.advanceTimeTo(nowTimeMillis + 8 + 2 * AWAIT_SAME_STREAM_TEXT_MILLIS);
+        assertFlushedChunks(
+          new FlushedChunk("Std", ProcessOutputType.STDOUT, nowTimeMillis),
+          new FlushedChunk("Out\n", ProcessOutputType.STDOUT, nowTimeMillis + 5),
+          new FlushedChunk("Std", ProcessOutputType.STDERR, nowTimeMillis + 5 + AWAIT_SAME_STREAM_TEXT_MILLIS),
+          new FlushedChunk("Err\n", ProcessOutputType.STDERR, nowTimeMillis + 5 + AWAIT_SAME_STREAM_TEXT_MILLIS),
+          new FlushedChunk("stdout again", ProcessOutputType.STDOUT, nowTimeMillis + 7 + AWAIT_SAME_STREAM_TEXT_MILLIS)
+        );
+        assertNoPendingChunks();
+        nowTimeMillis += 8 + 2 * AWAIT_SAME_STREAM_TEXT_MILLIS;
+      }
+    }).assertTiming();
   }
 
   private void assertFlushedChunks(@NotNull FlushedChunk... expectedFlushedChunks) {
