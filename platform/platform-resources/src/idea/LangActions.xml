@@ -1168,6 +1168,8 @@
               text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
       <separator/>
+      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
+      <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
               text="Clear Content" icon="AllIcons.Actions.Cancel"/>
       <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction"
@@ -1234,6 +1236,10 @@
            class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup">
       <add-to-group group-id="ServiceView.Filter"/>
     </group>
+    <action id="RunDashboard.AddType" text="Run Configuration Type"
+            class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
+      <add-to-group group-id="ServiceView.AddService"/>
+    </action>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
