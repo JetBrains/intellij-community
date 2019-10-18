@@ -40,10 +40,10 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
 
   @Override
   public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
-    WriteAction.run(() -> doConfigure(mavenProject, project, module));
+    WriteAction.runAndWait(() -> doConfigure(mavenProject, project, module));
   }
 
-  private void doConfigure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
+  private static void doConfigure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     if (project.isDisposed() || module.isDisposed()) {
       return;
     }

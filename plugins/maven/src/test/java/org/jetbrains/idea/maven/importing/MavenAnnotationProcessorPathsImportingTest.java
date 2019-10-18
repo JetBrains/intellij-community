@@ -7,6 +7,7 @@ import org.jetbrains.idea.maven.dom.MavenDomTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 
+import java.io.IOException;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -94,7 +95,7 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")));
   }
 
-  public void testLocalDependency() {
+  public void testLocalDependency() throws Exception {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -137,6 +138,8 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
                     "    </plugin>\n" +
                     "  </plugins>\n" +
                     "</build>");
+
+    createProjectSubFile("m1/src/main/java/A.java", "public class A{}");
 
     importProject();
 

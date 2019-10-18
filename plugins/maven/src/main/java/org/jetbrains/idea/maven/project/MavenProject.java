@@ -914,7 +914,7 @@ public class MavenProject {
     }
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Module module = ReadAction.compute(() -> projectsManager.findModule(this));
+    Module module =  projectsManager.findModule(this);
     if (module != null) {
       MavenAnnotationProcessorsModuleService apService = MavenAnnotationProcessorsModuleService.getInstance(module);
       for (String moduleName : apService.getAnnotationProcessorModules()) {
