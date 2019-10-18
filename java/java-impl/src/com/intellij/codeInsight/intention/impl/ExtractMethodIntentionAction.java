@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
@@ -49,6 +50,9 @@ public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (file instanceof PsiCodeFragment) {
+      return false;
+    }
     SelectionModel model = editor.getSelectionModel();
     if (!model.hasSelection()) return false;
     PsiElement[] elements = ExtractMethodHandler.getElements(project, editor, file);
