@@ -421,7 +421,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     ListSelection<ShelvedWrapper> wrappers = ListSelection.createAt(VcsTreeModelData.selected(tree).userObjects(ShelvedWrapper.class), 0);
 
-    if (wrappers.getList().size() < 2) {
+    if (wrappers.getList().size() == 1) {
       // return all changes for selected changelist
       ShelvedChangeList changeList = getFirstItem(getSelectedLists(tree, it -> true));
       if (changeList != null) {
