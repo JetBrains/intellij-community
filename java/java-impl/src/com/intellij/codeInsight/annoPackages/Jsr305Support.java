@@ -18,7 +18,7 @@ public class Jsr305Support implements AnnotationPackageSupport {
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";
   private final NullableNotNullManager myManager;
 
-  public Jsr305Support(NullableNotNullManager manager) {
+  Jsr305Support(NullableNotNullManager manager) {
     myManager = manager;
   }
 

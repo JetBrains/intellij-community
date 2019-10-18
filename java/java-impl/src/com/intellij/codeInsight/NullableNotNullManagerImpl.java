@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.annoPackages.*;
+import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
+import com.intellij.codeInsight.annoPackages.Jsr305Support;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -34,9 +35,7 @@ import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
 public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
-  private final AnnotationPackageSupport[] myAnnotationSupports = {
-    new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
-    new Jsr305Support(this), new CheckerFrameworkSupport()};
+  private final AnnotationPackageSupport[] myAnnotationSupports = AnnotationPackageSupport.getAnnotationPackages(this);
 
   private final List<String> myDefaultNullables =
     StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NULLABLE));

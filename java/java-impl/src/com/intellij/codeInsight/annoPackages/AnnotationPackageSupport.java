@@ -3,7 +3,9 @@ package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,5 +37,21 @@ public interface AnnotationPackageSupport {
   @NotNull
   default List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();
+  }
+
+  /**
+   * @param manager manager which wants to register annotations
+   * @return array of available annotation packages
+   */
+  @NotNull
+  static AnnotationPackageSupport[] getAnnotationPackages(@NotNull NullableNotNullManager manager) {
+    AnnotationPackageSupport[] extensions = {
+      new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
+      new Jsr305Support(manager), new CheckerFrameworkSupport()
+    };
+    if (CodeAnalysisAnnotationSupport.IS_AVAILABLE) {
+      return ArrayUtil.append(extensions, new CodeAnalysisAnnotationSupport());
+    }
+    return extensions;
   }
 }
