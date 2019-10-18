@@ -36,7 +36,7 @@ public class StringContentIndentUtil {
   }
 
   private static long getTimestamp(@NotNull Editor editor, Document document) {
-    return editor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
+    return editor.getSettings().isIndentGuidesShown() ? document.getModificationStamp() : -1;
   }
 
   /**

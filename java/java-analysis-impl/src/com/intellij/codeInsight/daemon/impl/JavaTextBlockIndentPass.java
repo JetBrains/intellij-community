@@ -53,7 +53,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!myEditor.getSettings().isStringContentIndentGuideShown()) {
+    if (!myEditor.getSettings().isIndentGuidesShown()) {
       myIndents = Collections.emptyList();
       return;
     }
