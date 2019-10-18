@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="kotlin-test" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-test:1.3.60-eap-23">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test:1.3.60-eap-25">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.3.60-eap-23/kotlin-test-1.3.60-eap-23.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-common/1.3.60-eap-23/kotlin-test-common-1.3.60-eap-23.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.3.60-eap-25/kotlin-test-1.3.60-eap-25.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-common/1.3.60-eap-25/kotlin-test-common-1.3.60-eap-25.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
