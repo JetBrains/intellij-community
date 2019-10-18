@@ -2,7 +2,6 @@
 package com.intellij.psi.util
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.SmartList
@@ -114,7 +113,8 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     return this to empty
   }
 
-  fun split(pattern: String): List<PartiallyKnownString> {
+  fun split(pattern: String, escaperFactory: (CharSequence, String) -> SplitEscaper = { _, _ -> SplitEscaper.AcceptAll })
+    : List<PartiallyKnownString> {
 
     tailrec fun collectPaths(result: MutableList<PartiallyKnownString>,
                              pending: MutableList<StringEntry>,
@@ -129,7 +129,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         is StringEntry.Known -> {
           val value = head.value
 
-          val stringParts = splitToTextRanges(value, pattern).toList()
+          val stringParts = splitToTextRanges(value, pattern, escaperFactory).toList()
           if (stringParts.size == 1) {
             return collectPaths(result, pending.apply { add(head) }, tail)
           }
@@ -173,8 +173,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 }
 
 @ApiStatus.Experimental
-fun splitToTextRanges(charSequence: CharSequence, pattern: String): Sequence<TextRange> {
+fun splitToTextRanges(charSequence: CharSequence,
+                      pattern: String,
+                      escaperFactory: (CharSequence, String) -> SplitEscaper = { _, _ -> SplitEscaper.AcceptAll }): Sequence<TextRange> {
   var lastMatch = 0
+  var lastSplit = 0
+  val escaper = escaperFactory(charSequence, pattern)
   return sequence {
     while (true) {
       val start = charSequence.indexOf(pattern, lastMatch)
@@ -182,9 +186,23 @@ fun splitToTextRanges(charSequence: CharSequence, pattern: String): Sequence<Tex
         yield(TextRange(lastMatch, charSequence.length))
         return@sequence
       }
-      yield(TextRange(lastMatch, start))
       lastMatch = start + pattern.length
+      if (escaper.filter(lastSplit, start)) {
+        yield(TextRange(lastSplit, start))
+        lastSplit = lastMatch
+      }
     }
+  }
+
+}
+
+@ApiStatus.Experimental
+interface SplitEscaper {
+
+  fun filter(lastSplit: Int, currentPosition: Int): Boolean
+
+  object AcceptAll : SplitEscaper {
+    override fun filter(lastSplit: Int, currentPosition: Int): Boolean = true
   }
 
 }
