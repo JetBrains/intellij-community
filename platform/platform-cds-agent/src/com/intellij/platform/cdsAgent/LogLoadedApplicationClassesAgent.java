@@ -237,7 +237,7 @@ public class LogLoadedApplicationClassesAgent {
       this.id = id;
       this.clazz = clazz;
       this.source = source;
-      this.name = clazz.getName().replace('.', '/');
+      this.name = getVMClassName(clazz);
     }
 
     @NotNull
@@ -582,8 +582,7 @@ public class LogLoadedApplicationClassesAgent {
     if (loader == null) return null;
     if (loader == ClassLoader.getSystemClassLoader()) return null;
 
-    //NOTE: also include the Java 9+ locations under META-INF
-    String resourceName = clazz.getName().replace('.', '/') + ".class";
+    String resourceName = getClassResourcePath(clazz);
     URL url = loader.getResource(resourceName);
     if (url == null) return null;
 
@@ -620,6 +619,17 @@ public class LogLoadedApplicationClassesAgent {
     }
 
     return path;
+  }
+
+  @NotNull
+  private static String getVMClassName(@NotNull Class<?> clazz) {
+    return clazz.getName().replace('.', '/');
+  }
+
+  @NotNull
+  private static String getClassResourcePath(@NotNull Class<?> clazz) {
+    //NOTE: consider Java 9+ locations under META-INF
+    return getVMClassName(clazz) + ".class";
   }
 
   private static void log(String message) {

@@ -20,8 +20,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
 
-//TODO: report to FUS if we use AppCDS in the product
-
 object CDSManager {
   private val LOG = Logger.getInstance(javaClass)
 
