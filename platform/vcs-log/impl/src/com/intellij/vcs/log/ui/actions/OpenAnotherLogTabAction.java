@@ -45,9 +45,13 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     }
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
-    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     // only for main log (it is a question, how and where we want to open tabs for external logs)
-    e.getPresentation().setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager && logUi != null);
+    if (logManager != null) {
+      e.getPresentation().setEnabledAndVisible(projectLog.getLogManager() == logManager);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(projectLog.getLogManager() != null);
+    }
   }
 
   @Override
@@ -55,9 +59,16 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogUi logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsLogFilterCollection filters = Registry.is("vcs.log.copy.filters.to.new.tab") ? logUi.getFilterUi().getFilters()
-                                                                                    : VcsLogFilterObject.collection();
+    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+
+    VcsLogFilterCollection filters;
+    if (Registry.is("vcs.log.copy.filters.to.new.tab") && logUi != null) {
+      filters = logUi.getFilterUi().getFilters();
+    }
+    else {
+      filters = VcsLogFilterObject.collection();
+    }
+
     VcsProjectLog.getInstance(project).openLogTab(filters);
   }
 }
