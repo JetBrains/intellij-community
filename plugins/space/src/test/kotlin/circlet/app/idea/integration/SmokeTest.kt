@@ -8,9 +8,9 @@ import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.ui.*
 import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.openapi.components.*
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.*
 import com.intellij.testFramework.fixtures.impl.*
-import com.intellij.util.*
 import libraries.coroutines.extra.*
 import kotlin.test.*
 
@@ -44,6 +44,7 @@ class SmokeTest : BasePlatformTestCase() {
 
     override fun tearDown() {
         super.tearDown()
+        LightPlatformTestCase.closeAndDeleteProject()
         testLifetimeImpl!!.terminate()
     }
 
@@ -54,8 +55,7 @@ class SmokeTest : BasePlatformTestCase() {
     // dsl exists on start
     fun testBuildModelWhenDslExistsFromBeginning() {
         val project = myFixture.project
-        val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
-        myFixture.copyFileToProject(DefaultDslFileName, "../$projectFileFolderName/$DefaultDslFileName")
+        myFixture.copyFileToProject(DefaultDslFileName, "../$DefaultDslFileName")
 
         val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
         val viewModel = circletModelStore.viewModel
@@ -89,7 +89,7 @@ class SmokeTest : BasePlatformTestCase() {
         assertNull(script, "script should be null without dsl file")
         assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
 
-
+        myFixture.copyFileToProject(DefaultDslFileName, "../$DefaultDslFileName")
         val newScript = viewModel.script.value
         assertNotSame(script, newScript, "new instance of script should be created")
         script = newScript

@@ -1,6 +1,6 @@
-task("myTask") {
-    this.fork {
-        run("hello-world1")
-        run("hello-world2")
+job("myTask") {
+    this.parallel {
+        container("hello-world1")
+        container("hello-world2")
     }
 }
