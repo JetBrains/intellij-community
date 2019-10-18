@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.openapi.application.WriteAction;
@@ -37,12 +23,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+
 public class BookmarkManagerTest extends AbstractEditorTest {
   private final List<Bookmark> myBookmarks = new ArrayList<>();
-  
+
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -57,6 +42,22 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     finally {
       super.tearDown();
     }
+  }
+
+  public void testLoadState() {
+    BookmarkManager manager = new BookmarkManager(getProject());
+    manager.applyNewStateInTestMode(Collections.emptyList());
+    assertThat(manager.getState()).isEqualTo("<BookmarkManager />");
+
+    String text = "point me";
+    init(text, TestFileType.TEXT);
+
+    Bookmark bookmark = new Bookmark(getFile().getVirtualFile().getUrl(), 0, "description?");
+    bookmark.setMnemonic('3');
+    manager.applyNewStateInTestMode(Collections.singletonList(bookmark));
+    assertThat(manager.getState()).isEqualTo("<BookmarkManager>\n" +
+                                             "  <bookmark url=\"temp:///src/LoadState.txt\" description=\"description?\" line=\"0\" mnemonic=\"3\" />\n" +
+                                             "</BookmarkManager>");
   }
 
   public void testWholeTextReplace() {
@@ -82,7 +83,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       checkBookmarkNavigation(bookmark);
     }
   }
-  
+
   public void testBookmarkLineRemove() {
     List<ComponentAdapter> adapters = getProject().getPicoContainer().getComponentAdaptersOfType(ChangeListManagerImpl.class);
     LOG.debug(adapters.size() + " adapters:");
@@ -164,7 +165,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
         new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2))), null, null)));
     delete();
   }
-  
+
   public void testBookmarkIsSavedAfterRemoteChange() {
     @Language("JAVA")
     @NonNls String text =
@@ -213,13 +214,13 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     setEditor(createEditor(getVFile()));
     checkBookmarkNavigation(bookmark);
   }
-  
+
   private Bookmark addBookmark(int line) {
     Bookmark bookmark = getManager().addTextBookmark(getFile().getVirtualFile(), line, "");
     myBookmarks.add(bookmark);
     return bookmark;
   }
-  
+
   private BookmarkManager getManager() {
     return BookmarkManager.getInstance(getProject());
   }
