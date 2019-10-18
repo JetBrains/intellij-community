@@ -56,10 +56,10 @@ public class LowLevelSearchUtil {
 
   private static boolean processTreeUp(@NotNull Project project,
                                        @NotNull PsiElement scope,
-                                       final @NotNull ASTNode leafNode,
-                                       final int offsetInLeaf,
+                                       @NotNull ASTNode leafNode,
+                                       int offsetInLeaf,
                                        @NotNull StringSearcher searcher,
-                                       final boolean processInjectedPsi,
+                                       boolean processInjectedPsi,
                                        @NotNull ProgressIndicator progress,
                                        @NotNull TextOccurenceProcessor processor) {
     final int patternLength = searcher.getPatternLength();
@@ -125,12 +125,12 @@ public class LowLevelSearchUtil {
                                                                @NotNull final StringSearcher searcher,
                                                                boolean processInjectedPsi,
                                                                @NotNull  ProgressIndicator progress) {
-    int[] occurrences = getTextOccurrencesInScope(scope, searcher, progress);
+    int[] occurrences = getTextOccurrencesInScope(scope, searcher);
     return processElementsAtOffsets(scope, searcher, processInjectedPsi, progress, occurrences, processor);
   }
 
   @NotNull
-  static int[] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher, ProgressIndicator progress) {
+  static int[] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher) {
     ProgressManager.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
@@ -150,7 +150,7 @@ public class LowLevelSearchUtil {
       return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
-    int[] offsets = getTextOccurrences(buffer, startOffset, endOffset, searcher, progress);
+    int[] offsets = getTextOccurrences(buffer, startOffset, endOffset, searcher);
     for (int i = 0; i < offsets.length; i++) {
       offsets[i] -= startOffset;
     }
@@ -225,7 +225,7 @@ public class LowLevelSearchUtil {
                                                @NotNull StringSearcher searcher,
                                                @Nullable ProgressIndicator progress,
                                                @NotNull TIntProcedure processor) {
-    for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher, progress)) {
+    for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher)) {
       if (!processor.execute(offset)) {
         return false;
       }
@@ -237,8 +237,7 @@ public class LowLevelSearchUtil {
   private static int[] getTextOccurrences(@NotNull CharSequence text,
                                           int startOffset,
                                           int endOffset,
-                                          @NotNull StringSearcher searcher,
-                                          @Nullable ProgressIndicator progress) {
+                                          @NotNull StringSearcher searcher) {
     if (endOffset > text.length()) {
       throw new IllegalArgumentException("end: " + endOffset + " > length: "+text.length());
     }
@@ -301,9 +300,7 @@ public class LowLevelSearchUtil {
     final int patternLength = searcher.getPattern().length();
     if (index + patternLength < endOffset) {
       char c = text.charAt(index + patternLength);
-      if (Character.isJavaIdentifierPart(c) && c != '$') {
-        return false;
-      }
+      return !Character.isJavaIdentifierPart(c) || c == '$';
     }
     return true;
   }

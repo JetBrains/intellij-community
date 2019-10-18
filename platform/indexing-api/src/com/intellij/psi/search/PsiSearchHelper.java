@@ -108,50 +108,46 @@ public interface PsiSearchHelper {
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_CODE code}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    * @param caseSensitively if words differing in the case only should not be considered equal
    */
   boolean processAllFilesWithWord(@NotNull String word,
                                   @NotNull GlobalSearchScope scope,
-                                  @NotNull Processor<PsiFile> processor,
+                                  @NotNull Processor<? super PsiFile> processor,
                                   final boolean caseSensitively);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_PLAIN_TEXT plain text}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    * @param caseSensitively if words differing in the case only should not be considered equal
    */
   boolean processAllFilesWithWordInText(@NotNull String word,
                                         @NotNull GlobalSearchScope scope,
-                                        @NotNull Processor<PsiFile> processor,
+                                        @NotNull Processor<? super PsiFile> processor,
                                         final boolean caseSensitively);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_COMMENTS comments}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  boolean processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
+  boolean processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<? super PsiFile> processor);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_STRINGS string literal}
    * context to the specified processor.
-   *
-   * @param word      the word to search.
+   *  @param word      the word to search.
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
+  boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<? super PsiFile> processor);
 
   boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 

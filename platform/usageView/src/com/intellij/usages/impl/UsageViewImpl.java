@@ -1216,7 +1216,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
+  public void removeUsagesBulk(@NotNull Collection<? extends Usage> usages) {
     Usage toSelect = getNextToSelect(usages);
     UsageNode nodeToSelect = toSelect != null ? myUsageNodes.get(toSelect) : null;
 
@@ -1257,7 +1257,8 @@ public class UsageViewImpl implements UsageViewEx {
       .forEach(myExclusionHandler::excludeNode);
   }
 
-  private Stream<UsageNode> usagesToNodes(Stream<Usage> usages) {
+  @NotNull
+  private Stream<UsageNode> usagesToNodes(@NotNull Stream<? extends Usage> usages) {
     return usages
       .map(myUsageNodes::get)
       .filter(node -> node != NULL_NODE && node != null);
