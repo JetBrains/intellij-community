@@ -40,7 +40,7 @@ public class JavacMain {
                                 final Collection<? extends File> sources,
                                 Collection<? extends File> classpath,
                                 Collection<? extends File> platformClasspath,
-                                Collection<? extends File> modulePath,
+                                ModulePath modulePath,
                                 Collection<? extends File> upgradeModulePath,
                                 Collection<? extends File> sourcePath,
                                 final Map<File, Set<File>> outputDirToRoots,
@@ -63,7 +63,7 @@ public class JavacMain {
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
     final boolean javacBefore9 = isJavacBefore9(compilingTool);
     final JpsJavacFileManager fileManager = new JpsJavacFileManager(
-      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers()
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, modulePath, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers()
     );
     if (!platformClasspath.isEmpty()) {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar
@@ -120,12 +120,12 @@ public class JavacMain {
 
       if (!modulePath.isEmpty()) {
         try {
-          setLocation(fileManager, "MODULE_PATH", modulePath);
+          setLocation(fileManager, "MODULE_PATH", modulePath.getPath());
           if (isAnnotationProcessingEnabled(_options) &&
             getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null &&
             fileManager.getLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) == null) {
             // default annotation processing discovery path to module path if not explicitly set
-            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", JpsJavacFileManager.filter(modulePath, new BooleanFunction<File>() {
+            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", JpsJavacFileManager.filter(modulePath.getPath(), new BooleanFunction<File>() {
               @Override
               public boolean fun(File file) {
                 return !outputDirToRoots.containsKey(file);
@@ -534,13 +534,25 @@ public class JavacMain {
     private final StandardJavaFileManager myStdManager;
     private final DiagnosticOutputConsumer myOutConsumer;
     private final OutputFileConsumer myOutputFileSink;
+    private final ModulePath myModulePath;
     private final CanceledStatus myCanceledStatus;
 
-    ContextImpl(@NotNull JavaCompiler compiler, @NotNull DiagnosticOutputConsumer outConsumer, @NotNull OutputFileConsumer sink, CanceledStatus canceledStatus) {
+    ContextImpl(@NotNull JavaCompiler compiler,
+                @NotNull DiagnosticOutputConsumer outConsumer,
+                @NotNull OutputFileConsumer sink,
+                @NotNull ModulePath modulePath,
+                CanceledStatus canceledStatus) {
       myOutConsumer = outConsumer;
       myOutputFileSink = sink;
+      myModulePath = modulePath;
       myCanceledStatus = canceledStatus;
       myStdManager = compiler.getStandardFileManager(outConsumer, Locale.US, null);
+    }
+
+    @Nullable
+    @Override
+    public String getExplodedAutomaticModuleName(File pathElement) {
+      return myModulePath.getModuleName(pathElement);
     }
 
     @Override

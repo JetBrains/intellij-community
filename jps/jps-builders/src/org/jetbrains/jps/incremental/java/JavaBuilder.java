@@ -27,14 +27,10 @@ import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
-import org.jetbrains.jps.builders.java.JavaBuilderExtension;
-import org.jetbrains.jps.builders.java.JavaBuilderUtil;
-import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
+import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
+import org.jetbrains.jps.builders.java.*;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -59,7 +55,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -70,6 +67,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -147,7 +145,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Java compiler ID: " + compilerId);
     }
-    MODULE_PATH_SPLITTER.set(context, new ModulePathSplitter());
+    MODULE_PATH_SPLITTER.set(context, new ModulePathSplitter(new ExplodedModuleNameFinder(context)));
     JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
     COMPILING_TOOL.set(context, compilingTool);
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
@@ -443,23 +441,27 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       Collection<? extends File> classPath = originalClassPath;
-      Collection<File> modulePath = Collections.emptyList();
+      ModulePath modulePath = ModulePath.EMPTY;
       Collection<? extends File> upgradeModulePath = Collections.emptyList();
 
       if (moduleInfoFile != null) { // has modules
+        final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
+        final Pair<ModulePath, Collection<File>> pair = splitter.splitPath(
+          moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false)
+        );
         final boolean useModulePathOnly = Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
         if (useModulePathOnly) {
           // in Java 9, named modules are not allowed to read classes from the classpath
           // moreover, the compiler requires all transitive dependencies to be on the module path
-          modulePath = ProjectPaths.getCompilationModulePath(chunk, false);
+          ModulePath.Builder mpBuilder = ModulePath.newBuilder();
+          for (File file : ProjectPaths.getCompilationModulePath(chunk, false)) {
+            mpBuilder.add(pair.first.getModuleName(file), file);
+          }
+          modulePath = mpBuilder.create();
           classPath = Collections.emptyList();
         }
         else {
           // placing only explicitly referenced modules into the module path and the rest of deps to classpath
-          final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
-          final Pair<Collection<File>, Collection<File>> pair = splitter.splitPath(
-            moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false)
-          );
           modulePath = pair.first;
           classPath = pair.second;
         }
@@ -1244,6 +1246,29 @@ public class JavaBuilder extends ModuleLevelBuilder {
     @NotNull
     Collection<File> getFilesWithErrors() {
       return myFilesWithErrors;
+    }
+  }
+
+  private static class ExplodedModuleNameFinder implements Function<File, String> {
+    private final TargetOutputIndex myOutsIndex;
+
+    ExplodedModuleNameFinder(CompileContext context) {
+      final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
+      final List<ModuleBuildTarget> javaModuleTargets = new ArrayList<>();
+      for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+        javaModuleTargets.addAll(targetIndex.getAllTargets(type));
+      }
+      myOutsIndex = new TargetOutputIndexImpl(javaModuleTargets, context);
+    }
+
+    @Override
+    public String apply(File outputDir) {
+      for (BuildTarget<?> target : myOutsIndex.getTargetsByOutputFile(outputDir)) {
+        if (target instanceof ModuleBasedTarget) {
+          return ((ModuleBasedTarget<?>)target).getModule().getName().trim();
+        }
+      }
+      return ModulePathSplitter.DEFAULT_MODULE_NAME_SEARCH.apply(outputDir);
     }
   }
 

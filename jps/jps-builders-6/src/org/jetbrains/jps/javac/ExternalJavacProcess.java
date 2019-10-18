@@ -142,7 +142,7 @@ public class ExternalJavacProcess {
                                                   Collection<? extends File> files,
                                                   Collection<? extends File> classpath,
                                                   Collection<? extends File> platformCp,
-                                                  Collection<? extends File> modulePath,
+                                                  ModulePath modulePath,
                                                   Collection<? extends File> upgradeModulePath,
                                                   Collection<? extends File> sourcePath,
                                                   Map<File, Set<File>> outs,
@@ -237,7 +237,14 @@ public class ExternalJavacProcess {
               final List<File> cp = toFiles(request.getClasspathList());
               final List<File> platformCp = toFiles(request.getPlatformClasspathList());
               final List<File> srcPath = toFiles(request.getSourcepathList());
-              final List<File> modulePath = toFiles(request.getModulePathList());
+
+              final ModulePath.Builder modulePathBuilder = ModulePath.newBuilder();
+              final Map<String, String> namesMap = request.getModuleNamesMap();
+              for (String path : request.getModulePathList()) {
+                modulePathBuilder.add(namesMap.get(path), new File(path));
+              }
+              final ModulePath modulePath = modulePathBuilder.create();
+              
               final List<File> upgradeModulePath = toFiles(request.getUpgradeModulePathList());
 
               final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
