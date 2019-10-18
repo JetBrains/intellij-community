@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.Consumer
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants
 import javax.swing.border.Border
 
 @ApiStatus.Experimental
@@ -131,7 +133,13 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
     preferredSize = JBDimension(DIALOG_WIDTH, DIALOG_HEIGHT)
     val commitInfoSplitter = OnePixelSplitter(CHANGES_SPLITTER, 0.5f)
     commitInfoSplitter.setHonorComponentsMinimumSize(false)
-    commitInfoSplitter.firstComponent = commitsList
+    val commitsListScrollPane = JBScrollPane(
+      commitsList,
+      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    )
+    commitsListScrollPane.border = JBUI.Borders.empty()
+    commitInfoSplitter.firstComponent = commitsListScrollPane
     val detailsSplitter = OnePixelSplitter(true, DETAILS_SPLITTER, 0.67f)
     detailsSplitter.firstComponent = changesBrowserWithLoadingPanel
     detailsSplitter.secondComponent = commitDetails
