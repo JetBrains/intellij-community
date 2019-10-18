@@ -1208,4 +1208,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert findClass("Foo")
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
+
+  void "test index clear increments modification stamp"() {
+    StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), false)
+    try {
+      def stamp = index.getModificationStamp()
+      index.clear();
+      assertTrue(stamp != index.getModificationStamp())
+    } finally {
+      index.dispose()
+    }
+  }
 }
