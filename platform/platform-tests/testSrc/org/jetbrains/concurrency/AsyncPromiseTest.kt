@@ -187,6 +187,18 @@ class AsyncPromiseTest {
     assertThat(promise.state).isEqualTo(Promise.State.REJECTED)
   }
 
+  @Test
+  fun `do not swallow exceptions - error in handler`() {
+    val promise = AsyncPromise<String>()
+    val promise2 = promise
+      .onSuccess {
+        throw java.lang.AssertionError("boo")
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+  }
+
   // this case quite tested by other tests, but better to have special test
   @Test
   fun `do not swallow exceptions - error handler added`() {
