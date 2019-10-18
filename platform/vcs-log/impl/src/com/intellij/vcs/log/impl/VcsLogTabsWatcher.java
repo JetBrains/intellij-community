@@ -46,7 +46,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @NotNull
   public Disposable addTabToWatch(@NotNull String tabId, @NotNull VisiblePackRefresher refresher, boolean isClosedOnDispose) {
-    return myRefresher.addLogWindow(new VcsLogTab(refresher, tabId, isClosedOnDispose));
+    return myRefresher.addLogWindow(new VcsLogTab(tabId, refresher, isClosedOnDispose));
   }
 
   private void installContentListeners() {
@@ -78,7 +78,7 @@ public class VcsLogTabsWatcher implements Disposable {
     return StreamEx.of(myRefresher.getLogWindows())
       .select(VcsLogTab.class)
       .filter(VcsLogTab::isClosedOnDispose)
-      .map(VcsLogTab::getTabId)
+      .map(VcsLogTab::getId)
       .toList();
   }
 
@@ -117,33 +117,21 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private class VcsLogTab extends VcsLogWindow {
-    @NotNull private final String myTabId;
     private final boolean myIsClosedOnDispose;
 
-    private VcsLogTab(@NotNull VisiblePackRefresher refresher, @NotNull String tabId, boolean isClosedOnDispose) {
-      super(refresher);
-      myTabId = tabId;
+    private VcsLogTab(@NotNull String tabId, @NotNull VisiblePackRefresher refresher, boolean isClosedOnDispose) {
+      super(tabId, refresher);
       myIsClosedOnDispose = isClosedOnDispose;
     }
 
     @Override
     public boolean isVisible() {
       String selectedTab = getSelectedTabId(getToolWindow());
-      return selectedTab != null && myTabId.equals(selectedTab);
-    }
-
-    @NotNull
-    public String getTabId() {
-      return myTabId;
+      return selectedTab != null && getId().equals(selectedTab);
     }
 
     public boolean isClosedOnDispose() {
       return myIsClosedOnDispose;
-    }
-
-    @Override
-    public String toString() {
-      return "VcsLogTab '" + myTabId + '\'';
     }
   }
 
@@ -170,8 +158,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
     @Override
     protected void selectionChanged(@NotNull String tabId) {
-      VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(),
-                                                  window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
+      VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(), window -> window.getId().equals(tabId));
       if (logWindow != null) {
         LOG.debug("Selected log window '" + logWindow + "'");
         VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null);

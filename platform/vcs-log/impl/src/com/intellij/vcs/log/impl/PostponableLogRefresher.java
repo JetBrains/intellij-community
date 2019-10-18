@@ -44,8 +44,8 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   @NotNull
-  public Disposable addLogWindow(@NotNull VisiblePackRefresher refresher) {
-    return addLogWindow(new VcsLogWindow(refresher));
+  public Disposable addLogWindow(@NotNull String id, @NotNull VisiblePackRefresher refresher) {
+    return addLogWindow(new VcsLogWindow(id, refresher));
   }
 
   public static boolean keepUpToDate() {
@@ -109,9 +109,11 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   public static class VcsLogWindow {
+    @NotNull private final String myId;
     @NotNull private final VisiblePackRefresher myRefresher;
 
-    public VcsLogWindow(@NotNull VisiblePackRefresher refresher) {
+    public VcsLogWindow(@NotNull String id, @NotNull VisiblePackRefresher refresher) {
+      myId = id;
       myRefresher = refresher;
     }
 
@@ -124,9 +126,14 @@ public class PostponableLogRefresher implements VcsLogRefresher {
       return true;
     }
 
+    @NotNull
+    public String getId() {
+      return myId;
+    }
+
     @Override
     public String toString() {
-      return "VcsLogWindow '" + myRefresher + "'";
+      return "VcsLogWindow '" + myId + "'";
     }
   }
 }

@@ -134,7 +134,7 @@ public class VcsLogManager implements Disposable {
       disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher(), isClosedOnDispose);
     }
     else {
-      disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
+      disposable = myPostponableRefresher.addLogWindow(ui.getId(), ui.getRefresher());
     }
     Disposer.register(ui, disposable);
     return ui;
