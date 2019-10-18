@@ -528,6 +528,11 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_js
         elif sdk_skeleton_status == SkeletonStatus.FAILING:
             return GenerationStatus.FAILED
 
+        # At this point we will either generate skeleton anew all take it from the cache.
+        # In either case state.json is supposed to be populated by this results.
+        if state_json:
+            state_json.clear()
+
         cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name, state_json)
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
             return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',

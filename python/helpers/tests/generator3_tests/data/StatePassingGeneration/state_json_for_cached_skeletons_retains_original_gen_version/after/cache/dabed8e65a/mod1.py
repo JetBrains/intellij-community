@@ -1,7 +1,7 @@
 # encoding: utf-8
-# module mod
-# from mod.so
-# by generator 0.1
+# module mod1
+# from mod1.so
+# by generator 0.2
 # no doc
 # no imports
 
