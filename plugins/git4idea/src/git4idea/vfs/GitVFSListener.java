@@ -227,7 +227,7 @@ public class GitVFSListener extends VcsVFSListener {
   private void executeAdding(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
     throws VcsException {
     LOG.debug("Git: adding files: " + files);
-    GitFileUtils.addPaths(myProject, root, files);
+    GitFileUtils.addPaths(myProject, root, files, false, false);
   }
 
   private Set<File> executeDeletion(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
