@@ -573,7 +573,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   @Nullable
   protected FileEditorWithProvider getSelectedEditor() {
     FileEditorManagerEx editorManager = getFileEditorManager();
-    VirtualFile file = editorManager.getCurrentFile();
+    VirtualFile file = editorManager != null ? editorManager.getCurrentFile() : null;
     return file == null ? null : editorManager.getSelectedEditorWithProvider(file);
   }
 
