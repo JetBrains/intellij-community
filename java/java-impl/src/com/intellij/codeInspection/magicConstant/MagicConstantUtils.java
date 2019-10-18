@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -139,12 +140,35 @@ public class MagicConstantUtils {
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    PsiModifierListOwner realElement = element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner
-                  ? (PsiModifierListOwner)element.getNavigationElement()
-                  : element;
+    PsiModifierListOwner realElement = getSourceElement(element);
     return CachedValuesManager.getCachedValue(realElement, () ->
       CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static PsiModifierListOwner getSourceElement(@NotNull PsiModifierListOwner element) {
+    if (element instanceof PsiCompiledElement) {
+      if (element instanceof PsiParameter) {
+        PsiParameterList list = ObjectUtils.tryCast(element.getParent(), PsiParameterList.class);
+        if (list != null && list.getParent() instanceof PsiMethod) {
+          int index = ArrayUtil.indexOf(list.getParameters(), element);
+          if (index >= 0) {
+            PsiMethod method = ObjectUtils.tryCast(list.getParent().getNavigationElement(), PsiMethod.class);
+            if (method != null) {
+              PsiParameter[] psiParameters = method.getParameterList().getParameters();
+              if (psiParameters.length > index) {
+                return psiParameters[index];
+              }
+            }
+          }
+        }
+      }
+      PsiElement navigationElement = element.getNavigationElement();
+      if (navigationElement instanceof PsiModifierListOwner) {
+        return (PsiModifierListOwner)navigationElement;
+      }
+    }
+    return element;
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {
