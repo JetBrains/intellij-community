@@ -30,10 +30,23 @@ public class CucumberJvmAdapter {
     }
   }
 
-  interface IdeaTestSourceReadEvent {
-    String getUri();
+  public static class IdeaTestSourceReadEvent {
+    private final String myUri;
 
-    String getSource();
+    private final String mySource;
+
+    public IdeaTestSourceReadEvent(String uri, String source) {
+      myUri = uri;
+      mySource = source;
+    }
+
+    public String getUri() {
+      return myUri;
+    }
+
+    public String getSource() {
+      return mySource;
+    }
   }
 
   interface IdeaTestCase {
