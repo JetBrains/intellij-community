@@ -329,7 +329,7 @@ private val safeToDeleteFilesInHome = setOf(
 
 private val safeToDeleteFilesInBin = setOf(
   "append.bat", "appletviewer.policy", "format.sh", "format.bat",
-  "fsnotifier", "fsnotifier-arm", "fsnotifier64",
+  "fsnotifier", "fsnotifier64",
   "inspect.bat", "inspect.sh",
   "restarter"
   /*

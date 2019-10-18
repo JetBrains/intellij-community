@@ -19,10 +19,12 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.sun.jna.Platform;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -45,7 +47,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
   private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
-  private static final File PLATFORM_NOT_SUPPORTED = new File("(platform not supported)");
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
@@ -73,10 +74,15 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       LOG.info("Native file watcher is disabled");
     }
     else if (myExecutable == null) {
-      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
-    }
-    else if (myExecutable == PLATFORM_NOT_SUPPORTED) {
-      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exists"), null);
+      if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux && ArrayUtil.contains(Platform.RESOURCE_PREFIX, "linux-x86", "linux-x86-64")) {
+        notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
+      }
+      else if (SystemInfo.isLinux) {
+        notifyOnFailure(ApplicationBundle.message("watcher.exe.compile"), NotificationListener.URL_OPENING_LISTENER);
+      }
+      else {
+        notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exists"), null);
+      }
     }
     else if (!myExecutable.canExecute()) {
       String message = ApplicationBundle.message("watcher.exe.not.exe", myExecutable);
@@ -129,10 +135,13 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
    */
   @Nullable
   protected File getExecutable() {
-    String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
-    if (execPath != null) return new File(execPath);
+    String customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+    if (customPath != null) {
+      File customFile = PathManager.findBinFile(customPath);
+      return customFile != null ? customFile : new File(customPath);
+    }
 
-    String[] names = null;
+    String[] names = ArrayUtil.EMPTY_STRING_ARRAY;
     if (SystemInfo.isWindows) {
       if ("win32-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier.exe"};
       else if ("win32-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64.exe", "fsnotifier.exe"};
@@ -143,11 +152,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     else if (SystemInfo.isLinux) {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier"};
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64"};
-      else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier-arm"};
     }
-    if (names == null) return PLATFORM_NOT_SUPPORTED;
-
-    return Arrays.stream(names).map(PathManager::findBinFile).filter(o -> o != null).findFirst().orElse(null);
+    return StreamEx.of(names).map(PathManager::findBinFile).nonNull().findFirst().orElse(null);
   }
 
   /* internal stuff */
