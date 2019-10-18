@@ -40,7 +40,7 @@ public class BundledPluginsLister implements ApplicationStarter {
       }
 
       try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
-        List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+        List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
 
         List<String> modules = plugins.stream()
           .flatMap(it -> it instanceof IdeaPluginDescriptorImpl ? ((IdeaPluginDescriptorImpl)it).getModules().stream() : Stream.empty())

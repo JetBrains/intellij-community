@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.BeanBinding
@@ -184,7 +185,7 @@ object DynamicPlugins {
   @JvmStatic
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
     val coreLoader = ReflectionUtil.findCallerClass(1)!!.classLoader
-    val pluginsWithNewPlugin = (PluginManagerCore.getPlugins().filterIsInstance<IdeaPluginDescriptorImpl>() + listOf(pluginDescriptor)).toTypedArray()
+    val pluginsWithNewPlugin = ContainerUtil.concat(PluginManagerCore.getPlugins().filterIsInstance<IdeaPluginDescriptorImpl>(), listOf(pluginDescriptor))
     PluginManagerCore.initClassLoader(pluginDescriptor, coreLoader, PluginManagerCore.pluginIdTraverser(pluginsWithNewPlugin))
 
     val application = ApplicationManager.getApplication() as ApplicationImpl

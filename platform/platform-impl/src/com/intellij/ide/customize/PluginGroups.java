@@ -4,6 +4,7 @@ package com.intellij.ide.customize;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.openapi.application.PathManager;
@@ -35,7 +36,7 @@ public class PluginGroups {
   private final Map<String, String> myDescriptions = new LinkedHashMap<>();
   private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<>();
   private final Collection<String> myDisabledPluginIds = new HashSet<>();
-  private final IdeaPluginDescriptor[] myAllPlugins;
+  private final List<IdeaPluginDescriptorImpl> myAllPlugins;
   private boolean myInitialized;
   private final Set<String> myFeaturedIds = new HashSet<>();
   private Runnable myLoadingCallback;

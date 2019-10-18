@@ -1,29 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.ui.IconManager;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.concurrent.*;
+import static com.intellij.idea.TestAppLoaderKt.loadTestApp;
 
 public final class IdeaTestApplication implements Disposable {
   private static volatile IdeaTestApplication ourInstance;
@@ -80,48 +69,7 @@ public final class IdeaTestApplication implements Disposable {
 
     HeavyPlatformTestCase.doAutodetectPlatformPrefix();
 
-    String[] args = {"inspect", "", "", ""};
-    Main.setFlags(args);
-    assert Main.isHeadless();
-    assert Main.isCommandLine();
-    PluginManagerCore.isUnitTestMode = true;
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-
-    CompletableFuture<List<IdeaPluginDescriptor>> loadedPluginFuture = CompletableFuture.supplyAsync(() -> {
-      return PluginManagerCore.getLoadedPlugins(IdeaTestApplication.class.getClassLoader());
-    }, AppExecutorUtil.getAppExecutorService());
-
-    StartupUtil.replaceSystemEventQueue(Logger.getInstance(IdeaTestApplication.class));
-    ApplicationImpl app = new ApplicationImpl(true, true, true, true);
-    IconManager.activate();
-    List<IdeaPluginDescriptorImpl> plugins;
-    try {
-      plugins = ApplicationLoader.registerRegistryAndInitStore(ApplicationLoader.registerAppComponents(loadedPluginFuture, app), app)
-        .get(20, TimeUnit.SECONDS);
-    }
-    catch (TimeoutException e) {
-      throw new RuntimeException("Cannot load plugin descriptors in 20 seconds: " + ThreadDumper.dumpThreadsToString(), e);
-    }
-    catch (ExecutionException | InterruptedException e) {
-      Throwable t = e.getCause() == null ? e : e.getCause();
-      ExceptionUtil.rethrowUnchecked(t);
-      throw new RuntimeException(t);
-    }
-
-    Executor boundedExecutor = ApplicationLoader.createExecutorToPreloadServices();
-    CompletableFuture<Void> preloadServiceFuture = ApplicationLoader.preloadServices(plugins, app, boundedExecutor, "");
-    app.loadComponents(null);
-    try {
-      preloadServiceFuture
-        .thenCompose(__ -> ApplicationLoader.callAppInitialized(app, boundedExecutor))
-        .get(20, TimeUnit.SECONDS);
-    }
-    catch (TimeoutException e) {
-      throw new RuntimeException("Cannot preload services in 20 seconds: " + ThreadDumper.dumpThreadsToString(), e);
-    }
-    catch (ExecutionException | InterruptedException e) {
-      ExceptionUtil.rethrow(e.getCause() == null ? e : e.getCause());
-    }
+    loadTestApp();
 
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();
