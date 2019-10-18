@@ -43,6 +43,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
+    BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")

@@ -92,6 +92,7 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/${executableName}*.exe")
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
+          exclude(name: "build.txt")
         }
         zipfileset(dir: "$winDistPath/bin", prefix: "bin/win") {
           include(name: "fsnotifier*.exe")

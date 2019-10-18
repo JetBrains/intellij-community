@@ -74,6 +74,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
     BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "macosx")
+    BuildTasksImpl.generateBuildTxt(buildContext, "$macDistPath/Resources")
 
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
@@ -290,7 +291,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           }
         }
 
-        // build.txt etc.
+        // the root directory must not have files other than Info.plist so files like NOTICE.TXT and LICENSE.txt are copied to Resources subfolder
+        //todo specify paths to such files in ProductProperties and put them to dist.mac/Resources to get rid of this exclusion
+        //todo remove code which does the same from tools/mac/scripts/signapp.sh
         zipfileset(dir: buildContext.paths.distAll, prefix: "$zipRoot/Resources") {
           include(name: "*.txt")
         }

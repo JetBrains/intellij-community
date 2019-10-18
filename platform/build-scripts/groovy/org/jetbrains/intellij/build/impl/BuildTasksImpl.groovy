@@ -205,8 +205,6 @@ idea.fatal.error.notification=disabled
 
   void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
-      new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
-
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
         fileset(dir: "$buildContext.paths.communityHome/bin") {
           include(name: "*.*")
@@ -230,6 +228,10 @@ idea.fatal.error.notification=disabled
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
     }
+  }
+
+  static void generateBuildTxt(BuildContext buildContext, String targetDirectory) {
+    new File(targetDirectory, "build.txt").text = buildContext.fullBuildNumber
   }
 
   private File findBrandingResource(String relativePath) {
