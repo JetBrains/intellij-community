@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import com.google.common.io.Files
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
+import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -363,6 +365,22 @@ class CommunityRepositoryModules {
       withModuleLibrary("precompiled-analytics-crash", "android.sdktools.analytics-crash", "")
       withModuleLibrary("precompiled-analytics-shared", "android.sdktools.analytics-shared", "")
       withModuleLibrary("precompiled-analytics-tracker", "android.sdktools.analytics-tracker", "")
+      withGeneratedResources(new ResourcesGenerator() {
+        @Override
+        // Sole purpose of this method is to rename resources-aar-<version>.jar into framework_res.jar and put it into lib/layoutlib/data
+        File generateResources(BuildContext context) {
+          def frameworkResJar = new File("$context.paths.temp/andorid-plugin/resources-aar/framework_res.jar")
+          List<File> files= context.project.libraryCollection
+            .findLibrary("org.jetbrains.intellij.deps.android.tools:resources-aar")
+            .getFiles(JpsOrderRootType.COMPILED)
+          assert files.size() == 1: "Exactly one file (resources-aar-<version>.jar) is expected"
+          assert files[0].name.endsWith(".jar") : "JAR file is expected, but ${files[0]} was found"
+
+          Files.createParentDirs(frameworkResJar)
+          Files.copy(files[0], frameworkResJar)
+          return frameworkResJar
+        }
+      }, "lib/layoutlib/data")
       // FIXME-ank: add "analytics-publisher"?
 
       additionalModulesToJars.entrySet().each {
