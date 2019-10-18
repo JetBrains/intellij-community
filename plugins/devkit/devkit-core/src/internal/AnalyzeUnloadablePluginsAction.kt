@@ -121,6 +121,24 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val unspecifiedDynamicEPs = mutableSetOf<String>()
     val nonDynamicEPs = mutableSetOf<String>()
     val analysisErrors = mutableListOf<String>()
+    var componentCount = analyzePluginFile(ideaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs)
+
+    for (dependency in ideaPlugin.dependencies) {
+      val depXmlFile = DescriptorUtil.resolveDependencyToXmlFile(dependency) ?: continue
+      val depIdeaPlugin = DescriptorUtil.getIdeaPlugin(depXmlFile) ?: continue
+      componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs)
+    }
+
+    return PluginUnloadabilityStatus(
+      ideaPlugin.pluginId ?: "?",
+      unspecifiedDynamicEPs, nonDynamicEPs, componentCount, analysisErrors
+    )
+  }
+
+  private fun analyzePluginFile(ideaPlugin: IdeaPlugin,
+                                analysisErrors: MutableList<String>,
+                                nonDynamicEPs: MutableSet<String>,
+                                unspecifiedDynamicEPs: MutableSet<String>): Int {
     for (extension in ideaPlugin.extensions.flatMap { it.collectExtensions() }) {
       val ep = extension.extensionPoint
       if (ep == null) {
@@ -135,10 +153,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val componentCount = ideaPlugin.applicationComponents.flatMap { it.components }.size +
                          ideaPlugin.projectComponents.flatMap { it.components }.size +
                          ideaPlugin.moduleComponents.flatMap { it.components }.size
-    return PluginUnloadabilityStatus(
-      ideaPlugin.pluginId ?: "?",
-      unspecifiedDynamicEPs, nonDynamicEPs, componentCount, analysisErrors
-    )
+    return componentCount
   }
 }
 
