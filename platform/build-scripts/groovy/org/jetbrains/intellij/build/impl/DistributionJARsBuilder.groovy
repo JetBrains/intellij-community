@@ -728,7 +728,8 @@ class DistributionJARsBuilder {
         def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
 
         def directory = getActualPluginDirectoryName(plugin, buildContext)
-        String suffix = includeInCustomRepository ? "" : "-${getPluginVersion(plugin)}"
+        def pluginVersion = getPluginVersion(plugin)
+        String suffix = includeInCustomRepository ? "" : "-$pluginVersion"
         def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading &&
                               whiteList.contains(plugin.mainModule)
           ? "$nonBundledPluginsArtifacts/auto-uploading"
@@ -737,6 +738,7 @@ class DistributionJARsBuilder {
 
         if (includeInCustomRepository) {
           pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(),
+                                                                          pluginVersion: pluginVersion,
                                                                           pluginXml: pluginXmlFiles[plugin]))
         }
 

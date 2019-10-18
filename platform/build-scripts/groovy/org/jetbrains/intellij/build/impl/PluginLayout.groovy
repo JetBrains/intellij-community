@@ -33,7 +33,9 @@ class PluginLayout extends BaseLayout {
   String directoryName
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
-  Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
+  Function<BuildContext, String> versionEvaluator = { BuildContext context ->
+    context.buildNumber.endsWith(".SNAPSHOT") ? context.buildNumber + ".${new Date().format('yyyyMMdd')}" : context.buildNumber
+  } as Function<BuildContext, String>
   boolean directoryNameSetExplicitly
   PluginPublishingSpec defaultPublishingSpec
   PluginBundlingRestrictions bundlingRestrictions

@@ -6,5 +6,6 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class PluginRepositorySpec {
   String pluginZip
+  String pluginVersion
   String pluginXml
 }

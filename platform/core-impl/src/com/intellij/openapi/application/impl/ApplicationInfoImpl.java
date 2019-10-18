@@ -858,9 +858,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         myPluginsDownloadUrl = downloadUrl;
       }
 
-      if (!getBuild().isSnapshot()) {
-        myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
-      }
+      myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
     }
 
     final String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
