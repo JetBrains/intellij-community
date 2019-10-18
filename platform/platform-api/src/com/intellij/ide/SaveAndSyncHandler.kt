@@ -12,7 +12,7 @@ abstract class SaveAndSyncHandler {
   companion object {
     @JvmStatic
     fun getInstance(): SaveAndSyncHandler {
-      return ApplicationManager.getApplication().getComponent(SaveAndSyncHandler::class.java)
+      return ApplicationManager.getApplication().getService(SaveAndSyncHandler::class.java)
     }
   }
 
