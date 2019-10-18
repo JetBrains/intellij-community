@@ -21,6 +21,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings"/>
+
+    <projectService serviceImplementation="org.jetbrains.plugins.github.ui.GHPREditorContentSynchronizer"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
@@ -66,6 +68,8 @@
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
               topic="git4idea.repo.GitRepositoryChangeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+
+    <listener class="org.jetbrains.plugins.github.ui.GHPREditorContentSynchronizer$MyToolwindowListener" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener" />
   </projectListeners>
 
   <extensions defaultExtensionNs="Git4Idea">
