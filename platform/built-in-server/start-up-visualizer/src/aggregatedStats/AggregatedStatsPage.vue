@@ -38,7 +38,7 @@
                        type="primary"
                        icon="el-icon-refresh"
                        :loading="isFetching"
-                       @click="loadData"></el-button>
+                       @click="loadData"/>
           </el-form-item>
         </el-form>
       </el-col>
@@ -69,7 +69,7 @@
       <el-form-item>
         <el-input-number v-if="chartSettings.aggregationOperator === 'quantile'"
                          :min="0" :max="100" :step="10"
-                         v-model="chartSettings.quantile"></el-input-number>
+                         v-model="chartSettings.quantile"/>
       </el-form-item>
     </el-form>
 
