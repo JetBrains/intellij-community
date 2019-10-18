@@ -2,8 +2,12 @@
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
+import com.intellij.idea.LoggerFactory
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertConcurrentPromises
+import org.apache.log4j.Level
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
@@ -193,6 +197,65 @@ class AsyncPromiseTest {
     val promise2 = promise
       .onSuccess {
         throw java.lang.AssertionError("boo")
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+  }
+
+  @Test
+  fun `do not swallow exceptions - error2 in handler`() {
+    val oldFactory = Logger.getFactory()
+    try {
+      Logger.setFactory({ object : Logger() {
+        override fun warn(message: String?, t: Throwable?) {
+        }
+
+        override fun setLevel(level: Level?) {
+        }
+
+        override fun info(message: String?) {
+        }
+
+        override fun info(message: String?, t: Throwable?) {
+        }
+
+        override fun error(message: String?, t: Throwable?, vararg details: String?) {
+        }
+
+        override fun isDebugEnabled(): Boolean {
+          return false
+        }
+
+        override fun debug(message: String?) {
+        }
+
+        override fun debug(t: Throwable?) {
+        }
+
+        override fun debug(message: String?, t: Throwable?) {
+        }
+      }})
+      val promise = AsyncPromise<String>()
+      val promise2 = promise
+        .onSuccess {
+          throw java.lang.AssertionError("boo")
+        }
+      promise.setResult("foo")
+      assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+      assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+    }
+    finally {
+      Logger.setFactory(oldFactory)
+    }
+  }
+
+  @Test
+  fun `do not swallow exceptions - error3 in handler`() {
+    val promise = AsyncPromise<String>()
+    val promise2 = promise
+      .onSuccess {
+        throw ProcessCanceledException()
       }
     promise.setResult("foo")
     assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
