@@ -32,7 +32,7 @@ internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
       buttonGroup {
         getUpdateMethods().forEach { method ->
           row {
-            radioButton(method.getPresentation()).withSelectedBinding(PropertyBinding(
+            radioButton(method.presentation).withSelectedBinding(PropertyBinding(
               get = { settings.updateMethod == method },
               set = { selected -> if (selected) settings.updateMethod = method }
             ))
