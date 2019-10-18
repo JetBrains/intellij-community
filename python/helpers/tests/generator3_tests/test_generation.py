@@ -17,6 +17,7 @@ from generator3.constants import (
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
     STATE_FILE_NAME)
+from generator3.core import file_modification_timestamp
 from generator3.util_methods import ignored_os_errors, mkdir
 from generator3_tests import GeneratorTestCase, python2_only, python3_only, test_data_dir
 
@@ -465,8 +466,8 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.2')
 
     def test_existing_updated_due_to_modified_binary(self):
-        mod1_mtime = os.stat(self.get_test_data_path('binaries/mod1.so')).st_mtime
-        mod2_mtime = os.stat(self.get_test_data_path('binaries/mod2.so')).st_mtime
+        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -487,8 +488,8 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.2')
 
     def test_failed_updated_due_to_modified_binary(self):
-        mod1_mtime = os.stat(self.get_test_data_path('binaries/mod1.so')).st_mtime
-        mod2_mtime = os.stat(self.get_test_data_path('binaries/mod2.so')).st_mtime
+        mod1_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod1.so'))
+        mod2_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod2.so'))
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -507,6 +508,22 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
         self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.1')
+
+    def test_failed_skeleton_skipped(self):
+        mod_mtime = file_modification_timestamp(self.get_test_data_path('binaries/mod.so'))
+        state = {
+            'sdk_skeletons': {
+                'mod': {
+                    'gen_version': '0.1',
+                    'status': 'FAILED',
+                    'bin_mtime': mod_mtime
+                }
+            }
+        }
+        self.check_generator_output(extra_args=['--read-state-from-stdin', '--name-pattern', 'mod'],
+                                    gen_version='0.1',
+                                    custom_required_gen=True,
+                                    input=json.dumps(state))
 
     def test_non_existing_skeleton(self):
         state = {
