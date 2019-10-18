@@ -22,6 +22,7 @@ public final class MavenIcons {
 
   /** 12x12 */ public static final Icon ChildrenProjects = load("/images/childrenProjects.svg");
   /** 16x16 */ public static final Icon ExecuteMavenGoal = load("/images/executeMavenGoal.svg");
+  /** 16x16 */ public static final Icon MavenLoadChanges = load("/images/mavenLoadChanges.svg");
   /** 16x16 */ public static final Icon MavenPlugin = load("/images/mavenPlugin.svg");
   /** 16x16 */ public static final Icon MavenProject = load("/images/mavenProject.svg");
   /** 16x16 */ public static final Icon ModulesClosed = load("/images/modulesClosed.svg");

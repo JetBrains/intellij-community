@@ -22,6 +22,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Amend = load("/actions/amend.svg");
     /** 16x16 */ public static final Icon Annotate = load("/actions/annotate.svg");
     /** 16x16 */ public static final Icon Back = load("/actions/back.svg");
+    /** 16x16 */ public static final Icon BuildLoadChanges = load("/actions/buildLoadChanges.svg");
     /** 16x16 */ public static final Icon Cancel = load("/actions/cancel.svg");
     /** 16x16 */ public static final Icon ChangeView = load("/actions/changeView.svg");
     /** 12x12 */ public static final Icon Checked = load("/actions/checked.svg");
