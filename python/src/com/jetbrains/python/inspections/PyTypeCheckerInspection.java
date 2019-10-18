@@ -63,6 +63,9 @@ public class PyTypeCheckerInspection extends PyInspection {
     @Override
     public void visitPySubscriptionExpression(PySubscriptionExpression node) {
       // TODO: Support slice PySliceExpressions
+      // Type check in TypedDict subscription expressions cannot be properly done because each key should have its own value type,
+      // so this case is covered by PyTypedDictInspection
+      if (myTypeEvalContext.getType(node.getOperand()) instanceof PyTypedDictType) return;
       checkCallSite(node);
     }
 
