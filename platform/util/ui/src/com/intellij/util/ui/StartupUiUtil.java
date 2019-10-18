@@ -15,7 +15,6 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
@@ -27,10 +26,8 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
-public class StartupUiUtil {
+public final class StartupUiUtil {
   private static String ourSystemLaFClassName;
   private static volatile StyleSheet ourDefaultHtmlKitCss;
 
@@ -96,7 +93,6 @@ public class StartupUiUtil {
     activity.end();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
   }
@@ -125,7 +121,7 @@ public class StartupUiUtil {
     }
   }
 
-  protected static int normalizeLcdContrastValue(int lcdContrastValue) {
+  static int normalizeLcdContrastValue(int lcdContrastValue) {
     return (lcdContrastValue < 100 || lcdContrastValue > 250) ? 140 : lcdContrastValue;
   }
 
@@ -209,7 +205,7 @@ public class StartupUiUtil {
     drawImage(g, image, x, y, width, height, null, observer);
   }
 
-  private static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op, ImageObserver observer) {
+  static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op, ImageObserver observer) {
     Rectangle srcBounds = width >= 0 && height >= 0 ? new Rectangle(x, y, width, height) : null;
     drawImage(g, image, new Rectangle(x, y, width, height), srcBounds, op, observer);
   }
@@ -230,8 +226,7 @@ public class StartupUiUtil {
                                @NotNull Image image,
                                @Nullable Rectangle dstBounds,
                                @Nullable Rectangle srcBounds,
-                               @Nullable ImageObserver observer)
-  {
+                               @Nullable ImageObserver observer) {
     drawImage(g, image, dstBounds, srcBounds, null, observer);
   }
 
@@ -336,24 +331,6 @@ public class StartupUiUtil {
 
   public static Font getLabelFont() {
     return UIManager.getFont("Label.font");
-  }
-
-  /** @see UIUtil#dispatchAllInvocationEvents() */
-  @TestOnly
-  public static void pump() {
-    assert !SwingUtilities.isEventDispatchThread();
-    final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      //noinspection CollectionAddedToSelf
-      queue.offer(queue);
-    });
-    try {
-      queue.take();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public static boolean isDialogFont(@NotNull Font font) {

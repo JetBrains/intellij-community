@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons.Ide.Shadow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +17,7 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Alexander Lobas
  */
-public class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
+public final class NotificationBalloonShadowBorderProvider implements BalloonImpl.ShadowBorderProvider {
   private static final Insets INSETS = new JBInsets(4, 6, 8, 6);
   private final Color myFillColor;
   private final Color myBorderColor;
@@ -113,10 +100,10 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
     if (calcLength < length) {
       ImageIcon imageIcon = (ImageIcon)IconLoader.getIconSnapshot(icon);
       if (horizontal) {
-        UIUtil.drawImage(g, imageIcon.getImage(),
-                         new Rectangle(lastValue, start2, length - calcLength, imageIcon.getIconHeight()),
-                         new Rectangle(0, 0, length - calcLength, imageIcon.getIconHeight()),
-                         component);
+        StartupUiUtil.drawImage(g, imageIcon.getImage(),
+                                new Rectangle(lastValue, start2, length - calcLength, imageIcon.getIconHeight()),
+                                new Rectangle(0, 0, length - calcLength, imageIcon.getIconHeight()),
+                                component);
       }
       else {
         UIUtil.drawImage(g, imageIcon.getImage(),

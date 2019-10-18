@@ -1871,7 +1871,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
     if (buffer != null) {
       Rectangle rect = getContentComponent().getVisibleRect();
-      UIUtil.drawImage(g, buffer, null, rect.x, rect.y);
+      StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
       return;
     }
 

@@ -3,7 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
@@ -27,7 +27,7 @@ public final class TestRunnerUtil {
     // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
     // so we have to wait through its agony to termination
     try {
-      StartupUiUtil.pump();
+      UIUtil.pump();
       SwingUtilities.invokeAndWait(() -> IdeEventQueue.getInstance());
       SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
       SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());

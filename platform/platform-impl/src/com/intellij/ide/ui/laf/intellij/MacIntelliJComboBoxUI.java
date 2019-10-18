@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
@@ -10,6 +10,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
+public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static final Icon ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, false));
   private static final Icon EDITABLE_ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, true));
 
@@ -59,7 +60,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
         Icon icon = LafIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
-          UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
+          StartupUiUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
         }
         else {
           icon.paintIcon(this, g, 0, 0);

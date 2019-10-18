@@ -4,8 +4,8 @@ package com.intellij.util.ui.standalone;
 import com.intellij.idea.StartupUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TestScaleHelper;
-import com.intellij.util.ui.UIUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,7 +30,7 @@ public class HidpiPropTest {
     Graphics2D g = TestScaleHelper.createGraphics(2);
 
     Assert.assertFalse(UI_SCALE_PROP + " should be disabled", SystemProperties.is(UI_SCALE_PROP));
-    Assert.assertFalse("hidpi should be disabled", UIUtil.isJreHiDPI());
+    Assert.assertFalse("hidpi should be disabled", StartupUiUtil.isJreHiDPI());
     Assert.assertFalse("hidpi should be disabled", JreHiDpiUtil.isJreHiDPI(g));
   }
 }

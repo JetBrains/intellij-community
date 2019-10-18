@@ -56,6 +56,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ImageObserver;
 import java.awt.image.RGBImageFilter;
 import java.awt.print.PrinterGraphics;
 import java.beans.PropertyChangeListener;
@@ -71,14 +73,15 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
 /**
  * @author max
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
-public final class UIUtil extends StartupUiUtil {
-
+public final class UIUtil {
   static {
     LoadingState.LAF_INITIALIZED.checkOccurred();
   }
@@ -828,13 +831,13 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Font getFont(@NotNull FontSize size, @Nullable Font base) {
-    if (base == null) base = getLabelFont();
+    if (base == null) base = StartupUiUtil.getLabelFont();
 
     return base.deriveFont(getFontSize(size));
   }
 
   public static float getFontSize(@NotNull FontSize size) {
-    int defSize = getLabelFont().getSize();
+    int defSize = StartupUiUtil.getLabelFont().getSize();
     switch (size) {
       case SMALL:
         return Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
@@ -1390,20 +1393,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Font getToolbarFont() {
-    return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : getLabelFont();
-  }
-
-  /**
-   * @deprecated GTK Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isMurrineBasedTheme() {
-    final String gtkTheme = getGtkThemeName();
-    return "Ambiance".equalsIgnoreCase(gtkTheme) ||
-           "Radiance".equalsIgnoreCase(gtkTheme) ||
-           "Dust".equalsIgnoreCase(gtkTheme) ||
-           "Dust Sand".equalsIgnoreCase(gtkTheme);
+    return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : StartupUiUtil.getLabelFont();
   }
 
   @NotNull
@@ -1488,7 +1478,7 @@ public final class UIUtil extends StartupUiUtil {
     }
 
     // add label font (if isn't listed among above)
-    Font labelFont = getLabelFont();
+    Font labelFont = StartupUiUtil.getLabelFont();
     if (labelFont != null && FontUtil.isValidFont(labelFont)) {
       result.add(familyName ? labelFont.getFamily() : labelFont.getName());
     }
@@ -1499,11 +1489,6 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static String[] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
-  }
-
-  @Deprecated
-  public static boolean isValidFont(@NotNull Font font) {
-    return FontUtil.isValidFont(font);
   }
 
   public static void setupEnclosingDialogBounds(@NotNull final JComponent component) {
@@ -1814,7 +1799,7 @@ public final class UIUtil extends StartupUiUtil {
    */
   @NotNull
   public static BufferedImage createImage(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
-    if (isJreHiDPI(ctx)) {
+    if (StartupUiUtil.isJreHiDPI(ctx)) {
       return RetinaImage.create(ctx, width, height, type, rm);
     }
     //noinspection UndesirableClassUsage
@@ -2228,7 +2213,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Font getTitledBorderFont() {
-    return getLabelFont();
+    return StartupUiUtil.getLabelFont();
   }
 
   /**
@@ -2367,7 +2352,7 @@ public final class UIUtil extends StartupUiUtil {
   @NonNls
   public static String toHtml(@NotNull String html, final int hPadding) {
     html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
-    Font font = getLabelFont();
+    Font font = StartupUiUtil.getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : JBUIScale.scale(11);
     return "<html><style>body { font-family: "
@@ -3079,7 +3064,7 @@ public final class UIUtil extends StartupUiUtil {
       return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
     }
     else {
-      return normalizeLcdContrastValue(lcdContrastValue);
+      return StartupUiUtil.normalizeLcdContrastValue(lcdContrastValue);
     }
   }
 
@@ -3276,12 +3261,12 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static String rightArrow() {
-    return FontUtil.rightArrow(getLabelFont());
+    return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
 
   @NotNull
   public static String upArrow(@NotNull String defaultValue) {
-    return FontUtil.upArrow(getLabelFont(), defaultValue);
+    return FontUtil.upArrow(StartupUiUtil.getLabelFont(), defaultValue);
   }
 
   /**
@@ -3504,7 +3489,7 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static Font getListFont() {
     Font font = UIManager.getFont("List.font");
-    return font != null ? font : getLabelFont();
+    return font != null ? font : StartupUiUtil.getLabelFont();
   }
 
   // background
@@ -3606,7 +3591,7 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static Font getTreeFont() {
     Font font = UIManager.getFont("Tree.font");
-    return font != null ? font : getLabelFont();
+    return font != null ? font : StartupUiUtil.getLabelFont();
   }
 
   // background
@@ -3850,6 +3835,54 @@ public final class UIUtil extends StartupUiUtil {
         component.removeFocusListener(focusListener);
         component.removeHierarchyListener(hierarchyListener);
       });
+    }
+  }
+
+  public static Font getLabelFont() {
+    return StartupUiUtil.getLabelFont();
+  }
+
+  public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, @Nullable ImageObserver observer) {
+    StartupUiUtil.drawImage(g, image, x, y, null);
+  }
+
+  @NotNull
+  public static Point getCenterPoint(@NotNull Dimension container, @NotNull Dimension child) {
+    return StartupUiUtil.getCenterPoint(container, child);
+  }
+
+  @NotNull
+  public static Point getCenterPoint(@NotNull Rectangle container, @NotNull Dimension child) {
+    return StartupUiUtil.getCenterPoint(container, child);
+  }
+
+  public static void drawImage(@NotNull Graphics g,
+                               @NotNull Image image,
+                               @Nullable Rectangle dstBounds,
+                               @Nullable Rectangle srcBounds,
+                               @Nullable ImageObserver observer) {
+    StartupUiUtil.drawImage(g, image, dstBounds, srcBounds, null, observer);
+  }
+
+  public static void drawImage(@NotNull Graphics g, @NotNull BufferedImage image, @Nullable BufferedImageOp op, int x, int y) {
+    StartupUiUtil.drawImage(g, image, x, y, -1, -1, op, null);
+  }
+
+  /** @see UIUtil#dispatchAllInvocationEvents() */
+  @TestOnly
+  public static void pump() {
+    assert !SwingUtilities.isEventDispatchThread();
+    final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(() -> {
+      //noinspection CollectionAddedToSelf
+      queue.offer(queue);
+    });
+    try {
+      queue.take();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 }
