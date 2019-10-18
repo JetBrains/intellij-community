@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseProgramRunner<Settings extends RunnerSettings> implements ProgramRunner<Settings> {
   @Override
   @Nullable
-  public Settings createConfigurationData(ConfigurationInfoProvider settingsProvider) {
+  public Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider) {
     return null;
   }
 

@@ -487,7 +487,8 @@
                     area="IDEA_PROJECT"/>
 
     <extensionPoint name="programRunner"
-                    interface="com.intellij.execution.runners.ProgramRunner"/>
+                    interface="com.intellij.execution.runners.ProgramRunner"
+                    dynamic="true"/>
 
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 

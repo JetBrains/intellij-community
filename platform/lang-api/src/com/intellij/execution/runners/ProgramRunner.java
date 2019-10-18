@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @see GenericProgramRunner
  */
 public interface ProgramRunner<Settings extends RunnerSettings> {
-  ExtensionPointName<ProgramRunner<RunnerSettings>> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
+  ExtensionPointName<ProgramRunner<? extends RunnerSettings>> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
 
   interface Callback {
     void processStarted(RunContentDescriptor descriptor);
@@ -45,9 +45,9 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
 
   @Nullable
   static ProgramRunner<RunnerSettings> getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
-    for (ProgramRunner<RunnerSettings> runner : PROGRAM_RUNNER_EP.getExtensionList()) {
+    for (ProgramRunner<? extends RunnerSettings> runner : PROGRAM_RUNNER_EP.getExtensionList()) {
       if (runner.canRun(executorId, settings)) {
-        return runner;
+        return (ProgramRunner<RunnerSettings>)runner;
       }
     }
     return null;
@@ -77,7 +77,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    * @return the per-runner settings, or null if this runner doesn't use any per-runner settings.
    */
   @Nullable
-  Settings createConfigurationData(ConfigurationInfoProvider settingsProvider);
+  Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider);
 
   void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
     throws RuntimeConfigurationException;
