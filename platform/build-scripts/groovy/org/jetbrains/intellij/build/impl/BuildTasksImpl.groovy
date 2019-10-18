@@ -787,7 +787,7 @@ idea.fatal.error.notification=disabled
 
     if (includeBinAndRuntime) {
       def propertiesFile = patchIdeaPropertiesFile()
-      OsSpecificDistributionBuilder builder;
+      OsSpecificDistributionBuilder builder
       switch (currentOs) {
         case OsFamily.WINDOWS:
           builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, patchedApplicationInfo)
@@ -801,9 +801,15 @@ idea.fatal.error.notification=disabled
       }
       builder.copyFilesForOsDistribution(targetDirectory)
       def jbrTargetDir = buildContext.bundledJreManager.extractJre(currentOs)
-      buildContext.ant.move(todir: targetDirectory) {
-        fileset(dir: jbrTargetDir)
+      if (currentOs == OsFamily.WINDOWS) {
+        buildContext.ant.move(todir: targetDirectory) {
+          fileset(dir: jbrTargetDir)
+        }
       }
+      else {
+        buildContext.ant.exec(command: "/bin/sh -c 'mv \"$jbrTargetDir\"/* \"$targetDirectory\"'")
+      }
+
       def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       buildContext.ant.chmod(perm: "755") {
         fileset(dir: targetDirectory) {
