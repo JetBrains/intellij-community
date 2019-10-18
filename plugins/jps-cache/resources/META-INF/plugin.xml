@@ -3,6 +3,7 @@
   <vendor>JetBrains</vendor>
   <name>JPS Cache</name>
 
+  <depends>Git4Idea</depends>
   <description><![CDATA[
   Adds support for working with JPS portable caches
 ]]></description>
