@@ -7,11 +7,11 @@ import java.util.*
 /**
  * Creates a metric without any event data, e.g.
  *
- * "has.dockerfile"
+ * eventId="has.dockerfile"
  *
  * This type of metric is not recommended, before using it consider:
- * * merging this metric with another one, e.g. "has.config.file" -> "type":"dockerfile" or "type":"docker-compose.yml";
- * * adding more information about this metric, e.g. "has.dockerfile" -> "version":"2.3", "location":"project.root";
+ * * merging this metric with another one, e.g. eventId="has.config.file", eventData={"type":"dockerfile"} or eventData={"type":"docker-compose.yml"};
+ * * adding more information about this metric, e.g. eventId="has.dockerfile", eventData={"version":"2.3", "location":"project.root"};
  */
 @StatisticsEventProvider(eventIdIndex = 0)
 fun newMetric(eventId: String): MetricEvent {
@@ -21,8 +21,8 @@ fun newMetric(eventId: String): MetricEvent {
 /**
  * Creates a multi-dimensional metric or a metric with a single but common event data, e.g.
  *
- * "breakpoint" -> "type":"line", "lang":"Java", "count":5,
- * "gradle" -> "version":"2.3.1"
+ * eventId="breakpoint", eventData={"type":"line", "lang":"Java", "count":5}
+ * eventId="gradle", eventData={"version":"2.3.1"}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 1)
 fun newMetric(eventId: String, data: FeatureUsageData?): MetricEvent {
@@ -32,7 +32,7 @@ fun newMetric(eventId: String, data: FeatureUsageData?): MetricEvent {
 /**
  * Creates a enum-like string metrics, e.g.
  *
- * "upload.files" -> "value":"ON_SAVE"
+ * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
 @StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: String): MetricEvent {
@@ -42,7 +42,7 @@ fun newMetric(eventId: String, value: String): MetricEvent {
 /**
  * Creates a enum-like string metrics, e.g.
  *
- * "upload.files" -> "value":"ON_SAVE"
+ * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: String, data: FeatureUsageData?): MetricEvent {
@@ -53,7 +53,7 @@ fun newMetric(eventId: String, value: String, data: FeatureUsageData?): MetricEv
 /**
  * Creates a metric with enum value, e.g.
  *
- * "upload.files" -> "value":"ON_SAVE"
+ * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
 @StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: Enum<*>?): MetricEvent {
@@ -63,7 +63,7 @@ fun newMetric(eventId: String, value: Enum<*>?): MetricEvent {
 /**
  * Creates a metric with enum value, e.g.
  *
- * "upload.files" -> "value":"ON_SAVE"
+ * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: Enum<*>?, data: FeatureUsageData?): MetricEvent {
@@ -75,7 +75,7 @@ fun newMetric(eventId: String, value: Enum<*>?, data: FeatureUsageData?): Metric
 /**
  * Creates a metric with numerical value, e.g.
  *
- * "allowed.connections" -> "value":3
+ * eventId="allowed.connections", eventData={"value":3}
  */
 @StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(eventId: String, value: Int): MetricEvent {
@@ -85,7 +85,7 @@ fun newMetric(eventId: String, value: Int): MetricEvent {
 /**
  * Creates a metric with numerical value, e.g.
  *
- * "allowed.connections" -> "value":3
+ * eventId="allowed.connections", eventData={"value":3}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(eventId: String, value: Int, data: FeatureUsageData?): MetricEvent {
@@ -96,7 +96,7 @@ fun newMetric(eventId: String, value: Int, data: FeatureUsageData?): MetricEvent
 /**
  *  Creates a metric with numerical value, e.g.
  *
- * "line.spacing" -> "value":1.2
+ * eventId="line.spacing", eventData={"value":1.2}
  */
 @StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#float"])
 fun newMetric(eventId: String, value: Float): MetricEvent {
@@ -106,7 +106,7 @@ fun newMetric(eventId: String, value: Float): MetricEvent {
 /**
  * Creates a metric with numerical value, e.g.
  *
- * "line.spacing" -> "value":1.2
+ * eventId="line.spacing", eventData={"value":1.2}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#float"])
 fun newMetric(eventId: String, value: Float, data: FeatureUsageData?): MetricEvent {
@@ -117,7 +117,7 @@ fun newMetric(eventId: String, value: Float, data: FeatureUsageData?): MetricEve
 /**
  * Creates a metric with information about a boolean setting, if it's enabled or disabled, e.g.
  *
- * "font.ligatures" -> "enabled":true
+ * eventId="font.ligatures", eventData={"enabled":true}
  */
 @StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(eventId: String, enabled: Boolean): MetricEvent {
@@ -127,7 +127,7 @@ fun newBooleanMetric(eventId: String, enabled: Boolean): MetricEvent {
 /**
  * Creates a metric with information about a boolean setting, if it's enabled or disabled, e.g.
  *
- * "font.ligatures" -> "enabled":true
+ * eventId="font.ligatures", eventData={"enabled":true}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(eventId: String, enabled: Boolean, data: FeatureUsageData?): MetricEvent {
@@ -138,7 +138,7 @@ fun newBooleanMetric(eventId: String, enabled: Boolean, data: FeatureUsageData?)
 /**
  * Creates a general boolean metric, e.g.
  *
- * "tool.is.under.project.root" -> "value":true
+ * eventId="tool.is.under.project.root", eventData={"value":true}
  */
 @StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(eventId: String, value: Boolean): MetricEvent {
@@ -148,7 +148,7 @@ fun newMetric(eventId: String, value: Boolean): MetricEvent {
 /**
  * Creates a general boolean metric, e.g.
  *
- * "tool.is.under.project.root" -> "value":true
+ * eventId="tool.is.under.project.root", eventData={"value":true}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(eventId: String, value: Boolean, data: FeatureUsageData? = null): MetricEvent {
@@ -159,7 +159,7 @@ fun newMetric(eventId: String, value: Boolean, data: FeatureUsageData? = null): 
 /**
  * Creates a metric with information about the number of elements in the group, e.g.
  *
- * "source_roots" -> "count":3
+ * eventId="source_roots", eventData={"count":3}
  */
 @StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(eventId: String, count: Int): MetricEvent {
@@ -169,7 +169,7 @@ fun newCounterMetric(eventId: String, count: Int): MetricEvent {
 /**
  * Creates a metric with information about the number of elements in the group, e.g.
  *
- * "source_roots" -> "count":3
+ * eventId="source_roots", eventData={"count":3}
  */
 @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(eventId: String, count: Int, data: FeatureUsageData?): MetricEvent {

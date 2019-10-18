@@ -92,10 +92,16 @@ fun findPluginTypeByValue(value: String): PluginType? {
 
 class PluginInfo(val type: PluginType, val id: String?) {
 
+  /**
+   * @return true if code is from IntelliJ platform or JB plugin.
+   */
   fun isDevelopedByJetBrains(): Boolean {
     return type.isDevelopedByJetBrains()
   }
 
+  /**
+   * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
+   */
   fun isSafeToReport(): Boolean {
     return type.isSafeToReport()
   }

@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
+import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
+import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -14,6 +17,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * <p>
+ *   Base class for custom validation rules.
+ *   If your data cannot be validated with enumerated values or by a regexp,
+ *   inherit the class and implement {@link CustomWhiteListRule#doValidate(String, EventContext)}.
+ *   For more information see {@link SensitiveDataValidator}.
+ * </p>
+ *
+ * <p><i>Example:</i> {@link ClassNameRuleValidator}, {@link LangCustomRuleValidator}, etc.</p>
+ *
+ * @see SensitiveDataValidator
+ */
 public abstract class CustomWhiteListRule extends PerformanceCareRule implements FUSRule {
   public static final ExtensionPointName<CustomWhiteListRule> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.validation.customWhiteListRule");

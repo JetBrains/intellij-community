@@ -1,10 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator;
 
+import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
@@ -20,6 +26,77 @@ import java.util.concurrent.ConcurrentMap;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
+/**
+ * <p>
+ *   The data from all collectors is validated before it's recorded locally.
+ *   It's necessary to make sure that the data is correct and it doesn't contain personal or proprietary information.<br/>
+ *   Validation is performed right before logging in {@link SensitiveDataValidator#guaranteeCorrectEventId(EventLogGroup, EventContext)}
+ *   and {@link SensitiveDataValidator#guaranteeCorrectEventData(EventLogGroup, EventContext)}.<br/>
+ * </p>
+ *
+ * <p>
+ *   Therefore, each collector should define data scheme and rules which will be used in validation.<br/>
+ *   Rules are stored in a separate repository, IDE loads rules from the server during runtime.<br/>
+ *   To register rules for a new group or change existing ones, create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a>.
+ * </p>
+ *
+ * <p>
+ * There are 3 types of rules:
+ * <ol>
+ *     <li>
+ *       <b>Enum</b>: a list of possible values, e.g.
+ *       <i>"{enum:started|finished}"</i> checks that the value is equal to 'started' or 'finished'.<br/>
+ *      See: {@link EnumWhiteListRule}
+ *     </li>
+ *     <li>
+ *       <b>Regexp</b>: e.g. <i>"{regexp#integer}</i> checks that the value is integer.<br/>
+ *       See: {@link RegexpWhiteListRule}
+ *     </li>
+ *     <li>
+ *       <b>Custom rule</b>: class which inherits {@link CustomWhiteListRule} and validates dynamic data like action id or file type, e.g.
+ *       <i>"{util#class_name}"</i> checks that the value is a class name from platform, JB plugin or a plugin from JB plugin repository.<br/>
+ *       See: {@link ClassNameRuleValidator}
+ *     </li>
+ * </ol>
+ * </p>
+ *
+ * <p>
+ *   There is also a list of common event data fields which doesn't require validation
+ *   because they are always validated in {@link FeatureUsageData}, e.g. "plugin", "lang", etc.
+ * </p>
+ *
+ * <p>Example:</p>
+ * <ul>
+ * <li><i>"actions"</i> collector records invoked actions ({@link ActionsCollectorImpl}).<br/>
+ * It is validated by the following rules:
+ * <pre>
+ * {
+ *   "event_id" : [ "{enum:action.invoked|custom.action.invoked}" ],
+ *   "event_data" : {
+ *     "action_id" : [ "{util#action}" ],
+ *     "class" : [ "{util#class_name}" ],
+ *     "context_menu" : [ "{enum#boolean}" ],
+ *     "current_file" : [ "{util#current_file}" ],
+ *     "input_event" : [ "{util#shortcut}" ],
+ *     "place" : [ "{util#place}" ],
+ *     "plugin" : [ "{util#plugin}" ],
+ *     "plugin_type" : [ "{util#plugin_type}" ]
+ *   }
+ * }
+ * </pre></li>
+ *
+ * <li><i>"file.types"</i> collector records information about project files ({@link FileTypeUsagesCollector}).<br/>
+ * It is validated by the following rules:
+ * <pre>
+ * {
+ *   "event_id" : ["{enum:file.in.project}" ],
+ *   "event_data" : {
+ *     "file_type" : [ "{util#file_type}" ]
+ *   }
+ * }
+ * </pre></li>
+ * </ul>
+ */
 public class SensitiveDataValidator {
   private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = ContainerUtil.newConcurrentMap();
   @NotNull

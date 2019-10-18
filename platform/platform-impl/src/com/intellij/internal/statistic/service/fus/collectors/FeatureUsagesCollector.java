@@ -10,6 +10,12 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * <p>Use it to create a collector which records IDE/project state.</p>
+ *
+ * @see ApplicationUsagesCollector
+ * @see ProjectUsagesCollector
+ */
 public abstract class FeatureUsagesCollector {
   private static final String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
 

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.validator.rules;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PerformanceCareRule implements FUSRule {
@@ -23,6 +24,19 @@ public abstract class PerformanceCareRule implements FUSRule {
     return resultType;
   }
 
+  /**
+   * <p>Validates event id and event data before recording it locally. Used to ensure that no personal or proprietary data is recorded.<p/>
+   *
+   * <ul>
+   *     <li>{@link ValidationResultType#ACCEPTED} - data is checked and should be recorded as is;</li>
+   *     <li>{@link ValidationResultType#THIRD_PARTY} - data is correct but is implemented in an unknown third-party plugin, e.g. third-party file type<br/>
+   *     {@link PluginInfo#isDevelopedByJetBrains()}, {@link PluginInfo#isSafeToReport()};</li>
+   *     <li>{@link ValidationResultType#REJECTED} - unexpected data, e.g. cannot find run-configuration by provided id;</li>
+   * </ul>
+   *
+   * @param data what is validated. Event id or the value of event data field.
+   * @param context whole event context, i.e. both event id and event data.
+   */
   @NotNull
   protected abstract ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context);
 }

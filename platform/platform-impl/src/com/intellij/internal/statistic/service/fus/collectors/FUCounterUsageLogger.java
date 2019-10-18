@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
@@ -20,9 +21,24 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <p>Used to record IDE events, e.g. invoked action, opened dialog.</p><br/>
  *
- * <p>To record IDE/project state use {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector}<p/>
+ * <p>Use it to record IDE events e.g. invoked action, opened dialog.</p><br/>
+ *
+ * To implement a new collector:
+ * <ol>
+ *   <li>Record events with {@link FUCounterUsageLogger#logEvent(Project, String, String)},
+ *   {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
+ *   {@link FUCounterUsageLogger#logEvent(String, String)} or
+ *   {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)};
+ *   </li>
+ *   <li>Register collector in XML as {@code <statistics.counterUsagesCollector groupId="ID" version="VERSION"/>};</li>
+ *   <li>Specify collectors data scheme and implement custom validation rules if necessary.<br/>
+ *   For more information see {@link SensitiveDataValidator};</li>
+ *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> to add group, its data scheme and description to the whitelist;</li>
+ * </ol>
+ *
+ * @see ApplicationUsagesCollector
+ * @see ProjectUsagesCollector
  */
 public class FUCounterUsageLogger {
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
