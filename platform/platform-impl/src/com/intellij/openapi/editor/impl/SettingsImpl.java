@@ -71,7 +71,6 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsInnerWhitespacesShown               = null;
   private Boolean myIsTrailingWhitespacesShown            = null;
   private Boolean myIndentGuidesShown                     = null;
-  private Boolean myIsStringContentIndentShown            = null;
   private Boolean myIsAnimatedScrolling                   = null;
   private Boolean myIsAdditionalPageAtBottom              = null;
   private Boolean myIsDndEnabled                          = null;
@@ -181,21 +180,6 @@ public class SettingsImpl implements EditorSettings {
     if (newValue.equals(myIndentGuidesShown)) return;
 
     myIndentGuidesShown = newValue;
-    fireEditorRefresh();
-  }
-
-  @Override
-  public boolean isStringContentIndentGuideShown() {
-    return myIsStringContentIndentShown != null
-           ? myIsStringContentIndentShown.booleanValue()
-           : EditorSettingsExternalizable.getInstance().isStringContentIndentGuideShown();
-  }
-
-  @Override
-  public void setStringContentIndentGuideShown(boolean val) {
-    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
-    if (newValue.equals(myIsStringContentIndentShown)) return;
-    myIsStringContentIndentShown = newValue;
     fireEditorRefresh();
   }
 
