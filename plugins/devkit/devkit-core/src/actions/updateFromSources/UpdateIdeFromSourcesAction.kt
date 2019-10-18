@@ -249,9 +249,10 @@ open class UpdateIdeFromSourcesAction
     }
 
     val command = if (SystemInfo.isMac) arrayOf(
-      "rm -rf \"$workIdeHome\"/lib",
-      "rm -rf \"$workIdeHome\"/plugins",
-      "cp -r \"$builtDistPath\"/* \"$workIdeHome\""
+      "rm -rf \"$workIdeHome\"/*",
+      // Historic versions of the cp utility had a -r option. Mac's implementation supports that option, 
+      // however, its use is strongly discouraged, as it does not correctly copy special files, symbolic links, or fifo's.
+      "cp -R \"$builtDistPath\"/* \"$workIdeHome\""
     )
     else arrayOf(
       "rm -rf \"$workIdeHome\"/*",
