@@ -444,6 +444,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  private static PyType getTypedDictTypeForTarget(@NotNull PyTargetExpression referenceTarget, @NotNull TypeEvalContext context) {
+    if (PyTypedDictTypeProvider.Companion.isTypedDict(referenceTarget, context)) {
+      return new PyCustomType(TYPED_DICT, null, false, true,
+                              PyBuiltinCache.getInstance(referenceTarget).getDictType());
+    }
+
+    return null;
+  }
+
+  @Nullable
   private static PyType getNewTypeCreationForTarget(@NotNull PyTargetExpression referenceTarget, @NotNull TypeEvalContext context) {
     final PyTargetExpressionStub stub = referenceTarget.getStub();
     if (stub != null) {
@@ -511,6 +521,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyType newType = getNewTypeCreationForTarget(target, context);
       if (newType != null) {
         return Ref.create(newType);
+      }
+
+      final PyType typedDictType = getTypedDictTypeForTarget(target, context);
+      if (typedDictType != null) {
+        return Ref.create(typedDictType);
       }
 
       final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
@@ -1003,11 +1018,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
 
     return null;
-  }
-
-  public static boolean isTypedDict(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    Collection<String> qualifiedNames = resolveToQualifiedNames(expression, context);
-    return qualifiedNames.stream().anyMatch(name -> TYPED_DICT.equals(name) || TYPED_DICT_EXT.equals(name));
   }
 
   public static boolean isFinal(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {

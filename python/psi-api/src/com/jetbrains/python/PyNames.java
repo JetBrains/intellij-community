@@ -203,8 +203,6 @@ public class PyNames {
   public static final String COLLECTIONS_NAMEDTUPLE_PY2 = COLLECTIONS + "." + NAMEDTUPLE;
   public static final String COLLECTIONS_NAMEDTUPLE_PY3 = COLLECTIONS + "." + INIT + "." + NAMEDTUPLE;
 
-  public static final String TYPED_DICT = "TypedDict";
-
   public static final String FORMAT = "format";
 
   public static final String ABSTRACTMETHOD = "abstractmethod";
