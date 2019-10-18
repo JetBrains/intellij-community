@@ -79,35 +79,10 @@ public class LicensePanel extends NonOpaquePanel {
     myPanel.setVisible(true);
   }
 
-  public void setTextFromStamp(@NotNull String stamp) {
+  public void setTextFromStamp(@NotNull String stamp, @Nullable Date expirationDate) {
+    long days = expirationDate == null ? 0 : DateFormatUtil.getDifferenceInDays(new Date(), expirationDate);
+
     if (stamp.startsWith("eval:")) {
-      long[] expTime = parseExpTime(StringUtil.substringAfter(stamp, ":"));
-      setTextFromStamp(true, expTime[0], expTime[1]);
-    }
-    else if (stamp.startsWith("key:")) {
-      setTextFromStamp(false, 0, 0);
-      // XXX: get exp time
-    }
-    else if (stamp.startsWith("stamp:")) {
-      setTextFromStamp(false, 0, 0);
-      // XXX: get exp time
-    }
-  }
-
-  @NotNull
-  private static long[] parseExpTime(@Nullable String timeValue) {
-    try {
-      long time = StringUtil.isEmpty(timeValue) ? 0 : Long.parseLong(timeValue);
-      long days = time == 0 ? 0 : (time - System.currentTimeMillis()) / DateFormatUtil.DAY_FACTOR;
-      return new long[]{time, days};
-    }
-    catch (NumberFormatException e) {
-      return new long[]{0, 0};
-    }
-  }
-
-  private void setTextFromStamp(boolean trial, long time, long days) {
-    if (trial) {
       if (days <= 0) {
         setText("Trial expired.", false, true);
       }
@@ -115,11 +90,11 @@ public class LicensePanel extends NonOpaquePanel {
         setText("Trial expires in " + days + " days.", days < 11, false);
       }
     }
-    else if (time == 0) {
+    else if (expirationDate == null) {
       setText("License is active.", false, false);
     }
     else if (days > 30) {
-      setText("License is active until " + PluginManagerConfigurable.DATE_FORMAT.format(new Date(time)) + ".", false, false);
+      setText("License is active until " + PluginManagerConfigurable.DATE_FORMAT.format(expirationDate) + ".", false, false);
     }
     else if (days <= 0) {
       setText("License expired.", false, true);

@@ -432,7 +432,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           myLicensePanel.setText("No license.", true, false);
         }
         else {
-          myLicensePanel.setTextFromStamp(stamp);
+          myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
         }
         //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
       }

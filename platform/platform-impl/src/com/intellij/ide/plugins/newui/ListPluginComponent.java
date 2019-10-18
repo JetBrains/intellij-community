@@ -282,7 +282,7 @@ public class ListPluginComponent extends JPanel {
       licensePanel.setText("No license.", true, false);
     }
     else {
-      licensePanel.setTextFromStamp(stamp);
+      licensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
     }
     setTagTooltip(licensePanel.getMessage());
 
