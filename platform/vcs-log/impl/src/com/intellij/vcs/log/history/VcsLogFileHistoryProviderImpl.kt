@@ -62,7 +62,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
       }
     }
 
-    findOrOpenFolderHistory(project, logManager, createHashFilter(hash, root), createPathsFilter(project, logManager.dataManager, paths)!!,
+    findOrOpenFolderHistory(project, createHashFilter(hash, root), createPathsFilter(project, logManager.dataManager, paths)!!,
                             historyUiConsumer)
   }
 
@@ -96,8 +96,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     consumer(fileHistoryUi!!, firstTime)
   }
 
-  private fun findOrOpenFolderHistory(project: Project, logManager: VcsLogManager,
-                                      hashFilter: VcsLogFilter, pathsFilter: VcsLogFilter,
+  private fun findOrOpenFolderHistory(project: Project, hashFilter: VcsLogFilter, pathsFilter: VcsLogFilter,
                                       consumer: (AbstractVcsLogUi, Boolean) -> Unit) {
     var ui = VcsLogContentUtil.findAndSelect(project, VcsLogUiImpl::class.java) { logUi ->
       matches(logUi.filterUi.filters, pathsFilter, hashFilter)
@@ -105,7 +104,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val firstTime = ui == null
     if (firstTime) {
       val filters = VcsLogFilterObject.collection(pathsFilter, hashFilter)
-      ui = VcsProjectLog.getInstance(project).tabsManager.openAnotherLogTab(logManager, filters)
+      ui = VcsProjectLog.getInstance(project).openLogTab(filters) ?: return
       ui.properties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, true)
     }
     consumer(ui!!, firstTime)

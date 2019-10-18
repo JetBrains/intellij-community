@@ -55,10 +55,9 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
     VcsLogUi logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogFilterCollection filters = Registry.is("vcs.log.copy.filters.to.new.tab") ? logUi.getFilterUi().getFilters()
                                                                                     : VcsLogFilterObject.collection();
-    VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(logManager, filters);
+    VcsProjectLog.getInstance(project).openLogTab(filters);
   }
 }

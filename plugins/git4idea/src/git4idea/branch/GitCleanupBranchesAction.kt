@@ -314,9 +314,9 @@ private class ShowBranchDiffAction : CleanupBranchesActionBase("Compare with Cur
     val branch = e.getData(GIT_BRANCH)!!
     val project = e.project!!
 
-    VcsLogContentUtil.runWhenLogIsReady(project) { log, logManager ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { log, _ ->
       val filters = VcsLogFilterObject.fromRange("HEAD", branch.branchName)
-      log.tabsManager.openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters))
+      log.openLogTab(VcsLogFilterObject.collection(filters))
     }
   }
 }

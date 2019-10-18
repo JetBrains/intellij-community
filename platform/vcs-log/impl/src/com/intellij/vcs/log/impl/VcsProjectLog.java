@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -111,6 +112,14 @@ public class VcsProjectLog implements Disposable {
   @NotNull
   public VcsLogTabsManager getTabsManager() {
     return myTabsManager;
+  }
+
+  @CalledInAwt
+  @Nullable
+  public VcsLogUiImpl openLogTab(@Nullable VcsLogFilterCollection filters) {
+    VcsLogManager logManager = getLogManager();
+    if (logManager == null) return null;
+    return myTabsManager.openAnotherLogTab(logManager, filters);
   }
 
   @CalledInAny

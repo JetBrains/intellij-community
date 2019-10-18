@@ -57,7 +57,7 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
-  public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
+  VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
     return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, filters);
   }
 

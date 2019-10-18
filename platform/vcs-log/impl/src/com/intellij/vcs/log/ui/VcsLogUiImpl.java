@@ -17,8 +17,11 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
@@ -141,14 +144,15 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       }
     });
     VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
-    VcsLogManager logManager = projectLog.getLogManager();
-    if (logManager != null && logManager.getDataManager() == myLogData) {
+    if (projectLog.getDataManager() == myLogData) {
       runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
-          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(logManager, VcsLogFilterObject.collection());
-          ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
-                            pack -> pack.getFilters().isEmpty());
+          VcsLogUiImpl ui = projectLog.openLogTab(VcsLogFilterObject.collection());
+          if (ui != null) {
+            ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
+                              pack -> pack.getFilters().isEmpty());
+          }
         }
       });
     }
