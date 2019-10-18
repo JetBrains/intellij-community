@@ -60,7 +60,7 @@ internal class GithubAccountsPanel(private val project: Project,
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     emptyText.apply {
       appendText("No GitHub accounts added.")
-      appendSecondaryText("Add account", SimpleTextAttributes.LINK_ATTRIBUTES, { addAccount() })
+      appendSecondaryText("Add account", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, { addAccount() })
       appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
     }
   }

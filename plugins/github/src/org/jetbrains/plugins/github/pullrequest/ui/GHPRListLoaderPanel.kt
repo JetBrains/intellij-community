@@ -44,13 +44,13 @@ internal class GHPRListLoaderPanel(listLoader: GHPRListLoader,
   override fun displayEmptyStatus(emptyText: StatusText) {
     if (listLoader.filterNotEmpty) {
       emptyText.text = "No pull requests matching filters. "
-      emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
+      emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
         resetFilter()
       }
     }
     else {
       emptyText.text = "No pull requests loaded. "
-      emptyText.appendSecondaryText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES) {
+      emptyText.appendSecondaryText("Refresh", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
         listLoader.reset()
       }
     }

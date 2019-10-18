@@ -80,12 +80,12 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
     emptyText.appendText(getErrorPrefix(!listLoader.hasLoadedItems), SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { listLoader.reset() }
+      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { listLoader.reset() }
   }
 
   protected open fun displayEmptyStatus(emptyText: StatusText) {
     emptyText.text = "List is empty "
-    emptyText.appendSecondaryText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES) {
+    emptyText.appendSecondaryText("Refresh", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       listLoader.reset()
     }
   }

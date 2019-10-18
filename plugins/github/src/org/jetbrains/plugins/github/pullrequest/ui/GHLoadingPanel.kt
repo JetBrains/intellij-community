@@ -67,7 +67,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
             .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
 
           resetHandler?.let {
-            content.emptyText.appendSecondaryText(" Retry", SimpleTextAttributes.LINK_ATTRIBUTES, it)
+            content.emptyText.appendSecondaryText(" Retry", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
             registerKeyboardAction(it, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
           }
         }
