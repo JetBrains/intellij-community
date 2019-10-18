@@ -77,6 +77,11 @@ public class SafeFileOutputStream extends OutputStream {
     myBuffer.write(b, off, len);
   }
 
+  public void abort() throws IOException {
+    myClosed = true;
+    deleteBackup(waitForBackup());
+  }
+
   @Override
   public void close() throws IOException {
     if (myClosed) return;

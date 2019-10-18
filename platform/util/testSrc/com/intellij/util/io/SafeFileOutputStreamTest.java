@@ -121,6 +121,19 @@ public class SafeFileOutputStreamTest {
     assertThat(target).isFile().hasBinaryContent(TEST_DATA);
   }
 
+  @Test public void abort() throws IOException {
+    File target = tempDir.newFile("dir/test.txt"), backup = new File(target.getParent(), target.getName() + TEST_BACKUP_EXT);
+    try (OutputStream out = openStream(target)) {
+      out.write(TEST_DATA);
+    }
+    assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+    try (SafeFileOutputStream out = openStream(target)) {
+      out.write(new byte[] {'b', 'y', 'e'});
+      out.abort();
+    }
+    assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+  }
+
   private static void checkWriteSucceed(File target) throws IOException {
     try (OutputStream out = openStream(target)) {
       out.write(TEST_DATA[0]);
