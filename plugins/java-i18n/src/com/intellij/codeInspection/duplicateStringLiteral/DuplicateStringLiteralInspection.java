@@ -71,7 +71,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
   }
 
   @NotNull
-  private static List<PsiLiteralExpression> findDuplicatedLiterals(@NotNull String stringToFind, @NotNull Project project, int minStringLength, boolean ignorePropertyKeys) {
+  private static List<PsiLiteralExpression> findDuplicateLiterals(@NotNull String stringToFind, @NotNull Project project, int minStringLength, boolean ignorePropertyKeys) {
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     final List<String> words = ContainerUtil.filter(StringUtil.getWordsInStringLongestFirst(stringToFind), s -> s.length() >= minStringLength);
     if (words.isEmpty()) return Collections.emptyList();
@@ -171,7 +171,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     Map<Trinity<String, Boolean, Integer>, List<PsiLiteralExpression>> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<Trinity<String, Boolean, Integer>, List<PsiLiteralExpression>> duplicates = ConcurrentFactoryMap.createMap(
         t -> {
-          return findDuplicatedLiterals(t.first, project, t.third, t.second);
+          return findDuplicateLiterals(t.first, project, t.third, t.second);
         });
       return CachedValueProvider.Result.create(duplicates, PsiModificationTracker.MODIFICATION_COUNT);
     });
