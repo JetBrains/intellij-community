@@ -78,7 +78,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
   @CalledInAwt
   private fun initLogUi(logManager: VcsLogManager) {
-    val ui = logManager.createLogUi("BRANCHES_LOG", true, false)
+    val ui = logManager.createLogUi("BRANCHES_LOG", VcsLogManager.LogWindowKind.TOOL_WINDOW, false)
     Disposer.register(this, ui)
     uiController.registerDataPackListener(logManager.dataManager)
     branchViewSplitter.secondComponent = VcsLogPanel(logManager, ui)

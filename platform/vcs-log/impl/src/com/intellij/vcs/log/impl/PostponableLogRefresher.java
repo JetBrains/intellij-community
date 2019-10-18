@@ -47,11 +47,6 @@ public class PostponableLogRefresher implements VcsLogRefresher {
     };
   }
 
-  @NotNull
-  public Disposable addLogWindow(@NotNull String id, @NotNull VisiblePackRefresher refresher) {
-    return addLogWindow(new VcsLogWindow(id, refresher));
-  }
-
   public static boolean keepUpToDate() {
     return Registry.is("vcs.log.keep.up.to.date") && !PowerSaveMode.isEnabled();
   }

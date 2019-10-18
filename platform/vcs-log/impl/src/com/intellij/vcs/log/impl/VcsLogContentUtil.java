@@ -130,7 +130,7 @@ public class VcsLogContentUtil {
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
                                                     @NotNull String tabGroupName, @NotNull String shortName,
                                                     @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
-    U logUi = logManager.createLogUi(factory, true);
+    U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(),
