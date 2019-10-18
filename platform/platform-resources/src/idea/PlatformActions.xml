@@ -1156,12 +1156,6 @@
               text="Show Editor Highlighter Tokens"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
 
-      <separator/>
-
-      <group id="Internal.CDS" popup="true" text="CDS">
-        <action id="installCDS" class="com.intellij.ide.cds.CDSEnableAction"/>
-        <action id="disableCDS" class="com.intellij.ide.cds.CDSDisableAction"/>
-      </group>
     </group>
 
     <group id="EditorContextBarMenu">
