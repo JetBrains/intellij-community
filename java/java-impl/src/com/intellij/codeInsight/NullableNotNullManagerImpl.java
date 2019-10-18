@@ -35,7 +35,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
   private final AnnotationPackageSupport[] myAnnotationSupports = {
-    new JetBrainsAnnotationsSupport(), new FindBugsAnnotationsSupport(), new AndroidAnnotationsSupport(),
+    new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
     new Jsr305Support(this), new CheckerFrameworkSupport()};
 
   private final List<String> myDefaultNullables =

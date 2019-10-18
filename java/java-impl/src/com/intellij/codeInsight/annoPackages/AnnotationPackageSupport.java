@@ -22,8 +22,8 @@ public interface AnnotationPackageSupport {
    * @return NullabilityAnnotationInfo object if given annotation is recognized default annotation; null otherwise
    */
   @Nullable
-  default NullabilityAnnotationInfo getNullabilityByContainerAnnotation(PsiAnnotation anno,
-                                                                        PsiAnnotation.TargetType[] types,
+  default NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                        @NotNull PsiAnnotation.TargetType[] types,
                                                                         boolean superPackage) {
     return null;
   }
@@ -33,7 +33,7 @@ public interface AnnotationPackageSupport {
    * @return list of explicit annotations which denote given nullability (and may denote additional semantics)
    */
   @NotNull
-  default List<String> getNullabilityAnnotations(Nullability nullability) {
+  default List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();
   }
 }

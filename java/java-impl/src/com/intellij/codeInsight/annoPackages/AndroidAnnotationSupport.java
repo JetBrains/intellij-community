@@ -8,10 +8,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AndroidAnnotationsSupport implements AnnotationPackageSupport {
+public class AndroidAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
-  public List<String> getNullabilityAnnotations(Nullability nullability) {
+  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     switch (nullability) {
       case NOT_NULL:
         return Arrays.asList("android.support.annotation.NonNull",

@@ -27,8 +27,8 @@ public class CheckerFrameworkSupport implements AnnotationPackageSupport {
 
   @Nullable
   @Override
-  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(PsiAnnotation anno,
-                                                                       PsiAnnotation.TargetType[] types,
+  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                       @NotNull PsiAnnotation.TargetType[] types,
                                                                        boolean superPackage) {
     String qName = anno.getQualifiedName();
     if (DEFAULT_QUALIFIER.equals(qName)) {
@@ -79,7 +79,7 @@ public class CheckerFrameworkSupport implements AnnotationPackageSupport {
 
   @NotNull
   @Override
-  public List<String> getNullabilityAnnotations(Nullability nullability) {
+  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     switch (nullability) {
       case NOT_NULL:
         return Arrays.asList("org.checkerframework.checker.nullness.qual.NonNull",

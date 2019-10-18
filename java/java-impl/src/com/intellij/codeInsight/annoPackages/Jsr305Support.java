@@ -24,8 +24,8 @@ public class Jsr305Support implements AnnotationPackageSupport {
 
   @Nullable
   @Override
-  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(PsiAnnotation annotation,
-                                                                       PsiAnnotation.TargetType[] placeTargetTypes,
+  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation annotation,
+                                                                       @NotNull PsiAnnotation.TargetType[] placeTargetTypes,
                                                                        boolean superPackage) {
     if (superPackage) return null;
     PsiClass declaration = resolveAnnotationType(annotation);
@@ -101,7 +101,7 @@ public class Jsr305Support implements AnnotationPackageSupport {
 
   @NotNull
   @Override
-  public List<String> getNullabilityAnnotations(Nullability nullability) {
+  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     switch (nullability) {
       case NOT_NULL:
         return Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
