@@ -18,6 +18,7 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
@@ -70,6 +71,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
 
   public static final class ServiceState {
     @NotNull
+    @OptionTag("requirementsPath")
     public String myRequirementsPath = DEFAULT_REQUIREMENTS_PATH;
   }
 
