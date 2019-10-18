@@ -2,7 +2,6 @@
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
-import com.intellij.idea.LoggerFactory
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.assertConcurrent
@@ -17,6 +16,7 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.fail
 
+@Suppress("UsePropertyAccessSyntax")
 class AsyncPromiseTest {
   @Test
   fun done() {
@@ -207,35 +207,37 @@ class AsyncPromiseTest {
   fun `do not swallow exceptions - error2 in handler`() {
     val oldFactory = Logger.getFactory()
     try {
-      Logger.setFactory({ object : Logger() {
-        override fun warn(message: String?, t: Throwable?) {
-        }
+      Logger.setFactory {
+        object : Logger() {
+          override fun warn(message: String?, t: Throwable?) {
+          }
 
-        override fun setLevel(level: Level?) {
-        }
+          override fun setLevel(level: Level?) {
+          }
 
-        override fun info(message: String?) {
-        }
+          override fun info(message: String?) {
+          }
 
-        override fun info(message: String?, t: Throwable?) {
-        }
+          override fun info(message: String?, t: Throwable?) {
+          }
 
-        override fun error(message: String?, t: Throwable?, vararg details: String?) {
-        }
+          override fun error(message: String?, t: Throwable?, vararg details: String?) {
+          }
 
-        override fun isDebugEnabled(): Boolean {
-          return false
-        }
+          override fun isDebugEnabled(): Boolean {
+            return false
+          }
 
-        override fun debug(message: String?) {
-        }
+          override fun debug(message: String?) {
+          }
 
-        override fun debug(t: Throwable?) {
-        }
+          override fun debug(t: Throwable?) {
+          }
 
-        override fun debug(message: String?, t: Throwable?) {
+          override fun debug(message: String?, t: Throwable?) {
+          }
         }
-      }})
+      }
       val promise = AsyncPromise<String>()
       val promise2 = promise
         .onSuccess {
@@ -260,6 +262,40 @@ class AsyncPromiseTest {
     promise.setResult("foo")
     assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
     assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+  }
+
+  @Test
+  fun `do not swallow exceptions - error in success handler and no error in error handler`() {
+    val promise = AsyncPromise<String>()
+    var errorHandled = false
+    val promise2 = promise
+      .onSuccess {
+        throw ProcessCanceledException()
+      }
+      .onError {
+        errorHandled = true
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+    assertThat(errorHandled).isTrue()
+  }
+
+  @Test
+  fun `do not swallow exceptions - error in success handler and no error in error handler that added before success handler`() {
+    val promise = AsyncPromise<String>()
+    var errorHandled = false
+    val promise2 = promise
+      .onError {
+        errorHandled = true
+      }
+      .onSuccess {
+        throw ProcessCanceledException()
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+    assertThat(errorHandled).isFalse()
   }
 
   // this case quite tested by other tests, but better to have special test

@@ -10,9 +10,28 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-open class AsyncPromise<T> private constructor(private val f: CompletableFuture<T>,
-                                               private val hasErrorHandler: AtomicBoolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
-  constructor() : this(CompletableFuture(), AtomicBoolean())
+open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
+                                               private val hasErrorHandler: AtomicBoolean,
+                                               addExceptionHandler: Boolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
+  private val f: CompletableFuture<T>
+
+  constructor() : this(CompletableFuture(), AtomicBoolean(), addExceptionHandler = false)
+
+  init {
+    // cannot be performed outside of AsyncPromise constructor because this instance `hasErrorHandler` must be checked
+    this.f = when {
+      addExceptionHandler -> {
+        f.exceptionally { error ->
+          if (!hasErrorHandler.get() && error !is ControlFlowException) {
+            Logger.getInstance(AsyncPromise::class.java).error(error)
+          }
+
+          throw error
+        }
+      }
+      else -> f
+    }
+  }
 
   override fun isDone() = f.isDone
 
@@ -52,30 +71,26 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
   }
 
   override fun onSuccess(handler: Consumer<in T>): Promise<T> {
-    return AsyncPromise(f.whenComplete { value, exception ->
-      if (exception == null && !InternalPromiseUtil.isHandlerObsolete(handler)) {
-        try {
-          handler.accept(value)
-        }
-        catch (e: Throwable) {
-          if (e !is ControlFlowException) {
-            Logger.getInstance(AsyncPromise::class.java).error(e)
-          }
-        }
+    return AsyncPromise(f.whenComplete { value, error ->
+      if (error != null) {
+        throw error
       }
-    }, hasErrorHandler)
+
+      if (!InternalPromiseUtil.isHandlerObsolete(handler)) {
+        handler.accept(value)
+      }
+    }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun onError(rejected: Consumer<in Throwable>): Promise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
-        val toReport = if (exception is CompletionException && exception.cause != null) exception.cause!! else exception
         if (!InternalPromiseUtil.isHandlerObsolete(rejected)) {
-          rejected.accept(toReport)
+          rejected.accept((exception as? CompletionException)?.cause ?: exception)
         }
       }
-    }, hasErrorHandler)
+    }, hasErrorHandler, addExceptionHandler = false)
   }
 
   override fun onProcessed(processed: Consumer<in T>): Promise<T> {
@@ -84,7 +99,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
       if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
         processed.accept(value)
       }
-    }, hasErrorHandler)
+    }, hasErrorHandler, addExceptionHandler = true)
   }
 
   @Throws(TimeoutException::class)
@@ -103,19 +118,18 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
   }
 
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
-    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler)
+    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
-    val convert: (T) -> CompletableFuture<SUB_RESULT> = {
+    return AsyncPromise(f.thenCompose {
       val promise = doneF.`fun`(it)
       val future = CompletableFuture<SUB_RESULT>()
       promise
         .onSuccess { value -> future.complete(value) }
         .onError { error -> future.completeExceptionally(error) }
       future
-    }
-    return AsyncPromise(f.thenCompose(convert), hasErrorHandler)
+    }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun processed(child: Promise<in T>): Promise<T> {
