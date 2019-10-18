@@ -248,15 +248,9 @@ open class UpdateIdeFromSourcesAction
       return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
     }
 
-    val command = if (SystemInfo.isMac) arrayOf(
+    val command = arrayOf(
       "rm -rf \"$workIdeHome\"/*",
-      // Historic versions of the cp utility had a -r option. Mac's implementation supports that option, 
-      // however, its use is strongly discouraged, as it does not correctly copy special files, symbolic links, or fifo's.
       "cp -R \"$builtDistPath\"/* \"$workIdeHome\""
-    )
-    else arrayOf(
-      "rm -rf \"$workIdeHome\"/*",
-      "cp -r \"$builtDistPath\"/* \"$workIdeHome\""
     )
 
     return arrayOf("/bin/sh", "-c", command.joinToString(" && "))
