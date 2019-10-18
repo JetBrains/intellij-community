@@ -554,9 +554,19 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
         self.assertIn('bin_mtime', result.state_json['sdk_skeletons']['mod'])
 
     def test_state_json_for_cached_skeletons_retains_original_gen_version(self):
-        self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod'],
-                                    gen_version='0.2',
-                                    custom_required_gen=True)
+        # For mod1 we have a newer version in the cache.
+        # For non-existing mod2 we have satisfying version in the cache.
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                }
+            }
+        }
+        self.check_generator_output(gen_version='0.3',
+                                    custom_required_gen=True,
+                                    input=json.dumps(state))
 
     def test_state_json_for_up_to_date_skeletons_retains_original_gen_version(self):
         self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod'],
