@@ -3,6 +3,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
@@ -518,8 +520,11 @@ public abstract class VcsVFSListener implements Disposable {
   @Nullable
   protected Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
-    return helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
-                                           getSingleFileDeletePromptTemplate(), myRemoveOption);
+    Ref<Collection<FilePath>> ref = Ref.create();
+    ApplicationManager.getApplication()
+      .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
+                                                                   getSingleFileDeletePromptTemplate(), myRemoveOption)));
+    return ref.get();
   }
 
   protected void beforeContentsChange(@NotNull VFileContentChangeEvent event) {
