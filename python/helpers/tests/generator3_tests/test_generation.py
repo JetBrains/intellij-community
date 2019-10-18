@@ -535,3 +535,13 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     extra_env={ENV_TEST_MODE_FLAG: None})
         self.assertIsNotNone(result.state_json)
         self.assertIn('bin_mtime', result.state_json['sdk_skeletons']['mod'])
+
+    def test_state_json_for_cached_skeletons_retains_original_gen_version(self):
+        self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod'],
+                                    gen_version='0.2',
+                                    custom_required_gen=True)
+
+    def test_state_json_for_up_to_date_skeletons_retains_original_gen_version(self):
+        self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod'],
+                                    gen_version='0.2',
+                                    custom_required_gen=True)
