@@ -3638,6 +3638,109 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-36008
+  public void testTypedDictSubscriptionExpression() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a['x']");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionUndefinedKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Any",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a[x]");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionRequiredKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionOptionalKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Optional[int]",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionSameValueTypeAndDefaultArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x', 42)");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionDifferentValueTypeAndDefaultArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Union[int, str]",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x', '')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictAlternativeSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("A",
+               "from typing import TypedDict\n" +
+               "A = TypedDict('A', {'x': int}, total=False)\n" +
+               "expr = A");
+      }
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

@@ -151,19 +151,6 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class InferredTypedDictType extends TypeModel {
-    private final List<TypeModel> members;
-
-    InferredTypedDictType(List<TypeModel> members) {
-      this.members = members;
-    }
-
-    @Override
-    void accept(@NotNull TypeVisitor visitor) {
-      visitor.typedDict(this);
-    }
-  }
-
   static class FunctionType extends TypeModel {
     @NotNull private final TypeModel returnType;
     @Nullable private final Collection<TypeModel> parameters;
@@ -240,9 +227,12 @@ public class PyTypeModelBuilder {
 
     TypeModel result = null;
     if (type instanceof PyTypedDictType) {
-      if (((PyTypedDictType)type).isInferred()) {
-        result = new InferredTypedDictType(Collections.singletonList(build(((PyTypedDictType)type).getValuesType(), true)));
-      } else {
+      PyTypedDictType typedDictType = (PyTypedDictType)type;
+      if (typedDictType.isInferred()) {
+        return build(new PyCollectionTypeImpl(typedDictType.getPyClass(), false,
+                                              typedDictType.getElementTypes()), allowUnions);
+      }
+      else {
         result = NamedType.nameOrAny(type);
       }
     }
@@ -365,8 +355,6 @@ public class PyTypeModelBuilder {
     void optional(OptionalType type);
 
     void tuple(TupleType type);
-
-    void typedDict(InferredTypedDictType type);
 
     void classObject(ClassObjectType type);
 
@@ -617,24 +605,6 @@ public class PyTypeModelBuilder {
         processList(type.members);
         if (type.homogeneous) {
           add(", ...");
-        }
-        add("]");
-      }
-    }
-
-    @Override
-    public void typedDict(InferredTypedDictType type) {
-      add("Dict[str, ");
-      boolean first = true;
-      if (!type.members.isEmpty()) {
-        for (TypeModel member : type.members) {
-          if (!first) {
-            add(", ");
-          }
-          else {
-            first = false;
-          }
-          member.accept(this);
         }
         add("]");
       }
