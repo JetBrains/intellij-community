@@ -265,6 +265,18 @@ class AsyncPromiseTest {
   }
 
   @Test
+  fun `do not swallow exceptions -  cancelled`() {
+    val promise = AsyncPromise<String>()
+    val promise2 = promise
+      .onSuccess {
+        throw ProcessCanceledException()
+      }
+    promise.cancel()
+    assertThat(promise.state).isEqualTo(Promise.State.REJECTED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+  }
+
+  @Test
   fun `do not swallow exceptions - error in success handler and no error in error handler`() {
     val promise = AsyncPromise<String>()
     var errorHandled = false

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
@@ -21,9 +20,10 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     // cannot be performed outside of AsyncPromise constructor because this instance `hasErrorHandler` must be checked
     this.f = when {
       addExceptionHandler -> {
-        f.exceptionally { error ->
-          if (!hasErrorHandler.get() && error !is ControlFlowException) {
-            Logger.getInstance(AsyncPromise::class.java).error(error)
+        f.exceptionally { originalError ->
+          val error = (originalError as? CompletionException)?.cause ?: originalError
+          if (!hasErrorHandler.get()) {
+            Logger.getInstance(AsyncPromise::class.java).errorIfNotMessage((error as? CompletionException)?.cause ?: error)
           }
 
           throw error
@@ -56,7 +56,9 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   override fun isCancelled() = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
-  override fun cancel(mayInterruptIfRunning: Boolean) = !isCancelled && f.cancel(mayInterruptIfRunning)
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+    return !isCancelled && f.cancel(mayInterruptIfRunning)
+  }
 
   override fun cancel() {
     cancel(true)
