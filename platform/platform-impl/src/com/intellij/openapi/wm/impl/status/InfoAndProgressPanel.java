@@ -738,7 +738,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> {
         ProgressSuspender suspender = getSuspender();
         if (suspender == null) {
-          LOG.assertTrue(myOriginal == null, "The process is expected to be finished at this point");
           return;
         }
 
