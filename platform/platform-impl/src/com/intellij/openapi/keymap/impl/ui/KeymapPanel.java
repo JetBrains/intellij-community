@@ -112,7 +112,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     IdeFrame ideFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     if (ideFrame != null && KeyboardSettingsExternalizable.isSupportedKeyboardLayout(ideFrame.getComponent())) {
-      preferKeyPositionOverCharOption = new JCheckBox(new AbstractAction(" " + KeyMapBundle.message("prefer.key.position")) {
+      preferKeyPositionOverCharOption = new JCheckBox(new AbstractAction(KeyMapBundle.message("prefer.key.position")) {
         @Override
         public void actionPerformed(ActionEvent e) {
           KeyboardSettingsExternalizable.getInstance().setPreferKeyPositionOverCharOption(preferKeyPositionOverCharOption.isSelected());
