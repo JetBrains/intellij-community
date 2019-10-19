@@ -22,54 +22,56 @@ class CDSStartupActivity : StartupActivity {
   private val isExecuted = AtomicBoolean(false)
 
   //for tests
-  val setupResult = AtomicReference<CDSTaskResult?>(null)
+  val setupResult = AtomicReference<String>(null)
 
   override fun runActivity(project: Project) {
     if (!isExecuted.compareAndSet(false, true)) return
-    if (!CDSManager.isValidEnv && System.getProperty("intellij.appcds.assumeValidEnv") != "true") return
+    if (!CDSManager.isValidEnv && !Registry.`is`("intellij.appcds.assumeValidEnv", false)) return
+    if (!Registry.`is`("intellij.appcds.useStartupActivity", true)) return
 
-    if (System.getProperty("intellij.appcds.startupActivity") == "false") return
-
-    val isRunningWithCDS = CDSManager.isRunningWithCDS
-    if (isRunningWithCDS) {
-      Logger.getInstance(CDSManager::class.java).warn("Running with enabled CDS")
+    val cdsArchive = CDSManager.currentCDSArchive
+    if (cdsArchive != null && cdsArchive.isFile) {
+      Logger.getInstance(CDSManager::class.java).warn("Running with enabled CDS $cdsArchive, ${StringUtil.formatFileSize(cdsArchive.length())}")
+      CDSFUSCollector.logRunningWithCDS()
     }
 
-    // 1. allow to toggle the feature via -DintelliJ.appCDS.enabled
-    // 2. if not set, use Registry to enable the feature
-    // 3. and finally, fallback to see if we already run with AppCDS
-    val cdsEnabled = System.getProperty("intellij.appcds.enabled")?.toBoolean()
-                     ?: (runCatching {
-                       Registry.`is`("appcds.enabled")
-                     }.getOrElse { false } || isRunningWithCDS)
-
+    val cdsEnabled = Registry.`is`("intellij.appcds.enabled")
     AppExecutorUtil.getAppExecutorService().submit {
       CDSManager.cleanupStaleCDSFiles(cdsEnabled)
       if (!cdsEnabled) {
         CDSManager.removeCDS()
-        setupResult.set(CDSTaskResult.Success)
+        setupResult.set("removed")
       }
     }
 
-    if (!cdsEnabled) return
+    if (!cdsEnabled) {
+      CDSFUSCollector.logCDSDisabled()
+      return
+    }
+
+    CDSFUSCollector.logCDSEnabled()
 
     object : Runnable {
-      val retryPaceShort = System.getProperty("intellij.appcds.install.idleRetry")?.toLong() ?: 15
-      val retryPaceLong = System.getProperty("intellij.appcds.install.idleLongRetry")?.toLong() ?: 300
+      val retryPaceShort get() = Registry.intValue("intellij.appcds.install.idleRetrySeconds", 15).toLong()
+      val retryPaceLong get() = Registry.intValue("intellij.appcds.install.idleLongRetrySeconds", 300).toLong()
 
       fun reschedule(time: Long) {
         AppExecutorUtil.getAppScheduledExecutorService().schedule(this, time, TimeUnit.SECONDS)
       }
 
       fun needsWaitingForIdleSeconds(): Long? = runCatching {
-        if (System.getProperty("intellij.appcds.install.idleTest") == "false") return null
+        if (!Registry.`is`("intellij.appcds.install.idleTestEnabled", true)) return null
 
         if (PowerSaveMode.isEnabled()) return retryPaceLong
         if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) return retryPaceLong
 
-        // our IDE is not using the whole CPU
         val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
-        if (osBean.processCpuLoad * osBean.availableProcessors > osBean.availableProcessors - 1.3) return retryPaceShort
+
+        // our IDE or whole OS is too busy right now,
+        // careful! Our CDS archive generation process would take 1 CPU
+        // the supported minimum is 2 CPU!
+        if (osBean.processCpuLoad > 0.6) return retryPaceShort
+        if (osBean.systemCpuLoad > 0.9) return retryPaceShort
 
         // ensure free space under CDS folder (aka System folder)
         if (CDSPaths.freeSpaceForCDS < 3L * 1024 * 1024 * 1024) return retryPaceLong
@@ -82,10 +84,17 @@ class CDSStartupActivity : StartupActivity {
 
         CDSManager.installCDS(canStillWork = { needsWaitingForIdleSeconds() == null },
                               onResult = { result ->
-                                setupResult.set(result)
-                                if (result is CDSTaskResult.Cancelled) {
-                                  LOG.info("CDS archive generation was re-scheduled in ${StringUtil.formatDuration(retryPaceLong)}")
-                                  reschedule(retryPaceLong)
+                                return@installCDS when(result) {
+                                  is CDSTaskResult.Cancelled -> {
+                                    LOG.info("CDS archive generation was re-scheduled in ${StringUtil.formatDuration(retryPaceLong)}")
+                                    reschedule(retryPaceLong)
+                                  }
+                                  is CDSTaskResult.Failed -> {
+                                    setupResult.set("enabled:failed")
+                                  }
+                                  is CDSTaskResult.Success -> {
+                                    setupResult.set("enabled")
+                                  }
                                 }
                               })
       }

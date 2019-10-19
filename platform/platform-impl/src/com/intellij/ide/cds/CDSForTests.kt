@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
  */
 object CDSForTests {
   @JvmStatic
-  fun toggleCDSForPerfTests(@Suppress("UNUSED_PARAMETER") context: PlaybackContext): Promise<String> {
+  fun waitForEnabledCDS(@Suppress("UNUSED_PARAMETER") context: PlaybackContext): Promise<String> {
     val promise = AsyncPromise<String>()
 
     object : Runnable {
@@ -26,13 +26,10 @@ object CDSForTests {
         val result = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(CDSStartupActivity::class.java)?.setupResult?.get()
         if (result == null) return reschedule()
 
-        if (result == CDSTaskResult.Success) {
-          return promise.setResult("ok")
-        }
-
-        if (result is CDSTaskResult.Failed) {
-          promise.setError(result.error)
-          return
+        if (result == "enabled") {
+          promise.setResult(result)
+        } else {
+          promise.setError(result)
         }
       }
     }.run()

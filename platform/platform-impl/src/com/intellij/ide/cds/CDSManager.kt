@@ -63,7 +63,7 @@ object CDSManager {
     true
   }
 
-  private val currentCDSArchive: File? by lazy {
+  val currentCDSArchive: File? by lazy {
     val arguments = ManagementFactory.getRuntimeMXBean().inputArguments
 
     val xShare = arguments.any { it == "-Xshare:auto" || it == "-Xshare:on" }
@@ -72,11 +72,6 @@ object CDSManager {
     val key = "-XX:SharedArchiveFile="
     return@lazy arguments.firstOrNull { it.startsWith(key) }?.removePrefix(key)?.let(::File)
   }
-
-  val isRunningWithCDS: Boolean
-    get() {
-      return isValidEnv && currentCDSArchive?.isFile == true
-    }
 
   fun cleanupStaleCDSFiles(isCDSEnabled: Boolean): CDSTaskResult {
     val paths = CDSPaths.current
@@ -96,12 +91,15 @@ object CDSManager {
   }
 
   fun removeCDS() {
-    if (!isRunningWithCDS) return
+    if (currentCDSArchive?.isFile != true ) return
     VMOptions.writeDisableCDSArchiveOption()
     LOG.warn("Disabled CDS")
   }
 
   fun installCDS(canStillWork: () -> Boolean, onResult: (CDSTaskResult) -> Unit) {
+    CDSFUSCollector.logCDSBuildingStarted()
+    val startTime = System.currentTimeMillis()
+
     ProgressManager.getInstance().run(object : Task.Backgroundable(
       null,
       "Optimizing startup performance",
@@ -122,21 +120,51 @@ object CDSManager {
             }
         }
 
-        val result = runCatching {
-          installCDSImpl(progress)
-        }.getOrElse {
-          LOG.warn("Settings up CDS Archive crashed unexpectedly. ${it.message}", it)
-          CDSTaskResult.Failed("Unexpected crash $it")
-        }
-
-        onResult(result)
+        onResult(installCDSSafe(progress, indicator, startTime))
       }
     })
   }
 
-  private fun installCDSImpl(indicator: CDSProgressIndicator): CDSTaskResult {
+  private fun installCDSSafe(progress: CDSProgressIndicator,
+                             indicator: ProgressIndicator,
+                             startTime: Long): CDSTaskResult {
     val paths = CDSPaths.current
+    try {
+      val result = installCDSImpl(progress, paths)
+      val installTime = System.currentTimeMillis() - startTime
+      return when (result) {
+        is CDSTaskResult.Success -> {
+          CDSFUSCollector.logCDSBuildingCompleted(installTime)
+          result
+        }
+        is CDSTaskResult.Failed -> {
+          CDSFUSCollector.logCDSBuildingFailed()
+          result
+        }
+        is CDSTaskResult.Cancelled -> {
+          // detect an User attempt to stop AppCDS generation
+          // turn in to unrecoverable failure to avoid bothering for that version
+          if (indicator.isCanceled) {
+            CDSFUSCollector.logCDSBuildingStoppedByUser()
+            paths.markError("User Interrupted")
+            CDSTaskResult.Failed("User Interrupted")
+          } else {
+            CDSFUSCollector.logCDSBuildingInterrupted()
+            result
+          }
+        }
+      }
+    }
+    catch (t: Throwable) {
+      LOG.warn("Settings up CDS Archive crashed unexpectedly. ${t.message}", t)
+      val message = "Unexpected crash $t"
+      paths.markError(message)
+      CDSFUSCollector.logCDSBuildingFailed()
+      return CDSTaskResult.Failed(message)
+    }
+  }
 
+  private fun installCDSImpl(indicator: CDSProgressIndicator, paths: CDSPaths): CDSTaskResult {
     if (paths.isSame(currentCDSArchive)) {
       val message = "CDS archive is already generated and being used. Nothing to do"
       LOG.debug(message)
