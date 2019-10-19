@@ -13,7 +13,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 
-open class VcsLogEditorTabSelector(private val project : Project) : ContentManagerAdapter(), PropertyChangeListener {
+open class VcsLogEditorTabSelector(private val project: Project) : ContentManagerAdapter(), PropertyChangeListener {
 
   override fun selectionChanged(event: ContentManagerEvent) {
     if (ContentManagerEvent.ContentOperation.add == event.operation) {

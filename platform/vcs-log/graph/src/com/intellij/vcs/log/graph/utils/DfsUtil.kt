@@ -92,7 +92,7 @@ class DfsWalk(private val startNodes: Collection<Int>, private val graph: LiteLi
  */
 fun LiteLinearGraph.walk(start: Int, visitor: Dfs.NodeVisitor) {
   if (start < 0 || start >= nodesCount()) return
-  
+
   val visited = BitSetFlags(nodesCount(), false)
 
   val stack = IntStack()

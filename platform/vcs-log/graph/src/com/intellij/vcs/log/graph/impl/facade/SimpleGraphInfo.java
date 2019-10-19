@@ -113,7 +113,8 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
   }
 
   @NotNull
-  private static <CommitId> TObjectIntHashMap<CommitId> reverseCommitIdMap(@NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo, int size) {
+  private static <CommitId> TObjectIntHashMap<CommitId> reverseCommitIdMap(@NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
+                                                                           int size) {
     TObjectIntHashMap<CommitId> result = new TObjectIntHashMap<>();
     for (int i = 0; i < size; i++) {
       result.put(permanentCommitsInfo.getCommitId(i), i);

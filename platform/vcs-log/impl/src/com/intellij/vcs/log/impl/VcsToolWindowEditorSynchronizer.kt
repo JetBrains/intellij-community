@@ -15,7 +15,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.ContentManagerListener
 
-class VcsToolWindowEditorSynchronizer() {
+class VcsToolWindowEditorSynchronizer {
 
   companion object {
     fun getInstance(project: Project): VcsToolWindowEditorSynchronizer = project.service()
@@ -30,7 +30,7 @@ class VcsToolWindowEditorSynchronizer() {
     })
   }
 
-  private class MyFileEditorListener() : FileEditorManagerListener {
+  private class MyFileEditorListener : FileEditorManagerListener {
     override fun selectionChanged(e: FileEditorManagerEvent) {
       if (!Registry.`is`("show.log.as.editor.tab")) {
         return

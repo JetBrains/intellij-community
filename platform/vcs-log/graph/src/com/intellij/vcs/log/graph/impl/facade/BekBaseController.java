@@ -110,7 +110,7 @@ public class BekBaseController extends CascadeController {
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       return map(myLinearGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex), filter),
                  edge -> new GraphEdge(getNodeIndex(edge.getUpNodeIndex()), getNodeIndex(edge.getDownNodeIndex()), edge.getTargetId(),
-                                              edge.getType()));
+                                       edge.getType()));
     }
 
     @NotNull

@@ -14,5 +14,4 @@ public interface VcsLogFilterUi {
    */
   @NotNull
   VcsLogFilterCollection getFilters();
-
 }
