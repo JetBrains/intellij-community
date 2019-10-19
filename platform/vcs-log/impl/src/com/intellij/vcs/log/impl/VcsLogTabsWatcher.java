@@ -241,7 +241,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void propertyChange(PropertyChangeEvent evt) {
+    public void propertyChange(@NotNull PropertyChangeEvent evt) {
       if (evt.getPropertyName().equals(Content.PROP_COMPONENT)) {
         selectionChanged();
       }
