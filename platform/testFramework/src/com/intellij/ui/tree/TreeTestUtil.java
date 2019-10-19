@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.ui.Queryable;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -18,18 +18,8 @@ import java.util.function.Predicate;
 public class TreeTestUtil {
   public static final TreeVisitor VISIT_ALL = path -> TreeVisitor.Action.CONTINUE;
   public static final Predicate<TreePath> APPEND_ALL = path -> true;
-  public static final Function<Object, String> TO_STRING = getToString(null);
+  public static final Function<Object, String> TO_STRING = node -> PlatformTestUtil.toString(node, null);
 
-  @NotNull
-  public static Function<Object, String> getToString(@Nullable Queryable.PrintInfo info) {
-    return object -> {
-      if (object instanceof AbstractTreeNode) {
-        AbstractTreeNode<?> node = (AbstractTreeNode<?>)object;
-        return node.toTestString(info);
-      }
-      return String.valueOf(object);
-    };
-  }
 
   @NotNull
   public static String toString(@NotNull JTree tree) {
@@ -75,6 +65,26 @@ public class TreeTestUtil {
     });
     return sb.toString();
   }
+
+
+  /**
+   * @param tree     a tree, which visible rows are used to create a string representation
+   * @param expected expected string representation of the given tree
+   */
+  public static void assertStructure(@NotNull JTree tree, @NonNls String expected) {
+    PlatformTestUtil.waitWhileBusy(tree);
+    Assert.assertEquals(expected, toString(tree));
+  }
+
+  /**
+   * @param tree     a tree, which visible rows are used to create a string representation
+   * @param expected expected string representation of the given tree
+   */
+  public static void assertStructureWithSelection(@NotNull JTree tree, @NonNls String expected) {
+    PlatformTestUtil.waitWhileBusy(tree);
+    Assert.assertEquals(expected, toString(tree, true));
+  }
+
 
   @NotNull
   public static DefaultMutableTreeNode node(@NotNull Object object, Object... children) {
