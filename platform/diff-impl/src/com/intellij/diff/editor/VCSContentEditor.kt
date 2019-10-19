@@ -4,8 +4,8 @@ import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
-class GraphViewEditor(
-  private val file: GraphViewVirtualFile
+class VCSContentEditor(
+  private val file: VCSContentVirtualFile
 ) : FileEditorBase() {
   init {
 
@@ -17,7 +17,7 @@ class GraphViewEditor(
   override fun dispose() { }
   override fun isValid(): Boolean = file.isValid
   override fun getFile(): VirtualFile = file
-  override fun getName(): String = "GraphView"
+  override fun getName(): String = "VCS View"
 
   override fun selectNotify() {
 
