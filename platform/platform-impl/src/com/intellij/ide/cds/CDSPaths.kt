@@ -7,24 +7,36 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
+import java.time.LocalDateTime
 
 
 class CDSPaths private constructor(val baseDir: File,
                                    val dumpOutputFile: File,
                                    cdsClassesHash: String) {
-  val classesMarkerFile = File(baseDir, "${cdsClassesHash}.marker")
+  val classesErrorMarkerFile = File(baseDir, "${cdsClassesHash}.error")
   val classesListFile = File(baseDir, "${cdsClassesHash}.txt")
   val classesPathFile = File(baseDir, "${cdsClassesHash}.classpath")
   val classesArchiveFile = File(baseDir, "${cdsClassesHash}.jsa")
 
   fun isSame(jsaFile: File?) = jsaFile == classesArchiveFile
-  fun isOurFile(file: File?) = file == classesMarkerFile || file == classesListFile || file == classesPathFile || file == classesArchiveFile
+  fun isOurFile(file: File?) = file == classesErrorMarkerFile || file == classesListFile || file == classesPathFile || file == classesArchiveFile
+
+  fun mkdirs() {
+    baseDir.mkdirs()
+    dumpOutputFile.parentFile?.mkdirs()
+  }
+
+  fun markError(message: String) {
+    classesErrorMarkerFile.writeText("Failed on ${LocalDateTime.now()}: $message")
+  }
 
   companion object {
-    fun current(): CDSPaths {
-      val baseDir = File(PathManager.getSystemPath(), "cds")
-      baseDir.mkdirs()
+    private val systemDir get() = File(PathManager.getSystemPath())
 
+    val freeSpaceForCDS get() = systemDir.freeSpace
+
+    val current: CDSPaths by lazy {
+      val baseDir = File(systemDir, "cds")
       val hasher = Hashing.sha256().newHasher()
 
       // make sure the system folder was not moved
@@ -51,8 +63,7 @@ class CDSPaths private constructor(val baseDir: File,
       val cdsClassesHash = "${info.build.asString()}-${hasher.hash()}"
 
       val dumpLog = File(PathManager.getLogPath(), "cds-dump.log")
-      dumpLog.parentFile?.mkdirs()
-      return CDSPaths(baseDir, dumpLog, cdsClassesHash)
+      CDSPaths(baseDir, dumpLog, cdsClassesHash)
     }
   }
 }

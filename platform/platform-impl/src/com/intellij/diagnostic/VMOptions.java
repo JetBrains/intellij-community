@@ -161,6 +161,10 @@ public class VMOptions {
     }
   }
 
+  public static boolean canWriteOptions() {
+    return getWriteFile() != null;
+  }
+
   @Nullable
   public static String read() {
     try {

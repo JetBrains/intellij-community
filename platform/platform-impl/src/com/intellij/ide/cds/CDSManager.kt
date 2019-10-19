@@ -3,147 +3,205 @@ package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.process.OSProcessUtil
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.VersionComparatorUtil
+import com.sun.management.OperatingSystemMXBean
 import com.sun.tools.attach.VirtualMachine
 import java.io.File
 import java.io.IOException
 import java.lang.management.ManagementFactory
-import java.time.Instant
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
+
+
+private interface CDSProgressIndicator {
+  val isCancelled: Boolean
+  var text2: String?
+}
+
+sealed class CDSTaskResult {
+  object Success : CDSTaskResult()
+  object Cancelled : CDSTaskResult()
+  data class Failed(val error: String) : CDSTaskResult()
+}
 
 object CDSManager {
   private val LOG = Logger.getInstance(javaClass)
 
-  val isValidEnv: Boolean
-    get() {
-      // The AppCDS (JEP 310) is only added in JDK10,
-      // The closest JRE we ship/support is 11
-      if (!SystemInfo.isJavaVersionAtLeast(11)) return false
+  val isValidEnv: Boolean by lazy {
+    // AppCDS requires classes packed into JAR files, not from the out folder
+    if (PluginManagerCore.isRunningFromSources()) return@lazy false
 
-      //AppCDS does not support Windows and macOS
-      if (!SystemInfo.isLinux) {
-        //Specific patches are included into JetBrains runtime
-        //to support Windows and macOS
-        if (!SystemInfo.isJetBrainsJvm) return false
-        if (VersionComparatorUtil.compare(SystemInfo.JAVA_RUNTIME_VERSION, "11.0.4+10-b520.2") < 0) return false
-      }
+    // CDS features are only available on 64 bit JVMs
+    if (!SystemInfo.is64Bit) return@lazy false
 
-      return true
+    // The AppCDS (JEP 310) is only added in JDK10,
+    // The closest JRE we ship/support is 11
+    if (!SystemInfo.isJavaVersionAtLeast(11)) return@lazy false
+
+    //AppCDS does not support Windows and macOS
+    if (!SystemInfo.isLinux) {
+      //Specific patches are included into JetBrains runtime
+      //to support Windows and macOS
+      if (!SystemInfo.isJetBrainsJvm) return@lazy false
+      if (VersionComparatorUtil.compare(SystemInfo.JAVA_RUNTIME_VERSION, "11.0.4+10-b520.2") < 0) return@lazy false
     }
+
+    // we do not like to overload a potentially small computer with our process
+    val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
+    if (osBean.totalPhysicalMemorySize < 3L * 1024L * 1024 * 1024) return@lazy false
+    if (osBean.availableProcessors < 2) return@lazy false
+
+    if (!VMOptions.canWriteOptions()) return@lazy false
+    true
+  }
+
+  private val currentCDSArchive: File? by lazy {
+    val arguments = ManagementFactory.getRuntimeMXBean().inputArguments
+
+    val xShare = arguments.any { it == "-Xshare:auto" || it == "-Xshare:on" }
+    if (!xShare) return@lazy null
+
+    val key = "-XX:SharedArchiveFile="
+    return@lazy arguments.firstOrNull { it.startsWith(key) }?.removePrefix(key)?.let(::File)
+  }
 
   val isRunningWithCDS: Boolean
     get() {
       return isValidEnv && currentCDSArchive?.isFile == true
     }
 
-  val canBuildOrUpdateCDS: Boolean
-    get() {
-      if (!isValidEnv) return false
-
-      val paths = CDSPaths.current()
-      return !paths.isSame(currentCDSArchive)
-    }
-
-  private val currentCDSArchive: File?
-    get() {
-      val arguments = ManagementFactory.getRuntimeMXBean().inputArguments
-
-      val xShare = arguments.any { it == "-Xshare:auto" || it == "-Xshare:on" }
-      if (!xShare) return null
-
-      val key = "-XX:SharedArchiveFile="
-      return arguments.firstOrNull { it.startsWith(key) }?.removePrefix(key)?.let(::File)
-    }
-
-  fun cleanupStaleCDSFiles(indicator: ProgressIndicator) = rejectIfRunning(Unit) {
-    val paths = CDSPaths.current()
+  fun cleanupStaleCDSFiles(isCDSEnabled: Boolean): CDSTaskResult {
+    val paths = CDSPaths.current
     val currentCDSPath = currentCDSArchive
 
     val files = paths.baseDir.listFiles() ?: arrayOf()
-    if (files.isEmpty()) return
+    if (files.isEmpty()) return CDSTaskResult.Success
 
-    indicator.text2 = "Removing old Class Data Sharing files..."
     for (path in files) {
-      indicator.checkCanceled()
+      if (path == currentCDSPath) continue
+      if (isCDSEnabled && paths.isOurFile(path)) continue
 
-      if (path != currentCDSPath && !paths.isOurFile(path)) {
-        FileUtil.delete(path)
-      }
+      FileUtil.delete(path)
     }
+
+    return CDSTaskResult.Success
   }
 
-  fun installCDS(indicator: ProgressIndicator): CDSPaths? = rejectIfRunning(null) {
-    if (VMOptions.getWriteFile() == null) {
-      LOG.warn("VMOptions.getWriteFile() == null. Are you running from an IDE run configuration?")
-      return null
-    }
+  fun removeCDS() {
+    if (!isRunningWithCDS) return
+    VMOptions.writeDisableCDSArchiveOption()
+    LOG.warn("Disabled CDS")
+  }
 
-    val paths = CDSPaths.current()
+  fun installCDS(canStillWork: () -> Boolean, onResult: (CDSTaskResult) -> Unit) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(
+      null,
+      "Optimizing startup performance",
+      true,
+      PerformInBackgroundOption.ALWAYS_BACKGROUND
+    ) {
+      override fun run(indicator: ProgressIndicator) {
+        indicator.isIndeterminate = true
+
+        val progress = object : CDSProgressIndicator {
+          override val isCancelled: Boolean
+            get() = !canStillWork() || indicator.isCanceled
+
+          override var text2: String?
+            get() = indicator.text2
+            set(value) {
+              indicator.text2 = value
+            }
+        }
+
+        val result = runCatching {
+          installCDSImpl(progress)
+        }.getOrElse {
+          LOG.warn("Settings up CDS Archive crashed unexpectedly. ${it.message}", it)
+          CDSTaskResult.Failed("Unexpected crash $it")
+        }
+
+        onResult(result)
+      }
+    })
+  }
+
+  private fun installCDSImpl(indicator: CDSProgressIndicator): CDSTaskResult {
+    val paths = CDSPaths.current
+
     if (paths.isSame(currentCDSArchive)) {
-      LOG.warn("CDS archive is already generated. Nothing to do")
-      return null
+      val message = "CDS archive is already generated and being used. Nothing to do"
+      LOG.debug(message)
+      return CDSTaskResult.Success
     }
 
-    if (paths.classesMarkerFile.isFile) {
-      LOG.warn("CDS archive is already generated. The marker file exists")
-      return null
-    }
-    paths.classesMarkerFile.writeText(Instant.now().toString())
-
-    // we need roughly 400mb of disk space, let's avoid disk space pressure
-    if (paths.baseDir.freeSpace < 3L * 1024 * FileUtil.MEGABYTE) {
-      LOG.warn("Not enough disk space to enable CDS archive")
-      return null
+    if (paths.classesErrorMarkerFile.isFile) {
+      return CDSTaskResult.Failed("CDS archive has already failed to set up, skipping")
     }
 
     LOG.info("Starting generation of CDS archive to the ${paths.classesArchiveFile} and ${paths.classesArchiveFile} files")
+    paths.mkdirs()
 
+    val listResult = generateFileIfNeeded(indicator, paths, paths.classesListFile, ::generateClassesList) { t ->
+      "Failed to attach CDS Java Agent to the running IDE instance. ${t.message}"
+    }
+    if (listResult != CDSTaskResult.Success) return listResult
+
+    val archiveResult = generateFileIfNeeded(indicator, paths, paths.classesArchiveFile, ::generateClassesArchive) { t ->
+      "Failed to generated CDS archive. ${t.message}"
+    }
+    if (archiveResult != CDSTaskResult.Success) return archiveResult
+
+    VMOptions.writeEnableCDSArchiveOption(paths.classesArchiveFile.absolutePath)
+    LOG.warn("Enabled CDS archive from ${paths.classesArchiveFile}, VMOptions were updated")
+    return CDSTaskResult.Success
+  }
+
+  private val agentPath: File
+    get() {
+      val libPath = File(PathManager.getLibPath()) / "cds" / "classesLogAgent.jar"
+      if (libPath.isFile) return libPath
+
+      LOG.warn("Failed to find bundled CDS classes agent in $libPath")
+
+      //consider local debug IDE case
+      val probe = File(PathManager.getHomePath()) / "out" / "classes" / "artifacts" / "classesLogAgent_jar" / "classesLogAgent.jar"
+      if (probe.isFile) return probe
+      error("Failed to resolve path to the CDS agent")
+    }
+
+  private fun generateClassesList(indicator: CDSProgressIndicator, paths: CDSPaths) {
     indicator.text2 = "Collecting classes list..."
-    indicator.checkCanceled()
 
-    val durationList = measureTimeMillis {
+    val selfAttachKey = "jdk.attach.allowAttachSelf"
+    if (!System.getProperties().containsKey(selfAttachKey)) {
+      throw RuntimeException("Please make sure you have -D$selfAttachKey=true set in the VM options")
+    }
+
+    val duration = measureTimeMillis {
+      val vm = VirtualMachine.attach(OSProcessUtil.getApplicationPid())
       try {
-        val agentPath = run {
-          val libPath = File(PathManager.getLibPath()) / "cds" / "classesLogAgent.jar"
-          if (libPath.isFile) return@run libPath
-
-          LOG.warn("Failed to find bundled CDS classes agent in $libPath")
-
-          //consider local debug IDE case
-          val probe = File(PathManager.getHomePath()) / "out" / "classes" / "artifacts" / "classesLogAgent_jar" / "classesLogAgent.jar"
-          if (probe.isFile) return@run probe
-
-          error("Failed to resolve path to the CDS agent")
-        }
-
-        val vm = VirtualMachine.attach(OSProcessUtil.getApplicationPid())
-        try {
-          vm.loadAgent(agentPath.path, "${paths.classesListFile}")
-        }
-        finally {
-          vm.detach()
-        }
+        vm.loadAgent(agentPath.path, "${paths.classesListFile}")
       }
-      catch (t: Throwable) {
-        LOG.warn("Failed to attach CDS Java Agent to the running IDE instance. ${t.message}\n" +
-                 "Please check you have -Djdk.attach.allowAttachSelf=true in the VM options of the IDE", t)
-        return null
+      finally {
+        vm.detach()
       }
     }
 
-    LOG.info("CDS classes file is generated in ${StringUtil.formatDuration(durationList)}")
+    LOG.info("CDS classes file is generated in ${StringUtil.formatDuration(duration)}")
+  }
 
+  private fun generateClassesArchive(indicator: CDSProgressIndicator,
+                                     paths: CDSPaths) {
     indicator.text2 = "Generating classes archive..."
-    indicator.checkCanceled()
 
     val logLevel = if (LOG.isDebugEnabled) "=debug" else ""
     val args = listOf(
@@ -170,8 +228,6 @@ object CDSManager {
       val cwd = File(".").canonicalFile
       LOG.info("Running CDS generation process: $javaArgs in $cwd with classpath: ${args}")
 
-      indicator.checkCanceled()
-
       //recreate logs file
       FileUtil.delete(paths.dumpOutputFile)
 
@@ -184,55 +240,71 @@ object CDSManager {
         .start()
 
       try {
-        process.outputStream.close()
-      } catch (t: IOException) {
-        //NOP
-      }
-
-      try {
-        if (!process.waitFor(10, TimeUnit.MINUTES)) {
-          LOG.warn("Failed to generate CDS archive, the process took too long and will be killed. See ${paths.dumpOutputFile} for details")
-          process.destroyForcibly()
-          return null
+        try {
+          process.outputStream.close()
         }
-      } catch (t: InterruptedException) {
-        LOG.warn("Failed to generate CDS archive, the process is interrupted")
-        process.destroyForcibly()
-        return null
+        catch (t: IOException) {
+          //NOP
+        }
+
+        val timeToWaitFor = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10)
+        while (timeToWaitFor > System.currentTimeMillis()) {
+          if (indicator.isCancelled) throw InterruptedException()
+          if (process.waitFor(200, TimeUnit.MILLISECONDS)) break
+        }
+
+        if (process.isAlive) {
+          process.destroyForcibly()
+          throw RuntimeException("The process took too long and will be killed. See ${paths.dumpOutputFile} for details")
+        }
+      }
+      finally {
+        if (process.isAlive) {
+          process.destroyForcibly()
+        }
       }
 
       val exitValue = process.exitValue()
       if (exitValue != 0) {
-        LOG.warn("Failed to generate CDS archive, the process existed with code $exitValue. See ${paths.dumpOutputFile} for details")
-        return null
+        val outputLines = runCatching {
+          paths.dumpOutputFile.readLines().takeLast(30).joinToString("\n")
+        }.getOrElse { "" }
+
+        throw RuntimeException("The process existed with code $exitValue. See ${paths.dumpOutputFile} for details:\n$outputLines")
       }
     }
 
-    VMOptions.writeEnableCDSArchiveOption(paths.classesArchiveFile.absolutePath)
-
-    LOG.warn("Enabled CDS archive from ${paths.classesArchiveFile}, " +
+    LOG.info("Generated CDS archive in ${paths.classesArchiveFile}, " +
              "size = ${StringUtil.formatFileSize(paths.classesArchiveFile.length())}, " +
-             "it took ${StringUtil.formatDuration(durationLink)} (VMOptions were updated)")
-
-    return paths
-  }
-
-  fun removeCDS() = rejectIfRunning(Unit) {
-    if (!isRunningWithCDS) return
-    VMOptions.writeDisableCDSArchiveOption()
-    LOG.warn("Disabled CDS")
+             "it took ${StringUtil.formatDuration(durationLink)}")
   }
 
   private operator fun File.div(s: String) = File(this, s)
+  private val File.isValidFile get() = isFile && length() > 42
 
-  private val ourIsRunning = AtomicBoolean(false)
-
-  private inline fun <T> rejectIfRunning(rejected: T, action: () -> T): T {
-    if (!ourIsRunning.compareAndSet(false, true)) return rejected
+  private inline fun generateFileIfNeeded(indicator: CDSProgressIndicator,
+                                          paths: CDSPaths,
+                                          theOutputFile: File,
+                                          generate: (CDSProgressIndicator, CDSPaths) -> Unit,
+                                          errorMessage: (Throwable) -> String): CDSTaskResult {
     try {
-      return action()
-    } finally {
-      ourIsRunning.set(false)
+      if (theOutputFile.isValidFile) return CDSTaskResult.Success
+      if (indicator.isCancelled) return CDSTaskResult.Cancelled
+      generate(indicator, paths)
+      LOG.assertTrue(theOutputFile.isValidFile, "Result file must be generated and be valid")
+      return CDSTaskResult.Success
+    }
+    catch (t: Throwable) {
+      FileUtil.delete(theOutputFile)
+
+      if (t is InterruptedException || t is ProcessCanceledException || indicator.isCancelled) {
+        return CDSTaskResult.Cancelled
+      }
+
+      val message = errorMessage(t)
+      LOG.warn(message, t)
+      paths.markError(message)
+      return CDSTaskResult.Failed(message)
     }
   }
 }
