@@ -25,7 +25,7 @@ object CDSFUSCollector {
                 "building.cds.completed",
                 FeatureUsageData()
                   .addData("duration", duration)
-                  .addData("uptime.millis", processUptime)
+                  .addData("uptime_millis", processUptime)
       )
   }
 }
