@@ -21,7 +21,9 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -251,6 +253,28 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    PsiParameterList list = ObjectUtils.tryCast(getParent(), PsiParameterList.class);
+    if (list != null) {
+      PsiMethod clsMethod = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
+      if (clsMethod != null) {
+        int index = ArrayUtil.indexOf(list.getParameters(), this);
+        if (index >= 0) {
+          PsiMethod psiMethod = ObjectUtils.tryCast(clsMethod.getNavigationElement(), PsiMethod.class);
+          if (psiMethod != null && psiMethod != clsMethod) {
+            PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
+            if (psiParameters.length > index) {
+              return psiParameters[index];
+            }
+          }
+        }
+      }
+    }
+    return this;
   }
 
   @Override
