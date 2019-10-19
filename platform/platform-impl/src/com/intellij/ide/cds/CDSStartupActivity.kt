@@ -52,6 +52,7 @@ class CDSStartupActivity : StartupActivity {
     CDSFUSCollector.logCDSEnabled()
 
     object : Runnable {
+      val retryPaceReSchedule get() = Registry.intValue("intellij.appcds.install.idleRescheduleSeconds", 1).toLong()
       val retryPaceShort get() = Registry.intValue("intellij.appcds.install.idleRetrySeconds", 15).toLong()
       val retryPaceLong get() = Registry.intValue("intellij.appcds.install.idleLongRetrySeconds", 300).toLong()
 
@@ -86,8 +87,8 @@ class CDSStartupActivity : StartupActivity {
                               onResult = { result ->
                                 return@installCDS when(result) {
                                   is CDSTaskResult.Cancelled -> {
-                                    LOG.info("CDS archive generation was re-scheduled in ${StringUtil.formatDuration(retryPaceLong)}")
-                                    reschedule(retryPaceLong)
+                                    LOG.info("CDS archive generation paused due to high CPU load and will be re-scheduled later")
+                                    reschedule(retryPaceReSchedule)
                                   }
                                   is CDSTaskResult.Failed -> {
                                     setupResult.set("enabled:failed")
