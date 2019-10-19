@@ -133,12 +133,9 @@ class ChangesViewCommitWorkflowHandler(
 
   fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
     setInclusion(items, force)
+    setSelection(changeList)
 
-    val inclusion = inclusionModel.getInclusion()
-    val isChangeListFullyIncluded = changeList.changes.run { isNotEmpty() && all { it in inclusion } }
-    if (isChangeListFullyIncluded) ui.select(changeList) else ui.selectFirst(inclusion)
-
-    currentChangeList = workflow.getAffectedChangeList(inclusion.filterIsInstance<Change>())
+    currentChangeList = workflow.getAffectedChangeList(inclusionModel.getInclusion().filterIsInstance<Change>())
   }
 
   private fun setInclusion(items: Collection<Any>, force: Boolean) {
@@ -161,6 +158,19 @@ class ChangesViewCommitWorkflowHandler(
 
       // include all active changes if nothing is included
       if (inclusionModel.isInclusionEmpty()) ui.includeIntoCommit(activeChanges)
+    }
+  }
+
+  private fun setSelection(changeList: LocalChangeList) {
+    val inclusion = inclusionModel.getInclusion()
+    val isChangeListFullyIncluded = changeList.changes.run { isNotEmpty() && all { it in inclusion } }
+
+    if (isChangeListFullyIncluded) {
+      ui.select(changeList)
+      ui.expand(changeList)
+    }
+    else {
+      ui.selectFirst(inclusion)
     }
   }
 

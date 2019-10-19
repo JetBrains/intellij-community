@@ -286,16 +286,21 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     isVisible = false
   }
 
+  override fun expand(item: Any) {
+    val node = changesView.findNodeInTree(item)
+    node?.let { changesView.expandSafe(it) }
+  }
+
   override fun select(item: Any) {
-    val pathToSelect = changesView.findNodePathInTree(item)
-    pathToSelect?.let { selectPath(changesView, it, false) }
+    val path = changesView.findNodePathInTree(item)
+    path?.let { selectPath(changesView, it, false) }
   }
 
   override fun selectFirst(items: Collection<Any>) {
     if (items.isEmpty()) return
 
-    val pathToSelect = treePathTraverser(changesView).preOrderDfsTraversal().find { getLastUserObject(it) in items }
-    pathToSelect?.let { selectPath(changesView, it, false) }
+    val path = treePathTraverser(changesView).preOrderDfsTraversal().find { getLastUserObject(it) in items }
+    path?.let { selectPath(changesView, it, false) }
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {

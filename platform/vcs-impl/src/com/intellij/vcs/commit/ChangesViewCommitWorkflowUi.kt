@@ -18,6 +18,7 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
 
   var inclusionModel: InclusionModel?
 
+  fun expand(item: Any)
   fun select(item: Any)
   fun selectFirst(items: Collection<Any>)
 
