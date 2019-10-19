@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.T
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.content.ContentManagerListener
 
 class VcsToolWindowEditorSynchronizer() {
 
@@ -20,8 +21,7 @@ class VcsToolWindowEditorSynchronizer() {
     fun getInstance(project: Project): VcsToolWindowEditorSynchronizer = project.service()
   }
 
-  private fun addContentManagerListener(window: ToolWindowImpl,
-                                listener: com.intellij.ui.content.ContentManagerListener) {
+  private fun addContentManagerListener(window: ToolWindowImpl, listener: ContentManagerListener) {
     window.contentManager.addContentManagerListener(listener)
     Disposer.register(window, Disposable {
       if (!window.isDisposed) {
