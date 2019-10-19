@@ -827,6 +827,6 @@
 
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
     <statistics.counterUsagesCollector groupId="intellij.cds" version="1"/>
-    <registryKey key="intellij.appcds.enabled" defaultValue="false" restartRequired="true" description="Whether IDE should use AppCDS (JEP 310) for faster startup"/>
+    <registryKey key="intellij.appcds.enabled" defaultValue="true" restartRequired="true" description="Whether IDE should use AppCDS (JEP 310) for faster startup"/>
   </extensions>
 </idea-plugin>
