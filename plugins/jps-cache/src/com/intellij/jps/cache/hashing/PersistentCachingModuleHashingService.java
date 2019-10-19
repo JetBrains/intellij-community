@@ -51,9 +51,7 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
       long end = System.currentTimeMillis() - start;
       LOG.debug("Modules hash calculating finished: " + end + "ms");
     }
-    else {
-      LOG.debug("Initialization finished");
-    }
+    LOG.info("Plugin initialization finished");
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 

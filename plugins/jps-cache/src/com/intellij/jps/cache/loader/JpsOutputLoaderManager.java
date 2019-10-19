@@ -76,6 +76,15 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   public void load(boolean isForceUpdate) {
+    if (!isInitialized()) {
+      String message = "The plugin context is not yet initialized. Please try again later";
+      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", message,
+                                                                             NotificationType.INFORMATION, null);
+      Notifications.Bus.notify(notification);
+      LOG.info(message);
+      return;
+    }
+
     Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -91,6 +100,11 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   public void notifyAboutNearestCache() {
+    if (!isInitialized()) {
+      LOG.warn("The plugin context is not yet initialized");
+      return;
+    }
+
     ourThreadPool.execute(() -> {
       Pair<String, Integer> commitInfo = getNearestCommit(false);
       if (commitInfo == null) return;
@@ -219,7 +233,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   private synchronized boolean canRunNewLoading() {
     if (hasRunningTask.get()) {
-      LOG.debug("Jps cache loading already in progress, can't start the new one");
+      LOG.warn("Jps cache loading already in progress, can't start the new one");
       return false;
     }
     hasRunningTask.set(true);
