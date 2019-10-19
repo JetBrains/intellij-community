@@ -230,7 +230,7 @@ public class LogLoadedApplicationClassesAgent {
     private Boolean isValid = null;
     private boolean isLogged = false;
 
-    private List<String> myWarnings = null;
+    private List<String> myIsNotValidReasons = null;
     private Integer myTooOldClassVersion = null;
 
     private ClassInfo(int id, @NotNull Class<?> clazz, @Nullable String source) {
@@ -344,7 +344,8 @@ public class LogLoadedApplicationClassesAgent {
           if (!Boolean.TRUE.equals(info.hasSameNamedClasses)) {
             if (info.source == null) {
               classWithoutSource = info;
-            } else {
+            }
+            else {
               classWithSource = info;
             }
           }
@@ -383,71 +384,63 @@ public class LogLoadedApplicationClassesAgent {
         return info.isValid;
       }
 
-      boolean result = true;
-      if (info.clazz.getClassLoader() != null && info.clazz.getClassLoader() != ClassLoader.getSystemClassLoader()) {
-        List<String> warnings = new ArrayList<>();
+      if (info.clazz.getClassLoader() == null || info.clazz.getClassLoader() == ClassLoader.getSystemClassLoader()) {
+        info.isValid = true;
+        return true;
+      }
 
-        if (!useAppCDS && info.source != null) {
-          warnings.add("the class has non-system source with disabled AppCDS");
-          result = false;
+      List<String> isNotValidReasons = new ArrayList<>();
+      if (!useAppCDS && info.source != null) {
+        isNotValidReasons.add("the class has non-system source with disabled AppCDS");
+      }
+
+      if (info.source != null) {
+        if (info.source.contains(" ")) {
+          isNotValidReasons.add("the class has whitespace in path, which is not supported by the JVM");
         }
 
-        if (info.source != null) {
-          if (info.source.contains(" ")) {
-            warnings.add("the class has whitespace in path, which is not supported by the JVM");
-            result = false;
-          }
-
-          if (!info.source.endsWith(".jar")) {
-            warnings.add("only .jar files are supported by CDS");
-            result = false;
-          }
-        }
-
-        info.assertClassVersion = assertClassVersion(info);
-        switch (info.assertClassVersion) {
-          case ERROR:
-            warnings.add("class version assert failed");
-            result = false;
-            break;
-          case NOT_FOUND:
-            warnings.add(".class is not found in the resources");
-            result = false;
-            break;
-          case TOO_OLD:
-            warnings.add("class version is too old: " + info.myTooOldClassVersion);
-            result = false;
-            break;
-          case OK:
-            break;
-          default:
-            throw new RuntimeException("Unknown case " + info.myTooOldClassVersion + " for " + info.name);
-        }
-
-        if (Boolean.TRUE.equals(info.hasSameNamedClasses)) {
-          warnings.add("same named class already exists");
-          result = false;
-        }
-
-        if (!isValid(info.superClass)) {
-          warnings.add("invalid superclass " + info.superClass.name);
-          result = false;
-        }
-
-        for (ClassInfo anInterface : info.interfaces) {
-          if (!isValid(anInterface)) {
-            warnings.add("invalid interface " + anInterface.name);
-            result = false;
-          }
-        }
-
-        if (!warnings.isEmpty()) {
-          info.myWarnings = warnings;
+        if (!info.source.endsWith(".jar")) {
+          isNotValidReasons.add("only .jar files are supported by CDS");
         }
       }
 
-      info.isValid = result;
-      return result;
+      info.assertClassVersion = assertClassVersion(info);
+      switch (info.assertClassVersion) {
+        case ERROR:
+          isNotValidReasons.add("class version assert failed");
+          break;
+        case NOT_FOUND:
+          isNotValidReasons.add(".class is not found in the resources");
+          break;
+        case TOO_OLD:
+          isNotValidReasons.add("class version is too old: " + info.myTooOldClassVersion);
+          break;
+        case OK:
+          break;
+        default:
+          throw new RuntimeException("Unknown case " + info.myTooOldClassVersion + " for " + info.name);
+      }
+
+      if (Boolean.TRUE.equals(info.hasSameNamedClasses)) {
+        isNotValidReasons.add("same named class already exists");
+      }
+
+      if (!isValid(info.superClass)) {
+        isNotValidReasons.add("invalid superclass " + info.superClass.name);
+      }
+
+      for (ClassInfo anInterface : info.interfaces) {
+        if (!isValid(anInterface)) {
+          isNotValidReasons.add("invalid interface " + anInterface.name);
+        }
+      }
+
+      if (!isNotValidReasons.isEmpty()) {
+        info.myIsNotValidReasons = isNotValidReasons;
+      }
+
+      info.isValid = isNotValidReasons.isEmpty();
+      return info.isValid;
     }
 
     private void logLine(@NotNull ClassInfo info) {
@@ -501,9 +494,9 @@ public class LogLoadedApplicationClassesAgent {
 
       lines.add("Transitively invalid classes:");
       for (ClassInfo entry : allInfos) {
-        if (entry.myWarnings == null) continue;
+        if (entry.myIsNotValidReasons == null) continue;
         lines.add("  " + entry.name);
-        for (String warning : entry.myWarnings) {
+        for (String warning : entry.myIsNotValidReasons) {
           lines.add("    " + warning);
         }
       }
@@ -613,7 +606,8 @@ public class LogLoadedApplicationClassesAgent {
           //can fail because of a file-system, e.g. java.lang.IllegalArgumentException: 'other' has different root
           path = resolvedPath.toString();
         }
-      } catch (Throwable t) {
+      }
+      catch (Throwable t) {
         //MOP
       }
     }
