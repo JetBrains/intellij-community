@@ -9,14 +9,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.language.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.preferences.Preferences;
+import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateCustomTextAttributes;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTheme;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
 
-import java.util.List;
 import java.util.Map;
 
 public abstract class TextMateService {
@@ -59,7 +58,7 @@ public abstract class TextMateService {
    * 4. fill the extensions mapping for {@link org.jetbrains.plugins.textmate.language.TextMateFileType}
    */
   public abstract void registerEnabledBundles();
-  
+
   @Deprecated
   public void registerEnabledBundles(boolean builtin) {
     registerEnabledBundles();
@@ -86,6 +85,9 @@ public abstract class TextMateService {
   @NotNull
   public abstract SnippetsRegistry getSnippetsRegistry();
 
+  @NotNull
+  public abstract PreferencesRegistry getPreferencesRegistry();
+
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
 
@@ -95,14 +97,6 @@ public abstract class TextMateService {
   public abstract String[] getThemeNames();
 
   /**
-   * @param selector scope of current context
-   * @return preferences that matched to current context.
-   *         Sorted by weigh matching {@link TextMateSelectorWeigher}
-   */
-  @NotNull
-  public abstract List<Preferences> getPreferencesForSelector(String selector);
-
-  /**
    * @return custom highlighting colors defined inside bundles (not in themes). 
    * Note that background color in text attributes is stored in raw format and isn't merged with default background.
    */
@@ -110,7 +104,7 @@ public abstract class TextMateService {
   public abstract Map<String, TextMateCustomTextAttributes> getCustomHighlightingColors();
 
   public abstract PlistReader getPlistReader();
-  
+
   public abstract void addListener(@NotNull TextMateBundleListener listener);
   public abstract void removeListener(@NotNull TextMateBundleListener listener);
   public abstract void clearListeners();

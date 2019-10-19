@@ -40,7 +40,6 @@ import org.jetbrains.plugins.textmate.editor.TextMateSnippet;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.language.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.preferences.Preferences;
 import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
@@ -188,13 +187,6 @@ public class TextMateServiceImpl extends TextMateService {
     return myCustomHighlightingColors;
   }
 
-  @NotNull
-  @Override
-  public List<Preferences> getPreferencesForSelector(@NotNull String selector) {
-    ensureInitialized();
-    return myPreferencesRegistry.getPreferences(selector);
-  }
-
   @Nullable
   @Override
   public TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor) {
@@ -207,6 +199,13 @@ public class TextMateServiceImpl extends TextMateService {
   public SnippetsRegistry getSnippetsRegistry() {
     ensureInitialized();
     return mySnippetsRegistry;
+  }
+
+  @NotNull
+  @Override
+  public PreferencesRegistry getPreferencesRegistry() {
+    ensureInitialized();
+    return myPreferencesRegistry;
   }
 
   @Override
