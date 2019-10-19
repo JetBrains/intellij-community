@@ -119,10 +119,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     }
 
     if (oldRoot.getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 0) {
-      // expanding lots of nodes is a slow operation (and result is not very useful)
-      if (defaultListNode.getChildCount() <= 10000) {
-        expandPath(TreeUtil.getPath(newRoot, defaultListNode));
-      }
+      expandSafe(defaultListNode);
     }
   }
 
@@ -452,6 +449,16 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   public TreePath findNodePathInTree(Object userObject) {
     DefaultMutableTreeNode node = findNodeInTree(userObject);
     return node != null ? TreeUtil.getPathFromRoot(node) : null;
+  }
+
+  /**
+   * Expands node only if its child count is small enough.
+   * As expanding node with large child count is a slow operation (and result is not very useful).
+   */
+  public void expandSafe(@NotNull DefaultMutableTreeNode node) {
+    if (node.getChildCount() <= 10000) {
+      expandPath(TreeUtil.getPathFromRoot(node));
+    }
   }
 
   private static class DistinctChangePredicate implements Predicate<Change> {
