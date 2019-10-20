@@ -39,7 +39,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
   @Nullable private Consumer<? super VcsLogUiImpl> myOnCreatedListener;
 
-  @Nullable private volatile VcsLogUiImpl myUi;
+  @Nullable private VcsLogUiImpl myUi;
 
   public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
     myProjectLog = projectLog;
