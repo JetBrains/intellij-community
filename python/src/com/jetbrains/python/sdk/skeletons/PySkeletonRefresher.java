@@ -38,7 +38,6 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +58,6 @@ import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionStri
  */
 public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
-
-  @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
 
   private static int ourGeneratingCount = 0;
 
@@ -307,7 +304,8 @@ public class PySkeletonRefresher {
         // clean up an individual file
         final String itemName = item.getName();
         if (PyNames.INIT_DOT_PY.equals(itemName) && item.length() == 0) continue; // these are versionless
-        if (BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
+        if (PySkeletonGenerator.BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
+        if (PySkeletonGenerator.STATE_MARKER_FILE.equals(itemName)) continue;
         if (PythonSdkType.getBuiltinsFileName(mySdk).equals(itemName)) {
           continue;
         }
