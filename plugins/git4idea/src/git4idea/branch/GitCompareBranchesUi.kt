@@ -18,8 +18,8 @@ import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
@@ -38,7 +38,7 @@ import java.util.*
 class GitCompareBranchesUi(private val project: Project, private val repositories: List<GitRepository>, private val branchName: String) {
 
   fun create() {
-    VcsLogContentUtil.runWhenLogIsReady(project) { _, logManager ->
+    VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
       val oneRepo = repositories.size == 1
       val firstRepo = repositories[0]
       val currentBranchName = firstRepo.currentBranchName

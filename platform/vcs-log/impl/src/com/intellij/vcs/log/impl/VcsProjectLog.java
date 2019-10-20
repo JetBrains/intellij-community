@@ -8,7 +8,9 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -32,9 +34,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.function.BiConsumer;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
@@ -219,6 +220,65 @@ public class VcsProjectLog implements Disposable {
     Ref<T> result = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), ModalityState.any());
     return result.get();
+  }
+
+  /**
+   * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
+   * waits for it in a background task, and executes the action after the log is ready.
+   */
+  @CalledInAwt
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
+    VcsProjectLog log = getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager != null) {
+      action.accept(log, manager);
+    }
+    else { // schedule showing the log, wait its initialization, and then open the tab
+      Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
+      new Task.Backgroundable(project, "Loading Commits") {
+        @Nullable private VcsLogManager myLogManager;
+
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            myLogManager = futureLogManager.get(5, TimeUnit.SECONDS);
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException e) {
+            LOG.error(e);
+          }
+          catch (TimeoutException e) {
+            LOG.warn(e);
+          }
+        }
+
+        @Override
+        public void onSuccess() {
+          if (myLogManager != null) {
+            action.accept(log, myLogManager);
+          }
+        }
+      }.queue();
+    }
+  }
+
+  @CalledInBackground
+  @Nullable
+  public static VcsLogManager getOrCreateLog(@NotNull Project project) {
+    VcsProjectLog log = getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager == null) {
+      try {
+        manager = log.createLogInBackground(true).get();
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+    return manager;
   }
 
   private class LazyVcsLogManager {

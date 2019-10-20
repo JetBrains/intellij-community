@@ -1,9 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
@@ -23,7 +20,6 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,11 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.BiConsumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -43,8 +34,6 @@ import static com.intellij.util.ObjectUtils.notNull;
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
  */
 public class VcsLogContentUtil {
-  private static final Logger LOG = Logger.getInstance(VcsLogContentUtil.class);
-
   @Nullable
   public static AbstractVcsLogUi getLogUi(@NotNull JComponent c) {
     VcsLogPanel vcsLogPanel = null;
@@ -218,64 +207,5 @@ public class VcsLogContentUtil {
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> ui == getLogUi(c));
     if (component == null) return;
     ContentUtilEx.renameTabbedContent(manager, component, newName);
-  }
-
-  /**
-   * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
-   * waits for it in a background task, and executes the action after the log is ready.
-   */
-  @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
-    VcsProjectLog log = VcsProjectLog.getInstance(project);
-    VcsLogManager manager = log.getLogManager();
-    if (manager != null) {
-      action.accept(log, manager);
-    }
-    else { // schedule showing the log, wait its initialization, and then open the tab
-      Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
-      new Task.Backgroundable(project, "Loading Commits") {
-        @Nullable private VcsLogManager myLogManager;
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            myLogManager = futureLogManager.get(5, TimeUnit.SECONDS);
-          }
-          catch (InterruptedException ignored) {
-          }
-          catch (ExecutionException e) {
-            LOG.error(e);
-          }
-          catch (TimeoutException e) {
-            LOG.warn(e);
-          }
-        }
-
-        @Override
-        public void onSuccess() {
-          if (myLogManager != null) {
-            action.accept(log, myLogManager);
-          }
-        }
-      }.queue();
-    }
-  }
-
-  @CalledInBackground
-  @Nullable
-  public static VcsLogManager getOrCreateLog(@NotNull Project project) {
-    VcsProjectLog log = VcsProjectLog.getInstance(project);
-    VcsLogManager manager = log.getLogManager();
-    if (manager == null) {
-      try {
-        manager = log.createLogInBackground(true).get();
-      }
-      catch (InterruptedException ignored) {
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
-    }
-    return manager;
   }
 }
