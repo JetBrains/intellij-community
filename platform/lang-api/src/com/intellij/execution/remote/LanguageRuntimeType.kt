@@ -5,6 +5,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CompletableFuture
 
 abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String) : BaseExtendableType<C>(id) {
 
@@ -32,8 +33,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
 
   abstract class Introspectable {
     open fun getEnvironmentVariable(varName: String): String? = null
-    // open fun executeScript(script: String): String? = null
-    // open fun getUser(): String? = null
+    open fun promiseExecuteScript(script: String): CompletableFuture<String?> = CompletableFuture.completedFuture(null)
   }
 
   interface Introspector {

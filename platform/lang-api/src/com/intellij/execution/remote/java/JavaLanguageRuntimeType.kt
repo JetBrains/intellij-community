@@ -6,8 +6,12 @@ import com.intellij.execution.remote.LanguageRuntimeType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.lang.JavaVersion
+import java.util.concurrent.TimeUnit
 
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
@@ -28,14 +32,31 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     ServiceManager.getService(JavaLanguageRuntimeUIFactory::class.java).create(config)
 
   override fun createIntrospector(config: JavaLanguageRuntimeConfiguration): Introspector? {
-    if (config.homePath.isNotBlank()) return null
+    if (config.homePath.isNotBlank() && config.javaVersionString.isNotBlank()) return null
 
     return object : Introspector {
       override fun introspect(subject: Introspectable) {
-        if (config.homePath.isNotBlank()) return // don't want to override user value
+        if (config.homePath.isBlank()) {
+          val home = subject.getEnvironmentVariable("JAVA_HOME")
+          home?.let { config.homePath = home }
+        }
 
-        val home = subject.getEnvironmentVariable("JAVA_HOME")
-        home?.let { config.homePath = home }
+        if (config.javaVersionString.isBlank()) {
+          val promise = subject.promiseExecuteScript("java -version")
+            .thenAccept {
+              it?.let { StringUtil.splitByLines(it, true) }
+                ?.firstOrNull()
+                ?.let { JavaVersion.parse(it) }
+                ?.let { config.javaVersionString = it.toString() }
+            }
+          try {
+            // todo[remoteServers]: blocking wait
+            promise.get(3, TimeUnit.SECONDS)
+          }
+          catch (e: Exception) {
+            LOG.error(e)
+          }
+        }
       }
     }
   }
@@ -43,5 +64,6 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"
+    private val LOG: Logger = Logger.getInstance(JavaLanguageRuntimeType::class.java)
   }
 }
