@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +88,9 @@ import java.util.*;
 public class PySkeletonGenerator {
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final String GENERATOR3 = "generator3/__main__.py";
-  protected static final String STATE_MARKER_FILE = ".state.json";
+
+  @NonNls public static final String STATE_MARKER_FILE = ".state.json";
+  @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
 
   // Some flavors need current folder to be passed as param. Here are they.
   private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
