@@ -19,7 +19,7 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
   private static final long AWAIT_SAME_STREAM_TEXT_MILLIS = TimeUnit.NANOSECONDS.toMillis(ProcessStreamsSynchronizer.AWAIT_SAME_STREAM_TEXT_NANO);
 
   private MockProcessStreamsSynchronizer mySynchronizer;
-  
+
   public void testBasic() {
     mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
     mySynchronizer.doWhenStreamsSynchronized("Hello stdout 1\n", ProcessOutputType.STDOUT, 0);
@@ -67,6 +67,35 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     assertNoPendingChunks();
   }
 
+  public void testNewlineArrivedLater() {
+    mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
+    long startTime = 10;
+    Assert.assertTrue(AWAIT_SAME_STREAM_TEXT_MILLIS >= 3);
+    mySynchronizer.doWhenStreamsSynchronized("info:", ProcessOutputType.STDOUT, startTime);
+    mySynchronizer.doWhenStreamsSynchronized("error\n", ProcessOutputType.STDERR, startTime + 1);
+    mySynchronizer.doWhenStreamsSynchronized("rest of info\n", ProcessOutputType.STDOUT, startTime + 2);
+
+    assertFlushedChunks(new FlushedChunk("info:", ProcessOutputType.STDOUT, startTime),
+                        new FlushedChunk("rest of info\n", ProcessOutputType.STDOUT, startTime + 2));
+    mySynchronizer.advanceTimeTo(startTime + AWAIT_SAME_STREAM_TEXT_MILLIS);
+    assertFlushedChunks(new FlushedChunk("error\n", ProcessOutputType.STDERR, startTime + AWAIT_SAME_STREAM_TEXT_MILLIS));
+    assertNoPendingChunks();
+  }
+
+  public void testNewlineArrivedAfterFirstScheduledProcessing() {
+    mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
+    long startTime = 10;
+    Assert.assertTrue(AWAIT_SAME_STREAM_TEXT_MILLIS >= 3);
+    mySynchronizer.doWhenStreamsSynchronized("info:", ProcessOutputType.STDOUT, startTime);
+    mySynchronizer.doWhenStreamsSynchronized("error\n", ProcessOutputType.STDERR, startTime + AWAIT_SAME_STREAM_TEXT_MILLIS);
+    assertFlushedChunks(new FlushedChunk("info:", ProcessOutputType.STDOUT, startTime));
+
+    mySynchronizer.doWhenStreamsSynchronized("rest of info\n", ProcessOutputType.STDOUT, startTime + 1 + AWAIT_SAME_STREAM_TEXT_MILLIS);
+    assertFlushedChunks(new FlushedChunk("rest of info\n", ProcessOutputType.STDOUT, startTime + 1 + AWAIT_SAME_STREAM_TEXT_MILLIS),
+                        new FlushedChunk("error\n", ProcessOutputType.STDERR, startTime + 1 + AWAIT_SAME_STREAM_TEXT_MILLIS));
+    assertNoPendingChunks();
+  }
+
   public void testPerformanceSingleStream() {
     PlatformTestUtil.startPerformanceTest("single stream", 30000, () -> {
       mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
@@ -105,8 +134,8 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
         assertFlushedChunks(
           new FlushedChunk("Std", ProcessOutputType.STDOUT, nowTimeMillis),
           new FlushedChunk("Out\n", ProcessOutputType.STDOUT, nowTimeMillis + 5),
-          new FlushedChunk("Std", ProcessOutputType.STDERR, nowTimeMillis + 5 + AWAIT_SAME_STREAM_TEXT_MILLIS),
-          new FlushedChunk("Err\n", ProcessOutputType.STDERR, nowTimeMillis + 5 + AWAIT_SAME_STREAM_TEXT_MILLIS),
+          new FlushedChunk("Std", ProcessOutputType.STDERR, nowTimeMillis + AWAIT_SAME_STREAM_TEXT_MILLIS),
+          new FlushedChunk("Err\n", ProcessOutputType.STDERR, nowTimeMillis + AWAIT_SAME_STREAM_TEXT_MILLIS),
           new FlushedChunk("stdout again", ProcessOutputType.STDOUT, nowTimeMillis + 7 + AWAIT_SAME_STREAM_TEXT_MILLIS)
         );
         assertNoPendingChunks();
@@ -121,7 +150,6 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
 
   private void assertNoPendingChunks() {
     Assert.assertEquals(0, mySynchronizer.myFlushedChunkCount - mySynchronizer.myRequestedChunkCount);
-    Assert.assertEquals(-1, mySynchronizer.myNextScheduledProcessingTimeNano);
   }
 
   private static class MockProcessStreamsSynchronizer extends ProcessStreamsSynchronizer {
@@ -151,7 +179,13 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     }
 
     @Override
+    boolean isProcessingScheduled() {
+      return myNextScheduledProcessingTimeNano != -1;
+    }
+
+    @Override
     void scheduleProcessPendingChunks(long delayNano) {
+      Assert.assertEquals(-1, myNextScheduledProcessingTimeNano);
       myNextScheduledProcessingTimeNano = myNowTimeNano + delayNano;
     }
 
