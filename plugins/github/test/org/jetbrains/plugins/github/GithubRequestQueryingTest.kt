@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
@@ -10,8 +11,6 @@ import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.test.GithubTest
 
 class GithubRequestQueryingTest : GithubTest() {
-
-  private val RETRIES = 2
 
   private lateinit var orgRepo: GithubRepo
   private lateinit var mainRepos: Set<GithubRepo>
@@ -77,18 +76,24 @@ class GithubRequestQueryingTest : GithubTest() {
     }
   }
 
-  private fun retry(action: () -> Unit) {
-    var exception: Exception? = null
-    for (i in 1..RETRIES) {
-      try {
-        action()
-        exception = null
-        break
+  companion object {
+    private val LOG = logger<GithubRequestQueryingTest>()
+    private const val RETRIES = 3
+
+    private fun retry(action: () -> Unit) {
+      var exception: Exception? = null
+      for (i in 1..RETRIES) {
+        try {
+          LOG.debug("Attempt #$i")
+          action()
+          exception = null
+          break
+        }
+        catch (e: Exception) {
+          exception = e
+        }
       }
-      catch (e: Exception) {
-        exception = e
-      }
+      exception?.let { throw it }
     }
-    exception?.let { throw it }
   }
 }
