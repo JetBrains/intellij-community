@@ -10,10 +10,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -109,8 +106,7 @@ public class VcsLogTabsWatcher implements Disposable {
     return null;
   }
 
-  private static void addContentManagerListener(@NotNull ToolWindow window,
-                                                @NotNull MyRefreshPostponedEventsListener listener,
+  private static void addContentManagerListener(@NotNull ToolWindow window, @NotNull ContentManagerListener listener,
                                                 @NotNull Disposable disposable) {
     window.getContentManager().addContentManagerListener(listener);
     Disposer.register(disposable, () -> {
