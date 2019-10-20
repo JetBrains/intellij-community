@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
-import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
@@ -14,7 +13,6 @@ class GHCompletableFutureLoadingModel<T> : GHSimpleLoadingModel<T>() {
   override var result: T? = null
   override var error: Throwable? = null
 
-  private val eventDispatcher = EventDispatcher.create(GHLoadingModel.StateChangeListener::class.java)
   //to cancel old callbacks
   private var updateFuture by observable<CompletableFuture<Unit>?>(null) { _, oldValue, _ ->
     oldValue?.cancel(true)
@@ -48,7 +46,4 @@ class GHCompletableFutureLoadingModel<T> : GHSimpleLoadingModel<T>() {
     error = null
     eventDispatcher.multicaster.onReset()
   }
-
-  override fun addStateChangeListener(listener: GHLoadingModel.StateChangeListener) = eventDispatcher.addListener(listener)
-  override fun removeStateChangeListener(listener: GHLoadingModel.StateChangeListener) = eventDispatcher.removeListener(listener)
 }
