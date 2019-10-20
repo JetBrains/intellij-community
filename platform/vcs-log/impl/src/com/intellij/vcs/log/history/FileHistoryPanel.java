@@ -25,11 +25,9 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
-import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -100,11 +98,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel = new VcsLogCommitDetailsListPanel(myLogData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {
-        VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(myLogData.getProject()).getMainLogUi();
-        if (mainLogUi != null) {
-          mainLogUi.jumpToCommit(commit.getHash(), commit.getRoot());
-          VcsLogContentUtil.selectLogUi(myLogData.getProject(), mainLogUi);
-        }
+        VcsLogContentUtil.openMainLogAndExecute(myLogData.getProject(), ui -> {
+          ui.jumpToCommit(commit.getHash(), commit.getRoot());
+        });
       }
     };
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));

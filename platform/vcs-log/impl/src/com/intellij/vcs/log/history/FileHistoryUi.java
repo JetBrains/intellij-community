@@ -21,9 +21,7 @@ import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -162,21 +160,16 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       });
     }
     else {
-      VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(myProject).getMainLogUi();
-      if (mainLogUi != null) {
-        showWarningWithLink(mainText, "View in Log", () -> {
-          if (VcsLogContentUtil.selectLogUi(myProject, mainLogUi)) {
-            if (commitId instanceof Hash) {
-              mainLogUi.jumpToCommit((Hash)commitId,
-                                     myRoot,
-                                     SettableFuture.create());
-            }
-            else if (commitId instanceof String) {
-              mainLogUi.jumpToCommitByPartOfHash((String)commitId, SettableFuture.create());
-            }
+      showWarningWithLink(mainText, "View in Log", () -> {
+        VcsLogContentUtil.openMainLogAndExecute(myProject, ui -> {
+          if (commitId instanceof Hash) {
+            ui.jumpToCommit((Hash)commitId, myRoot, SettableFuture.create());
+          }
+          else if (commitId instanceof String) {
+            ui.jumpToCommitByPartOfHash((String)commitId, SettableFuture.create());
           }
         });
-      }
+      });
     }
   }
 
