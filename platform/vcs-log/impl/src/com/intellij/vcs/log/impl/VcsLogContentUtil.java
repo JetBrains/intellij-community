@@ -15,7 +15,6 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -62,13 +61,7 @@ public class VcsLogContentUtil {
     }
     return null;
   }
-
-  public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
-                                                                          @NotNull Class<U> clazz,
-                                                                          @NotNull Condition<? super U> condition) {
-    return findAndSelect(project, clazz, condition) != null;
-  }
-
+  
   @Nullable
   public static <U extends AbstractVcsLogUi> U findAndSelect(@NotNull Project project,
                                                              @NotNull Class<U> clazz,
@@ -100,10 +93,6 @@ public class VcsLogContentUtil {
     }
     //noinspection unchecked
     return (U)getLogUi(component);
-  }
-
-  public static boolean selectLogUi(@NotNull Project project, @NotNull VcsLogUi ui) {
-    return findAndSelectContent(project, AbstractVcsLogUi.class, u -> u.equals(ui));
   }
 
   @Nullable
