@@ -84,7 +84,9 @@ def main():
         debug_mode = True
 
     if '--read-state-from-stdin' in opts:
-        state_json = json.load(sys.stdin, encoding='utf-8')
+        # We can't completely shut off stdin in case Docker-based interpreter to use json.load()
+        # and have to retreat to reading the content line-wise
+        state_json = json.loads(sys.stdin.readline(), encoding='utf-8')
     elif '--write-state-file' in opts:
         state_json = {'sdk_skeletons': {}}
     else:
