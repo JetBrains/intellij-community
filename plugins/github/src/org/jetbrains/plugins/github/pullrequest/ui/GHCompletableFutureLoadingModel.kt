@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
-class GHCompletableFutureLoadingModel<T> : GHLoadingModel<T> {
+class GHCompletableFutureLoadingModel<T> : GHSimpleLoadingModel<T>() {
   override var loading: Boolean = false
 
   override var result: T? = null

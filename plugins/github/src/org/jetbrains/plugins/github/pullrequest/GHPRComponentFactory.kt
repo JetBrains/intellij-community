@@ -340,7 +340,7 @@ internal class GHPRComponentFactory(private val project: Project) {
   }
 
   private fun createChangesModel(projectUiSettings: GithubPullRequestsProjectUISettings,
-                                 loadingModel: GHLoadingModel<List<GitCommit>>,
+                                 loadingModel: GHSimpleLoadingModel<List<GitCommit>>,
                                  parentDisposable: Disposable): GHPRChangesModel {
     val model = GHPRChangesModelImpl(projectUiSettings.zipChanges)
     loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
@@ -422,7 +422,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     return model
   }
 
-  private fun <T> createValueModel(loadingModel: GHLoadingModel<T>): SingleValueModel<T?> {
+  private fun <T> createValueModel(loadingModel: GHSimpleLoadingModel<T>): SingleValueModel<T?> {
     val model = SingleValueModel<T?>(null)
     loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
       override fun onLoadingCompleted() {

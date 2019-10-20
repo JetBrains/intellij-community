@@ -13,7 +13,7 @@ import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
+class GHLoadingPanel<T>(private val model: GHLoadingModel,
                         private val content: T,
                         parentDisposable: Disposable,
                         private val textBundle: EmptyTextBundle = EmptyTextBundle.Default)
@@ -43,7 +43,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
     if (model.loading) {
       isFocusable = true
       content.emptyText.clear()
-      if (model.result != null) {
+      if (model.resultAvailable) {
         updateLoadingPanel.startLoading()
       }
       else {
@@ -54,7 +54,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
       stopLoading()
       updateLoadingPanel.stopLoading()
 
-      if (model.result != null) {
+      if (model.resultAvailable) {
         isFocusable = false
         resetKeyboardActions()
         content.emptyText.text = textBundle.empty
