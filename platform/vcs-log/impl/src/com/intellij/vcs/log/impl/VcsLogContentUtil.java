@@ -105,7 +105,7 @@ public class VcsLogContentUtil {
   }
 
   @NotNull
-  public static String generateTabId(@NotNull Project project) {
+  public static Set<String> getExistingLogIds(@NotNull Project project) {
     Set<String> existingIds;
 
     ContentManager contentManager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
@@ -124,12 +124,7 @@ public class VcsLogContentUtil {
       });
     }
 
-    for (int i = 1; ; i++) {
-      String idString = Integer.toString(i);
-      if (!existingIds.contains(idString)) {
-        return idString;
-      }
-    }
+    return existingIds;
   }
 
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,

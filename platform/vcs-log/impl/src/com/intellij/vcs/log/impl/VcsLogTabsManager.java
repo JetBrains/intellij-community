@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 public class VcsLogTabsManager {
   @NotNull private final Project myProject;
@@ -59,7 +60,7 @@ public class VcsLogTabsManager {
 
   @NotNull
   MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
-    return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, filters);
+    return openLogTab(manager, generateTabId(myProject), true, filters);
   }
 
   @NotNull
@@ -84,6 +85,17 @@ public class VcsLogTabsManager {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
     if (filters.isEmpty()) return "all";
     return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
+  }
+
+  @NotNull
+  private static String generateTabId(@NotNull Project project) {
+    Set<String> existingIds = VcsLogContentUtil.getExistingLogIds(project);
+    for (int i = 1; ; i++) {
+      String idString = Integer.toString(i);
+      if (!existingIds.contains(idString)) {
+        return idString;
+      }
+    }
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
