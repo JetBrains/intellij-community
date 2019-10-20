@@ -12,16 +12,19 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.remote.IR;
 import com.intellij.execution.remote.RemoteTargetConfiguration;
 import com.intellij.execution.remote.RemoteTargetsManager;
+import com.intellij.execution.remote.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.remote.target.IRExecutionTarget;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Optional;
 
 /**
  * @author nik
@@ -54,7 +57,21 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     try {
       IR.RemoteRunner runner = getRemoteRunner(environment);
       if (!(runner instanceof IR.LocalRunner)) {
-        return myRemoteConnection = new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, "12345")
+        String remotePort = "12345";
+
+        JavaSdkVersion javaVersion = Optional.ofNullable(runner.getTargetConfiguration())
+          .map(RemoteTargetConfiguration::getRuntimes)
+          .map(list -> list.findByType(JavaLanguageRuntimeConfiguration.class))
+          .map(JavaLanguageRuntimeConfiguration::getJavaVersionString)
+          .filter(StringUtil::isNotEmpty)
+          .map(JavaSdkVersion::fromVersionString)
+          .orElse(null);
+
+        if (javaVersion != null && javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+          remotePort = "*:" + remotePort;
+        }
+
+        return myRemoteConnection = new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remotePort)
           .suspend(true)
           .create(getJavaParameters());
       }
@@ -77,7 +94,14 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     IR.RemoteRunner runner = getRemoteRunner(getEnvironment());
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     if (myRemoteConnection != null) {
-      int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationPort(), -1);
+      String maybeHostAndPort = myRemoteConnection.getApplicationPort();
+      final int remotePort;
+      if (maybeHostAndPort.contains(":")) {
+        remotePort = StringUtil.parseInt(StringUtil.substringAfterLast(maybeHostAndPort, ":"), -1);
+      }
+      else {
+        remotePort = StringUtil.parseInt(maybeHostAndPort, -1);
+      }
       if (remotePort > 0) {
         request.bindRemotePort(remotePort).promise().onSuccess(it -> {
           myRemoteConnection.setDebuggerHostName("0.0.0.0");
