@@ -83,7 +83,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   @NotNull
-  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager, AbstractVcsLogUi ui) {
+  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager, @NotNull AbstractVcsLogUi ui) {
     return new VcsLogPanel(logManager, ui);
   }
 
