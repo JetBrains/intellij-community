@@ -189,6 +189,11 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
       myNextScheduledProcessingTimeNano = myNowTimeNano + delayNano;
     }
 
+    @Override
+    void waitForAllFlushed() {
+      LOG.error("Use #advanceTimeTo for " + MockProcessStreamsSynchronizer.class);
+    }
+
     private void advanceTimeTo(long timeMillis) {
       long nowTimeNano = TimeUnit.MILLISECONDS.toNanos(timeMillis);
       assert nowTimeNano >= myNowTimeNano;
