@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
-import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
@@ -104,7 +103,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   private void updateDisplayName() {
     if (myContent != null && myUi != null) {
-      myContent.setDisplayName(ContentUtilEx.getFullName(TAB_NAME, VcsLogTabsManager.generateDisplayName(myUi)));
+      myContent.setDisplayName(VcsLogTabsManager.generateDisplayName(myUi));
     }
   }
 

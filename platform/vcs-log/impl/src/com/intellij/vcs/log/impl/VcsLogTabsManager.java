@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ContentUtilEx;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
@@ -77,19 +79,30 @@ public class VcsLogTabsManager {
   }
 
   private void updateTabName(@NotNull VcsLogUi ui) {
-    VcsLogContentUtil.renameLogUi(myProject, ui, generateDisplayName(ui));
+    VcsLogContentUtil.renameLogUi(myProject, ui, generateShortDisplayName(ui));
   }
 
   @NotNull
-  public static String generateDisplayName(@NotNull VcsLogUi ui) {
+  private static String generateShortDisplayName(@NotNull VcsLogUi ui) {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
     if (filters.isEmpty()) return "all";
     return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
   }
 
   @NotNull
+  private static String getFullName(@NotNull String shortName) {
+    return ContentUtilEx.getFullName(VcsLogContentProvider.TAB_NAME, shortName);
+  }
+
+  @NotNull
+  public static String generateDisplayName(@NotNull VcsLogUi ui) {
+    return getFullName(generateShortDisplayName(ui));
+  }
+
+  @NotNull
   private static String generateTabId(@NotNull Project project) {
-    Set<String> existingIds = VcsLogContentUtil.getExistingLogIds(project);
+    Set<String> existingIds = ContainerUtil.union(VcsLogContentUtil.getExistingLogIds(project),
+                                                  VcsLogEditorUtilKt.getExistingLogIds(project));
     for (int i = 1; ; i++) {
       String idString = Integer.toString(i);
       if (!existingIds.contains(idString)) {
