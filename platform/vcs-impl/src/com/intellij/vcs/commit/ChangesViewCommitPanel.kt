@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -137,6 +138,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
   private var needUpdateCommitOptionsUi = false
+
+  private var isHideToolWindowOnDeactivate = false
 
   var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->
     if (oldValue != newValue) {
@@ -270,9 +273,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   override val isActive: Boolean get() = isVisible
 
   override fun activate(): Boolean {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
+    val toolWindow = getVcsToolWindow() ?: return false
     val contentManager = ChangesViewContentManager.getInstance(project)
 
+    saveToolWindowState()
     changesView.isShowCheckboxes = true
     isVisible = true
 
@@ -282,9 +286,26 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   }
 
   override fun deactivate() {
+    restoreToolWindowState()
     changesView.isShowCheckboxes = false
     isVisible = false
   }
+
+  private fun saveToolWindowState() {
+    if (!isActive) {
+      isHideToolWindowOnDeactivate = getVcsToolWindow()?.isVisible != true
+    }
+  }
+
+  private fun restoreToolWindowState() {
+    if (isHideToolWindowOnDeactivate) {
+      isHideToolWindowOnDeactivate = false
+      getVcsToolWindow()?.hide(null)
+    }
+  }
+
+  private fun getVcsToolWindow(): ToolWindow? =
+    ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
 
   override fun expand(item: Any) {
     val node = changesView.findNodeInTree(item)
