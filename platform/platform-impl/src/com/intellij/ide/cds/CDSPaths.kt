@@ -18,7 +18,7 @@ class CDSPaths private constructor(val baseDir: File,
   val classesPathFile = File(baseDir, "${cdsClassesHash}.classpath")
   val classesArchiveFile = File(baseDir, "${cdsClassesHash}.jsa")
 
-  fun isSame(jsaFile: File?) = jsaFile == classesArchiveFile
+  fun isSame(jsaFile: File?) = jsaFile != null && jsaFile == classesArchiveFile && jsaFile.isFile
   fun isOurFile(file: File?) = file == classesErrorMarkerFile || file == classesListFile || file == classesPathFile || file == classesArchiveFile
 
   fun mkdirs() {
