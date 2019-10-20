@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +30,18 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
   private final PersistentHashMap<String, byte[]> myTestHashes;
   private final Map<String, Module> myModuleNameToModuleMap;
   private final ModuleHashingService myModuleHashingService;
+  private final Set<Module> myAffectedProductionModules;
+  private final Set<Module> myAffectedTestModules;
   private final ProjectFileIndex myProjectFileIndex;
   private final Project myProject;
+  private boolean isInitialized;
 
   public PersistentCachingModuleHashingService(File baseDir, Project project) throws IOException {
     myProject = project;
-    myModuleNameToModuleMap = JpsCachesUtils.createModuleNameToModuleMap(project);
+    myAffectedTestModules = ContainerUtil.newConcurrentSet();
+    myAffectedProductionModules = ContainerUtil.newConcurrentSet();
     myModuleHashingService = new ModuleHashingService();
+    myModuleNameToModuleMap = JpsCachesUtils.createModuleNameToModuleMap(project);
     File testHashesFile = new File(baseDir, TEST_CACHE_FILE_NAME);
     File productionHashesFile = new File(baseDir, PRODUCTION_CACHE_FILE_NAME);
     boolean shouldComputeHashesForEntireProject = !testHashesFile.exists() || !productionHashesFile.exists();
@@ -43,6 +49,7 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
     myProductionHashes = new PersistentHashMap<>(productionHashesFile, EnumeratorStringDescriptor.INSTANCE,
                                                  ByteArrayDescriptor.INSTANCE);
     myProjectFileIndex = ProjectFileIndex.getInstance(project);
+    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
 
     if (shouldComputeHashesForEntireProject) {
       long start = System.currentTimeMillis();
@@ -50,28 +57,30 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
       computeHashesForProjectAndPersist();
       long end = System.currentTimeMillis() - start;
       LOG.debug("Modules hash calculating finished: " + end + "ms");
+      handleAffectedModules();
     }
+    isInitialized = true;
     LOG.info("Plugin initialization finished");
-    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    Set<Module> affectedProductionModules = new HashSet<>();
-    Set<Module> affectedTestModules = new HashSet<>();
     events.stream().map(VFileEvent::getFile).filter(Objects::nonNull).forEach(vf -> {
       Module affectedModule = myProjectFileIndex.getModuleForFile(vf);
       if (affectedModule == null) return;
       ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(affectedModule).getFileIndex();
       if (moduleFileIndex.isInTestSourceContent(vf)) {
-        affectedTestModules.add(affectedModule);
+        myAffectedTestModules.add(affectedModule);
       }
       else {
-        affectedProductionModules.add(affectedModule);
+        myAffectedProductionModules.add(affectedModule);
       }
     });
+    if (isInitialized) handleAffectedModules();
+  }
 
-    for (Module affectedModule : affectedProductionModules) {
+  private void handleAffectedModules() {
+    for (Module affectedModule : myAffectedProductionModules) {
       try {
         LOG.debug("Changed production sources of module: " + affectedModule.getName());
         myProductionHashes.remove(affectedModule.getName());
@@ -80,8 +89,9 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
         LOG.warn("Couldn't remove affected module from collection", ex);
       }
     }
+    myAffectedProductionModules.clear();
 
-    for (Module affectedModule : affectedTestModules) {
+    for (Module affectedModule : myAffectedTestModules) {
       try {
         LOG.debug("Changed test sources of module: " + affectedModule.getName());
         myTestHashes.remove(affectedModule.getName());
@@ -90,6 +100,7 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
         LOG.warn("Couldn't remove affected module from collection", ex);
       }
     }
+    myAffectedTestModules.clear();
   }
 
   public void close() {
