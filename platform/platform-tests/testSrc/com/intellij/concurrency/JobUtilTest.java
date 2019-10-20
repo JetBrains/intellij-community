@@ -409,7 +409,13 @@ public class JobUtilTest extends LightPlatformTestCase {
       }
       assertTrue(started.get());
       job.cancel();
-      job.waitForCompletion(100_000);
+      try {
+        job.waitForCompletion(100_000);
+      }
+      catch (TimeoutException e) {
+        System.err.println(ThreadDumper.dumpThreadsToString());
+        throw e;
+      }
       assertTrue(finished.get());
     }
   }
