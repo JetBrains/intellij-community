@@ -183,7 +183,7 @@ class ChangesViewCommitWorkflowHandler(
 
   val isActive: Boolean get() = ui.isActive
   fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
-  fun deactivate() = fireActivityStateChanged { ui.deactivate() }
+  fun deactivate(isRestoreState: Boolean) = fireActivityStateChanged { ui.deactivate(isRestoreState) }
 
   fun addActivityListener(listener: ActivityListener, parent: Disposable) = activityEventDispatcher.addListener(listener, parent)
 
@@ -222,7 +222,7 @@ class ChangesViewCommitWorkflowHandler(
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (isToggleCommitUi.asBoolean() && result == CheckinHandler.ReturnResult.COMMIT) deactivate()
+    if (isToggleCommitUi.asBoolean() && result == CheckinHandler.ReturnResult.COMMIT) deactivate(true)
   }
 
   override fun updateWorkflow() {

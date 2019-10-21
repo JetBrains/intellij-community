@@ -366,7 +366,7 @@ public class ChangesViewManager implements ChangesViewEx,
           if (myCommitWorkflowHandler == null) return;
 
           if (value.asBoolean()) {
-            myCommitWorkflowHandler.deactivate();
+            myCommitWorkflowHandler.deactivate(false);
           }
           else {
             myCommitWorkflowHandler.activate();
@@ -415,7 +415,7 @@ public class ChangesViewManager implements ChangesViewEx,
           myCommitPanel = new ChangesViewCommitPanel(myView, this);
           myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
-          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate();
+          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
           Disposer.register(this, myCommitPanel);
 
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);

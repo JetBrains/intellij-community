@@ -285,8 +285,9 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     return true
   }
 
-  override fun deactivate() {
-    restoreToolWindowState()
+  override fun deactivate(isRestoreState: Boolean) {
+    if (isRestoreState) restoreToolWindowState()
+    clearToolWindowState()
     changesView.isShowCheckboxes = false
     isVisible = false
   }
@@ -299,9 +300,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   private fun restoreToolWindowState() {
     if (isHideToolWindowOnDeactivate) {
-      isHideToolWindowOnDeactivate = false
       getVcsToolWindow()?.hide(null)
     }
+  }
+
+  private fun clearToolWindowState() {
+    isHideToolWindowOnDeactivate = false
   }
 
   private fun getVcsToolWindow(): ToolWindow? =
