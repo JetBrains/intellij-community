@@ -749,11 +749,36 @@ class DistributionJARsBuilder {
         }
       }
 
+      def helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext)
+      if (helpPlugin != null) {
+        def spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, "$nonBundledPluginsArtifacts/auto-uploading", layoutBuilder)
+        if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+          pluginsToIncludeInCustomRepository.add(spec)
+        }
+      }
+
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
         buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
       }
     }
+  }
+
+  private PluginRepositorySpec buildHelpPlugin(PluginLayout helpPlugin, String pluginsToPublishDir, String targetDir, LayoutBuilder layoutBuilder) {
+    def directory = getActualPluginDirectoryName(helpPlugin, buildContext)
+    def destFile = "${targetDir}/${directory}.zip"
+    def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$helpPlugin.mainModule"
+    layoutBuilder.patchModuleOutput(helpPlugin.mainModule, patchedPluginXmlDir)
+    buildContext.messages.block("Building $directory plugin") {
+      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>([helpPlugin]), pluginsToPublishDir)
+      buildContext.ant.zip(destfile: destFile) {
+        zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
+      }
+    }
+    buildContext.notifyArtifactBuilt(destFile)
+    def pluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
+    return new PluginRepositorySpec(pluginZip: destFile,
+                                    pluginXml: pluginXmlPath)
   }
 
   private String getPluginVersion(PluginLayout plugin) {
