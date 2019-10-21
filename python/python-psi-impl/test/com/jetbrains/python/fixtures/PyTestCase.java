@@ -165,25 +165,47 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected void runWithAdditionalFileInLibDir(@NotNull String relativePath,
                                                @NotNull String text,
-                                               @NotNull Consumer<VirtualFile> consumer) {
+                                               @NotNull Consumer<VirtualFile> fileConsumer) {
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    runWithAdditionalFileIn(relativePath, text, PySearchUtilBase.findLibDir(sdk), consumer);
+    final VirtualFile libDir = PySearchUtilBase.findLibDir(sdk);
+    if (libDir != null) {
+      runWithAdditionalFileIn(relativePath, text, libDir, fileConsumer);
+    }
+    else {
+      createAdditionalRootAndRunWithIt(
+        sdk,
+        "Lib",
+        OrderRootType.CLASSES,
+        root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
+      );
+    }
   }
 
   protected void runWithAdditionalFileInSkeletonDir(@NotNull String relativePath,
                                                     @NotNull String text,
-                                                    @NotNull Consumer<VirtualFile> consumer) {
+                                                    @NotNull Consumer<VirtualFile> fileConsumer) {
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    runWithAdditionalFileIn(relativePath, text, PythonSdkUtil.findSkeletonsDir(sdk), consumer);
+    final VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);
+    if (skeletonsDir != null) {
+      runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);
+    }
+    else {
+      createAdditionalRootAndRunWithIt(
+        sdk,
+        PythonSdkUtil.SKELETON_DIR_NAME,
+        PythonSdkUtil.BUILTIN_ROOT_TYPE,
+        root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
+      );
+    }
   }
 
   private static void runWithAdditionalFileIn(@NotNull String relativePath,
                                               @NotNull String text,
                                               @NotNull VirtualFile dir,
-                                              @NotNull Consumer<VirtualFile> consumer) {
+                                              @NotNull Consumer<VirtualFile> fileConsumer) {
     final VirtualFile file = VfsTestUtil.createFile(dir, relativePath, text);
     try {
-      consumer.accept(file);
+      fileConsumer.accept(file);
     }
     finally {
       VfsTestUtil.deleteFile(file);
@@ -193,20 +215,40 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
+    runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (__) -> runnable.run());
+  }
+
+  private static void createAdditionalRootAndRunWithIt(@NotNull Sdk sdk,
+                                                       @NotNull String rootRelativePath,
+                                                       @NotNull OrderRootType rootType,
+                                                       @NotNull Consumer<VirtualFile> rootConsumer) {
+    final VirtualFile tempRoot = VfsTestUtil.createDir(sdk.getHomeDirectory().getParent().getParent(), rootRelativePath);
+    try {
+      runWithAdditionalRoot(sdk, tempRoot, rootType, rootConsumer);
+    }
+    finally {
+      VfsTestUtil.deleteFile(tempRoot);
+    }
+  }
+
+  private static void runWithAdditionalRoot(@NotNull Sdk sdk,
+                                            @NotNull VirtualFile root,
+                                            @NotNull OrderRootType rootType,
+                                            @NotNull Consumer<VirtualFile> rootConsumer) {
     WriteAction.run(() -> {
       final SdkModificator modificator = sdk.getSdkModificator();
       assertNotNull(modificator);
-      modificator.addRoot(directory, OrderRootType.CLASSES);
+      modificator.addRoot(root, rootType);
       modificator.commitChanges();
     });
     try {
-      runnable.run();
+      rootConsumer.accept(root);
     }
     finally {
       WriteAction.run(() -> {
         final SdkModificator modificator = sdk.getSdkModificator();
         assertNotNull(modificator);
-        modificator.removeRoot(directory, OrderRootType.CLASSES);
+        modificator.removeRoot(root, rootType);
         modificator.commitChanges();
       });
     }

@@ -26,6 +26,7 @@ sync(repo, bundled)
 
 val whiteList = setOf(
   "__builtin__",
+  "__future__",
   "_importlib_modulespec",
   "_io",
   "abc",
@@ -35,6 +36,7 @@ val whiteList = setOf(
   "builtins",
   "collections",
   "concurrent",
+  "cPickle",
   "crypt",
   "ctypes",
   "datetime",
@@ -47,6 +49,7 @@ val whiteList = setOf(
   "math",
   "mock",
   "multiprocessing",
+  "numbers",
   "pathlib",
   "queue",
   "re",
