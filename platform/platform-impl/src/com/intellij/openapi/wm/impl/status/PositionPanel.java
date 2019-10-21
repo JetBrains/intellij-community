@@ -12,6 +12,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
@@ -80,11 +82,18 @@ public final class PositionPanel extends EditorBasedWidget
 
   @Override
   public String getTooltipText() {
-    final String shortcut = KeymapUtil.getFirstKeyboardShortcutText("GotoLine");
-    if (!shortcut.isEmpty()) {
-      return UIBundle.message("go.to.line.command.name") + " (" + shortcut + ")";
+    String toolTip = UIBundle.message("go.to.line.command.name");
+    String shortcut = KeymapUtil.getFirstKeyboardShortcutText("GotoLine");
+
+    if (!Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(shortcut)) {
+      return toolTip + " (" + shortcut + ")";
     }
-    return UIBundle.message("go.to.line.command.name");
+    return toolTip;
+  }
+
+  @Override
+  public String getShortcutText() {
+    return KeymapUtil.getFirstKeyboardShortcutText("GotoLine");
   }
 
   @Override

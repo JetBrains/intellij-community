@@ -56,6 +56,9 @@ public interface StatusBarWidget extends Disposable {
     String getTooltipText();
 
     @Nullable
+    default String getShortcutText() { return null; }
+
+    @Nullable
     Consumer<MouseEvent> getClickConsumer();
   }
 
