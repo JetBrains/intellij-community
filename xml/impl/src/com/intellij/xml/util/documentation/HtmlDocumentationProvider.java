@@ -91,10 +91,13 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     final XmlTag tag = element instanceof XmlElement ?
                        ReadAction.compute(() -> PsiTreeUtil.getParentOfType(element, XmlTag.class, false)) :
                        null;
-    final SmartPsiElementPointer pointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
+    final SmartPsiElementPointer<?> pointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
     PsiElement originalElement = pointer != null ?
                                  ReadAction.compute((ThrowableComputable<PsiElement, RuntimeException>)pointer::getElement) :
                                  element;
+    if (originalElement != null && !(originalElement instanceof XmlElement)) {
+      return null;
+    }
     final DocEntity entity = ReadAction.compute(() -> findDocumentationEntity(element, tag));
     for (String url : docUrls) {
       if (url.contains("#attr-")) return null;
