@@ -354,6 +354,7 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
+  @NotNull
   private static File getTempFile(@NotNull String originalFileName, @NotNull String parent) {
     int randomSuffix = (int)(System.currentTimeMillis() % 1000);
     for (int i = randomSuffix; ; i++) {
@@ -419,6 +420,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
+  @NotNull
   private static FileOutputStream openOutputStream(@NotNull final File file) throws IOException {
     try {
       return new FileOutputStream(file);
@@ -526,10 +528,12 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.getNameWithoutExtension(name);
   }
 
+  @NotNull
   public static String createSequentFileName(@NotNull File aParentFolder, @NotNull String aFilePrefix, @NotNull String aExtension) {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
+  @NotNull
   public static String createSequentFileName(@NotNull File aParentFolder,
                                              @NotNull String aFilePrefix,
                                              @NotNull String aExtension,
@@ -603,17 +607,17 @@ public class FileUtil extends FileUtilRt {
    * </pre>
    * 'root/dir1/link_to_dir1/../dir2' should be resolved to 'root/dir2'
    */
-  @Contract("null, _ -> null")
+  @Contract("null, _ -> null; !null,_->!null")
   public static String toCanonicalPath(@Nullable String path, boolean resolveSymlinksIfNecessary) {
     return toCanonicalPath(path, File.separatorChar, true, resolveSymlinksIfNecessary);
   }
 
-  @Contract("null, _ -> null")
+  @Contract("null, _ -> null; !null,_->!null")
   public static String toCanonicalPath(@Nullable String path, char separatorChar) {
     return toCanonicalPath(path, separatorChar, true);
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null->!null")
   public static String toCanonicalUriPath(@Nullable String path) {
     return toCanonicalPath(path, '/', false);
   }
@@ -637,7 +641,7 @@ public class FileUtil extends FileUtilRt {
     }
   };
 
-  @Contract("null, _, _, _ -> null")
+  @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
   private static String toCanonicalPath(@Nullable String path,
                                         final char separatorChar,
                                         final boolean removeLastSlash,
@@ -1314,7 +1318,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @TestOnly
-  public static void resetCanonicalTempPathCache(final String tempPath) {
+  public static void resetCanonicalTempPathCache(@NotNull String tempPath) {
     FileUtilRt.resetCanonicalTempPathCache(tempPath);
   }
 
@@ -1458,7 +1462,7 @@ public class FileUtil extends FileUtilRt {
     return path.equals("/") || path.matches("[a-zA-Z]:[/\\\\]");
   }
 
-  public static boolean deleteWithRenaming(File file) {
+  public static boolean deleteWithRenaming(@NotNull File file) {
     File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
     boolean success = file.renameTo(tempFileNameForDeletion);
     return delete(success ? tempFileNameForDeletion:file);

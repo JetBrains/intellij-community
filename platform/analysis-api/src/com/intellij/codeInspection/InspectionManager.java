@@ -30,13 +30,13 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                                                                  QuickFix... fixes);
+                                                                  @Nullable QuickFix... fixes);
 
   @NotNull
   @Contract(pure = true)
   public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                                                                  Module module,
-                                                                  QuickFix... fixes);
+                                                                  @NotNull Module module,
+                                                                  @Nullable QuickFix... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
@@ -50,7 +50,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                                                            LocalQuickFix fix,
+                                                            @Nullable LocalQuickFix fix,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly);
 
@@ -66,7 +66,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                                                            LocalQuickFix[] fixes,
+                                                            @Nullable LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             boolean isAfterEndOfLine);
@@ -106,7 +106,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull String descriptionTemplate,
-                                                            LocalQuickFix fix,
+                                                            @Nullable LocalQuickFix fix,
                                                             @NotNull ProblemHighlightType highlightType);
 
   /**

@@ -12,7 +12,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private final QuickFix[] myFixes;
   private final String myDescriptionTemplate;
 
-  public CommonProblemDescriptorImpl(final QuickFix[] fixes, @NotNull final String descriptionTemplate) {
+  public CommonProblemDescriptorImpl(@Nullable QuickFix[] fixes, @NotNull final String descriptionTemplate) {
     if (fixes == null) {
       myFixes = null;
     }

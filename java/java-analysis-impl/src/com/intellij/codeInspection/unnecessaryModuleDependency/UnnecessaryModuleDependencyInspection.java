@@ -116,8 +116,8 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
   private static CommonProblemDescriptor createDescriptor(AnalysisScope scope,
                                                           InspectionManager manager,
-                                                          Module module,
-                                                          Module dependency) {
+                                                          @NotNull Module module,
+                                                          @NotNull Module dependency) {
     String dependencyName = dependency.getName();
     String moduleName = module.getName();
     if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives

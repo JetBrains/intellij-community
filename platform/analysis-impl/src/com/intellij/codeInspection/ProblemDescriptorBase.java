@@ -35,7 +35,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
                                @NotNull String descriptionTemplate,
-                               LocalQuickFix[] fixes,
+                               @Nullable LocalQuickFix[] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
