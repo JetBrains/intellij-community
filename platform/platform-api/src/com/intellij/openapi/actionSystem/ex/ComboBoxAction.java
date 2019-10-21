@@ -155,6 +155,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       setIcon(myPresentation.getIcon());
       setText(myPresentation.getText());
+      setEnabled(myPresentation.isEnabled());
 
       myTooltipText = myPresentation.getDescription();
       updateTooltipText();

@@ -67,7 +67,7 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
       sb.append(StringUtil.capitalize(hint));
       sb.append("</span>");
     }
-    return sb.toString();
+    return sb.append("</html>").toString();
   }
 
   @NotNull
