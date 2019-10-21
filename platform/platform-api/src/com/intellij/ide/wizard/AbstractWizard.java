@@ -13,22 +13,21 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -210,7 +209,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
     });
 
-    return wrapInScrollPane(panel);
+    return panel;
   }
 
   public JPanel getContentComponent() {
@@ -324,46 +323,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     updateStep();
   }
 
-  @Contract("null -> null")
-  private static JBScrollPane wrapInScrollPane(Component component) {
-    if (component == null) return null;
-    JBScrollPane scrollPane = new JBScrollPane(component);
-    scrollPane.setBorder(JBUI.Borders.empty());
-    // Needed to show scroll bars in case of emergency
-    bindSizeToPreferredSize(scrollPane, component);
-    return scrollPane;
-  }
-
-  private static void bindSizeToPreferredSize(@NotNull Component source, @NotNull Component destination) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    Dimension minimumSize = destination.getMinimumSize();
-    Dimension preferredSize = destination.getPreferredSize();
-    source.setPreferredSize(preferredSize);
-    destination.setPreferredSize(fitToBounds(source.getSize(), minimumSize, preferredSize));
-    source.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        destination.setPreferredSize(fitToBounds(source.getSize(), minimumSize, preferredSize));
-      }
-    });
-  }
-
-  private static Dimension fitToBounds(@NotNull Dimension size, @NotNull Dimension minimumSize, @NotNull Dimension maximumSize) {
-    int width = fitToBounds(size.width, minimumSize.width, maximumSize.width);
-    int height = fitToBounds(size.height, minimumSize.height, maximumSize.height);
-    return new Dimension(width, height);
-  }
-
-  private static int fitToBounds(int size, int minimumSize, int maximumSize) {
-    return Math.min(Math.max(size, minimumSize), maximumSize);
-  }
 
   protected String addStepComponent(final Component component) {
     String id = myComponentToIdMap.get(component);
     if (id == null) {
       id = Integer.toString(myComponentToIdMap.size());
       myComponentToIdMap.put(component, id);
-      myContentPanel.add(wrapInScrollPane(component), id);
+      myContentPanel.add(component, id);
     }
     return id;
   }
