@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.StringTokenizer;
 
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /**
@@ -85,6 +86,10 @@ public class Prefs {
 
   public static void remove(String key) {
     getPreferences(key).remove(getNodeKey(key));
+  }
+
+  public static void flush(String key) throws BackingStoreException {
+    getPreferences(key).flush();
   }
 
   private static String getNodeKey(String key) {
