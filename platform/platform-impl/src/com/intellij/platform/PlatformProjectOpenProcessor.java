@@ -97,7 +97,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       // doesn't make sense to use default project in tests for heavy projects
       options.useDefaultProjectAsTemplate = false;
     }
-    return doOpenProject(Paths.get(virtualFile.getPath()), options, -1);
+    Path baseDir = Paths.get(virtualFile.getPath());
+    options.isNewProject = !ProjectUtil.isValidProjectPath(baseDir);
+    return doOpenProject(baseDir, options, -1);
   }
 
   @Override
@@ -180,8 +182,6 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
         options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER));
       }
     }
-
-    options.isNewProject = !ProjectUtil.isValidProjectPath(baseDir);
 
     SaveAndSyncHandler saveAndSyncHandler = ApplicationManager.getApplication().getServiceIfCreated(SaveAndSyncHandler.class);
     if (saveAndSyncHandler != null) {
