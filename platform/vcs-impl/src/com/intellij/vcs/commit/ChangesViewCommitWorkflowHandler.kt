@@ -146,18 +146,17 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   private fun setInclusion(items: Collection<Any>, force: Boolean) {
-    if (force) {
+    val activeChanges = changeListManager.defaultChangeList.changes
+
+    if (!isActive || force) {
       inclusionModel.clearInclusion()
       ui.includeIntoCommit(items)
 
-      knownActiveChanges = emptyList()
+      knownActiveChanges = if (!isActive) activeChanges else emptyList()
     }
     else {
-      val activeChanges = changeListManager.defaultChangeList.changes
-
-      // clear inclusion from not active change lists
-      val inclusionFromNotActiveLists = (inclusionModel.getInclusion() - activeChanges.toPartialAwareSet()).filterIsInstance<Change>()
-      inclusionModel.removeInclusion(inclusionFromNotActiveLists)
+      // skip if we have inclusion from not active change lists
+      if ((inclusionModel.getInclusion() - activeChanges.toPartialAwareSet()).filterIsInstance<Change>().isNotEmpty()) return
 
       // we have inclusion in active change list and/or unversioned files => include new active changes if any
       val newChanges = activeChanges - knownActiveChanges
