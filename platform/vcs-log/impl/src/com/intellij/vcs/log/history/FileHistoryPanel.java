@@ -139,6 +139,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     Disposer.register(myUi, this);
   }
 
+  @NotNull
   private DiffPreviewProvider installEditorPreview() {
     final DiffPreviewProvider provider = new DiffPreviewProvider() {
       @NotNull

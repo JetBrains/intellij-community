@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -235,22 +236,22 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         openLogEditorTab();
+
+        new DumbAwareAction() {
+          {
+            setShortcutSet(CommonShortcuts.ESCAPE);
+          }
+
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            openLogEditorTab();
+          }
+        }.registerCustomShortcutSet(myChangesBrowser, this);
       }, ModalityState.NON_MODAL);
     }
     else {
       myChangesBrowserSplitter.setFirstComponent(myToolbarsAndTable);
     }
-
-    new AnAction() {
-      {
-        setShortcutSet(CommonShortcuts.ESCAPE);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        openLogEditorTab();
-      }
-    }.registerCustomShortcutSet(myChangesBrowser, this);
   }
 
   public void openLogEditorTab() {
