@@ -32,7 +32,7 @@ public class DependencySearchService {
   private final Project myProject;
 
   private final PackageSearchService myPackageSearchService = new PackageSearchService();
-  private OfflineSearchService myOfflineSearchService = new OfflineSearchService(Collections.emptyList());
+  private volatile OfflineSearchService myOfflineSearchService = new OfflineSearchService(Collections.emptyList());
   private volatile long myLastRequestedTime = -1;
 
   public DependencySearchService(Project project) {

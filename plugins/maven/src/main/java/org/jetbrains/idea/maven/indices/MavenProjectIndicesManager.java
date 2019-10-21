@@ -122,16 +122,17 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         File localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
         if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
 
-
+        final List<MavenIndex> newProjectIndices;
         if (remoteRepositoriesIdsAndUrls.isEmpty()) {
-          myProjectIndices.clear();
+          newProjectIndices = new ArrayList<>();
         }
         else {
-          myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
+          newProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
         }
-        ContainerUtil.addIfNotNull(myProjectIndices, MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
+        ContainerUtil.addIfNotNull(newProjectIndices, MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
         myDependencySearchService.reload();
 
+        myProjectIndices = newProjectIndices;
         if (consumer != null) {
           consumer.consume(myProjectIndices);
         }
