@@ -18,8 +18,6 @@ package com.intellij.psi.search;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,12 +37,8 @@ public class GlobalSearchScopeUtil {
   public static Set<VirtualFile> getLocalScopeFiles(@NotNull final LocalSearchScope scope) {
     return ReadAction.compute(() -> {
       Set<VirtualFile> files = new LinkedHashSet<>();
-      for (PsiElement element : scope.getScope()) {
-        PsiFile file = element.getContainingFile();
-        if (file != null) {
-          ContainerUtil.addIfNotNull(files, file.getVirtualFile());
-          ContainerUtil.addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
-        }
+      for (VirtualFile file : scope.getVirtualFiles()) {
+        ContainerUtil.addIfNotNull(files, file);
       }
       return files;
     });
