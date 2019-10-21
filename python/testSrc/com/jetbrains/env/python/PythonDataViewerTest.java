@@ -142,6 +142,21 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  @Staging
+  public void testLabelWithPercentSign() {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(33)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("df5", 10, 1, chunk -> {
+          final List<ArrayChunk.ColHeader> labels = chunk.getColHeaders();
+          assertEquals(1, labels.size());
+          assertEquals("foo_%", labels.get(0).getLabel());
+        });
+      }
+    });
+  }
+
   private static class PyDataFrameDebuggerTask extends PyDebuggerTask {
 
     private final Set<Integer> myLines;

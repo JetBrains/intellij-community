@@ -684,7 +684,7 @@ def slice_to_xml(slice, rows, cols, format, type, bounds):
 def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
     xml = "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
     for col in range(cols):
-        col_label = get_label(df.axes[1].values[col]) if dim > 1 else str(col)
+        col_label = quote(get_label(df.axes[1].values[col]) if dim > 1 else str(col))
         bounds = col_bounds[col]
         col_format = "%" + col_to_format(col)
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
