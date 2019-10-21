@@ -202,7 +202,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
-    return dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null;
+    return dir.isDirectory() && GitUtil.isUnderGit(dir);
   }
 
   @Override
