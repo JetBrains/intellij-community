@@ -117,6 +117,9 @@ public class ModulePathSplitter {
   private static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");
   private static final Pattern REPEATING_DOTS = Pattern.compile("(\\.)(\\1)+");
 
+  /**
+   * Following the logic of jdk.internal.module.ModulePath.cleanModuleName() that normalizes the module name derived from a jar artifact name
+   */
   private static String normalizeModuleName(String fName) {
     if (fName != null) {
       fName = NON_ALPHANUM.matcher(fName).replaceAll(".");
