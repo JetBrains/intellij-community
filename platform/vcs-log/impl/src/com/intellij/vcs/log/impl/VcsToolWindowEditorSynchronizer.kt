@@ -37,11 +37,9 @@ class VcsToolWindowEditorSynchronizer() {
       }
 
       val file = e.newFile
-      if (file is VCSContentVirtualFile) {
-        val tabSelector = file.getUserData(VCSContentVirtualFile.TabSelector)
-        if (tabSelector != null) {
-          tabSelector()
-        }
+      val tabSelector = file?.getUserData(VCSContentVirtualFile.TabSelector)
+      if (tabSelector != null) {
+        tabSelector()
       }
     }
   }

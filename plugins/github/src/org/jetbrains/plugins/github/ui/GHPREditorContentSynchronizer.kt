@@ -39,12 +39,12 @@ class GHPREditorContentSynchronizer {
 
       val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(id) as? ToolWindowImpl
       if (toolwindow != null) {
-        getInstance(project).addContentManagerListener(toolwindow, MyLogEditorListener(project))
+        getInstance(project).addContentManagerListener(toolwindow, MyGHPRLogEditorSelector(project))
       }
     }
   }
 
-  private class MyLogEditorListener(private val project: Project) : VcsLogEditorTabSelector(project) {
+  private class MyGHPRLogEditorSelector(private val project: Project) : VcsLogEditorTabSelector(project) {
     override fun selectEditorTab(content: Content) {
       val component = content.component
       val ghprAccountsComponent = component as? GHPRAccountsComponent

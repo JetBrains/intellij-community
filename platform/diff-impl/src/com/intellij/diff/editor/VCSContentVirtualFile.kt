@@ -6,7 +6,7 @@ import com.intellij.testFramework.LightVirtualFile
 import javax.swing.JComponent
 
 class VCSContentVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc: () -> String)
-  : LightVirtualFile(getTabNameFunc(), GraphViewFileType.INSTANCE, "") {
+  : LightVirtualFile(getTabNameFunc(), VCSContentFileType.INSTANCE, "") {
   companion object {
     @JvmField
     val TabSelector: Key<() -> Unit> = Key("TabContentId")

@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
-class GraphViewFileType private constructor() : FileType {
+class VCSContentFileType private constructor() : FileType {
   override fun getName(): String = "GraphView"
   override fun getDescription(): String = "GraphView"
   override fun getDefaultExtension(): String = "graph"
@@ -17,7 +17,7 @@ class GraphViewFileType private constructor() : FileType {
   override fun getCharset(file: VirtualFile, content: ByteArray): String? = CharsetToolkit.UTF8
 
   companion object {
-    val INSTANCE: FileType = GraphViewFileType()
+    val INSTANCE: FileType = VCSContentFileType()
   }
 }
 

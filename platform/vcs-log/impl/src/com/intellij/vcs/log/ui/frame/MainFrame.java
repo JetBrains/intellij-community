@@ -227,17 +227,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         instance.openFile(file, false, true);
       }
     }, this);
-
-    new AnAction() {
-      {
-        setShortcutSet(CommonShortcuts.ESCAPE);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        openLogEditorTab();
-      }
-    }.registerCustomShortcutSet(myChangesBrowser, this);
   }
 
   private void installGraphView() {
@@ -251,6 +240,17 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else {
       myChangesBrowserSplitter.setFirstComponent(myToolbarsAndTable);
     }
+
+    new AnAction() {
+      {
+        setShortcutSet(CommonShortcuts.ESCAPE);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        openLogEditorTab();
+      }
+    }.registerCustomShortcutSet(myChangesBrowser, this);
   }
 
   public void openLogEditorTab() {

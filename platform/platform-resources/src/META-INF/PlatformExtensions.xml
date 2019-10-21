@@ -208,7 +208,7 @@
 
     <editorTabColorProvider implementation="com.intellij.diff.editor.VcsEditorTabColorProvider" order="first"/>
 
-    <fileType name="GraphView" implementationClass="com.intellij.diff.editor.GraphViewFileType" fieldName="INSTANCE" extensions="GraphView" />
+    <fileType name="GraphView" implementationClass="com.intellij.diff.editor.VCSContentFileType" fieldName="INSTANCE" extensions="GraphView" />
     <fileIconProvider implementation="com.intellij.diff.editor.GraphViewFileIconProvider"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
