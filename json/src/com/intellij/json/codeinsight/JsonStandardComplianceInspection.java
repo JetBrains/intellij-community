@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -154,7 +155,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     @Override
     public void visitComment(PsiComment comment) {
       if (!allowComments() && myWarnAboutComments) {
-        if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment)) {
+        if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment) &&
+            comment.getContainingFile().getLanguage() instanceof JsonLanguage) {
           myHolder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"));
         }
       }
