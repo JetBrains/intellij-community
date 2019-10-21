@@ -3,7 +3,7 @@ import {Component, Vue, Watch} from "vue-property-decorator"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {InfoResponse, Machine} from "@/aggregatedStats/model"
+import {InfoResponse, MachineGroup} from "@/aggregatedStats/model"
 import {debounce} from "debounce"
 import {AggregatedStatComponent} from "@/aggregatedStats/AggregatedStatComponent"
 
@@ -29,7 +29,7 @@ export default class AggregatedStatsPage extends Vue {
   chartSettings = this.dataModule.chartSettings
 
   products: Array<string> = []
-  machines: Array<Machine> = []
+  machines: Array<MachineGroup> = []
 
   aggregationOperators: Array<string> = ["median", "min", "max", "quantile"]
 
@@ -68,7 +68,7 @@ export default class AggregatedStatsPage extends Vue {
         const oldSelectedMachine = this.chartSettings.selectedMachine
         this.applyChangedProduct(selectedProduct, data)
         const newSelectedMachine = this.chartSettings.selectedMachine
-        if (oldSelectedMachine !== newSelectedMachine) {
+        if (!isArrayContentTheSame(oldSelectedMachine, newSelectedMachine)) {
           this.selectedMachineChanged(newSelectedMachine, oldSelectedMachine)
         }
 
@@ -95,27 +95,25 @@ export default class AggregatedStatsPage extends Vue {
   private applyChangedProduct(product: string | null, infoResponse: InfoResponse) {
     if (product != null && product.length > 0) {
       // later maybe will be more info for machine, so, do not use string instead of Machine
-      this.machines = infoResponse.productToMachine[product].map(name => {
-        return {id: name, name}
-      }) || []
+      this.machines = infoResponse.productToMachine[product] || []
     }
     else {
       this.machines = []
     }
 
-    let selectedMachine = this.chartSettings.selectedMachine
+    let selectedMachine = this.chartSettings.selectedMachine || []
     const machines = this.machines
     if (machines.length === 0) {
-      selectedMachine = ""
+      selectedMachine = []
       this.chartSettings.selectedMachine = selectedMachine
     }
-    else if (selectedMachine == null || !machines.find(it => it.id === selectedMachine)) {
-      selectedMachine = machines[0].id
+    else if (selectedMachine.length === 0 || !machines.find(it => selectedMachine.includes(it.name)) || !machines.find(it => it.children.find(it => selectedMachine.includes(it.name)))) {
+      selectedMachine = [machines[0].name]
     }
 
-    if (this.chartSettings.selectedMachine === selectedMachine) {
+    if (isArrayContentTheSame(this.chartSettings.selectedMachine, selectedMachine)) {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
-      if (product != null && selectedMachine != null) {
+      if (product != null && selectedMachine != null && selectedMachine.length > 0) {
         this.loadClusteredChartsData(product)
         this.helper.loadLineChartData(product, selectedMachine, this.chartSettings, this.$refs as any, this.$notify)
       }
@@ -126,7 +124,12 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   @Watch("chartSettings.selectedMachine")
-  selectedMachineChanged(machine: string | null | undefined, _oldV: string): void {
+  selectedMachineChanged(machine: Array<string> | string, _oldV: Array<string>): void {
+    if (typeof machine === "string") {
+      machine = [machine]
+      this.chartSettings.selectedMachine = machine
+    }
+
     this.dataModule.updateChartSettings(this.chartSettings)
 
     console.log("machine changed", machine, _oldV)
@@ -145,7 +148,7 @@ export default class AggregatedStatsPage extends Vue {
 
   private loadClusteredChartsData(product: string): void {
     const machine = this.chartSettings.selectedMachine
-    if (machine != null) {
+    if (machine != null && machine.length > 0) {
       this.helper.loadClusteredChartsData(product, machine, this.chartSettings, this.$refs as any, this.$notify)
     }
   }
@@ -205,4 +208,17 @@ export default class AggregatedStatsPage extends Vue {
 
 function isEmpty(v: string | null): boolean {
   return v == null || v.length === 0
+}
+
+function isArrayContentTheSame(a: Array<string>, b: Array<string>): boolean {
+  if (a.length !== b.length) {
+    return false
+  }
+
+  for (const item of a) {
+    if (!b.includes(item)) {
+      return false
+    }
+  }
+  return true
 }

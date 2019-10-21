@@ -8,8 +8,7 @@
             <el-input
                 data-lpignore="true"
                 placeholder="Enter the aggregated stats server URL..."
-                v-model="chartSettings.serverUrl">
-            </el-input>
+                v-model="chartSettings.serverUrl"/>
           </el-form-item>
 
           <el-form-item label="Product">
@@ -23,14 +22,11 @@
             </el-select>
           </el-form-item>
           <el-form-item label="Machine">
-            <el-select v-model="chartSettings.selectedMachine" filterable>
-              <el-option
-                    v-for="machine in machines"
-                    :key="machine.id"
-                    :label="machine.name"
-                    :value="machine.id">
-                  </el-option>
-            </el-select>
+            <el-cascader
+                v-model="chartSettings.selectedMachine"
+                :show-all-levels="false"
+                :props='{"label": "name", value: "name", checkStrictly: true, emitPath: false}'
+                :options="machines"/>
           </el-form-item>
 
           <el-form-item>

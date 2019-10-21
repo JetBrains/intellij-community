@@ -24,7 +24,7 @@ export class AggregatedStatComponent {
     this.lineChartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
   }
 
-  loadClusteredChartsData(product: string, machine: string, chartSettings: ChartSettings, refs: { [key: string]: HTMLElement }, notify: ElNotification): void {
+  loadClusteredChartsData(product: string, machine: Array<string>, chartSettings: ChartSettings, refs: { [key: string]: HTMLElement }, notify: ElNotification): void {
     const chartManagers = this.clusteredChartManagers
     if (chartManagers.length === 0) {
       chartManagers.push(new ClusteredChartManager(refs.clusteredDurationChartContainer))
@@ -35,7 +35,22 @@ export class AggregatedStatComponent {
     chartManagers[1].setData(loadJson(this.createGroupedMetricUrl(product, machine, chartSettings, true), null, notify))
   }
 
-  private createGroupedMetricUrl(product: string, machineId: string, chartSettings: ChartSettings, isInstant: boolean): string {
+  private expandMachine(machineList: Array<string>, product: string): string {
+    if (machineList.length > 1) {
+      return machineList.join(",")
+    }
+
+    const groupName = machineList[0]
+    const infoResponse = this.lastInfoResponse!!
+    for (const machineGroup of infoResponse.productToMachine[product]) {
+      if (machineGroup.name === groupName) {
+        return machineGroup.children.map(it => it.name).join(",")
+      }
+    }
+    return groupName
+  }
+
+  private createGroupedMetricUrl(product: string, machine: Array<string>, chartSettings: ChartSettings, isInstant: boolean): string {
     let operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
     let operatorArg = 0
     if (operator === "median") {
@@ -48,7 +63,7 @@ export class AggregatedStatComponent {
 
     let result = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` +
       `product=${encodeURIComponent(product)}` +
-      `&machine=${machineId}` +
+      `&machine=${encodeURIComponent(this.expandMachine(machine, product))}` +
       `&operator=${operator}`
     if (operatorArg !== 0) {
       result += `&operatorArg=${operatorArg}`
@@ -57,14 +72,14 @@ export class AggregatedStatComponent {
     return result
   }
 
-  loadLineChartData(product: string, machine: string, chartSettings: ChartSettings, refs: { [key: string]: HTMLElement }, notify: ElNotification): void {
+  loadLineChartData(product: string, machine: Array<string>, chartSettings: ChartSettings, refs: { [key: string]: HTMLElement }, notify: ElNotification): void {
     const chartManagers = this.lineChartManagers
     if (chartManagers.length === 0) {
       chartManagers.push(new LineChartManager(refs.lineDurationChartContainer, chartSettings, false))
       chartManagers.push(new LineChartManager(refs.lineInstantChartContainer, chartSettings, true))
     }
 
-    const productAndMachineParams = `product=${encodeURIComponent(product)}&machine=${encodeURIComponent(machine)}`
+    const productAndMachineParams = `product=${encodeURIComponent(product)}&machine=${encodeURIComponent(this.expandMachine(machine, product))}`
     const url = `${chartSettings.serverUrl}/api/v1/metrics/` + productAndMachineParams
     const infoResponse = this.lastInfoResponse!!
 
