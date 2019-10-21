@@ -102,7 +102,7 @@ public class AnnotationParamListElement extends CompositeElement {
     }
 
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
-    if (first == last && first.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
+    if (first.getElementType() == JavaElementType.NAME_VALUE_PAIR && last.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
       JavaSourceUtil.addSeparatingComma(this, first, NAME_VALUE_PAIR_BIT_SET);
     }
     return firstAdded;
