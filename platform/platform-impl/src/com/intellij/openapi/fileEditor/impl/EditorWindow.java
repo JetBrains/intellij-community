@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -827,7 +828,10 @@ public class EditorWindow {
   }
 
   @Nullable
-  public EditorWithProviderComposite findFileComposite(final VirtualFile file) {
+  public EditorWithProviderComposite findFileComposite(VirtualFile file) {
+    if (file instanceof BackedVirtualFile)
+      file = ((BackedVirtualFile)file).getOriginFile();
+
     for (int i = 0; i != getTabCount(); ++i) {
       final EditorWithProviderComposite editor = getEditorAt(i);
       if (editor.getFile().equals(file)) {
