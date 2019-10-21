@@ -41,19 +41,12 @@ componentConstrains:
         preferred: *id006
   'JTextField #2':
     horizontal: {grow: 100.0}
-    split: 2
-  'JLabel #3':
-    horizontal:
-      gapBefore:
-        min: &id007 {horizontal: true, value: 4.0}
-        preferred: *id007
-    spanX: INF
-    wrap: true
+  'JLabel #3': {spanX: INF, wrap: true}
   Master Password [label]:
     horizontal:
       gapBefore:
-        min: &id008 {horizontal: true, value: 23.0}
-        preferred: *id008
+        min: &id007 {horizontal: true, value: 23.0}
+        preferred: *id007
   'JBPasswordField #5':
     horizontal: {grow: 100.0}
     spanX: INF
