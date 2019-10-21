@@ -280,7 +280,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     ));
   }
 
-  private void updateAddedElement(ErrorTreeElement element) {
+  protected void updateAddedElement(@NotNull ErrorTreeElement element) {
     Promise<?> promise;
     final Object parent = myErrorViewStructure.getParentElement(element);
     if (parent == null) {
