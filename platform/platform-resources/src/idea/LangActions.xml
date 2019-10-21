@@ -1168,6 +1168,11 @@
               text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
       <separator/>
+      <action id="RunDashboard.HideConfiguration" class="com.intellij.execution.dashboard.actions.HideConfigurationAction"
+              text="Hide Configuration"/>
+      <action id="RunDashboard.RestoreHiddenConfigurations"
+              class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"
+              text="Restore Hidden Configurations"/>
       <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
       <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
