@@ -15,8 +15,6 @@
  */
 package com.intellij.cvsSupport2.cvsExecution;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,13 +35,7 @@ public class ModalityContextImpl implements ModalityContext {
 
   @Override
   public void runInDispatchThread(@NotNull Runnable action, Project project) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isDispatchThread()) {
-      action.run();
-    }
-    else {
-      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(action, getCurrentModalityState());
-    }
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(action, getCurrentModalityState());
   }
 
   private ModalityState getCurrentModalityState() {
