@@ -15,7 +15,7 @@ import java.util.function.Function;
  *
  * @author nik
  */
-public class TreeTester {
+public class TreeNodeTester {
   private final TreeNode myNode;
   private Function<? super TreeNode, String> myPresenter = Object::toString;
 
@@ -23,19 +23,19 @@ public class TreeTester {
    * @deprecated use {@link com.intellij.ui.tree.TreeTestUtil#assertStructure(JTree, String)}
    */
   @Deprecated
-  public static TreeTester forTree(JTree tree) {
+  public static TreeNodeTester forTree(JTree tree) {
     return forNode((TreeNode)tree.getModel().getRoot());
   }
 
-  public static TreeTester forNode(TreeNode node) {
-    return new TreeTester(node);
+  public static TreeNodeTester forNode(TreeNode node) {
+    return new TreeNodeTester(node);
   }
 
-  private TreeTester(TreeNode node) {
+  private TreeNodeTester(TreeNode node) {
     myNode = node;
   }
 
-  public TreeTester withPresenter(Function<? super TreeNode, String> presenter) {
+  public TreeNodeTester withPresenter(Function<? super TreeNode, String> presenter) {
     myPresenter = presenter;
     return this;
   }

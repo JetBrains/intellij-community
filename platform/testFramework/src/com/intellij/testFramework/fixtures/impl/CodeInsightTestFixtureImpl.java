@@ -1999,7 +1999,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private String getUsageViewTreeTextRepresentation(@NotNull final UsageViewImpl usageView) {
     Disposer.register(getTestRootDisposable(), usageView);
     usageView.expandAll();
-    return TreeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();
+    return TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();
   }
 
   private static class SelectionAndCaretMarkupLoader {
