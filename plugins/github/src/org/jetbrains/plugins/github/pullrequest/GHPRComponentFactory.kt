@@ -25,7 +25,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -42,6 +41,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvid
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDescriptionPanel
@@ -209,8 +209,8 @@ internal class GHPRComponentFactory(private val project: Project) {
       resetHandler = ActionListener { dataProviderModel.value?.reloadDetails() }
     }
 
-    val changesLoadingModel = createChangesLoadingModel(dataProviderModel, disposable)
-    val changesModel = createChangesModel(projectUiSettings, changesLoadingModel, disposable)
+    val changesModel = GHPRChangesModelImpl(project)
+    val changesLoadingModel = createChangesLoadingModel(changesModel, dataProviderModel, projectUiSettings, disposable)
     val changesBrowser = GHPRChangesBrowser(changesModel, project)
 
     val diffCommentComponentFactory = GHPREditorReviewCommentsComponentFactoryImpl(project, avatarIconsProviderFactory,
@@ -339,54 +339,13 @@ internal class GHPRComponentFactory(private val project: Project) {
     })
   }
 
-  private fun createChangesModel(projectUiSettings: GithubPullRequestsProjectUISettings,
-                                 loadingModel: GHSimpleLoadingModel<List<GitCommit>>,
-                                 parentDisposable: Disposable): GHPRChangesModel {
-    val model = GHPRChangesModelImpl(projectUiSettings.zipChanges)
-    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        model.commits = loadingModel.result.orEmpty()
-      }
-
-      override fun onReset() {
-        model.commits = loadingModel.result.orEmpty()
-      }
-    })
-    projectUiSettings.addChangesListener(parentDisposable) {
-      model.zipChanges = projectUiSettings.zipChanges
-    }
-    return model
-  }
-
-  private fun createChangesLoadingModel(dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
-                                        parentDisposable: Disposable): GHCompletableFutureLoadingModel<List<GitCommit>> {
-    val model = GHCompletableFutureLoadingModel<List<GitCommit>>()
-
-    var listenerDisposable: Disposable? = null
-
-    dataProviderModel.addValueChangedListener {
-      val provider = dataProviderModel.value
-      model.future = provider?.logCommitsRequest
-
-      listenerDisposable = listenerDisposable?.let {
-        Disposer.dispose(it)
-        null
-      }
-
-      if (provider != null) {
-        val disposable = Disposer.newDisposable().apply {
-          Disposer.register(parentDisposable, this)
-        }
-        provider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
-          override fun commitsRequestChanged() {
-            model.future = provider.logCommitsRequest
-          }
-        })
-
-        listenerDisposable = disposable
-      }
-    }
-
+  private fun createChangesLoadingModel(changesModel: GHPRChangesModel,
+                                        dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
+                                        uiSettings: GithubPullRequestsProjectUISettings,
+                                        disposable: Disposable): GHPRChangesLoadingModel {
+    val model = GHPRChangesLoadingModel(changesModel, uiSettings.zipChanges)
+    projectUiSettings.addChangesListener(disposable) { model.zipChanges = projectUiSettings.zipChanges }
+    dataProviderModel.addValueChangedListener { model.dataProvider = dataProviderModel.value }
     return model
   }
 
@@ -448,6 +407,9 @@ internal class GHPRComponentFactory(private val project: Project) {
       }
       model.value = provider
     }
+    Disposer.register(parentDisposable, Disposable {
+      model.value = null
+    })
 
     listSelectionHolder.addSelectionChangeListener(parentDisposable) {
       setNewProvider(listSelectionHolder.selectionNumber?.let(dataContext.dataLoader::getDataProvider))
