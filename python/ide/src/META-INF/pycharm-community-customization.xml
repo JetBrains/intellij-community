@@ -40,6 +40,9 @@
 
     <optionsApplicabilityFilter implementation="com.jetbrains.python.PyOptionsApplicabilityFilter"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
+                        serviceImplementation="com.jetbrains.python.PyIdeCommonOptionsFormFactory"/>
+
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
