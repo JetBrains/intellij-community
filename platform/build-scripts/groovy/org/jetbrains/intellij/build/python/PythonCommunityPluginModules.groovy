@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.python
 
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ResourcesGenerator
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
@@ -34,7 +36,7 @@ class PythonCommunityPluginModules {
         withModule(module, mainJarName, null)
       }
       withModule(mainModuleName, mainJarName)
-      withResourceFromModule("intellij.python.helpers", "", "helpers")
+      withGeneratedResources(new HelpersGenerator(), "helpers")
       doNotCreateSeparateJarForLocalizableResources()
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
       body.delegate = delegate
@@ -44,5 +46,20 @@ class PythonCommunityPluginModules {
 
   static String getPluginBuildNumber() {
     System.getProperty("build.number", "SNAPSHOT")
+  }
+}
+
+class HelpersGenerator implements ResourcesGenerator {
+  @Override
+  File generateResources(BuildContext context) {
+    String output = "$context.paths.temp/python/helpers"
+    context.ant.copy(todir: output) {
+      fileset(dir: "$context.paths.communityHome/python/helpers") {
+        exclude(name: "**/setup.py")
+        exclude(name: "pydev/pydev_test*")
+        exclude(name: "tests/")
+      }
+    }
+    return new File(output)
   }
 }
