@@ -10,6 +10,7 @@ import com.sun.jna.Pointer
 import com.sun.jna.Structure
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.function.Supplier
 
 // Matching by name fails on locked keyring, because matches against `org.freedesktop.Secret.Generic`
@@ -84,33 +85,39 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val start = System.currentTimeMillis()
-    val credentials = CompletableFuture.supplyAsync(Supplier {
-      val userName = attributes.userName.nullize()
-      checkError("secret_password_lookup_sync") { errorRef ->
-        val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
-        if (userName == null) {
-          library.secret_password_lookup_sync(schema, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
-            // Secret Service doesn't allow to get attributes, so, we store joined data
-            return@Supplier splitData(it)
+    try {
+      val credentials = CompletableFuture.supplyAsync(Supplier {
+        val userName = attributes.userName.nullize()
+        checkError("secret_password_lookup_sync") { errorRef ->
+          val serviceNamePointer = stringPointer(attributes.serviceName.toByteArray())
+          if (userName == null) {
+            library.secret_password_lookup_sync(schema, null, errorRef, serviceAttributeNamePointer, serviceNamePointer, null)?.let {
+              // Secret Service doesn't allow to get attributes, so, we store joined data
+              return@Supplier splitData(it)
+            }
+          }
+          else {
+            library.secret_password_lookup_sync(schema, null, errorRef,
+                                                serviceAttributeNamePointer, serviceNamePointer,
+                                                accountAttributeNamePointer, stringPointer(userName.toByteArray()),
+                                                null)?.let {
+              return@Supplier splitData(it)
+            }
           }
         }
-        else {
-          library.secret_password_lookup_sync(schema, null, errorRef,
-                                              serviceAttributeNamePointer, serviceNamePointer,
-                                              accountAttributeNamePointer, stringPointer(userName.toByteArray()),
-                                              null)?.let {
-            return@Supplier splitData(it)
-          }
-        }
+      }, AppExecutorUtil.getAppExecutorService())
+        .get(30 /* on Linux first access to keychain can cause system unlock dialog, so, allow user to input data */, TimeUnit.SECONDS)
+      val end = System.currentTimeMillis()
+      if (credentials == null && end - start > 300) {
+        //todo: use complex API instead
+        return ACCESS_TO_KEY_CHAIN_DENIED
       }
-    }, AppExecutorUtil.getAppExecutorService())
-      .get(30 /* on Linux first access to keychain can cause system unlock dialog, so, allow user to input data */, TimeUnit.SECONDS)
-    val end = System.currentTimeMillis()
-    if (credentials == null && end - start > 300) {
-      //todo: use complex API instead
-      return ACCESS_TO_KEY_CHAIN_DENIED
+      return credentials
     }
-    return credentials
+    catch (e: TimeoutException) {
+      LOG.warn("storage unlock timeout")
+      return CANNOT_UNLOCK_KEYCHAIN
+    }
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
