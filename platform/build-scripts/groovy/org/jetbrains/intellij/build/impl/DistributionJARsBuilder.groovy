@@ -688,7 +688,7 @@ class DistributionJARsBuilder {
 
         def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
         def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-        if (!new File(pluginXmlPath)) {
+        if (!new File(pluginXmlPath).exists()) {
           buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
         }
 
@@ -760,7 +760,11 @@ class DistributionJARsBuilder {
         buildContext.notifyArtifactBuilt(destFile)
       }
 
-      KeymapPluginsBuilder.buildKeymapPlugins(buildContext, "$nonBundledPluginsArtifacts/auto-uploading")
+      KeymapPluginsBuilder.buildKeymapPlugins(buildContext, "$nonBundledPluginsArtifacts/auto-uploading").forEach {
+        if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+          pluginsToIncludeInCustomRepository.add(it)
+        }
+      }
 
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
