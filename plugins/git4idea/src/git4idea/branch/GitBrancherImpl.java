@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
@@ -138,7 +139,17 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories,
                       @NotNull GitRepository selectedRepository) {
-    new GitCompareBranchesUi(myProject, repositories, branchName).create();
+    if (Registry.is("git.compare.branches.as.tab")) {
+      new GitCompareBranchesUi(myProject, repositories, branchName).create();
+    }
+    else {
+      new CommonBackgroundTask(myProject, "Comparing with " + branchName + "...", null) {
+        @Override
+        public void execute(@NotNull ProgressIndicator indicator) {
+          newWorker(indicator).compare(branchName, repositories, selectedRepository);
+        }
+      }.runInBackground();
+    }
   }
 
   @Override
