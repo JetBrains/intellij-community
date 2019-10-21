@@ -4,6 +4,9 @@ package com.intellij.psi.impl.search;
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -13,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -303,9 +307,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     try {
       final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
       final AtomicBoolean stopped = new AtomicBoolean(false);
-
+      ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(progress);
       return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
-        TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
+        TooManyUsagesStatus.getFrom(originalIndicator).pauseProcessingIfTooManyUsages();
         try {
           processVirtualFile(vfile, stopped, localProcessor);
         }
@@ -330,7 +334,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   // Tries to run {@code localProcessor} for each file in {@code files} concurrently on ForkJoinPool.
   // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again.
-  // {@code localProcessor} must be as idempotent as possible.
+  // {@code localProcessor} must be as idempotent as possible (and must not return false on progress cancel)
   public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
                                                                     @NotNull List<? extends VirtualFile> files,
                                                                     @NotNull final ProgressIndicator progress,
@@ -340,59 +344,87 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (!app.isDispatchThread()) {
       CoreProgressManager.assertUnderProgress(progress);
     }
-
+    List<VirtualFile> processedFiles = Collections.synchronizedList(new ArrayList<>(files.size()));
     while (true) {
       ProgressManager.checkCanceled();
-      List<VirtualFile> failedList = new SmartList<>();
-      List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
-      boolean completed;
-      if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
-        // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
-        // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
-        completed = ContainerUtil.process(files, localProcessor);
-      }
-      else if (app.isWriteActionPending()) {
-        completed = true;
-        // we don't have read action now so wait for write action to complete
-        failedFiles.addAll(files);
-      }
-      else {
-        final Processor<VirtualFile> processor = vfile -> {
-          ProgressManager.checkCanceled();
-          if (failedFiles.isEmpty()) {
-            try {
-              // wrap in unconditional impatient reader to bail early at write action start,
-              // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
-              app.executeByImpatientReader(() -> {
-                if (!localProcessor.process(vfile)) {
-                  stopped.set(true);
-                }
-              });
+      ProgressIndicator wrapper = new SensitiveProgressWrapper(progress);
+      ApplicationListener listener = new ApplicationListener() {
+        @Override
+        public void beforeWriteActionStart(@NotNull Object action) {
+          wrapper.cancel();
+        }
+      };
+      processedFiles.clear();
+      Disposable disposable = Disposer.newDisposable();
+      app.addApplicationListener(listener, disposable);
+      boolean processorCanceled = false;
+      try {
+        if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
+          // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
+          // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
+          processorCanceled = !ContainerUtil.process(files, localProcessor);
+          if (processorCanceled) stopped.set(true);
+          processedFiles.addAll(files);
+        }
+        else if (app.isWriteActionPending()) {
+          // we don't have read action now so wait for write action to complete
+        }
+        else {
+          AtomicBoolean someTaskFailed = new AtomicBoolean();
+          Processor<VirtualFile> processor = vfile -> {
+            ProgressManager.checkCanceled();
+            // optimisation: avoid unnecessary processing if it's doomed to fail because some other task has failed already,
+            // and bail out of fork/join task as soon as possible
+            if (!someTaskFailed.get()) {
+              try {
+                // wrap in unconditional impatient reader to bail early at write action start,
+                // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
+                app.executeByImpatientReader(() -> {
+                  if (!localProcessor.process(vfile)) {
+                    stopped.set(true);
+                  }
+                  else {
+                    processedFiles.add(vfile);
+                  }
+                });
+              }
+              catch (ProcessCanceledException e) {
+                someTaskFailed.set(true);
+                throw e;
+              }
             }
-            catch (ApplicationUtil.CannotRunReadActionException action) {
-              failedFiles.add(vfile);
+            else {
+              return false;
             }
+            return !stopped.get();
+          };
+          // try to run parallel read actions but fail as soon as possible
+          try {
+            JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, wrapper, processor);
+            processorCanceled = stopped.get();
           }
-          else {
-            // 1st: optimisation to avoid unnecessary processing if it's doomed to fail because some other task has failed already,
-            // and 2nd: bail out of fork/join task as soon as possible
-            failedFiles.add(vfile);
+          catch (ProcessCanceledException e) {
+            // we can be interrupted by wrapper (means write action is about to start) or by genuine exception in progress
+            progress.checkCanceled();
           }
-          return !stopped.get();
-        };
-        // try to run parallel read actions but fail as soon as possible
-        completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, processor);
+        }
       }
-      if (!completed) {
+      finally {
+        Disposer.dispose(disposable);
+      }
+      if (processorCanceled) {
         return false;
       }
-      if (failedFiles.isEmpty()) {
+
+      if (processedFiles.size() == files.size()) {
         break;
       }
       // we failed to run read action in job launcher thread
       // run read action in our thread instead to wait for a write action to complete and resume parallel processing
       DumbService.getInstance(project).runReadActionInSmartMode(EmptyRunnable.getInstance());
-      files = failedList;
+      Set<VirtualFile> t = new THashSet<>(files);
+      t.removeAll(processedFiles);
+      files = new ArrayList<>(t);
     }
     return true;
   }

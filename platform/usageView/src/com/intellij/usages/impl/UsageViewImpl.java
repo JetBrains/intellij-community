@@ -493,7 +493,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
-      ProgressWrapper.unwrap(progress).cancel();
+      ProgressWrapper.unwrapAll(progress).cancel();
     }
   }
 

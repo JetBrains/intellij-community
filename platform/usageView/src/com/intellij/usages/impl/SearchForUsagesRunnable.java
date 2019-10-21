@@ -355,8 +355,9 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
-    ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-    if (indicator == null) throw new IllegalStateException("must run find usages under progress");
+    ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
+    if (current == null) throw new IllegalStateException("must run find usages under progress");
+    ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       CoreProgressManager.assertUnderProgress(indicator);
     }
@@ -370,9 +371,10 @@ class SearchForUsagesRunnable implements Runnable {
     UsageSearcher usageSearcher = mySearcherFactory.create();
 
     usageSearcher.generate(usage -> {
-      ProgressIndicator indicator1 = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-      if (indicator1 == null) throw new IllegalStateException("must run find usages under progress");
-      if (indicator1.isCanceled()) return false;
+      ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (currentIndicator == null) throw new IllegalStateException("must run find usages under progress");
+      ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(current);
+      ProgressManager.checkCanceled();
 
       if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
         myOutOfScopeUsages.incrementAndGet();
@@ -387,18 +389,18 @@ class SearchForUsagesRunnable implements Runnable {
           myFirstUsage.compareAndSet(null, usage);
         }
 
-        final UsageViewEx usageView = getUsageView(indicator1);
+        UsageViewEx usageView = getUsageView(originalIndicator);
 
-        TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(indicator1);
+        TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(originalIndicator);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, indicator1, myPresentation, usageCount, usageView);
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, originalIndicator, myPresentation, usageCount, usageView);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         if (usageView != null) {
           ApplicationManager.getApplication().runReadAction(() -> usageView.appendUsage(usage));
         }
       }
-      return !indicator1.isCanceled();
+      return true;
     });
     if (getUsageView(indicator) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
