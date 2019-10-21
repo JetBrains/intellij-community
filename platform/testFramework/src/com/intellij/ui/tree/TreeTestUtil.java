@@ -15,74 +15,70 @@ import javax.swing.tree.TreePath;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class TreeTestUtil {
-  public static final TreeVisitor VISIT_ALL = path -> TreeVisitor.Action.CONTINUE;
-  public static final Predicate<TreePath> APPEND_ALL = path -> true;
-  public static final Function<Object, String> TO_STRING = node -> PlatformTestUtil.toString(node, null);
+public final class TreeTestUtil {
+  private final JTree tree;
+  private boolean selection;
+  private TreeVisitor visitor = path -> TreeVisitor.Action.CONTINUE;
+  private Predicate<? super TreePath> filter = path -> true;
+  private Function<Object, String> converter = node -> PlatformTestUtil.toString(node, null);
 
-
-  @NotNull
-  public static String toString(@NotNull JTree tree) {
-    return toString(tree, VISIT_ALL, APPEND_ALL, false, TO_STRING);
+  public TreeTestUtil(@NotNull JTree tree) {
+    this.tree = tree;
   }
 
-  @NotNull
-  public static String toString(@NotNull JTree tree, boolean showSelection) {
-    return toString(tree, VISIT_ALL, APPEND_ALL, showSelection, TO_STRING);
+  public TreeTestUtil withSelection() {
+    return setSelection(true);
   }
 
-  @NotNull
-  public static String toString(@NotNull JTree tree, @NotNull Predicate<? super TreePath> append, boolean showSelection) {
-    return toString(tree, VISIT_ALL, append, showSelection, TO_STRING);
+  public TreeTestUtil setSelection(boolean selection) {
+    this.selection = selection;
+    return this;
   }
 
-  @NotNull
-  public static String toString(@NotNull JTree tree, boolean showSelection, @NotNull Function<Object, String> toString) {
-    return toString(tree, VISIT_ALL, APPEND_ALL, showSelection, toString);
+  public TreeTestUtil setVisitor(@NotNull TreeVisitor visitor) {
+    this.visitor = visitor;
+    return this;
   }
 
-  @NotNull
-  public static String toString(@NotNull JTree tree,
-                                @NotNull TreeVisitor visitor,
-                                @NotNull Predicate<? super TreePath> append,
-                                boolean showSelection,
-                                @NotNull Function<Object, String> toString) {
+  public TreeTestUtil setFilter(@NotNull Predicate<? super TreePath> filter) {
+    this.filter = filter;
+    return this;
+  }
+
+  public TreeTestUtil setConverter(@NotNull Function<Object, String> converter) {
+    this.converter = converter;
+    return this;
+  }
+
+  public TreeTestUtil expandAll() {
+    PlatformTestUtil.expandAll(tree);
+    return this;
+  }
+
+  public void assertStructure(@NonNls String expected) {
+    PlatformTestUtil.waitWhileBusy(tree);
+    Assert.assertEquals(expected, toString());
+  }
+
+  @Override
+  public String toString() {
     StringBuilder sb = new StringBuilder();
     TreeUtil.visitVisibleRows(tree, path -> {
       TreeVisitor.Action action = visitor.visit(path);
-      if (append.test(path)) {
+      if (filter.test(path)) {
         int count = path.getPathCount();
         for (int i = 1; i < count; i++) sb.append(' ');
         Object component = path.getLastPathComponent();
         if (!tree.getModel().isLeaf(component)) sb.append(tree.isExpanded(path) ? '-' : '+');
-        boolean selected = showSelection && tree.isPathSelected(path);
+        boolean selected = selection && tree.isPathSelected(path);
         if (selected) sb.append('[');
-        sb.append(toString.apply(TreeUtil.getUserObject(component)));
+        sb.append(converter.apply(TreeUtil.getUserObject(component)));
         if (selected) sb.append(']');
         sb.append('\n');
       }
       return action;
     });
     return sb.toString();
-  }
-
-
-  /**
-   * @param tree     a tree, which visible rows are used to create a string representation
-   * @param expected expected string representation of the given tree
-   */
-  public static void assertStructure(@NotNull JTree tree, @NonNls String expected) {
-    PlatformTestUtil.waitWhileBusy(tree);
-    Assert.assertEquals(expected, toString(tree));
-  }
-
-  /**
-   * @param tree     a tree, which visible rows are used to create a string representation
-   * @param expected expected string representation of the given tree
-   */
-  public static void assertStructureWithSelection(@NotNull JTree tree, @NonNls String expected) {
-    PlatformTestUtil.waitWhileBusy(tree);
-    Assert.assertEquals(expected, toString(tree, true));
   }
 
 

@@ -20,7 +20,7 @@ public class TreeNodeTester {
   private Function<? super TreeNode, String> myPresenter = Object::toString;
 
   /**
-   * @deprecated use {@link com.intellij.ui.tree.TreeTestUtil#assertStructure(JTree, String)}
+   * @deprecated use {@link com.intellij.ui.tree.TreeTestUtil#TreeTestUtil(JTree)}
    */
   @Deprecated
   public static TreeNodeTester forTree(JTree tree) {

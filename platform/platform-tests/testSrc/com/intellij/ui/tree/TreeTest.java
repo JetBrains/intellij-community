@@ -86,7 +86,7 @@ public class TreeTest implements Disposable {
 
   public void assertTree(@NotNull String expected, boolean showSelection, @NotNull Runnable runnable) {
     invokeSafely(() -> {
-      Assert.assertEquals(expected, TreeTestUtil.toString(getTree(), showSelection));
+      Assert.assertEquals(expected, new TreeTestUtil(getTree()).setSelection(showSelection).toString());
       runnable.run();
     });
   }
