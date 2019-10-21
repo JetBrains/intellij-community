@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.configurationScript" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.configurationScript" />
-      <sourceFolder url="file://$MODULE_DIR$/snakeyaml-engine" isTestSource="false" packagePrefix="org.snakeyaml.engine.v1" generated="true" />
       <excludeFolder url="file://$MODULE_DIR$/testSnapshots" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -25,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
+    <orderEntry type="library" name="snakeyaml-engine" level="project" />
   </component>
 </module>
