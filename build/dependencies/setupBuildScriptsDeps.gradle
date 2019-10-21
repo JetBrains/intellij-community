@@ -3,7 +3,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 repositories {
-  maven { url "https://repo.labs.intellij.net/intellij-snapshot-modules" }
   maven { url "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies" }
   maven { url "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/test-discovery" }
   maven { url "https://cache-redirector.jetbrains.com/jcenter.bintray.com" }
