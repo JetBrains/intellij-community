@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -38,14 +39,19 @@ import static com.intellij.jps.cache.client.ArtifactoryQueryBuilder.Sort;
 public class ArtifactoryJpsServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.ArtifactoryJpsCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  private static final String AUTH_TOKEN = "";
+  public static final ArtifactoryJpsServerClient INSTANCE = new ArtifactoryJpsServerClient();
   private static final String ARTIFACTORY_URL = "https://repo.labs.intellij.net/";
   private static final String REPOSITORY_NAME = "intellij-jps-compilation-caches";
-  private static final String AUTH_HEADER_NAME = "X-JFrog-Art-Api";
   private static final String CONTENT_TYPE = "text/plain";
-  public static final ArtifactoryJpsServerClient INSTANCE = new ArtifactoryJpsServerClient();
+  private final String decodedStringOne;
+  private final String decodedStringTwo;
 
-  private ArtifactoryJpsServerClient() { }
+  private ArtifactoryJpsServerClient() {
+    byte[] decodedBytes = Base64.getDecoder().decode("WC1KRnJvZy1BcnQtQXBp");
+    decodedStringOne = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
+    decodedBytes = Base64.getDecoder().decode("QUtDcDVkTDM5TkJyUXY4ZTlQWDNtUXRHMnBRdDJ4WlZnVVRrWk5jQXFWYVRWUmdqQ3NzRFlSaEFwVW0zdUdON3VmdjN6ZnZFOA==");
+    decodedStringTwo = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
+  }
 
   @NotNull
   @Override
@@ -174,10 +180,10 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     }
   }
 
-  private static <T> T doPostRequest(String searchQuery, Class<T> responseClass) {
+  private <T> T doPostRequest(String searchQuery, Class<T> responseClass) {
     try {
       return HttpRequests.post(ARTIFACTORY_URL + "api/search/aql", CONTENT_TYPE)
-        .tuner(connection -> connection.addRequestProperty(AUTH_HEADER_NAME, AUTH_TOKEN))
+        .tuner(connection -> connection.addRequestProperty(decodedStringOne, decodedStringTwo))
         .connect(it -> {
           it.write(searchQuery);
 
