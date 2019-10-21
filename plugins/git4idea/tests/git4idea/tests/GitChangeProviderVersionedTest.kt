@@ -2,8 +2,10 @@
 package git4idea.tests
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatus.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -150,8 +152,8 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
     dirty(projectRoot)
 
-    assertProviderChangesInPaths(listOf("rename.txt", "staged.txt", "unstaged.txt").map { VcsUtil.getFilePath(projectRoot, it) },
-                                 listOf(null, null, MODIFIED))
+    assertProviderChangesIn(listOf("rename.txt", "staged.txt", "unstaged.txt"),
+                            listOf(null, null, MODIFIED))
 
     assertChanges {
       rename("rename.txt", "unstaged.txt")
@@ -174,12 +176,95 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
     dirty(projectRoot)
 
-    assertProviderChangesInPaths(listOf("rename.txt", "staged.txt", "unstaged.txt").map { VcsUtil.getFilePath(projectRoot, it) },
-                                 listOf(null, MODIFIED, MODIFIED))
+    assertProviderChangesIn(listOf("rename.txt", "staged.txt", "unstaged.txt"),
+                            listOf(null, MODIFIED, MODIFIED))
 
     assertChanges {
       rename("rename.txt", "staged.txt")
       rename("staged.txt", "unstaged.txt")
     }
+  }
+
+  fun testCaseOnlyRenamed() {
+    assumeWorktreeRenamesSupported()
+
+    touch("rename.txt", "rename_file_content")
+    addCommit("init rename")
+
+    repo.git("mv rename.txt RENAME.txt")
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
+    dirty(projectRoot)
+
+    assertProviderChangesIn(listOf("rename.txt", "RENAME.txt"),
+                            listOf(null, MODIFIED))
+
+    assertChanges {
+      rename("rename.txt", "RENAME.txt")
+    }
+  }
+
+  fun testRevertedTwiceRenamed() {
+    assumeWorktreeRenamesSupported()
+
+    touch("rename.txt", "rename_file_content")
+    addCommit("init rename")
+
+    repo.git("mv rename.txt staged.txt")
+
+    // do not trigger move via VcsVFSListener
+    rm("staged.txt")
+    touch("rename.txt", "rename_file_content")
+    repo.git("add -N rename.txt")
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
+    dirty(projectRoot)
+
+    assertProviderChangesIn(listOf("rename.txt", "staged.txt"),
+                            listOf(MODIFIED, MODIFIED))
+
+    assertChanges {
+      rename("rename.txt", "staged.txt")
+      rename("staged.txt", "rename.txt")
+    }
+  }
+
+  fun testCaseOnlyRevertedTwiceRenamed() {
+    assumeWorktreeRenamesSupported()
+
+    touch("rename.txt", "rename_file_content")
+    addCommit("init rename")
+
+    repo.git("mv rename.txt RENAME.txt")
+
+    // do not trigger move via VcsVFSListener
+    rm("RENAME.txt")
+    touch("rename.txt", "rename_file_content")
+    repo.git("add -N rename.txt")
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
+    dirty(projectRoot)
+
+    if (SystemInfo.isWindows) {
+      assertProviderChangesIn(listOf("rename.txt", "RENAME.txt"),
+                              listOf(null, MODIFIED))
+
+      assertChanges {
+        rename("rename.txt", "RENAME.txt")
+      }
+    }
+    else {
+      assertProviderChangesIn(listOf("rename.txt", "RENAME.txt"),
+                              listOf(MODIFIED, MODIFIED))
+
+      assertChanges {
+        rename("rename.txt", "RENAME.txt")
+        rename("RENAME.txt", "rename.txt")
+      }
+    }
+  }
+
+  protected fun assertProviderChangesIn(files: List<String>, fileStatuses: List<FileStatus?>) {
+    assertProviderChangesInPaths(files.map { VcsUtil.getFilePath(projectRoot, it) }, fileStatuses)
   }
 }

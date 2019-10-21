@@ -22,6 +22,7 @@ import git4idea.status.GitChangeProvider
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
+import gnu.trove.THashMap
 import junit.framework.TestCase
 import org.junit.Assume
 import java.io.File
@@ -105,7 +106,8 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
     val builder = MockChangelistBuilder()
     changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(), MockChangeListManagerGate(changeListManager))
     val changes = builder.changes
-    return changes.associateBy { ChangesUtil.getFilePath(it) }
+    val map = THashMap<FilePath, Change>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
+    return changes.associateByTo(map) { ChangesUtil.getFilePath(it) }
   }
 
   protected fun create(parent: VirtualFile, name: String): VirtualFile {
