@@ -26,7 +26,10 @@ import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TestTimeOut;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +38,10 @@ import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -881,5 +887,16 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFile vDir = getVirtualTempRoot();
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + "/xxx/ /c.txt", disposable, null);
     assertFalse(pointer.isValid());
+  }
+  @Test
+  public void testCrazyExclamationMarkInFileNameMustBeAllowed() {
+    IoTestUtil.assumeWindows();
+    VirtualFile vDir = getVirtualTempRoot();
+    String rel = "/xxx/!/c.txt";
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + rel, disposable, null);
+    assertFalse(pointer.isValid());
+    assertTrue(FileUtil.createIfDoesntExist(new File(vDir.getPath() + rel)));
+    vDir.refresh(false, true);
+    assertTrue(pointer.isValid());
   }
 }
