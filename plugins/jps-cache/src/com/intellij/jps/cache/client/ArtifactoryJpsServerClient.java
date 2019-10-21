@@ -40,17 +40,19 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.ArtifactoryJpsCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   public static final ArtifactoryJpsServerClient INSTANCE = new ArtifactoryJpsServerClient();
-  private static final String ARTIFACTORY_URL = "https://repo.labs.intellij.net/";
   private static final String REPOSITORY_NAME = "intellij-jps-compilation-caches";
   private static final String CONTENT_TYPE = "text/plain";
-  private final String decodedStringOne;
-  private final String decodedStringTwo;
+  private final String stringOne;
+  private final String stringTwo;
+  private final String stringThree;
 
   private ArtifactoryJpsServerClient() {
     byte[] decodedBytes = Base64.getDecoder().decode("WC1KRnJvZy1BcnQtQXBp");
-    decodedStringOne = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
+    stringOne = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
     decodedBytes = Base64.getDecoder().decode("QUtDcDVkTDM5TkJyUXY4ZTlQWDNtUXRHMnBRdDJ4WlZnVVRrWk5jQXFWYVRWUmdqQ3NzRFlSaEFwVW0zdUdON3VmdjN6ZnZFOA==");
-    decodedStringTwo = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
+    stringTwo = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
+    decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9yZXBvLmxhYnMuaW50ZWxsaWoubmV0Lw==");
+    stringThree = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull
@@ -82,7 +84,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   @Override
   public Pair<Boolean, File> downloadCacheById(@NotNull Project project, @NotNull SegmentedProgressIndicatorManager indicatorManager,
                                                @NotNull String cacheId, @NotNull File targetDir) {
-    String downloadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/caches/" + cacheId;
+    String downloadUrl = stringThree + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     File tmpFolder = new File(targetDir, "tmp");
     DownloadableFileService service = DownloadableFileService.getInstance();
@@ -123,7 +125,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
                                                                   @NotNull String prefix, @NotNull Map<String, String> affectedModules,
                                                                   @NotNull File targetDir) {
     Map<String, String> urlToModuleNameMap = affectedModules.entrySet().stream().collect(Collectors.toMap(
-                            entry -> ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + entry.getKey() + "/" + prefix + "/" + entry.getValue(),
+                            entry -> stringThree + REPOSITORY_NAME + "/binaries/" + entry.getKey() + "/" + prefix + "/" + entry.getValue(),
                             entry -> entry.getKey()));
 
     DownloadableFileService service = DownloadableFileService.getInstance();
@@ -164,7 +166,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
 
   @Override
   public void uploadBinaryData(@NotNull File uploadData, @NotNull String moduleName, @NotNull String prefix) {
-    String uploadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + prefix + "/";
+    String uploadUrl = stringThree + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + prefix + "/";
     try {
       //TODO :: Rewrite from cURL to REST
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine()
@@ -182,8 +184,8 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
 
   private <T> T doPostRequest(String searchQuery, Class<T> responseClass) {
     try {
-      return HttpRequests.post(ARTIFACTORY_URL + "api/search/aql", CONTENT_TYPE)
-        .tuner(connection -> connection.addRequestProperty(decodedStringOne, decodedStringTwo))
+      return HttpRequests.post(stringThree + "api/search/aql", CONTENT_TYPE)
+        .tuner(connection -> connection.addRequestProperty(stringOne, stringTwo))
         .connect(it -> {
           it.write(searchQuery);
 
