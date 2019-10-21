@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pydev" scope="TEST" />
