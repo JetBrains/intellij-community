@@ -222,7 +222,7 @@ class ChangesViewCommitWorkflowHandler(
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (isToggleCommitUi.asBoolean() && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
+    if (isToggleCommitUi.asBoolean() && result == CheckinHandler.ReturnResult.COMMIT) deactivate()
   }
 
   override fun updateWorkflow() {
