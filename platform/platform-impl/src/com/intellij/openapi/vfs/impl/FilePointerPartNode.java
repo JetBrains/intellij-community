@@ -507,7 +507,7 @@ class FilePointerPartNode {
       if (startIndex == 0) {
         break;
       }
-      int skipSeparator = StringUtil.endsWith(path, 0, startIndex, JarFileSystem.JAR_SEPARATOR) ? 2 : 1;
+      int skipSeparator = StringUtil.endsWith(path, 0, startIndex, JarFileSystem.JAR_SEPARATOR) && startIndex > 2 && path.charAt(startIndex-3) != '/' ? 2 : 1;
       end = startIndex - skipSeparator;
       if (end == 0 && path.charAt(0) == '/') {
         end = 1; // here's this weird ROOT file in temp system
