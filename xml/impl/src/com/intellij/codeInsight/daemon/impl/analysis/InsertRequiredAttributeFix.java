@@ -25,7 +25,7 @@ import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -128,8 +128,8 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
 
     final PsiElement anchor1 = anchor;
 
-    final Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(
-      () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      WriteCommandAction.runWriteCommandAction(project, getText(), getFamilyName(), () -> {
         int textOffset = anchor1.getTextOffset();
         if (!anchorIsEmptyTag && indirectSyntax) ++textOffset;
         editor.getCaretModel().moveToOffset(textOffset);
@@ -137,21 +137,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
           editor.getDocument().deleteString(textOffset,textOffset + 2);
         }
         TemplateManager.getInstance(project).startTemplate(editor, template);
-      }
-    );
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      Runnable commandRunnable = () -> CommandProcessor.getInstance().executeCommand(
-        project,
-        runnable,
-        getText(),
-        getFamilyName()
-      );
-
-      ApplicationManager.getApplication().invokeLater(commandRunnable);
-    }
-    else {
-      runnable.run();
-    }
+      });
+    });
   }
 }

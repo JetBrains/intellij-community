@@ -7,7 +7,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -381,7 +380,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                                       @Nullable final Runnable runnable,
                                       final List<? extends SmartPsiElementPointer<PsiElement>> elements,
                                       @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    Runnable cleanupRunnable = () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {
         PsiElement psiElement = element.getElement();
@@ -396,15 +395,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
       globalContext.codeCleanup(analysisScope, profile, null, runnable, true, shouldApplyFix);
-    };
-
-    Application application = ApplicationManager.getApplication();
-    if (application.isWriteAccessAllowed() && !application.isUnitTestMode()) {
-      application.invokeLater(cleanupRunnable);
-    }
-    else {
-      cleanupRunnable.run();
-    }
+    });
   }
 
   public void close(boolean noSuspiciousCodeFound) {

@@ -103,7 +103,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
       if (editor == null) return;
       final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
-      final Runnable runnable = () -> {
+
+      ApplicationManager.getApplication().invokeLater(() -> {
         WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> {
           try {
             editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
@@ -113,13 +114,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
           }
         });
         startTemplate(editor, template, project, null, getText());
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable);
-      }
+      });
     }
     else {
       positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
