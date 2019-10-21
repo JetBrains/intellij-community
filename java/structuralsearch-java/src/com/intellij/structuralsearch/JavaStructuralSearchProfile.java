@@ -43,7 +43,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,12 +62,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", "Class Member");
   private static final List<PatternContext> PATTERN_CONTEXTS = ContainerUtil.immutableList(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
-  private static final Set<String> PRIMITIVE_TYPES = new THashSet<>(Arrays.asList(
+  private static final Set<String> PRIMITIVE_TYPES = ContainerUtil.set(
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
     PsiKeyword.DOUBLE, PsiKeyword.LONG,
     PsiKeyword.INT, PsiKeyword.FLOAT,
     PsiKeyword.CHAR, PsiKeyword.BYTE
-  ));
+  );
 
   private static final Key<List<PsiErrorElement>> ERRORS = new Key<>("STRUCTURAL_SEARCH_ERRORS");
   private static final Comparator<PsiErrorElement> ERROR_COMPARATOR =

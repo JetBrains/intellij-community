@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -37,10 +36,9 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  */
 public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private static final Set<String> MEMBER_METHOD_NAMES = Collections.unmodifiableSet(
-    ContainerUtil.set(GET_FIELD, GET_DECLARED_FIELD,
+  private static final Set<String> MEMBER_METHOD_NAMES = ContainerUtil.immutableSet(GET_FIELD, GET_DECLARED_FIELD,
                       GET_METHOD, GET_DECLARED_METHOD,
-                      GET_CONSTRUCTOR, GET_DECLARED_CONSTRUCTOR));
+                      GET_CONSTRUCTOR, GET_DECLARED_CONSTRUCTOR);
 
   private final List<String> ignoredClassNames = new ArrayList<>();
 

@@ -40,13 +40,17 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -447,7 +451,7 @@ class SliceUtil {
                                paramSeqNo, specificMethodCall);
     }
 
-    Collection<PsiMethod> superMethods = new THashSet<>(Arrays.asList(method.findDeepestSuperMethods()));
+    Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
     superMethods.add(method);
 
     final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap

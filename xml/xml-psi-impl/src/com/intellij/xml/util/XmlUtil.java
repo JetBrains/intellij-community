@@ -137,7 +137,7 @@ public class XmlUtil {
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls private static final String URN = "urn:";
-  private final static Set<String> doNotVisitTags = new HashSet<>(Arrays.asList("annotation", "element", "attribute"));
+  private final static Set<String> doNotVisitTags = ContainerUtil.set("annotation", "element", "attribute");
 
   private XmlUtil() {
   }

@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
       List<VirtualFile> result = Lists.newLinkedList();
 
       if (sdk != null) {
-        Set<VirtualFile> roots = new HashSet<>(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+        Set<VirtualFile> roots = ContainerUtil.set(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
 
         for (VirtualFile dir : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
           for (String name : SITE_PACKAGES) {

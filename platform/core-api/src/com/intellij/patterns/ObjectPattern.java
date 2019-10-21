@@ -18,6 +18,7 @@ package com.intellij.patterns;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +131,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       list = Collections.singletonList(values[0]);
     }
     else if (length >= 11) {
-      list = new HashSet<>(Arrays.asList(values));
+      list = ContainerUtil.set(values);
     }
     else {
       list = Arrays.asList(values);

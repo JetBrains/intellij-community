@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -112,7 +111,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
-      RefactoringUtil.fixJavadocsForParams(prototype, new HashSet<>(Arrays.asList(prototype.getParameterList().getParameters())));
+      RefactoringUtil.fixJavadocsForParams(prototype, ContainerUtil.set(prototype.getParameterList().getParameters()));
 
 
       PsiCodeBlock body = prototype.getBody();

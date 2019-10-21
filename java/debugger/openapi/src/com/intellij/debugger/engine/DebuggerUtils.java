@@ -43,9 +43,9 @@ import java.util.*;
 public abstract class DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
   private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
-  public static final Set<String> ourPrimitiveTypeNames = new HashSet<>(Arrays.asList(
+  public static final Set<String> ourPrimitiveTypeNames = ContainerUtil.set(
     "byte", "short", "int", "long", "float", "double", "boolean", "char"
-  ));
+  );
 
   public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
     debugProcess.putUserData(TO_STRING_METHOD_KEY, null);

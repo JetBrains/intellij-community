@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,7 @@ import java.util.stream.Collectors;
  * @author peter
  */
 public class StaticGenericInfoBuilder {
-  private static final Set<Class<?>> ADDER_PARAMETER_TYPES = new THashSet<>(Arrays.asList(Class.class, int.class));
+  private static final Set<Class<?>> ADDER_PARAMETER_TYPES = ContainerUtil.set(Class.class, int.class);
   private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
   private final Class myClass;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<>();
