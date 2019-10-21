@@ -157,6 +157,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEADEV40479() { doTest(); }
   public void testMultilineReturn() { doTest(); }
   public void testMultilineCall() { doTest(); }
+  public void testVarargCall() { doTest(); }
+  public void testOverloadedCall() { doTest(); }
   public void testIDEADEV13019() { doTestBracesNextLineStyle(); }
   public void testIDEA25139() { doTestBracesNextLineStyle(); }
   public void testClassBracesNextLine() { doTestBracesNextLineStyle(); }
