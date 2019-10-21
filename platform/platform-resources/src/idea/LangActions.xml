@@ -1174,7 +1174,8 @@
       <action id="RunDashboard.RestoreHiddenConfigurations"
               class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"
               text="Restore Hidden Configurations"/>
-      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
+      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"
+              text="Remove Selected Types from Services"/>
       <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
               text="Clear Content" icon="AllIcons.Actions.Cancel"/>
