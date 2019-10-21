@@ -62,7 +62,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
     commitsList.border = JBUI.Borders.emptyTop(10)
     val model = FilteringListModel(CollectionListModel(commits))
     commitsList.model = model
-    model.setFilter { true }
+    resetFilter()
     commitsList.cellRenderer = object : ColoredListCellRenderer<VcsCommitMetadata>() {
       override fun customizeCellRenderer(
         list: JList<out VcsCommitMetadata>,
@@ -114,11 +114,28 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
   }
 
   fun setFilter(condition: (VcsCommitMetadata) -> Boolean) {
-    (commitsList.model as FilteringListModel<VcsCommitMetadata>).setFilter(condition)
+    val selectedCommits = commitsList.selectedValuesList.toSet()
+    val model = commitsList.model as FilteringListModel<VcsCommitMetadata>
+    model.setFilter(condition)
+
+
+    val selectedIndicesAfterFilter = mutableListOf<Int>()
+    for (index in 0 until model.size) {
+      val commit = model.getElementAt(index)
+      if (commit in selectedCommits) {
+        selectedIndicesAfterFilter.add(index)
+      }
+    }
+    if (selectedIndicesAfterFilter.isEmpty()) {
+      commitsList.selectedIndex = 0
+    }
+    else {
+      commitsList.selectedIndices = selectedIndicesAfterFilter.toIntArray()
+    }
   }
 
   fun resetFilter() {
-    (commitsList.model as FilteringListModel<VcsCommitMetadata>).setFilter { true }
+    setFilter { true }
   }
 
   private fun installSpeedSearch() {
