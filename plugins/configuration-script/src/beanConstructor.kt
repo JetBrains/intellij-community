@@ -6,12 +6,17 @@ import com.intellij.openapi.components.StoredProperty
 import com.intellij.serialization.stateProperties.CollectionStoredProperty
 import com.intellij.serialization.stateProperties.MapStoredProperty
 import org.snakeyaml.engine.v2.nodes.MappingNode
+import org.snakeyaml.engine.v2.nodes.NodeTuple
 import org.snakeyaml.engine.v2.nodes.ScalarNode
 import org.snakeyaml.engine.v2.nodes.SequenceNode
 
 internal fun <T : BaseState> readIntoObject(instance: T, node: MappingNode, affectedPropertyConsumer: ((StoredProperty<Any>) -> Unit)? = null): T {
+  return readIntoObject(instance, node.value, affectedPropertyConsumer)
+}
+
+internal fun <T : BaseState> readIntoObject(instance: T, nodes: List<NodeTuple>, affectedPropertyConsumer: ((StoredProperty<Any>) -> Unit)? = null): T {
   val properties = instance.__getProperties()
-  for (tuple in node.value) {
+  for (tuple in nodes) {
     val valueNode = tuple.valueNode
     val key = (tuple.keyNode as ScalarNode).value
     if (valueNode is ScalarNode) {

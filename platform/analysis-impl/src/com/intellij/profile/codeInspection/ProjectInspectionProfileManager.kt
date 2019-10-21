@@ -42,7 +42,7 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
 const val PROFILE_DIR = "inspectionProfiles"
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
-class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element> {
+open class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element> {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {

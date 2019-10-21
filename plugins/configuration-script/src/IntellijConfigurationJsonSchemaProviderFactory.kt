@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationScript
 
+import com.intellij.configurationScript.inspection.InspectionJsonSchemaGenerator
 import com.intellij.configurationScript.providers.PluginsConfiguration
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
@@ -74,7 +75,8 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 }
 
 private fun generateConfigurationSchema(): CharSequence {
-  return doGenerateConfigurationSchema(listOf(RunConfigurationJsonSchemaGenerator(), ComponentStateJsonSchemaGenerator()))
+  return doGenerateConfigurationSchema(listOf(RunConfigurationJsonSchemaGenerator(), ComponentStateJsonSchemaGenerator(),
+    InspectionJsonSchemaGenerator()))
 }
 
 internal interface SchemaGenerator {
@@ -101,6 +103,7 @@ internal fun doGenerateConfigurationSchema(generators: List<SchemaGenerator>): C
     map("properties") {
       map(Keys.plugins) {
         "type" to "object"
+        "description" to "The plugins"
         map("properties") {
           buildJsonSchema(PluginsConfiguration(), this)
         }

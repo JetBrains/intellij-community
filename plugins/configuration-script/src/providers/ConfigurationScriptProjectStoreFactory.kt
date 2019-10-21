@@ -9,8 +9,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.concurrency.SynchronizedClearableLazy
-import org.snakeyaml.engine.v2.nodes.MappingNode
+import org.snakeyaml.engine.v2.nodes.NodeTuple
 
 internal class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
   override fun createStore(project: Project): IComponentStore {
@@ -19,15 +18,6 @@ internal class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
 }
 
 private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
-  val data by lazy {
-    val result = SynchronizedClearableLazy {
-      val node = ConfigurationFileManager.getInstance(project).getConfigurationNode() ?: return@SynchronizedClearableLazy null
-      readPluginsConfiguration(node)
-    }
-    ConfigurationFileManager.getInstance(project).registerClearableLazyValue(result)
-
-    result
-  }
 
   override fun doCreateStateGetter(reloadData: Boolean,
                                    storage: StateStorage,
@@ -72,6 +62,6 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
   }
 }
 
-internal fun <T : BaseState> readComponentConfiguration(node: MappingNode, stateClass: Class<out T>): T? {
-  return readIntoObject(ReflectionUtil.newInstance(stateClass), node)
+internal fun <T : BaseState> readComponentConfiguration(nodes: List<NodeTuple>, stateClass: Class<out T>): T? {
+  return readIntoObject(ReflectionUtil.newInstance(stateClass), nodes)
 }
