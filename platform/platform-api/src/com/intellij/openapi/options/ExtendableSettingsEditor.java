@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ public class ExtendableSettingsEditor<T> extends SettingsEditor<T> {
 
   public ExtendableSettingsEditor(SettingsEditor<T> mainEditor) {
     myMainEditor = mainEditor;
+    Disposer.register(this, myMainEditor);
     myExtensionEditors = new ArrayList<>();
   }
 
@@ -37,8 +39,9 @@ public class ExtendableSettingsEditor<T> extends SettingsEditor<T> {
     }
   }
 
-  public void addExtensionEditor(SettingsEditor<T> extensionSettingsEditor) {
+  public void addExtensionEditor(@NotNull SettingsEditor<T> extensionSettingsEditor) {
     myExtensionEditors.add(extensionSettingsEditor);
+    Disposer.register(this, extensionSettingsEditor);
   }
 
   @NotNull
