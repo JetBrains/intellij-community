@@ -427,7 +427,6 @@ public class NewMappings implements Disposable {
       activator = updateActiveVcses();
     }
     activator.activate();
-    myFileWatchRequestsManager.ping();
   }
 
   public List<VcsDirectoryMapping> getDirectoryMappings() {
