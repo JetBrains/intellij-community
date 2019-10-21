@@ -76,7 +76,7 @@ open class PyPsiTestCase : TestCase() {
   protected var myPsiFile: PsiFile? = null
 
   init {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PythonPsi")
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PythonAnalysisTool")
     val loadedPlugins = PluginManagerCore.getLoadedPlugins(PyPsiTestCase::class.java.classLoader)
     myApplication.registerComponents(loadedPlugins)
     myApplication.picoContainer.registerComponentInstance(FileTypeRegistry::class.java, myFileTypeManager)

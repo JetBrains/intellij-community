@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs
 import com.intellij.openapi.util.text.StringUtil
 import java.io.*
 import java.nio.charset.Charset
-import java.nio.file.Files
 
 private const val TEST_LOCAL_FS_PROTOCOL = "test_local"
 
