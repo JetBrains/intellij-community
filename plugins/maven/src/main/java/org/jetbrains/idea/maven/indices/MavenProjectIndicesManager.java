@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.onlinecompletion.DependencyCompletionProviderFactory;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
@@ -58,6 +61,31 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       scheduleUpdateIndicesList();
     }
+
+    MavenRepositoryProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<MavenRepositoryProvider>() {
+      @Override
+      public void extensionAdded(@NotNull MavenRepositoryProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        scheduleUpdateIndicesList();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull MavenRepositoryProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        scheduleUpdateIndicesList();
+      }
+    }, myProject);
+
+    DependencyCompletionProviderFactory.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<DependencyCompletionProviderFactory>() {
+        @Override
+        public void extensionAdded(@NotNull DependencyCompletionProviderFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
+          scheduleUpdateIndicesList();
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull DependencyCompletionProviderFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
+          scheduleUpdateIndicesList();
+        }
+      }, myProject);
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       @Override

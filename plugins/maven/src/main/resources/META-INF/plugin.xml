@@ -28,11 +28,13 @@
 
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor"/>
 
-    <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
+    <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"
+                    dynamic="true"/>
     <extensionPoint name="executionEnvironmentProvider"
                     interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder"/>
-    <extensionPoint name="dependencyCompletionProviderFactory" interface="org.jetbrains.idea.maven.onlinecompletion.DependencyCompletionProviderFactory"/>
+    <extensionPoint name="dependencyCompletionProviderFactory" interface="org.jetbrains.idea.maven.onlinecompletion.DependencyCompletionProviderFactory"
+                    dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
