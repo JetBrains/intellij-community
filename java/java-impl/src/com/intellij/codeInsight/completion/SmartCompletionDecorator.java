@@ -14,11 +14,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -137,7 +136,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
-    final Set<PsiTypeParameter> set = new THashSet<>(Arrays.asList(typeParameters));
+    final Set<PsiTypeParameter> set = ContainerUtil.set(typeParameters);
     for (final PsiParameter parameter : method.getParameterList().getParameters()) {
       if (PsiTypesUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
     }

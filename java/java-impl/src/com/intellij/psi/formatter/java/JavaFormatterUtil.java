@@ -21,12 +21,10 @@ import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
-
-import static java.util.Arrays.asList;
 
 /**
  * @author Denis Zhdanov
@@ -35,9 +33,8 @@ public class JavaFormatterUtil {
   /**
    * Holds type of AST elements that are considered to be assignments.
    */
-  private static final Set<IElementType> ASSIGNMENT_ELEMENT_TYPES = new HashSet<>(asList(
-    JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD
-  ));
+  private static final Set<IElementType> ASSIGNMENT_ELEMENT_TYPES = ContainerUtil
+    .set(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
 
   private JavaFormatterUtil() { }
 

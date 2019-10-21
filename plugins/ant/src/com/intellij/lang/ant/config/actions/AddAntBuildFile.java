@@ -20,10 +20,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class AddAntBuildFile extends AnAction {
@@ -39,7 +38,7 @@ public class AddAntBuildFile extends AnAction {
     }
     final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
 
-    final Set<VirtualFile> files = new HashSet<>(Arrays.asList(contextFiles));
+    final Set<VirtualFile> files = ContainerUtil.set(contextFiles);
     for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       files.remove(buildFile.getVirtualFile());
     }

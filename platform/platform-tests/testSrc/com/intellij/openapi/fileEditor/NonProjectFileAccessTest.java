@@ -32,6 +32,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -323,7 +324,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       @Override
       public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
         requested.addAll(files);
-        HashSet<VirtualFile> denied = new HashSet<>(Arrays.asList(filesToDeny));
+        Set<VirtualFile> denied = ContainerUtil.set(filesToDeny);
         denied.retainAll(files);
         return denied;
       }

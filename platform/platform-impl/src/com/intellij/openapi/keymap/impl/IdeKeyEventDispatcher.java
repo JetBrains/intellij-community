@@ -1002,7 +1002,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
-  @NonNls private static final Set<String> ALT_GR_LANGUAGES = new HashSet<>(Arrays.asList(
+  @NonNls private static final Set<String> ALT_GR_LANGUAGES = ContainerUtil.set(
     "da", // Danish
     "de", // German
     "es", // Spanish
@@ -1024,13 +1024,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     "sr", // Serbian
     "sv", // Swedish
     "tr"  // Turkish
-  ));
-  @NonNls private static final Set<String> ALT_GR_COUNTRIES = new HashSet<>(Arrays.asList(
+  );
+  @NonNls private static final Set<String> ALT_GR_COUNTRIES = ContainerUtil.set(
     "DK", // Denmark
     "DE", // Germany
     "FI", // Finland
     "NL", // Netherlands
     "SL", // Slovenia
     "SE"  // Sweden
-  ));
+  );
 }

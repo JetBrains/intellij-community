@@ -4,12 +4,11 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import java.util.Arrays;
 import java.util.Set;
 
 @TestOnly
@@ -26,8 +25,8 @@ public class SdkLeakTracker {
     if (table != null) {
       Sdk[] jdks = table.getAllJdks();
       if (jdks.length != 0) {
-        Set<Sdk> leaked = new THashSet<>(Arrays.asList(jdks));
-        Set<Sdk> old = new THashSet<>(Arrays.asList(oldSdks));
+        Set<Sdk> leaked = ContainerUtil.set(jdks);
+        Set<Sdk> old = ContainerUtil.set(oldSdks);
         leaked.removeAll(old);
 
         try {

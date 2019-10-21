@@ -331,7 +331,7 @@ public final class EnvironmentUtil {
 
   @NotNull
   public static Map<String, String> parseEnv(String... lines) {
-    Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
+    Set<String> toIgnore = ContainerUtil.set("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER);
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<>();
 

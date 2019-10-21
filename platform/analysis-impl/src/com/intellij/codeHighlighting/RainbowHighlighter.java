@@ -53,7 +53,7 @@ public class RainbowHighlighter {
   private static final int RAINBOW_COLORS_BETWEEN = 4;
   private static final String UNIT_TEST_COLORS = "#000001,#000002,#000003,#000004"; // Do not modify!
   private static final String INHERITED = "inherited";
-  private static final Set<TextAttributesKey> CODE_INSIGHT_CONFLICT_KEYS = new HashSet<>(Arrays.asList(
+  private static final Set<TextAttributesKey> CODE_INSIGHT_CONFLICT_KEYS = ContainerUtil.set(
     CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES,
     CodeInsightColors.ERRORS_ATTRIBUTES,
     CodeInsightColors.WARNINGS_ATTRIBUTES,
@@ -70,7 +70,7 @@ public class RainbowHighlighter {
     CodeInsightColors.HYPERLINK_ATTRIBUTES,
     CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES,
     CodeInsightColors.TODO_DEFAULT_ATTRIBUTES,
-    CodeInsightColors.BOOKMARKS_ATTRIBUTES));
+    CodeInsightColors.BOOKMARKS_ATTRIBUTES);
 
   private static final TextAttributesKey[] RAINBOW_TEMP_KEYS;
 

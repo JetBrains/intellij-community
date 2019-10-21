@@ -38,7 +38,6 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -268,7 +267,7 @@ public abstract class PluginManagerMain {
       }
       List<PluginId> depends = node.getDepends();
       if (depends != null) {
-        Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
+        Set<PluginId> optionalDeps = ContainerUtil.set(node.getOptionalDependentPluginIds());
         for (PluginId dependantId : depends) {
           if (optionalDeps.contains(dependantId)) continue;
           IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);

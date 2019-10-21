@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -32,7 +31,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     myPresentableText = presentableText;
     myIcon = icon;
     myLookupString = lookupStrings[0];
-    myAllLookupStrings = Collections.unmodifiableSet(ContainerUtil.newHashSet(lookupStrings));
+    myAllLookupStrings = ContainerUtil.immutableSet(lookupStrings);
   }
 
   @Nullable

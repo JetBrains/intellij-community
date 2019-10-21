@@ -34,16 +34,15 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   private static final String BASE_PATH = "psi/formatter/xml";
-  private final Set<String> ourTestsWithDocumentUpdate = new HashSet<>(Arrays.asList("Performance3", "Performance4"));
+  private final Set<String> ourTestsWithDocumentUpdate = ContainerUtil.set("Performance3", "Performance4");
 
   @Override
   protected boolean doCheckDocumentUpdate() {

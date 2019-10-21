@@ -20,14 +20,13 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class JShellPsiAugmentProvider extends PsiAugmentProvider{
-  private static final Set<String> JSHELL_FIELD_MODIFIERS = Collections.unmodifiableSet(ContainerUtil.newHashSet(PsiModifier.PUBLIC, PsiModifier.STATIC));
+  private static final Set<String> JSHELL_FIELD_MODIFIERS = ContainerUtil.immutableSet(PsiModifier.PUBLIC, PsiModifier.STATIC);
   @NotNull
   @Override
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {
