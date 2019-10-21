@@ -26,7 +26,6 @@ import com.intellij.util.CharTable;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
@@ -40,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.AbstractList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
@@ -975,12 +975,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull final LighterASTNode newNode, final int pos) {
-      myDelegate.nodeInserted(oldParent, myConverter.convert((Node)newNode), pos);
+      myDelegate.nodeInserted(oldParent, myConverter.apply((Node)newNode), pos);
     }
 
     @Override
     public void nodeReplaced(@NotNull final ASTNode oldChild, @NotNull final LighterASTNode newChild) {
-      ASTNode converted = myConverter.convert((Node)newChild);
+      ASTNode converted = myConverter.apply((Node)newChild);
       myDelegate.nodeReplaced(oldChild, converted);
     }
   }
@@ -1647,7 +1647,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  private static class ASTConverter implements Convertor<Node, ASTNode> {
+  private static class ASTConverter implements Function<Node, ASTNode> {
     private final StartMarker myRoot;
     private final ASTFactory myASTFactory;
 
@@ -1657,7 +1657,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
-    public ASTNode convert(final Node n) {
+    public ASTNode apply(final Node n) {
       if (n instanceof Token) {
         final Token token = (Token)n;
         return token.getBuilder().createLeaf(token.getTokenType(), token.getStartOffsetInBuilder(), token.getEndOffsetInBuilder());

@@ -73,7 +73,7 @@ public class CommittedListsSequencesZipperTest {
   }
 
   private static void check(@NotNull long[][] expected, @NotNull List<CommittedChangeList>... lists) {
-    CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(Convertor.ourInstance);
+    CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(ConvertorZipper.ourInstance);
     int id = 0;
 
     for (List<CommittedChangeList> list : lists) {
@@ -109,8 +109,8 @@ public class CommittedListsSequencesZipperTest {
     }
   }
 
-  private static class Convertor implements VcsCommittedListsZipper {
-    private final static Convertor ourInstance = new Convertor();
+  private static class ConvertorZipper implements VcsCommittedListsZipper {
+    private final static ConvertorZipper ourInstance = new ConvertorZipper();
 
     @Override
     @NotNull

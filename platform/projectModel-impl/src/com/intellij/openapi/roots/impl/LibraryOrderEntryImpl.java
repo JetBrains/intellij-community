@@ -141,8 +141,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     if (myLibrary != null) {
       myLibraryName = myLibrary.getName();
       myLibraryLevel = myLibrary.getTable().getTableLevel();
+      myLibrary = null;
     }
-    myLibrary = null;
     return null;
   }
 
