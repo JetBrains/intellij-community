@@ -252,11 +252,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   // Diff
   //
 
+  @Override
+  protected void onBeforeDocumentChange(@NotNull DocumentEvent event) {
+    super.onBeforeDocumentChange(event);
+    myMarkupUpdater.suspendUpdate();
+  }
 
   @Override
   protected void onBeforeRediff() {
     super.onBeforeRediff();
-    myMarkupUpdater.cancelUpdate();
+    myMarkupUpdater.suspendUpdate();
   }
 
   @Override
@@ -441,6 +446,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
 
       myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
+      myMarkupUpdater.resumeUpdate();
 
       myInitialScrollHelper.onRediff();
 
@@ -1267,9 +1273,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   private class MarkupUpdater implements Disposable {
     @NotNull private final MergingUpdateQueue myUpdateQueue =
-      new MergingUpdateQueue("UnifiedDiffViewer.MarkupUpdater", 1000, true, myPanel, this);
+      new MergingUpdateQueue("UnifiedDiffViewer.MarkupUpdater", 300, true, myPanel, this);
 
     @NotNull private ProgressIndicator myUpdateIndicator = new EmptyProgressIndicator();
+    private boolean mySuspended;
 
     private MarkupUpdater(@NotNull List<? extends DocumentContent> contents) {
       Disposer.register(UnifiedDiffViewer.this, this);
@@ -1288,14 +1295,22 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @CalledInAwt
-    public void cancelUpdate() {
+    public void suspendUpdate() {
       myUpdateIndicator.cancel();
       myUpdateQueue.cancelAllUpdates();
+      mySuspended = true;
+    }
+
+    @CalledInAwt
+    public void resumeUpdate() {
+      mySuspended = false;
+      scheduleUpdate();
     }
 
     @CalledInAwt
     public void scheduleUpdate() {
       if (myProject == null) return;
+      if (mySuspended) return;
       myUpdateIndicator.cancel();
 
       myUpdateQueue.queue(new Update("update") {
@@ -1311,15 +1326,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
           ReadAction
             .nonBlocking(() -> updateHighlighters(blockData))
             .finishOnUiThread(ModalityState.stateForComponent(myPanel), result -> {
-              if (blockData == myModel.getData()) {
-                EditorHighlighter highlighter = result.first;
-                UnifiedEditorRangeHighlighter rangeHighlighter = result.second;
+              if (myStateIsOutOfDate || blockData != myModel.getData()) return;
 
-                if (highlighter != null) myEditor.setHighlighter(highlighter);
+              EditorHighlighter highlighter = result.first;
+              UnifiedEditorRangeHighlighter rangeHighlighter = result.second;
 
-                UnifiedEditorRangeHighlighter.erase(myProject, myDocument);
-                rangeHighlighter.apply(myProject, myDocument);
-              }
+              if (highlighter != null) myEditor.setHighlighter(highlighter);
+
+              UnifiedEditorRangeHighlighter.erase(myProject, myDocument);
+              rangeHighlighter.apply(myProject, myDocument);
             })
             .withDocumentsCommitted(myProject)
             .cancelWith(myUpdateIndicator)
