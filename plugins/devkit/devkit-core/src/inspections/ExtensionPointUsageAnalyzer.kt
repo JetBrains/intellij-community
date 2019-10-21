@@ -21,6 +21,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.ui.AppUIUtil
 import org.jetbrains.uast.*
 
 /**
@@ -129,17 +130,15 @@ class AnalyzeEPUsageAction : AnAction() {
     val fieldType = (target.type as? PsiClassReferenceType)?.rawType() ?: return
     if (fieldType.canonicalText == ExtensionPointName::class.java.name ||
         fieldType.canonicalText == ProjectExtensionPointName::class.java.name) {
-      val unsafeUsages = mutableListOf<Pair<PsiReference, EPUsage>>()
+      val unsafeUsages = mutableListOf<Pair<PsiReference, EPUsage.Unknown>>()
       val safeUsages = mutableListOf<PsiReference>()
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         {
           ReferencesSearch.search(sourcePsi).forEach { ref ->
             val usage = runReadAction { analyzeEPUsage(ref) }
-            if (usage != EPUsage.Safe) {
-              unsafeUsages.add(ref to usage)
-            }
-            else {
-              safeUsages.add(ref)
+            when (usage) {
+              is EPUsage.Unknown -> unsafeUsages.add(ref to usage)
+              is EPUsage.Safe -> safeUsages.add(ref)
             }
           }
         }, "Analyzing EP usages", true, file.project
