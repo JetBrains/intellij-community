@@ -133,29 +133,47 @@ public class PersistentCachingModuleHashingService implements BulkFileListener {
 
   public Map<String, String> computeProductionHashesForProject() {
     Map<String, String> result = new HashMap<>();
-    try {
-      Collection<String> keys = myProductionHashes.getAllKeysWithExistingMapping();
-      for (String key : keys) {
-        result.put(key, convertToStringRepr(myProductionHashes.get(key)));
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    Arrays.stream(modules).forEach(module -> {
+      try {
+        String moduleName = module.getName();
+        byte[] moduleHash = myProductionHashes.get(moduleName);
+        if (moduleHash != null) {
+          result.put(moduleName, convertToStringRepr(moduleHash));
+          return;
+        }
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModuleNameToModuleMap.get(moduleName));
+        File[] sourceRoots = JpsCachesUtils.getProductionSourceRootFiles(moduleRootManager);
+        getFromCacheOrCalcAndPersist(moduleName, myProductionHashes, sourceRoots)
+          .map(hash -> result.put(moduleName, convertToStringRepr(hash)));
       }
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    });
     return result;
   }
 
   public Map<String, String> computeTestHashesForProject() {
     Map<String, String> result = new HashMap<>();
-    try {
-      Collection<String> keys = myTestHashes.getAllKeysWithExistingMapping();
-      for (String key : keys) {
-        result.put(key, convertToStringRepr(myTestHashes.get(key)));
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    Arrays.stream(modules).forEach(module -> {
+      try {
+        String moduleName = module.getName();
+        byte[] moduleHash = myTestHashes.get(moduleName);
+        if (moduleHash != null) {
+          result.put(moduleName, convertToStringRepr(moduleHash));
+          return;
+        }
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModuleNameToModuleMap.get(moduleName));
+        File[] sourceRoots = JpsCachesUtils.getTestSourceRootFiles(moduleRootManager);
+        getFromCacheOrCalcAndPersist(moduleName, myTestHashes, sourceRoots)
+          .map(hash -> result.put(moduleName, convertToStringRepr(hash)));
       }
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    });
     return result;
   }
 
