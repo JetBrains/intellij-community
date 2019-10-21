@@ -621,6 +621,32 @@ def foo(a) {
 ''', JAVA_LANG_STRING
   }
 
+  void 'test instanceof or null on field'() {
+    doTest '''\
+class C {
+  Object f 
+  def foo() {
+      if (null == f || f instanceof String) {
+          <caret>f
+      }
+  }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test instanceof or null on field 2'() {
+    doTest '''\
+class C {
+  Object f 
+  def foo() {
+      if (null == this.f || this.f instanceof String) {
+          <caret>f
+      }
+  }
+}
+''', JAVA_LANG_STRING
+  }
+
   void 'test null or instanceof else'() {
     doTest '''\
 def foo(a) {

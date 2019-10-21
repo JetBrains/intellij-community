@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.openapi.util.Key
@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
@@ -159,4 +160,10 @@ fun GrVariable.isDeclaredIn(block: GrControlFlowOwner): Boolean {
   val parent = findFirstParent(this) { block == it || it is GrMethod || it is GrClosableBlock }
 
   return parent == block
+}
+
+fun isThisRef(expression: GrExpression?): Boolean {
+  return expression is GrReferenceExpression &&
+         expression.qualifier == null &&
+         "this" == expression.referenceName
 }
