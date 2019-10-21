@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
@@ -59,6 +60,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     super(name, null, LocalTimeCounter.currentTime());
     myContent = text;
     setLanguage(language);
+    setCharset(CharsetToolkit.UTF8_CHARSET);
   }
 
   public Language getLanguage() {
