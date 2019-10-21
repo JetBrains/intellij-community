@@ -12,12 +12,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.inputStreamIfExists
-import org.snakeyaml.engine.v1.api.LoadSettingsBuilder
-import org.snakeyaml.engine.v1.composer.Composer
-import org.snakeyaml.engine.v1.nodes.MappingNode
-import org.snakeyaml.engine.v1.nodes.ScalarNode
-import org.snakeyaml.engine.v1.parser.ParserImpl
-import org.snakeyaml.engine.v1.scanner.StreamReader
+import org.snakeyaml.engine.v2.api.LoadSettings
+import org.snakeyaml.engine.v2.composer.Composer
+import org.snakeyaml.engine.v2.nodes.MappingNode
+import org.snakeyaml.engine.v2.nodes.ScalarNode
+import org.snakeyaml.engine.v2.parser.ParserImpl
+import org.snakeyaml.engine.v2.scanner.StreamReader
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -108,7 +108,7 @@ internal fun findValueNodeByPath(namePath: String, rootNode: MappingNode): Mappi
 
 internal fun doRead(reader: Reader): MappingNode? {
   reader.use {
-    val settings = LoadSettingsBuilder()
+    val settings = LoadSettings.builder()
       .setUseMarks(false)
       .setScalarResolver(LightScalarResolver())
       .build()

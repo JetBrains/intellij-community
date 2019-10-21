@@ -506,8 +506,12 @@ class CommunityLibraryLicenses {
                        url: "http://pythonhosted.org/six/"),
     new LibraryLicense(libraryName: "Slf4j", license: "MIT License", url: "http://slf4j.org/",
                        licenseUrl: "http://slf4j.org/license.html"),
+
     new LibraryLicense(name: "SnakeYAML", libraryName: "snakeyaml", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://bitbucket.org/asomov/snakeyaml"),
+    new LibraryLicense(name: "snakeyaml-engine", libraryName: "snakeyaml-engine", license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://bitbucket.org/asomov/snakeyaml-engine/src"),
+
     new LibraryLicense(name: "Sonatype Nexus: Indexer", attachedTo: "intellij.maven.server.m3.common",
                        additionalLibraryNames: ["org.sonatype.nexus:nexus-indexer:3.0.4", "org.sonatype.nexus:nexus-indexer-artifact:1.0.1"],
                        license: "Eclipse Public License v1.0", url: "http://nexus.sonatype.org/",
