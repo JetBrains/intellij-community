@@ -119,7 +119,6 @@ public class ModulePathSplitter {
 
   private static String normalizeModuleName(String fName) {
     if (fName != null) {
-      // replace non-alphanumeric
       fName = NON_ALPHANUM.matcher(fName).replaceAll(".");
       // collapse repeating dots
       fName = REPEATING_DOTS.matcher(fName).replaceAll(".");
@@ -196,15 +195,9 @@ public class ModulePathSplitter {
 
   private String deriveAutomaticModuleName(File dir) {
     if (dir.isDirectory()) {
-      try {
-        final BufferedInputStream is = new BufferedInputStream(new FileInputStream(new File(dir, "META-INF/MANIFEST.MF")));
-        try {
-          final String name = new Manifest(is).getMainAttributes().getValue(AUTOMATIC_MODULE_NAME);
-          return name != null ? name : normalizeModuleName(myModuleNameSearch.apply(dir));
-        }
-        finally {
-          is.close();
-        }
+      try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(new File(dir, "META-INF/MANIFEST.MF")))) {
+        final String name = new Manifest(is).getMainAttributes().getValue(AUTOMATIC_MODULE_NAME);
+        return name != null ? name : normalizeModuleName(myModuleNameSearch.apply(dir));
       }
       catch (FileNotFoundException e) {
         return normalizeModuleName(myModuleNameSearch.apply(dir)); // inferring the module name from the dir

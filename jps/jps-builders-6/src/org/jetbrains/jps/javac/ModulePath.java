@@ -9,10 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Eugene Zhuravlev
- * Date: 17-Oct-19
- */
 public abstract class ModulePath {
 
   public interface Builder {
