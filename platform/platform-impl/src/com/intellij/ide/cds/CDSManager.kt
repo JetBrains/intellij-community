@@ -273,7 +273,10 @@ object CDSManager {
       commandLine.exePath = javaExe.absolutePath
       commandLine.addParameter("@${paths.classesPathFile}")
 
-      ExecUtil.setupLowPriorityExecution(commandLine)
+      if (!SystemInfo.isWindows) {
+        // the utility does not recover process exit code from the call on Windows
+        ExecUtil.setupLowPriorityExecution(commandLine)
+      }
 
       val timeToWaitFor = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10)
       fun shouldWaitForProcessToComplete() = timeToWaitFor > System.currentTimeMillis()
