@@ -16,13 +16,11 @@ import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+import static org.jetbrains.jps.incremental.storage.Md5HashingService.*;
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
 import static org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE;
 import static org.jetbrains.jps.model.java.JavaResourceRootType.TEST_RESOURCE;
@@ -45,14 +43,9 @@ import static org.jetbrains.jps.model.java.JavaSourceRootType.TEST_SOURCE;
 @ApiStatus.Experimental
 public class ModuleSourcesState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ModuleSourcesState");
-  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
   private static final List<JpsModuleSourceRootType<?>> PRODUCTION_SOURCE_ROOTS = Arrays.asList(SOURCE, RESOURCE);
   private static final List<JpsModuleSourceRootType<?>> TEST_SOURCE_ROOTS = Arrays.asList(TEST_SOURCE, TEST_RESOURCE);
-  private static final String SOURCES_STATE_FILE_NAME = "sources_state";
-  private static final String HASH_FUNCTION = "MD5";
-  private static final byte CARRIAGE_RETURN_CODE = 13;
-  private static final int HASH_FUNCTION_SIZE = 16;
-  private static final byte LINE_FEED_CODE = 10;
+  private static final String SOURCES_STATE_FILE_NAME = "sources_state.json";
   private final IgnoredFileIndex myIgnoredFileIndex;
   private final ProjectStamps myProjectStamps;
   private final File mySourceStateStorageRoot;
@@ -134,34 +127,9 @@ public class ModuleSourcesState {
     assert storage instanceof FileStampStorage;
     FileStampStorage fileStampStorage = (FileStampStorage)storage;
     byte[] fileHash = fileStampStorage.getStoredFileHash(file);
-    fileHash = fileHash != null ? fileHash : getFileHash(file);
-
-    MessageDigest md = getMessageDigest();
-    md.reset();
-    //noinspection SSBasedInspection,ImplicitDefaultCharsetUsage
-    md.update(toRelative(file, rootPath).getBytes());
-    return sum(md.digest(), fileHash);
-  }
-
-  private static byte[] getFileHash(@NotNull File file) throws IOException {
-    MessageDigest md = getMessageDigest();
-    md.reset();
-    try (FileInputStream fis = new FileInputStream(file)) {
-      byte[] buffer = new byte[1024 * 1024];
-      int length;
-      while ((length = fis.read(buffer)) != -1) {
-        byte[] result = new byte[length];
-        int copiedBytes = 0;
-        for (int i = 0; i < length; i++) {
-          if (buffer[i] != CARRIAGE_RETURN_CODE && ((i + 1) >= length || buffer[i + 1] != LINE_FEED_CODE)) {
-            result[copiedBytes] = buffer[i];
-            copiedBytes++;
-          }
-        }
-        md.update(copiedBytes != result.length ? Arrays.copyOf(result, result.length - (result.length - copiedBytes)) : result);
-      }
-    }
-    return md.digest();
+    fileHash = fileHash != null ? fileHash : Md5HashingService.getFileHash(file);
+    byte[] stringHash = getStringHash(toRelative(file, rootPath));
+    return sum(stringHash, fileHash);
   }
 
   private static String toRelative(File target, File rootPath) {
@@ -169,25 +137,11 @@ public class ModuleSourcesState {
   }
 
   private static byte[] sum(byte[] firstHash, byte[] secondHash) {
-    byte[] result = firstHash != null ? firstHash : new byte[HASH_FUNCTION_SIZE];
+    byte[] result = firstHash != null ? firstHash : new byte[getHashSize()];
     for (int i = 0; i < result.length; i++) {
       result[i] += secondHash[i];
     }
     return result;
-  }
-
-  @NotNull
-  private static MessageDigest getMessageDigest() throws IOException {
-    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get();
-    if (messageDigest != null) return messageDigest;
-    try {
-      messageDigest = MessageDigest.getInstance(HASH_FUNCTION);
-      MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest);
-      return messageDigest;
-    }
-    catch (NoSuchAlgorithmException e) {
-      throw new IOException(e);
-    }
   }
 
   private static String convertToStringRepr(byte[] hash) {
