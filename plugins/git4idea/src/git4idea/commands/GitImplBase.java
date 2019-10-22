@@ -104,8 +104,8 @@ public abstract class GitImplBase implements Git {
    * Run handler with retry on authentication failure
    */
   @NotNull
-  private GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
-                               @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
+  private static GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
+                                      @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
     int authAttempt = 0;
@@ -128,7 +128,7 @@ public abstract class GitImplBase implements Git {
    * Run handler with per-project locking, logging and authentication
    */
   @NotNull
-  private GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+  private static GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
     GitVersion version = GitVersion.NULL;
     if (handler.isPreValidateExecutable()) {
       String executablePath = handler.getExecutablePath();
