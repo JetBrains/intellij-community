@@ -11,7 +11,6 @@
 package org.picocontainer.defaults;
 
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.ComponentMonitor;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoIntrospectionException;
 
@@ -21,25 +20,16 @@ import org.picocontainer.PicoIntrospectionException;
  */
 public class ConstructorInjectionComponentAdapterFactory extends MonitoringComponentAdapterFactory {
     private final boolean allowNonPublicClasses;
-    private LifecycleStrategy lifecycleStrategy;
+    private final LifecycleStrategy lifecycleStrategy;
 
-    public ConstructorInjectionComponentAdapterFactory(boolean allowNonPublicClasses,
-                        ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) {
+    public ConstructorInjectionComponentAdapterFactory(boolean allowNonPublicClasses, LifecycleStrategy lifecycleStrategy) {
         this.allowNonPublicClasses = allowNonPublicClasses;
-        this.changeMonitor(monitor);
         this.lifecycleStrategy = lifecycleStrategy;
     }
 
-    public ConstructorInjectionComponentAdapterFactory(boolean allowNonPublicClasses, ComponentMonitor monitor) {
-        this(allowNonPublicClasses, monitor, new DefaultLifecycleStrategy(monitor));
-    }
-
-    public ConstructorInjectionComponentAdapterFactory(boolean allowNonPublicClasses, LifecycleStrategy lifecycleStrategy) {
-        this(allowNonPublicClasses, new DelegatingComponentMonitor(), lifecycleStrategy);
-    }
 
     public ConstructorInjectionComponentAdapterFactory(boolean allowNonPublicClasses) {
-        this(allowNonPublicClasses, new DelegatingComponentMonitor());
+        this(allowNonPublicClasses, new DefaultLifecycleStrategy());
     }
 
     public ConstructorInjectionComponentAdapterFactory() {
@@ -52,6 +42,6 @@ public class ConstructorInjectionComponentAdapterFactory extends MonitoringCompo
                                                    Parameter[] parameters)
             throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
         return new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters,
-                allowNonPublicClasses, currentMonitor(), lifecycleStrategy);
+                allowNonPublicClasses, lifecycleStrategy);
     }
 }

@@ -33,10 +33,8 @@ import java.io.Serializable;
  * @author Mauro Talevi
  * @version $Revision: 2631 $
  */
-public class DecoratingComponentAdapter implements ComponentAdapter, ComponentMonitorStrategy,
-                                                    LifecycleManager, LifecycleStrategy, Serializable {
-
-    private ComponentAdapter delegate;
+public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleManager, LifecycleStrategy, Serializable {
+    private final ComponentAdapter delegate;
 
     public DecoratingComponentAdapter(ComponentAdapter delegate) {
          this.delegate = delegate;
@@ -70,32 +68,6 @@ public class DecoratingComponentAdapter implements ComponentAdapter, ComponentMo
     public void accept(PicoVisitor visitor) {
         visitor.visitComponentAdapter(this);
         delegate.accept(visitor);
-    }
-
-    /**
-     * Delegates change of monitor if the delegate supports
-     * a component monitor strategy.
-     * {@inheritDoc}
-     */
-    @Override
-    public void changeMonitor(ComponentMonitor monitor) {
-        if ( delegate instanceof ComponentMonitorStrategy ){
-            ((ComponentMonitorStrategy)delegate).changeMonitor(monitor);
-        }
-    }
-
-    /**
-     * Returns delegate's current monitor if the delegate supports
-     * a component monitor strategy.
-     * {@inheritDoc}
-     * @throws PicoIntrospectionException if no component monitor is found in delegate
-     */
-    @Override
-    public ComponentMonitor currentMonitor() {
-        if ( delegate instanceof ComponentMonitorStrategy ){
-            return ((ComponentMonitorStrategy)delegate).currentMonitor();
-        }
-        throw new PicoIntrospectionException("No component monitor found in delegate");
     }
 
     // ~~~~~~~~ LifecylceManager ~~~~~~~~
@@ -196,13 +168,11 @@ public class DecoratingComponentAdapter implements ComponentAdapter, ComponentMo
     }
 
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("[");
-        buffer.append(getPrintableClassName());
-        buffer.append(" delegate=");
-        buffer.append(delegate);
-        buffer.append("]");
-        return buffer.toString();
+        return "[" +
+               getPrintableClassName() +
+               " delegate=" +
+               delegate +
+               "]";
     }
 
     private String getPrintableClassName() {

@@ -60,9 +60,8 @@ public abstract class InstantiatingComponentAdapter extends AbstractComponentAda
      * @throws NotConcreteRegistrationException if the implementation is not a concrete class
      * @throws NullPointerException if one of the parameters is <code>null</code>
      */
-    protected InstantiatingComponentAdapter(Object componentKey, Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses,
-            ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) {
-        super(componentKey, componentImplementation, monitor);
+    protected InstantiatingComponentAdapter(Object componentKey, Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, LifecycleStrategy lifecycleStrategy) {
+        super(componentKey, componentImplementation);
         checkConcrete();
         if (parameters != null) {
             for (int i = 0; i < parameters.length; i++) {
@@ -88,23 +87,8 @@ public abstract class InstantiatingComponentAdapter extends AbstractComponentAda
      * @throws NullPointerException if one of the parameters is <code>null</code>
      */
     protected InstantiatingComponentAdapter(Object componentKey, Class componentImplementation,
-            Parameter[] parameters, boolean allowNonPublicClasses,
-            ComponentMonitor monitor) {
-        this(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor, new DefaultLifecycleStrategy(monitor));
-    }
-
-    /**
-     * Constructs a new ComponentAdapter for the given key and implementation.
-     * @param componentKey the search key for this implementation
-     * @param componentImplementation the concrete implementation
-     * @param parameters the parameters to use for the initialization
-     * @param allowNonPublicClasses flag to allow instantiation of non-public classes.
-     * @throws AssignabilityRegistrationException if the key is a type and the implementation cannot be assigned to.
-     * @throws NotConcreteRegistrationException if the implementation is not a concrete class.
-     * @throws NullPointerException if one of the parameters is <code>null</code>
-     */
-    protected InstantiatingComponentAdapter(Object componentKey, Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) {
-        this(componentKey, componentImplementation, parameters, allowNonPublicClasses, new DelegatingComponentMonitor());
+            Parameter[] parameters, boolean allowNonPublicClasses) {
+        this(componentKey, componentImplementation, parameters, allowNonPublicClasses, new DefaultLifecycleStrategy());
     }
 
     private void checkConcrete() throws NotConcreteRegistrationException {

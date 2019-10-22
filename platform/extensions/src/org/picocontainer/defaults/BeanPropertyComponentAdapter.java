@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.picocontainer.defaults;
 
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
+import org.picocontainer.PicoIntrospectionException;
 
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
@@ -70,7 +73,6 @@ public class BeanPropertyComponentAdapter extends DecoratingComponentAdapter {
         }
 
         if (properties != null) {
-            ComponentMonitor componentMonitor = currentMonitor();
             Set propertyNames = properties.keySet();
             for (Iterator iterator = propertyNames.iterator(); iterator.hasNext();) {
                 final String propertyName = (String) iterator.next();
@@ -80,12 +82,8 @@ public class BeanPropertyComponentAdapter extends DecoratingComponentAdapter {
                 Object valueToInvoke = this.getSetterParameter(propertyName,propertyValue,componentInstance,container);
 
                 try {
-                    componentMonitor.invoking(setter, componentInstance);
-                    long startTime = System.currentTimeMillis();
                     setter.invoke(componentInstance, new Object[]{valueToInvoke});
-                    componentMonitor.invoked(setter, componentInstance, System.currentTimeMillis() - startTime);
                 } catch (final Exception e) {
-                    componentMonitor.invocationFailed(setter, componentInstance, e);
                     throw new PicoInitializationException("Failed to set property " + propertyName + " to " + propertyValue + ": " + e.getMessage(), e);
                 }
             }

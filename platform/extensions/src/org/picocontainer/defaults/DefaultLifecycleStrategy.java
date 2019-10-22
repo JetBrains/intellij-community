@@ -7,36 +7,15 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import org.picocontainer.ComponentMonitor;
 import org.picocontainer.Disposable;
 
-import java.lang.reflect.Method;
-
 /**
- * Default lifecycle strategy.  Starts and stops component if Startable,
- * and disposes it if Disposable.
- *
  * @author Mauro Talevi
  * @author J&ouml;rg Schaible
  * @see Startable
  * @see Disposable
  */
 public class DefaultLifecycleStrategy extends AbstractMonitoringLifecycleStrategy {
-
-  private static Method dispose;
-
-  static {
-    try {
-      dispose = Disposable.class.getMethod("dispose", (Class[])null);
-    }
-    catch (NoSuchMethodException ignored) {
-    }
-  }
-
-  public DefaultLifecycleStrategy(ComponentMonitor monitor) {
-    super(monitor);
-  }
-
   @Override
   public void start(Object component) {
   }
@@ -48,15 +27,7 @@ public class DefaultLifecycleStrategy extends AbstractMonitoringLifecycleStrateg
   @Override
   public void dispose(Object component) {
     if (component instanceof Disposable) {
-      long str = System.currentTimeMillis();
-      currentMonitor().invoking(dispose, component);
-      try {
-        ((Disposable)component).dispose();
-        currentMonitor().invoked(dispose, component, System.currentTimeMillis() - str);
-      }
-      catch (RuntimeException cause) {
-        currentMonitor().lifecycleInvocationFailed(dispose, component, cause); // may re-throw
-      }
+      ((Disposable)component).dispose();
     }
   }
 

@@ -9,7 +9,10 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
+import org.picocontainer.PicoIntrospectionException;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -70,22 +73,16 @@ public class ImplementationHidingComponentAdapter extends DecoratingComponentAda
                                          final Object[] args)
                             throws Throwable {
                         Object componentInstance = getDelegate().getComponentInstance(container);
-                        ComponentMonitor componentMonitor = currentMonitor();
                         try {
-                            componentMonitor.invoking(method, componentInstance);
-                            long startTime = System.currentTimeMillis();
-                            Object object = method.invoke(componentInstance, args);
-                            componentMonitor.invoked(method, componentInstance, System.currentTimeMillis() - startTime);
-                            return object;
+                            return method.invoke(componentInstance, args);
                         } catch (final InvocationTargetException ite) {
-                            componentMonitor.invocationFailed(method, componentInstance, ite);
                             throw ite.getTargetException();
                         }
                     }
                 });
     }
 
-    private Class[] verifyInterfacesOnly(Class[] classes) {
+    private static Class[] verifyInterfacesOnly(Class[] classes) {
         for (int i = 0; i < classes.length; i++) {
             if(!classes[i].isInterface()) {
                 throw new PicoIntrospectionException("Class keys must be interfaces. " + classes[i] + " is not an interface.");

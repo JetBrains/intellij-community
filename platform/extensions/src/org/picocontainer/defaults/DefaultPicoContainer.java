@@ -10,7 +10,6 @@
 package org.picocontainer.defaults;
 
 import org.picocontainer.*;
-import org.picocontainer.monitors.DefaultComponentMonitor;
 
 import java.io.Serializable;
 import java.util.*;
@@ -46,7 +45,7 @@ import java.util.*;
  * @author Mauro Talevi
  * @version $Revision: 1.8 $
  */
-public class DefaultPicoContainer implements MutablePicoContainer, ComponentMonitorStrategy, Serializable {
+public class DefaultPicoContainer implements MutablePicoContainer, Serializable {
     private Map componentKeyToAdapterCache = new HashMap();
     private ComponentAdapterFactory componentAdapterFactory;
     private PicoContainer parent;
@@ -80,7 +79,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
      * @param parent                  the parent container (used for component dependency lookups).
      */
     public DefaultPicoContainer(ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
-        this(componentAdapterFactory, new DefaultLifecycleStrategy(new DefaultComponentMonitor()), parent);
+        this(componentAdapterFactory, new DefaultLifecycleStrategy(), parent);
     }
 
     /**
@@ -116,9 +115,9 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
       * @param monitor the ComponentMonitor to use
       * @param parent the parent container (used for component dependency lookups).
       */
-    public DefaultPicoContainer(ComponentMonitor monitor, PicoContainer parent) {
-        this(new DefaultComponentAdapterFactory(monitor), parent);
-        lifecycleStrategyForInstanceRegistrations = new DefaultLifecycleStrategy(monitor);
+    public DefaultPicoContainer(PicoContainer parent) {
+        this(new DefaultComponentAdapterFactory(), parent);
+        lifecycleStrategyForInstanceRegistrations = new DefaultLifecycleStrategy();
     }
 
     /**
@@ -129,21 +128,9 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
       * @param lifecycleStrategy the lifecycle strategy to use.
       * @param parent the parent container (used for component dependency lookups).
       */
-    public DefaultPicoContainer(ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy, PicoContainer parent) {
-        this(new DefaultComponentAdapterFactory(monitor, lifecycleStrategy), lifecycleStrategy,  parent);
-    }
-
-    /**
-      * Creates a new container with the DefaultComponentAdapterFactory using a
-      * custom lifecycle strategy
-      *
-      * @param lifecycleStrategy the lifecycle strategy to use.
-      * @param parent the parent container (used for component dependency lookups).
-      */
     public DefaultPicoContainer(LifecycleStrategy lifecycleStrategy, PicoContainer parent) {
-        this(new DefaultComponentMonitor(), lifecycleStrategy, parent);
+        this(new DefaultComponentAdapterFactory(), lifecycleStrategy,  parent);
     }
-
 
     /**
      * Creates a new container with a custom ComponentAdapterFactory and no parent container.
@@ -160,25 +147,8 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
       *
       * @param monitor the ComponentMonitor to use
       */
-    public DefaultPicoContainer(ComponentMonitor monitor) {
-        this(monitor, new DefaultLifecycleStrategy(monitor), null);
-    }
-
-    /**
-     * Creates a new container with a (caching) {@link DefaultComponentAdapterFactory}
-     * and a parent container.
-     *
-     * @param parent the parent container (used for component dependency lookups).
-     */
-    public DefaultPicoContainer(PicoContainer parent) {
-        this(new DefaultComponentAdapterFactory(), parent);
-    }
-
-    /**
-     * Creates a new container with a (caching) {@link DefaultComponentAdapterFactory} and no parent container.
-     */
     public DefaultPicoContainer() {
-        this(new DefaultComponentAdapterFactory(), null);
+        this(new DefaultLifecycleStrategy(), null);
     }
 
     @Override
@@ -557,57 +527,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
         }
     }
 
-    /**
-     * Changes monitor in the ComponentAdapterFactory, the component adapters
-     * and the child containers, if these support a ComponentMonitorStrategy.
-     * {@inheritDoc}
-     */
-    @Override
-    public void changeMonitor(ComponentMonitor monitor) {
-        // will also change monitor in lifecycleStrategyForInstanceRegistrations
-        if (componentAdapterFactory instanceof ComponentMonitorStrategy) {
-            ((ComponentMonitorStrategy) componentAdapterFactory).changeMonitor(monitor);
-        }
-        for ( Iterator i = componentAdapters.iterator(); i.hasNext(); ){
-            Object adapter = i.next();
-            if ( adapter instanceof ComponentMonitorStrategy ) {
-                ((ComponentMonitorStrategy)adapter).changeMonitor(monitor);
-            }
-        }
-        for (Iterator i = children.iterator(); i.hasNext();) {
-            Object child = i.next();
-            if (child instanceof ComponentMonitorStrategy) {
-                ((ComponentMonitorStrategy) child).changeMonitor(monitor);
-            }
-        }
-    }
-
-    /**
-     * Returns the first current monitor found in the ComponentAdapterFactory, the component adapters
-     * and the child containers, if these support a ComponentMonitorStrategy.
-     * {@inheritDoc}
-     * @throws PicoIntrospectionException if no component monitor is found in container or its children
-     */
-    @Override
-    public ComponentMonitor currentMonitor() {
-        if (componentAdapterFactory instanceof ComponentMonitorStrategy) {
-            return ((ComponentMonitorStrategy) componentAdapterFactory).currentMonitor();
-        }
-        for ( Iterator i = componentAdapters.iterator(); i.hasNext(); ){
-            Object adapter = i.next();
-            if ( adapter instanceof ComponentMonitorStrategy ) {
-                return ((ComponentMonitorStrategy)adapter).currentMonitor();
-            }
-        }
-        for (Iterator i = children.iterator(); i.hasNext();) {
-            Object child = i.next();
-            if (child instanceof ComponentMonitorStrategy) {
-                return ((ComponentMonitorStrategy) child).currentMonitor();
-            }
-        }
-        throw new PicoIntrospectionException("No component monitor found in container or its children");
-    }
-
    /**
     * <p>
     * Implementation of lifecycle manager which delegates to the container's component adapters.
@@ -622,7 +541,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, ComponentMoni
     private class OrderedComponentAdapterLifecycleManager implements LifecycleManager, Serializable {
 
         /** List collecting the CAs which have been successfully started */
-        private List startedComponentAdapters = new ArrayList();
+        private final List startedComponentAdapters = new ArrayList();
 
         /**
          * {@inheritDoc}

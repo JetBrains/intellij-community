@@ -13,7 +13,6 @@ package org.picocontainer.defaults;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoIntrospectionException;
-import org.picocontainer.monitors.DefaultComponentMonitor;
 
 
 /**
@@ -34,7 +33,7 @@ public class SetterInjectionComponentAdapterFactory extends MonitoringComponentA
     }
 
     public SetterInjectionComponentAdapterFactory(boolean allowNonPublicClasses) {
-        this(allowNonPublicClasses, new DefaultLifecycleStrategy(new DefaultComponentMonitor()));
+        this(allowNonPublicClasses, new DefaultLifecycleStrategy());
     }
 
     public SetterInjectionComponentAdapterFactory() {
@@ -62,6 +61,6 @@ public class SetterInjectionComponentAdapterFactory extends MonitoringComponentA
     public ComponentAdapter createComponentAdapter(Object componentKey, Class componentImplementation, Parameter[] parameters)
             throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
         return new SetterInjectionComponentAdapter(componentKey, componentImplementation, parameters,
-                allowNonPublicClasses, currentMonitor(), lifecycleStrategy);
+                allowNonPublicClasses, lifecycleStrategy);
     }
 }

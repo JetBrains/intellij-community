@@ -9,8 +9,6 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import org.picocontainer.ComponentMonitor;
-
 import java.io.Serializable;
 
 /**
@@ -24,39 +22,5 @@ import java.io.Serializable;
  * @see ComponentMonitorStrategy
  * @since 1.2
  */
-public abstract class MonitoringComponentAdapterFactory implements ComponentAdapterFactory, ComponentMonitorStrategy, Serializable {
-    private ComponentMonitor componentMonitor;
-
-    /**
-     * Constructs a MonitoringComponentAdapterFactory with a custom monitor
-     * @param monitor the ComponentMonitor used by the factory
-     */
-    protected MonitoringComponentAdapterFactory(ComponentMonitor monitor) {
-        if (monitor == null){
-            throw new NullPointerException("componentMonitor");
-        }
-        this.componentMonitor = monitor;
-    }
-
-    /**
-     * Constructs a  MonitoringComponentAdapterFactory with a {@link DelegatingComponentMonitor default monitor}.
-     */
-    protected MonitoringComponentAdapterFactory() {
-        this(new DelegatingComponentMonitor());
-    }
-
-    @Override
-    public void changeMonitor(ComponentMonitor monitor) {
-        this.componentMonitor = monitor;
-    }
-
-    /**
-     * Returns the monitor currently used
-     * @return The ComponentMonitor currently used
-     */
-    @Override
-    public ComponentMonitor currentMonitor(){
-        return componentMonitor;
-    }
-
+public abstract class MonitoringComponentAdapterFactory implements ComponentAdapterFactory, Serializable {
 }

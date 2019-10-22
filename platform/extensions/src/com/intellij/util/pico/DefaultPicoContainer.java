@@ -10,14 +10,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
-import org.picocontainer.defaults.*;
+import org.picocontainer.defaults.AmbiguousComponentResolutionException;
+import org.picocontainer.defaults.DefaultLifecycleStrategy;
+import org.picocontainer.defaults.DuplicateComponentKeyRegistrationException;
+import org.picocontainer.defaults.InstanceComponentAdapter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultPicoContainer implements MutablePicoContainer {
-  public static final DelegatingComponentMonitor DEFAULT_DELEGATING_COMPONENT_MONITOR = new DelegatingComponentMonitor();
-  public static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy(DEFAULT_DELEGATING_COMPONENT_MONITOR);
+  public static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy();
 
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new THashSet<>();

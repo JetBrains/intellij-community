@@ -10,7 +10,10 @@
 
 package org.picocontainer.defaults;
 
-import org.picocontainer.*;
+import org.picocontainer.Parameter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
+import org.picocontainer.PicoIntrospectionException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -61,26 +64,8 @@ public class ConstructorInjectionComponentAdapter extends InstantiatingComponent
      *                              if the implementation is not a concrete class.
      * @throws NullPointerException if one of the parameters is <code>null</code>
      */
-    public ConstructorInjectionComponentAdapter(final Object componentKey, final Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-        super(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor, lifecycleStrategy);
-    }
-
-    /**
-     * Creates a ConstructorInjectionComponentAdapter
-     *
-     * @param componentKey            the search key for this implementation
-     * @param componentImplementation the concrete implementation
-     * @param parameters              the parameters to use for the initialization
-     * @param allowNonPublicClasses   flag to allow instantiation of non-public classes.
-     * @param monitor                 the component monitor used by this adapter
-     * @throws AssignabilityRegistrationException
-     *                              if the key is a type and the implementation cannot be assigned to.
-     * @throws NotConcreteRegistrationException
-     *                              if the implementation is not a concrete class.
-     * @throws NullPointerException if one of the parameters is <code>null</code>
-     */
-    public ConstructorInjectionComponentAdapter(final Object componentKey, final Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-        super(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor);
+    public ConstructorInjectionComponentAdapter(final Object componentKey, final Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+        super(componentKey, componentImplementation, parameters, allowNonPublicClasses, lifecycleStrategy);
     }
 
     /**
@@ -205,16 +190,12 @@ public class ConstructorInjectionComponentAdapter extends InstantiatingComponent
                         e.setComponent(getComponentImplementation());
                         throw e;
                     }
-                    ComponentMonitor componentMonitor = currentMonitor();
                     try {
                         Object[] parameters = getConstructorArguments(guardedContainer, constructor);
-                        componentMonitor.instantiating(constructor);
                         long startTime = System.currentTimeMillis();
                         Object inst = newInstance(constructor, parameters);
-                        componentMonitor.instantiated(constructor, System.currentTimeMillis() - startTime);
                         return inst;
                     } catch (InvocationTargetException e) {
-                        componentMonitor.instantiationFailed(constructor, e);
                         if (e.getTargetException() instanceof RuntimeException) {
                             throw (RuntimeException) e.getTargetException();
                         } else if (e.getTargetException() instanceof Error) {
@@ -224,13 +205,11 @@ public class ConstructorInjectionComponentAdapter extends InstantiatingComponent
                     } catch (InstantiationException e) {
                         // can't get here because checkConcrete() will catch it earlier, but see PICO-191
                         ///CLOVER:OFF
-                        componentMonitor.instantiationFailed(constructor, e);
                         throw new PicoInitializationException("Should never get here");
                         ///CLOVER:ON
                     } catch (IllegalAccessException e) {
                         // can't get here because either filtered or access mode set
                         ///CLOVER:OFF
-                        componentMonitor.instantiationFailed(constructor, e);
                         throw new PicoInitializationException(e);
                         ///CLOVER:ON
                     }

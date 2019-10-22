@@ -9,7 +9,10 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import org.picocontainer.*;
+import org.picocontainer.Parameter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
+import org.picocontainer.PicoIntrospectionException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -55,28 +58,10 @@ public class SetterInjectionComponentAdapter extends InstantiatingComponentAdapt
      *                              if the implementation is not a concrete class.
      * @throws NullPointerException if one of the parameters is <code>null</code>
      */
-    public SetterInjectionComponentAdapter(final Object componentKey, final Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-        super(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor, lifecycleStrategy);
+    public SetterInjectionComponentAdapter(final Object componentKey, final Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+        super(componentKey, componentImplementation, parameters, allowNonPublicClasses, lifecycleStrategy);
     }
 
-
-    /**
-     * Constructs a SetterInjectionComponentAdapter
-     *
-     * @param componentKey            the search key for this implementation
-     * @param componentImplementation the concrete implementation
-     * @param parameters              the parameters to use for the initialization
-     * @param allowNonPublicClasses   flag to allow instantiation of non-public classes.
-     * @param monitor                 the component monitor used by this adapter
-     * @throws AssignabilityRegistrationException
-     *                              if the key is a type and the implementation cannot be assigned to.
-     * @throws NotConcreteRegistrationException
-     *                              if the implementation is not a concrete class.
-     * @throws NullPointerException if one of the parameters is <code>null</code>
-     */
-    public SetterInjectionComponentAdapter(final Object componentKey, final Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-        super(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor);
-    }
 
     /**
      * Constructs a SetterInjectionComponentAdapter with a {@link DelegatingComponentMonitor} as default.
@@ -183,15 +168,11 @@ public class SetterInjectionComponentAdapter extends InstantiatingComponentAdapt
                 @Override
                 public Object run() {
                     final Parameter[] matchingParameters = getMatchingParameterListForSetters(guardedContainer);
-                    ComponentMonitor componentMonitor = currentMonitor();
                     Object componentInstance;
                     try {
                         long startTime = System.currentTimeMillis();
-                        componentMonitor.instantiating(constructor);
                         componentInstance = newInstance(constructor, null);
-                        componentMonitor.instantiated(constructor, System.currentTimeMillis() - startTime);
                     } catch (InvocationTargetException e) {
-                        componentMonitor.instantiationFailed(constructor, e);
                         if (e.getTargetException() instanceof RuntimeException) {
                             throw (RuntimeException) e.getTargetException();
                         } else if (e.getTargetException() instanceof Error) {
@@ -201,13 +182,11 @@ public class SetterInjectionComponentAdapter extends InstantiatingComponentAdapt
                     } catch (InstantiationException e) {
                         // can't get here because checkConcrete() will catch it earlier, but see PICO-191
                         ///CLOVER:OFF
-                        componentMonitor.instantiationFailed(constructor, e);
                         throw new PicoInitializationException("Should never get here");
                         ///CLOVER:ON
                     } catch (IllegalAccessException e) {
                         // can't get here because either filtered or access mode set
                         ///CLOVER:OFF
-                        componentMonitor.instantiationFailed(constructor, e);
                         throw new PicoInitializationException(e);
                         ///CLOVER:ON
                     }
@@ -215,14 +194,11 @@ public class SetterInjectionComponentAdapter extends InstantiatingComponentAdapt
                     try {
                         for (int i = 0; i < setters.size(); i++) {
                             setter = (Method) setters.get(i);
-                            componentMonitor.invoking(setter, componentInstance);
                             long startTime = System.currentTimeMillis();
                             setter.invoke(componentInstance, new Object[]{matchingParameters[i].resolveInstance(guardedContainer, SetterInjectionComponentAdapter.this, setterTypes[i])});
-                            componentMonitor.invoked(setter, componentInstance, System.currentTimeMillis() - startTime);
                         }
                         return componentInstance;
                     } catch (InvocationTargetException e) {
-                        componentMonitor.invocationFailed(setter, componentInstance, e);
                         if (e.getTargetException() instanceof RuntimeException) {
                             throw (RuntimeException) e.getTargetException();
                         } else if (e.getTargetException() instanceof Error) {
@@ -230,7 +206,6 @@ public class SetterInjectionComponentAdapter extends InstantiatingComponentAdapt
                         }
                         throw new PicoInvocationTargetInitializationException(e.getTargetException());
                     } catch (IllegalAccessException e) {
-                        componentMonitor.invocationFailed(setter, componentInstance, e);
                         throw new PicoInvocationTargetInitializationException(e);
                     }
                 }

@@ -10,7 +10,6 @@
 package org.picocontainer.defaults;
 
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.ComponentMonitor;
 import org.picocontainer.PicoVisitor;
 
 /**
@@ -27,8 +26,8 @@ import org.picocontainer.PicoVisitor;
  * @since 1.0
  */
 public abstract class AbstractComponentAdapter extends MonitoringComponentAdapter {
-    private Object componentKey;
-    private Class componentImplementation;
+    private final Object componentKey;
+    private final Class componentImplementation;
 
     /**
      * Constructs a new ComponentAdapter for the given key and implementation.
@@ -37,18 +36,6 @@ public abstract class AbstractComponentAdapter extends MonitoringComponentAdapte
      * @throws AssignabilityRegistrationException if the key is a type and the implementation cannot be assigned to.
      */
     protected AbstractComponentAdapter(Object componentKey, Class componentImplementation) throws AssignabilityRegistrationException {
-        this(componentKey, componentImplementation, new DelegatingComponentMonitor());
-    }
-
-    /**
-     * Constructs a new ComponentAdapter for the given key and implementation.
-     * @param componentKey the search key for this implementation
-     * @param componentImplementation the concrete implementation
-     * @param monitor the component monitor used by this ComponentAdapter
-     * @throws AssignabilityRegistrationException if the key is a type and the implementation cannot be assigned to.
-     */
-    protected AbstractComponentAdapter(Object componentKey, Class componentImplementation, ComponentMonitor monitor) throws AssignabilityRegistrationException {
-        super(monitor);
         if (componentImplementation == null) {
             throw new NullPointerException("componentImplementation");
         }

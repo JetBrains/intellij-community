@@ -7,8 +7,6 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import org.picocontainer.ComponentMonitor;
-
 import java.io.Serializable;
 
 /**
@@ -17,34 +15,13 @@ import java.io.Serializable;
  * @author J&ouml;rg Schaible
  * @since 1.2
  */
-public abstract class AbstractMonitoringLifecycleStrategy implements LifecycleStrategy, ComponentMonitorStrategy, Serializable {
-
-    private ComponentMonitor componentMonitor;
-
+public abstract class AbstractMonitoringLifecycleStrategy implements LifecycleStrategy, Serializable {
     /**
      * Construct a AbstractMonitoringLifecylceStrategy.
      *
      * @param monitor the componentMonitor to use
      * @throws NullPointerException if the monitor is <code>null</code>
      */
-    public AbstractMonitoringLifecycleStrategy(ComponentMonitor monitor) {
-        if (monitor == null) {
-            throw new NullPointerException("Monitor is null");
-        }
-        this.componentMonitor = monitor;
+    public AbstractMonitoringLifecycleStrategy() {
     }
-
-    @Override
-    public void changeMonitor(ComponentMonitor monitor) {
-        if (monitor == null) {
-            throw new NullPointerException("Monitor is null");
-        }
-        this.componentMonitor = monitor;
-    }
-
-    @Override
-    public ComponentMonitor currentMonitor() {
-        return componentMonitor;
-    }
-
 }
