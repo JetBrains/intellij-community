@@ -717,6 +717,16 @@ public final class ArrayUtil extends ArrayUtilRt {
     return -1;
   }
 
+  @Contract(pure = true)
+  public static int indexOf(@NotNull byte[] array, @NotNull byte[] pattern, int startIndex) {
+    for (int i = startIndex; i <= array.length - pattern.length; i++) {
+      if (startsWith(array, i, pattern)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   @Contract(pure=true)
   public static <T> int lastIndexOf(@NotNull final T[] src, @Nullable final T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
