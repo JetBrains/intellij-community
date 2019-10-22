@@ -12,6 +12,7 @@ import java.io.File;
 public class TestUtil {
   @NonNls public static final String BAT = "bat";
   @NonNls public static final String JAVA = "java";
+  @NonNls public static final String LOG = "log";
   @NonNls public static final String JAVASCRIPT = "javascript";
   @NonNls public static final String CHEF = "chef";
   @NonNls public static final String HTML = "html";
