@@ -207,6 +207,7 @@ iml_project(
         "//tools/base/usb-devices:studio.usb-devices",
         "//tools/base/wizard/template-impl:studio.intellij.android.wizardTemplate.impl",
         "//tools/base/wizard/template-plugin:studio.intellij.android.wizardTemplate.plugin",
+        "//tools/base/zipflinger:studio.android.sdktools.zipflinger",
         "//tools/data-binding:studio.baseLibrary",
         "//tools/data-binding:studio.baseLibrarySupport",
         "//tools/data-binding:studio.compiler",
