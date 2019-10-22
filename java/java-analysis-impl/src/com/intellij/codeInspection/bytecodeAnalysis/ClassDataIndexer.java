@@ -169,9 +169,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
     // of states/actions/results which were written by the current pass of the analysis.
     // Since states/actions/results are quite expensive to create (32K array) for each analysis, we create them once per class analysis.
-    final State[] sharedPendingStates = new State[Analysis.STEPS_LIMIT];
-    final PendingAction[] sharedPendingActions = new PendingAction[Analysis.STEPS_LIMIT];
-    final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
+    final ExpandableArray<State> sharedPendingStates = new ExpandableArray<>();
+    final ExpandableArray<PendingAction> sharedPendingActions = new ExpandableArray<>();
+    final ExpandableArray<PResults.PResult> sharedResults = new ExpandableArray<>();
     final Map<EKey, Equations> equations = new HashMap<>();
 
     registerVolatileFields(equations, classReader);
@@ -256,16 +256,16 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   private static class MethodAnalysisVisitor extends KeyedMethodVisitor {
     private final Map<EKey, Equations> myEquations;
     private final String myPresentableUrl;
-    private final State[] mySharedPendingStates;
-    private final PendingAction[] mySharedPendingActions;
-    private final PResults.PResult[] mySharedResults;
+    private final ExpandableArray<State> mySharedPendingStates;
+    private final ExpandableArray<PendingAction> mySharedPendingActions;
+    private final ExpandableArray<PResults.PResult> mySharedResults;
     private final Set<Member> myStaticFinalFields;
 
     private MethodAnalysisVisitor(Map<EKey, Equations> equations,
                                   String presentableUrl,
-                                  State[] sharedPendingStates,
-                                  PendingAction[] sharedPendingActions,
-                                  PResults.PResult[] sharedResults, Set<Member> staticFinalFields) {
+                                  ExpandableArray<State> sharedPendingStates,
+                                  ExpandableArray<PendingAction> sharedPendingActions,
+                                  ExpandableArray<PResults.PResult> sharedResults, Set<Member> staticFinalFields) {
       myEquations = equations;
       myPresentableUrl = presentableUrl;
       mySharedPendingStates = sharedPendingStates;
