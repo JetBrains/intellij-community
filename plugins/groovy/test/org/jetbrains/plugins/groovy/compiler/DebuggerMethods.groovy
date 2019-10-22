@@ -73,7 +73,7 @@ trait DebuggerMethods extends CompilerMethods {
       resume()
       if (!handler.waitFor(ourTimeout)) {
         if (handler instanceof OSProcessHandler) {
-          ProcessUtil.killProcessTree((handler as OSProcessHandler).process)
+          OSProcessUtil.killProcessTree((handler as OSProcessHandler).process)
         }
         else {
           println "can't terminate $handler"

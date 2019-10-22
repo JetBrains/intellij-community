@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -10,14 +11,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
 
-public final class ProcessUtil {
-  private static final Logger LOG = Logger.getInstance(ProcessUtil.class);
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public final class OSProcessUtil {
+  private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
+  private static String ourPid;
+
+  @NotNull
+  public static ProcessInfo[] getProcessList() {
+    return ProcessListUtil.getProcessList();
+  }
 
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
-          int pid = ((WinPtyProcess)process).getChildProcessId();
+          int pid = ((WinPtyProcess) process).getChildProcessId();
           if (pid == -1) return true;
           boolean res = WinProcessManager.kill(pid, true);
           process.destroy();
@@ -72,8 +83,7 @@ public final class ProcessUtil {
     }
   }
 
-  @ApiStatus.Internal
-  public static void logSkippedActionWithTerminatedProcess(@NotNull Process process, @NotNull String actionName, @Nullable String commandLine) {
+  static void logSkippedActionWithTerminatedProcess(@NotNull Process process, @NotNull String actionName, @Nullable String commandLine) {
     Integer pid = null;
     try {
       pid = getProcessID(process);
@@ -110,7 +120,7 @@ public final class ProcessUtil {
     else if (SystemInfo.isUnix) {
       return UnixProcessManager.getProcessId(process);
     }
-    throw new IllegalStateException("Unknown OS: " + SystemInfo.OS_NAME);
+    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
   }
 
   @SuppressWarnings("deprecation")
@@ -139,5 +149,23 @@ public final class ProcessUtil {
     }
 
     return pid;
+  }
+
+  public static String getApplicationPid() {
+    if (ourPid == null) {
+      ourPid = String.valueOf(getCurrentProcessId());
+    }
+    return ourPid;
+  }
+
+  /** @deprecated trivial, use {@link #getProcessList()} directly */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static List<String> getCommandLinesOfRunningProcesses() {
+    List<String> result = new ArrayList<>();
+    for (ProcessInfo each : getProcessList()) {
+      result.add(each.getCommandLine());
+    }
+    return Collections.unmodifiableList(result);
   }
 }
