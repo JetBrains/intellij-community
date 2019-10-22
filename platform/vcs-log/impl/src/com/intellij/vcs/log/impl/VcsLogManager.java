@@ -107,8 +107,8 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, boolean isToolWindowTab) {
-    return createLogUi(getMainLogUiFactory(logId, null), isToolWindowTab);
+  public VcsLogUiImpl createLogUi(@NotNull String logId, boolean isToolWindowTab, boolean isClosedOnDispose) {
+    return createLogUi(getMainLogUiFactory(logId, null), isToolWindowTab, isClosedOnDispose);
   }
 
   @NotNull
@@ -118,6 +118,13 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
+    return createLogUi(factory, isToolWindowTab, true);
+  }
+
+  @NotNull
+  public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
+                                                    boolean isToolWindowTab,
+                                                    boolean isClosedOnDispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) throw new ProcessCanceledException();
 
@@ -126,7 +133,7 @@ public class VcsLogManager implements Disposable {
     Disposable disposable;
     if (isToolWindowTab) {
       if (myTabsLogRefresher == null) myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
-      disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher());
+      disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher(), isClosedOnDispose);
     }
     else {
       disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());

@@ -45,8 +45,8 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   @NotNull
-  public Disposable addTabToWatch(@NotNull String tabId, @NotNull VisiblePackRefresher refresher) {
-    return myRefresher.addLogWindow(new VcsLogTab(refresher, tabId));
+  public Disposable addTabToWatch(@NotNull String tabId, @NotNull VisiblePackRefresher refresher, boolean isClosedOnDispose) {
+    return myRefresher.addLogWindow(new VcsLogTab(refresher, tabId, isClosedOnDispose));
   }
 
   private void installContentListeners() {
@@ -64,7 +64,7 @@ public class VcsLogTabsWatcher implements Disposable {
   private void closeLogTabs() {
     ToolWindow window = getToolWindow();
     if (window != null) {
-      Collection<String> tabs = getTabs();
+      Collection<String> tabs = getTabsToClose();
       for (String tabId : tabs) {
         boolean closed = VcsLogContentUtil.closeLogTab(window.getContentManager(), tabId);
         LOG.assertTrue(closed, "Could not find content component for tab " + tabId + "\nExisting content: " +
@@ -74,11 +74,11 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   @NotNull
-  private List<String> getTabs() {
+  private List<String> getTabsToClose() {
     return StreamEx.of(myRefresher.getLogWindows())
       .select(VcsLogTab.class)
+      .filter(VcsLogTab::isClosedOnDispose)
       .map(VcsLogTab::getTabId)
-      .filter(tabId -> !VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(tabId))
       .toList();
   }
 
@@ -118,10 +118,12 @@ public class VcsLogTabsWatcher implements Disposable {
 
   private class VcsLogTab extends VcsLogWindow {
     @NotNull private final String myTabId;
+    private final boolean myIsClosedOnDispose;
 
-    private VcsLogTab(@NotNull VisiblePackRefresher refresher, @NotNull String tabId) {
+    private VcsLogTab(@NotNull VisiblePackRefresher refresher, @NotNull String tabId, boolean isClosedOnDispose) {
       super(refresher);
       myTabId = tabId;
+      myIsClosedOnDispose = isClosedOnDispose;
     }
 
     @Override
@@ -133,6 +135,10 @@ public class VcsLogTabsWatcher implements Disposable {
     @NotNull
     public String getTabId() {
       return myTabId;
+    }
+
+    public boolean isClosedOnDispose() {
+      return myIsClosedOnDispose;
     }
 
     @Override

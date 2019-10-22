@@ -110,7 +110,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
         repositoryManager.removeExternalRepository(root);
       }
     }));
-    AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab);
+    AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab, true);
     Disposer.register(disposable, ui);
     return new MyContentComponent(new VcsLogPanel(manager, ui), roots, disposable);
   }
