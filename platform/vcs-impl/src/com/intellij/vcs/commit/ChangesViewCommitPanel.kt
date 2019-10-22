@@ -6,6 +6,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
@@ -59,7 +60,6 @@ import javax.swing.border.EmptyBorder
 import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
-private val BACKGROUND_COLOR = JBColor { getTreeBackground() }
 
 private val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
 
@@ -126,7 +126,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   }
   private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
     init {
-      background = BACKGROUND_COLOR
+      background = getButtonPanelBackground()
       optionTooltipText = getDefaultTooltip()
       isOkToProcessDefaultMnemonics = false
     }
@@ -176,13 +176,13 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   private fun buildLayout() {
     buttonPanel.apply {
-      background = BACKGROUND_COLOR
+      background = getButtonPanelBackground()
       border = getButtonPanelBorder()
 
       addToLeft(commitActionToolbar.component)
       addToCenter(
         createHorizontalPanel().apply {
-          background = BACKGROUND_COLOR
+          background = getButtonPanelBackground()
 
           add(NonOpaquePanel(HorizontalLayout(scale(4))).apply {
             add(commitButton)
@@ -224,6 +224,9 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   private fun getButtonPanelBorder(): Border =
     EmptyBorder(0, scale(4), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
+
+  private fun getButtonPanelBackground() =
+    JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
 
   private fun inclusionChanged() {
     updateLegend()
