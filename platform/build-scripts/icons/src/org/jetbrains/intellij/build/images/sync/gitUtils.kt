@@ -143,7 +143,7 @@ internal fun commitAndPush(repo: File, branch: String, message: String, user: St
     "commit", "-m", message,
     "--author=$user <$email>"
   )
-  push(repo, "$branch:$branch")
+  push(repo, branch)
   return commitInfo(repo) ?: error("Unable to read last commit")
 }
 
