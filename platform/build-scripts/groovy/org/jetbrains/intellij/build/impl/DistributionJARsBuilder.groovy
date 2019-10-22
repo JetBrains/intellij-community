@@ -119,23 +119,9 @@ class DistributionJARsBuilder {
         withModule(it, "openapi.jar")
       }
 
-      Map<String, Boolean> usedCommunityModules = new HashMap<>()
-      for (name in CommunityRepositoryModules.JAVA_IDE_IMPLEMENTATION_MODULES) {
-        usedCommunityModules.put(name, false)
-      }
       getProductImplModules(productLayout).each {
-        if (usedCommunityModules.containsKey(it)) {
-          usedCommunityModules.put(it, true)
-        }
-        else {
-          withModule(it, productLayout.mainJarName)
-        }
+        withModule(it, productLayout.mainJarName)
       }
-      usedCommunityModules.forEach({ name, isUsed ->
-        if (isUsed) {
-          withModule(name)
-        }
-      })
 
       productLayout.moduleExcludes.entrySet().each {
         layout.moduleExcludes.putAll(it.key, it.value)

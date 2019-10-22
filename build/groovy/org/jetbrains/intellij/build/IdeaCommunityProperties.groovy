@@ -3,6 +3,10 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.PlatformLayout
+
+import java.util.function.Consumer
+
 /**
  * @author nik
  */
@@ -16,12 +20,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productApiModules = JAVA_IDE_API_MODULES
-    productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES + [
-      "intellij.platform.duplicates.analysis",
-      "intellij.platform.structuralSearch",
-      "intellij.platform.main"
-    ]
+    productLayout.productImplementationModules = ["intellij.platform.main"]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
@@ -31,6 +30,22 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
+
+
+    def commonCustomizer = productLayout.platformLayoutCustomizer
+    productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
+      commonCustomizer.accept(layout)
+      layout.customize {
+        for (String name : JAVA_IDE_API_MODULES) {
+          withModule(name)
+        }
+        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
+          withModule(name)
+        }
+        withModule("intellij.platform.duplicates.analysis")
+        withModule("intellij.platform.structuralSearch")
+      }
+    } as Consumer<PlatformLayout>
 
     mavenArtifacts.forIdeModules = true
     mavenArtifacts.additionalModules = [

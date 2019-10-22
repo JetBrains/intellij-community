@@ -16,7 +16,11 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.platform.uast.tests",
     "intellij.jsp.base"
   ]
-  public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = CommunityRepositoryModules.JAVA_IDE_IMPLEMENTATION_MODULES
+  public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = [
+    "intellij.xml.dom.impl",
+    "intellij.platform.testFramework",
+    "intellij.tools.testsBootstrap"
+  ]
 
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "intellij.java.plugin",
