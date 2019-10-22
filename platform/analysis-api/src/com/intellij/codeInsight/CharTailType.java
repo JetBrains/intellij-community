@@ -58,11 +58,11 @@ public class CharTailType extends TailType {
   }
 
   public int hashCode() {
-    return (int)myChar;
+    return myChar;
   }
 
   @NonNls
   public String toString() {
-    return "CharTailType:\'" + myChar + "\'";
+    return "CharTailType:'" + myChar + "'";
   }
 }

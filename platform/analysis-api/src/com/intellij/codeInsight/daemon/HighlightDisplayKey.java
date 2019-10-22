@@ -39,14 +39,14 @@ public class HighlightDisplayKey {
   public static HighlightDisplayKey register(@NonNls @NotNull final String name) {
     final HighlightDisplayKey key = find(name);
     if (key != null) {
-      LOG.error("Key with name \'" + name + "\' already registered with display name: " + getDisplayNameByKey(key));
+      LOG.error("Key with name '" + name + "' already registered with display name: " + getDisplayNameByKey(key));
       return null;
     }
     return new HighlightDisplayKey(name);
   }
 
   /**
-   * @see #register(String, com.intellij.openapi.util.Computable)
+   * @see #register(String, Computable)
    */
   @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull final String displayName) {
@@ -60,7 +60,7 @@ public class HighlightDisplayKey {
 
 
   /**
-   * @see #register(String, com.intellij.openapi.util.Computable, String)
+   * @see #register(String, Computable, String)
    */
   @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name,
@@ -75,7 +75,7 @@ public class HighlightDisplayKey {
                                              @NotNull @NonNls final String id) {
     final HighlightDisplayKey key = find(name);
     if (key != null) {
-      LOG.error("Key with name \'" + name + "\' already registered with display name: " + getDisplayNameByKey(key));
+      LOG.error("Key with name '" + name + "' already registered with display name: " + getDisplayNameByKey(key));
       return null;
     }
     HighlightDisplayKey highlightDisplayKey = new HighlightDisplayKey(name, id);
