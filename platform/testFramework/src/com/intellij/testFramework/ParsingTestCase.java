@@ -7,6 +7,7 @@ import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
@@ -438,12 +439,13 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   public static void ensureCorrectReparse(@NotNull final PsiFile file) {
     final String psiToStringDefault = DebugUtil.psiToString(file, false, false);
 
-    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
-                                       final String fileText = file.getText();
-                                       final DiffLog diffLog = new BlockSupportImpl().reparseRange(
-                                         file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
-                                       diffLog.performActualPsiChange(file);
-                                     });
+    ApplicationManager.getApplication().runWriteAction(() -> DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+      final String fileText = file.getText();
+      final DiffLog diffLog = new BlockSupportImpl().reparseRange(
+        file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
+      diffLog.performActualPsiChange(file);
+    }));
+
 
     assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
   }

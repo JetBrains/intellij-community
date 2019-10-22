@@ -24,7 +24,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements ApplicationEx {
-  public static int INSTANCES_CREATED = 0;
+  public static int INSTANCES_CREATED;
+  int writes;
 
   public MockApplication(@NotNull Disposable parentDisposable) {
     super(null, parentDisposable);
@@ -99,7 +100,7 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return true;
+    return writes>0;
   }
 
   @Override
@@ -160,17 +161,23 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void runWriteAction(@NotNull Runnable action) {
-    action.run();
+    runWriteAction((ThrowableComputable<Void,RuntimeException>)()->{action.run();return null;});
   }
 
   @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
-    return computation.compute();
+    return runWriteAction((ThrowableComputable<T,RuntimeException>)()->computation.compute());
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return computation.compute();
+    writes++;
+    try {
+      return computation.compute();
+    }
+    finally {
+      writes--;
+    }
   }
 
   @NotNull
@@ -187,7 +194,7 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public boolean hasWriteAction(@NotNull Class<?> actionClass) {
-    return false;
+    return writes>0;
   }
 
   @Override

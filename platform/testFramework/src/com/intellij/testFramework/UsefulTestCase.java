@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -28,10 +27,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
@@ -219,6 +218,7 @@ public abstract class UsefulTestCase extends TestCase {
         }
       },
       () -> UIUtil.removeLeakingAppleListeners(),
+      () -> EditorNotificationsImpl.completeAsyncTasks(),
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
     ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
@@ -685,7 +685,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
-    Set<Consumer<T>> checkerSet = new HashSet<>(Arrays.asList(checkers));
+    Set<Consumer<T>> checkerSet = ContainerUtil.set(checkers);
     int i = 0;
     Throwable lastError = null;
     for (final T actual : collection) {

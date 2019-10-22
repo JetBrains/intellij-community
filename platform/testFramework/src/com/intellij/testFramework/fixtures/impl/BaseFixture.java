@@ -8,6 +8,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
+import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +45,7 @@ public class BaseFixture implements IdeaTestFixture {
 
     Assert.assertFalse("tearDown() already has been called", myDisposed);
     new RunAll(
+      () -> EditorNotificationsImpl.completeAsyncTasks(),
       () -> UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> disposeRootDisposable()
     ).run(ObjectUtils.notNull(mySuppressedExceptions, ContainerUtil.emptyList()));
