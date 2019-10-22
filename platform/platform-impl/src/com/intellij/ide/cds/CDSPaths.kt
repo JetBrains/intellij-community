@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 
 class CDSPaths private constructor(val baseDir: File,
                                    val dumpOutputFile: File,
-                                   cdsClassesHash: String) {
+                                   val cdsClassesHash: String) {
   val classesErrorMarkerFile = File(baseDir, "${cdsClassesHash}.error")
   val classesListFile = File(baseDir, "${cdsClassesHash}.txt")
   val classesPathFile = File(baseDir, "${cdsClassesHash}.classpath")
@@ -30,12 +30,17 @@ class CDSPaths private constructor(val baseDir: File,
     classesErrorMarkerFile.writeText("Failed on ${LocalDateTime.now()}: $message")
   }
 
+  // re-compute installed plugins cache and see if there plugins were not changed
+  fun hasSameEnvironmentToBuildCDSArchive() = computePaths().cdsClassesHash == current.cdsClassesHash
+
   companion object {
     private val systemDir get() = File(PathManager.getSystemPath())
 
     val freeSpaceForCDS get() = systemDir.freeSpace
 
-    val current: CDSPaths by lazy {
+    val current: CDSPaths by lazy { computePaths() }
+
+    private fun computePaths(): CDSPaths {
       val baseDir = File(systemDir, "cds")
       val hasher = Hashing.sha256().newHasher()
 
@@ -63,7 +68,7 @@ class CDSPaths private constructor(val baseDir: File,
       val cdsClassesHash = "${info.build.asString()}-${hasher.hash()}"
 
       val dumpLog = File(PathManager.getLogPath(), "cds-dump.log")
-      CDSPaths(baseDir, dumpLog, cdsClassesHash)
+      return CDSPaths(baseDir, dumpLog, cdsClassesHash)
     }
   }
 }

@@ -87,8 +87,12 @@ class CDSStartupActivity : StartupActivity {
                               onResult = { result ->
                                 return@installCDS when(result) {
                                   is CDSTaskResult.Cancelled -> {
-                                    LOG.info("CDS archive generation paused due to high CPU load and will be re-scheduled later")
-                                    reschedule(retryPaceReSchedule)
+                                    if (!CDSPaths.current.hasSameEnvironmentToBuildCDSArchive()) {
+                                      setupResult.set("enabled:classes-change-detected")
+                                    } else {
+                                      LOG.info("CDS archive generation paused due to high CPU load and will be re-scheduled later")
+                                      reschedule(retryPaceReSchedule)
+                                    }
                                   }
                                   is CDSTaskResult.Failed -> {
                                     setupResult.set("enabled:failed")

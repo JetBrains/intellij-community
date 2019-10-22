@@ -325,6 +325,8 @@ object CDSManager {
     try {
       if (theOutputFile.isValidFile) return CDSTaskResult.Success
       if (indicator.isCancelled) return CDSTaskResult.Cancelled
+      if (!paths.hasSameEnvironmentToBuildCDSArchive()) return CDSTaskResult.Cancelled
+
       generate(indicator, paths)
       LOG.assertTrue(theOutputFile.isValidFile, "Result file must be generated and be valid")
       return CDSTaskResult.Success
