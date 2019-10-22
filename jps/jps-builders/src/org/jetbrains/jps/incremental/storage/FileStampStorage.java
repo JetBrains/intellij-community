@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -110,6 +111,12 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
       }
     }
     return FileStamp.EMPTY;
+  }
+
+  @Nullable
+  public byte[] getStoredFileHash(File file) throws IOException {
+    HashStampPerTarget hashStamp = ArrayUtil.getFirstElement(getState(relativePath(file)));
+    return  hashStamp != null ? hashStamp.hash : null;
   }
 
   @Override

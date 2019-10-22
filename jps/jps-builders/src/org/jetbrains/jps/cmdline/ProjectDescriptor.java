@@ -27,6 +27,7 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.incremental.storage.ModuleSourcesState;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -63,6 +64,7 @@ public final class ProjectDescriptor {
   private final BuildRootIndex myBuildRootIndex;
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
+  public final ModuleSourcesState sourcesState;
   private FSCache myFSCache = FSCache.NO_CACHE;
 
   public ProjectDescriptor(JpsModel model,
@@ -72,7 +74,8 @@ public final class ProjectDescriptor {
                            BuildLoggingManager loggingManager,
                            final ModuleExcludeIndex moduleExcludeIndex,
                            final BuildTargetsState targetsState,
-                           final BuildTargetIndex buildTargetIndex, final BuildRootIndex buildRootIndex, IgnoredFileIndex ignoredFileIndex) {
+                           final BuildTargetIndex buildTargetIndex, final BuildRootIndex buildRootIndex, IgnoredFileIndex ignoredFileIndex,
+                           ModuleSourcesState sourcesState) {
     myModel = model;
     myIgnoredFileIndex = ignoredFileIndex;
     myProject = model.getProject();
@@ -93,6 +96,7 @@ public final class ProjectDescriptor {
       }
     }
     myTargetsState = targetsState;
+    this.sourcesState = sourcesState;
   }
 
   /**
