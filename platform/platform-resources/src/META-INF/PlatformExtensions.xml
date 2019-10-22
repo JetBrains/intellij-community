@@ -738,6 +738,10 @@
       <description>Use popups (instead of dialogs) for creating new items (files, classes, etc.)</description>
     </experimentalFeature>
 
+    <experimentalFeature id="whats.new.notification" percentOfUsers="0">
+      <description>Defines whether to show "What's new" notification after IDE update or not.</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>

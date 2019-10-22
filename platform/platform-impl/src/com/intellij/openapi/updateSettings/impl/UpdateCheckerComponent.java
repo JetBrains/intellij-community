@@ -70,7 +70,7 @@ public final class UpdateCheckerComponent implements Runnable {
           public void projectOpened(@NotNull Project project) {
             connection.disconnect();
             StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-              if (!updateFailed) showWhatsNewNotification(project);
+              if (!updateFailed && Experiments.getInstance().isFeatureEnabled("whats.new.notification")) showWhatsNewNotification(project);
               UpdateInstaller.cleanupPatch();
             });
           }
