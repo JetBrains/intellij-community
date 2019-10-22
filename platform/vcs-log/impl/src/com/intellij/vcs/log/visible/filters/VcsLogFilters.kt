@@ -11,7 +11,6 @@ import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
