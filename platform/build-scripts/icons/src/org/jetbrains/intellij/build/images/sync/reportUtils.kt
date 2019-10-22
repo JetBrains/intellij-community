@@ -219,7 +219,7 @@ internal fun notifySlackChannel(investigator: Investigator, context: Context) {
 internal fun notifySlackChannel(message: String, context: Context, success: Boolean) {
   val reaction = if (success) ":white_check_mark:" else ":sadfrog:"
   val build = "See ${slackLink("build log", thisBuildReportableLink())}"
-  val text = "*${context.devRepoName}* $reaction\n$message\n$build"
+  val text = "*${context.devRepoName}* $reaction\n${message.replace("\"", "\\\"")}\n$build"
   val body = """{ "text": "$text" }"""
   val response = try {
     post(CHANNEL_WEB_HOOK, body)
