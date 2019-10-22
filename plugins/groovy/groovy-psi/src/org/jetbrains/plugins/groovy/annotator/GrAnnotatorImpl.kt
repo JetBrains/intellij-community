@@ -39,8 +39,10 @@ class GrAnnotatorImpl : Annotator {
     else {
       val parent = element.parent
       if (parent is GrMethod && element == parent.nameIdentifierGroovy) {
-        if (parent.name.contains(illegalJvmNameSymbols)) {
-          holder.createWarningAnnotation(element, GroovyBundle.message("illegal.method.name"))
+        val illegalCharacters = illegalJvmNameSymbols.findAll(parent.name).mapTo(HashSet()) { it.value }
+        if (illegalCharacters.isNotEmpty()) {
+          val chars = illegalCharacters.joinToString { "'$it'" }
+          holder.createWarningAnnotation(element, GroovyBundle.message("illegal.method.name", chars))
         }
         if (parent.returnTypeElementGroovy == null) {
           GroovyAnnotator.checkMethodReturnType(parent, element, holder)

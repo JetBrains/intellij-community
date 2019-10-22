@@ -1,19 +1,21 @@
 class CC {
-  def <warning>'.'</warning>() {}
-  def <warning>';'</warning>() {}
-  def <warning>'['</warning>() {}
-  def <warning>'/'</warning>() {}
-  def <warning>'<'</warning>() {}
-  def <warning>'>'</warning>() {}
-  def <warning>':'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '.'">'.'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '.'">'duplicate chars ..'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): ';'">';'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '['">'['</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '/'">'/'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '<'">'<'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '>'">'>'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): ':'">':'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): ':', '.'">'different:chars.'</warning>() {}
 }
 
 class CU {
-  def <warning>'\u002e'</warning>() {}
-  def <warning>'\u003b'</warning>() {}
-  def <warning>'\u005b'</warning>() {}
-  def <warning>'\u002f'</warning>() {}
-  def <warning>'\u003c'</warning>() {}
-  def <warning>'\u003e'</warning>() {}
-  def <warning>'\u003a'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '.'">'\u002e'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): ';'">'\u003b'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '['">'\u005b'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '/'">'\u002f'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '<'">'\u003c'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): '>'">'\u003e'</warning>() {}
+  def <warning descr="Method name contains illegal character(s): ':'">'\u003a'</warning>() {}
 }
