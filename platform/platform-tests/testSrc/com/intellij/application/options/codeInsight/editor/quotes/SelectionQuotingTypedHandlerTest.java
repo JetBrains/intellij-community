@@ -113,6 +113,12 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
            "aa\"<caret>a \"<selection><caret>bbb</selection>\" c\"<selection><caret>cc</selection>\"");
   }
 
+  public void testUpdatePairQuote() {
+    doTest("\"",
+           "<selection><caret>'</selection>aa'",
+           "\"<caret>aa\"");
+  }
+
   private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
     EditorActionManager.getInstance();
