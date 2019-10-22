@@ -86,7 +86,8 @@ object ExecUtil {
 
   @JvmStatic
   fun execAndReadLine(commandLine: GeneralCommandLine): String? = try {
-    readFirstLine(commandLine.createProcess().inputStream, commandLine.charset)
+    readFirstLine(commandLine.createProcess().inputStream,
+        commandLine.charset)
   }
   catch (e: ExecutionException) {
     Logger.getInstance(ExecUtil::class.java).debug(e)
@@ -132,7 +133,9 @@ object ExecUtil {
         GeneralCommandLine(listOf(launcherExe.path, commandLine.exePath) + commandLine.parametersList.parameters)
       }
       SystemInfo.isMac -> {
-        val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
+        val escapedCommand = StringUtil.join(command, {
+          escapeAppleScriptArgument(it)
+        }, " & \" \" & ")
         val messageArg = if (SystemInfo.isMacOSYosemite) " with prompt \"${prompt.replace("\"", "\\\"")}\"" else ""
         val escapedScript =
           "tell current application\n" +
@@ -142,19 +145,27 @@ object ExecUtil {
         GeneralCommandLine(osascriptPath, "-e", escapedScript)
       }
       hasGkSudo.value -> {
-        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(commandLine) + command)
+        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(
+          commandLine) + command)
       }
       hasKdeSudo.value -> {
-        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(commandLine) + command)
+        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(
+          commandLine) + command)
       }
       hasPkExec.value -> {
-        GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)
+        GeneralCommandLine(listOf("pkexec") + envCommand(
+          commandLine) + command)
       }
       SystemInfo.isUnix && hasTerminalApp() -> {
-        val escapedCommandLine = StringUtil.join(command, { escapeUnixShellArgument(it) }, " ")
-        val escapedEnvCommand = when (val args = envCommandArgs(commandLine)) {
+        val escapedCommandLine = StringUtil.join(command, {
+          escapeUnixShellArgument(it)
+        }, " ")
+        val escapedEnvCommand = when (val args = envCommandArgs(
+          commandLine)) {
           emptyList<String>() -> ""
-          else -> "env " + StringUtil.join(args, { escapeUnixShellArgument(it) }, " ") + " "
+          else -> "env " + StringUtil.join(args, {
+            escapeUnixShellArgument(it)
+          }, " ") + " "
         }
         val script = createTempExecutableScript(
           "sudo", ".sh",
@@ -166,7 +177,8 @@ object ExecUtil {
           "echo\n" +
           "read -p \"Press Enter to close this window...\" TEMP\n" +
           "exit \$STATUS\n")
-        GeneralCommandLine(getTerminalCommand("Install", script.absolutePath))
+        GeneralCommandLine(
+          getTerminalCommand("Install", script.absolutePath))
       }
       else -> {
         throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
@@ -197,7 +209,8 @@ object ExecUtil {
   @JvmStatic
   @Throws(IOException::class, ExecutionException::class)
   fun sudoAndGetOutput(commandLine: GeneralCommandLine, prompt: String): ProcessOutput =
-    execAndGetOutput(sudoCommand(commandLine, prompt))
+    execAndGetOutput(
+      sudoCommand(commandLine, prompt))
 
   private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"")}\""
 
@@ -211,7 +224,8 @@ object ExecUtil {
   @JvmStatic
   fun getTerminalCommand(title: String?, command: String): List<String> = when {
     SystemInfo.isWindows -> {
-      listOf(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
+      listOf(
+        windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
     }
     SystemInfo.isMac -> {
       listOf(openCommandPath, "-a", "Terminal", command)

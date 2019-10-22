@@ -380,6 +380,7 @@ public final class ParametersList implements Cloneable {
     if (application == null || application.isUnitTestMode() && ourTestMacros != null) {
       return ObjectUtils.notNull(ourTestMacros, Collections.emptyMap());
     }
+
     Map<String, String> map = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
     Map<String, String> pathMacros = PathMacros.getInstance().getUserMacros();
     if (!pathMacros.isEmpty()) {
