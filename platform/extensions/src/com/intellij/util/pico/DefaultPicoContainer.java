@@ -252,16 +252,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  public void start() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void stop() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void dispose() {
     throw new UnsupportedOperationException();
   }
