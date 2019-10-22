@@ -39,7 +39,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public Map<String, List<String>> FILTERS = new TreeMap<>();
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
     public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
-    @Deprecated public List<Integer> COLUMN_ORDER = new ArrayList<>();
   }
 
   @NotNull

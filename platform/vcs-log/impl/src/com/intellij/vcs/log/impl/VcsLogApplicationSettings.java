@@ -99,13 +99,6 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     myListeners.remove(listener);
   }
 
-  @Deprecated
-  public void migrateColumnOrder(@NotNull List<Integer> columnOrder) {
-    if (myState.COLUMN_ORDER == null || myState.COLUMN_ORDER.isEmpty()) {
-      myState.COLUMN_ORDER = columnOrder;
-    }
-  }
-
   public static class State {
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;

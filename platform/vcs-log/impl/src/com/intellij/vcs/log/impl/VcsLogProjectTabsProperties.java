@@ -36,15 +36,6 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-
-    VcsLogUiPropertiesImpl.State mainState = myState.TAB_STATES.get(MAIN_LOG_ID);
-    if (mainState != null) {
-      List<Integer> columnOrder = mainState.COLUMN_ORDER;
-      mainState.COLUMN_ORDER = null;
-      if (columnOrder != null && !columnOrder.isEmpty()) {
-        myAppSettings.migrateColumnOrder(columnOrder);
-      }
-    }
   }
 
   @Override
