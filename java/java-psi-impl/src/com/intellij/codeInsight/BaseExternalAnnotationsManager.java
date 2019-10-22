@@ -318,6 +318,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   // failing, we escape attributes values.
   @NotNull
   private static CharSequence escapeAttributes(@NotNull CharSequence invalidXml) {
+    if (!hasInvalidAttribute(invalidXml)) {
+      return invalidXml;
+    }
     // We assume that XML has single- and double-quote characters only for attribute values, therefore we don't any complex parsing,
     // just have binary inAttribute state
     StringBuilder buf = new StringBuilder(invalidXml.length());
@@ -339,6 +342,23 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       }
     }
     return buf;
+  }
+
+  private static boolean hasInvalidAttribute(CharSequence invalidXml) {
+    boolean inAttribute = false;
+    for (int i = 0; i < invalidXml.length(); i++) {
+      char c = invalidXml.charAt(i);
+      if (inAttribute && c == '<') {
+        return true;
+      }
+      else if (inAttribute && c == '>') {
+        return true;
+      }
+      else if (c == '\"' || c == '\'') {
+        inAttribute = !inAttribute;
+      }
+    }
+    return false;
   }
 
   @Override
