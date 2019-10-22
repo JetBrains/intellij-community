@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomExclusion;
 
 import java.util.Set;
 
@@ -34,7 +35,7 @@ import java.util.Set;
  */
 public class MavenPomXmlCompletionTagListenerContributor extends CompletionContributor {
 
-  private final Set<String> myHandledTags = ImmutableSet.of("dependency");
+  private final Set<String> myHandledTags = ImmutableSet.of("dependency", "exclusion");
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
@@ -54,16 +55,15 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
     result.runRemainingContributors(parameters, r -> {
       final LookupElement lookupElement = r.getLookupElement();
 
-      if (myHandledTags.contains(lookupElement.getLookupString())) {
+      final String lookupString = lookupElement.getLookupString();
+      if (myHandledTags.contains(lookupString)) {
         LookupElement decorator =
           LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<LookupElementDecorator<LookupElement>>() {
             @Override
             public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
               lookupElement.handleInsert(context);
-
               Object object = lookupElement.getObject();
-              if ("dependency".equals(lookupElement.getLookupString()) && object instanceof XmlTag
-                  && "maven-4.0.0.xsd".equals(((XmlTag)object).getContainingFile().getName())) {
+              if (object instanceof XmlTag && "maven-4.0.0.xsd".equals(((XmlTag)object).getContainingFile().getName())) {
                 context.commitDocument();
 
                 CaretModel caretModel = context.getEditor().getCaretModel();
@@ -72,7 +72,7 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
                 XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
                 if (xmlTag != null) {
                   DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(xmlTag);
-                  if (domElement instanceof MavenDomDependency) {
+                  if (domElement instanceof MavenDomDependency || domElement instanceof MavenDomExclusion) {
                     String s = "\n<groupId></groupId>\n<artifactId></artifactId>\n";
                     context.getDocument().insertString(caretModel.getOffset(), s);
                     caretModel.moveToOffset(caretModel.getOffset() + s.length() - "</artifactId>\n".length());
@@ -93,40 +93,4 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
       result.passResult(r);
     });
   }
-
-  //private static abstract class TagInsertListener {
-  //  public abstract String getTagName();
-  //
-  //  public abstract boolean isApplicable(InsertionContext context);
-  //
-  //  public abstract void onInsert(InsertionContext context);
-  //}
-
-  //private static class DomTagInsertHandler extends TagInsertListener {
-  //  private final String myTagName;
-  //
-  //  private final Class myDomClass;
-  //
-  //  private DomTagInsertHandler(String tagName, Class domClass) {
-  //    myTagName = tagName;
-  //    myDomClass = domClass;
-  //  }
-  //
-  //
-  //  @Override
-  //  public String getTagName() {
-  //    return myTagName;
-  //  }
-  //
-  //  @Override
-  //  public boolean isApplicable(InsertionContext context) {
-  //    context.get
-  //    return false;
-  //  }
-  //
-  //  @Override
-  //  public void onInsert(InsertionContext context) {
-  //
-  //  }
-  //}
 }
