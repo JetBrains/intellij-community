@@ -264,12 +264,10 @@ public class RunContentDescriptor implements Disposable {
   }
 
   @NotNull
-  @ApiStatus.Experimental
   public RunContentDescriptorReusePolicy getReusePolicy() {
     return myReusePolicy;
   }
 
-  @ApiStatus.Experimental
   public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
     myReusePolicy = reusePolicy;
   }
