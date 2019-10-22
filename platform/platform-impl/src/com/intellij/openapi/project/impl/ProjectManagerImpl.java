@@ -755,7 +755,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       fireProjectClosing(project);
 
       app.runWriteAction(() -> {
-        if (project instanceof ProjectImpl) {
+        if (dispose && project instanceof ProjectImpl) {
           ((ProjectImpl)project).setDisposeInProgress();
         }
 
