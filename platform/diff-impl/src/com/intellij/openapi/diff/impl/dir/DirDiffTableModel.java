@@ -176,12 +176,16 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void setReplacement(DirDiffElementImpl source, @Nullable DirDiffElementImpl target) {
-    BiMap<String, String> map = mySourceToReplacingTarget.computeIfAbsent(source.getParentNode().getPath(), (p) -> HashBiMap.create());
-    if (target != null) {
-      map.forcePut(source.getSourceName(), target.getTargetName());
+    setReplacement(source.getParentNode().getPath(), source.getSourceName(), target == null ? null : target.getTargetName());
+  }
+
+  public void setReplacement(@NotNull String path, @Nullable String sourceName, @Nullable String targetName) {
+    BiMap<String, String> map = mySourceToReplacingTarget.computeIfAbsent(path, (p) -> HashBiMap.create());
+    if (targetName != null) {
+      map.forcePut(sourceName, targetName);
     }
     else {
-      map.remove(source.getSourceName());
+      map.remove(sourceName);
     }
   }
 
