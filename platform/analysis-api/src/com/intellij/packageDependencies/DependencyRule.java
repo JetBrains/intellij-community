@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class DependencyRule {
   private NamedScope myFromScope;
   private NamedScope myToScope;
-  private boolean myDenyRule = true;
+  private final boolean myDenyRule;
 
   public DependencyRule(NamedScope fromPackageSet, NamedScope toPackageSet, boolean isDenyRule) {
     myFromScope = fromPackageSet;
