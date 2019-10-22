@@ -214,7 +214,8 @@ public class FUCounterUsageLogger {
   @Nullable
   private EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
     if (!myGroups.containsKey(groupId)) {
-      LOG.warn("Cannot record event because group '" + groupId + "' is not registered.");
+      LOG.warn("Cannot record event because group '" + groupId + "' is not registered. " +
+               "To fix it add '<statistics.counterUsagesCollector groupId=\"" + groupId + "\" version=\"1\"/>' in plugin.xml");
       return null;
     }
     return myGroups.get(groupId);
