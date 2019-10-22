@@ -13,13 +13,12 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -28,9 +27,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.enumeration;
-import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.*;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
@@ -54,25 +51,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
               ? new Invoker.Background(this)
               : new Invoker.EDT(this);
     Disposer.register(parentDisposable, this);
-  }
-
-  /**
-   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public StructureTreeModel(@NotNull Structure structure) {
-    this(structure, Disposer.newDisposable());
-  }
-
-  /**
-   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Comparator, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Comparator<? super NodeDescriptor> comparator) {
-    this(structure, comparator, Disposer.newDisposable());
   }
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parentDisposable) {
