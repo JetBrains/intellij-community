@@ -124,7 +124,7 @@ public class LowLevelSearchUtil {
                                                                @NotNull final PsiElement scope,
                                                                @NotNull final StringSearcher searcher,
                                                                boolean processInjectedPsi,
-                                                               @NotNull  ProgressIndicator progress) {
+                                                               @NotNull ProgressIndicator progress) {
     int[] occurrences = getTextOccurrencesInScope(scope, searcher);
     return processElementsAtOffsets(scope, searcher, processInjectedPsi, progress, occurrences, processor);
   }
@@ -161,8 +161,11 @@ public class LowLevelSearchUtil {
                                           @NotNull StringSearcher searcher,
                                           boolean processInjectedPsi,
                                           @NotNull ProgressIndicator progress,
-                                          int[] offsetsInScope, @NotNull TextOccurenceProcessor processor) {
-    if (offsetsInScope.length == 0) return true;
+                                          @NotNull int[] offsetsInScope,
+                                          @NotNull TextOccurenceProcessor processor) {
+    if (offsetsInScope.length == 0) {
+      return true;
+    }
 
     final Project project = scope.getProject();
     final ASTNode scopeNode = scope.getNode();
@@ -209,8 +212,8 @@ public class LowLevelSearchUtil {
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile root = viewProvider.getPsi(language);
       //noinspection StringConcatenationInLoop
-      msg += "\n root " + language + " length=" + root.getTextLength() + (root instanceof PsiFileImpl
-                                                                          ? "; contentsLoaded=" + ((PsiFileImpl)root).isContentsLoaded() : "");
+      msg += "\n root " + language + " length=" + root.getTextLength()
+             + (root instanceof PsiFileImpl ? "; contentsLoaded=" + ((PsiFileImpl)root).isContentsLoaded() : "");
     }
 
     LOG.error(msg);
@@ -218,7 +221,9 @@ public class LowLevelSearchUtil {
 
   // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
   // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
-  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache =
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,
@@ -239,7 +244,7 @@ public class LowLevelSearchUtil {
                                           int endOffset,
                                           @NotNull StringSearcher searcher) {
     if (endOffset > text.length()) {
-      throw new IllegalArgumentException("end: " + endOffset + " > length: "+text.length());
+      throw new IllegalArgumentException("end: " + endOffset + " > length: " + text.length());
     }
     Map<StringSearcher, int[]> cachedMap = cache.get(text);
     int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
