@@ -220,8 +220,14 @@ internal fun notifySlackChannel(message: String, context: Context, success: Bool
   val reaction = if (success) ":white_check_mark:" else ":sadfrog:"
   val build = "See ${slackLink("build log", thisBuildReportableLink())}"
   val text = "*${context.devRepoName}* $reaction\n$message\n$build"
-  val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
-  if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
+  val body = """{ "text": "$text" }"""
+  val response = try {
+    post(CHANNEL_WEB_HOOK, body)
+  } catch (e: Exception) {
+    log("Post of '$body' has failed")
+    throw e
+  }
+  if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response, body is '$body'")
 }
 
 internal fun slackLink(linkText: String, linkUrl: String) = "<$linkUrl|$linkText>"
