@@ -123,4 +123,10 @@ public class FirefoxSettingsConfigurable implements Configurable {
   public String getDisplayName() {
     return IdeBundle.message("display.name.firefox.settings");
   }
+
+  @Nullable
+  @Override
+  public String getHelpTopic() {
+    return "reference.settings.ide.settings.web.browsers.edit";
+  }
 }

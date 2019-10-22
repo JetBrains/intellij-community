@@ -127,6 +127,6 @@ public class ChromeSettingsConfigurable implements Configurable {
 
   @Override
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.ide.settings.web.browsers.edit";
   }
 }
