@@ -270,21 +270,6 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <!--  TODO: fix
-      <group id="UsageView.Popup">-->
-    <!--<reference ref="EditSource"/>-->
-    <!--<action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>-->
-    <!--<action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>-->
-    <!--<separator/>-->
-    <!--<reference ref="AddToFavorites"/>-->
-    <!--<reference ref="FindUsages"/>-->
-    <!--<action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>-->
-    <!--<separator/>-->
-    <!--<reference ref="VersionControlsGroup"/>-->
-    <!--<separator/>-->
-    <!--<reference ref="ExternalToolsGroup"/>-->
-    <!--</group>-->
-
     <!-- ****************************************************************** -->
 
     <group id="WelcomeScreen.Documentation.IDEA">
@@ -411,7 +396,7 @@
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
 
-    <!-- The action remains for compabitility but is not added to menus because it does the same thing as Move, which is now
+    <!-- The action remains for compatibility but is not added to menus because it does the same thing as Move, which is now
          correctly labeled -->
     <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
 
@@ -430,7 +415,6 @@
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
       </action>
-      <!--Moved to XDebugger <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>-->
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
 
@@ -518,8 +502,6 @@
       <action id="Debugger.ShowTypes" class="com.intellij.debugger.actions.ShowTypesAction" text="Show types">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
-      <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
-      <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
@@ -656,9 +638,7 @@
 
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
@@ -668,51 +648,39 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.EvaluationDialogPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
-      <!--<reference ref="Debugger.ShowAsHex"/>-->
       <reference ref="Debugger.ViewAsGroup"/>
       <separator/>
       <reference ref="Debugger.AddToWatch"/>
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.InspectPanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
       <reference ref="Debugger.AddToWatch"/>
       <separator/>
-      <!--<reference ref="Debugger.ShowAsHex"/>-->
       <reference ref="Debugger.ViewAsGroup"/>
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
@@ -720,11 +688,7 @@
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.InterruptThread"/>
-      <!--<reference ref="Debugger.ShowFrame"/>-->
       <reference ref="Debugger.PopFrame"/>
-      <!--<reference ref="Debugger.EditFrameSource"/>-->
-      <!--<reference ref="Debugger.EditTypeSource"/>-->
-      <!--<reference ref="EditSource"/>-->
       <separator/>
       <reference ref="ExportThreads"/>
       <reference ref="Debugger.AddSteppingFilter"/>
@@ -733,28 +697,19 @@
     </group>
 
     <group id="Debugger.WatchesPanelPopup">
-      <!--<reference ref="Debugger.NewWatch"/>-->
-      <!--<reference ref="Debugger.EditWatch"/>-->
-      <!--<reference ref="Debugger.RemoveWatch"/>-->
-      <!--<reference ref="Debugger.RemoveAllWatches"/>-->
       <separator/>
       <reference ref="Debugger.AdjustArrayRange"/>
-      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
-      <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
       <reference ref="Debugger.EditTypeSource"/>
       <separator/>
-      <!--<reference ref="Debugger.ShowAsHex"/>-->
       <reference ref="Debugger.ViewAsGroup"/>
       <separator/>
       <reference ref="Debugger.AddToWatch"/>
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
@@ -778,7 +733,6 @@
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>
-
 
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
