@@ -223,13 +223,13 @@ fun VcsLogFilterCollection.getPresentation(): String {
 }
 
 private fun VcsLogFilter.getPrefix(): String {
-  when {
-    this is VcsLogTextFilter -> return "containing "
-    this is VcsLogUserFilter -> return "by "
-    this is VcsLogDateFilter -> return "made "
-    this is VcsLogBranchFilter -> return "on "
-    this is VcsLogRootFilter -> return "in "
-    this is VcsLogStructureFilter -> return "for "
+  when (this) {
+    is VcsLogTextFilter -> return "containing "
+    is VcsLogUserFilter -> return "by "
+    is VcsLogDateFilter -> return "made "
+    is VcsLogBranchFilter -> return "on "
+    is VcsLogRootFilter -> return "in "
+    is VcsLogStructureFilter -> return "for "
   }
   return ""
 }
