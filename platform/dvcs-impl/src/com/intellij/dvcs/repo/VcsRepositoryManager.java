@@ -77,11 +77,11 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   }
 
   /**
-   * @deprecated to delete in 2017.X
+   * @deprecated to delete in 2020.X
    */
   @Nullable
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, true);
   }
