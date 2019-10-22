@@ -16,8 +16,10 @@
 package com.intellij.remote.ext;
 
 import com.intellij.remote.CredentialsType;
-import com.intellij.remote.VagrantBasedCredentialsHolder;
 import com.intellij.remote.WebDeploymentCredentialsHolder;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 public interface CredentialsCase<T> {
 
@@ -25,19 +27,25 @@ public interface CredentialsCase<T> {
 
   void process(T credentials);
 
-  abstract class Vagrant implements CredentialsCase<VagrantBasedCredentialsHolder> {
-
-    @Override
-    public CredentialsType<VagrantBasedCredentialsHolder> getType() {
-      return CredentialsType.VAGRANT;
-    }
-  }
-
   abstract class WebDeployment implements CredentialsCase<WebDeploymentCredentialsHolder> {
 
     @Override
     public CredentialsType<WebDeploymentCredentialsHolder> getType() {
       return CredentialsType.WEB_DEPLOYMENT;
     }
+  }
+
+  static <T> CredentialsCase<T> create(@NotNull CredentialsType<T> type, @NotNull Consumer<T> consumer) {
+    return new CredentialsCase<T>() {
+      @Override
+      public CredentialsType<T> getType() {
+        return type;
+      }
+
+      @Override
+      public void process(T credentials) {
+        consumer.accept(credentials);
+      }
+    };
   }
 }

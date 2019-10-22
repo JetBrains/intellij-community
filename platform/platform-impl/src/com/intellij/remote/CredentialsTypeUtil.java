@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class CredentialsTypeUtil {
-  public static final ImmutableSet<CredentialsType> BUILTIN_CREDENTIALS_TYPE = ImmutableSet.of(CredentialsType.VAGRANT,
-                                                                                               CredentialsType.WEB_DEPLOYMENT);
+  public static final ImmutableSet<CredentialsType> BUILTIN_CREDENTIALS_TYPE = ImmutableSet.of(CredentialsType.WEB_DEPLOYMENT);
 
   private CredentialsTypeUtil() {
   }

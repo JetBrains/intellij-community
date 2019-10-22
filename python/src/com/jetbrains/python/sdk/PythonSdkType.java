@@ -29,11 +29,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remote.CredentialsType;
 import com.intellij.remote.ExceptionFix;
-import com.intellij.remote.VagrantBasedCredentialsHolder;
 import com.intellij.remote.VagrantNotStartedException;
-import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -137,15 +134,6 @@ public final class PythonSdkType extends SdkType {
   @Override
   public boolean isValidSdkHome(@Nullable final String path) {
     return PythonSdkFlavor.getFlavor(path) != null;
-  }
-
-  public static boolean isVagrant(@Nullable Sdk sdk) {
-    if (sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
-      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-
-      return data.connectionCredentials().getRemoteConnectionType() == CredentialsType.VAGRANT;
-    }
-    return false;
   }
 
   @NotNull
@@ -534,15 +522,7 @@ public final class PythonSdkType extends SdkType {
           protected void processLanguageContribution(PyCredentialsContribution languageContribution, Object credentials) {
             result.set(!languageContribution.isValid(credentials));
           }
-        }.collectCases(
-          PyCredentialsContribution.class,
-          new CredentialsCase.Vagrant() {
-            @Override
-            public void process(VagrantBasedCredentialsHolder cred) {
-              result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
-            }
-          }
-        ));
+        }.collectCases(PyCredentialsContribution.class));
       return result.get();
     }
     return false;

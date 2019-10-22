@@ -18,7 +18,6 @@ package com.jetbrains.python.sdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.remote.VagrantBasedCredentialsHolder;
 import com.intellij.remote.WebDeploymentCredentialsHolder;
 import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.LanguageCaseCollector;
@@ -27,13 +26,7 @@ import com.jetbrains.python.remote.PyCredentialsContribution;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CredentialsTypeExChecker {
-  private boolean myVagrantContribution;
   private boolean myWebDeploymentContribution;
-
-  public CredentialsTypeExChecker withVagrantContribution(boolean vagrantContribution) {
-    myVagrantContribution = vagrantContribution;
-    return this;
-  }
 
   public CredentialsTypeExChecker withWebDeploymentContribution(boolean webDeploymentContribution) {
     myWebDeploymentContribution = webDeploymentContribution;
@@ -59,12 +52,7 @@ public abstract class CredentialsTypeExChecker {
       protected void processLanguageContribution(PyCredentialsContribution languageContribution, Object credentials) {
         result.set(checkLanguageContribution(languageContribution));
       }
-    }.collectCases(PyCredentialsContribution.class, new CredentialsCase.Vagrant() {
-      @Override
-      public void process(VagrantBasedCredentialsHolder credentials) {
-        result.set(myVagrantContribution);
-      }
-    }, new CredentialsCase.WebDeployment() {
+    }.collectCases(PyCredentialsContribution.class, new CredentialsCase.WebDeployment() {
       @Override
       public void process(WebDeploymentCredentialsHolder credentials) {
         result.set(myWebDeploymentContribution);

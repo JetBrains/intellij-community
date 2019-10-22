@@ -14,7 +14,7 @@ public abstract class CredentialsTypeEx<T> extends CredentialsType<T> {
     super(name, prefix);
   }
 
-  public abstract RemoteCredentials createRemoteCredentials(T credentials);
+  public abstract RemoteCredentials createRemoteCredentials(T credentials, boolean allowSynchronousInteraction);
 
   public abstract boolean useRemoteCredentials();
 
