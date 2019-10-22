@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
 
 /**
@@ -29,7 +28,6 @@ public interface OptionAccessor {
   void setOption(String optionName, boolean optionValue);
 
   class Default implements OptionAccessor {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.OptionAccessor");
     private final InspectionProfileEntry myInspection;
 
     public Default(final InspectionProfileEntry inspection) {
