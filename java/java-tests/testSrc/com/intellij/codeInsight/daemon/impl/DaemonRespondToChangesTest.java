@@ -2380,6 +2380,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private static final AtomicInteger toSleepMs = new AtomicInteger(0);
   public static class MySleepyAnnotator implements Annotator {
+    @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiClass) { // must be after MyFastAnnotator annotated the comment
         // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
@@ -2392,6 +2393,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public static class MyFastAnnotator implements Annotator {
     private static final String SWEARING = "No swearing";
 
+    @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         holder.createErrorAnnotation(element.getTextRange(), SWEARING);
