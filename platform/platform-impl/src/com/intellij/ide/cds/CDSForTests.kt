@@ -26,7 +26,7 @@ object CDSForTests {
         val result = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(CDSStartupActivity::class.java)?.setupResult?.get()
         if (result == null) return reschedule()
 
-        if (result == "enabled") {
+        if (result == "enabled:success") {
           promise.setResult(result)
         } else {
           promise.setError(result)

@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
@@ -22,15 +23,15 @@ import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
 
-private interface CDSProgressIndicator {
-  val isCancelled: Boolean
-  var text2: String?
-}
+sealed class CDSTaskResult(val statusName: String) {
+  object Success : CDSTaskResult("success")
 
-sealed class CDSTaskResult {
-  object Success : CDSTaskResult()
-  object Cancelled : CDSTaskResult()
-  data class Failed(val error: String) : CDSTaskResult()
+  abstract class Cancelled(statusName: String) : CDSTaskResult(statusName)
+  object InterruptedForRetry : Cancelled("cancelled")
+  object TerminatedByUser : Cancelled("terminated-by-user")
+  object PluginsChanged : Cancelled("plugins-changed")
+
+  data class Failed(val error: String) : CDSTaskResult("failed")
 }
 
 object CDSManager {
@@ -57,9 +58,8 @@ object CDSManager {
 
     // we do not like to overload a potentially small computer with our process
     val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
-    if (osBean.totalPhysicalMemorySize < 3L * 1024L * 1024 * 1024) return@lazy false
-    if (osBean.availableProcessors < 2) return@lazy false
-
+    if (osBean.totalPhysicalMemorySize < 4L * 1024 * 1024 * 1024) return@lazy false
+    if (osBean.availableProcessors < 4) return@lazy false
     if (!VMOptions.canWriteOptions()) return@lazy false
     true
   }
@@ -97,13 +97,19 @@ object CDSManager {
     LOG.warn("Disabled CDS")
   }
 
+  private interface CDSProgressIndicator {
+    /// returns non-null value if cancelled
+    val cancelledStatus: CDSTaskResult.Cancelled?
+    var text2: String?
+  }
+
   fun installCDS(canStillWork: () -> Boolean, onResult: (CDSTaskResult) -> Unit) {
     CDSFUSCollector.logCDSBuildingStarted()
     val startTime = System.currentTimeMillis()
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(
       null,
-      "Optimizing startup performance",
+      "Optimizing startup performance...",
       true,
       PerformInBackgroundOption.ALWAYS_BACKGROUND
     ) {
@@ -111,8 +117,13 @@ object CDSManager {
         indicator.isIndeterminate = true
 
         val progress = object : CDSProgressIndicator {
-          override val isCancelled: Boolean
-            get() = !canStillWork() || indicator.isCanceled
+          override val cancelledStatus: CDSTaskResult.Cancelled?
+            get() {
+              if (!canStillWork()) return CDSTaskResult.InterruptedForRetry
+              if (indicator.isCanceled) return CDSTaskResult.TerminatedByUser
+              if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress) return CDSTaskResult.InterruptedForRetry
+              return null
+            }
 
           override var text2: String?
             get() = indicator.text2
@@ -121,48 +132,21 @@ object CDSManager {
             }
         }
 
-        onResult(installCDSSafe(progress, indicator, startTime))
+        val paths = CDSPaths.current
+        val result = try {
+          installCDSImpl(progress, paths)
+        } catch (t: Throwable) {
+          LOG.warn("Settings up CDS Archive crashed unexpectedly. ${t.message}", t)
+          val message = "Unexpected crash $t"
+          paths.markError(message)
+          CDSTaskResult.Failed(message)
+        }
+
+        val installTime = System.currentTimeMillis() - startTime
+        CDSFUSCollector.logCDSBuildingCompleted(installTime, result)
+        onResult(result)
       }
     })
-  }
-
-  private fun installCDSSafe(progress: CDSProgressIndicator,
-                             indicator: ProgressIndicator,
-                             startTime: Long): CDSTaskResult {
-    val paths = CDSPaths.current
-    try {
-      val result = installCDSImpl(progress, paths)
-      val installTime = System.currentTimeMillis() - startTime
-      return when (result) {
-        is CDSTaskResult.Success -> {
-          CDSFUSCollector.logCDSBuildingCompleted(installTime)
-          result
-        }
-        is CDSTaskResult.Failed -> {
-          CDSFUSCollector.logCDSBuildingFailed()
-          result
-        }
-        is CDSTaskResult.Cancelled -> {
-          // detect an User attempt to stop AppCDS generation
-          // turn in to unrecoverable failure to avoid bothering for that version
-          if (indicator.isCanceled) {
-            CDSFUSCollector.logCDSBuildingStoppedByUser()
-            paths.markError("User Interrupted")
-            CDSTaskResult.Failed("User Interrupted")
-          } else {
-            CDSFUSCollector.logCDSBuildingInterrupted()
-            result
-          }
-        }
-      }
-    }
-    catch (t: Throwable) {
-      LOG.warn("Settings up CDS Archive crashed unexpectedly. ${t.message}", t)
-      val message = "Unexpected crash $t"
-      paths.markError(message)
-      CDSFUSCollector.logCDSBuildingFailed()
-      return CDSTaskResult.Failed(message)
-    }
   }
 
   private fun installCDSImpl(indicator: CDSProgressIndicator, paths: CDSPaths): CDSTaskResult {
@@ -173,18 +157,18 @@ object CDSManager {
     }
 
     if (paths.classesErrorMarkerFile.isFile) {
-      return CDSTaskResult.Failed("CDS archive has already failed to set up, skipping")
+      return CDSTaskResult.Failed("CDS archive has already failed, skipping")
     }
 
     LOG.info("Starting generation of CDS archive to the ${paths.classesArchiveFile} and ${paths.classesArchiveFile} files")
     paths.mkdirs()
 
-    val listResult = generateFileIfNeeded(indicator, paths, paths.classesListFile, ::generateClassesList) { t ->
+    val listResult = generateFileIfNeeded(indicator, paths, paths.classesListFile, ::generateClassList) { t ->
       "Failed to attach CDS Java Agent to the running IDE instance. ${t.message}"
     }
     if (listResult != CDSTaskResult.Success) return listResult
 
-    val archiveResult = generateFileIfNeeded(indicator, paths, paths.classesArchiveFile, ::generateClassesArchive) { t ->
+    val archiveResult = generateFileIfNeeded(indicator, paths, paths.classesArchiveFile, ::generateSharedArchive) { t ->
       "Failed to generated CDS archive. ${t.message}"
     }
     if (archiveResult != CDSTaskResult.Success) return archiveResult
@@ -207,7 +191,7 @@ object CDSManager {
       error("Failed to resolve path to the CDS agent")
     }
 
-  private fun generateClassesList(indicator: CDSProgressIndicator, paths: CDSPaths) {
+  private fun generateClassList(indicator: CDSProgressIndicator, paths: CDSPaths) {
     indicator.text2 = "Collecting classes list..."
 
     val selfAttachKey = "jdk.attach.allowAttachSelf"
@@ -228,8 +212,8 @@ object CDSManager {
     LOG.info("CDS classes file is generated in ${StringUtil.formatDuration(duration)}")
   }
 
-  private fun generateClassesArchive(indicator: CDSProgressIndicator,
-                                     paths: CDSPaths) {
+  private fun generateSharedArchive(indicator: CDSProgressIndicator,
+                                    paths: CDSPaths) {
     indicator.text2 = "Generating classes archive..."
 
     val logLevel = if (LOG.isDebugEnabled) "=debug" else ""
@@ -285,7 +269,7 @@ object CDSManager {
       try {
         runCatching { process.outputStream.close() }
         while (shouldWaitForProcessToComplete()) {
-          if (indicator.isCancelled) throw InterruptedException()
+          if (indicator.cancelledStatus != null) throw InterruptedException()
           if (process.waitFor(200, TimeUnit.MILLISECONDS)) break
         }
       }
@@ -324,8 +308,8 @@ object CDSManager {
                                           errorMessage: (Throwable) -> String): CDSTaskResult {
     try {
       if (theOutputFile.isValidFile) return CDSTaskResult.Success
-      if (indicator.isCancelled) return CDSTaskResult.Cancelled
-      if (!paths.hasSameEnvironmentToBuildCDSArchive()) return CDSTaskResult.Cancelled
+      indicator.cancelledStatus?.let { return it }
+      if (!paths.hasSameEnvironmentToBuildCDSArchive()) return CDSTaskResult.PluginsChanged
 
       generate(indicator, paths)
       LOG.assertTrue(theOutputFile.isValidFile, "Result file must be generated and be valid")
@@ -334,8 +318,9 @@ object CDSManager {
     catch (t: Throwable) {
       FileUtil.delete(theOutputFile)
 
-      if (t is InterruptedException || t is ProcessCanceledException || indicator.isCancelled) {
-        return CDSTaskResult.Cancelled
+      indicator.cancelledStatus?.let { return it }
+      if (t is InterruptedException) {
+        return CDSTaskResult.InterruptedForRetry
       }
 
       val message = errorMessage(t)

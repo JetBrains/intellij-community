@@ -17,6 +17,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.max
 
 private val LOG = logger<CDSStartupActivity>()
 
@@ -28,15 +29,15 @@ internal class CDSStartupActivity : StartupActivity {
 
   override fun runActivity(project: Project) {
     if (!isExecuted.compareAndSet(false, true)) return
-    if (!Registry.`is`("intellij.appcds.useStartupActivity", true)) return
+    if (!Registry.`is`("appcds.useStartupActivity")) return
 
     NonUrgentExecutor.getInstance().execute {
-      if (!CDSManager.isValidEnv && !Registry.`is`("intellij.appcds.assumeValidEnv", false)) return@execute
+      if (!CDSManager.isValidEnv && !Registry.`is`("appcds.assumeValidEnv")) return@execute
 
       // let's execute CDS archive building on the second start of the IDE only,
       // the first run - we set the property, the second run we run it!
-      val cdsOnSecondStartKey = "intellij.appcds.runOnSecondStart"
-      if (Registry.`is`(cdsOnSecondStartKey, true)) {
+      val cdsOnSecondStartKey = "appcds.runOnSecondStart"
+      if (Registry.`is`(cdsOnSecondStartKey)) {
         val propertiesComponent = PropertiesComponent.getInstance()
         val hash = CDSPaths.current.cdsClassesHash
         if (propertiesComponent.getValue(cdsOnSecondStartKey) != hash) {
@@ -45,13 +46,16 @@ internal class CDSStartupActivity : StartupActivity {
         }
       }
 
+      val cdsEnabled = Registry.`is`("appcds.enabled")
       val cdsArchive = CDSManager.currentCDSArchive
       if (cdsArchive != null && cdsArchive.isFile) {
         Logger.getInstance(CDSManager::class.java).warn("Running with enabled CDS $cdsArchive, ${StringUtil.formatFileSize(cdsArchive.length())}")
-        CDSFUSCollector.logRunningWithCDS()
+        CDSFUSCollector.logCDSStatus(cdsEnabled, true)
+      }
+      else {
+        CDSFUSCollector.logCDSStatus(cdsEnabled, false)
       }
 
-      val cdsEnabled = Registry.`is`("intellij.appcds.enabled")
       AppExecutorUtil.getAppExecutorService().submit {
         CDSManager.cleanupStaleCDSFiles(cdsEnabled)
         if (!cdsEnabled) {
@@ -60,81 +64,90 @@ internal class CDSStartupActivity : StartupActivity {
         }
       }
 
-      if (!cdsEnabled) {
-        CDSFUSCollector.logCDSDisabled()
-      } else {
-        CDSFUSCollector.logCDSEnabled()
-        BuildCDSWhenNeededAction(setupResult).run()
+      if (cdsEnabled) {
+        BuildCDSWhenPossibleAction(setupResult).start()
       }
     }
   }
 
-  private class BuildCDSWhenNeededAction(val setupResult: AtomicReference<String>) : Runnable {
-    private val retryMeasureCPULoad get() = Registry.intValue("intellij.appcds.install.idleRecheckCPU", 200).toLong()
-    private val retryTooHighCPULoad get() = Registry.intValue("intellij.appcds.install.idleTooHeavyCPULoad", 5_000).toLong()
-    private val retryPaceLong get() = Registry.intValue("intellij.appcds.install.idleLongRetry", 300_000).toLong()
+  private enum class WaitOutcome {
+    NO_WAIT_NEEDED,
+    CHECK_AGAIN,
+    TOO_HIGH_CPU_LOAD,
+    WAIT_LONG,
+  }
 
+  private class BuildCDSWhenPossibleAction(val setupResult: AtomicReference<String>) : Runnable {
     private val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
     private val cpuCount = osBean.availableProcessors
     private val processCpuLoad by AverageCPULoad { osBean.processCpuLoad }
     private val systemCpuLoad by AverageCPULoad { osBean.systemCpuLoad }
+    private val waitIdle get() = Registry.`is`("appcds.install.idleTestEnabled")
 
-    fun reschedule(time: Long) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(this, time, TimeUnit.SECONDS)
+    fun start() {
+      if (waitIdle) reschedule(WaitOutcome.WAIT_LONG) else run()
     }
 
-    fun needsWaitingForIdleMillis(): Long? = runCatching {
-      if (!Registry.`is`("intellij.appcds.install.idleTestEnabled", true)) return null
+    fun reschedule(outcome: WaitOutcome): Boolean {
+      val time = when (outcome) {
+        WaitOutcome.NO_WAIT_NEEDED -> return false
+        WaitOutcome.CHECK_AGAIN -> Registry.intValue("appcds.install.idleRecheckDelay").toLong()
+        WaitOutcome.TOO_HIGH_CPU_LOAD -> Registry.intValue("appcds.install.idleTooHeavyCPULoadDelay").toLong()
+        WaitOutcome.WAIT_LONG -> Registry.intValue("appcds.install.idleLongRetryDelay").toLong()
+      }
 
-      if (PowerSaveMode.isEnabled()) return retryPaceLong
-      if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) return retryPaceLong
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(this, time, TimeUnit.MILLISECONDS)
+      return true
+    }
+
+    fun needsWaitingForIdleMillis(): WaitOutcome = runCatching {
+      if (!waitIdle) return WaitOutcome.NO_WAIT_NEEDED
+
+      if (PowerSaveMode.isEnabled()) return WaitOutcome.WAIT_LONG
+      if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) return WaitOutcome.WAIT_LONG
+
+      val processCPULoad = processCpuLoad
+      val systemCPULoad = systemCpuLoad
+      if (processCPULoad == null || systemCPULoad == null) return WaitOutcome.CHECK_AGAIN
 
       // check if our IDE is busy right now doing something useful
       // careful! Our CDS archive generation process would take 1 CPU
       // the supported minimum is 2 CPU!
-      val processCPULoad = processCpuLoad ?: return retryMeasureCPULoad
-      if (processCPULoad * cpuCount > 2.0) return retryTooHighCPULoad
-
+      if (processCPULoad * cpuCount > 2.5) return WaitOutcome.TOO_HIGH_CPU_LOAD
       // OS CPU load, our CDS generation will consume 1 CPU anyways
-      val systemCPULoad = systemCpuLoad ?: return retryMeasureCPULoad
-      if (systemCPULoad * cpuCount > 3.0) return retryTooHighCPULoad
+      if (systemCPULoad * cpuCount > 3.7) return WaitOutcome.TOO_HIGH_CPU_LOAD
 
       // ensure free space under CDS folder (aka System folder)
-      if (CDSPaths.freeSpaceForCDS < 3L * 1024 * 1024 * 1024) return retryPaceLong
-      return null
-    }.getOrNull()
+      if (CDSPaths.freeSpaceForCDS < 3L * 1024 * 1024 * 1024) return WaitOutcome.WAIT_LONG
+      return WaitOutcome.NO_WAIT_NEEDED
+    }.getOrElse { WaitOutcome.WAIT_LONG }
+
+    fun canStillWork() = needsWaitingForIdleMillis() <= WaitOutcome.CHECK_AGAIN
 
     override fun run() {
       val timeToSleep = needsWaitingForIdleMillis()
-      if (timeToSleep != null) return reschedule(timeToSleep)
+      if (reschedule(timeToSleep)) return
 
-      CDSManager.installCDS(canStillWork = {
-        val wait = needsWaitingForIdleMillis()
-        wait == null || wait <= retryMeasureCPULoad
-      }, onResult = { result ->
-        when (result) {
-          is CDSTaskResult.Cancelled -> {
-            if (!CDSPaths.current.hasSameEnvironmentToBuildCDSArchive()) {
-              setupResult.set("enabled:classes-change-detected")
-            }
-            else {
-              LOG.info("CDS archive generation paused due to high CPU load and will be re-scheduled later")
-              reschedule(retryPaceLong)
-            }
-          }
-          is CDSTaskResult.Failed -> {
-            setupResult.set("enabled:failed")
-          }
-          is CDSTaskResult.Success -> {
-            setupResult.set("enabled")
-          }
+      CDSManager.installCDS(canStillWork = this::canStillWork, onResult = { result ->
+        if (result is CDSTaskResult.InterruptedForRetry) {
+          LOG.info("CDS archive generation paused due to high CPU load and will be re-scheduled later")
+          reschedule(WaitOutcome.WAIT_LONG)
+        }
+        else {
+          setupResult.set("enabled:" + result.statusName)
         }
       })
     }
   }
 
   private class AverageCPULoad(val compute: () -> Double) {
-    private val samples = 32
+    companion object {
+      private const val minMetricsTimeDifference = 100
+      private const val minMeasurementTime = 2_000
+      private const val maxMeasurementTime = 5_000
+      private const val minMeasurementsCount = 3
+      private const val samples = 128
+    }
 
     private var index = 0
     private val measurements = DoubleArray(samples)
@@ -145,8 +158,7 @@ internal class CDSStartupActivity : StartupActivity {
     //helper function for Kotlin delegated property syntax
     operator fun getValue(x: Any?, p: Any): Double? = nextValue()
 
-    /// returns null if the measured value of CPU load is not yet totally
-    // defined otherwise an average value of recent measurements
+    // returns null or a measured average CPU load value
     private fun nextValue(): Double? {
       val now = now()
 
@@ -155,7 +167,7 @@ internal class CDSStartupActivity : StartupActivity {
 
       // let's skip measurements if they happen too often
       val previousRecord = (index + samples - 1) % samples
-      if (now - times[previousRecord] < 200) return null
+      if (now - times[previousRecord] < minMetricsTimeDifference) return null
 
       measurements[index] = nextResult
       times[index] = now
@@ -163,16 +175,18 @@ internal class CDSStartupActivity : StartupActivity {
 
       var sum = 0.0
       var count = 0
+      var maxDiff = 0L
       // we consider only measurements that were collected within latest 5 minutes
       measurements.indices.forEach { idx ->
-        if (now - times[idx] < TimeUnit.SECONDS.toMillis(5)) {
+        val time = now - times[idx]
+        if (time < maxMeasurementTime) {
+          maxDiff = max(maxDiff, time)
           sum += measurements[idx]
           count++
         }
       }
 
-      // it is still required to have at least N measurements has to be considered
-      if (count < 5) return null
+      if (maxDiff < minMeasurementTime || count < minMeasurementsCount) return null
       return sum / count
     }
   }

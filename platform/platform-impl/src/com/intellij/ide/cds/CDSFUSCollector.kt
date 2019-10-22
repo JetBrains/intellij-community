@@ -8,24 +8,33 @@ import java.lang.management.ManagementFactory
 object CDSFUSCollector {
   private const val groupId = "intellij.cds"
 
-  fun logRunningWithCDS() = FUCounterUsageLogger.getInstance().logEvent(groupId, "running.with.cds")
+  private val uptime
+    get() = System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().uptime
 
-  fun logCDSDisabled() = FUCounterUsageLogger.getInstance().logEvent(groupId, "cds.disabled")
-  fun logCDSEnabled() = FUCounterUsageLogger.getInstance().logEvent(groupId, "cds.enabled")
+  fun logCDSStatus(enabled: Boolean,
+                   runningWithArchive: Boolean) {
+    FUCounterUsageLogger.getInstance().logEvent(groupId, "runnings.with.cds", FeatureUsageData()
+      .addData("running_with_archive", runningWithArchive)
+      .addData("status", if (enabled) "enabled" else "disabled")
+    )
+  }
 
-  fun logCDSBuildingStoppedByUser() = FUCounterUsageLogger.getInstance().logEvent(groupId, "building.cds.stopped")
-  fun logCDSBuildingInterrupted() = FUCounterUsageLogger.getInstance().logEvent(groupId, "building.cds.interrupted")
-  fun logCDSBuildingFailed() = FUCounterUsageLogger.getInstance().logEvent(groupId, "building.cds.failed")
-  fun logCDSBuildingStarted() = FUCounterUsageLogger.getInstance().logEvent(groupId, "building.cds.started")
-
-  fun logCDSBuildingCompleted(duration: Long) {
-    val processUptime = System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().uptime
+  fun logCDSBuildingStarted() {
     FUCounterUsageLogger.getInstance()
       .logEvent(groupId,
-                "building.cds.completed",
+                "building.cds.started",
+                FeatureUsageData().addData("uptime_millis", uptime)
+      )
+  }
+
+  fun logCDSBuildingCompleted(duration: Long, result: CDSTaskResult) {
+    FUCounterUsageLogger.getInstance()
+      .logEvent(groupId,
+                "building.cds.finished",
                 FeatureUsageData()
                   .addData("duration", duration)
-                  .addData("uptime_millis", processUptime)
+                  .addData("uptime_millis", uptime)
+                  .addData("status", result.statusName)
       )
   }
 }
