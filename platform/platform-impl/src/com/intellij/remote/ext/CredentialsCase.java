@@ -16,7 +16,6 @@
 package com.intellij.remote.ext;
 
 import com.intellij.remote.CredentialsType;
-import com.intellij.remote.RemoteCredentialsHolder;
 import com.intellij.remote.VagrantBasedCredentialsHolder;
 import com.intellij.remote.WebDeploymentCredentialsHolder;
 
@@ -25,15 +24,6 @@ public interface CredentialsCase<T> {
   CredentialsType<T> getType();
 
   void process(T credentials);
-
-
-  abstract class Ssh implements CredentialsCase<RemoteCredentialsHolder> {
-
-    @Override
-    public CredentialsType<RemoteCredentialsHolder> getType() {
-      return CredentialsType.SSH_HOST;
-    }
-  }
 
   abstract class Vagrant implements CredentialsCase<VagrantBasedCredentialsHolder> {
 
