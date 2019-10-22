@@ -48,11 +48,6 @@
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
-
-    <annotator language="Python" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
-    <annotator language="TEXT" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
-    <annotator language="JSON" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
-    <projectService serviceImplementation="com.jetbrains.python.PyCharmProfessionalAdvertiserSettings"/>
   </extensions>
 
   <actions>
