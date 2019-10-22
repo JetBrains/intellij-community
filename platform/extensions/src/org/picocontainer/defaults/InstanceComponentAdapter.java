@@ -28,78 +28,55 @@ import org.picocontainer.PicoContainer;
  * @author Mauro Talevi
  * @version $Revision: 2823 $
  */
-public class InstanceComponentAdapter extends AbstractComponentAdapter implements LifecycleManager, LifecycleStrategy {
-    private Object componentInstance;
-    private LifecycleStrategy lifecycleStrategy;
+public final class InstanceComponentAdapter extends AbstractComponentAdapter implements LifecycleManager, LifecycleStrategy {
+  private final Object componentInstance;
+  private final LifecycleStrategy lifecycleStrategy;
 
-    public InstanceComponentAdapter(Object componentKey, Object componentInstance) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-        this(componentKey, componentInstance, new DefaultLifecycleStrategy());
+  public InstanceComponentAdapter(Object componentKey, Object componentInstance)
+    throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+    this(componentKey, componentInstance, new DefaultLifecycleStrategy());
+  }
+
+  public InstanceComponentAdapter(Object componentKey, Object componentInstance, LifecycleStrategy lifecycleStrategy)
+    throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+    super(componentKey, getInstanceClass(componentInstance));
+    this.componentInstance = componentInstance;
+    this.lifecycleStrategy = lifecycleStrategy;
+  }
+
+  private static Class getInstanceClass(Object componentInstance) {
+    if (componentInstance == null) {
+      throw new NullPointerException("componentInstance cannot be null");
     }
+    return componentInstance.getClass();
+  }
 
-    public InstanceComponentAdapter(Object componentKey, Object componentInstance, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-        super(componentKey, getInstanceClass(componentInstance));
-        this.componentInstance = componentInstance;
-        this.lifecycleStrategy = lifecycleStrategy;
-    }
+  @Override
+  public Object getComponentInstance(PicoContainer container) {
+    return componentInstance;
+  }
 
-    private static Class getInstanceClass(Object componentInstance) {
-        if (componentInstance == null) {
-            throw new NullPointerException("componentInstance cannot be null");
-        }
-        return componentInstance.getClass();
-    }
+  @Override
+  public void verify(PicoContainer container) {
+  }
 
-    @Override
-    public Object getComponentInstance(PicoContainer container) {
-        return componentInstance;
-    }
+  @Override
+  public void dispose(PicoContainer container) {
+    dispose(componentInstance);
+  }
 
-    @Override
-    public void verify(PicoContainer container) {
-    }
+  @Override
+  public boolean hasLifecycle() {
+    return hasLifecycle(componentInstance.getClass());
+  }
 
-    // ~~~~~~~~ LifecylceManager ~~~~~~~~
+  @Override
+  public void dispose(Object component) {
+    lifecycleStrategy.dispose(componentInstance);
+  }
 
-    @Override
-    public void start(PicoContainer container) {
-        start(componentInstance);
-    }
-
-    @Override
-    public void stop(PicoContainer container) {
-        stop(componentInstance);
-    }
-
-    @Override
-    public void dispose(PicoContainer container) {
-        dispose(componentInstance);
-    }
-
-    @Override
-    public boolean hasLifecycle() {
-        return hasLifecycle(componentInstance.getClass());
-    }
-
-    // ~~~~~~~~ LifecylceStrategy ~~~~~~~~
-
-    @Override
-    public void start(Object component) {
-        lifecycleStrategy.start(componentInstance);
-    }
-
-    @Override
-    public void stop(Object component) {
-        lifecycleStrategy.stop(componentInstance);
-    }
-
-    @Override
-    public void dispose(Object component) {
-        lifecycleStrategy.dispose(componentInstance);
-    }
-
-    @Override
-    public boolean hasLifecycle(Class type) {
-        return lifecycleStrategy.hasLifecycle(type);
-    }
-
+  @Override
+  public boolean hasLifecycle(Class type) {
+    return lifecycleStrategy.hasLifecycle(type);
+  }
 }

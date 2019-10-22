@@ -12,8 +12,6 @@ package org.picocontainer.defaults;
 
 import org.picocontainer.*;
 
-import java.io.Serializable;
-
 /**
  * <p>
  * Component adapter which decorates another adapter.
@@ -33,7 +31,7 @@ import java.io.Serializable;
  * @author Mauro Talevi
  * @version $Revision: 2631 $
  */
-public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleManager, LifecycleStrategy, Serializable {
+public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleManager, LifecycleStrategy {
     private final ComponentAdapter delegate;
 
     public DecoratingComponentAdapter(ComponentAdapter delegate) {
@@ -70,30 +68,6 @@ public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleMa
         delegate.accept(visitor);
     }
 
-    // ~~~~~~~~ LifecylceManager ~~~~~~~~
-
-    /**
-     * Invokes delegate start method if the delegate is a LifecycleManager
-     * {@inheritDoc}
-     */
-    @Override
-    public void start(PicoContainer container) {
-        if ( delegate instanceof LifecycleManager ){
-            ((LifecycleManager)delegate).start(container);
-        }
-    }
-
-    /**
-     * Invokes delegate stop method if the delegate is a LifecycleManager
-     * {@inheritDoc}
-     */
-    @Override
-    public void stop(PicoContainer container) {
-        if ( delegate instanceof LifecycleManager ){
-            ((LifecycleManager)delegate).stop(container);
-        }
-    }
-
     /**
      * Invokes delegate dispose method if the delegate is a LifecycleManager
      * {@inheritDoc}
@@ -118,30 +92,6 @@ public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleMa
             return ((LifecycleStrategy)delegate).hasLifecycle(delegate.getComponentImplementation());
         }
         return false;
-    }
-
-    // ~~~~~~~~ LifecylceStrategy ~~~~~~~~
-
-    /**
-     * Invokes delegate start method if the delegate is a LifecycleStrategy
-     * {@inheritDoc}
-     */
-    @Override
-    public void start(Object component) {
-        if ( delegate instanceof LifecycleStrategy ){
-            ((LifecycleStrategy)delegate).start(component);
-        }
-    }
-
-    /**
-     * Invokes delegate stop method if the delegate is a LifecycleStrategy
-     * {@inheritDoc}
-     */
-    @Override
-    public void stop(Object component) {
-        if ( delegate instanceof LifecycleStrategy ){
-            ((LifecycleStrategy)delegate).stop(component);
-        }
     }
 
     /**

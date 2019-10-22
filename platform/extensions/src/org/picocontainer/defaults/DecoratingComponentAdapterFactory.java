@@ -13,17 +13,18 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoIntrospectionException;
 
-public class DecoratingComponentAdapterFactory extends MonitoringComponentAdapterFactory {
-    private ComponentAdapterFactory delegate;
+public abstract class DecoratingComponentAdapterFactory implements ComponentAdapterFactory {
+  private final ComponentAdapterFactory delegate;
 
-    public DecoratingComponentAdapterFactory(ComponentAdapterFactory delegate) {
-        this.delegate = delegate;
-    }
+  public DecoratingComponentAdapterFactory(ComponentAdapterFactory delegate) {
+    this.delegate = delegate;
+  }
 
-    @Override
-    public ComponentAdapter createComponentAdapter(Object componentKey,
-                                                   Class componentImplementation,
-                                                   Parameter[] parameters) throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
-        return delegate.createComponentAdapter(componentKey, componentImplementation, parameters);
-    }
+  @Override
+  public ComponentAdapter createComponentAdapter(Object componentKey,
+                                                 Class componentImplementation,
+                                                 Parameter[] parameters)
+    throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
+    return delegate.createComponentAdapter(componentKey, componentImplementation, parameters);
+  }
 }

@@ -41,22 +41,8 @@ public class ComponentParameter
      * Use <code>ARRAY</code> as {@link Parameter}for an Array that must have elements.
      */
     public static final ComponentParameter ARRAY = new ComponentParameter(false);
-    /**
-     * Use <code>ARRAY_ALLOW_EMPTY</code> as {@link Parameter}for an Array that may have no
-     * elements.
-     */
-    public static final ComponentParameter ARRAY_ALLOW_EMPTY = new ComponentParameter(true);
 
     private final Parameter collectionParameter;
-
-    /**
-     * Expect a parameter matching a component of a specific key.
-     *
-     * @param componentKey the key of the desired component
-     */
-    public ComponentParameter(Object componentKey) {
-        this(componentKey, null);
-    }
 
     /**
      * Expect any scalar paramter of the appropriate type or an {@link java.lang.reflect.Array}.
@@ -74,34 +60,6 @@ public class ComponentParameter
      */
     public ComponentParameter(boolean emptyCollection) {
         this(null, emptyCollection ? CollectionComponentParameter.ARRAY_ALLOW_EMPTY : CollectionComponentParameter.ARRAY);
-    }
-
-    /**
-     * Expect any scalar paramter of the appropriate type or the collecting type
-     * {@link java.lang.reflect.Array},{@link java.util.Collection}or {@link java.util.Map}.
-     * The components in the collection will be of the specified type.
-     *
-     * @param componentValueType the component's type (ignored for an Array)
-     * @param emptyCollection <code>true</code> allows the collection to be empty
-     * @since 1.1
-     */
-    public ComponentParameter(Class componentValueType, boolean emptyCollection) {
-        this(null, new CollectionComponentParameter(componentValueType, emptyCollection));
-    }
-
-    /**
-     * Expect any scalar paramter of the appropriate type or the collecting type
-     * {@link java.lang.reflect.Array},{@link java.util.Collection}or {@link java.util.Map}.
-     * The components in the collection will be of the specified type and their adapter's key
-     * must have a particular type.
-     *
-     * @param componentKeyType the component adapter's key type
-     * @param componentValueType the component's type (ignored for an Array)
-     * @param emptyCollection <code>true</code> allows the collection to be empty
-     * @since 1.1
-     */
-    public ComponentParameter(Class componentKeyType, Class componentValueType, boolean emptyCollection) {
-        this(null, new CollectionComponentParameter(componentKeyType, componentValueType, emptyCollection));
     }
 
     private ComponentParameter(Object componentKey, Parameter collectionParameter) {

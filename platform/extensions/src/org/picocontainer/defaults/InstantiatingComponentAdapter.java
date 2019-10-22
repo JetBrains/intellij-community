@@ -144,16 +144,6 @@ public abstract class InstantiatingComponentAdapter extends AbstractComponentAda
     }
 
     @Override
-    public void start(Object component) {
-        lifecycleStrategy.start(component);
-    }
-
-    @Override
-    public void stop(Object component) {
-        lifecycleStrategy.stop(component);
-    }
-
-    @Override
     public void dispose(Object component) {
         lifecycleStrategy.dispose(component);
     }

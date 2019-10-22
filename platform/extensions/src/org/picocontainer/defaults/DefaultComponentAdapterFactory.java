@@ -14,6 +14,8 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoIntrospectionException;
 
+import java.io.Serializable;
+
 /**
  * Creates instances of {@link ConstructorInjectionComponentAdapter} decorated by
  * {@link CachingComponentAdapter}.
@@ -22,7 +24,7 @@ import org.picocontainer.PicoIntrospectionException;
  * @author Aslak Helles&oslash;y
  * @version $Revision: 2779 $
  */
-public class DefaultComponentAdapterFactory extends MonitoringComponentAdapterFactory {
+public class DefaultComponentAdapterFactory implements ComponentAdapterFactory, Serializable {
   private final LifecycleStrategy lifecycleStrategy;
 
   public DefaultComponentAdapterFactory() {

@@ -27,28 +27,17 @@ import org.picocontainer.defaults.LifecycleStrategy;
  * @since 1.2
  */
 public interface LifecycleManager {
+  /**
+   * Invoke the "dispose" method on the container's components.
+   *
+   * @param container the container to "dispose" its components' lifecycle
+   */
+  void dispose(PicoContainer container);
 
-    /**
-     * Invoke the "start" method on the container's components.
-     * @param container the container to "start" its components' lifecycle
-     */
-    void start(PicoContainer container);
-
-    /**
-     * Invoke the "stop" method on the container's components.
-     * @param container the container to "stop" its components' lifecycle
-     */
-    void stop(PicoContainer container);
-
-    /**
-     * Invoke the "dispose" method on the container's components.
-     * @param container the container to "dispose" its components' lifecycle
-     */
-    void dispose(PicoContainer container);
-
-    /**
-     * Test if a container's component has a lifecycle.
-     * @return <code>true</code> if the component has a lifecycle
-     */
-    boolean hasLifecycle();
+  /**
+   * Test if a container's component has a lifecycle.
+   *
+   * @return <code>true</code> if the component has a lifecycle
+   */
+  boolean hasLifecycle();
 }

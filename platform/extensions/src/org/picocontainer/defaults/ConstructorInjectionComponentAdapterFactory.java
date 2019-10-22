@@ -14,11 +14,13 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoIntrospectionException;
 
+import java.io.Serializable;
+
 /**
  * @author Jon Tirs&eacute;n
  * @version $Revision: 2654 $
  */
-public class ConstructorInjectionComponentAdapterFactory extends MonitoringComponentAdapterFactory {
+public class ConstructorInjectionComponentAdapterFactory implements ComponentAdapterFactory, Serializable {
     private final boolean allowNonPublicClasses;
     private final LifecycleStrategy lifecycleStrategy;
 

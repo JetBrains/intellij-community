@@ -21,37 +21,19 @@ import org.picocontainer.Disposable;
  * @see Disposable
  */
 public interface LifecycleStrategy {
+  /**
+   * Invoke the "dispose" method on the component instance if this is disposable.
+   * It is up to the implementation of the strategy what "dispose" and "disposable" means.
+   *
+   * @param component the instance of the component to dispose
+   */
+  void dispose(Object component);
 
-    /**
-     * Invoke the "start" method on the component instance if this is startable.
-     * It is up to the implementation of the strategy what "start" and "startable" means.
-     *
-     * @param component the instance of the component to start
-     */
-    void start(Object component);
-
-    /**
-     * Invoke the "stop" method on the component instance if this is stoppable.
-     * It is up to the implementation of the strategy what "stop" and "stoppable" means.
-     *
-     * @param component the instance of the component to stop
-     */
-    void stop(Object component);
-
-    /**
-     * Invoke the "dispose" method on the component instance if this is disposable.
-     * It is up to the implementation of the strategy what "dispose" and "disposable" means.
-     *
-     * @param component the instance of the component to dispose
-     */
-    void dispose(Object component);
-
-    /**
-     * Test if a component instance has a lifecycle.
-     * @param type the component's type
-     *
-     * @return <code>true</code> if the component has a lifecycle
-     */
-    boolean hasLifecycle(Class type);
-
+  /**
+   * Test if a component instance has a lifecycle.
+   *
+   * @param type the component's type
+   * @return <code>true</code> if the component has a lifecycle
+   */
+  boolean hasLifecycle(Class type);
 }

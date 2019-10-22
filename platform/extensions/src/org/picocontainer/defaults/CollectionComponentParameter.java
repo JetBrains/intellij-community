@@ -228,7 +228,7 @@ public class CollectionComponentParameter
         return adapterMap;
     }
 
-    private Class getCollectionType(final Class collectionType) {
+    private static Class getCollectionType(final Class collectionType) {
         Class collectionClass = null;
         if (collectionType.isArray()) {
             collectionClass = Array.class;
@@ -259,7 +259,7 @@ public class CollectionComponentParameter
         return result;
     }
 
-    private Collection getCollectionInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
+    private static Collection getCollectionInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
         Class collectionType = expectedType;
         if (collectionType.isInterface()) {
             // The order of tests are significant. The least generic types last.
@@ -295,7 +295,7 @@ public class CollectionComponentParameter
         }
     }
 
-    private Map getMapInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
+    private static Map getMapInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
         Class collectionType = expectedType;
         if (collectionType.isInterface()) {
             // The order of tests are significant. The least generic types last.

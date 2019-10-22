@@ -20,10 +20,6 @@ import org.picocontainer.PicoIntrospectionException;
  * @version $Revision: 1651 $
  */
 public class CachingComponentAdapterFactory extends DecoratingComponentAdapterFactory {
-    public CachingComponentAdapterFactory() {
-        this(null);
-    }
-
     public CachingComponentAdapterFactory(ComponentAdapterFactory delegate) {
         super(delegate);
     }

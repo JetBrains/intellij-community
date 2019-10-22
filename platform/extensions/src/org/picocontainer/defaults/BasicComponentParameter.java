@@ -34,11 +34,6 @@ import java.util.List;
 public class BasicComponentParameter
         implements Parameter, Serializable {
 
-    /**
-     * <code>BASIC_DEFAULT</code> is an instance of BasicComponentParameter using the default constructor.
-     */
-    public static final BasicComponentParameter BASIC_DEFAULT = new BasicComponentParameter();
-
     private Object componentKey;
 
     /**
@@ -48,12 +43,6 @@ public class BasicComponentParameter
      */
     public BasicComponentParameter(Object componentKey) {
         this.componentKey = componentKey;
-    }
-
-    /**
-     * Expect any paramter of the appropriate type.
-     */
-    public BasicComponentParameter() {
     }
 
     /**
