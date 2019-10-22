@@ -45,7 +45,7 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
       ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
 
       String title = "Restart Required";
-      String message = "You need to restart " + ApplicationNamesInfo.getInstance().getFullProductName() + " for the changes to take effect";
+      String message = ApplicationNamesInfo.getInstance().getFullProductName() + " must be restarted for the changes to take effect";
       String action = app.isRestartCapable() ? "Restart" : "Shutdown";
       String okText = action + " Now";
       String cancelText = action + " Later";
@@ -57,7 +57,7 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
       else {
         result = Messages.showOkCancelDialog(message, title, okText, cancelText, Messages.getQuestionIcon());
       }
-      
+
       if (result == Messages.OK) {
         ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.NON_MODAL);
       }
