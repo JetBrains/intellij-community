@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,17 +65,14 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "pointless.boolean.expression.ignore.option"),
-      this, "m_ignoreExpressionsContainingConstants");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"),
+                                          this, "m_ignoreExpressionsContainingConstants");
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "pointless.arithmetic.expression.display.name");
+    return InspectionGadgetsBundle.message("pointless.arithmetic.expression.display.name");
   }
 
   @Override
@@ -105,18 +102,17 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
   List<PsiExpression> collectSalientOperands(PsiExpression[] operands, IElementType tokenType, PsiType type) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(operands[0].getProject());
     final List<PsiExpression> expressions = new SmartList<>();
-    for (int i = 0, length = operands.length; i < length; i++) {
-      final PsiExpression operand = operands[i];
+    for (PsiExpression operand : operands) {
       if (tokenType.equals(JavaTokenType.PLUS) && isZero(operand) ||
-        tokenType.equals(JavaTokenType.MINUS) && isZero(operand) && !expressions.isEmpty() ||
-        tokenType.equals(JavaTokenType.ASTERISK) && isOne(operand) ||
-        tokenType.equals(JavaTokenType.DIV) && isOne(operand) && !expressions.isEmpty()) {
+          tokenType.equals(JavaTokenType.MINUS) && isZero(operand) && !expressions.isEmpty() ||
+          tokenType.equals(JavaTokenType.ASTERISK) && isOne(operand) ||
+          tokenType.equals(JavaTokenType.DIV) && isOne(operand) && !expressions.isEmpty()) {
         continue;
       }
-      else if (tokenType.equals(JavaTokenType.MINUS) && i == 1 &&
-               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(ContainerUtil.getLastItem(expressions), operand)) {
-        expressions.remove(expressions.size() - 1);
-        expressions.add(factory.createExpressionFromText(PsiType.LONG.equals(type) ? "0L" : "0", operand));
+      else if (tokenType.equals(JavaTokenType.MINUS) && !expressions.isEmpty() &&
+               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expressions.get(0), operand)) {
+        expressions.remove(0);
+        expressions.add(0, factory.createExpressionFromText(PsiType.LONG.equals(type) ? "0L" : "0", operand));
         continue;
       }
       else if (tokenType.equals(JavaTokenType.DIV) &&
@@ -135,7 +131,8 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
       expressions.add(operand);
     }
     if (expressions.isEmpty()) {
-      expressions.add(factory.createExpressionFromText(tokenType.equals(JavaTokenType.ASTERISK) ? "1" : "0", operands[0]));
+      final String value = tokenType.equals(JavaTokenType.ASTERISK) ? "1" : "0";
+      expressions.add(factory.createExpressionFromText(PsiType.LONG.equals(type) ? value + "L" : value, operands[0]));
     }
     return expressions;
   }
@@ -222,14 +219,12 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
     }
 
     private boolean subtractionExpressionIsPointless(PsiExpression[] expressions) {
-      PsiExpression previousExpression = null;
-      for (int i = 0; i < expressions.length; i++) {
+      final PsiExpression firstExpression = expressions[0];
+      for (int i = 1; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
-        if (previousExpression != null &&
-            (isZero(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i))) {
+        if (isZero(expression) || areExpressionsIdenticalWithoutSideEffects(firstExpression, expression)) {
           return true;
         }
-        previousExpression = expression;
       }
       return false;
     }
@@ -257,7 +252,7 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i) && !isZero(expression))) {
+            (isOne(expression) || i == 1 && areExpressionsIdenticalWithoutSideEffects(previousExpression, expression) && !isZero(expression))) {
           return true;
         }
         previousExpression = expression;
@@ -265,8 +260,8 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
       return false;
     }
 
-    private boolean areExpressionsIdenticalWithoutSideEffects(PsiExpression expression1, PsiExpression expression2, int index) {
-      return index == 1 && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, expression2) &&
+    private boolean areExpressionsIdenticalWithoutSideEffects(PsiExpression expression1, PsiExpression expression2) {
+      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, expression2) &&
              !SideEffectChecker.mayHaveSideEffects(expression1);
     }
   }

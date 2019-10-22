@@ -115,6 +115,12 @@ class Main {
   }
 
   int one = <warning descr="'5/5' can be replaced with '1'">5/5</warning>;
+
+  void foo(int x) {
+    int a = <warning descr="'x - x - 10' can be replaced with '0 - 10'">x - x - 10</warning>;
+    int b = 10 - x - x;
+    int c = <warning descr="'x - 10 - x' can be replaced with '0 - 10'">x - 10 - x</warning>;
+  }
 }
 class Expanded {{
   int m = <warning descr="'1/**/ - (byte)0 - 9' can be replaced with '1 - 9'">1/**/ - (byte)0 - 9</warning>; // warn
