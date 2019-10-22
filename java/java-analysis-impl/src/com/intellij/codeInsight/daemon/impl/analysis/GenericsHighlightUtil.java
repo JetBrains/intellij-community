@@ -24,12 +24,12 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -220,9 +220,9 @@ public class GenericsHighlightUtil {
             final PsiExpression[] expressions = argumentList.getExpressions();
             final int idx = ArrayUtilRt.find(expressions, newExpression);
             if (idx > -1) {
-              final PsiParameterList parameterList = method.getParameterList();
-              if (idx < parameterList.getParametersCount()) {
-                expectedType = parameterList.getParameters()[idx].getType();
+              final PsiParameter parameter = method.getParameterList().getParameter(idx);
+              if (parameter != null) {
+                expectedType = parameter.getType();
               }
             }
           }
@@ -1046,11 +1046,11 @@ public class GenericsHighlightUtil {
         return info;
       }
 
-      final PsiParameter varParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
+      PsiParameterList parameterList = method.getParameterList();
+      final PsiParameter varParameter = Objects.requireNonNull(parameterList.getParameter(parameterList.getParametersCount() - 1));
 
-      for (PsiReference reference : ReferencesSearch.search(varParameter)) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiExpression && !PsiUtil.isAccessedForReading((PsiExpression)element)) {
+      for (PsiReferenceExpression element : VariableAccessUtils.getVariableReferences(varParameter, method.getBody())) {
+        if (!PsiUtil.isAccessedForReading(element)) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element).descriptionAndTooltip(
             "@SafeVarargs do not suppress potentially unsafe operations").create();
         }

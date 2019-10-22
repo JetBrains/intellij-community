@@ -95,7 +95,7 @@ public interface ChainCallExtractor {
     if (parameters.getParametersCount() != 1) return null;
     PsiExpressionList args = tryCast(PsiUtil.skipParenthesizedExprUp(lambda.getParent()), PsiExpressionList.class);
     if (args == null || args.getExpressionCount() != 1) return null;
-    PsiParameter parameter = parameters.getParameters()[0];
+    PsiParameter parameter = parameters.getParameter(0);
     if (ExpressionUtils.isReferenceTo(expression, parameter) && parameter.getType().equals(targetType)) {
       // No-op extraction is useless
       return null;

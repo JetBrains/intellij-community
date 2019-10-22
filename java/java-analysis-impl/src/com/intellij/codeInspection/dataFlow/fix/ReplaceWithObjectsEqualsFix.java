@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
@@ -82,7 +84,7 @@ public class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
     PsiMethod method = call.resolveMethod();
     if (method != null &&
         method.getParameterList().getParametersCount() == 1 &&
-        method.getParameterList().getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        Objects.requireNonNull(method.getParameterList().getParameter(0)).getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       return new ReplaceWithObjectsEqualsFix(qualifier.getText(), noParens.getText());
     }
     return null;

@@ -293,15 +293,13 @@ public class CreateFromUsageUtils {
       } else if (argType instanceof PsiWildcardType) {
         argType = ((PsiWildcardType)argType).isBounded() ? ((PsiWildcardType)argType).getBound() : PsiType.getJavaLangObject(psiManager, resolveScope);
       }
-      PsiParameter parameter;
-      if (parameterList.getParametersCount() <= i) {
+      PsiParameter parameter = parameterList.getParameter(i);
+      if (parameter == null) {
         PsiParameter param = factory.createParameter(names[0], argType);
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }
         parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
-      } else {
-        parameter = parameterList.getParameters()[i];
       }
 
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);

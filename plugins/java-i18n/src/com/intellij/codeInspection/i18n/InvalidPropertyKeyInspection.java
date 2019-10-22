@@ -221,7 +221,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
             if (i + maxParamCount >= args.length
                 && method != null
                 && method.getParameterList().getParametersCount() == i + 2
-                && method.getParameterList().getParameters()[i + 1].isVarArgs()
+                && Objects.requireNonNull(method.getParameterList().getParameter(i + 1)).isVarArgs()
                 && !hasArrayTypeAt(i + 1, methodCall)) {
               myProblems.putIfAbsent(methodCall, myManager.createProblemDescriptor(methodCall,
                                                                CodeInsightBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),

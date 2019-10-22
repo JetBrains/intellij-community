@@ -21,6 +21,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author anna
  */
@@ -110,7 +112,7 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
       return false;
     }
 
-    final PsiType psiType = method.getParameterList().getParameters()[0].getType();
+    final PsiType psiType = Objects.requireNonNull(method.getParameterList().getParameter(0)).getType();
     return isDomElementInheritor(psiType);
   }
 

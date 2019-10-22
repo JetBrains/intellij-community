@@ -378,7 +378,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
           DfaFactMap facts = DfaFactMap.EMPTY
-            .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(paramList.getParameters()[paramCount - 1].getType()).asConstraint())
+            .with(DfaFactType.TYPE_CONSTRAINT, 
+                  factory.createDfaType(Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType()).asConstraint())
             .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
             .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(factory.getInt(argCount - paramCount + 1)));
           argValues[paramCount - 1] = factory.getFactFactory().createValue(facts);

@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
@@ -149,7 +151,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     if (argumentType instanceof PsiPrimitiveType) {
       PsiMethod method = call.resolveMethod();
       assert method != null; // otherwise the matcher above won't match
-      if (!method.getParameters()[0].getType().equals(argumentType)) {
+      if (!Objects.requireNonNull(method.getParameterList().getParameter(0)).getType().equals(argumentType)) {
         return null;
       }
     }

@@ -72,7 +72,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
                      && (!f.hasModifierProperty(PsiModifier.FINAL) || f.getInitializer() == null))
         .collect(Collectors.toList());
       if (fields.isEmpty()) return;
-      final PsiParameter parameter = method.getParameterList().getParameters()[0];
+      final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(0));
       final List<PsiField> assignedFields = new SmartList<>();
       final Set<PsiMethod> methodsOneLevelDeep = new HashSet<>();
       if (!PsiTreeUtil.processElements(method, e -> collectAssignedFields(e, parameter, methodsOneLevelDeep, assignedFields))) {

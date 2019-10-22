@@ -169,7 +169,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         for (PsiMethod method : aClass.getConstructors()) {
           PsiParameterList list = method.getParameterList();
           if (list.getParametersCount() == 1 &&
-              list.getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+              Objects.requireNonNull(list.getParameter(0)).getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             return true;
           }
         }

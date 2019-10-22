@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -80,7 +81,7 @@ public class WrapExpressionFix implements IntentionAction {
       for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC)
             && method.getParameterList().getParametersCount() == 1
-            && method.getParameterList().getParameters()[0].getType().isAssignableFrom(type)
+            && Objects.requireNonNull(method.getParameterList().getParameter(0)).getType().isAssignableFrom(type)
             && method.getReturnType() != null
             && expectedReturnType.equals(method.getReturnType())) {
           final String methodName = method.getName();

@@ -220,14 +220,16 @@ public class DfaPsiUtil {
     }
     PsiClassType type = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
     PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
-    if (sam != null && index < sam.getParameterList().getParametersCount()) {
-      PsiParameter parameter = sam.getParameterList().getParameters()[index];
-      nullability = getElementNullability(null, parameter);
-      if(nullability != Nullability.UNKNOWN) {
-        return nullability;
+    if (sam != null) {
+      PsiParameter parameter = sam.getParameterList().getParameter(index);
+      if (parameter != null) {
+        nullability = getElementNullability(null, parameter);
+        if (nullability != Nullability.UNKNOWN) {
+          return nullability;
+        }
+        PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
+        return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
       }
-      PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
-      return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
     }
     return Nullability.UNKNOWN;
   }

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,7 +84,7 @@ public class MethodUtils {
     PsiParameterList parameterList = method.getParameterList();
     return parameterList.getParametersCount() == 1 &&
            PsiType.BOOLEAN.equals(method.getReturnType()) &&
-           TypeUtils.isJavaLangObject(parameterList.getParameters()[0].getType());
+           TypeUtils.isJavaLangObject(Objects.requireNonNull(parameterList.getParameter(0)).getType());
   }
 
   @Contract("null -> false")

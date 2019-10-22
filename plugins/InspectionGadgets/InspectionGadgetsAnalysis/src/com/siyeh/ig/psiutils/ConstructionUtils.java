@@ -9,6 +9,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -251,7 +252,7 @@ public class ConstructionUtils {
     if (ctor == null || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
     PsiParameterList list = ctor.getParameterList();
     if (list.getParametersCount() != 1) return false;
-    PsiTypeElement typeElement = list.getParameters()[0].getTypeElement();
+    PsiTypeElement typeElement = Objects.requireNonNull(list.getParameter(0)).getTypeElement();
     if (typeElement == null) return false;
     PsiType type = typeElement.getType();
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);

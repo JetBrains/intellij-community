@@ -305,7 +305,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       PsiElement element = containingMethodCopy.findElementAt(anonClassOffsetInContainingMethod);
       PsiClass containingClassCopy = PsiTreeUtil.getParentOfType(element, containingClass.getClass(), false);
       PsiMethod newMethodCopy = containingClassCopy.getMethods()[ArrayUtil.indexOf(containingClass.getMethods(), candidate.method)];
-      PsiTypeElement paramTE = newMethodCopy.getParameterList().getParameters()[candidate.methodParameterIndex].getTypeElement();
+      PsiTypeElement paramTE = Objects.requireNonNull(newMethodCopy.getParameterList().getParameter(candidate.methodParameterIndex)).getTypeElement();
       ReplaceWithQuestionTFix.replaceType(project, paramTE, newParameterType);
 
       findSuperMethodCallsInside(newMethodCopy, candidate.superMethods, superMethodsCalls);
@@ -343,7 +343,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                                           processor.execute(methodCopy, state));
 
     if (methodParameterIndex != -1) {
-      PsiTypeElement paramTE = methodCopy.getParameterList().getParameters()[methodParameterIndex].getTypeElement();
+      PsiTypeElement paramTE = Objects.requireNonNull(methodCopy.getParameterList().getParameter(methodParameterIndex)).getTypeElement();
       ReplaceWithQuestionTFix.replaceType(project, paramTE, newParameterExtends);
     }
 

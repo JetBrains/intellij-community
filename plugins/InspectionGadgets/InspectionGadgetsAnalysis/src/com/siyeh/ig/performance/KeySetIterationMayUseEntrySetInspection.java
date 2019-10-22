@@ -128,7 +128,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       if (parameterList.getParametersCount() != 1) return;
       PsiElement lambdaBody = lambda.getBody();
       if (lambdaBody == null) return;
-      PsiParameter keyParameter = parameterList.getParameters()[0];
+      PsiParameter keyParameter = Objects.requireNonNull(parameterList.getParameter(0));
       mapRef = (PsiReferenceExpression)new CommentTracker().replaceAndRestoreComments(iteratedValue, mapRef);
       PsiType valueType = PsiUtil.substituteTypeParameter(mapRef.getType(), CommonClassNames.JAVA_UTIL_MAP, 1, true);
       List<PsiExpression> accesses = ParameterAccessCollector.collectParameterAccesses(keyParameter, mapRef, lambdaBody);

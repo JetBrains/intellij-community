@@ -49,6 +49,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
@@ -240,7 +241,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
     for (PsiParameter param : params) {
       final int parameterIndex = parameterList.getParameterIndex(param);
-      prototype.getParameterList().getParameters()[parameterIndex].delete();
+      Objects.requireNonNull(prototype.getParameterList().getParameter(parameterIndex)).delete();
     }
     return prototype;
   }
