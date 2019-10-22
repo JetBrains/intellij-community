@@ -20,7 +20,7 @@ final class ExpandableArray<T> {
     if (array == null) {
       array = (T[])new Object[Math.max(index + 1, 100)];
     }
-    else if (index > array.length) {
+    else if (index >= array.length) {
       array = Arrays.copyOf(array, Math.max(index + 1, array.length * 2));
     }
     array[index] = value;
