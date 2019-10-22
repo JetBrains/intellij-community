@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
@@ -18,23 +19,25 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.FlowLayout
+import java.awt.*
 import java.io.File
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 import kotlin.math.max
+import kotlin.math.min
 
 object UpdateInfoPanelUI {
   private const val MB_UNITS = "MB"
   private const val PATCH_SIZE_IS = "Patch size is"
   private val FROM_TO_PATCHES_REGEXP: Regex = "from \\d+ to (\\d+)".toRegex()
   private val DIVIDER_COLOR = JBColor(0xd9d9d9, 0x515151)
+  private const val DEFAULT_HEIGHT = 600
+  private const val DEFAULT_WIDTH = 700
 
   fun createPanel(newBuild: BuildInfo,
                   patches: UpdateChain?,
@@ -61,12 +64,15 @@ object UpdateInfoPanelUI {
 
         it.caretPosition = 0
         it.isEditable = false
-        it.border = JBUI.Borders.empty(8, 12)
+        it.border = JBUI.Borders.empty(10, 16)
         it.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
       }
 
     val updateHighlightsScrollPane = ScrollPaneFactory.createScrollPane(updateHighlightsComponent, true)
-      .also { it.border = JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0) }
+      .also {
+        it.border = JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0)
+        it.preferredSize = Dimension(min(it.preferredSize.width, DEFAULT_WIDTH), min(it.preferredSize.height, DEFAULT_HEIGHT))
+      }
 
     val updatingVersionAndPatches = JBLabel()
       .also {
@@ -75,26 +81,44 @@ object UpdateInfoPanelUI {
 
         val patchSize = calculatePatchSize(patches, testPatch)
         it.text = """Updating ${appInfo.fullVersion} to ${newBuild.version} (${newBuild.number}).$patchSize"""
+        it.font = smallFont(it.font)
       }
 
     val updatingInfoPanel = JPanel(FlowLayout(FlowLayout.LEFT, 2, 0))
       .also {
-        it.add(updatingVersionAndPatches, BorderLayout.WEST)
+        it.border = JBUI.Borders.empty(1, 16)
+        it.add(updatingVersionAndPatches)
         getSettingsLink(panel, writeProtected, enableLink, appNames)?.let { link -> it.add(link) }
       }
 
     val infoPanel = JPanel(VerticalFlowLayout(0, 0))
-      .also { it.border = JBUI.Borders.empty(8, 12) }
-
-    if (licenseInfo != null) {
-      infoPanel.add(JBLabel(licenseInfo.first).also { label -> label.foreground = licenseInfo.second })
-    }
-    infoPanel.add(updatingInfoPanel)
-
-    panel.add(updateHighlightsScrollPane, BorderLayout.CENTER)
-    panel.add(infoPanel, BorderLayout.SOUTH)
+      .also {
+        it.border = JBUI.Borders.empty(8, 0)
+        if (licenseInfo != null) {
+          val licensePanel = JBLabel(licenseInfo.first)
+            .also { label ->
+              run {
+                label.foreground = licenseInfo.second
+                label.border = JBUI.Borders.empty(1, 16)
+                label.font = smallFont(label.font)
+              }
+            }
+          it.add(licensePanel)
+        }
+        it.add(updatingInfoPanel)
+      }
 
     return panel
+      .also {
+        it.add(updateHighlightsScrollPane, BorderLayout.CENTER)
+        it.add(infoPanel, BorderLayout.SOUTH)
+      }
+  }
+
+  private fun smallFont(font: Font): Font = when {
+    SystemInfoRt.isMac -> FontUtil.minusOne(font)
+    SystemInfoRt.isLinux -> FontUtil.minusOne(FontUtil.minusOne(font))
+    else -> font
   }
 
   private fun getSettingsLink(panel: JPanel, writeProtected: Boolean, enableLink: Boolean, appNames: ApplicationNamesInfo): LinkLabel<*>? {
@@ -133,7 +157,7 @@ object UpdateInfoPanelUI {
       message = IdeBundle.message("updates.new.version.available", appNames.fullProductName, downloadUrl(newBuildInfo, updateChannel))
     }
 
-    return "$message<br><br>" + newBuildInfo.buttons.filter { !it.isDownload || patches == null && testPatch == null }
+    return "$message<br><br>" + newBuildInfo.buttons.filter { !it.isDownload }
       .joinToString("<br>") { "<a href=\"${it.url}\">${it.name}</href>" }
   }
 
