@@ -18,7 +18,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -309,7 +308,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       Disposer.register(parentDisposable, this);
 
       try {
-        boolean forwardIndexRequired = VcsLogIndexService.isPathsForwardIndexRequired();
+        boolean forwardIndexRequired = VcsLogPathsIndex.isPathsForwardIndexRequired();
         StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{forwardIndexRequired});
 
         File commitsStorage = storageId.getStorageFile(COMMITS);
