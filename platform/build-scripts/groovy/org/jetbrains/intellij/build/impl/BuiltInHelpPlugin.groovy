@@ -13,12 +13,13 @@ final class BuiltInHelpPlugin {
     def indexerJar = "$helpRoot/indexer/bundled-help-indexer-1.0.jar"
     def resourceRoot = "$helpRoot/plugin-resources"
     if (!new File(indexerJar).exists()) {
-      buildContext.messages.warning("Skipping ${productName}Help plugin because $indexerJar not present")
+      buildContext.messages.warning("Skipping $productName Help plugin because $indexerJar not present")
       return null
     }
     return PluginLayout.plugin(moduleName) {
-      mainJarName = "${productName.toLowerCase()}-help.jar"
-      directoryName = "${productName}Help"
+      def productLowerCase = productName.replace(" ", "-").toLowerCase();
+      mainJarName = "$productLowerCase-help.jar"
+      directoryName = "${productName.replace(" ", "")}Help"
       withGeneratedResources({ BuildContext context ->
         def helpModule = context.findRequiredModule(moduleName)
         def ant = context.ant
@@ -43,7 +44,7 @@ final class BuiltInHelpPlugin {
           "org.apache.lucene.codecs.lucene50.Lucene50Codec"
         new File(patchedRoot, "META-INF/plugin.xml").text = pluginXml(context)
 
-        def jarName = "$buildContext.paths.temp/help/${productName.toLowerCase()}-assets.jar"
+        def jarName = "$buildContext.paths.temp/help/$productLowerCase-assets.jar"
         ant.jar(destfile: jarName) {
           ant.fileset(dir: resourceRoot) {
             ant.include(name: "topics/**")
@@ -59,8 +60,10 @@ final class BuiltInHelpPlugin {
   static String pluginXml(BuildContext buildContext) {
     def version = buildContext.buildNumber;
     def productName = buildContext.applicationInfo.productName
-    def pluginId = "bundled-${productName.toLowerCase()}-help"
-    def pluginName = "${productName} Help"
+    def productLowerCase = productName.replace(" ", "-").toLowerCase()
+    def pluginId = "bundled-$productLowerCase-help"
+    def pluginName = "$productName Help"
+    def productModuleDep = "com.intellij.modules.${productLowerCase.replace("intellij-", "")}"
 
     return """<idea-plugin allow-bundled-update="true">
     <name>$pluginName</name>
@@ -68,9 +71,9 @@ final class BuiltInHelpPlugin {
     <version>$version</version>
     <idea-version since-build="${version.substring(0, version.lastIndexOf('.'))}"/>
     <vendor>JetBrains</vendor>
-    <description>Contains $productName Web Help for offline use.</description>
+    <description>$productName Web Help for offline use.</description>
 
-    <depends>com.intellij.modules.${productName.toLowerCase()}</depends>
+    <depends>$productModuleDep</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceInterface="com.intellij.openapi.help.HelpManager" overrides="true"
@@ -78,7 +81,7 @@ final class BuiltInHelpPlugin {
         <httpRequestHandler implementation="com.jetbrains.builtInHelp.HelpSearchRequestHandler"/>
         <httpRequestHandler implementation="com.jetbrains.builtInHelp.HelpContentRequestHandler"/>
         <applicationConfigurable instance="com.jetbrains.builtInHelp.settings.SettingsPage"
-                                 displayName="${productName} Help" groupId="tools"/>
+                                 displayName="$productName Help" groupId="tools"/>
     </extensions>
 </idea-plugin>"""
   }
