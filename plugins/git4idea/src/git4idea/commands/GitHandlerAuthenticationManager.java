@@ -72,6 +72,10 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
         manager.prepareNativeSshAuth();
       }
       boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
+
+      boolean isConfigCommand = handler.getCommand() == GitCommand.CONFIG;
+      if (isConfigCommand) return;
+
       boolean shouldResetCredentialHelper = !useCredentialHelper &&
                                             GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(version);
       if (shouldResetCredentialHelper) {
