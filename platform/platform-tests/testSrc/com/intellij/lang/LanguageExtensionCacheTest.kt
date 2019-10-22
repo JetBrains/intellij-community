@@ -61,7 +61,6 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
     extension.addExplicitExtension(language, "hello")
     assertSize(2, extension.allForLanguage(language))
     assertEquals("hello", extension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
-    assertEquals("hello", extension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
 
     assertSize(2, extension.allForLanguage(plainTextDialect))
 
