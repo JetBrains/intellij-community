@@ -97,6 +97,8 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Repository", libraryName: "precompiled-repository", license: "Apache 2.0",
                        url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Resources Aar", libraryName: "org.jetbrains.intellij.deps.android.tools:resources-aar", license: "Apache 2.0",
+                       url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Sdk Common", libraryName: "precompiled-sdk-common", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Sdk Lib", libraryName: "precompiled-sdklib", license: "Apache 2.0",
@@ -162,8 +164,6 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(libraryName: "bouncy-castle-provider", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
-    new LibraryLicense(name: "Bouncy Castle", libraryName: "org.bouncycastle:bcpkix-jdk15on:1.56", license: "MIT License",
-                       url: "http://bouncycastle.org", licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
     new LibraryLicense(name: "classworlds", libraryName: "Maven", transitiveDependency: true, version: "1.1", license: "codehaus",
@@ -216,7 +216,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     new LibraryLicense(name: "FreeMarker", attachedTo: "intellij.java.coverage", version: "2.3.15", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
-    new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", version: "2.3.20", license: "BSD",
+    new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
 
     new LibraryLicense(name: "Gant", libraryName: "gant-groovy", license: "Apache 2.0",
