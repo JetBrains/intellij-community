@@ -1,34 +1,30 @@
 package com.jetbrains.python
 
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionService
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.SimpleCompletionProcess
+import com.intellij.codeInsight.completion.BaseCompletionHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.core.CoreFileTypeRegistry
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.MockPsiApplication
-import com.intellij.openapi.editor.impl.MockEditor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.impl.MockPsiProject
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.vfs.TestLocalVirtualFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PlatformUtils
-import kotlin.math.max
 
-class PythonAnalysisTool {
+class PythonAnalysisTool: Disposable {
   private val myParentDisposable = HeadDisposable()
   private val myFileTypeManager = CoreFileTypeRegistry()
   private val myApplication: MockPsiApplication = MockPsiApplication(myParentDisposable)
     .also { ApplicationManager.setApplication(it, Getter { myFileTypeManager }, myParentDisposable) }
   private val myProject: MockPsiProject = MockPsiProject(myApplication)
   private val myFileSystem = TestLocalVirtualFileSystem()
-  private val myCompletionService: CompletionService
+  private val myCompletionHandler = BaseCompletionHandler(myProject)
 
   init {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PythonAnalysisTool")
@@ -37,7 +33,6 @@ class PythonAnalysisTool {
     myApplication.picoContainer.registerComponentInstance(FileTypeRegistry::class.java, myFileTypeManager)
     myProject.registerComponents(loadedPlugins)
     myFileTypeManager.registerFileType(PythonFileType.INSTANCE, "py")
-    myCompletionService = CompletionService.getCompletionService()
   }
 
   fun configureByText(text: String): PsiFile? {
@@ -48,17 +43,12 @@ class PythonAnalysisTool {
   fun resolve(file: PsiFile, offset: Int): PsiElement? = file.findElementAt(offset)
 
   fun completion(file: PsiFile, offset: Int): List<LookupElement> {
-    val position = file.findElementAt(max(0, offset - 1))
-    requireNotNull(position)
+    val params = myCompletionHandler.prepareCompletionParameters(file, offset)
+    return myCompletionHandler.getLookupElements(params)
+  }
 
-    val editor = MockEditor(file.virtualFile)
-    editor.caretModel.moveToOffset(offset)
-    val params = CompletionParameters(position, file, CompletionType.BASIC, max(0, offset - 1), 1, editor, SimpleCompletionProcess.INSTANCE)
-    val lookupElements = mutableListOf<LookupElement>()
-    myCompletionService.performCompletion(params) { result ->
-      lookupElements.add(result.lookupElement)
-    }
-    return lookupElements
+  override fun dispose() {
+    Disposer.dispose(myParentDisposable)
   }
 
   inner class HeadDisposable : Disposable {
@@ -112,6 +102,7 @@ fun main() {
         println("Not resolved")
       }
     } else if (command.startsWith("x")) {
+      analysisTool.dispose()
       return
     } else {
       println("Unknown command")

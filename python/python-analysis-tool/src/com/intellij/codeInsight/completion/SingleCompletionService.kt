@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion
 
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.Consumer
 
 class SingleCompletionService: CompletionService() {
@@ -14,10 +15,13 @@ class SingleCompletionService: CompletionService() {
     return SimpleCompletionResultSet(matcher!!, consumer!!, contributor)
   }
 
-  override fun suggestPrefix(parameters: CompletionParameters?): String {
-    val file = parameters?.originalFile
-    val element = file?.findElementAt(parameters.offset)
-    return element?.text ?: ""
+  override fun suggestPrefix(parameters: CompletionParameters): String {
+    val element = parameters.position
+    if (element is LeafPsiElement) {
+      val startOffset = element.startOffset
+      return element.text.substring(0, parameters.offset - startOffset)
+    }
+    return element.text
   }
 
   override fun createMatcher(prefix: String?, typoTolerant: Boolean): PrefixMatcher = prefix?.let { PlainPrefixMatcher(it) } ?: PrefixMatcher.ALWAYS_TRUE

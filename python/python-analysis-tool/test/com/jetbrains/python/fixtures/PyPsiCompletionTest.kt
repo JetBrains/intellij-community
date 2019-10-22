@@ -15,54 +15,20 @@ import com.jetbrains.python.psi.LanguageLevel
 
 class PyPsiCompletionTest: PyPsiTestCase() {
 
-  private lateinit var myEditor: Editor
+  private val completionHandler = BaseCompletionHandler(myProject)
 
   override fun configureByFile(filePath: String): PsiFile? = super.configureByFile("completion/$filePath")
-
-  private fun insertCompletion(file: VirtualFile, insertElement: LookupElement, allElements: Array<LookupElement>, offset: Int, prefix: Int) {
-    val commandProcessor = CommandProcessor.getInstance()
-
-    val document = myEditor.document
-
-    commandProcessor.executeCommand(myProject, {
-      document.deleteString(offset - prefix, offset)
-      document.insertString(offset - prefix, insertElement.lookupString)
-      myEditor.caretModel.moveToOffset((offset - prefix) + insertElement.lookupString.length)
-      val offsetMap = OffsetMap(document)
-      offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, myEditor.caretModel.offset)
-      val context = InsertionContext(offsetMap, Lookup.AUTO_INSERT_SELECT_CHAR, allElements, myPsiFile!!, myEditor, true)
-      insertElement.handleInsert(context)
-    }, "Completion", "")
-
-    VfsUtil.saveText(file, document.text)
-  }
 
   private fun completeBasic() {
     val file = requireNotNull(myFile)
     val fileText = readFileText(file)
-    var offset = fileText.indexOf(CARET)
+    val offset = fileText.indexOf(CARET)
     assertTrue(offset >= 0)
     val finalText = fileText.substring(0, offset) + fileText.substring(offset + CARET.length)
     VfsUtil.saveText(file, finalText)
     myPsiFile = PsiManager.getInstance(myProject).findFile(file)
     val psiFile = requireNotNull(myPsiFile)
-    val position = psiFile.findElementAt(offset - 1)
-    requireNotNull(position)
-
-    myEditor = MockEditor(file)
-    val completionService = CompletionService.getCompletionService()
-    myEditor.caretModel.moveToOffset(offset)
-    val params = CompletionParameters(position, psiFile, CompletionType.BASIC, offset - 1, 1, myEditor, SimpleCompletionProcess.INSTANCE)
-    val lookupElements = mutableListOf<LookupElement>()
-    completionService.performCompletion(params) { result ->
-      lookupElements.add(result.lookupElement)
-    }
-    if (lookupElements.size == 0) return
-    val replace = lookupElements[0]
-    if (position is LeafPsiElement) {
-      offset = position.startOffset + position.textLength
-    }
-    insertCompletion(file, replace, lookupElements.toTypedArray(), offset, position.textLength)
+    completionHandler.complete(psiFile, offset)
   }
 
   private fun checkResultByFile(filePath: String) {
@@ -71,7 +37,7 @@ class PyPsiCompletionTest: PyPsiTestCase() {
     val assertText = readFileText(assertFile!!)
     var realText = readFileText(myFile!!)
     if (assertText != realText) {
-      val offset = myEditor.caretModel.offset
+      val offset = completionHandler.editor.caretModel.offset
       realText = realText.substring(0, offset) + CARET + realText.substring(offset)
     }
     assertEquals(assertText, realText)

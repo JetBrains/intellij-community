@@ -154,7 +154,7 @@ public class OffsetMap implements Disposable {
   }
 
   @NotNull
-  OffsetMap copyOffsets(@NotNull Document anotherDocument) {
+  public OffsetMap copyOffsets(@NotNull Document anotherDocument) {
     assert anotherDocument.getTextLength() == myDocument.getTextLength();
     return mapOffsets(anotherDocument, Function.identity());
   }
