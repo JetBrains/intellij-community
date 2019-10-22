@@ -244,15 +244,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     throw new UnsupportedOperationException("Do not use");
   }
 
-  /**
-   * @deprecated Do not use.
-   */
-  @Override
-  @Deprecated
-  public void verify() {
-    throw new UnsupportedOperationException("Do not use");
-  }
-
   @Override
   public void dispose() {
     throw new UnsupportedOperationException();

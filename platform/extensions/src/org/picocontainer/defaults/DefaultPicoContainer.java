@@ -404,14 +404,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     }
 
     /**
-     * @deprecated since 1.1 - Use "new VerifyingVisitor().traverse(this)"
-     */
-    @Override
-    public void verify() throws PicoVerificationException {
-        new VerifyingVisitor().traverse(this);
-    }
-
-    /**
      * Start the components of this PicoContainer and all its logical child containers.
      * The starting of the child container is only attempted if the parent
      * container start successfully.  The child container for which start is attempted

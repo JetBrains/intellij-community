@@ -114,20 +114,6 @@ public abstract class AbstractDelegatingMutablePicoContainer implements MutableP
     return delegate.getComponentAdaptersOfType(componentType);
   }
 
-  /**
-   * @deprecated since 1.1 - Use new VerifyingVisitor().traverse(this)
-   */
-  @Override
-  public void verify() throws PicoVerificationException {
-    delegate.verify();
-  }
-
-  public void start() {
-  }
-
-  public void stop() {
-  }
-
   @Override
   public void dispose() {
     delegate.dispose();
@@ -155,7 +141,6 @@ public abstract class AbstractDelegatingMutablePicoContainer implements MutableP
 
   public boolean equals(Object obj) {
     // required to make it pass on both jdk 1.3 and jdk 1.4. Btw, what about overriding hashCode()? (AH)
-    final boolean result = delegate.equals(obj) || this == obj;
-    return result;
+    return delegate.equals(obj) || this == obj;
   }
 }

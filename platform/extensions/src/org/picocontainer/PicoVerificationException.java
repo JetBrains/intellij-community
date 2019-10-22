@@ -9,8 +9,6 @@
  *****************************************************************************/
 package org.picocontainer;
 
-import org.picocontainer.defaults.VerifyingVisitor;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +19,6 @@ import java.util.List;
  * between the registered components and their parameters. This exception is designed as a
  * collector for all Exceptions occuring at the verification of the complete container
  * hierarchy. The verification is normally done with the
- * {@link VerifyingVisitor}, that will throw this exception.
  *
  * @version $Revision: 1801 $
  * @since 1.0

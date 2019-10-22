@@ -9,9 +9,11 @@
  *****************************************************************************/
 package org.picocontainer.alternatives;
 
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoException;
+import org.picocontainer.PicoVisitor;
 import org.picocontainer.defaults.ImmutablePicoContainerProxyFactory;
-import org.picocontainer.defaults.VerifyingVisitor;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -73,14 +75,6 @@ public class ImmutablePicoContainer implements PicoContainer, Serializable {
     @Override
     public List getComponentAdaptersOfType(Class componentType) {
         return delegate.getComponentAdaptersOfType(componentType);
-    }
-
-    /**
-     * @deprecated since 1.1 - Use "new VerifyingVisitor().traverse(this)"
-     */
-    @Override
-    public void verify() throws PicoVerificationException {
-        new VerifyingVisitor().traverse(this);
     }
 
     @Override
