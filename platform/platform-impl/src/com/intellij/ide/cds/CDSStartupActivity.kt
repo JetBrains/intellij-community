@@ -2,6 +2,7 @@
 package com.intellij.ide.cds
 
 import com.intellij.ide.PowerSaveMode
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -28,6 +29,18 @@ class CDSStartupActivity : StartupActivity {
     if (!isExecuted.compareAndSet(false, true)) return
     if (!CDSManager.isValidEnv && !Registry.`is`("intellij.appcds.assumeValidEnv", false)) return
     if (!Registry.`is`("intellij.appcds.useStartupActivity", true)) return
+
+    // let's execute CDS archive building on the second start of the IDE only,
+    // the first run - we set the property, the second run we run it!
+    val cdsOnSecondStartKey = "intellij.appcds.runOnSecondStart"
+    if (Registry.`is`(cdsOnSecondStartKey, true)) {
+      val propertiesComponent = PropertiesComponent.getInstance()
+      val hash = CDSPaths.current.cdsClassesHash
+      if (propertiesComponent.getValue(cdsOnSecondStartKey) != hash) {
+        propertiesComponent.setValue(cdsOnSecondStartKey, hash)
+        return
+      }
+    }
 
     val cdsArchive = CDSManager.currentCDSArchive
     if (cdsArchive != null && cdsArchive.isFile) {
