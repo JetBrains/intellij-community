@@ -258,6 +258,12 @@ object ExecUtil {
     }
   }
 
+  /**
+   * Wraps the commandline process with the OS specific utility
+   * to mark the process to run with low priority.
+   *
+   * NOTE. Windows implementation does not return the original process exit code!
+   */
   @JvmStatic
   fun setupLowPriorityExecution(commandLine: GeneralCommandLine) {
     if (canRunLowPriority()) {
