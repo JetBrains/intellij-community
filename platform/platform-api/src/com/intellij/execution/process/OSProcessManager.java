@@ -14,6 +14,11 @@ public abstract class OSProcessManager {
     return ServiceManager.getService(OSProcessManager.class);
   }
 
+  /**
+   * @deprecated Use {@link ProcessUtil#killProcessTree} directly.
+   */
+  @Deprecated
+  @SuppressWarnings("MethodMayBeStatic")
   public final boolean killProcessTree(@NotNull Process process) {
     return ProcessUtil.killProcessTree(process);
   }

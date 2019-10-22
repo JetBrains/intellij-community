@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ import java.util.Set;
  */
 public abstract class PathMacros {
   public static PathMacros getInstance() {
-    return ServiceManager.getService(PathMacros.class);
+    return ApplicationManager.getApplication().getService(PathMacros.class);
   }
 
   @NotNull
@@ -31,7 +30,7 @@ public abstract class PathMacros {
   public abstract void setMacro(@NotNull String name, @Nullable String value);
 
   /**
-   * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted
+   * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted.
    */
   public abstract void addLegacyMacro(@NotNull String name, @NotNull String value);
 

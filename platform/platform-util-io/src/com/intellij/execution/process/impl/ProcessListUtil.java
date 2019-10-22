@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ProcessListUtil {
+public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.ProcessListUtil");
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
 
