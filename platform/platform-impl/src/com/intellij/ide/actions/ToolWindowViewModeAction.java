@@ -19,6 +19,12 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
     Float("FloatMode"),
     Window("WindowMode");
 
+    public static final String DOCK_PINNED_TEXT = ActionsBundle.actionText(DockPinned.getActionID());
+    public static final String DOCK_UNPINNED_TEXT = ActionsBundle.actionText(DockUnpinned.getActionID());
+    public static final String UNDOCK_TEXT = ActionsBundle.actionText(Undock.getActionID());
+    public static final String FLOAT_TEXT = ActionsBundle.actionText(Float.getActionID());
+    public static final String WINDOW_TEXT = ActionsBundle.actionText(Window.getActionID());
+
     private final String myActionID;
 
     ViewMode(String actionID) {
@@ -71,9 +77,12 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
     @Override
     public String toString() {
       switch (this) {
-        case DockPinned: return "Dock Pinned";
-        case DockUnpinned: return "Dock Unpinned";
-        default: return name();
+        case DockPinned: return DOCK_PINNED_TEXT;
+        case DockUnpinned: return DOCK_UNPINNED_TEXT;
+        case Undock: return UNDOCK_TEXT;
+        case Float: return FLOAT_TEXT;
+        case Window: return WINDOW_TEXT;
+        default: throw new AssertionError("No menu item text found for " + name());
       }
     }
   }
