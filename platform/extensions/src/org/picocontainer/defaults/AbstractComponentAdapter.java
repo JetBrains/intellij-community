@@ -25,7 +25,7 @@ import org.picocontainer.PicoVisitor;
  * @version $Revision: 2654 $
  * @since 1.0
  */
-public abstract class AbstractComponentAdapter extends MonitoringComponentAdapter {
+public abstract class AbstractComponentAdapter implements ComponentAdapter {
     private final Object componentKey;
     private final Class componentImplementation;
 
