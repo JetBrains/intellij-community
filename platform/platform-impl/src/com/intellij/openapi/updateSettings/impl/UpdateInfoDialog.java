@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
@@ -152,7 +153,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   @Override
   protected JComponent createSouthPanel() {
     JComponent component = super.createSouthPanel();
-    component.setBorder(JBUI.Borders.empty(8, 12));
+    component.setBorder(JBUI.Borders.empty(8));
     return component;
   }
 
@@ -175,9 +176,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     List<Action> actions = new ArrayList<>();
     actions.add(getCancelAction());
 
+    AbstractAction updateButton;
     if (myPatches != null || myTestPatch != null) {
       boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-      AbstractAction updateButton =
+      updateButton =
         new AbstractAction(IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button")) {
           {
             setEnabled(!myWriteProtected);
@@ -189,6 +191,22 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
             downloadPatchAndRestart();
           }
         };
+    }
+    else {
+      updateButton = myNewBuild.getButtons().stream()
+        .filter(info -> info.isDownload())
+        .findAny()
+        .map(info -> new AbstractAction(info.getName()) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            close(OK_EXIT_CODE);
+            BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(info.getUrl()));
+          }
+        })
+        .orElse(null);
+    }
+
+    if (updateButton != null) {
       updateButton.putValue(DEFAULT_ACTION, Boolean.TRUE);
       actions.add(updateButton);
     }
