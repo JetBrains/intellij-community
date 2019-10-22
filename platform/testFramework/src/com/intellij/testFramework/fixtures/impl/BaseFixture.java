@@ -45,7 +45,7 @@ public class BaseFixture implements IdeaTestFixture {
 
     Assert.assertFalse("tearDown() already has been called", myDisposed);
     new RunAll(
-      () -> EditorNotificationsImpl.completeAsyncTasks(),
+      () -> EdtTestUtil.runInEdtAndWait(() -> {EditorNotificationsImpl.completeAsyncTasks();}),
       () -> UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> disposeRootDisposable()
     ).run(ObjectUtils.notNull(mySuppressedExceptions, ContainerUtil.emptyList()));

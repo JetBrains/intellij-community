@@ -218,7 +218,7 @@ public abstract class UsefulTestCase extends TestCase {
         }
       },
       () -> UIUtil.removeLeakingAppleListeners(),
-      () -> EditorNotificationsImpl.completeAsyncTasks(),
+      () -> EdtTestUtil.runInEdtAndWait(() -> {EditorNotificationsImpl.completeAsyncTasks();}),
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
     ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
