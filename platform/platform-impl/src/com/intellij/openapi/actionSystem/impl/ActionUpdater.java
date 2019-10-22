@@ -109,10 +109,12 @@ class ActionUpdater {
   }
 
   private DataContext getDataContext(@NotNull AnAction action) {
-    if (myVisitor == null)
+    if (myVisitor == null) {
       return myDataContext;
-    if (myDataContext instanceof AsyncDataContext)  // it's very expensive to create async-context for each custom component
-      return myDataContext;                         // and such actions (with custom components, i.e. buttons from dialogs) updates synchronously now
+    }
+    if (myDataContext instanceof AsyncDataContext) { // it's very expensive to create async-context for each custom component
+      return myDataContext;                          // and such actions (with custom components, i.e. buttons from dialogs) updates synchronously now
+    }
     final Component component = myVisitor.getCustomComponent(action);
     return component != null ? DataManager.getInstance().getDataContext(component) : myDataContext;
   }
@@ -257,8 +259,9 @@ class ActionUpdater {
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-    if (myVisitor != null && !myVisitor.enterNode(group))
+    if (myVisitor != null && !myVisitor.enterNode(group)) {
       return Collections.emptyList();
+    }
 
     try {
       Presentation presentation = update(group, strategy);
@@ -269,8 +272,9 @@ class ActionUpdater {
       List<AnAction> children = getGroupChildren(group, strategy);
       return ContainerUtil.concat(children, child -> expandGroupChild(child, hideDisabled, strategy));
     } finally {
-      if (myVisitor != null)
+      if (myVisitor != null) {
         myVisitor.leaveNode();
+      }
     }
   }
 
@@ -308,8 +312,9 @@ class ActionUpdater {
           presentation.setEnabled(visibleChildren || canBePerformed(actionGroup, strategy));
         }
 
-        if (myVisitor != null)
+        if (myVisitor != null) {
           myVisitor.visitLeaf(child);
+        }
         if (hideDisabled && !(child instanceof CompactActionGroup)) {
           return Collections.singletonList(new EmptyAction.DelegatingCompactActionGroup((ActionGroup) child));
         }
@@ -319,8 +324,9 @@ class ActionUpdater {
       return doExpandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, strategy);
     }
 
-    if (myVisitor != null)
+    if (myVisitor != null) {
       myVisitor.visitLeaf(child);
+    }
     return Collections.singletonList(child);
   }
 
@@ -435,8 +441,9 @@ class ActionUpdater {
   static boolean doUpdate(boolean isInModalContext, AnAction action, AnActionEvent e, Utils.ActionGroupVisitor visitor) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
 
-    if (visitor != null && !visitor.beginUpdate(action, e))
+    if (visitor != null && !visitor.beginUpdate(action, e)) {
       return true;
+    }
 
     long startTime = System.currentTimeMillis();
     final boolean result;
@@ -450,8 +457,9 @@ class ActionUpdater {
       handleUpdateException(action, e.getPresentation(), exc);
       return false;
     } finally {
-      if (visitor != null)
+      if (visitor != null) {
         visitor.endUpdate(action);
+      }
     }
     long endTime = System.currentTimeMillis();
     if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
