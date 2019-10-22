@@ -61,7 +61,7 @@ public class ModuleSourcesState {
   }
 
   public void reportSourcesState() {
-    if (!PORTABLE_CACHES && myProjectStamps == null) return;
+    if (!PORTABLE_CACHES || myProjectStamps == null) return;
 
     try {
       Map<String, String> productionModulesHash = new HashMap<>();
