@@ -231,7 +231,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   private void killProcessTreeSync(@NotNull Process process) {
     LOG.debug("killing process tree");
-    final boolean destroyed = ProcessUtil.killProcessTree(process);
+    final boolean destroyed = OSProcessUtil.killProcessTree(process);
     if (!destroyed) {
       if (!process.isAlive()) {
         LOG.warn("Process has been already terminated: " + myCommandLine);

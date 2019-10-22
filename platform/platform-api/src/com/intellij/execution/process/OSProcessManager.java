@@ -15,12 +15,12 @@ public abstract class OSProcessManager {
   }
 
   /**
-   * @deprecated Use {@link ProcessUtil#killProcessTree} directly.
+   * @deprecated Use {@link OSProcessUtil#killProcessTree} directly.
    */
   @Deprecated
   @SuppressWarnings("MethodMayBeStatic")
   public final boolean killProcessTree(@NotNull Process process) {
-    return ProcessUtil.killProcessTree(process);
+    return OSProcessUtil.killProcessTree(process);
   }
 
   @NotNull
