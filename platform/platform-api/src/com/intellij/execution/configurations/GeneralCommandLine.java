@@ -452,7 +452,18 @@ public class GeneralCommandLine implements UserDataHolder {
     if (myInputFile != null) {
       builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
     }
-    return builder.start();
+    return buildProcess(builder).start();
+  }
+
+  /**
+   * Executed with pre-filled ProcessBuilder as the param and
+   * gives the last chance to configure starting process
+   * parameters before a process is started
+   * @param builder filed ProcessBuilder
+   */
+  @NotNull
+  protected ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
+    return builder;
   }
 
   protected void setupEnvironment(@NotNull Map<String, String> environment) {

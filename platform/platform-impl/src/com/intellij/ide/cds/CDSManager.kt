@@ -2,7 +2,9 @@
 package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessUtil
+import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -15,7 +17,6 @@ import com.intellij.util.text.VersionComparatorUtil
 import com.sun.management.OperatingSystemMXBean
 import com.sun.tools.attach.VirtualMachine
 import java.io.File
-import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
@@ -256,40 +257,43 @@ object CDSManager {
       val cwd = File(".").canonicalFile
       LOG.info("Running CDS generation process: $javaArgs in $cwd with classpath: ${args}")
 
-      //recreate logs file
+      //recreate files for sanity
       FileUtil.delete(paths.dumpOutputFile)
+      FileUtil.delete(paths.classesArchiveFile)
 
-      val process = ProcessBuilder()
-        .directory(cwd)
-        .command(javaArgs)
-        .redirectErrorStream(true)
-        .redirectInput(ProcessBuilder.Redirect.PIPE)
-        .redirectOutput(paths.dumpOutputFile)
-        .start()
+      val commandLine = object : GeneralCommandLine() {
+        override fun buildProcess(builder: ProcessBuilder) : ProcessBuilder {
+          return super.buildProcess(builder)
+            .redirectErrorStream(true)
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .redirectOutput(paths.dumpOutputFile)
+        }
+      }
+      commandLine.workDirectory = cwd
+      commandLine.exePath = javaExe.absolutePath
+      commandLine.addParameter("@${paths.classesPathFile}")
 
+      ExecUtil.setupLowPriorityExecution(commandLine)
+
+      val timeToWaitFor = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10)
+      fun shouldWaitForProcessToComplete() = timeToWaitFor > System.currentTimeMillis()
+
+      val process = commandLine.createProcess()
       try {
-        try {
-          process.outputStream.close()
-        }
-        catch (t: IOException) {
-          //NOP
-        }
-
-        val timeToWaitFor = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10)
-        while (timeToWaitFor > System.currentTimeMillis()) {
+        runCatching { process.outputStream.close() }
+        while (shouldWaitForProcessToComplete()) {
           if (indicator.isCancelled) throw InterruptedException()
           if (process.waitFor(200, TimeUnit.MILLISECONDS)) break
-        }
-
-        if (process.isAlive) {
-          process.destroyForcibly()
-          throw RuntimeException("The process took too long and will be killed. See ${paths.dumpOutputFile} for details")
         }
       }
       finally {
         if (process.isAlive) {
           process.destroyForcibly()
         }
+      }
+
+      if (!shouldWaitForProcessToComplete()) {
+        throw RuntimeException("The process took too long and will be killed. See ${paths.dumpOutputFile} for details")
       }
 
       val exitValue = process.exitValue()
