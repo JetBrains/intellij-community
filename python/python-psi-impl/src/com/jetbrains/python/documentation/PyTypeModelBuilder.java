@@ -72,12 +72,12 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class CollectionOf extends TypeModel {
-    private final String collectionName;
+  private static class CollectionOf extends TypeModel {
+    private final TypeModel collectionType;
     private final List<TypeModel> elementTypes;
 
-    private CollectionOf(String collectionName, List<TypeModel> elementTypes) {
-      this.collectionName = collectionName;
+    private CollectionOf(TypeModel collectionType, List<TypeModel> elementTypes) {
+      this.collectionType = collectionType;
       this.elementTypes = elementTypes;
     }
 
@@ -270,14 +270,14 @@ public class PyTypeModelBuilder {
       result = new TupleType(elementModels, tupleType.isHomogeneous());
     }
     else if (type instanceof PyCollectionType) {
-      final String name = type.getName();
-      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes();
+      final PyCollectionType asCollection = (PyCollectionType)type;
       final List<TypeModel> elementModels = new ArrayList<>();
-      for (PyType elementType : elementTypes) {
+      for (PyType elementType : asCollection.getElementTypes()) {
         elementModels.add(build(elementType, true));
       }
       if (!elementModels.isEmpty()) {
-        result = new CollectionOf(name, elementModels);
+        final TypeModel collectionType = build(new PyClassTypeImpl(asCollection.getPyClass(), asCollection.isDefinition()), false);
+        result = new CollectionOf(collectionType, elementModels);
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
@@ -303,6 +303,9 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());
+    }
+    else if (type != null && type.isBuiltin() && PyNames.BUILTIN_PATH_LIKE.equals(type.getName())) {
+      result = new NamedType(PyNames.PATH_LIKE);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -483,6 +486,7 @@ public class PyTypeModelBuilder {
   private abstract static class TypeNameVisitor implements TypeVisitor {
     private int myDepth = 0;
     private final static int MAX_DEPTH = 6;
+    private boolean switchBuiltinToTyping = false;
 
     @Override
     public void oneOf(OneOf oneOf) {
@@ -522,7 +526,7 @@ public class PyTypeModelBuilder {
       }
       final boolean allTypeParamsAreAny = ContainerUtil.and(collectionOf.elementTypes, t -> t == NamedType.ANY);
       if (allTypeParamsAreAny) {
-        name(collectionOf.collectionName);
+        collectionOf.collectionType.accept(this);
       }
       else {
         typingGenericFormat(collectionOf);
@@ -531,8 +535,11 @@ public class PyTypeModelBuilder {
     }
 
     protected void typingGenericFormat(CollectionOf collectionOf) {
-      final String name = collectionOf.collectionName;
-      addType(PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name));
+      final boolean prevSwitchBuiltinToTyping = switchBuiltinToTyping;
+      switchBuiltinToTyping = true;
+      collectionOf.collectionType.accept(this);
+      switchBuiltinToTyping = prevSwitchBuiltinToTyping;
+
       if (!collectionOf.elementTypes.isEmpty()) {
         add("[");
         processList(collectionOf.elementTypes);
@@ -544,7 +551,7 @@ public class PyTypeModelBuilder {
 
     @Override
     public void name(String name) {
-      addType(name);
+      addType(switchBuiltinToTyping ? PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.getOrDefault(name, name) : name);
     }
 
     @Override

@@ -158,6 +158,7 @@ public class PyNames {
   public static final String ABC_SET = "Set";
   public static final String ABC_MUTABLE_SET = "MutableSet";
   public static final String PATH_LIKE = "PathLike";
+  public static final String BUILTIN_PATH_LIKE = "_PathLike";
 
   public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";

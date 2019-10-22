@@ -28,11 +28,6 @@ public class Py3NoneFunctionAssignmentInspectionTest extends PyInspectionTestCas
     return ourPy3Descriptor;
   }
 
-  // PY-21040
-  public void testOsPopenClose() {
-    doMultiFileTest();
-  }
-
   // PY-28729
   public void testGenericSubstitutedWithNone() {
     doTestByText(
