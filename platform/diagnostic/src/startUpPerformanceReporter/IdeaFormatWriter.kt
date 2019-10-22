@@ -16,6 +16,7 @@ import com.intellij.util.io.jackson.obj
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.io.CharArrayWriter
+import java.lang.management.ManagementFactory
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.time.ZoneId
@@ -52,6 +53,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
         writer.writeStringField("os", SystemInfo.getOsNameAndVersion())
         writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
+        writer.writeStringField("cds", ManagementFactory.getRuntimeMXBean().inputArguments.any { it == "-Xshare:auto" || it == "-Xshare:on" }.toString()) //see CDSManager from platform-impl)
 
         writer.writeStringField("project", safeHashValue(projectName))
 
