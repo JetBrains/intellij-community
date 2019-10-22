@@ -11,6 +11,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -19,6 +20,8 @@ import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurab
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
+import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -124,7 +127,7 @@ public abstract class RemoteServersServiceViewContributor
     RemoteServersManager remoteServersManager = RemoteServersManager.getInstance();
     RemoteServer<C> server = remoteServersManager.createServer(serverType, name);
     SingleRemoteServerConfigurable configurable = new SingleRemoteServerConfigurable(server, null, true);
-    configurable.setDisplayName(String.format("New %s Connection", serverType.getPresentableName()));
+    configurable.setDisplayName(CloudBundle.getText("new.cloud.connection.configurable.title", serverType.getPresentableName()));
     Runnable advancedInitialization = () -> {
       configurable.setDisplayName(name);
       configurable.updateName();
@@ -132,8 +135,9 @@ public abstract class RemoteServersServiceViewContributor
     if (ShowSettingsUtil.getInstance().editConfigurable(project, configurable, advancedInitialization)) {
       remoteServersManager.addServer(server);
       if (contributorClass != null) {
+        ServerConnectionManager.getInstance().getOrCreateConnection(server).connect(EmptyRunnable.INSTANCE);
         RemoteServerNode node = new RemoteServerNode(project, server, (connection, serverNode, deployment) -> null);
-        ServiceViewManager.getInstance(project).select(node, contributorClass, false, true);
+        ServiceViewManager.getInstance(project).select(node, contributorClass, true, true);
       }
       return server;
     }
