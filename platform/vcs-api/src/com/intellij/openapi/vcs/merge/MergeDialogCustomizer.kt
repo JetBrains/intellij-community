@@ -15,6 +15,10 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.OverrideOnly
 open class MergeDialogCustomizer {
+  companion object {
+    val DEFAULT_CUSTOMIZER_LIST = DiffEditorTitleCustomizerList(null, null, null)
+  }
+
   /**
    * Returns the description that is shown above the list of conflicted files.
    *
@@ -34,7 +38,7 @@ open class MergeDialogCustomizer {
    * Returns the title that is shown above the left panel in the 3-way merge dialog.
    *
    * @param file the file that is being merged.
-   * @see getLeftTitleCustomizer
+   * @see getTitleCustomizerList
    */
   open fun getLeftPanelTitle(file: VirtualFile): String = DiffBundle.message("merge.version.title.our")
 
@@ -42,7 +46,7 @@ open class MergeDialogCustomizer {
    * Returns the title that is shown above the center panel in the 3-way merge dialog.
    *
    * @param file the file that is being merged.
-   * @see getCenterTitleCustomizer
+   * @see getTitleCustomizerList
    */
   open fun getCenterPanelTitle(file: VirtualFile): String = DiffBundle.message("merge.version.title.base")
 
@@ -50,8 +54,8 @@ open class MergeDialogCustomizer {
    * Returns the title that is shown above the right panel in the 3-way merge dialog.
    *
    * @param file           the file that is being merged.
-   * @param revisionNumber the revision number of the file at the right. Can be `null` if unknown.
-   * @see getRightTitleCustomizer
+   * @param revisionNumber the revision number of the file at the right. Can be null if unknown.
+   * @see getTitleCustomizerList
    */
   open fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): String =
     if (revisionNumber != null)
@@ -75,26 +79,16 @@ open class MergeDialogCustomizer {
   open fun getColumnNames(): List<String>? = null
 
   /**
-   * Allows to customize the left diff editor title in the 3-way merge dialog using [DiffEditorTitleCustomizer].
-   *
-   * This method takes precedence over [getLeftPanelTitle], which is used as a fallback only if this method returns `null`.
+   * Allows to customize diff editor titles in the 3-way merge dialog using [DiffEditorTitleCustomizer] for each editor.
+   * This method takes precedence over methods like [getLeftPanelTitle].
+   * If [DiffEditorTitleCustomizer] is null for the side, get(side)PanelTitle will be used as a fallback.
    */
   @ApiStatus.Experimental
-  open fun getLeftTitleCustomizer(file: FilePath): DiffEditorTitleCustomizer? = null
+  open fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList = DEFAULT_CUSTOMIZER_LIST
 
-  /**
-   * Allows to customize the center diff editor title in the 3-way merge dialog using [DiffEditorTitleCustomizer].
-   *
-   * This method takes precedence over [getCenterPanelTitle], which is used as a fallback only if this method returns `null`.
-   */
-  @ApiStatus.Experimental
-  open fun getCenterTitleCustomizer(file: FilePath): DiffEditorTitleCustomizer? = null
-
-  /**
-   * Allows to customize the right diff editor title in the 3-way merge dialog using [DiffEditorTitleCustomizer].
-   *
-   * This method takes precedence over [getRightPanelTitle], which is used as a fallback only if this method returns `null`.
-   */
-  @ApiStatus.Experimental
-  open fun getRightTitleCustomizer(file: FilePath): DiffEditorTitleCustomizer? = null
+  data class DiffEditorTitleCustomizerList(
+    val leftTitleCustomizer: DiffEditorTitleCustomizer?,
+    val centerTitleCustomizer: DiffEditorTitleCustomizer?,
+    val rightTitleCustomizer: DiffEditorTitleCustomizer?
+  )
 }

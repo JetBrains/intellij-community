@@ -521,8 +521,17 @@ public class GitRebaseProcess {
                     GitMergeProvider.calcColumnName(true, myBasePresentable));
     }
 
-    @Nullable
+    @NotNull
     @Override
+    public DiffEditorTitleCustomizerList getTitleCustomizerList(@NotNull FilePath file) {
+      return new DiffEditorTitleCustomizerList(
+        getLeftTitleCustomizer(file),
+        null,
+        getRightTitleCustomizer(file)
+      );
+    }
+
+    @Nullable
     public DiffEditorTitleCustomizer getLeftTitleCustomizer(@NotNull FilePath file) {
       if (myIngoingCommit == null) {
         return null;
@@ -550,7 +559,6 @@ public class GitRebaseProcess {
     }
 
     @Nullable
-    @Override
     public DiffEditorTitleCustomizer getRightTitleCustomizer(@NotNull FilePath file) {
       if (myHead == null || myMergeBase == null || myUpstreamHash == null) {
         return null;
