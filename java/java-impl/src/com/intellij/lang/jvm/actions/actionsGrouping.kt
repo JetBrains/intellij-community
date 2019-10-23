@@ -2,10 +2,10 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 
-fun List<IntentionAction>.groupActionsByType(): List<IntentionAction> {
+fun List<IntentionAction>.groupActionsByType(language: Language): List<IntentionAction> {
   if (ApplicationManager.getApplication().isUnitTestMode) {
     return this
   }
@@ -17,7 +17,7 @@ fun List<IntentionAction>.groupActionsByType(): List<IntentionAction> {
       actions[0]
     }
     else {
-      JvmClassIntentionActionGroup(actions, type, JavaLanguage.INSTANCE)
+      JvmClassIntentionActionGroup(actions, type, language)
     }
   }
   return result
