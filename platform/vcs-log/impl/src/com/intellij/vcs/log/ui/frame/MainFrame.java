@@ -254,6 +254,15 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
   }
 
+  public void closeEditorTab() {
+    VirtualFile file = getOrCreateGraphViewFile();
+    if (file == null) {
+      return;
+    }
+
+    FileEditorManager.getInstance(myLogData.getProject()).closeFile(file);
+  }
+
   public void openLogEditorTab() {
     VirtualFile file = getOrCreateGraphViewFile();
 

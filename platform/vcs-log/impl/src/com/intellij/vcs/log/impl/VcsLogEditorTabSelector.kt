@@ -30,6 +30,14 @@ open class VcsLogEditorTabSelector(private val project : Project) : ContentManag
     }
   }
 
+  protected open fun closeEditorTab(content: Content) {
+    val ui = VcsLogContentUtil.getLogUi(content.component)
+    if (ui is VcsLogUiImpl) {
+      val frame = ui.mainFrame
+      frame.closeEditorTab()
+    }
+  }
+
   override fun contentAdded(event: ContentManagerEvent) {
     val content = event.content
     if (content is TabbedContent) {
@@ -42,6 +50,14 @@ open class VcsLogEditorTabSelector(private val project : Project) : ContentManag
     if (content is TabbedContent) {
       content.removePropertyChangeListener(this)
     }
+    if (shouldCloseEditorTab(content)) {
+      closeEditorTab(content)
+    }
+  }
+
+  protected open fun shouldCloseEditorTab(content: Content): Boolean {
+    val ui = VcsLogContentUtil.getLogUi(content.component)
+    return ui is VcsLogUiImpl
   }
 
   private fun getToolWindow(): ToolWindow? {

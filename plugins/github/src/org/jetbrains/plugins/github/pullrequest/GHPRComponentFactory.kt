@@ -168,6 +168,12 @@ internal class GHPRComponentFactory(private val project: Project) {
                  ?: return
     val editorWindow = holder.editorWindow
     editorWindow.setFilePinned(file, true)
+    Disposer.register(editor, Disposable { ghprVirtualFile = null })
+  }
+
+  fun tryCloseGHPREditorTab() {
+    val file = getOrCreateGHPRViewFile() ?: return
+    FileEditorManager.getInstance(project).closeFile(file)
   }
 
   private fun createContent(dataContext: GHPullRequestsDataContext, disposable: Disposable): JComponent {

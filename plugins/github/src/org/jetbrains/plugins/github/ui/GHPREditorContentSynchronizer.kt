@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -49,8 +51,21 @@ class GHPREditorContentSynchronizer {
       val component = content.component
       val ghprAccountsComponent = component as? GHPRAccountsComponent
       if (ghprAccountsComponent != null) {
-        project.service<GHPRComponentFactory>().tryOpenGHPREditorTab()
+        ApplicationManager.getApplication().invokeLater({
+            project.service<GHPRComponentFactory>().tryOpenGHPREditorTab()
+          }, ModalityState.NON_MODAL)
       }
+    }
+
+    override fun closeEditorTab(content: Content) {
+      project.service<GHPRComponentFactory>().tryCloseGHPREditorTab()
+    }
+
+    override fun shouldCloseEditorTab(content: Content): Boolean {
+      val component = content.component
+      val ghprAccountsComponent = component as? GHPRAccountsComponent
+
+      return ghprAccountsComponent != null
     }
   }
 
