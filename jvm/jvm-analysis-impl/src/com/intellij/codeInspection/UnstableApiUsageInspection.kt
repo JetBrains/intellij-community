@@ -205,14 +205,15 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
   override fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
     with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
-        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName)
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName, presentableAnnotationName)
       }
       else {
         JvmAnalysisBundle.message(
           "jvm.inspections.unstable.api.usage.overridden.method.is.declared.in.unstable.api",
           targetName,
           containingDeclarationType,
-          containingDeclarationName
+          containingDeclarationName,
+          presentableAnnotationName
         )
       }
     }
@@ -220,14 +221,15 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
   override fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
     with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
-        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.api.is.marked.unstable.itself", targetName)
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.api.is.marked.unstable.itself", targetName, presentableAnnotationName)
       }
       else {
         JvmAnalysisBundle.message(
           "jvm.inspections.unstable.api.usage.api.is.declared.in.unstable.api",
           targetName,
           containingDeclarationType,
-          containingDeclarationName
+          containingDeclarationName,
+          presentableAnnotationName
         )
       }
     }
@@ -239,7 +241,8 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
     "jvm.inspections.unstable.api.usage.unstable.type.is.used.in.signature.of.referenced.api",
     DeprecationInspection.getPresentableName(referencedApi),
     annotatedTypeUsedInSignature.targetType,
-    annotatedTypeUsedInSignature.targetName
+    annotatedTypeUsedInSignature.targetName,
+    annotatedTypeUsedInSignature.presentableAnnotationName
   )
 }
 
