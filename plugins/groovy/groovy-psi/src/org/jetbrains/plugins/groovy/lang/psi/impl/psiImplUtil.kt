@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -152,7 +153,7 @@ private fun GrCodeReferenceElement.isInClosureSafeCast(): Boolean {
  * @return `true` if variable is declared in given block(nested closure and method blocks excluded)
  */
 fun GrVariable.isDeclaredIn(block: GrControlFlowOwner): Boolean {
-  if (this is GrParameter) {
+  if (this is GrParameter && this.parent !is GrForInClause) {
     val parametersOwner = getParentOfType(block, GrParametersOwner::class.java, false)
     return declarationScope == parametersOwner
   }
