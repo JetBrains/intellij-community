@@ -13,7 +13,7 @@ envs {
 
   if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
     zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
-    shouldUseZipsFromRespository = Os.isFamily(Os.FAMILY_WINDOWS)
+    shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
   }
 
   Closure testHelpers = { String pythonName, String pythonVersion ->
