@@ -34,6 +34,16 @@ internal class CDSStartupActivity : StartupActivity {
     NonUrgentExecutor.getInstance().execute {
       if (!CDSManager.isValidEnv && !Registry.`is`("appcds.assumeValidEnv")) return@execute
 
+      val cdsEnabled = Registry.`is`("appcds.enabled")
+      val cdsArchive = CDSManager.currentCDSArchive
+      if (cdsArchive != null && cdsArchive.isFile) {
+        Logger.getInstance(CDSManager::class.java).warn("Running with enabled CDS $cdsArchive, ${StringUtil.formatFileSize(cdsArchive.length())}")
+        CDSFUSCollector.logCDSStatus(cdsEnabled, true)
+      }
+      else {
+        CDSFUSCollector.logCDSStatus(cdsEnabled, false)
+      }
+
       // let's execute CDS archive building on the second start of the IDE only,
       // the first run - we set the property, the second run we run it!
       val cdsOnSecondStartKey = "appcds.runOnSecondStart"
@@ -44,16 +54,6 @@ internal class CDSStartupActivity : StartupActivity {
           propertiesComponent.setValue(cdsOnSecondStartKey, hash)
           return@execute
         }
-      }
-
-      val cdsEnabled = Registry.`is`("appcds.enabled")
-      val cdsArchive = CDSManager.currentCDSArchive
-      if (cdsArchive != null && cdsArchive.isFile) {
-        Logger.getInstance(CDSManager::class.java).warn("Running with enabled CDS $cdsArchive, ${StringUtil.formatFileSize(cdsArchive.length())}")
-        CDSFUSCollector.logCDSStatus(cdsEnabled, true)
-      }
-      else {
-        CDSFUSCollector.logCDSStatus(cdsEnabled, false)
       }
 
       AppExecutorUtil.getAppExecutorService().submit {
