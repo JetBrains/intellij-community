@@ -67,6 +67,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
+import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.util.containers.ContainerUtil.set;
@@ -765,7 +766,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
       @Override
       public void setAllowExcludeFromCommit(boolean value) {
-        // FIXME [Kirill.Skrygan]
+        myChangeProcessor.putContextUserData(ALLOW_EXCLUDE_FROM_COMMIT, value);
+        myChangeProcessor.updateRequest(true);
       }
 
       private class MyDiffPreviewProvider implements DiffPreviewProvider {
