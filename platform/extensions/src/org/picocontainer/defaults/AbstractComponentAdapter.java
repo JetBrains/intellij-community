@@ -26,7 +26,7 @@ import org.picocontainer.ComponentAdapter;
  */
 public abstract class AbstractComponentAdapter implements ComponentAdapter {
     private final Object componentKey;
-    private final Class componentImplementation;
+    private final Class<?> componentImplementation;
 
     /**
      * Constructs a new ComponentAdapter for the given key and implementation.
@@ -60,7 +60,7 @@ public abstract class AbstractComponentAdapter implements ComponentAdapter {
      * @see ComponentAdapter#getComponentImplementation()
      */
     @Override
-    public Class getComponentImplementation() {
+    public Class<?> getComponentImplementation() {
         return componentImplementation;
     }
 

@@ -38,7 +38,7 @@ public interface ComponentAdapter {
      * @return the component's implementation class. Should normally be a concrete class (ie, a class that can be
      *         instantiated).
      */
-    Class getComponentImplementation();
+    Class<?> getComponentImplementation();
 
     /**
      * Retrieve the component instance. This method will usually create a new instance each time it is called, but that

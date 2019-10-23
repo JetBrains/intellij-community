@@ -13,14 +13,7 @@ package org.picocontainer.defaults;
 import org.picocontainer.*;
 
 /**
- * <p>
  * Component adapter which decorates another adapter.
- * </p>
- * <p>
- * This adapter supports a {@link ComponentMonitorStrategy component monitor strategy}
- * and will propagate change of monitor to the delegate if the delegate itself
- * support the monitor strategy.
- * </p>
  * <p>
  * This adapter also supports a {@link LifecycleManager lifecycle manager} and a
  * {@link LifecycleStrategy lifecycle strategy} if the delegate does.
@@ -44,7 +37,7 @@ public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleMa
     }
 
     @Override
-    public Class getComponentImplementation() {
+    public Class<?> getComponentImplementation() {
         return delegate.getComponentImplementation();
     }
 

@@ -26,7 +26,7 @@ import java.util.Arrays;
  */
 public class AmbiguousComponentResolutionException extends PicoIntrospectionException {
     private Class component;
-    private Class ambiguousDependency;
+    private final Class ambiguousDependency;
     private final Object[] ambiguousComponentKeys;
 
 
@@ -40,9 +40,7 @@ public class AmbiguousComponentResolutionException extends PicoIntrospectionExce
         super("");
         this.ambiguousDependency = ambiguousDependency;
         this.ambiguousComponentKeys = new Class[componentKeys.length];
-        for (int i = 0; i < componentKeys.length; i++) {
-            ambiguousComponentKeys[i] = componentKeys[i];
-        }
+        System.arraycopy(componentKeys, 0, ambiguousComponentKeys, 0, componentKeys.length);
     }
 
     /**
@@ -50,14 +48,12 @@ public class AmbiguousComponentResolutionException extends PicoIntrospectionExce
      */
     @Override
     public String getMessage() {
-        StringBuffer msg = new StringBuffer();
-        msg.append(component);
-        msg.append(" has ambiguous dependency on ");
-        msg.append(ambiguousDependency);
-        msg.append(", ");
-        msg.append("resolves to multiple classes: ");
-        msg.append(Arrays.asList(getAmbiguousComponentKeys()));
-        return msg.toString();
+        return component +
+               " has ambiguous dependency on " +
+               ambiguousDependency +
+               ", " +
+               "resolves to multiple classes: " +
+               Arrays.asList(getAmbiguousComponentKeys());
     }
 
     /**
