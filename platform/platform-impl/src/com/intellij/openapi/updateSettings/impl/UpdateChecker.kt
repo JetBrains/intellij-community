@@ -370,7 +370,7 @@ object UpdateChecker {
       }
       else {
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
-        val title = "${ApplicationNamesInfo.getInstance().fullProductName} ${newBuild.version} available"
+        val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName, newBuild.version)
         showNotification(project, title, "", {
           IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
           runnable()
@@ -391,7 +391,7 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
-        val title = IdeBundle.message("updates.plugins.ready.title", ApplicationNamesInfo.getInstance().fullProductName, " available")
+        val title = IdeBundle.message("updates.plugins.ready.title.available", ApplicationNamesInfo.getInstance().fullProductName)
         val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
         val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
         showNotification(project, title, message, runnable, NotificationUniqueType.PLUGINS)
@@ -410,7 +410,7 @@ object UpdateChecker {
           runnable.invoke()
         }
         else {
-          val title = IdeBundle.message("updates.plugins.ready.title", ApplicationNamesInfo.getInstance().fullProductName, " available")
+          val title = IdeBundle.message("updates.plugins.ready.title.available", ApplicationNamesInfo.getInstance().fullProductName)
           val updates = update.components.joinToString(", ")
           val message = IdeBundle.message("updates.external.ready.message", update.components.size, updates)
           showNotification(project, title, message, runnable, NotificationUniqueType.EXTERNAL)
@@ -425,7 +425,7 @@ object UpdateChecker {
 
   private fun showNotification(project: Project?, title: String, message: String, action: () -> Unit, notificationType: NotificationUniqueType) {
     val notification = NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, null)
-    notification.addAction(object : NotificationAction("Update...") {
+    notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         notification.expire()
         action.invoke()
