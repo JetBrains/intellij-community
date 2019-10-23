@@ -71,7 +71,12 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
         selected: Boolean,
         hasFocus: Boolean
       ) {
-        customizeListCellRenderer(list, value, index, selected, hasFocus)
+        border = JBUI.Borders.empty()
+        ipad = JBUI.insetsLeft(20)
+        if (value != null) {
+          append(value.subject)
+          SpeedSearchUtil.applySpeedSearchHighlighting(commitsList, this, true, selected)
+        }
       }
     }
     commitsList.selectionModel.addListSelectionListener { e ->
@@ -97,21 +102,6 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
   @CalledInBackground
   @Throws(VcsException::class)
   abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
-
-  open fun ColoredListCellRenderer<VcsCommitMetadata>.customizeListCellRenderer(
-    list: JList<out VcsCommitMetadata>,
-    value: VcsCommitMetadata?,
-    index: Int,
-    selected: Boolean,
-    hasFocus: Boolean
-  ) {
-    border = JBUI.Borders.empty()
-    ipad = JBUI.insetsLeft(20)
-    if (value != null) {
-      append(value.subject)
-      SpeedSearchUtil.applySpeedSearchHighlighting(commitsList, this, true, selected)
-    }
-  }
 
   fun setFilter(condition: (VcsCommitMetadata) -> Boolean) {
     val selectedCommits = commitsList.selectedValuesList.toSet()

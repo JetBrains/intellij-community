@@ -33,8 +33,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
@@ -73,8 +71,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -594,8 +590,7 @@ public class GitRebaseProcess {
           "Collecting Commit Details...",
           true,
           project);
-        DialogWrapper dlg = new MyMultipleCommitInfoDialog(project, root, details, filteredCommits,
-                                                           find(details, (commit) -> commit.getId().asString().equals(myUpstreamHash)));
+        DialogWrapper dlg = new MyMultipleCommitInfoDialog(project, root, details, filteredCommits);
         dlg.setTitle(getRightTitle(false));
         dlg.show();
         return Unit.INSTANCE;
@@ -614,29 +609,15 @@ public class GitRebaseProcess {
       @NotNull private final Project myProject;
       @NotNull private final VirtualFile myRoot;
       @NotNull private final Set<VcsCommitMetadata> myFilteredCommits;
-      @NotNull private final Set<VcsCommitMetadata> myHighlightedCommits;
-      @NotNull private static final JBColor UPSTREAM_COMMITS_BACKGROUND = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
 
       MyMultipleCommitInfoDialog(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull List<VcsCommitMetadata> commits,
-                                 @NotNull Set<VcsCommitMetadata> filteredCommits,
-                                 @Nullable VcsCommitMetadata baseCommit) {
+                                 @NotNull Set<VcsCommitMetadata> filteredCommits) {
         super(project, commits);
         myProject = project;
         myRoot = root;
         myFilteredCommits = filteredCommits;
-
-        myHighlightedCommits = new HashSet<>();
-        boolean highlighting = false;
-        for (VcsCommitMetadata commit : commits) {
-          if (commit.equals(baseCommit)) {
-            highlighting = true;
-          }
-          if (highlighting) {
-            myHighlightedCommits.add(commit);
-          }
-        }
         filterCommitsByConflictingFile();
       }
 
@@ -670,25 +651,6 @@ public class GitRebaseProcess {
           }
         });
         return new BorderLayoutPanel().addToCenter(checkbox);
-      }
-
-
-      @Override
-      public void customizeListCellRenderer(@NotNull ColoredListCellRenderer<VcsCommitMetadata> renderer,
-                                            @NotNull JList<? extends VcsCommitMetadata> list,
-                                            @Nullable VcsCommitMetadata value,
-                                            int index,
-                                            boolean selected,
-                                            boolean hasFocus) {
-        super.customizeListCellRenderer(renderer, list, value, index, selected, hasFocus);
-        if (!selected) {
-          if (myHighlightedCommits.contains(value)) {
-            renderer.setBackground(UPSTREAM_COMMITS_BACKGROUND);
-          }
-          else {
-            renderer.setBackground(list.getBackground());
-          }
-        }
       }
     }
   }
