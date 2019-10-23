@@ -9,16 +9,21 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  * @author nik
  */
 class PythonCommunityPluginModules {
-  static List<String> COMMUNITY_MODULES = ["intellij.python.community",
-                                           "intellij.python.community.plugin",
-                                           "intellij.python.community.plugin.java",
-                                           "intellij.python.configure",
-                                           "intellij.python.community.plugin.minor",
-                                           "intellij.python.psi",
-                                           "intellij.python.psi.impl",
-                                           "intellij.python.pydev",
-                                           "intellij.python.community.impl",
-                                          ]
+  static List<String> COMMUNITY_MODULES = [
+    "intellij.python.community",
+    "intellij.python.community.plugin",
+    "intellij.python.community.plugin.java",
+    "intellij.python.configure",
+    "intellij.python.community.plugin.minor",
+    "intellij.python.psi",
+    "intellij.python.psi.impl",
+    "intellij.python.pydev",
+    "intellij.python.community.impl",
+    "intellij.python.langInjection",
+    "intellij.python.copyright",
+    "intellij.python.terminal",
+    "intellij.python.reStructuredText",
+  ]
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     pythonPlugin("intellij.python.community.plugin", "python-ce", COMMUNITY_MODULES) {
       withProjectLibrary("markdown4j")  // Required for ipnb
