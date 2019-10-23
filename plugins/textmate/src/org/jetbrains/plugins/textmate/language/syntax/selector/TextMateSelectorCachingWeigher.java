@@ -14,7 +14,7 @@ public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
   private static final Logger LOG = Logger.getInstance(TextMateSelectorCachingWeigher.class);
 
   @NotNull private final TextMateSelectorWeigher myOriginalWeigher;
-  @NotNull private final LoadingCache<Pair<CharSequence, CharSequence>, TextMateWeigh> myCache;
+  @NotNull private final LoadingCache<Pair<String, String>, TextMateWeigh> myCache;
 
   public TextMateSelectorCachingWeigher(@NotNull TextMateSelectorWeigher originalWeigher) {
     myOriginalWeigher = originalWeigher;
