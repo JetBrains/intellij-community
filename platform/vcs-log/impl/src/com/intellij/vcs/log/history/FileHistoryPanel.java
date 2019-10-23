@@ -157,7 +157,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
       @Override
       public String getEditorTabName() {
-        return String.format("History for '%s'", myFilePath.getName());
+        return myFilePath.getName();
       }
     };
 
