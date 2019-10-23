@@ -114,9 +114,10 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
   }
 
   public void testUpdatePairQuote() {
-    doTest("\"",
-           "<selection><caret>'</selection>aa'",
-           "\"<caret>aa\"");
+    doTest("\"", "<selection><caret>'</selection>'", "\"<caret>\"");
+    doTest("\"", "<selection><caret>'</selection>aa'", "\"<caret>aa\"");
+    doTest("\"", "<selection><caret>'</selection>aa\\'bb'", "\"<selection><caret>'</selection>\"aa\\'bb'");
+    doTest("\"", "'aa\\'bb<selection><caret>'</selection>", "'aa\\'bb\"<selection><caret>'</selection>\"");
   }
 
   private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {
