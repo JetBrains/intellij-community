@@ -155,7 +155,8 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
     OpenProjectTask copy = options.copy();
     copy.isNewProject = true;
-    Project project = openExistingProject(file, baseDir, copy, dummyProjectName);
+    copy.setDummyProjectName(dummyProjectName);
+    Project project = openExistingProject(file, baseDir, copy);
     if (project != null) {
       openFileFromCommandLine(project, file, line);
     }
@@ -188,7 +189,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       saveAndSyncHandler.blockSyncOnFrameActivation();
     }
     try {
-      Project project = openExistingProject(file, baseDir, options, null);
+      Project project = openExistingProject(file, baseDir, options);
       if (project != null && file != baseDir && !Files.isDirectory(file)) {
         openFileFromCommandLine(project, file, line);
       }
@@ -205,8 +206,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @ApiStatus.Internal
   public static Project openExistingProject(@NotNull Path file,
                                             @NotNull Path baseDir,
-                                            @NotNull OpenProjectTask options,
-                                            @Nullable String dummyProjectName) {
+                                            @NotNull OpenProjectTask options) {
     Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
       Project[] openProjects = ProjectUtil.getOpenProjects();
@@ -233,28 +233,34 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
     boolean isCompleted = frameAllocator.run(() -> {
       Pair<Project, Module> result;
-      CannotConvertException cannotConvertException = null;
-      try {
-        activity.end();
-        result = prepareProject(file, options, baseDir, dummyProjectName);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (CannotConvertException e) {
-        LOG.info(e);
-        cannotConvertException = e;
-        result = Pair.empty();
-      }
-      catch (Exception e) {
-        result = Pair.empty();
-        LOG.error(e);
-      }
-
-      Project project = result.first;
+      Project project = options.getProject();
       if (project == null) {
-        frameAllocator.projectNotLoaded(cannotConvertException);
-        return;
+        CannotConvertException cannotConvertException = null;
+        try {
+          activity.end();
+          result = prepareProject(file, options, baseDir);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (CannotConvertException e) {
+          LOG.info(e);
+          cannotConvertException = e;
+          result = Pair.empty();
+        }
+        catch (Exception e) {
+          result = Pair.empty();
+          LOG.error(e);
+        }
+
+        project = result.first;
+        if (project == null) {
+          frameAllocator.projectNotLoaded(cannotConvertException);
+          return;
+        }
+      }
+      else {
+        result = new Pair<>(project, null);
       }
 
       refResult.set(result);
@@ -291,12 +297,14 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @NotNull
   private static Pair<Project, Module> prepareProject(@NotNull Path file,
                                                       @NotNull OpenProjectTask options,
-                                                      @NotNull Path baseDir,
-                                                      @Nullable String dummyProjectName) throws CannotConvertException {
+                                                      @NotNull Path baseDir) throws CannotConvertException {
     Project project;
     boolean isNewProject = options.isNewProject;
     if (isNewProject) {
-      String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
+      String projectName = options.getDummyProjectName();
+      if (projectName == null) {
+        projectName = baseDir.getFileName().toString();
+      }
       project = ((ProjectManagerImpl)ProjectManager.getInstance()).newProject(baseDir, projectName, options);
     }
     else {
@@ -316,7 +324,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
 
-    Module module = configureNewProject(project, baseDir, file, dummyProjectName == null, isNewProject);
+    Module module = configureNewProject(project, baseDir, file, options.getDummyProjectName() == null, isNewProject);
 
     if (isNewProject) {
       project.save();

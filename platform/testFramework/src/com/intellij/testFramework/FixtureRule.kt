@@ -2,6 +2,7 @@
 package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
@@ -232,8 +233,8 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: Path, useDefaultProjectSettings: Boolean = false): Project {
-  return ProjectManagerEx.getInstanceEx().newProject(path, useDefaultProjectSettings)!!
+fun createHeavyProject(path: Path, useDefaultProjectAsTemplate: Boolean = false): Project {
+  return ProjectManagerEx.getInstanceEx().newProject(path, null, OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true))!!
 }
 
 suspend fun Project.use(task: suspend (Project) -> Unit) {
@@ -333,8 +334,8 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
     }
 
     val project = when (projectCreator) {
-      null -> createHeavyProject(file, useDefaultProjectSettings = useDefaultProjectSettings)
-      else -> ProjectManagerEx.getInstanceEx().loadProject(file, null)!!
+      null -> createHeavyProject(file, useDefaultProjectAsTemplate = useDefaultProjectSettings)
+      else -> ProjectManagerEx.getInstanceEx().loadProject(file, null)
     }
 
     if (loadComponentState) {
