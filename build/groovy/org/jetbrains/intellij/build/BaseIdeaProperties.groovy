@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import java.util.function.Consumer
 
 /**
- * @author nik
+ * Base class for all editions of IntelliJ IDEA
  */
 abstract class BaseIdeaProperties extends ProductProperties {
   public static final List<String> JAVA_IDE_API_MODULES = [
