@@ -93,7 +93,10 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       //UAST for Kotlin produces UQualifiedReferenceExpression with UCallExpression as selector
       return true
     }
-    val resolved = node.resolve()
+    var resolved = node.resolve()
+    if (resolved == null) {
+      resolved = node.selector.tryResolve()
+    }
     if (resolved is PsiModifierListOwner) {
       apiUsageProcessor.processReference(node.selector, resolved, node.receiver)
     }
