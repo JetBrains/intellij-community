@@ -91,8 +91,7 @@ class JDKDownloader {
     }
 
   fun downloadModel(progress: ProgressIndicator?): JDKDownloadModel {
-    //use HTTP caches here, in-memory only
-    //note we use 3 copies of data here: String, JSON and Model (first two should GC)
+    //the file is ~15k, in-memory only via JSON tree, no caches needed
     val rawData = HttpRequests.request(feedUrl).forceHttps(true).readString(progress)
     val tree = om.readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
     val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
