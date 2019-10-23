@@ -68,6 +68,9 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.copyright" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
   </component>
   <component name="copyright">
     <Base>

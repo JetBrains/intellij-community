@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -586,5 +587,18 @@ public final class JavaSdkImpl extends JavaSdk {
            type == OrderRootType.SOURCES ||
            type == JavadocOrderRootType.getInstance() ||
            type == AnnotationOrderRootType.getInstance();
+  }
+
+  @Override
+  public boolean supportsCustomCreateUI() {
+    return JDKDownloader.getInstance().isEnabled();
+  }
+
+  @Override
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
+                                 @NotNull JComponent parentComponent,
+                                 @Nullable Sdk selectedSdk,
+                                 @NotNull Consumer<Sdk> sdkCreatedCallback) {
+    JDKDownloader.getInstance().showCustomCreateUI(sdkModel, parentComponent, selectedSdk, sdkCreatedCallback);
   }
 }
