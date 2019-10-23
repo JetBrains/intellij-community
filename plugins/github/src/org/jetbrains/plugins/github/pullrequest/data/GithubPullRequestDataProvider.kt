@@ -20,6 +20,7 @@ interface GithubPullRequestDataProvider {
   val branchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GithubCommit>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>
+  val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
   val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
   val diffRangesRequest: CompletableFuture<Map<Change, List<GHPRDiffRangeMapping>>>
   val filesReviewThreadsRequest: CompletableFuture<Map<Change, List<GHPRDiffReviewThreadMapping>>>

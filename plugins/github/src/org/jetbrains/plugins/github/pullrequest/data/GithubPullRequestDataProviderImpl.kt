@@ -84,6 +84,13 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   private val diffFileRequestValue = backingValue {
     requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(repository, number))
   }
+  private val changesProviderValue = backingValue {
+    GHPRChangesProviderImpl(gitRemote.repository,
+                            logCommitsRequestValue.value.joinCancellable(),
+                            diffFileRequestValue.value.joinCancellable())
+  }
+  override val changesProviderRequest: CompletableFuture<out GHPRChangesProvider> by backgroundProcessValue(changesProviderValue)
+
   private val reviewThreadsRequestValue = backingValue {
     SimpleGHGQLPagesLoader(requestExecutor, { p ->
       GHGQLRequests.PullRequest.reviewThreads(repository, number, p)

@@ -53,10 +53,14 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel, zipCha
     else {
       loading = true
       error = null
-      val newUpdateFuture = dataProvider.logCommitsRequest.successOnEdt { commits ->
-        if (zipChanges) changesModel.changes = CommittedChangesTreeBrowser.zipChanges(commits.flatMap { it.changes })
-        else changesModel.commits = commits
-      }
+
+      val newUpdateFuture =
+        if (zipChanges) {
+          dataProvider.changesProviderRequest.successOnEdt { changesModel.changes = it.changes }
+        }
+        else {
+          dataProvider.logCommitsRequest.successOnEdt { changesModel.commits = it }
+        }
 
       newUpdateFuture.handleOnEdt { _, error: Throwable? ->
         if (error != null) this.error = error.cause

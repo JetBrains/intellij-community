@@ -345,7 +345,18 @@ internal class GHPRComponentFactory(private val project: Project) {
                                         disposable: Disposable): GHPRChangesLoadingModel {
     val model = GHPRChangesLoadingModel(changesModel, uiSettings.zipChanges)
     projectUiSettings.addChangesListener(disposable) { model.zipChanges = projectUiSettings.zipChanges }
-    dataProviderModel.addValueChangedListener { model.dataProvider = dataProviderModel.value }
+
+    val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
+      override fun commitsRequestChanged() {
+        model.dataProvider = model.dataProvider
+      }
+    }
+    dataProviderModel.addValueChangedListener {
+      model.dataProvider?.removeRequestsChangesListener(requestChangesListener)
+      model.dataProvider = dataProviderModel.value?.apply {
+        addRequestsChangesListener(disposable, requestChangesListener)
+      }
+    }
     return model
   }
 
