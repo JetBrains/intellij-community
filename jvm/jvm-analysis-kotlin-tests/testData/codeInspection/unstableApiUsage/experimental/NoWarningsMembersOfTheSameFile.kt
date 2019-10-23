@@ -8,23 +8,23 @@ class NoWarningsMembersOfTheSameFile {
 
   companion object {
 
-    private var staticField: <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>? = null;
+    private var staticField: <warning descr="'pkg.AnnotatedClass' is marked unstable with @ApiStatus.Experimental">AnnotatedClass</warning>? = null;
 
-    private fun staticReturnType(): <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>? {
+    private fun staticReturnType(): <warning descr="'pkg.AnnotatedClass' is marked unstable with @ApiStatus.Experimental">AnnotatedClass</warning>? {
       return null;
     }
 
-    private fun staticParamType(param: <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>?) {
+    private fun staticParamType(param: <warning descr="'pkg.AnnotatedClass' is marked unstable with @ApiStatus.Experimental">AnnotatedClass</warning>?) {
     }
   }
 
-  private var field: <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>? = null;
+  private var field: <warning descr="'pkg.AnnotatedClass' is marked unstable with @ApiStatus.Experimental">AnnotatedClass</warning>? = null;
 
-  private fun returnType(): <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>? {
+  private fun returnType(): <warning descr="'pkg.AnnotatedClass' is marked unstable with @ApiStatus.Experimental">AnnotatedClass</warning>? {
     return null;
   }
 
-  private fun paramType(param: <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>?) {
+  private fun paramType(param: <warning descr="'pkg.AnnotatedClass' is marked unstable with @ApiStatus.Experimental">AnnotatedClass</warning>?) {
   }
 
   fun testNoWarningsProducedForMembersOfTheSameClass() {
