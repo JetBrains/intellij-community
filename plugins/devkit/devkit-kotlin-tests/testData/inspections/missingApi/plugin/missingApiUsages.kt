@@ -22,9 +22,6 @@ import library.RecentKotlinAnnotation
 import library.OldAnnotation
 import library.OldKotlinAnnotation
 
-import library.RecentClass.*
-import library.*
-
 class A {
   var r: <error descr="'library.RecentClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this type might have had a different fully qualified name in the previous IDEs.">RecentClass</error>? = null
   var kr: <error descr="'library.RecentKotlinClass' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this type might have had a different fully qualified name in the previous IDEs.">RecentKotlinClass</error>? = null
@@ -78,12 +75,6 @@ class A {
     Supplier<OldKotlinClass> { <error descr="'OldKotlinClass()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">OldKotlinClass</error>() }
   }
 
-  fun topLevelFunction(s: String) {
-    <error descr="'recentTopLevelFunction()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">recentTopLevelFunction</error>()
-    s.<error descr="'recentExtensionFunction(java.lang.String)' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">recentExtensionFunction</error>()
-    s.<error descr="'recentInlineExtensionFunction(java.lang.String, kotlin.jvm.functions.Function0<java.lang.String>)' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">recentInlineExtensionFunction</error> { "" }
-  }
-
   fun singleAbstractMethod() {
     <error descr="'library.RecentSamInterface' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this type might have had a different fully qualified name in the previous IDEs.">RecentSamInterface</error> { 42 }
   }
@@ -125,12 +116,4 @@ class B {
   )
   fun recentAnnotationParam() {
   }
-
-  @OldKotlinAnnotation(
-    oldParam = 0,
-    <error descr="'recentParam' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">recentParam</error> = 1
-  )
-  fun recentKotlinAnnotationParam() {
-  }
-
 }

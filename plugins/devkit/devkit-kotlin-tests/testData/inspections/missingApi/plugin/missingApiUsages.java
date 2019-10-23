@@ -135,7 +135,7 @@ class KotlinNonDirectOverrideOfRecentMethod extends KOverrider {
   }
 }
 
-class <error descr="Default constructor of 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">D</error> extends OldClassWithDefaultConstructor {
+class <error descr="'OldClassWithDefaultConstructor()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">D</error> extends OldClassWithDefaultConstructor {
   //implicit call to default "recent" constructor that is NOT available in source code.
 }
 
@@ -145,10 +145,10 @@ class <error descr="'OldKotlinClassWithDefaultConstructor()' is available only s
 
 //Class with constructors delegating to default "recent" constructor.
 class E extends OldClassWithDefaultConstructor {
-  public <error descr="Default constructor of 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">E</error>() {}
+  public <error descr="'OldClassWithDefaultConstructor()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">E</error>() {}
 
   public E(int x) {
-    <error descr="Default constructor of 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">super</error>();
+    <error descr="'OldClassWithDefaultConstructor()' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">super</error>();
   }
 }
 
