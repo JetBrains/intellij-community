@@ -9,6 +9,7 @@ import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -369,8 +370,8 @@ object UpdateChecker {
       }
       else {
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
-        val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
-        showNotification(project, message, {
+        val title = "${ApplicationNamesInfo.getInstance().fullProductName} ${newBuild.version} available"
+        showNotification(project, title, "", {
           IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
           runnable()
         }, NotificationUniqueType.PLATFORM)
@@ -390,9 +391,10 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
+        val title = IdeBundle.message("updates.plugins.ready.title", ApplicationNamesInfo.getInstance().fullProductName, " available")
         val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
         val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
-        showNotification(project, message, runnable, NotificationUniqueType.PLUGINS)
+        showNotification(project, title, message, runnable, NotificationUniqueType.PLUGINS)
       }
     }
 
@@ -408,9 +410,10 @@ object UpdateChecker {
           runnable.invoke()
         }
         else {
+          val title = IdeBundle.message("updates.plugins.ready.title", ApplicationNamesInfo.getInstance().fullProductName, " available")
           val updates = update.components.joinToString(", ")
           val message = IdeBundle.message("updates.external.ready.message", update.components.size, updates)
-          showNotification(project, message, runnable, NotificationUniqueType.EXTERNAL)
+          showNotification(project, title, message, runnable, NotificationUniqueType.EXTERNAL)
         }
       }
     }
@@ -420,14 +423,14 @@ object UpdateChecker {
     }
   }
 
-  private fun showNotification(project: Project?, message: String, action: () -> Unit, notificationType: NotificationUniqueType) {
-    val listener = NotificationListener { notification, _ ->
-      notification.expire()
-      action.invoke()
-    }
-
-    val title = IdeBundle.message("update.notifications.title")
-    val notification = NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener)
+  private fun showNotification(project: Project?, title: String, message: String, action: () -> Unit, notificationType: NotificationUniqueType) {
+    val notification = NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, null)
+    notification.addAction(object : NotificationAction("Update...") {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        notification.expire()
+        action.invoke()
+      }
+    })
     notification.whenExpired { ourShownNotifications.remove(notificationType, notification) }
     notification.notify(project)
     ourShownNotifications.putValue(notificationType, notification)
