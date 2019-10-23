@@ -117,12 +117,4 @@ public interface PicoContainer extends Disposable {
      * @since 1.1
      */
     List getComponentInstancesOfType(Class componentType);
-
-    /**
-     * Accepts a visitor that should visit the child containers, component adapters and component instances.
-     *
-     * @param visitor the visitor
-     * @since 1.1
-     */
-    void accept(PicoVisitor visitor);
 }

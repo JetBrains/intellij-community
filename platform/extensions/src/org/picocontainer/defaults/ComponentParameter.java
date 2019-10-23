@@ -12,7 +12,6 @@ package org.picocontainer.defaults;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoVisitor;
 
 
 /**
@@ -135,20 +134,6 @@ public class ComponentParameter
                 return;
             }
             throw e;
-        }
-    }
-
-    /**
-     * Accept the visitor for the current {@link Parameter}. If internally a
-     * {@link CollectionComponentParameter}is used, it is visited also.
-     *
-     * @see BasicComponentParameter#accept(PicoVisitor)
-     */
-    @Override
-    public void accept(PicoVisitor visitor) {
-        super.accept(visitor);
-        if (collectionParameter != null) {
-            collectionParameter.accept(visitor);
         }
     }
 }

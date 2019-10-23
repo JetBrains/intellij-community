@@ -57,12 +57,6 @@ public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleMa
         return delegate;
     }
 
-    @Override
-    public void accept(PicoVisitor visitor) {
-        visitor.visitComponentAdapter(this);
-        delegate.accept(visitor);
-    }
-
     /**
      * Invokes delegate dispose method if the delegate is a LifecycleManager
      * {@inheritDoc}

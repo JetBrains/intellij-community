@@ -60,13 +60,4 @@ public interface ComponentAdapter {
     @Deprecated
     default void verify(PicoContainer container) {
     }
-
-    /**
-     * Accepts a visitor for this ComponentAdapter. The method is normally called by visiting a {@link PicoContainer}, that
-     * cascades the visitor also down to all its ComponentAdapter instances.
-     *
-     * @param visitor the visitor.
-     * @since 1.1
-     */
-    void accept(PicoVisitor visitor);
 }

@@ -9,7 +9,10 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.Parameter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -76,16 +79,6 @@ public class BasicComponentParameter
             throw new UnsatisfiableDependenciesException(adapter, set, container);
         }
         componentAdapter.verify(container);
-    }
-
-    /**
-     * Visit the current {@link Parameter}.
-     *
-     * @see Parameter#accept(PicoVisitor)
-     */
-    @Override
-    public void accept(final PicoVisitor visitor) {
-        visitor.visitParameter(this);
     }
 
     private ComponentAdapter resolveAdapter(PicoContainer container, ComponentAdapter adapter, Class expectedType) {

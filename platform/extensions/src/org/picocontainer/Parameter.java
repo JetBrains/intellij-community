@@ -62,13 +62,4 @@ public interface Parameter {
      * @since 1.1
      */
     void verify(PicoContainer container, ComponentAdapter adapter, Class expectedType);
-
-    /**
-     * Accepts a visitor for this Parameter. The method is normally called by visiting a {@link ComponentAdapter}, that
-     * cascades the {@linkplain PicoVisitor visitor} also down to all its {@linkplain Parameter Parameters}.
-     *
-     * @param visitor the visitor.
-     * @since 1.1
-     */
-    void accept(PicoVisitor visitor);
 }

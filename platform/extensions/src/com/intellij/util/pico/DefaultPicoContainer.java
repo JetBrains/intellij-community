@@ -9,7 +9,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.Parameter;
+import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.AmbiguousComponentResolutionException;
 import org.picocontainer.defaults.DefaultLifecycleStrategy;
 import org.picocontainer.defaults.DuplicateComponentKeyRegistrationException;
@@ -265,18 +268,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Override
   public boolean removeChildContainer(@NotNull PicoContainer child) {
     return children.remove(child);
-  }
-
-  @Override
-  public void accept(PicoVisitor visitor) {
-    visitor.visitContainer(this);
-
-    for (ComponentAdapter adapter : getComponentAdapters()) {
-      adapter.accept(visitor);
-    }
-    for (PicoContainer child : new SmartList<>(children)) {
-      child.accept(visitor);
-    }
   }
 
   @Override

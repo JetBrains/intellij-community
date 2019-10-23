@@ -10,7 +10,6 @@
 package org.picocontainer.defaults;
 
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.PicoVisitor;
 
 /**
  * Base class for a ComponentAdapter with general functionality.
@@ -80,11 +79,6 @@ public abstract class AbstractComponentAdapter implements ComponentAdapter {
      */
     public String toString() {
         return getClass().getName() + "[" + getComponentKey() + "]";
-    }
-
-    @Override
-    public void accept(PicoVisitor visitor) {
-        visitor.visitComponentAdapter(this);
     }
 
 }

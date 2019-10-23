@@ -176,16 +176,6 @@ public class CollectionComponentParameter
     }
 
     /**
-     * Visit the current {@link Parameter}.
-     *
-     * @see Parameter#accept(PicoVisitor)
-     */
-    @Override
-    public void accept(final PicoVisitor visitor) {
-        visitor.visitParameter(this);
-    }
-
-    /**
      * Evaluate whether the given component adapter will be part of the collective type.
      *
      * @param adapter a <code>ComponentAdapter</code> value

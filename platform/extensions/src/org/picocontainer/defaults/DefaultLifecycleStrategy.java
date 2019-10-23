@@ -15,7 +15,7 @@ import org.picocontainer.Disposable;
  * @see Startable
  * @see Disposable
  */
-public class DefaultLifecycleStrategy extends AbstractMonitoringLifecycleStrategy {
+public final class DefaultLifecycleStrategy implements LifecycleStrategy {
   @Override
   public void dispose(Object component) {
     if (component instanceof Disposable) {

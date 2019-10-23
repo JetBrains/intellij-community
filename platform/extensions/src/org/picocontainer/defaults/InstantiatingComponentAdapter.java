@@ -9,7 +9,10 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.Parameter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoIntrospectionException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -121,16 +124,6 @@ public abstract class InstantiatingComponentAdapter extends AbstractComponentAda
       componentParameters[i] = ComponentParameter.DEFAULT;
     }
     return componentParameters;
-  }
-
-  @Override
-  public void accept(PicoVisitor visitor) {
-    super.accept(visitor);
-    if (parameters != null) {
-      for (Parameter parameter : parameters) {
-        parameter.accept(visitor);
-      }
-    }
   }
 
   @Override

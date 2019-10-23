@@ -508,21 +508,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return children.remove(child);
   }
 
-  @Override
-  public void accept(PicoVisitor visitor) {
-    visitor.visitContainer(this);
-    final List componentAdapters = new ArrayList(getComponentAdapters());
-    for (Iterator iterator = componentAdapters.iterator(); iterator.hasNext(); ) {
-      ComponentAdapter componentAdapter = (ComponentAdapter)iterator.next();
-      componentAdapter.accept(visitor);
-    }
-    final List allChildren = new ArrayList(children);
-    for (Iterator iterator = allChildren.iterator(); iterator.hasNext(); ) {
-      PicoContainer child = (PicoContainer)iterator.next();
-      child.accept(visitor);
-    }
-  }
-
   /**
    * <p>
    * Implementation of lifecycle manager which delegates to the container's component adapters.

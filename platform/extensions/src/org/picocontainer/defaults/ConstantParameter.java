@@ -66,16 +66,6 @@ public class ConstantParameter
         }
     }
 
-    /**
-     * Visit the current {@link Parameter}.
-     *
-     * @see Parameter#accept(PicoVisitor)
-     */
-    @Override
-    public void accept(final PicoVisitor visitor) {
-        visitor.visitParameter(this);
-    }
-
     private boolean checkPrimitive(Class expectedType) {
         try {
             if (expectedType.isPrimitive()) {
