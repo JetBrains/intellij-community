@@ -3609,6 +3609,14 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-30861
+  public void testDontReplaceSpecifiedReturnTypeWithSelf() {
+    doTest("dict",
+           "from collections import defaultdict\n" +
+           "data = defaultdict(dict)\n" +
+           "expr = data['name']");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

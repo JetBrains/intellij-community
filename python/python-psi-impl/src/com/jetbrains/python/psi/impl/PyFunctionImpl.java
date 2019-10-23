@@ -279,7 +279,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         type = null;
       }
     }
-    if (receiver != null) {
+    else if (receiver != null) {
       type = replaceSelf(type, receiver, context);
     }
     if (type != null && isDynamicallyEvaluated(parameters.values(), context)) {
