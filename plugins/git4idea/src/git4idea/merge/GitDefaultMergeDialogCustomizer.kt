@@ -1,18 +1,30 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge
 
+import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.Consumer
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
+import com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
@@ -20,12 +32,17 @@ import git4idea.GitUtil
 import git4idea.GitUtil.CHERRY_PICK_HEAD
 import git4idea.GitUtil.MERGE_HEAD
 import git4idea.GitVcs
+import git4idea.changes.GitChangeUtils
+import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
+import git4idea.history.GitLogUtil.readFullDetails
+import git4idea.history.GitLogUtil.readFullDetailsForHashes
 import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import java.io.File
 import java.io.IOException
+import java.util.*
 import javax.swing.JPanel
 
 open class GitDefaultMergeDialogCustomizer(
@@ -213,10 +230,106 @@ fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? {
     .singleOrNull()
 }
 
+internal fun getTitleWithCommitDetailsCustomizer(
+  title: String,
+  repository: GitRepository,
+  file: FilePath,
+  commit: String
+) = DiffEditorTitleCustomizer {
+  getTitleWithShowDetailsAction(title) {
+    val dlg = ChangeListViewerDialog(repository.project)
+    dlg.loadChangesInBackground {
+      val changeList = GitChangeUtils.getRevisionChanges(
+        repository.project,
+        repository.root,
+        commit,
+        true,
+        false,
+        false
+      )
+      ChangeListViewerDialog.ChangelistData(changeList, file)
+    }
+    dlg.title = StringUtil.stripHtml(title, false)
+    dlg.isModal = true
+    dlg.show()
+  }
+}
+
+internal fun getTitleWithCommitsRangeDetailsCustomizer(
+  title: String,
+  repository: GitRepository,
+  file: FilePath,
+  range: Pair<String, String>
+) = DiffEditorTitleCustomizer {
+  getTitleWithShowDetailsAction(title) {
+    val details = mutableListOf<VcsCommitMetadata>()
+    val filteredCommits = HashSet<VcsCommitMetadata>()
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      {
+        readFullDetails(
+          repository.project,
+          repository.root,
+          Consumer { commit ->
+            val commitMetadata = VcsCommitMetadataImpl(
+              commit.id, commit.parents, commit.commitTime, commit.root, commit.subject,
+              commit.author, commit.fullMessage, commit.committer, commit.authorTime)
+            if (commit.affectedPaths.contains(file)) {
+              filteredCommits.add(commitMetadata)
+            }
+            details.add(commitMetadata)
+          },
+          "${range.first}..${range.second}")
+      },
+      "Collecting Commits Details...",
+      true,
+      repository.project)
+    val dlg = MergeConflictMultipleCommitInfoDialog(repository.project, repository.root, details, filteredCommits)
+    dlg.title = StringUtil.stripHtml(title, false)
+    dlg.show()
+  }
+}
+
 internal fun getTitleWithShowDetailsAction(title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
     .addToRight(LinkLabel.create("Show Details", action))
+
+private class MergeConflictMultipleCommitInfoDialog(
+  private val project: Project,
+  private val root: VirtualFile,
+  commits: List<VcsCommitMetadata>,
+  private val filteredCommits: Set<VcsCommitMetadata>
+) : MultipleCommitInfoDialog(project, commits) {
+  init {
+    filterCommitsByConflictingFile()
+  }
+
+  @Throws(VcsException::class)
+  override fun loadChanges(commits: List<VcsCommitMetadata>): List<Change> {
+    val changes = mutableListOf<Change>()
+    readFullDetailsForHashes(project, root, commits.map { commit -> commit.id.asString() }, GitCommitRequirements.DEFAULT) { gitCommit ->
+      changes.addAll(gitCommit.changes)
+    }
+    return CommittedChangesTreeBrowser.zipChanges(changes)
+  }
+
+  private fun filterCommitsByConflictingFile() {
+    setFilter { commit -> filteredCommits.contains(commit) }
+  }
+
+  override fun createSouthAdditionalPanel(): JPanel {
+    val checkbox = JBCheckBox("Filter by conflicted file", true)
+    checkbox.addItemListener {
+      if (checkbox.isSelected) {
+        filterCommitsByConflictingFile()
+      }
+      else {
+        resetFilter()
+      }
+    }
+    return BorderLayoutPanel().addToCenter(checkbox)
+  }
+}
 
 private data class RefInfo(val hash: Hash, val branchName: String?) {
   val presentable: String = branchName ?: hash.toShortString()
