@@ -32,10 +32,19 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           final int startOffset,
                                           final int endOffset,
                                           @NotNull final Processor<? super HighlightInfo> processor) {
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    return processHighlights(model, project, minSeverity, startOffset, endOffset, processor);
+  }
+
+  public static boolean processHighlights(@NotNull MarkupModelEx model,
+                                          @NotNull Project project,
+                                          @Nullable("null means all") final HighlightSeverity minSeverity,
+                                          final int startOffset,
+                                          final int endOffset,
+                                          @NotNull final Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
       Object tt = marker.getErrorStripeTooltip();

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -121,6 +122,18 @@ public class UpdateHighlightersUtil {
   }
 
 
+  public static void setHighlightersToSingleEditor(@NotNull Project project,
+                                                   @NotNull Editor editor,
+                                                   int startOffset,
+                                                   int endOffset,
+                                                   @NotNull Collection<? extends HighlightInfo> highlights,
+                                                   @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                                   int group) {
+    Document document = editor.getDocument();
+    MarkupModelEx markup = (MarkupModelEx)editor.getMarkupModel();
+    setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
+  }
+
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull Document document,
                                              int startOffset,
@@ -128,6 +141,18 @@ public class UpdateHighlightersUtil {
                                              @NotNull Collection<? extends HighlightInfo> highlights,
                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                              int group) {
+    MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
+  }
+
+  private static void setHighlightersToEditor(@NotNull Project project,
+                                              @NotNull Document document,
+                                              int startOffset,
+                                              int endOffset,
+                                              @NotNull Collection<? extends HighlightInfo> highlights,
+                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                              int group,
+                                              @NotNull MarkupModelEx markup) {
     TextRange range = new TextRange(startOffset, endOffset);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -135,19 +160,20 @@ public class UpdateHighlightersUtil {
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     codeAnalyzer.cleanFileLevelHighlights(project, group, psiFile);
 
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     assertMarkupConsistent(markup, project);
 
-    setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), (MarkupModelEx)markup, group);
+    setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), markup, group);
   }
+
 
   @NotNull
   private static List<HighlightInfo> applyPostFilter(@NotNull Project project,
                                                      @NotNull List<? extends HighlightInfo> highlightInfos) {
     List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
     for (HighlightInfo info : highlightInfos) {
-      if (accept(project, info))
+      if (accept(project, info)) {
         result.add(info);
+      }
     }
     return result;
   }
@@ -243,7 +269,7 @@ public class UpdateHighlightersUtil {
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+    DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
         if (info.getGroup() == group) {
           RangeHighlighter highlighter = info.getHighlighter();
           int hiStart = highlighter.getStartOffset();
