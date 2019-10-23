@@ -789,7 +789,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
         @Override
         public String getEditorTabName() {
-          return "Local Changes: " + myChangeProcessor.getCurrentChangeName();
+          String name = myChangeProcessor.getCurrentChangeName();
+          return name != null ? name : "";
         }
       }
     }
