@@ -335,7 +335,7 @@ class GitBranchPopupActions {
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
@@ -532,7 +532,7 @@ class GitBranchPopupActions {
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new Separator(),
-        new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
@@ -716,15 +716,12 @@ class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
-    private final GitRepository mySelectedRepository;
 
-    CompareAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
-                  @NotNull GitRepository selectedRepository) {
+    CompareAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
       super("Compare with Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
-      mySelectedRepository = selectedRepository;
     }
 
     @Override
@@ -732,7 +729,7 @@ class GitBranchPopupActions {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       GitBrancher brancher = GitBrancher.getInstance(myProject);
-      brancher.compare(myBranchName, myRepositories, mySelectedRepository);
+      brancher.compare(myBranchName, myRepositories);
     }
 
     @Override

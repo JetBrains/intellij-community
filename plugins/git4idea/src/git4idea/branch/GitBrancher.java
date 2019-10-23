@@ -156,7 +156,7 @@ public interface GitBrancher {
   /**
    * Compares commits from the HEAD with the specified branch.
    */
-  void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories, @NotNull GitRepository selectedRepository);
+  void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories);
 
   /**
    * Compares the current working tree with its state in the selected branch.
