@@ -22,8 +22,6 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
                                              private var implementationClass: Class<*>?) : ComponentAdapter {
   private var initializing = false
 
-  final override fun verify(container: PicoContainer) {}
-
   final override fun accept(visitor: PicoVisitor) {
     visitor.visitComponentAdapter(this)
   }

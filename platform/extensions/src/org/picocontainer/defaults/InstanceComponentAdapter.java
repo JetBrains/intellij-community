@@ -57,10 +57,6 @@ public final class InstanceComponentAdapter extends AbstractComponentAdapter imp
   }
 
   @Override
-  public void verify(PicoContainer container) {
-  }
-
-  @Override
   public void dispose(PicoContainer container) {
     dispose(componentInstance);
   }

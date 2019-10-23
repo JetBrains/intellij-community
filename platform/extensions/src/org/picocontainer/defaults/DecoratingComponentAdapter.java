@@ -53,11 +53,6 @@ public class DecoratingComponentAdapter implements ComponentAdapter, LifecycleMa
         return delegate.getComponentInstance(container);
     }
 
-    @Override
-    public void verify(PicoContainer container) throws PicoIntrospectionException {
-        delegate.verify(container);
-    }
-
     public ComponentAdapter getDelegate() {
         return delegate;
     }

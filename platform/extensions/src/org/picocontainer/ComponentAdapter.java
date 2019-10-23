@@ -55,13 +55,11 @@ public interface ComponentAdapter {
     Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException;
 
     /**
-     * Verify that all dependencies for this adapter can be satisifed. Normally, the adapter should verify this by
-     * checking that the associated PicoContainer contains all the needed dependnecies.
-     *
-     * @param container the {@link PicoContainer}, that is used to resolve any possible dependencies of the instance.
-     * @throws PicoIntrospectionException if one or more dependencies cannot be resolved.
+     * @deprecated Not used anymore.
      */
-    void verify(PicoContainer container) throws PicoIntrospectionException;
+    @Deprecated
+    default void verify(PicoContainer container) {
+    }
 
     /**
      * Accepts a visitor for this ComponentAdapter. The method is normally called by visiting a {@link PicoContainer}, that
