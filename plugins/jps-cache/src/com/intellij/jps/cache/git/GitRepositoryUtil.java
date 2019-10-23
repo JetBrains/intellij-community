@@ -6,13 +6,13 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.EmptyIterator;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -25,14 +25,14 @@ public class GitRepositoryUtil {
   public static Iterator<String> getCommitsIterator(@NotNull Project project) {
     if (GitUtil.hasGitRepositories(project)) {
       VirtualFile virtualFile = project.getProjectFile();
-      if (virtualFile == null) return EmptyIterator.getInstance();
+      if (virtualFile == null) return Collections.emptyIterator();
 
       GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(virtualFile);
-      if (repository == null) return EmptyIterator.getInstance();
+      if (repository == null) return Collections.emptyIterator();
       return new GitCommitsIterator(project, repository);
     }
     LOG.debug("Project doesn't contain Git repository");
-    return EmptyIterator.getInstance();
+    return Collections.emptyIterator();
   }
 
   private static class GitCommitsIterator implements Iterator<String> {

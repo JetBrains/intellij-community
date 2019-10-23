@@ -1,7 +1,6 @@
 package com.intellij.jps.cache.loader;
 
 import com.intellij.jps.cache.client.JpsServerClient;
-import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -13,16 +12,19 @@ import java.io.File;
 import java.util.Map;
 
 class JpsProductionOutputLoader extends JpsCompilationOutputLoader {
-  JpsProductionOutputLoader(JpsServerClient client, Project project, PersistentCachingModuleHashingService hashingService) {
-    super(client, project, hashingService);
+  JpsProductionOutputLoader(JpsServerClient client, Project project) {
+    super(client, project);
   }
 
   @Override
-  LoaderStatus load(@NotNull File compilerOutputDir, @NotNull SegmentedProgressIndicatorManager progressIndicatorManager) {
+  LoaderStatus load(@NotNull File compilerOutputDir, @NotNull JpsLoaderContext context) {
+    SegmentedProgressIndicatorManager progressIndicatorManager = context.getIndicatorManager();
     File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
     progressIndicatorManager.setText(this, "Calculating affected production modules");
-    Map<String, String> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
-                                                                       myHashingService::computeProductionHashesForProject);
+    Map<String, String> affectedProductionModules = getAffectedModules(productionDir, context.getCurrentSourcesState() != null
+                                                                                      ? context.getCurrentSourcesState().getProduction()
+                                                                                      : null,
+                                                                       context.getCommitSourcesState().getProduction());
     progressIndicatorManager.finished(this);
     progressIndicatorManager.getProgressIndicator().checkCanceled();
     if (affectedProductionModules.size() > 0) {
@@ -32,7 +34,8 @@ class JpsProductionOutputLoader extends JpsCompilationOutputLoader {
                                                                                               affectedProductionModules, productionDir);
       myTmpFolderToModuleName = downloadResultsPair.second;
       if (!downloadResultsPair.first) return LoaderStatus.FAILED;
-    } else {
+    }
+    else {
       // Move progress up to the half of segment size
       displaySkippedStepOnProgressBar(progressIndicatorManager);
     }

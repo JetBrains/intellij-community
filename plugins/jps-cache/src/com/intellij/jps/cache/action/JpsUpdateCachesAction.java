@@ -4,7 +4,6 @@ import com.intellij.jps.cache.loader.JpsOutputLoaderManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 public class JpsUpdateCachesAction extends DumbAwareAction {
   @Override
@@ -12,11 +11,5 @@ public class JpsUpdateCachesAction extends DumbAwareAction {
     Project project = actionEvent.getProject();
     if (project == null) return;
     JpsOutputLoaderManager.getInstance(project).load(false);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    Project project = event.getProject();
-    event.getPresentation().setEnabled(project != null && JpsOutputLoaderManager.getInstance(project).isInitialized());
   }
 }

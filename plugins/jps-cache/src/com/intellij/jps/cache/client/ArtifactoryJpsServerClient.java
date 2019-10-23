@@ -19,9 +19,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
+import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,6 +81,37 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     ArtifactoryEntryDto[] responseDtos = doPostRequest(searchQuery, ArtifactoryEntryDto[].class);
     if (responseDtos == null) return Collections.emptySet();
     return Arrays.stream(responseDtos).map(ArtifactoryEntryDto::getName).collect(Collectors.toSet());
+  }
+
+  @Nullable
+  @Override
+  public File downloadMetadataById(@NotNull String metadataId, @NotNull File targetDir) {
+    String downloadUrl = stringThree + REPOSITORY_NAME + "/metadata/" + metadataId;
+    DownloadableFileService service = DownloadableFileService.getInstance();
+    String fileName = "metadata.json";
+    DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
+    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), fileName);
+
+    LOG.debug("Downloading JPS metadata from: " + downloadUrl);
+    File metadataFile = null;
+    try {
+      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir);
+      Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
+      metadataFile = first != null ? first.first : null;
+      if (metadataFile == null) {
+        LOG.warn("Failed to download JPS metadata");
+        return null;
+      }
+      return metadataFile;
+    }
+    catch (ProcessCanceledException | IOException e) {
+      //noinspection InstanceofCatchParameter
+      if (e instanceof IOException) LOG.warn("Failed to download JPS metadata from URL: " + downloadUrl, e);
+      if (metadataFile != null && metadataFile.exists()) {
+        FileUtil.delete(metadataFile);
+      }
+      return null;
+    }
   }
 
   @Override

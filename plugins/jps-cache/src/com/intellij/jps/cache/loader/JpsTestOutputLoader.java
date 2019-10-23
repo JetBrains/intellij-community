@@ -1,7 +1,6 @@
 package com.intellij.jps.cache.loader;
 
 import com.intellij.jps.cache.client.JpsServerClient;
-import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -13,16 +12,19 @@ import java.io.File;
 import java.util.Map;
 
 class JpsTestOutputLoader extends JpsCompilationOutputLoader {
-  JpsTestOutputLoader(JpsServerClient client, Project project, PersistentCachingModuleHashingService hashingService) {
-    super(client, project, hashingService);
+  JpsTestOutputLoader(JpsServerClient client, Project project) {
+    super(client, project);
   }
 
   @Override
-  LoaderStatus load(@NotNull File compilerOutputDir, @NotNull SegmentedProgressIndicatorManager progressIndicatorManager) {
+  LoaderStatus load(@NotNull File compilerOutputDir, @NotNull JpsLoaderContext context) {
     File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
+    SegmentedProgressIndicatorManager progressIndicatorManager = context.getIndicatorManager();
     progressIndicatorManager.setText(this, "Calculating affected test modules");
-    Map<String, String> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
-                                                                 myHashingService::computeTestHashesForProject);
+    Map<String, String> affectedTestModules = getAffectedModules(testDir, context.getCurrentSourcesState() != null
+                                                                          ? context.getCurrentSourcesState().getTest()
+                                                                          : null,
+                                                                 context.getCommitSourcesState().getTest());
     progressIndicatorManager.finished(this);
     progressIndicatorManager.getProgressIndicator().checkCanceled();
     if (affectedTestModules.size() > 0) {
@@ -32,7 +34,8 @@ class JpsTestOutputLoader extends JpsCompilationOutputLoader {
                                                                                               affectedTestModules, testDir);
       myTmpFolderToModuleName = downloadResultsPair.second;
       if (!downloadResultsPair.first) return LoaderStatus.FAILED;
-    } else {
+    }
+    else {
       // Move progress up to the half of segment size
       displaySkippedStepOnProgressBar(progressIndicatorManager);
     }

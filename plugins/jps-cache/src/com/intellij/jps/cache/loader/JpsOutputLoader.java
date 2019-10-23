@@ -4,7 +4,7 @@ import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import org.jetbrains.annotations.NotNull;
 
 interface JpsOutputLoader {
-  LoaderStatus load(@NotNull String commitId, @NotNull SegmentedProgressIndicatorManager indicatorManager);
+  LoaderStatus load(@NotNull JpsLoaderContext context);
   void rollback();
   void apply();
 
