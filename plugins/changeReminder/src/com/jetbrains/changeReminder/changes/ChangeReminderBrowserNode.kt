@@ -37,6 +37,7 @@ class ChangeReminderBrowserNode(private val files: Collection<VirtualFile>,
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.append(NODE_TITLE, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    renderer.icon = AllIcons.Nodes.Related
     appendCount(renderer)
     val project = predictionService.project
     if (predictionService.isReady) {
