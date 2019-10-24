@@ -449,6 +449,9 @@
       <action id="DumpIndex" internal="true" class="com.intellij.internal.DumpIndexAction"
               text="Dump Index"/>
 
+      <action id="InspectStubIndex" internal="true" class="com.intellij.internal.InspectStubIndexAction"
+              text="Inspect Stub Index"/>
+
       <add-to-group group-id="Internal"/>
     </group>
 
