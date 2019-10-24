@@ -59,7 +59,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    */
   @SuppressWarnings("rawtypes")
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   protected void notifyColoredListeners(String text, Key attributes) {
   }
 
@@ -68,7 +68,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
      *             listen for {@link ProcessListener#onTextAvailable(ProcessEvent, Key)} events
      */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public void addColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
     addProcessListener(new ProcessAdapter() {
       @Override
