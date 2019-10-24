@@ -54,10 +54,7 @@ else:
                 log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
                     sys.executable, os.path.join(dirname, 'setup_cython.py')))
             else:
-                # Don't suggest to build Cython extensions for CPython 3.8 until CPython 3.8 beta 1 is released.
-                # See: https://github.com/cython/cython/issues/2938#issuecomment-498410903.
-                if sys.version_info < (3, 8):
-                    show_frame_eval_warning = True
+                show_frame_eval_warning = True
 
     else:
         raise RuntimeError('Unexpected value for PYDEVD_USE_FRAME_EVAL: %s (accepted: YES, NO)' % (use_frame_eval,))
