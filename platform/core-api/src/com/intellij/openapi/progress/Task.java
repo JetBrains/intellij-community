@@ -235,7 +235,7 @@ public abstract class Task implements TaskInfo, Progressive {
      * @deprecated do not implement. to remove in IDEA 16
      */
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2016")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
     public DumbModeAction getDumbModeAction() {
       return DumbModeAction.NOTHING;
     }
