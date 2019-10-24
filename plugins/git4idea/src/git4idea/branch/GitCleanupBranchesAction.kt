@@ -33,7 +33,6 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl
 import git4idea.config.GitSharedSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -393,7 +392,7 @@ private fun checkBranchesSynchronously(log: VcsProjectLog,
 }
 
 fun findMyCommits(log: VcsProjectLog): Set<Int>? {
-  val filterByMe = VcsLogFilterObject.fromUserNames(listOf(VcsLogUserFilterImpl.ME), log.dataManager!!)
+  val filterByMe = VcsLogFilterObject.fromUserNames(listOf(VcsLogFilterObject.ME), log.dataManager!!)
   return log.dataManager!!.index.dataGetter!!.filter(listOf(filterByMe))
 }
 

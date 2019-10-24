@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.highlighters;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
     VcsLogUserFilter userFilter = filters.get(VcsLogFilterCollection.USER_FILTER);
     if (userFilter == null) return false;
     Collection<String> filterByName = ((VcsLogUserFilterImpl)userFilter).getUserNamesForPresentation();
-    if (Collections.singleton(VcsLogUserFilterImpl.ME).containsAll(filterByName)) return true;
+    if (Collections.singleton(VcsLogFilterObject.ME).containsAll(filterByName)) return true;
     return false;
   }
 

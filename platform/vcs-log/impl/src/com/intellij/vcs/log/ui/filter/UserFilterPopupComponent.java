@@ -12,7 +12,7 @@ import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.util.VcsUserUtil;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ public class UserFilterPopupComponent
     group.add(createAllAction());
     group.add(createSelectMultipleValuesAction());
     if (!myLogData.getCurrentUser().isEmpty()) {
-      group.add(new PredefinedValueAction(VcsLogUserFilterImpl.ME));
+      group.add(new PredefinedValueAction(VcsLogFilterObject.ME));
     }
     group.addAll(createRecentItemsActionGroup());
     return group;
@@ -51,7 +51,7 @@ public class UserFilterPopupComponent
   @NotNull
   protected ActionGroup createSpeedSearchActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new SpeedsearchPredefinedValueAction(VcsLogUserFilterImpl.ME));
+    group.add(new SpeedsearchPredefinedValueAction(VcsLogFilterObject.ME));
     group.add(Separator.getInstance());
     for (String user : collectUsers(myLogData)) {
       group.add(new SpeedsearchPredefinedValueAction(user));
@@ -62,7 +62,7 @@ public class UserFilterPopupComponent
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.concat(Collections.singletonList(VcsLogUserFilterImpl.ME), collectUsers(myLogData));
+    return ContainerUtil.concat(Collections.singletonList(VcsLogFilterObject.ME), collectUsers(myLogData));
   }
 
   @NotNull

@@ -23,8 +23,6 @@ import java.util.Set;
 public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   private static final Logger LOG = Logger.getInstance(VcsLogUserFilterImpl.class);
 
-  @NotNull public static final String ME = "me";
-
   @NotNull private final Collection<String> myUsers;
   @NotNull private final Map<VirtualFile, VcsUser> myData;
   @NotNull private final MultiMap<String, VcsUser> myAllUsersByNames = MultiMap.create();
@@ -62,7 +60,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @NotNull
   private Set<VcsUser> getUsers(@NotNull VirtualFile root, @NotNull String name) {
     Set<VcsUser> users = new HashSet<>();
-    if (ME.equals(name)) {
+    if (VcsLogFilterObject.ME.equals(name)) {
       VcsUser vcsUser = myData.get(root);
       if (vcsUser != null) {
         users.addAll(getUsers(vcsUser.getName())); // do not just add vcsUser, also add synonyms
@@ -93,7 +91,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
       if (!users.isEmpty()) {
         return users.contains(commit.getAuthor());
       }
-      else if (!name.equals(ME)) {
+      else if (!name.equals(VcsLogFilterObject.ME)) {
         String lowerUser = VcsUserUtil.nameToLowerCase(name);
         boolean result = VcsUserUtil.nameToLowerCase(commit.getAuthor().getName()).equals(lowerUser) ||
                          VcsUserUtil.emailToLowerCase(commit.getAuthor().getEmail()).startsWith(lowerUser + "@");

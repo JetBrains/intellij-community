@@ -22,6 +22,8 @@ import java.util.regex.PatternSyntaxException
 private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
 
 object VcsLogFilterObject {
+  const val ME = "me"
+
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
     if (isRegexpAllowed && VcsLogUtil.maybeRegexp(text)) {
