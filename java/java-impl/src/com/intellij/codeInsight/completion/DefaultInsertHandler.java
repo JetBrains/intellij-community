@@ -12,10 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Please implement InsertHandler instead.
- * To remove after IDEA 16
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2016")
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public class DefaultInsertHandler implements InsertHandler {
 
   @Override

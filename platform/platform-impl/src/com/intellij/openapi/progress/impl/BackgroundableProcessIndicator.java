@@ -105,10 +105,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     }, option);
   }
 
-  /**
-   * to remove in IDEA 16
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   public DumbModeAction getDumbModeAction() {
     return myDumbModeAction;
