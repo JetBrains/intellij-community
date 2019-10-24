@@ -23,11 +23,15 @@ class CollectingGroovyInferenceSession(
   context: PsiElement,
   contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
-  private val ignoreClosureArguments: Set<GrParameter> = emptySet()
+  private val ignoreClosureArguments: Set<GrParameter> = emptySet(),
+  private val depth : Int = 0
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, false, emptySet()) {
 
 
+
   companion object {
+    private const val MAX_DEPTH = 127
+
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
                               nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
       val collectingSession = CollectingGroovyInferenceSession(nearestCall.parentOfType<GrMethod>()!!.typeParameters, nearestCall)
@@ -65,7 +69,10 @@ class CollectingGroovyInferenceSession(
                                   context: PsiElement,
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, ignoreClosureArguments)
+    if (depth >= MAX_DEPTH) {
+      throw AssertionError("Inference process has gone too deep on ${result.element?.text}")
+    }
+    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, ignoreClosureArguments, depth + 1)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     mirrorInnerVariables(nestedSession)
