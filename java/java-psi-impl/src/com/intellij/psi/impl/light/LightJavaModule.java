@@ -125,7 +125,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Cannot modify automatic module '" + getName() + "'");
+    throw new IncorrectOperationException("Cannot modify an automatic module '" + getName() + "'");
   }
 
   @Override
@@ -262,7 +262,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   /**
    * <p>Implements a name deriving for automatic modules as described in ModuleFinder.of(Path...) method documentation.</p>
    *
-   * <p>Please note that the result may not be a valid module name when the source contains a sequence which starts with a digit
+   * <p>Please note that the result may not be a valid module name when the source contains a sequence that starts with a digit
    * (e.g. "org.7gnomes..."). One may validate the result with {@link PsiNameHelper#isValidModuleName}.</p>
    *
    * @param name a .jar file name without extension
