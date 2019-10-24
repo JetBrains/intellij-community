@@ -833,6 +833,6 @@
     <virtualFileManagerListener implementation="com.intellij.configurationStore.StoreReloadManagerImpl$MyVirtualFileManagerListener"/>
 
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
-    <statistics.counterUsagesCollector groupId="intellij.cds" version="1"/>
+    <statistics.counterUsagesCollector groupId="intellij.cds" version="2"/>
   </extensions>
 </idea-plugin>
