@@ -438,7 +438,7 @@ public class GitRebaseProcess {
 
       if (upstream != null && branch != null) {
         Hash head = resolveRef(repository, HEAD);
-        Hash rebaseHead = resolveRef(repository, "REBASE_HEAD");
+        Hash rebaseHead = resolveRef(repository, REBASE_HEAD);
         Hash upstreamRef = resolveRef(repository, upstream);
         Hash mergeBase = null;
         try {
