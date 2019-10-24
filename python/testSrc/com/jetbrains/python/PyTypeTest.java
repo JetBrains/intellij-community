@@ -3617,6 +3617,27 @@ public class PyTypeTest extends PyTestCase {
            "expr = data['name']");
   }
 
+  // PY-37601
+  public void testClassWithOwnInitInheritsClassWithGenericCall() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("Derived",
+                   "from typing import Any, Generic, TypeVar\n" +
+                   "\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "\n" +
+                   "class Base(Generic[T]):\n" +
+                   "    def __call__(self, p: Any) -> T:\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "class Derived(Base):\n" +
+                   "    def __init__():\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "expr = Derived()")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
