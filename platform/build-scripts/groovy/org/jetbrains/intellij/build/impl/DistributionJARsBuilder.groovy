@@ -681,6 +681,8 @@ class DistributionJARsBuilder {
         pluginXmlFiles.put(plugin, pluginXmlPath)
       }
 
+      def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
+                                                                         : buildContext.buildNumber
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
         pluginsToPublish.each { pluginAndPublishing ->
           def plugin = pluginAndPublishing.key
@@ -705,9 +707,7 @@ class DistributionJARsBuilder {
                                                                       : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
           }
 
-          setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
-                                   buildContext.buildNumber,
-                                   compatibleBuildRange)
+          setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, buildContext.buildNumber, compatibleBuildRange)
           layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
         }
       }
@@ -781,10 +781,6 @@ class DistributionJARsBuilder {
     def pluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
     return new PluginRepositorySpec(pluginZip: destFile,
                                     pluginXml: pluginXmlPath)
-  }
-
-  private String getPluginVersion(PluginLayout plugin) {
-    return plugin.versionEvaluator.apply(buildContext)
   }
 
   /**
