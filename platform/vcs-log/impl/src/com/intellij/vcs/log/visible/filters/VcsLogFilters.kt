@@ -159,7 +159,6 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromPaths(files: Collection<FilePath>): VcsLogStructureFilter {
-    @Suppress("DEPRECATION")
     return VcsLogStructureFilterImpl(files)
   }
 
