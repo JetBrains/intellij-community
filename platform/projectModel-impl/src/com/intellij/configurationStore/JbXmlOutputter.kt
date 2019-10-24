@@ -20,7 +20,7 @@ import org.jdom.output.Format
 import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
-import java.util.Collections
+import java.util.*
 import javax.xml.transform.Result
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -38,8 +38,13 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     @JvmStatic
     @Throws(IOException::class)
     fun collapseMacrosAndWrite(element: Element, project: ComponentManager, writer: Writer) {
+      createOutputter(project).output(element, writer)
+    }
+
+    @JvmStatic
+    fun createOutputter(project: ComponentManager): JbXmlOutputter {
       val macroManager = PathMacroManager.getInstance(project)
-      JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter).output(element, writer)
+      return JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter)
     }
 
     @JvmStatic

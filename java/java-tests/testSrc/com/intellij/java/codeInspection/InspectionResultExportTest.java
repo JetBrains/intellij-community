@@ -18,7 +18,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,7 +56,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     InspectionManager im = InspectionManager.getInstance(getProject());
     AnalysisScope scope = new AnalysisScope(getProject());
     List<Path> resultFiles = new ArrayList<>();
-    File outputPath = FileUtil.createTempDirectory("inspection", "results");
+    Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
@@ -66,7 +65,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
     context.setExternalProfile(profile);
 
-    ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath.getAbsolutePath(), false, resultFiles), new ProgressIndicatorBase());
+    ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath, false, resultFiles), new ProgressIndicatorBase());
     assertSize(2, resultFiles);
 
     Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantConditions.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
