@@ -222,8 +222,9 @@ public class PyTypeChecker {
       if (expected.equals(actual) || substitution.equals(expected)) {
         return true;
       }
-      if (context.recursive) {
-        Optional<Boolean> recursiveMatch = match(substitution, actual, context.notRecursive());
+      if (context.typeVarsInMatching.add(expected)) {
+        Optional<Boolean> recursiveMatch = match(substitution, actual, context);
+        context.typeVarsInMatching.remove(expected);
         if (recursiveMatch.isPresent()) {
           return recursiveMatch.get();
         }
@@ -1017,29 +1018,25 @@ public class PyTypeChecker {
     @NotNull
     private final Map<PyGenericType, PyType> substitutions; // mutable
 
-    private final boolean recursive;
+    @NotNull
+    private final Set<PyGenericType> typeVarsInMatching; // mutable
 
     @NotNull
     private final Set<Pair<PyType, PyType>> matching; // mutable
 
     MatchContext(@NotNull TypeEvalContext context,
                  @NotNull Map<PyGenericType, PyType> substitutions) {
-      this(context, substitutions, true, new HashSet<>());
+      this(context, substitutions, new HashSet<>(), new HashSet<>());
     }
 
     private MatchContext(@NotNull TypeEvalContext context,
                          @NotNull Map<PyGenericType, PyType> substitutions,
-                         boolean recursive,
+                         @NotNull Set<PyGenericType> typeVarsInMatching,
                          @NotNull Set<Pair<PyType, PyType>> matching) {
       this.context = context;
       this.substitutions = substitutions;
-      this.recursive = recursive;
+      this.typeVarsInMatching = typeVarsInMatching;
       this.matching = matching;
-    }
-
-    @NotNull
-    public MatchContext notRecursive() {
-      return new MatchContext(context, substitutions, false, matching);
     }
   }
 }
