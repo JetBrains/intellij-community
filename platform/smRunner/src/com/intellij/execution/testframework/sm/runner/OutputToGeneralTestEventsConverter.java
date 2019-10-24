@@ -100,7 +100,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
    *
    * @deprecated use {@link #processConsistentText(String, Key)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   protected void processConsistentText(@NotNull final String text,
                                        final Key<?> outputType,
