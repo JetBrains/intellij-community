@@ -17,8 +17,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_NUMBER
+import static com.intellij.psi.CommonClassNames.*
 import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType
 
 @CompileStatic
@@ -268,6 +267,18 @@ static void testCode(java.util.stream.Stream<Integer> ss) {
 }
 ''', GrMethodCall
     assertSubstitutor(call.advancedResolve(), JAVA_LANG_INTEGER)
+  }
+
+  @Test
+  void 'static call with raw argument with left type'() {
+    def call = elementUnderCaret 'static <T> T lll(List<T> l) {}; List l; Date d = <caret>lll(l)', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_OBJECT)
+  }
+
+  @Test
+  void 'dgm call on raw receiver with left type'() {
+    def call = elementUnderCaret 'List l; Date d = l.<caret>getAt(0)', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_OBJECT)
   }
 
   private static void assertSubstitutor(GroovyResolveResult result, String... expectedTypes) {
