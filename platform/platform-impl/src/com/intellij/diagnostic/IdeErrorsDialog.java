@@ -943,6 +943,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof NoClassDefFoundError && t.getMessage() != null) {
       String className = StringUtil.substringAfterLast(t.getMessage(), " ");
       if (className == null) className = t.getMessage();
+      if (className.indexOf('/') > 0) {
+        className = className.replace('/', '.');
+      }
       if (PluginManagerCore.isPluginClass(className)) {
         return PluginManagerCore.getPluginByClassName(className);
       }
