@@ -197,7 +197,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
 
       Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
@@ -671,7 +671,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
     css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
     css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
     SingleInspectionProfilePanel.readHTML(htmlView, SingleInspectionProfilePanel.toHTML(htmlView, text, false));

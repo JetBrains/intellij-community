@@ -9,7 +9,6 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -38,8 +37,6 @@ import java.awt.event.ActionListener;
 import java.util.*;
 
 public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.DuplicatePropertyInspection");
-
   public boolean CURRENT_FILE = true;
   public boolean MODULE_WITH_DEPENDENCIES = false;
 
@@ -56,8 +53,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     checkFile(file, manager, (GlobalInspectionContextBase)globalContext, globalContext.getRefManager(), problemDescriptionsProcessor);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void surroundWithHref(StringBuffer anchor, PsiElement element, final boolean isValue) {
+  private static void surroundWithHref(@NotNull StringBuilder anchor, PsiElement element, final boolean isValue) {
     if (element != null) {
       final PsiElement parent = element.getParent();
       PsiElement elementToLink = isValue ? parent.getFirstChild() : parent.getLastChild();
@@ -86,8 +82,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void compoundLineLink(StringBuffer lineAnchor, PsiElement psiElement) {
+  private static void compoundLineLink(@NotNull StringBuilder lineAnchor, PsiElement psiElement) {
     final PsiFile file = psiElement.getContainingFile();
     if (file != null) {
       final VirtualFile vFile = file.getVirtualFile();
@@ -186,7 +181,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       }
       if (value.length() == 0) continue;
       StringSearcher searcher = new StringSearcher(value, true, true);
-      final StringBuffer message = new StringBuffer();
+      StringBuilder message = new StringBuilder();
       final int[] duplicatesCount = {0};
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
       for (final PsiFile file : psiFilesWithDuplicates) {
@@ -225,7 +220,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         progress.setText2(InspectionsBundle.message("duplicate.property.key.progress.indicator.text", key));
         if (progress.isCanceled()) throw new ProcessCanceledException();
       }
-      final StringBuffer message = new StringBuffer();
+      StringBuilder message = new StringBuilder();
       int duplicatesCount = 0;
       Set<PsiFile> psiFilesWithDuplicates = keyToFiles.get(key);
       for (PsiFile file : psiFilesWithDuplicates) {
@@ -270,7 +265,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       if (values == null || values.size() < 2){
         keyToFiles.remove(key);
       } else {
-        StringBuffer message = new StringBuffer();
+        StringBuilder message = new StringBuilder();
         final Set<PsiFile> psiFiles = keyToFiles.get(key);
         boolean firstUsage = true;
         for (PsiFile file : psiFiles) {

@@ -594,7 +594,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  public void compose(@NotNull final StringBuffer buf, @NotNull final RefEntity refEntity, @NotNull final HTMLComposer composer) {
+  public void compose(@NotNull StringBuilder buf, @NotNull final RefEntity refEntity, @NotNull final HTMLComposer composer) {
     composer.appendElementInReferences(buf, (RefElement)refEntity);
   }
 
