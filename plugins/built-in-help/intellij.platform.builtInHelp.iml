@@ -104,18 +104,9 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="org.jsoup:jsoup:1.7.2" type="repository">
-        <properties maven-id="org.jsoup:jsoup:1.7.2" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.7.2/jsoup-1.7.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="commons-compress" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.xml.impl" />

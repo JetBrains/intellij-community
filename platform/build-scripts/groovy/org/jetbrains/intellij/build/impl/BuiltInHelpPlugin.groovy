@@ -20,6 +20,7 @@ final class BuiltInHelpPlugin {
       mainJarName = "$productLowerCase-help.jar"
       directoryName = "${productName.replace(" ", "")}Help"
       excludeFromModule(moduleName, "com/jetbrains/builtInHelp/indexer/**")
+      doNotCopyModuleLibrariesAutomatically(["jsoup"])
       withGeneratedResources({ BuildContext context ->
         def helpModule = context.findRequiredModule(moduleName)
         def ant = context.ant
