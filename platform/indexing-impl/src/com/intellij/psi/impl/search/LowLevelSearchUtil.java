@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -224,11 +225,24 @@ public class LowLevelSearchUtil {
   private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache =
     ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
 
+  /**
+   * @deprecated please use {@link #processTextOccurrences(CharSequence, int, int, StringSearcher, TIntProcedure)}
+   */
+  @ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,
                                                @NotNull StringSearcher searcher,
-                                               @Nullable ProgressIndicator progress,
+                                               @SuppressWarnings("unused") @Nullable ProgressIndicator progress,
+                                               @NotNull TIntProcedure processor) {
+    return processTextOccurrences(text, startOffset, endOffset, searcher, processor);
+  }
+
+  public static boolean processTextOccurrences(@NotNull CharSequence text,
+                                               int startOffset,
+                                               int endOffset,
+                                               @NotNull StringSearcher searcher,
                                                @NotNull TIntProcedure processor) {
     for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher)) {
       if (!processor.execute(offset)) {
