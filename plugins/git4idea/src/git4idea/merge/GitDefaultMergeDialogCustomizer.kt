@@ -2,6 +2,7 @@
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
+import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -25,15 +26,14 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog
-import com.intellij.xml.util.XmlStringUtil
+import com.intellij.xml.util.XmlStringUtil.escapeString
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
-import git4idea.GitUtil
-import git4idea.GitUtil.CHERRY_PICK_HEAD
-import git4idea.GitUtil.MERGE_HEAD
+import git4idea.GitUtil.*
 import git4idea.GitVcs
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
+import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
 import git4idea.history.GitLogUtil.readFullDetails
 import git4idea.history.GitLogUtil.readFullDetailsForHashes
@@ -49,15 +49,15 @@ open class GitDefaultMergeDialogCustomizer(
   private val project: Project
 ) : MergeDialogCustomizer() {
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
-    val repos = GitUtil.getRepositoriesForFiles(project, files)
+    val repos = getRepositoriesForFiles(project, files)
 
     val mergeBranches = repos.map { resolveMergeBranch(it)?.presentable }
     if (mergeBranches.any { it != null }) {
       return buildString {
         append("<html>Merging ")
-        append(mergeBranches.toSet().singleOrNull()?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
+        append(mergeBranches.toSet().singleOrNull()?.let { "branch <b>${escapeString(it)}</b>" } ?: "diverging branches ")
         append(" into ")
-        append(getSingleCurrentBranchName(repos)?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" }
+        append(getSingleCurrentBranchName(repos)?.let { "branch <b>${escapeString(it)}</b>" }
                ?: "diverging branches")
       }
     }
@@ -82,8 +82,8 @@ open class GitDefaultMergeDialogCustomizer(
           append("multiple commits ")
         }
         if (singleCherryPick != null) {
-          append("made by ${XmlStringUtil.escapeString(singleCherryPick.authorName)}<br/>")
-          append("<code>\"${XmlStringUtil.escapeString(singleCherryPick.commitMessage)}\"</code>")
+          append("made by ${escapeString(singleCherryPick.authorName)}<br/>")
+          append("<code>\"${escapeString(singleCherryPick.commitMessage)}\"</code>")
         }
       }
     }
@@ -123,6 +123,43 @@ open class GitDefaultMergeDialogCustomizer(
     return super.getRightPanelTitle(file, revisionNumber)
   }
 
+  override fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList {
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return DEFAULT_CUSTOMIZER_LIST
+    return when (repository.state) {
+      Repository.State.MERGING -> getMergeTitleCustomizerList(repository, file)
+      else -> DEFAULT_CUSTOMIZER_LIST
+    }
+  }
+
+  private fun getMergeTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
+    val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val currentBranchPresentable = repository.currentBranchName ?: currentBranchHash.toShortString()
+    val mergeBranch = resolveMergeBranch(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val mergeBranchHash = mergeBranch.hash
+    val mergeBase = GitHistoryUtils.getMergeBase(
+      repository.project,
+      repository.root,
+      currentBranchHash.asString(),
+      mergeBranchHash.asString()
+    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+
+    fun getChangesFromBranchTitle(branch: String) = "<html>Changes from <b>${escapeString(branch)}</b></html>"
+
+    val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
+      getChangesFromBranchTitle(currentBranchPresentable),
+      repository,
+      file,
+      Pair(mergeBase, currentBranchHash.asString())
+    )
+    val rightTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
+      getChangesFromBranchTitle(mergeBranch.presentable),
+      repository,
+      file,
+      Pair(mergeBase, mergeBranchHash.asString())
+    )
+    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+  }
+
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
     val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
 
@@ -139,15 +176,15 @@ open class GitDefaultMergeDialogCustomizer(
 fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, baseHash: Hash?): String {
   return buildString {
     append("<html>Rebasing ")
-    if (rebasingBranch != null) append("branch <b>${XmlStringUtil.escapeString(rebasingBranch)}</b> ")
+    if (rebasingBranch != null) append("branch <b>${escapeString(rebasingBranch)}</b> ")
     append("onto ")
     appendBranchName(baseBranch, baseHash)
   }
 }
 
 fun getDefaultLeftPanelTitleForBranch(branchName: String): String {
-  return "<html>${XmlStringUtil.escapeString(DiffBundle.message("merge.version.title.our"))}, branch <b>" +
-         "${XmlStringUtil.escapeString(branchName)}</b>"
+  return "<html>${escapeString(DiffBundle.message("merge.version.title.our"))}, branch <b>" +
+         "${escapeString(branchName)}</b>"
 }
 
 fun getDefaultRightPanelTitleForBranch(branchName: String?, baseHash: Hash?): String {
@@ -159,7 +196,7 @@ fun getDefaultRightPanelTitleForBranch(branchName: String?, baseHash: Hash?): St
 
 private fun StringBuilder.appendBranchName(branchName: String?, hash: Hash?) {
   if (branchName != null) {
-    append("branch <b>${XmlStringUtil.escapeString(branchName)}</b>")
+    append("branch <b>${escapeString(branchName)}</b>")
     if (hash != null) append(", revision ${hash.toShortString()}")
   }
   else if (hash != null) {
