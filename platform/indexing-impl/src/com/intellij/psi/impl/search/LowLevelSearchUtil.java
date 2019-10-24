@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.TextOccurenceProcessor;
@@ -29,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.intellij.openapi.util.text.StringUtil.isEscapedBackslash;
 
 public class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
@@ -274,7 +275,7 @@ public class LowLevelSearchUtil {
         //noinspection AssignmentToForLoopParameter
         index = searcher.scan(text, index, newEnd);
         if (index < 0) break;
-        if (checkJavaIdentifier(text, 0, text.length(), searcher, index)) {
+        if (checkJavaIdentifier(text, searcher, index)) {
           occurrences.add(index);
         }
       }
@@ -296,35 +297,29 @@ public class LowLevelSearchUtil {
   }
 
   private static boolean checkJavaIdentifier(@NotNull CharSequence text,
-                                             int startOffset,
-                                             int endOffset,
                                              @NotNull StringSearcher searcher,
                                              int index) {
     if (!searcher.isJavaIdentifier()) {
       return true;
     }
 
-    if (index > startOffset) {
+    if (index > 0) {
       char c = text.charAt(index - 1);
       if (Character.isJavaIdentifierPart(c) && c != '$') {
-        if (!searcher.isHandleEscapeSequences() || index < 2 || isEscapedBackslash(text, startOffset, index - 2)) { //escape sequence
+        if (!searcher.isHandleEscapeSequences() || index < 2 || isEscapedBackslash(text, 0, index - 2)) { //escape sequence
           return false;
         }
       }
-      else if (index > 0 && searcher.isHandleEscapeSequences() && !isEscapedBackslash(text, startOffset, index - 1)) {
+      else if (searcher.isHandleEscapeSequences() && !isEscapedBackslash(text, 0, index - 1)) {
         return false;
       }
     }
 
     final int patternLength = searcher.getPattern().length();
-    if (index + patternLength < endOffset) {
+    if (index + patternLength < text.length()) {
       char c = text.charAt(index + patternLength);
       return !Character.isJavaIdentifierPart(c) || c == '$';
     }
     return true;
-  }
-
-  private static boolean isEscapedBackslash(CharSequence text, int startOffset, int index) {
-    return StringUtil.isEscapedBackslash(text, startOffset, index);
   }
 }
