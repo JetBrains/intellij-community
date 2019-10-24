@@ -105,7 +105,7 @@ interface UCallExpression : UExpression, UResolvable {
    * Useful when the order of passed arguments is different to the order of declared parameters (e.g. in Kotlin named arguments).
    *
    * @param i index of the parameter in the resolved [PsiMethod] declaration
-   * @return [UExpression] from the [valueArguments] list that corresponds to the [i]-th parameter.
+   * @return [UExpression] that corresponds to the [i]-th parameter.
    * If the given parameter is vararg then the corresponding arguments will be returned wrapped into
    * [UExpressionList] (with [UExpressionList.kind] = [UastSpecialExpressionKind.VARARGS])
    */
