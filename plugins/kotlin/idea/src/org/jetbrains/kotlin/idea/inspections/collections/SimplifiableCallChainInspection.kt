@@ -12,14 +12,17 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
@@ -42,7 +45,10 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                         }
                     ) return@check false
                 }
-
+                if (conversion.replacement == "maxBy" || conversion.replacement == "minBy") {
+                    val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
+                    if (functionalArgumentReturnType.isNullable()) return@check false
+                }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
             } ?: return
 
@@ -66,6 +72,25 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             )
             holder.registerProblem(descriptor)
         })
+    }
+
+    private fun ResolvedCall<*>.lastFunctionalArgumentReturnType(context: BindingContext): KotlinType? {
+        val argument = valueArguments.entries.lastOrNull()?.value?.arguments?.firstOrNull()
+        return when (val argumentExpression = argument?.getArgumentExpression()) {
+            is KtLambdaExpression -> {
+                val functionLiteral = argumentExpression.functionLiteral
+                val body = argumentExpression.bodyExpression
+                val lastStatementType = body?.statements?.lastOrNull()?.getType(context)
+                val returnedTypes = body
+                    ?.collectDescendantsOfType<KtReturnExpression> { it.getTargetFunction(context) == functionLiteral }
+                    ?.mapNotNull { it.returnedExpression?.getType(context) }
+                    .orEmpty()
+                val types = listOfNotNull(lastStatementType) + returnedTypes
+                types.firstOrNull { it.isNullable() } ?: types.firstOrNull()
+            }
+            is KtNamedFunction -> argumentExpression.typeReference?.let { context[BindingContext.TYPE, it] }
+            else -> null
+        }
     }
 
     private fun containsSuspendFunctionCall(resolvedCall: ResolvedCall<*>, context: BindingContext): Boolean {
