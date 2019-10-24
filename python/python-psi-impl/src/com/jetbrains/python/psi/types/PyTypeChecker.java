@@ -645,7 +645,7 @@ public class PyTypeChecker {
         collectGenerics(elementType, context, collected, visited);
       }
     }
-    else if (type instanceof PyCallableType) {
+    else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       final PyCallableType callable = (PyCallableType)type;
       final List<PyCallableParameter> parameters = callable.getParameters(context);
       if (parameters != null) {
@@ -716,7 +716,7 @@ public class PyTypeChecker {
 
         return new PyTupleType(tupleClass, newElementTypes, tupleType.isHomogeneous());
       }
-      else if (type instanceof PyCallableType) {
+      else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
         final PyCallableType callable = (PyCallableType)type;
         List<PyCallableParameter> substParams = null;
         final List<PyCallableParameter> parameters = callable.getParameters(context);
