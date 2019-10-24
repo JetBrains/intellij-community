@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -123,21 +124,26 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         if (!disabledPlugins.isEmpty()) {
           notificationActions.add(NotificationAction.createSimpleExpiring(
             "Enable Plugins...", () -> {
-              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins.notification");
+              FeatureUsageData data = new FeatureUsageData()
+                .addData("source", "notification")
+                .addData("plugin", disabledPlugins.values().iterator().next().getPluginId().getIdString());
+              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
               PluginsAdvertiser.enablePlugins(project, disabledPlugins.values());
             }));
         }
         else {
           notificationActions.add(NotificationAction.createSimpleExpiring(
             "Configure Plugins...", () -> {
-              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "configure.plugins");
+              FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
+              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "configure.plugins", data);
               new PluginsAdvertiserDialog(project, plugins.toArray(new PluginDownloader[0]), allPlugins).show();
             }));
         }
         notificationActions.add(NotificationAction.createSimpleExpiring(
           "Ignore Unknown Features",
           () -> {
-            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.unknown.features");
+            FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
+            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.unknown.features", data);
             UnknownFeaturesCollector featuresCollector = UnknownFeaturesCollector.getInstance(project);
             for (UnknownFeature feature : unknownFeatures) {
               featuresCollector.ignoreFeature(feature);
@@ -149,12 +155,14 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
                   " (" + StringUtil.join(bundledPlugin, ", ") + ") are detected";
         notificationActions.add(NotificationAction.createSimpleExpiring(
           PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, () -> {
-            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page.notification");
+            FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
+            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page", data);
             PluginsAdvertiser.openDownloadPage();
           }));
         notificationActions.add(NotificationAction.createSimpleExpiring(
           PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, () -> {
-            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.ultimate");
+            FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
+            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.ultimate", data);
             PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
           }));
       }
