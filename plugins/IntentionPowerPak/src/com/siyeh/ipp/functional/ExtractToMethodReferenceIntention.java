@@ -118,7 +118,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
                                                                   targetMethodName + parameters, targetClass);
       PsiCodeBlock targetMethodBody = emptyMethod.getBody();
       LOG.assertTrue(targetMethodBody != null);
-      if (elements.length > 0) targetMethodBody.addRange(elements[0], elements[elements.length - 1]);
+      targetMethodBody.replace(body);
 
       PsiMethod method = (PsiMethod)CodeStyleManager.getInstance(project)
         .reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetClass.add(emptyMethod)));
@@ -126,6 +126,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
         (PsiMethodReferenceExpression)elementFactory
           .createExpressionFromText((canBeStatic ? targetClass.getName() : "this") + "::" + targetMethodName, lambdaExpression);
       CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(lambdaExpression.getBody());
       methodReference = (PsiMethodReferenceExpression)tracker.replace(lambdaExpression, methodReference);
       tracker.insertCommentsBefore(methodReference);
 
