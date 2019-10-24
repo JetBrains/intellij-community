@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
-import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBCheckBox
@@ -89,38 +88,6 @@ open class GitDefaultMergeDialogCustomizer(
     }
 
     return super.getMultipleFileMergeDescription(files)
-  }
-
-  override fun getLeftPanelTitle(file: VirtualFile): String {
-    val currentBranch = GitRepositoryManager.getInstance(project).getRepositoryForFile(file)?.currentBranchName
-    return if (currentBranch != null) getDefaultLeftPanelTitleForBranch(currentBranch)
-           else super.getLeftPanelTitle(file)
-  }
-
-  override fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): String {
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file)
-                     ?: return super.getRightPanelTitle(file, revisionNumber)
-
-    val branchBeingMerged = resolveMergeBranch(repository) ?: resolveRebaseOntoBranch(repository)
-    if (branchBeingMerged != null) {
-      return getDefaultRightPanelTitleForBranch(branchBeingMerged.branchName, branchBeingMerged.hash)
-    }
-
-    val cherryPickHead = try {
-      GitRevisionNumber.resolve(project, repository.root, CHERRY_PICK_HEAD)
-    }
-    catch (e: VcsException) {
-      null
-    }
-
-    if (cherryPickHead != null) {
-      return "<html>Changes from cherry-pick <code>${cherryPickHead.shortRev}</code>"
-    }
-
-    if (revisionNumber is GitRevisionNumber) {
-      return DiffBundle.message("merge.version.title.their.with.revision", revisionNumber.shortRev)
-    }
-    return super.getRightPanelTitle(file, revisionNumber)
   }
 
   override fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList {
