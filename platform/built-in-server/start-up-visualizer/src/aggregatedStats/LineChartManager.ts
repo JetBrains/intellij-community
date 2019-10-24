@@ -6,7 +6,7 @@ import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {addExportMenu} from "@/charts/ChartManager"
 import HumanizeDuration from "humanize-duration"
 import {InfoResponse, Metrics} from "@/aggregatedStats/model"
-import {ChartConfigurator, SortedByCategory} from "@/aggregatedStats/ChartConfigurator"
+import {ChartConfigurator} from "@/aggregatedStats/ChartConfigurator"
 
 export class LineChartManager {
   private readonly chart: am4charts.XYChart
@@ -48,9 +48,9 @@ export class LineChartManager {
   }
 
   constructor(container: HTMLElement,
-              private readonly chartSettings: ChartSettings,
+              private chartSettings: ChartSettings,
               private readonly isInstantEvents: boolean,
-              private readonly configurator: ChartConfigurator = new SortedByCategory()) {
+              private readonly configurator: ChartConfigurator) {
     this.chart = am4core.create(container, am4charts.XYChart)
 
     const chart = this.chart
@@ -92,6 +92,9 @@ export class LineChartManager {
     else {
       chart.scrollbarX = new am4core.Scrollbar()
     }
+
+    // prevent Vue reactivity
+    Object.seal(this)
   }
 
   private configureScrollbarXWithPreview(): am4charts.XYChartScrollbar {
@@ -102,10 +105,17 @@ export class LineChartManager {
     return scrollbarX
   }
 
-  scrollbarXPreviewOptionChanged() {
+  scrollbarXPreviewOptionChanged(chartSettings: ChartSettings) {
+    this.chartSettings = chartSettings
+
     // no need to dispose old scrollbar explicit - will be disposed automatically on set
     const chart = this.chart
-    if (this.chartSettings.showScrollbarXPreview) {
+    if ((chart.scrollbarX instanceof am4charts.XYChartScrollbar) === chartSettings.showScrollbarXPreview) {
+      return
+    }
+
+
+    if (chartSettings.showScrollbarXPreview) {
       const scrollbarX = this.configureScrollbarXWithPreview()
       chart.series.each(it => {
         scrollbarX.series.push(it)
@@ -183,15 +193,8 @@ export class LineChartManager {
     this.chart.dispose()
   }
 
-  setData(data: Promise<Array<Metrics>>, info: InfoResponse, reportUrlPrefix: string) {
-    data
-      .then(data => {
-        if (data == null) {
-          return
-        }
-
-        this.render(new LineChartDataManager(data, info, this.isInstantEvents, reportUrlPrefix))
-      })
+  setData(data: Array<Metrics>, info: InfoResponse, reportUrlPrefix: string): void {
+    this.render(new LineChartDataManager(data, info, this.isInstantEvents, reportUrlPrefix))
   }
 }
 

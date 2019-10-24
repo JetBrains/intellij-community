@@ -5,9 +5,12 @@ import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
 import {InfoResponse, MachineGroup} from "@/aggregatedStats/model"
 import {debounce} from "debounce"
-import {AggregatedStatComponent} from "@/aggregatedStats/AggregatedStatComponent"
+import {AggregatedStatComponent, DataRequest} from "@/aggregatedStats/AggregatedStatComponent"
+import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
 
-@Component
+@Component({
+  components: {LineChartComponent}
+})
 export default class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
 
@@ -40,9 +43,10 @@ export default class AggregatedStatsPage extends Vue {
   }, 1000)
 
   isShowScrollbarXPreviewChanged(_value: boolean) {
-    this.helper.showScrollbarXPreviewChanged()
     this.dataModule.updateChartSettings(this.chartSettings)
   }
+
+  dataRequest: DataRequest | null = null
 
   loadData() {
     this.isFetching = true
@@ -115,12 +119,16 @@ export default class AggregatedStatsPage extends Vue {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
       if (product != null && selectedMachine != null && selectedMachine.length > 0) {
         this.loadClusteredChartsData(product)
-        this.helper.loadLineChartData(product, selectedMachine, this.chartSettings, this.$refs as any, this.$notify)
+        this.requestDataReloading(product, selectedMachine)
       }
     }
     else {
       this.chartSettings.selectedMachine = selectedMachine
     }
+  }
+
+  private requestDataReloading(product: string, machine: Array<string>) {
+    this.dataRequest = {product, machine, infoResponse: this.helper.lastInfoResponse!!, chartSettings: this.chartSettings}
   }
 
   @Watch("chartSettings.selectedMachine")
@@ -143,7 +151,7 @@ export default class AggregatedStatsPage extends Vue {
     }
 
     this.loadClusteredChartsData(product)
-    this.helper.loadLineChartData(product, machine, this.chartSettings, this.$refs as any, this.$notify)
+    this.requestDataReloading(product, machine)
   }
 
   private loadClusteredChartsData(product: string): void {
