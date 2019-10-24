@@ -23,7 +23,6 @@ class CollectingGroovyInferenceSession(
   context: PsiElement,
   contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
-  private val parent: CollectingGroovyInferenceSession? = null,
   private val ignoreClosureArguments: Set<GrParameter> = emptySet()
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, false, emptySet()) {
 
@@ -49,15 +48,8 @@ class CollectingGroovyInferenceSession(
     })
   }
 
-  override fun substituteWithInferenceVariables(type: PsiType?): PsiType? {
-    val result = substituteForeignTypeParameters(super.substituteWithInferenceVariables(type))
-    if ((result == type || result == null) && parent != null) {
-      return parent.substituteWithInferenceVariables(result)
-    }
-    else {
-      return result
-    }
-  }
+  override fun substituteWithInferenceVariables(type: PsiType?): PsiType? =
+    substituteForeignTypeParameters(super.substituteWithInferenceVariables(type))
 
   override fun inferSubst(result: GroovyResolveResult): PsiSubstitutor {
     repeatInferencePhases()
@@ -73,7 +65,7 @@ class CollectingGroovyInferenceSession(
                                   context: PsiElement,
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, this, ignoreClosureArguments)
+    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, ignoreClosureArguments)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     mirrorInnerVariables(nestedSession)
