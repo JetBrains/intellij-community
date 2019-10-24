@@ -21,6 +21,8 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.HttpRequests
+import org.tukaani.xz.XZInputStream
+import java.io.ByteArrayInputStream
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 
@@ -87,51 +89,75 @@ class JDKDownloader {
       if (!registry.isNullOrBlank()) return registry
 
       //let's use CDN URL in once it'd be established
-      return "https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_Service_GenerateJDKsJson/lasest.lastSuccessful/feed.zip!/jdks.json"
+      return "https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_Service_GenerateJDKsJson/lasest.lastSuccessful/feed.zip!/jdks.json.xz"
     }
 
-  fun downloadModel(progress: ProgressIndicator?): JDKDownloadModel {
-    //the file is ~15k, in-memory only via JSON tree, no caches needed
-    val rawData = HttpRequests.request(feedUrl).forceHttps(true).readString(progress)
-    val tree = om.readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
-    val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
-
-    val expectedOS = when {
-      SystemInfo.isWindows -> "windows"
-      SystemInfo.isMac -> "mac"
-      SystemInfo.isLinux -> "linux"
-      else -> error("Unsupported OS")
+  fun downloadModel(progress: ProgressIndicator?, feedUrl : String = this.feedUrl): JDKDownloadModel {
+    //we download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
+    val rawData = try {
+      HttpRequests
+        .request(feedUrl)
+        .connectTimeout(5_000)
+        .readTimeout(5_000)
+        .forceHttps(true)
+        .throwStatusCodeException(true)
+        .readBytes(progress)
+        .unXZ()
+    } catch (t: Throwable) {
+      LOG.warn("Failed to download and process the JDKs list from $feedUrl. ${t.message}", t)
+      return JDKDownloadModel.errorModel("Failed to download and process the JDKs list from $feedUrl")
     }
 
-    val result = mutableListOf<JDKDownloadItem>()
-    for (item in items.filterIsInstance<ObjectNode>()) {
-      val vendor = item["vendor"]?.asText() ?: continue
-      val version = item["jdk_version"]?.asText() ?: continue
-      val packages = item["packages"] as? ArrayNode ?: continue
-      val pkg = packages.filterIsInstance<ObjectNode>().singleOrNull { it["os"]?.asText() == expectedOS } ?: continue
-      val arch = pkg["arch"]?.asText() ?: continue
-      val fileType = pkg["package"]?.asText() ?: continue
-      val url = pkg["url"]?.asText() ?: continue
-      val size = pkg["size"]?.asLong() ?: continue
-      val sha256 = pkg["sha256"]?.asText() ?: continue
+    try {
+      val tree = om.readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
+      val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
 
-      result += JDKDownloadItem(vendor = vendor,
-                                version = version,
-                                arch = arch,
-                                fileType = fileType,
-                                url = url,
-                                size = size,
-                                sha256 = sha256)
+      val expectedOS = when {
+        SystemInfo.isWindows -> "windows"
+        SystemInfo.isMac -> "mac"
+        SystemInfo.isLinux -> "linux"
+        else -> error("Unsupported OS")
+      }
+
+      val result = mutableListOf<JDKDownloadItem>()
+      for (item in items.filterIsInstance<ObjectNode>()) {
+        val vendor = item["vendor"]?.asText() ?: continue
+        val version = item["jdk_version"]?.asText() ?: continue
+        val packages = item["packages"] as? ArrayNode ?: continue
+        val pkg = packages.filterIsInstance<ObjectNode>().singleOrNull { it["os"]?.asText() == expectedOS } ?: continue
+        val arch = pkg["arch"]?.asText() ?: continue
+        val fileType = pkg["package"]?.asText() ?: continue
+        val url = pkg["url"]?.asText() ?: continue
+        val size = pkg["size"]?.asLong() ?: continue
+        val sha256 = pkg["sha256"]?.asText() ?: continue
+
+        result += JDKDownloadItem(vendor = vendor,
+                                  version = version,
+                                  arch = arch,
+                                  fileType = fileType,
+                                  url = url,
+                                  size = size,
+                                  sha256 = sha256)
+      }
+
+      return JDKDownloadModel.validModel(result)
+    } catch (t: Throwable) {
+      LOG.warn("Failed to parse downloaded JDKs list from $feedUrl. ${t.message}", t)
+      return JDKDownloadModel.errorModel("Failed to parse downloaded JDKs list")
     }
-
-    return JDKDownloadModel(result)
   }
-
 }
 
-data class JDKDownloadModel(
+class JDKDownloadModel private constructor(
+  val feedError: String?,
   val items: List<JDKDownloadItem>
-)
+) {
+  companion object {
+    fun errorModel(error: String) = JDKDownloadModel(feedError = error, items = listOf())
+    fun validModel(items: List<JDKDownloadItem>) = JDKDownloadModel(feedError = null, items = items)
+  }
+}
+
 
 data class JDKDownloadItem(
   val vendor: String,
@@ -142,3 +168,7 @@ data class JDKDownloadItem(
   val size: Long,
   val sha256: String
 )
+
+private fun ByteArray.unXZ() = ByteArrayInputStream(this).use { input ->
+  XZInputStream(input).use { it.readBytes() }
+}
