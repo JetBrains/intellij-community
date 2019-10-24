@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +37,11 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private TaskInfo myInfo;
 
   private boolean myDisposed;
-  private DumbModeAction myDumbModeAction = DumbModeAction.NOTHING;
 
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
     this(task.getProject(), task, task);
 
-    myDumbModeAction = task.getDumbModeAction();
-    if (myDumbModeAction == DumbModeAction.CANCEL) {
+    if (task.getDumbModeAction() == DumbModeAction.CANCEL) {
       task.getProject().getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
         @Override
@@ -103,12 +100,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         return cancellable;
       }
     }, option);
-  }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public DumbModeAction getDumbModeAction() {
-    return myDumbModeAction;
   }
 
   @Override
