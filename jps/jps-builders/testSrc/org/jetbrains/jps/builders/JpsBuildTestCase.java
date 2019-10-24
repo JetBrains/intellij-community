@@ -27,9 +27,9 @@ import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
-import org.jetbrains.jps.incremental.storage.ModuleSourcesState;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
@@ -211,7 +211,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject(), dataPaths.getDataStorageRoot());
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState, relativizer);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, true);
-      ModuleSourcesState sourcesState = new ModuleSourcesState(myModel.getProject(), timestamps, dataPaths, ignoredFileIndex);
+      BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(targetIndex, buildRootIndex, timestamps, dataPaths);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
                                    targetIndex, buildRootIndex, ignoredFileIndex, sourcesState);
     }

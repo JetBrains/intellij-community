@@ -27,7 +27,7 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.ModuleSourcesState;
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -64,7 +64,7 @@ public final class ProjectDescriptor {
   private final BuildRootIndex myBuildRootIndex;
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
-  public final ModuleSourcesState sourcesState;
+  private final BuildTargetSourcesState myBuildTargetSourcesState;
   private FSCache myFSCache = FSCache.NO_CACHE;
 
   public ProjectDescriptor(JpsModel model,
@@ -75,7 +75,7 @@ public final class ProjectDescriptor {
                            final ModuleExcludeIndex moduleExcludeIndex,
                            final BuildTargetsState targetsState,
                            final BuildTargetIndex buildTargetIndex, final BuildRootIndex buildRootIndex, IgnoredFileIndex ignoredFileIndex,
-                           ModuleSourcesState sourcesState) {
+                           BuildTargetSourcesState sourcesState) {
     myModel = model;
     myIgnoredFileIndex = ignoredFileIndex;
     myProject = model.getProject();
@@ -96,7 +96,7 @@ public final class ProjectDescriptor {
       }
     }
     myTargetsState = targetsState;
-    this.sourcesState = sourcesState;
+    myBuildTargetSourcesState = sourcesState;
   }
 
   /**
@@ -142,6 +142,10 @@ public final class ProjectDescriptor {
 
   public BuildLoggingManager getLoggingManager() {
     return myLoggingManager;
+  }
+
+  public BuildTargetSourcesState getBuildTargetSourcesState() {
+    return myBuildTargetSourcesState;
   }
 
   public synchronized void incUsageCounter() {

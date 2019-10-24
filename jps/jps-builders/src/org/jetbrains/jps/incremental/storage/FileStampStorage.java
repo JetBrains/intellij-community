@@ -18,8 +18,7 @@ import java.util.Arrays;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPerTarget;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
-import static org.jetbrains.jps.incremental.storage.Md5HashingService.getFileHash;
-import static org.jetbrains.jps.incremental.storage.Md5HashingService.getHashSize;
+import static org.jetbrains.jps.incremental.storage.Md5HashingService.*;
 
 public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements TimestampStorage<FileStamp> {
   private final FileTimestampStorage myTimestampStorage;
@@ -112,9 +111,14 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
   }
 
   @Nullable
-  public byte[] getStoredFileHash(File file) throws IOException {
-    HashStampPerTarget hashStamp = ArrayUtil.getFirstElement(getState(relativePath(file)));
-    return  hashStamp != null ? hashStamp.hash : null;
+  public byte[] getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
+    HashStampPerTarget[] state = getState(relativePath(file));
+    if (state == null) return null;
+    int targetId = myTargetsState.getBuildTargetId(target);
+    for (HashStampPerTarget filesStampPerTarget : state) {
+      if (filesStampPerTarget.targetId == targetId) return filesStampPerTarget.hash;
+    }
+    return null;
   }
 
   @Override
@@ -208,7 +212,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
       HashStampPerTarget[] targets = new HashStampPerTarget[size];
       for (int i = 0; i < size; i++) {
         int id = in.readInt();
-        byte[] bytes = new byte[getHashSize()];
+        byte[] bytes = new byte[HASH_SIZE];
         in.readFully(bytes);
         targets[i] = new HashStampPerTarget(id, bytes);
       }
