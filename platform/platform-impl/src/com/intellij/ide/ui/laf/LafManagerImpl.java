@@ -505,7 +505,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
 
   public static void installMacOSXFonts(UIDefaults defaults) {
-    final String face = "HelveticaNeue-Regular";
+    final String face = "Helvetica Neue";
     final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
     initFontDefaults(defaults, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
@@ -525,7 +525,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     FontUIResource uiFont11 = getFont(face, 11, Font.PLAIN);
     defaults.put("TableHeader.font", uiFont11);
 
-    FontUIResource buttonFont = getFont("HelveticaNeue-Medium", 13, Font.PLAIN);
+    FontUIResource buttonFont = getFont("Helvetica Neue", 13, Font.PLAIN);
     defaults.put("Button.font", buttonFont);
     Font menuFont = getFont("Lucida Grande", 14, Font.PLAIN);
     defaults.put("Menu.font", menuFont);
