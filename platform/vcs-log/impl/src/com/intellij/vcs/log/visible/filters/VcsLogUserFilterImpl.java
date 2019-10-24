@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @ApiStatus.Internal
-public class VcsLogUserFilterImpl implements VcsLogUserFilter {
+class VcsLogUserFilterImpl implements VcsLogUserFilter {
   private static final Logger LOG = Logger.getInstance(VcsLogUserFilterImpl.class);
 
   @NotNull private final Collection<String> myUsers;
@@ -85,7 +85,8 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   }
 
   @NotNull
-  public Collection<String> getUserNamesForPresentation() {
+  @Override
+  public Collection<String> getValuesAsText() {
     return myUsers;
   }
 
@@ -112,17 +113,11 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @NotNull
   private Set<VcsUser> getUsers(@NotNull String name) {
     String standardName = VcsUserUtil.getNameInStandardForm(name);
-    
+
     Set<VcsUser> result = new HashSet<>();
     result.addAll(myAllUsersByNames.get(standardName));
     result.addAll(myAllUsersByEmails.get(standardName));
     return result;
-  }
-
-  @NotNull
-  @Override
-  public String getPresentation() {
-    return StringUtil.join(getUserNamesForPresentation(), ", ");
   }
 
   @Override
