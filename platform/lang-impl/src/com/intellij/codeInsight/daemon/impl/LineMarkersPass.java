@@ -52,11 +52,11 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
   @NotNull private final TextRange myPriorityBounds;
   @NotNull private final TextRange myRestrictRange;
 
-  LineMarkersPass(@NotNull Project project,
-                  @NotNull PsiFile file,
-                  @NotNull Document document,
-                  @NotNull TextRange priorityBounds,
-                  @NotNull TextRange restrictRange) {
+  public LineMarkersPass(@NotNull Project project,
+                         @NotNull PsiFile file,
+                         @NotNull Document document,
+                         @NotNull TextRange priorityBounds,
+                         @NotNull TextRange restrictRange) {
     super(project, document, false);
     myFile = file;
     myPriorityBounds = priorityBounds;
