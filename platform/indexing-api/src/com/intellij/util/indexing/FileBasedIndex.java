@@ -58,7 +58,10 @@ public abstract class FileBasedIndex {
     throw new IllegalArgumentException("Virtual file doesn't support id: " + file + ", implementation class: " + file.getClass().getName());
   }
 
-  // note: upsource implementation requires access to Project here, please don't remove
+  /**
+   * @deprecated see {@link ManagingFS#findFileById(int)}
+   */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
+  @Deprecated
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
