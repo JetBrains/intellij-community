@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import gnu.trove.THashMap
 import java.util.*
 
@@ -53,7 +54,8 @@ open class DefaultKeymap {
   }
 
   init {
-    val headless = ApplicationManager.getApplication().isHeadlessEnvironment
+    val filterKeymaps = !ApplicationManager.getApplication().isHeadlessEnvironment &&
+                        Registry.`is`("keymap.current.os.only")
     loop@ for (bean in BundledKeymapBean.EP_NAME.extensionList) {
       val plugin = bean.pluginDescriptor ?: continue@loop
       val keymapName = bean.keymapName
@@ -61,7 +63,7 @@ open class DefaultKeymap {
       // filter out bundled keymaps for other systems, but allow them via non-bundled plugins
       // also skip non-bundled known macOS keymaps on non-macOS systems
       if (!(bean.file.contains("\$OS\$") ||
-            headless ||
+            !filterKeymaps ||
             !plugin.isBundled && !isBundledMacOSKeymap(keymapName) ||
             !isBundledKeymapHidden(keymapName))) continue@loop
       LOG.runAndLogException {
