@@ -127,9 +127,11 @@ open class GitDefaultMergeDialogCustomizer(
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return DEFAULT_CUSTOMIZER_LIST
     return when (repository.state) {
       Repository.State.MERGING -> getMergeTitleCustomizerList(repository, file)
+      Repository.State.REBASING -> getRebaseTitleCustomizerList(repository, file)
       else -> DEFAULT_CUSTOMIZER_LIST
     }
   }
+
 
   private fun getMergeTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
     val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
@@ -156,6 +158,34 @@ open class GitDefaultMergeDialogCustomizer(
       repository,
       file,
       Pair(mergeBase, mergeBranchHash.asString())
+    )
+    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+  }
+
+  private fun getRebaseTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
+    val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val rebasingBranchPresentable = repository.currentBranchName ?: currentBranchHash.toShortString()
+    val upstreamBranch = resolveRebaseOntoBranch(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val upstreamBranchHash = upstreamBranch.hash
+    val rebaseHead = tryResolveRef(repository, REBASE_HEAD) ?: return DEFAULT_CUSTOMIZER_LIST
+    val mergeBase = GitHistoryUtils.getMergeBase(
+      repository.project,
+      repository.root,
+      REBASE_HEAD,
+      upstreamBranchHash.asString()
+    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    val leftTitleCustomizer = getTitleWithCommitDetailsCustomizer(
+      "<html>Rebasing ${rebaseHead.toShortString()} from <b>${escapeString(rebasingBranchPresentable)}</b></html>",
+      repository,
+      file,
+      rebaseHead.asString())
+    val branchPartWithBold = if (upstreamBranch.branchName != null) " and commits from <b>${upstreamBranch.branchName}</b>" else ""
+    val rightTitle = "<html>Already rebased commits$branchPartWithBold</html>"
+    val rightTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
+      rightTitle,
+      repository,
+      file,
+      Pair(mergeBase, HEAD)
     )
     return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
   }

@@ -43,6 +43,7 @@ import git4idea.branch.GitRebaseParams;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.merge.GitConflictResolver;
+import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.merge.GitDefaultMergeDialogCustomizerKt;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rebase.GitSuccessfulRebase.SuccessType;
@@ -435,7 +436,7 @@ public class GitRebaseProcess {
         return new GitRebaseMergeDialogCustomizer(repository, upstream, branch, rebaseHead, mergeBase);
       }
     }
-    return new MergeDialogCustomizer();
+    return new GitDefaultMergeDialogCustomizer(repository.getProject());
   }
 
   private static class GitRebaseMergeDialogCustomizer extends MergeDialogCustomizer {
