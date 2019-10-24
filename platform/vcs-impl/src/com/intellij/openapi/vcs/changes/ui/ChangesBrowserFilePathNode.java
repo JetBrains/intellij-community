@@ -43,10 +43,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     final FilePath path = (FilePath)userObject;
 
-    if (path.isDirectory() || !isLeaf()) {
-      renderer.append(getRelativePath(path), getTextAttributes());
-    }
-    else if (renderer.isShowFlatten()) {
+    if (renderer.isShowFlatten() && isLeaf()) {
       renderer.append(path.getName(), getTextAttributes());
       appendParentPath(renderer, path.getParentPath());
     }
