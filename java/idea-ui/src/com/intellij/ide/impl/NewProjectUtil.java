@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -94,10 +95,18 @@ public final class NewProjectUtil {
 
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     try {
-      Path projectDir = Paths.get(projectFilePath);
-      if (wizard.getStorageScheme() == StorageScheme.DEFAULT && projectDir.getParent() == null) {
-        throw new IOException("Cannot create project in '" + projectFilePath + "': no parent file exists");
+      Path projectFile = Paths.get(projectFilePath);
+      Path projectDir;
+      if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
+        projectDir = projectFile.getParent();
+        if (projectDir == null) {
+          throw new IOException("Cannot create project in '" + projectFilePath + "': no parent file exists");
+        }
       }
+      else {
+        projectDir = projectFile;
+      }
+      Files.createDirectories(projectDir);
 
       Project newProject;
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
@@ -106,7 +115,7 @@ public final class NewProjectUtil {
           OpenProjectTask options = new OpenProjectTask();
           options.useDefaultProjectAsTemplate = true;
           options.isNewProject = true;
-          newProject = projectManager.newProject(projectDir, name, options);
+          newProject = projectManager.newProject(projectFile, name, options);
         }
         else {
           newProject = projectBuilder.createProject(name, projectFilePath);
@@ -138,45 +147,45 @@ public final class NewProjectUtil {
         }
       }), null, null);
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        newProject.save();
-      }
-
-      if (projectBuilder != null && !projectBuilder.validate(projectToClose, newProject)) {
-        return projectToClose;
-      }
-
       if (projectBuilder != null) {
+        // validate can require project on disk
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          newProject.save();
+        }
+
+        if (!projectBuilder.validate(projectToClose, newProject)) {
+          return projectToClose;
+        }
+
         projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
       }
 
-      boolean needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
-      StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
-        // ensure the dialog is shown after all startup activities are done
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-            return;
-          }
-          if (needToOpenProjectStructure) {
-            ModulesConfigurator.showDialog(newProject, null, null);
-          }
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        boolean needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
+        StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
+          // ensure the dialog is shown after all startup activities are done
           ApplicationManager.getApplication().invokeLater(() -> {
-            if (newProject.isDisposed()) return;
-            ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-            if (toolWindow != null) {
-              toolWindow.activate(null);
+            if (needToOpenProjectStructure) {
+              ModulesConfigurator.showDialog(newProject, null, null);
             }
-          }, ModalityState.NON_MODAL);
-        }, ModalityState.NON_MODAL);
-      });
+            ApplicationManager.getApplication().invokeLater(() -> {
+              ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+              if (toolWindow != null) {
+                toolWindow.activate(null);
+              }
+            }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
+          }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
+        });
+      }
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
 
         OpenProjectTask options = new OpenProjectTask();
         options.setProject(newProject);
-        PlatformProjectOpenProcessor.openExistingProject(projectDir, projectDir, options);
+        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, options);
       }
+
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
       }
