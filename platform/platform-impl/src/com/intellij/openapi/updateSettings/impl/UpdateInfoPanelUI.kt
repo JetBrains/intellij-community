@@ -58,7 +58,8 @@ object UpdateInfoPanelUI {
         it.text = """<html><head>$cssFontDeclaration</head><body>$updateHighlightsContent</body></html>"""
         it.addHyperlinkListener(HyperlinkListener { event: HyperlinkEvent ->
           if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-            FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog.link.clicked", "url", FeatureUsageData().addValue(event.url))
+            FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog", "link.clicked",
+                                                        FeatureUsageData().addData("url", event.url.toString()))
           }
         })
 
