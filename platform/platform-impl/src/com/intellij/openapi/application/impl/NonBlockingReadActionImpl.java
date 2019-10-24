@@ -7,6 +7,8 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -270,6 +272,12 @@ public class NonBlockingReadActionImpl<T>
     }
 
     void transferToBgThread() {
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      if (app.isWriteActionInProgress() || app.isWriteActionPending()) {
+        dispatchLaterUnconstrained(() -> reschedule());
+        return;
+      }
+
       if (myCoalesceEquality != null) {
         acquire();
       }

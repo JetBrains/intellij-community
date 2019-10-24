@@ -107,6 +107,20 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     assertTrue(executionCount.toString(), executionCount.get() <= 2);
   }
 
+  public void testDoNotSubmitToExecutorUntilWriteActionFinishes() {
+    AtomicInteger executionCount = new AtomicInteger();
+    Executor executor = r -> {
+      executionCount.incrementAndGet();
+      AppExecutorUtil.getAppExecutorService().execute(r);
+    };
+    assertEquals("x", waitForPromise(WriteAction.compute(() -> {
+      Promise<String> promise = ReadAction.nonBlocking(() -> "x").submit(executor);
+      assertEquals(0, executionCount.get());
+      return promise;
+    })));
+    assertEquals(1, executionCount.get());
+  }
+
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public void testProhibitCoalescingByCommonObjects() {
     NonBlockingReadAction<Void> ra = ReadAction.nonBlocking(() -> {});
