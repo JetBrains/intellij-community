@@ -19,15 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
-/**
- * @author lene
- */
 public interface AsyncDiffElement {
 
   @NotNull
-  Promise<DiffElement> copyToAsync(@NotNull DiffElement container,
-                                   @Nullable DiffElement target,
-                                   @NotNull String relativePath);
+  Promise<DiffElement<?>> copyToAsync(@NotNull DiffElement<?> container,
+                                      @Nullable DiffElement<?> target,
+                                      @NotNull String relativePath);
 
   @NotNull
   Promise<Void> deleteAsync();
