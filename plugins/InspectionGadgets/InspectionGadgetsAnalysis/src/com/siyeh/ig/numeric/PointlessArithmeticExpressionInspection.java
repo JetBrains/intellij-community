@@ -36,6 +36,7 @@ import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -84,18 +85,28 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor",
-                                           calculateReplacementExpression((PsiPolyadicExpression)infos[0]));
+                                           calculateReplacementExpression((PsiPolyadicExpression)infos[0], null));
   }
 
   @NonNls
-  String calculateReplacementExpression(PsiPolyadicExpression expression) {
+  String calculateReplacementExpression(PsiPolyadicExpression expression, @Nullable CommentTracker ct) {
     final PsiExpression[] operands = expression.getOperands();
     final IElementType tokenType = expression.getOperationTokenType();
-    final List<PsiExpression> expressions = collectSalientOperands(operands, tokenType, expression.getType());
+    final PsiType type = expression.getType();
+    final List<PsiExpression> expressions = collectSalientOperands(operands, tokenType, type);
     final PsiJavaToken token = expression.getTokenBeforeOperand(operands[1]);
     assert token != null;
+    String prefix = "";
+    if (isZero(expressions.get(0)) && expressions.size() > 1 && JavaTokenType.MINUS == token.getTokenType()) {
+      expressions.remove(0);
+      prefix = "- ";
+    }
     final String delimiter = " " + token.getText() + " ";
-    return expressions.stream().map(PsiElement::getText).collect(Collectors.joining(delimiter));
+    final String result =
+      prefix + expressions.stream().map(e -> ct == null ? e.getText() : ct.textWithComments(e)).collect(Collectors.joining(delimiter));
+    final boolean castToLongNeeded = ct != null && TypeConversionUtil.isLongType(type) &&
+                                     expressions.stream().noneMatch(x -> TypeConversionUtil.isLongType(x.getType()));
+    return castToLongNeeded ? "(long)" + result : result;
   }
 
   @NotNull
@@ -147,8 +158,7 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "constant.conditional.expression.simplify.quickfix");
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     @Override
@@ -158,17 +168,8 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
         return;
       }
       final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
-      final PsiExpression[] operands = expression.getOperands();
-      final PsiType type = expression.getType();
-      final List<PsiExpression> expressions = collectSalientOperands(operands, expression.getOperationTokenType(), type);
       final CommentTracker tracker = new CommentTracker();
-      final PsiJavaToken token = expression.getTokenBeforeOperand(operands[1]);
-      assert token != null;
-      final String delimiter = " " + token.getText() + " ";
-      final String replacement = expressions.stream().map(x -> tracker.textWithComments(x)).collect(Collectors.joining(delimiter));
-      final boolean castToLongNeeded = TypeConversionUtil.isLongType(type) &&
-                                       expressions.stream().noneMatch(x -> TypeConversionUtil.isLongType(x.getType()));
-      tracker.replaceExpressionAndRestoreComments(expression, castToLongNeeded ? "(long)" + replacement : replacement);
+      tracker.replaceExpressionAndRestoreComments(expression, calculateReplacementExpression(expression, tracker));
     }
   }
 
@@ -220,6 +221,9 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
 
     private boolean subtractionExpressionIsPointless(PsiExpression[] expressions) {
       final PsiExpression firstExpression = expressions[0];
+      if (isZero(firstExpression)) {
+        return true;
+      }
       for (int i = 1; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         if (isZero(expression) || areExpressionsIdenticalWithoutSideEffects(firstExpression, expression)) {
