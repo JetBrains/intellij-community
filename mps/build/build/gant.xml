@@ -191,18 +191,6 @@
             <arg value="apply"/>
             <arg value="${patchFile2}"/>
         </exec>
-
-        <property name="patchFile3"
-                  value="${basedir}/patches/PluginManagerCore_temporary.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchFile3}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchFile3}"/>
-        </exec>
     </target>
 
     <!-- ===================================================== -->
