@@ -13,6 +13,5 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" exported="" />
     <orderEntry type="module" module-name="intellij.python.configure" exported="" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.minor" exported="" />
-    <orderEntry type="module" module-name="intellij.idea.community.main" />
   </component>
 </module>
