@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
+import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
@@ -29,27 +30,60 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
+  protected enum LineMarkerType { External, InferredNullability, InferredContract }
+
   private final Function<PsiElement, String> myTooltipProvider = nameIdentifier -> {
     PsiModifierListOwner owner = (PsiModifierListOwner)nameIdentifier.getParent();
 
     return XmlStringUtil.wrapInHtml(NonCodeAnnotationGenerator.getNonCodeHeader(NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values()) +
                                     " available. Full signature:<p>\n" + JavaDocInfoGenerator.generateSignature(owner));
   };
+
+  private static LineMarkerType getAnnotationLineMarkerType(PsiModifierListOwner owner) {
+    Collection<? extends AnnotationDocGenerator> nonCodeAnnotations =
+      NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
+    if (ContainerUtil.find(nonCodeAnnotations, (anno) -> !anno.isInferred()) != null) {
+      return LineMarkerType.External;
+    }
+
+    if (ContainerUtil.find(nonCodeAnnotations, (anno) -> anno.isInferred() && !isContract(anno)) != null) {
+      return LineMarkerType.InferredNullability;
+    }
+
+    return LineMarkerType.InferredContract;
+  }
+
+  private static boolean isContract(AnnotationDocGenerator anno) {
+    return Contract.class.getName().equals(anno.getAnnotationQualifiedName());
+  }
+
+  private final String myName;
+  private final LineMarkerType myLineMarkerType;
+
+  protected NonCodeAnnotationsLineMarkerProvider(String name,
+                                                 LineMarkerType lineMarkerType) {
+    myName = name;
+    myLineMarkerType = lineMarkerType;
+  }
+
+  @Override
+  public String getName() {
+    return myName;
+  }
 
   @Nullable
   @Override
@@ -67,7 +101,9 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
                                 GutterIconRenderer.Alignment.RIGHT);
   }
 
-  protected abstract boolean hasAnnotationsToShow(@NotNull PsiModifierListOwner owner);
+  protected boolean hasAnnotationsToShow(@NotNull PsiModifierListOwner owner) {
+    return getAnnotationLineMarkerType(owner) == myLineMarkerType;
+  }
 
   @Nullable
   static PsiModifierListOwner getAnnotationOwner(@Nullable PsiElement element) {
