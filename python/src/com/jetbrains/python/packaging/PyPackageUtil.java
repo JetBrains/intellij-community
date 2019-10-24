@@ -337,7 +337,7 @@ public class PyPackageUtil {
       protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
         return languageContribution.isPackageManagementEnabled();
       }
-    }.withWebDeploymentContribution(true).check(sdk);
+    }.check(sdk);
   }
 
   /**

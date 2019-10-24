@@ -2,6 +2,7 @@
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.remote.CredentialsType;
 import com.intellij.remote.RemoteCredentials;
 import org.jetbrains.annotations.Nls;
@@ -14,7 +15,9 @@ public abstract class CredentialsTypeEx<T> extends CredentialsType<T> {
     super(name, prefix);
   }
 
-  public abstract RemoteCredentials createRemoteCredentials(T credentials, boolean allowSynchronousInteraction);
+  public abstract RemoteCredentials createRemoteCredentials(Project project,
+                                                            T credentials,
+                                                            boolean allowSynchronousInteraction);
 
   public abstract boolean useRemoteCredentials();
 

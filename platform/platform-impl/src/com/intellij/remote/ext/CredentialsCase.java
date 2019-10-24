@@ -16,7 +16,6 @@
 package com.intellij.remote.ext;
 
 import com.intellij.remote.CredentialsType;
-import com.intellij.remote.WebDeploymentCredentialsHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -26,14 +25,6 @@ public interface CredentialsCase<T> {
   CredentialsType<T> getType();
 
   void process(T credentials);
-
-  abstract class WebDeployment implements CredentialsCase<WebDeploymentCredentialsHolder> {
-
-    @Override
-    public CredentialsType<WebDeploymentCredentialsHolder> getType() {
-      return CredentialsType.WEB_DEPLOYMENT;
-    }
-  }
 
   static <T> CredentialsCase<T> create(@NotNull CredentialsType<T> type, @NotNull Consumer<T> consumer) {
     return new CredentialsCase<T>() {

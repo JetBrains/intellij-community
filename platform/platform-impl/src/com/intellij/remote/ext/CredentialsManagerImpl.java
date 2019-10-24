@@ -28,10 +28,7 @@ public class CredentialsManagerImpl extends CredentialsManager {
 
   @Override
   public List<CredentialsType> getAllTypes() {
-    List<CredentialsType> result = new ArrayList<>();
-    result.add(CredentialsType.WEB_DEPLOYMENT);
-    result.addAll(getExTypes());
-    return result;
+    return new ArrayList<>(getExTypes());
   }
 
   @Override

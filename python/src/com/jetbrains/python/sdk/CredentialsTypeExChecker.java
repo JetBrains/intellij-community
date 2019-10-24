@@ -18,21 +18,12 @@ package com.jetbrains.python.sdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.remote.WebDeploymentCredentialsHolder;
-import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CredentialsTypeExChecker {
-  private boolean myWebDeploymentContribution;
-
-  public CredentialsTypeExChecker withWebDeploymentContribution(boolean webDeploymentContribution) {
-    myWebDeploymentContribution = webDeploymentContribution;
-    return this;
-  }
-
   public boolean check(@Nullable final Sdk sdk) {
     if (sdk == null) {
       return false;
@@ -52,12 +43,7 @@ public abstract class CredentialsTypeExChecker {
       protected void processLanguageContribution(PyCredentialsContribution languageContribution, Object credentials) {
         result.set(checkLanguageContribution(languageContribution));
       }
-    }.collectCases(PyCredentialsContribution.class, new CredentialsCase.WebDeployment() {
-      @Override
-      public void process(WebDeploymentCredentialsHolder credentials) {
-        result.set(myWebDeploymentContribution);
-      }
-    }));
+    }.collectCases(PyCredentialsContribution.class));
     return result.get();
   }
 
