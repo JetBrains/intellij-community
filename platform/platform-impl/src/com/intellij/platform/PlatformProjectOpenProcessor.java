@@ -205,7 +205,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @Nullable
   @ApiStatus.Internal
   public static Project openExistingProject(@NotNull Path file,
-                                            @NotNull Path baseDir,
+                                            @Nullable("null for IPR project") Path projectDir,
                                             @NotNull OpenProjectTask options) {
     Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
@@ -221,7 +221,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
           }
         }
 
-        if (checkExistingProjectOnOpen(projectToClose, options.callback, baseDir)) {
+        if (checkExistingProjectOnOpen(projectToClose, options.callback, projectDir)) {
           return null;
         }
       }
@@ -238,7 +238,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
         CannotConvertException cannotConvertException = null;
         try {
           activity.end();
-          result = prepareProject(file, options, baseDir);
+          result = prepareProject(file, options, projectDir);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -357,8 +357,8 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     return module.get();
   }
 
-  private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, Path baseDir) {
-    if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+  private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, @Nullable Path projectDir) {
+    if (projectDir != null && ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
       if (exitCode == -1) {
         return true;
@@ -369,7 +369,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
         }
       }
       else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-        if (attachToProject(projectToClose, baseDir, callback)) {
+        if (attachToProject(projectToClose, projectDir, callback)) {
           return true;
         }
       }
@@ -410,7 +410,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     return moduleRef.get();
   }
 
-  public static boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
+  public static boolean attachToProject(@NotNull Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
     return ProjectAttachProcessor.EP_NAME.findFirstSafe(processor -> processor.attachToProject(project, projectDir, callback)) != null;
   }
 
