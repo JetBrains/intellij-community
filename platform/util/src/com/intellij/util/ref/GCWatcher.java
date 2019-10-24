@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ref;
 
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Ref;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.MemoryDumpHelper;
@@ -68,7 +69,15 @@ public class GCWatcher {
   }
 
   public boolean tryCollect() {
-    return GCUtil.allocateTonsOfMemory(new StringBuilder(), this::isEverythingCollected);
+    LowMemoryWatcher.ourNotificationsSuppressed.set(true);
+    try {
+      long startTime = System.currentTimeMillis();
+      GCUtil.allocateTonsOfMemory(new StringBuilder(), () -> isEverythingCollected() && System.currentTimeMillis() - startTime < 5000);
+      return isEverythingCollected();
+    }
+    finally {
+      LowMemoryWatcher.ourNotificationsSuppressed.set(false);
+    }
   }
 
   /**
