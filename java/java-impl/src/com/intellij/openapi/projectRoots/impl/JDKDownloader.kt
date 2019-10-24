@@ -9,14 +9,17 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.Consumer
@@ -25,21 +28,23 @@ import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import kotlin.properties.Delegates
+import kotlin.reflect.KProperty
 
 class JDKDownloader {
   companion object {
     @JvmStatic
-    fun getInstance(): JDKDownloader = ApplicationManager.getApplication().getService(JDKDownloader::class.java)
+    fun getInstance(): JDKDownloader? = if (!isEnabled) null else ApplicationManager.getApplication().getService(JDKDownloader::class.java)
 
     private val LOG = logger<JDKDownloader>()
+
+    @JvmStatic
+    val isEnabled
+      get() = Registry.`is`("jdk.downloader.ui")
   }
 
-  val isEnabled
-    get() = Registry.`is`("jdk.downloader.ui")
-
-  lateinit var mock: JDKDownloadItem
-
-  fun showCustomCreateUI(sdkModel: SdkModel,
+  fun showCustomCreateUI(javaSdk: JavaSdkImpl,
+                         sdkModel: SdkModel,
                          parentComponent: JComponent,
                          selectedSdk: Sdk?,
                          sdkCreatedCallback: Consumer<Sdk>) {
@@ -48,9 +53,12 @@ class JDKDownloader {
     ProgressManager.getInstance().run(object : Task.Modal(project, "Downloading JDK list...", true) {
       override fun run(indicator: ProgressIndicator) {
         val model = downloadModel(progress = indicator)
-        mock = model.items.first()
+        if (model.feedError != null) return /*Handle error?*/
 
         invokeLater {
+          if (project.isDisposedOrDisposeInProgress) return@invokeLater
+          val uiModel = JDKDownloadIUModel(project, model.items)
+
           dialog(title = "Download JDK",
                  parent = parentComponent,
                  resizable = false,
@@ -58,27 +66,81 @@ class JDKDownloader {
                  modality = DialogWrapper.IdeModalityType.PROJECT,
                  panel = panel {
                    row("Vendor:") {
-                     comboBox(
-                       model = DefaultComboBoxModel(model.items.toTypedArray()),
-                       prop = ::mock,
-                       renderer = listCellRenderer { value, _, _ -> text = "${value.vendor}: ${value.version}" }
-                     )
-                   }
-                   //row("Version") { comboBox() }
-                   row {
-                     right {
-                       button("Download", actionListener = {})
+                     cell {
+                       uiModel.apply { vendorCombobox }
                      }
                    }
-                   row { }
-                   row("Path to JDK:") {
-                     textFieldWithBrowseButton("Select installation path for the JDK", project = project)
+                   row("Version:") {
+                     uiModel.apply { versionCombobox }
                    }
-
+                   row { }
+                   row("Install JDK to:") {
+                     uiModel.apply { installPathChooser }
+                   }
                  }).show()
         }
       }
     })
+  }
+
+  class JDKDownloadIUModel(
+    val project: Project? = null,
+    val items: List<JDKDownloadItem>,
+    defaultItem: JDKDownloadItem = items.first()
+    ) {
+
+    var selectedVendor: JDKVendor by Delegates.observable(defaultItem.vendor, this::updateVendorState)
+    val vendorModel = DefaultComboBoxModel<JDKVendor>()
+    val vendorRenderer = listCellRenderer<JDKVendor> { vendor, _, _ -> setText(vendor.vendor) }
+    val Cell.vendorCombobox get() =
+      comboBox(model = vendorModel, prop = this@JDKDownloadIUModel::selectedVendor, renderer = vendorRenderer)
+      .applyIfEnabled()
+
+    var selectedVersion: JDKDownloadItem by Delegates.observable(defaultItem, this::updateVersionState)
+    val versionModel = DefaultComboBoxModel<JDKDownloadItem>()
+    val versionRenderer = listCellRenderer<JDKDownloadItem> { it, _, _ ->
+      setText("${it.version} (${StringUtil.formatFileSize(it.size)})")
+    }
+    val Cell.versionCombobox get() =
+      comboBox(model = versionModel, prop = this@JDKDownloadIUModel::selectedVersion, renderer = versionRenderer)
+
+
+    var installPath: String by Delegates.observable(generateInstallPath(defaultItem)) {_,_,_ ->}
+    val Cell.installPathChooser get() = textFieldWithBrowseButton(project = project,
+                                                                  browseDialogTitle = "Select installation path for the JDK",
+                                                                  prop = this@JDKDownloadIUModel::installPath,
+                                                                  fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                                                                  ).applyIfEnabled()
+
+    private fun generateInstallPath(item: JDKDownloadItem): String {
+      return "~/.jdks/${item.installFolderName}"
+    }
+
+    init {
+      items.map { it.vendor }.toSet().forEach {
+        vendorModel.addElement(it)
+      }
+    }
+
+    private fun updateVendorState(prop: KProperty<*>, oldVendor: JDKVendor, newVendor: JDKVendor) {
+      if (oldVendor == newVendor) return
+
+      val oldVersion = selectedVersion
+      versionModel.removeAllElements()
+
+      val newVersions = items.filter { it.vendor == newVendor }
+      newVersions.forEach {
+        versionModel.addElement(it)
+      }
+      selectedVersion = newVersions.firstOrNull { it.version.startsWith(oldVersion.version) } ?: newVersions.first()
+    }
+
+    private fun updateVersionState(prop: KProperty<*>, oldVersion: JDKDownloadItem, newVersion: JDKDownloadItem) {
+      if (oldVersion == newVersion) return
+
+      //todo: tell customized path and ask
+      installPath = generateInstallPath(newVersion)
+    }
   }
 
   private val om = ObjectMapper()
@@ -131,7 +193,7 @@ class JDKDownloader {
         val size = pkg["size"]?.asLong() ?: continue
         val sha256 = pkg["sha256"]?.asText() ?: continue
 
-        result += JDKDownloadItem(vendor = vendor,
+        result += JDKDownloadItem(vendor = JDKVendor(vendor),
                                   version = version,
                                   arch = arch,
                                   fileType = fileType,
@@ -149,25 +211,30 @@ class JDKDownloader {
 }
 
 class JDKDownloadModel private constructor(
-  val feedError: String?,
-  val items: List<JDKDownloadItem>
+  val feedError: String? = null,
+  val items: List<JDKDownloadItem> = listOf()
 ) {
   companion object {
-    fun errorModel(error: String) = JDKDownloadModel(feedError = error, items = listOf())
-    fun validModel(items: List<JDKDownloadItem>) = JDKDownloadModel(feedError = null, items = items)
+    fun errorModel(error: String) = JDKDownloadModel(feedError = error)
+    fun validModel(items: List<JDKDownloadItem>) = JDKDownloadModel(items = items)
   }
 }
 
+data class JDKVendor(
+  val vendor: String
+)
 
 data class JDKDownloadItem(
-  val vendor: String,
+  val vendor: JDKVendor,
   val version: String,
   val arch: String,
   val fileType: String,
   val url: String,
   val size: Long,
   val sha256: String
-)
+) {
+  val installFolderName get() = url.split("/").last() //TODO: use feed for it
+}
 
 private fun ByteArray.unXZ() = ByteArrayInputStream(this).use { input ->
   XZInputStream(input).use { it.readBytes() }

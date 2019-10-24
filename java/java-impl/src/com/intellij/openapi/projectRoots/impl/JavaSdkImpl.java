@@ -591,7 +591,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean supportsCustomCreateUI() {
-    return JDKDownloader.getInstance().isEnabled();
+    return JDKDownloader.isEnabled();
   }
 
   @Override
@@ -599,6 +599,8 @@ public final class JavaSdkImpl extends JavaSdk {
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<Sdk> sdkCreatedCallback) {
-    JDKDownloader.getInstance().showCustomCreateUI(sdkModel, parentComponent, selectedSdk, sdkCreatedCallback);
+    JDKDownloader instance = JDKDownloader.getInstance();
+    if (instance == null) return;
+    instance.showCustomCreateUI(this, sdkModel, parentComponent, selectedSdk, sdkCreatedCallback);
   }
 }
