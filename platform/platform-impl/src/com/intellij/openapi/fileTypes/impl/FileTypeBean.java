@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,6 +92,7 @@ public final class FileTypeBean implements PluginAware {
     return new ArrayList<>(myMatchers);
   }
 
+  @Transient
   @NotNull
   public PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;

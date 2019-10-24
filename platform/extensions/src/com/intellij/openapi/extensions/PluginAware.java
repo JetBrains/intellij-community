@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 public interface PluginAware {
   /**
    * Called by extensions framework when extension is loaded from plugin.xml descriptor.
+   * <p>If this method is implemented in a {@link ExtensionPoint.Kind#BEAN_CLASS bean class}
+   * extension point and it also exposes the stored plugin description via {@code getPluginDescriptor} method, you <strong>must annotate the latter
+   * with {@link com.intellij.util.xmlb.annotations.Transient @Transient}</strong> to ensure that serialization engine won't try to deserialize this property.</p>
    * @param pluginDescriptor descriptor of the plugin that provided this particular extension.
    */
   void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor);

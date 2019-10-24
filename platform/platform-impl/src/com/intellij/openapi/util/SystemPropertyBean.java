@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public final class SystemPropertyBean implements PluginAware {
     myPluginDescriptor = pluginDescriptor;
   }
 
+  @Transient
   @Nullable
   public PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
