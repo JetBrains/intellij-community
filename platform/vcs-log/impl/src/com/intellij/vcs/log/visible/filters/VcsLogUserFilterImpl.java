@@ -106,12 +106,13 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     });
   }
 
+  @NotNull
   private Set<VcsUser> getUsers(@NotNull String name) {
+    String standardName = VcsUserUtil.getNameInStandardForm(name);
+    
     Set<VcsUser> result = new HashSet<>();
-
-    result.addAll(myAllUsersByNames.get(VcsUserUtil.getNameInStandardForm(name)));
-    result.addAll(myAllUsersByEmails.get(VcsUserUtil.getNameInStandardForm(name)));
-
+    result.addAll(myAllUsersByNames.get(standardName));
+    result.addAll(myAllUsersByEmails.get(standardName));
     return result;
   }
 
