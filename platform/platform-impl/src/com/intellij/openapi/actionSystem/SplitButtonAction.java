@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,16 +30,32 @@ import java.awt.geom.Area;
 
 import static com.intellij.openapi.actionSystem.ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
 
-public class SplitButtonAction extends AnAction implements CustomComponentAction {
+public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
 
   @ApiStatus.Experimental
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
+    setPopup(true);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {}
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+    if (component instanceof SplitButton) {
+      ((SplitButton)component).update(e);
+    }
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return myActionGroup.getChildren(e);
+  }
 
   @Override
   public boolean isDumbAware() {
@@ -79,6 +96,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       myPresentation.copyFrom(presentation);
       actionEnabled = presentation.isEnabled();
       myPresentation.setEnabled(true);
+      myPresentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, this);
     }
 
     @Override
@@ -221,24 +239,20 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       }
     }
 
-    @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      if (selectedAction != action && myAction != action) {
-        selectedAction = action;
-        copyPresentation(selectedAction.getTemplatePresentation());
-
-        if(selectedAction instanceof Toggleable) {
-          myPresentation.putClientProperty(Toggleable.SELECTED_PROPERTY, event.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
-        }
-      }
-      else if (myPresentation != event.getPresentation()) {
+    private void update(@NotNull AnActionEvent event) {
+      if (selectedAction != null) {
+        selectedAction.update(event);
         copyPresentation(event.getPresentation());
       }
-      else if (!myPresentation.isEnabled()) {
-        actionEnabled = false;
-        myPresentation.setEnabled(true);
+    }
+
+    @Override
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == this) {
+        selectedAction = action;
+        update(event);
+        repaint();
       }
-      repaint();
     }
   }
 }
