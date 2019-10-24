@@ -128,10 +128,33 @@ open class GitDefaultMergeDialogCustomizer(
     return when (repository.state) {
       Repository.State.MERGING -> getMergeTitleCustomizerList(repository, file)
       Repository.State.REBASING -> getRebaseTitleCustomizerList(repository, file)
+      Repository.State.GRAFTING -> getCherryPickTitleCustomizerList(repository, file)
       else -> DEFAULT_CUSTOMIZER_LIST
     }
   }
 
+  private fun getCherryPickTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
+    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return DEFAULT_CUSTOMIZER_LIST
+    val mergeBase = GitHistoryUtils.getMergeBase(
+      repository.project,
+      repository.root,
+      CHERRY_PICK_HEAD,
+      HEAD
+    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
+      "Local Changes",
+      repository,
+      file,
+      Pair(mergeBase, HEAD)
+    )
+    val rightTitleCustomizer = getTitleWithCommitDetailsCustomizer(
+      "<html>Changes from cherry-pick ${cherryPickHead.toShortString()}</html>",
+      repository,
+      file,
+      cherryPickHead.asString()
+    )
+    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+  }
 
   private fun getMergeTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
     val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
