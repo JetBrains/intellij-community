@@ -14,19 +14,12 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.Disposer
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
-import org.picocontainer.PicoVisitor
 
 internal abstract class BaseComponentAdapter(internal val componentManager: PlatformComponentManagerImpl,
                                              val pluginDescriptor: PluginDescriptor,
                                              @field:Volatile private var initializedInstance: Any?,
                                              private var implementationClass: Class<*>?) : ComponentAdapter {
   private var initializing = false
-
-  final override fun verify(container: PicoContainer) {}
-
-  final override fun accept(visitor: PicoVisitor) {
-    visitor.visitComponentAdapter(this)
-  }
 
   protected val pluginId: PluginId
     get() = pluginDescriptor.pluginId

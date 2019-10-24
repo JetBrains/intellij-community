@@ -9,6 +9,7 @@ import javax.swing.JComponent
 
 /**
  * Model of settings of single language hints provider (Preferences | Editor | Inlay Hints)
+ * @param isEnabled language is enabled in terms of InlayHintsSettings.hintsEnabled
  */
 abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String) {
   /**

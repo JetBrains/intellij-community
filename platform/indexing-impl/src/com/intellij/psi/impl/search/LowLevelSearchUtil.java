@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.TextOccurenceProcessor;
@@ -22,12 +21,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.intellij.openapi.util.text.StringUtil.isEscapedBackslash;
 
 public class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
@@ -124,7 +126,7 @@ public class LowLevelSearchUtil {
                                                                @NotNull final PsiElement scope,
                                                                @NotNull final StringSearcher searcher,
                                                                boolean processInjectedPsi,
-                                                               @NotNull  ProgressIndicator progress) {
+                                                               @NotNull ProgressIndicator progress) {
     int[] occurrences = getTextOccurrencesInScope(scope, searcher);
     return processElementsAtOffsets(scope, searcher, processInjectedPsi, progress, occurrences, processor);
   }
@@ -161,8 +163,11 @@ public class LowLevelSearchUtil {
                                           @NotNull StringSearcher searcher,
                                           boolean processInjectedPsi,
                                           @NotNull ProgressIndicator progress,
-                                          int[] offsetsInScope, @NotNull TextOccurenceProcessor processor) {
-    if (offsetsInScope.length == 0) return true;
+                                          @NotNull int[] offsetsInScope,
+                                          @NotNull TextOccurenceProcessor processor) {
+    if (offsetsInScope.length == 0) {
+      return true;
+    }
 
     final Project project = scope.getProject();
     final ASTNode scopeNode = scope.getNode();
@@ -209,8 +214,8 @@ public class LowLevelSearchUtil {
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile root = viewProvider.getPsi(language);
       //noinspection StringConcatenationInLoop
-      msg += "\n root " + language + " length=" + root.getTextLength() + (root instanceof PsiFileImpl
-                                                                          ? "; contentsLoaded=" + ((PsiFileImpl)root).isContentsLoaded() : "");
+      msg += "\n root " + language + " length=" + root.getTextLength()
+             + (root instanceof PsiFileImpl ? "; contentsLoaded=" + ((PsiFileImpl)root).isContentsLoaded() : "");
     }
 
     LOG.error(msg);
@@ -218,12 +223,27 @@ public class LowLevelSearchUtil {
 
   // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
   // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
-  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache =
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+
+  /**
+   * @deprecated please use {@link #processTextOccurrences(CharSequence, int, int, StringSearcher, TIntProcedure)}
+   */
+  @ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,
                                                @NotNull StringSearcher searcher,
-                                               @Nullable ProgressIndicator progress,
+                                               @SuppressWarnings("unused") @Nullable ProgressIndicator progress,
+                                               @NotNull TIntProcedure processor) {
+    return processTextOccurrences(text, startOffset, endOffset, searcher, processor);
+  }
+
+  public static boolean processTextOccurrences(@NotNull CharSequence text,
+                                               int startOffset,
+                                               int endOffset,
+                                               @NotNull StringSearcher searcher,
                                                @NotNull TIntProcedure processor) {
     for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher)) {
       if (!processor.execute(offset)) {
@@ -239,7 +259,7 @@ public class LowLevelSearchUtil {
                                           int endOffset,
                                           @NotNull StringSearcher searcher) {
     if (endOffset > text.length()) {
-      throw new IllegalArgumentException("end: " + endOffset + " > length: "+text.length());
+      throw new IllegalArgumentException("end: " + endOffset + " > length: " + text.length());
     }
     Map<StringSearcher, int[]> cachedMap = cache.get(text);
     int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
@@ -255,7 +275,7 @@ public class LowLevelSearchUtil {
         //noinspection AssignmentToForLoopParameter
         index = searcher.scan(text, index, newEnd);
         if (index < 0) break;
-        if (checkJavaIdentifier(text, 0, text.length(), searcher, index)) {
+        if (checkJavaIdentifier(text, searcher, index)) {
           occurrences.add(index);
         }
       }
@@ -277,35 +297,29 @@ public class LowLevelSearchUtil {
   }
 
   private static boolean checkJavaIdentifier(@NotNull CharSequence text,
-                                             int startOffset,
-                                             int endOffset,
                                              @NotNull StringSearcher searcher,
                                              int index) {
     if (!searcher.isJavaIdentifier()) {
       return true;
     }
 
-    if (index > startOffset) {
+    if (index > 0) {
       char c = text.charAt(index - 1);
       if (Character.isJavaIdentifierPart(c) && c != '$') {
-        if (!searcher.isHandleEscapeSequences() || index < 2 || isEscapedBackslash(text, startOffset, index - 2)) { //escape sequence
+        if (!searcher.isHandleEscapeSequences() || index < 2 || isEscapedBackslash(text, 0, index - 2)) { //escape sequence
           return false;
         }
       }
-      else if (index > 0 && searcher.isHandleEscapeSequences() && !isEscapedBackslash(text, startOffset, index - 1)) {
+      else if (searcher.isHandleEscapeSequences() && !isEscapedBackslash(text, 0, index - 1)) {
         return false;
       }
     }
 
     final int patternLength = searcher.getPattern().length();
-    if (index + patternLength < endOffset) {
+    if (index + patternLength < text.length()) {
       char c = text.charAt(index + patternLength);
       return !Character.isJavaIdentifierPart(c) || c == '$';
     }
     return true;
-  }
-
-  private static boolean isEscapedBackslash(CharSequence text, int startOffset, int index) {
-    return StringUtil.isEscapedBackslash(text, startOffset, index);
   }
 }

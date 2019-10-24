@@ -1,4 +1,0 @@
-package library
-
-interface RecentKotlinInterface {
-}

@@ -346,11 +346,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       // fill position managers
-      ((DebuggerManagerImpl)DebuggerManager.getInstance(getProject())).getCustomPositionManagerFactories()
-        .map(factory -> factory.fun(this))
-        .filter(Objects::nonNull)
-        .forEach(this::appendPositionManager);
-      Stream.of(PositionManagerFactory.EP_NAME.getExtensions(getProject()))
+      PositionManagerFactory.EP_NAME.extensions(getProject())
         .map(factory -> factory.createPositionManager(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);

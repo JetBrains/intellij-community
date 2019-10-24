@@ -40,18 +40,19 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   @Override
-  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     final FilePath path = (FilePath)userObject;
-    if (path.isDirectory() || !isLeaf()) {
+
+    if (renderer.isShowFlatten() && isLeaf()) {
       renderer.append(path.getName(), getTextAttributes());
       appendParentPath(renderer, path.getParentPath());
-      if (!isLeaf()) {
-        appendCount(renderer);
-      }
     }
     else {
-      renderer.append(path.getName(), getTextAttributes());
-      appendParentPath(renderer, path.getParentPath());
+      renderer.append(getRelativePath(path), getTextAttributes());
+    }
+
+    if (!isLeaf()) {
+      appendCount(renderer);
     }
 
     renderer.setIcon(path.getFileType(), path.isDirectory() || !isLeaf());

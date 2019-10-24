@@ -243,14 +243,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       gc.gridy++;
       JButton button = new JButton("Abracadabra");
-      new HelpTooltip().
-        setTitle("Highlight Non-Picked Commit and Automatically Create Some Very Long Action Name").
-        setShortcut("Ctrl+Alt+Shift+H").
-        setDescription("Highlight commits from selected branch that have not been applied to the current branch.").
-        installOn(button);
+      new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
 
       topPanel.add(UI.PanelFactory.panel(button).
-        withComment("Abradabra comment").resizeX(false).createPanel(), gc);
+        withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).
@@ -452,7 +448,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JPanel p2 = UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(cb1).withComment("Comment 1").moveCommentRight()).
         add(UI.PanelFactory.panel(cb2).withComment("Comment 2")).
-        add(UI.PanelFactory.panel(cb3).withTooltip("Checkbox tooltip")).
+        add(UI.PanelFactory.panel(cb3).withTooltip(LONG_TEXT1)).
 
         add(UI.PanelFactory.panel(rb1).withComment("No validation").moveCommentRight()).
         add(UI.PanelFactory.panel(rb2).withComment("Warning checkbox validation").moveCommentRight()).
@@ -779,12 +775,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       DefaultActionGroup toolbarActions = new DefaultActionGroup();
       toolbarActions.add(new SplitButtonAction(actions));
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1).withShortCut("control K"));
-      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2)
-                           .withDescription(LONG_TEXT1)
-                           .withShortCut("control N"));
-      toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3)
-                           .withDescription(LONG_TEXT2)
-                           .withShortCut("control P"));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2).withShortCut("control N"));
+      toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3).withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
       JComponent toolbarComponent = toolbar.getComponent();
@@ -842,7 +834,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       slider.setSnapToTicks(true);
 
-      Hashtable position = new Hashtable();
+      Hashtable<Integer, JLabel> position = new Hashtable<>();
       position.put(0, new JLabel("Hashtable"));
       position.put(25, new JLabel("Hash"));
       position.put(50, new JLabel("Ha"));

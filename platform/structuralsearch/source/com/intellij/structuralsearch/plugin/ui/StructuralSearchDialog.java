@@ -134,7 +134,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       })
         .withDocumentsCommitted(getProject())
         .expireWith(getDisposable())
-        .coalesceBy(event.getDocument())
+        .coalesceBy(this, event.getDocument())
         .submit(AppExecutorUtil.getAppExecutorService());
     }
   };

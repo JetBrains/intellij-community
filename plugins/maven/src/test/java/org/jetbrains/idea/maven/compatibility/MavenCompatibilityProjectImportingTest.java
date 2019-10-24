@@ -152,4 +152,32 @@ public class MavenCompatibilityProjectImportingTest extends MavenCompatibilityTe
       assertModuleLibDep("module1", "Maven: junit:junit:4.1");
     });
   }
+
+  @Test
+  public void testImportSubProjectWithPropertyInParent() throws Throwable {
+    assumeVersionMoreThan("3.0.3");
+    doTest(() -> {
+      createModulePom("module1", "<parent>" +
+                                 "<groupId>test</groupId>" +
+                                 "<artifactId>project</artifactId>" +
+                                 "<version>${revision}</version>" +
+                                 "</parent>" +
+                                 "<artifactId>module1</artifactId>");
+
+      importProject("<groupId>test</groupId>" +
+                    "    <artifactId>project</artifactId>" +
+                    "    <version>${revision}</version>" +
+                    "    <packaging>pom</packaging>" +
+                    "    <modules>" +
+                    "        <module>module1</module>\n" +
+                    "    </modules>" +
+                    "    <properties>" +
+                    "        <revision>1.0-SNAPSHOT</revision>" +
+                    "    </properties>");
+      waitForReadingCompletion();
+
+      assertModules("project", "module1");
+
+    });
+  }
 }

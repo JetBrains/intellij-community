@@ -159,7 +159,7 @@ private class UnstableApiUsageProcessor(
         messageProvider.buildMessage(annotatedContainingDeclaration)
       }
       val elementToHighlight = getElementToHighlight(sourceNode) ?: return false
-      problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
       return true
     }
     return false
@@ -176,7 +176,7 @@ private class UnstableApiUsageProcessor(
         val messageProvider = getMessageProvider(unstableTypeUsedInSignature.psiAnnotation) ?: return
         val message = messageProvider.buildMessageUnstableTypeIsUsedInSignatureOfReferencedApi(target, unstableTypeUsedInSignature)
         val elementToHighlight = getElementToHighlight(sourceNode) ?: return
-        problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
       }
     }
   }
@@ -191,6 +191,8 @@ private class UnstableApiUsageProcessor(
 
 private interface UnstableApiUsageMessageProvider {
 
+  val problemHighlightType: ProblemHighlightType
+
   fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
 
   fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String
@@ -202,17 +204,22 @@ private interface UnstableApiUsageMessageProvider {
 }
 
 private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageProvider {
+
+  override val problemHighlightType
+    get() = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+
   override fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
     with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
-        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName)
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName, presentableAnnotationName)
       }
       else {
         JvmAnalysisBundle.message(
           "jvm.inspections.unstable.api.usage.overridden.method.is.declared.in.unstable.api",
           targetName,
           containingDeclarationType,
-          containingDeclarationName
+          containingDeclarationName,
+          presentableAnnotationName
         )
       }
     }
@@ -220,14 +227,15 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
   override fun buildMessage(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
     with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
-        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.api.is.marked.unstable.itself", targetName)
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.api.is.marked.unstable.itself", targetName, presentableAnnotationName)
       }
       else {
         JvmAnalysisBundle.message(
           "jvm.inspections.unstable.api.usage.api.is.declared.in.unstable.api",
           targetName,
           containingDeclarationType,
-          containingDeclarationName
+          containingDeclarationName,
+          presentableAnnotationName
         )
       }
     }
@@ -239,11 +247,16 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
     "jvm.inspections.unstable.api.usage.unstable.type.is.used.in.signature.of.referenced.api",
     DeprecationInspection.getPresentableName(referencedApi),
     annotatedTypeUsedInSignature.targetType,
-    annotatedTypeUsedInSignature.targetName
+    annotatedTypeUsedInSignature.targetName,
+    annotatedTypeUsedInSignature.presentableAnnotationName
   )
 }
 
 private class ScheduledForRemovalMessageProvider : UnstableApiUsageMessageProvider {
+
+  override val problemHighlightType
+    get() = ProblemHighlightType.GENERIC_ERROR
+
   override fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String {
     val versionMessage = getVersionMessage(annotatedContainingDeclaration)
     return with(annotatedContainingDeclaration) {

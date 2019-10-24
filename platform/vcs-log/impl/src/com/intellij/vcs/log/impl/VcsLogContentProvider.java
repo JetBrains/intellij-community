@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
@@ -23,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -143,9 +140,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   public static class VcsLogVisibilityPredicate implements NotNullFunction<Project, Boolean> {
     @NotNull
     @Override
-    public Boolean fun(Project project) {
-      VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
-      return !VcsLogManager.findLogProviders(Arrays.asList(roots), project).isEmpty();
+    public Boolean fun(@NotNull Project project) {
+      return !VcsProjectLog.getLogProviders(project).isEmpty();
     }
   }
 }

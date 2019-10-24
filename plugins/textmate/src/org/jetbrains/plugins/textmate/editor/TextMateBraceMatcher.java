@@ -18,18 +18,20 @@ public class TextMateBraceMatcher implements BraceMatcher {
 
   @Override
   public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
-    final IElementType tokenType = iterator.getTokenType();
-    final int start = iterator.getStart();
-    final String currentSelector = tokenType != null ? tokenType.toString() : null;
-    return TextMateEditorUtils.getHighlightingPairForLeftChar(fileText.charAt(start), currentSelector) != null;
+    if (iterator.getStart() == iterator.getEnd()) return false;
+    IElementType tokenType = iterator.getTokenType();
+    String currentSelector = tokenType != null ? tokenType.toString() : null;
+    return TextMateEditorUtils.getHighlightingPairForLeftChar(fileText.charAt(iterator.getStart()), currentSelector) != null;
   }
 
   @Override
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
-    final IElementType tokenType = iterator.getTokenType();
-    final int start = iterator.getStart();
-    final String currentSelector = tokenType != null ? tokenType.toString() : null;
-    return TextMateEditorUtils.getHighlightingPairForRightChar(fileText.charAt(start), currentSelector) != null;
+    int end = iterator.getEnd();
+    if (end == 0 || end == iterator.getStart()) return false;
+
+    IElementType tokenType = iterator.getTokenType();
+    String currentSelector = tokenType != null ? tokenType.toString() : null;
+    return TextMateEditorUtils.getHighlightingPairForRightChar(fileText.charAt(end - 1), currentSelector) != null;
   }
 
   @Override

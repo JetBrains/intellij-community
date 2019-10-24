@@ -58,7 +58,8 @@ object UpdateInfoPanelUI {
         it.text = """<html><head>$cssFontDeclaration</head><body>$updateHighlightsContent</body></html>"""
         it.addHyperlinkListener(HyperlinkListener { event: HyperlinkEvent ->
           if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-            FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog.buttons", "url", FeatureUsageData().addValue(event.description))
+            FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog", "link.clicked",
+                                                        FeatureUsageData().addData("url", event.url.toString()))
           }
         })
 
@@ -134,9 +135,9 @@ object UpdateInfoPanelUI {
     }
   }
 
-  private fun getConfigLink(panel: JPanel, text: String?): LinkLabel<*> {
-    return LinkLabel.create(text) { ShowSettingsUtil.getInstance().editConfigurable(panel, UpdateSettingsConfigurable(false)) }
-  }
+  private fun getConfigLink(panel: JPanel, text: String?): LinkLabel<*> =
+    LinkLabel.create(text) { ShowSettingsUtil.getInstance().editConfigurable(panel, UpdateSettingsConfigurable(false)) }
+      .also { it.font = smallFont(it.font) }
 
   private fun getPatchesText(patches: UpdateChain?, testPatch: File?): String? {
     return if (patches != null && !StringUtil.isEmptyOrSpaces(patches.size)) {

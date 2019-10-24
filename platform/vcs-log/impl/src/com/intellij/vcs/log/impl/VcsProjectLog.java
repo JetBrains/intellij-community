@@ -172,7 +172,7 @@ public class VcsProjectLog implements Disposable {
   @CalledInBackground
   private VcsLogManager createLog(boolean forceInit) {
     if (myDisposeStarted) return null;
-    Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
+    Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders(myProject);
     if (!logProviders.isEmpty()) {
       VcsLogManager logManager = myLogManager.getValue(logProviders);
       initialize(logManager, forceInit);
@@ -204,8 +204,8 @@ public class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  private Map<VirtualFile, VcsLogProvider> getLogProviders() {
-    return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()), myProject);
+  static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
+    return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project);
   }
 
   public static VcsProjectLog getInstance(@NotNull Project project) {

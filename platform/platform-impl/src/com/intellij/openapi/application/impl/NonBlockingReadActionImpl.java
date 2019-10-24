@@ -231,10 +231,6 @@ public class NonBlockingReadActionImpl<T>
     }
 
     void transferToBgThread() {
-      transferToBgThread(ReschedulingAttempt.NULL);
-    }
-
-    void transferToBgThread(@NotNull ReschedulingAttempt previousAttempt) {
       if (myCoalesceEquality != null) {
         acquire();
       }
@@ -250,9 +246,9 @@ public class NonBlockingReadActionImpl<T>
         currentIndicator = indicator;
         try {
           ReadAction.run(() -> {
-            boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> insideReadAction(previousAttempt, indicator), indicator);
+            boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> insideReadAction(indicator), indicator);
             if (!success && Promises.isPending(promise)) {
-              reschedule(previousAttempt);
+              reschedule();
             }
           });
         }
@@ -265,26 +261,26 @@ public class NonBlockingReadActionImpl<T>
       });
     }
 
-    private void reschedule(ReschedulingAttempt previousAttempt) {
+    private void reschedule() {
       if (!checkObsolete()) {
-        doScheduleWithinConstraints(attempt -> dispatchLaterUnconstrained(() -> transferToBgThread(attempt)), previousAttempt);
+        scheduleWithinConstraints(() -> dispatchLaterUnconstrained(() -> transferToBgThread()), null);
       }
     }
 
-    void insideReadAction(ReschedulingAttempt previousAttempt, ProgressIndicator indicator) {
+    void insideReadAction(ProgressIndicator indicator) {
       try {
         if (checkObsolete()) {
           return;
         }
         if (!constraintsAreSatisfied()) {
-          reschedule(previousAttempt);
+          reschedule();
           return;
         }
 
         T result = myComputation.call();
 
         if (myEdtFinish != null) {
-          safeTransferToEdt(result, myEdtFinish, previousAttempt);
+          safeTransferToEdt(result, myEdtFinish);
         } else {
           promise.setResult(result);
         }
@@ -317,14 +313,14 @@ public class NonBlockingReadActionImpl<T>
       return false;
     }
 
-    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish, ReschedulingAttempt previousAttempt) {
+    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish) {
       if (Promises.isRejected(promise)) return;
 
       long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (stamp != AsyncExecutionServiceImpl.getWriteActionCounter()) {
-          reschedule(previousAttempt);
+          reschedule();
           return;
         }
 
@@ -354,8 +350,7 @@ public class NonBlockingReadActionImpl<T>
 
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
-    Application application = ApplicationManager.getApplication();
-    assert application == null || !application.isWriteAccessAllowed();
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (CancellablePromise<?> task : ourTasks) {
       waitForTask(task);
     }

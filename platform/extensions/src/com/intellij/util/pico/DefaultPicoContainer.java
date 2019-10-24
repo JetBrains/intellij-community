@@ -9,15 +9,20 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.*;
-import org.picocontainer.defaults.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.Parameter;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.defaults.AmbiguousComponentResolutionException;
+import org.picocontainer.defaults.DefaultLifecycleStrategy;
+import org.picocontainer.defaults.DuplicateComponentKeyRegistrationException;
+import org.picocontainer.defaults.InstanceComponentAdapter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultPicoContainer implements MutablePicoContainer {
-  public static final DelegatingComponentMonitor DEFAULT_DELEGATING_COMPONENT_MONITOR = new DelegatingComponentMonitor();
-  public static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy(DEFAULT_DELEGATING_COMPONENT_MONITOR);
+  public static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy();
 
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new THashSet<>();
@@ -242,25 +247,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     throw new UnsupportedOperationException("Do not use");
   }
 
-  /**
-   * @deprecated Do not use.
-   */
-  @Override
-  @Deprecated
-  public void verify() {
-    throw new UnsupportedOperationException("Do not use");
-  }
-
-  @Override
-  public void start() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void stop() {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public void dispose() {
     throw new UnsupportedOperationException();
@@ -282,18 +268,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Override
   public boolean removeChildContainer(@NotNull PicoContainer child) {
     return children.remove(child);
-  }
-
-  @Override
-  public void accept(PicoVisitor visitor) {
-    visitor.visitContainer(this);
-
-    for (ComponentAdapter adapter : getComponentAdapters()) {
-      adapter.accept(visitor);
-    }
-    for (PicoContainer child : new SmartList<>(children)) {
-      child.accept(visitor);
-    }
   }
 
   @Override

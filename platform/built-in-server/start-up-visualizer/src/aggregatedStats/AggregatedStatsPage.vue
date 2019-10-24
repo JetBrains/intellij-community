@@ -80,10 +80,24 @@
     </el-row>
 
     <h3>Duration Events</h3>
-    <div class="aggregatedChart" ref="lineDurationChartContainer"></div>
+    <el-tabs value="date" size="small">
+      <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
+                   :key="item.order" :label="item.name" :name="item.order" lazy>
+        <keep-alive>
+          <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"/>
+        </keep-alive>
+      </el-tab-pane>
+    </el-tabs>
 
     <h3>Instant Events</h3>
-    <div class="aggregatedChart" ref="lineInstantChartContainer"></div>
+    <el-tabs value="date" size="small">
+      <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
+                   :key="item.order" :label="item.name" :name="item.order" lazy>
+        <keep-alive>
+          <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest"/>
+        </keep-alive>
+      </el-tab-pane>
+    </el-tabs>
 
     <el-row>
       <el-col>

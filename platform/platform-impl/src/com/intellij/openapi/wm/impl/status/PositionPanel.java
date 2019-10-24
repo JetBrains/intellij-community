@@ -83,7 +83,7 @@ public final class PositionPanel extends EditorBasedWidget
   @Override
   public String getTooltipText() {
     String toolTip = UIBundle.message("go.to.line.command.name");
-    String shortcut = KeymapUtil.getFirstKeyboardShortcutText("GotoLine");
+    String shortcut = getShortcutText();
 
     if (!Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(shortcut)) {
       return toolTip + " (" + shortcut + ")";

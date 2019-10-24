@@ -516,6 +516,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     else if ("selected".equals(propertyName)) {
       repaint();
     }
+    else if (HIDE_DROPDOWN_ICON.toString().equals(propertyName)) {
+      repaint();
+    }
   }
 
   // Accessibility

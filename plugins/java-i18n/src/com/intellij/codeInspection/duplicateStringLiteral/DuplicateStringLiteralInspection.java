@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInspection.*;
@@ -115,7 +115,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     StringSearcher searcher = new StringSearcher(stringToFind, true, true);
 
     List<PsiLiteralExpression> foundExpr = new SmartList<>();
-    LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, ProgressManager.getInstance().getProgressIndicator(), offset -> {
+    LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, offset -> {
       PsiElement element = file.findElementAt(offset);
       if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
       PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();

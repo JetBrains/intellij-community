@@ -191,7 +191,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
       for (final PsiFile file : psiFilesWithDuplicates) {
         CharSequence text = file.getViewProvider().getContents();
-        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, progress, offset -> {
+        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, offset -> {
           PsiElement element = file.findElementAt(offset);
           if (element != null && element.getParent() instanceof Property) {
             final Property property = (Property)element.getParent();

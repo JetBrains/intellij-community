@@ -2,13 +2,13 @@
 import * as am4charts from "@amcharts/amcharts4/charts"
 
 export interface ChartConfigurator {
-  configureXAxis(chart: am4charts.XYChart): am4charts.CategoryAxis
+  configureXAxis(chart: am4charts.XYChart): am4charts.Axis
 
   configureSeries(series: am4charts.LineSeries): void
 }
 
 export class SortedByCategory implements ChartConfigurator {
-  configureXAxis(chart: am4charts.XYChart): am4charts.CategoryAxis {
+  configureXAxis(chart: am4charts.XYChart): am4charts.Axis {
     const axis = new am4charts.CategoryAxis()
     axis.dataFields.category = "build"
 
@@ -27,6 +27,19 @@ export class SortedByCategory implements ChartConfigurator {
 
   configureSeries(series: am4charts.LineSeries) {
     series.dataFields.categoryX = "build"
+  }
+}
+
+export class SortedByDate implements ChartConfigurator {
+  configureXAxis(chart: am4charts.XYChart): am4charts.Axis {
+    const axis = new am4charts.DateAxis()
+    axis.groupData = true
+    axis.dataFields.date = "t"
+    chart.xAxes.push(axis)
+    return axis
+  }
+
+  configureSeries(series: am4charts.LineSeries) {
     series.dataFields.dateX = "t"
   }
 }

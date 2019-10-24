@@ -13,7 +13,7 @@ object CDSFUSCollector {
 
   fun logCDSStatus(enabled: Boolean,
                    runningWithArchive: Boolean) {
-    FUCounterUsageLogger.getInstance().logEvent(groupId, "runnings.with.cds", FeatureUsageData()
+    FUCounterUsageLogger.getInstance().logEvent(groupId, "running.with.cds", FeatureUsageData()
       .addData("running_with_archive", runningWithArchive)
       .addData("status", if (enabled) "enabled" else "disabled")
     )

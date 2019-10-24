@@ -468,8 +468,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Okio", libraryName: "okio", license: "Apache 2.0",
                        url: "https://github.com/square/okio"),
     new LibraryLicense(name: "PEPK", libraryName: "pepk", license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "PicoContainer", libraryName: "picocontainer", license: "BSD",
-                       url: "https://github.com/codehaus/picocontainer", licenseUrl: "https://opensource.org/licenses/bsd-license.php"),
+    
     new LibraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver", license: "Apache 2.0",
                        url: "https://github.com/codehaus-plexus/plexus-archiver", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "plexus-classworlds", attachedTo: "intellij.maven.server.m30.impl", version: "2.4", license: "Apache 2.0",

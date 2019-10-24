@@ -10,21 +10,21 @@ final class BuiltInHelpPlugin {
     def productName = buildContext.applicationInfo.productName
     def moduleName = "intellij.platform.builtInHelp"
     def helpRoot = "${buildContext.paths.projectHome}/help"
-    def indexerJar = "$helpRoot/indexer/bundled-help-indexer-1.0.jar"
     def resourceRoot = "$helpRoot/plugin-resources"
-    if (!new File(indexerJar).exists()) {
-      buildContext.messages.warning("Skipping $productName Help plugin because $indexerJar not present")
+    if (!new File(resourceRoot, "topics/app.js").exists()) {
+      buildContext.messages.warning("Skipping $productName Help plugin because $resourceRoot/topics/app.js not present")
       return null
     }
     return PluginLayout.plugin(moduleName) {
       def productLowerCase = productName.replace(" ", "-").toLowerCase();
       mainJarName = "$productLowerCase-help.jar"
       directoryName = "${productName.replace(" ", "")}Help"
+      excludeFromModule(moduleName, "com/jetbrains/builtInHelp/indexer/**")
       withGeneratedResources({ BuildContext context ->
         def helpModule = context.findRequiredModule(moduleName)
         def ant = context.ant
         context.messages.block("Indexing help topics..") {
-          ant.java(classname: "com.jetbrains.bundled.help.search.HelpIndex", fork: true, failonerror: true) {
+          ant.java(classname: "com.jetbrains.builtInHelp.indexer.HelpIndexer", fork: true, failonerror: true) {
             jvmarg(line: "-ea -Xmx500m")
             sysproperty(key: "java.awt.headless", value: true)
             arg(path: "$resourceRoot/search")
@@ -34,7 +34,6 @@ final class BuiltInHelpPlugin {
               context.getModuleRuntimeClasspath(helpModule, false).each {
                 pathelement(location: it)
               }
-              pathelement(location: indexerJar)
             }
           }
         }

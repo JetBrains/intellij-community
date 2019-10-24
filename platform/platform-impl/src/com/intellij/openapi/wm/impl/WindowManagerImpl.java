@@ -569,7 +569,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       frame.getFrame().setVisible(true);
 
       if (FrameInfoHelper.isFullScreenSupportedInCurrentOs() &&
-          ((frameInfo != null && frameInfo.getFullScreen()) || IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
+          ((frameInfo != null && frameInfo.getFullScreen()))) {
         frame.toggleFullScreen(true);
       }
     }

@@ -29,7 +29,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.EmptyIcon;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitProtectedBranchesKt;
+import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
 import git4idea.push.GitPushSource;
@@ -38,7 +41,6 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.DvcsImplIcons;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +59,7 @@ import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
 import static git4idea.ui.branch.GitBranchActionsUtilKt.checkCommitsUnderProgress;
 import static java.util.Arrays.asList;
+import static one.util.streamex.StreamEx.of;
 
 class GitBranchPopupActions {
 
@@ -95,7 +98,7 @@ class GitBranchPopupActions {
     GitLocalBranch currentBranch = myRepository.getCurrentBranch();
     GitBranchesCollection branchesCollection = myRepository.getBranches();
 
-    List<LocalBranchActions> localBranchActions = StreamEx.of(branchesCollection.getLocalBranches())
+    List<LocalBranchActions> localBranchActions = of(branchesCollection.getLocalBranches())
       .filter(branch -> !branch.equals(currentBranch))
       .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
       .sorted((b1, b2) -> {
@@ -115,7 +118,7 @@ class GitBranchPopupActions {
                                firstLevelGroup);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
-    List<RemoteBranchActions> remoteBranchActions = StreamEx.of(branchesCollection.getRemoteBranches())
+    List<RemoteBranchActions> remoteBranchActions = of(branchesCollection.getRemoteBranches())
       .map(GitBranch::getName)
       .sorted(StringUtil::naturalCompare)
       .map(remoteName -> new RemoteBranchActions(myProject, repositoryList, remoteName, myRepository))
@@ -217,12 +220,12 @@ class GitBranchPopupActions {
               brancher.checkoutNewBranchStartingFrom(name, HEAD, true, currentBranchOfSameName, null);
             }
             if (!currentBranchOfDifferentName.isEmpty()) {
-              brancher.createBranch(name, StreamEx.of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
+              brancher.createBranch(name, of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
             }
           }
           else {
-            brancher.createBranch(name, StreamEx.of(myRepositories).filter(r -> r.getBranches().findLocalBranch(name) == null)
-              .toMap(position -> HEAD));
+            brancher
+              .createBranch(name, of(myRepositories).filter(r -> r.getBranches().findLocalBranch(name) == null).toMap(position -> HEAD));
           }
         }
       }
@@ -436,9 +439,9 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        GitNewBranchOptions options = new GitNewBranchDialog(myProject, myRepositories,
-                                                             "Rename Branch " + myCurrentBranchName,
-                                                             myCurrentBranchName, false).showAndGetOptions();
+        GitNewBranchOptions options =
+          new GitNewBranchDialog(myProject, myRepositories, "Rename Branch " + myCurrentBranchName, myCurrentBranchName, false, false,
+                                 false, GitBranchOperationType.RENAME).showAndGetOptions();
         if (options != null) {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.renameBranch(myCurrentBranchName, options.getName(), myRepositories);
@@ -603,7 +606,7 @@ class GitBranchPopupActions {
       }
 
       private boolean hasTrackingConflicts(@NotNull Map<GitRepository, GitLocalBranch> conflictingLocalBranches) {
-        return StreamEx.of(conflictingLocalBranches.keySet()).anyMatch(r -> {
+        return of(conflictingLocalBranches.keySet()).anyMatch(r -> {
           GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(r, conflictingLocalBranches.get(r));
           return trackInfo != null && !BRANCH_NAME_HASHING_STRATEGY.equals(myRemoteBranchName, trackInfo.getRemoteBranch().getName());
         });

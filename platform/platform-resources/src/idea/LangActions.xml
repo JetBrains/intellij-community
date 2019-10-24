@@ -1201,13 +1201,16 @@
       </group>
       <group id="ServiceView.Filter" popup="true" text="Filter" icon="AllIcons.General.Filter"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
-      <separator/>
-      <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
-              text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
-      <action id="ServiceView.SplitToNewTabs" class="com.intellij.execution.services.SplitToNewTabsAction"
-              text="Split to New Tabs" icon="AllIcons.General.Layout"/>
-      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
-              text="Split By Type" icon="AllIcons.Modules.Split"/>
+      <group id="ServiceView.OpenInNewTabGroup" popup="true" text="Open in New Tab" icon="AllIcons.Actions.OpenNewTab"
+             class="com.intellij.execution.services.OpenInNewTabActionGroup">
+        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"
+                text="Open in New Tab">
+        </action>
+        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"
+                text="Open Each in New Tab"/>
+        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
+                text="Open Each Type in New Tab"/>
+      </group>
       <separator/>
       <group id="ServiceView.AddService" popup="true" text="Add Service" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
              class="com.intellij.execution.services.AddServiceActionGroup">
@@ -1220,8 +1223,8 @@
     <group id="ServiceViewItemPopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
       <separator/>
-      <reference id="ServiceView.ShowInNewTab"/>
-      <reference id="ServiceView.SplitToNewTabs"/>
+      <reference id="ServiceView.OpenInNewTab"/>
+      <reference id="ServiceView.OpenEachInNewTab"/>
       <reference id="ServiceView.SplitByType"/>
       <separator/>
       <reference id="$Delete"/>

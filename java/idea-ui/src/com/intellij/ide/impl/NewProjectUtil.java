@@ -6,6 +6,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,28 +31,44 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class NewProjectUtil {
+public final class NewProjectUtil {
   private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
 
   private NewProjectUtil() { }
 
-  public static void createNewProject(@Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
+  /**
+   * @deprecated Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.
+   */
+  @Deprecated
+  public static void createNewProject(@SuppressWarnings("unused") @Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
+    createNewProject(wizard);
+  }
+
+  public static void createNewProject(@NotNull AbstractProjectWizard wizard) {
     String title = ProjectBundle.message("project.new.wizard.progress.title");
     Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
     boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
     if (proceed && wizard.showAndGet()) {
-      createFromWizard(wizard, projectToClose);
+      createFromWizard(wizard);
     }
+  }
+
+  public static Project createFromWizard(@NotNull AbstractProjectWizard wizard) {
+    return createFromWizard(wizard, null);
   }
 
   public static Project createFromWizard(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) {
@@ -64,10 +81,9 @@ public class NewProjectUtil {
     }
   }
 
-  private static Project doCreate(AbstractProjectWizard wizard, @Nullable Project projectToClose) throws IOException {
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+  private static Project doCreate(@NotNull AbstractProjectWizard wizard, @Nullable Project projectToClose) throws IOException {
     String projectFilePath = wizard.getNewProjectFilePath();
-    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+    for (Project p : ProjectUtil.getOpenProjects()) {
       if (ProjectUtil.isSameProject(projectFilePath, p)) {
         ProjectUtil.focusProjectWindow(p, false);
         return null;
@@ -77,31 +93,41 @@ public class NewProjectUtil {
     ProjectBuilder projectBuilder = wizard.getProjectBuilder();
     LOG.debug("builder " + projectBuilder);
 
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     try {
-      File directoryToCreate = new File(projectFilePath);
+      Path projectFile = Paths.get(projectFilePath);
+      Path projectDir;
       if (wizard.getStorageScheme() == StorageScheme.DEFAULT) {
-        directoryToCreate = directoryToCreate.getParentFile();
-        if (directoryToCreate == null) {
+        projectDir = projectFile.getParent();
+        if (projectDir == null) {
           throw new IOException("Cannot create project in '" + projectFilePath + "': no parent file exists");
         }
       }
-      else if (wizard.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
-        directoryToCreate = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
+      else {
+        projectDir = projectFile;
       }
-      FileUtil.ensureExists(directoryToCreate);
+      Files.createDirectories(projectDir);
 
       Project newProject;
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
         String name = wizard.getProjectName();
-        newProject = projectBuilder == null
-                   ? projectManager.newProject(name, projectFilePath, true, false)
-                   : projectBuilder.createProject(name, projectFilePath);
+        if (projectBuilder == null) {
+          OpenProjectTask options = new OpenProjectTask();
+          options.useDefaultProjectAsTemplate = true;
+          options.isNewProject = true;
+          newProject = projectManager.newProject(projectFile, name, options);
+        }
+        else {
+          newProject = projectBuilder.createProject(name, projectFilePath);
+        }
       }
       else {
         newProject = projectToClose;
       }
 
-      if (newProject == null) return projectToClose;
+      if (newProject == null) {
+        return projectToClose;
+      }
 
       Sdk jdk = wizard.getNewProjectJdk();
       if (jdk != null) {
@@ -121,54 +147,47 @@ public class NewProjectUtil {
         }
       }), null, null);
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        newProject.save();
-      }
-
-      if (projectBuilder != null && !projectBuilder.validate(projectToClose, newProject)) {
-        return projectToClose;
-      }
-
-      if (newProject != projectToClose && !ApplicationManager.getApplication().isUnitTestMode()) {
-        closePreviousProject(projectToClose);
-      }
-
       if (projectBuilder != null) {
+        // validate can require project on disk
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          newProject.save();
+        }
+
+        if (!projectBuilder.validate(projectToClose, newProject)) {
+          return projectToClose;
+        }
+
         projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
       }
 
-      boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
-      StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
-        // ensure the dialog is shown after all startup activities are done
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
-          if (need2OpenProjectStructure) {
-            ModulesConfigurator.showDialog(newProject, null, null);
-          }
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        boolean needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
+        StartupManager.getInstance(newProject).registerPostStartupActivity(() -> {
+          // ensure the dialog is shown after all startup activities are done
           ApplicationManager.getApplication().invokeLater(() -> {
-            if (newProject.isDisposed()) return;
-            ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-            if (toolWindow != null) {
-              toolWindow.activate(null);
+            if (needToOpenProjectStructure) {
+              ModulesConfigurator.showDialog(newProject, null, null);
             }
-          }, ModalityState.NON_MODAL);
-        }, ModalityState.NON_MODAL);
-      });
+            ApplicationManager.getApplication().invokeLater(() -> {
+              ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+              if (toolWindow != null) {
+                toolWindow.activate(null);
+              }
+            }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
+          }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
+        });
+      }
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
 
-        if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
-          IdeFrame lastFocusedFrame = IdeFocusManager.findInstance().getLastFocusedFrame();
-          if (lastFocusedFrame != null && lastFocusedFrame.isInFullScreen()) {
-            newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
-          }
-        }
-
-        projectManager.openProject(newProject);
+        OpenProjectTask options = new OpenProjectTask();
+        options.setProject(newProject);
+        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, options);
       }
+
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        newProject.save();
+        SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
       }
       return newProject;
     }
@@ -195,7 +214,7 @@ public class NewProjectUtil {
   }
 
   public static void closePreviousProject(Project projectToClose) {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    Project[] openProjects = ProjectUtil.getOpenProjects();
     if (openProjects.length > 0) {
       int exitCode = ProjectUtil.confirmOpenNewProject(true);
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {

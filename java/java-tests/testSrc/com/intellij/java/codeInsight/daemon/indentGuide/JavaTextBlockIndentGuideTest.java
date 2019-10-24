@@ -88,6 +88,28 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
       "}\n");
   }
 
+  public void testTabsOnlyIndent() {
+    doTest("public class TextBlock {\n" +
+           "\n" +
+           "  String text = \"\"\"\n" +
+           "		|1\n" +
+           "		|2\n" +
+           "		|3\n" +
+           "		\"\"\";\n" +
+           "}");
+  }
+
+  public void testMixedIndent() {
+    doTest("public class TextBlock {\n" +
+           "\n" +
+           "  String text = \"\"\"\n" +
+           "	1\n" +
+           " 2\n" +
+           "	3\n" +
+           "	\"\"\";\n" +
+           "}");
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

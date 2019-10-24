@@ -12,23 +12,18 @@ import org.jdom.Element;
 public class GenericDebuggerRunnerSettings implements DebuggingRunnerData, RunnerSettings {
   private final SmartSerializer mySerializer = new SmartSerializer();
 
-  @Transient
-  @Deprecated
-  public String DEBUG_PORT = "";
-
+  private String DEBUG_PORT = "";
   public int TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
   public boolean LOCAL = true;
 
   @Override
   @OptionTag("DEBUG_PORT")
   public String getDebugPort() {
-    //noinspection deprecation
     return DEBUG_PORT;
   }
 
   @Override
   public void setDebugPort(String port) {
-    //noinspection deprecation
     DEBUG_PORT = port;
   }
 

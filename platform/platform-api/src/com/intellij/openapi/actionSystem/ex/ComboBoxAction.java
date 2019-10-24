@@ -393,7 +393,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
      * Other updates happen in Swing.
      */
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
     protected void updateButtonSize() {}
 
     @ApiStatus.Experimental

@@ -289,8 +289,13 @@
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
 
+    <registryKey key="git.commit.completion.fixup.squash" defaultValue="false"
+                 description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
+
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
+    <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
+                            order="first, before commitCompletion"/>
   </extensions>
 
   <extensionPoints>
