@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -23,7 +23,7 @@ class PluginRepositoryXmlGenerator {
   void generate(List<PluginRepositorySpec> pluginSpecs, String targetDirectory) {
     def categories = new TreeMap<String, List<Plugin>>()
     pluginSpecs.each { spec ->
-      def p = readPlugin(new File(spec.pluginZip), new File(spec.pluginXml), spec.pluginVersion, buildContext.buildNumber, new File(targetDirectory))
+      def p = readPlugin(new File(spec.pluginZip), new File(spec.pluginXml), buildContext.buildNumber, new File(targetDirectory))
       categories.putIfAbsent(p.category, [])
       categories[p.category] << p
     }
@@ -56,7 +56,7 @@ class PluginRepositoryXmlGenerator {
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
-  private Plugin readPlugin(File pluginZip, File pluginXml, String pluginVersion, String buildNumber, File targetDirectory) {
+  private Plugin readPlugin(File pluginZip, File pluginXml, String buildNumber, File targetDirectory) {
     def xml = new XmlParser().parse(pluginXml)
     def versionNode = xml."idea-version"[0]
 
@@ -74,7 +74,7 @@ class PluginRepositoryXmlGenerator {
       vendor: xml.vendor.text(),
       sinceBuild: versionNode?.attribute("since-build") ?: buildNumber,
       untilBuild: versionNode?.attribute("until-build") ?: buildNumber,
-      version: pluginVersion,
+      version: xml.version.text(),
       description: xml.description.text(),
       relativeFilePath: FileUtil.getRelativePath(targetDirectory, pluginZip),
       size: pluginZip.length(),

@@ -728,7 +728,6 @@ class DistributionJARsBuilder {
         def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
 
         def directory = getActualPluginDirectoryName(plugin, buildContext)
-        def pluginVersion = getPluginVersion(plugin)
         String suffix = includeInCustomRepository ? "" : "-$pluginVersion"
         def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading &&
                               whiteList.contains(plugin.mainModule)
@@ -737,9 +736,7 @@ class DistributionJARsBuilder {
         def destFile = "$targetDirectory/$directory${suffix}.zip"
 
         if (includeInCustomRepository) {
-          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(),
-                                                                          pluginVersion: pluginVersion,
-                                                                          pluginXml: pluginXmlFiles[plugin]))
+          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXmlFiles[plugin]))
         }
 
         ant.zip(destfile: destFile) {
