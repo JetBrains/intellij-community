@@ -4,11 +4,11 @@ package com.intellij.openapi.projectRoots.impl
 import org.junit.Assert
 import org.junit.Test
 
-class JDKDownloaderTest {
+class JDKListDownloaderTest {
 
   @Test
   fun `model can be downloaded and parsed`() {
-    val data = JDKDownloader().downloadModel(null)
+    val data = JDKListDownloader.downloadModel(null)
     Assert.assertTrue(data.items.isNotEmpty())
   }
 }
