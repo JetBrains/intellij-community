@@ -5,8 +5,10 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
@@ -65,6 +67,17 @@ open class GroovyInferenceSession(
         }
       }
     }
+  }
+
+  fun registerReturnTypeConstraints(expectedType: ExpectedType, right: PsiType, context: PsiElement) {
+    val right_ = if (isErased) {
+      val currentSubstitutor = resolveSubset(myInferenceVariables, contextSubstitutor)
+      TypeConversionUtil.erasure(currentSubstitutor.substitute(right))
+    }
+    else {
+      substituteWithInferenceVariables(contextSubstitutor.substitute(right))
+    }
+    addConstraint(TypePositionConstraint(expectedType, right_, context))
   }
 
   open fun startNestedSession(params: Array<PsiTypeParameter>,

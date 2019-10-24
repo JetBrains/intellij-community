@@ -23,14 +23,10 @@ class MethodCallConstraint(
       nested.repeatInferencePhases()
 
       if (expectedType != null) {
-        val left = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(expectedType.type))
-        if (left != null) {
-          val rt = SpreadState.apply(PsiUtil.getSmartReturnType(method), result.spreadState, context.project)
-          val right = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(rt))
-          if (right != null && right != PsiType.VOID) {
-            nested.addConstraint(TypePositionConstraint(expectedType, right, context))
-            nested.repeatInferencePhases()
-          }
+        val rt = SpreadState.apply(PsiUtil.getSmartReturnType(method), result.spreadState, context.project)
+        if (rt != null && rt != PsiType.VOID) {
+          nested.registerReturnTypeConstraints(expectedType, rt, context)
+          nested.repeatInferencePhases()
         }
       }
     }
