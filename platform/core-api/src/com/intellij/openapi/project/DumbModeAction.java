@@ -19,10 +19,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author peter
- * @deprecated to remove in IDEA 16
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2016")
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public enum DumbModeAction {
   NOTHING,
   CANCEL,
