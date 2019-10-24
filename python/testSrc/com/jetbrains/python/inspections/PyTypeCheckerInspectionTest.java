@@ -1000,4 +1000,25 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypedDictConsistency() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
+
+  // PY-33548
+  public void testTypeVarsChainBeforeNonTypeVarSubstitution() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText(
+        "from typing import TypeVar, Mapping\n" +
+        "\n" +
+        "MyKT = TypeVar(\"MyKT\")\n" +
+        "MyVT = TypeVar(\"MyVT\")\n" +
+        "\n" +
+        "class MyMapping(Mapping[MyKT, MyVT]):\n" +
+        "    pass\n" +
+        "\n" +
+        "d: MyMapping[str, str] = undefined1\n" +
+        "d.get(undefined2)\n" +
+        "d.get(\"str\")\n" +
+        "d.get(<weak_warning descr=\"Expected type 'str' (matched generic type '_KT'), got 'int' instead\">1</weak_warning>)"
+      )
+    );
+  }
 }
