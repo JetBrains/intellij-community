@@ -8,12 +8,18 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -116,8 +122,23 @@ public class NonBlockingReadActionImpl<T>
   public NonBlockingReadAction<T> coalesceBy(@NotNull Object... equality) {
     if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
     if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
+    if (equality.length == 1 && isTooCommon(equality[0])) {
+      throw new IllegalArgumentException("Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
+    }
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
                                            ContainerUtil.newArrayList(equality), myProgressIndicator);
+  }
+
+  private static boolean isTooCommon(Object o) {
+    return o instanceof Project ||
+           o instanceof PsiElement ||
+           o instanceof Document ||
+           o instanceof VirtualFile ||
+           o instanceof Editor ||
+           o instanceof FileEditor ||
+           o instanceof Class ||
+           o instanceof String ||
+           o == null;
   }
 
   @Override
@@ -220,6 +241,9 @@ public class NonBlockingReadActionImpl<T>
           ourTasksByEquality.put(coalesceEquality, this);
           transferToBgThread();
         } else {
+          if (!current.getComputationOrigin().equals(getComputationOrigin())) {
+            reportCoalescingConflict(current);
+          }
           if (current.myReplacement != null) {
             current.myReplacement.promise.cancel();
             assert current == ourTasksByEquality.get(coalesceEquality);
@@ -228,6 +252,21 @@ public class NonBlockingReadActionImpl<T>
           current.promise.cancel();
         }
       }
+    }
+
+    private void reportCoalescingConflict(NonBlockingReadActionImpl<?>.Submission current) {
+      LOG.error("Same coalesceBy arguments are already used by " + current.getComputationOrigin() + " so they can cancel each other. " +
+                "Please make them more unique.");
+    }
+
+    String getComputationOrigin() {
+      Object computation = myComputation;
+      if (computation instanceof RunnableCallable) {
+        computation = ((RunnableCallable)computation).getDelegate();
+      }
+      String name = computation.getClass().getName();
+      int dollars = name.indexOf("$$Lambda");
+      return dollars >= 0 ? name.substring(0, dollars) : name;
     }
 
     void transferToBgThread() {

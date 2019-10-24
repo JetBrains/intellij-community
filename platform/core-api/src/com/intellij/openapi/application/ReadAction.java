@@ -16,6 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.RunnableCallable;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -75,10 +76,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   @NotNull
   @Contract(pure=true)
   public static NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
-    return nonBlocking(() -> {
-      task.run();
-      return null;
-    });
+    return nonBlocking(new RunnableCallable(task));
   }
 
   /**
@@ -89,5 +87,4 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<T> task) {
     return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
   }
-
 }
