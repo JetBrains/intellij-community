@@ -218,6 +218,11 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection"/>
+    <localInspection language="JAVA" shortName="SerializableCtor"
+                     displayName="Non-default constructor in serializable class"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.SerializableCtorInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
