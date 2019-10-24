@@ -64,7 +64,11 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       return LineMarkerType.InferredNullability;
     }
 
-    return LineMarkerType.InferredContract;
+    if (!nonCodeAnnotations.isEmpty()) {
+      return LineMarkerType.InferredContract;
+    }
+
+    return null;
   }
 
   private static boolean isContract(AnnotationDocGenerator anno) {
