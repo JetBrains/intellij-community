@@ -14,6 +14,8 @@ import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,47 +43,53 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
 @ApiStatus.Experimental
 public class BuildTargetSourcesState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ModuleSourcesState");
-  private static final String SOURCES_STATE_FILE_NAME = "sources_state.json";
+  private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
   private final BuildTargetIndex myBuildTargetIndex;
   private final BuildRootIndex myBuildRootIndex;
   private final ProjectStamps myProjectStamps;
-  private final File mySourceStateStorageRoot;
+  private final File myTargetStateStorage;
+  private final File myProjectFolder;
   private final Gson gson;
 
-  public BuildTargetSourcesState(@NotNull BuildTargetIndex buildTargetIndex, @NotNull BuildRootIndex buildRootIndex,
+  public BuildTargetSourcesState(@NotNull JpsProject project, @NotNull BuildTargetIndex buildTargetIndex, @NotNull BuildRootIndex buildRootIndex,
                                  ProjectStamps projectStamps, @NotNull BuildDataPaths dataPaths) {
     gson = new Gson();
     myProjectStamps = projectStamps;
     myBuildRootIndex = buildRootIndex;
     myBuildTargetIndex = buildTargetIndex;
-    mySourceStateStorageRoot = new File(dataPaths.getDataStorageRoot(), SOURCES_STATE_FILE_NAME);
+    myProjectFolder = JpsModelSerializationDataService.getBaseDirectory(project);
+    myTargetStateStorage = new File(dataPaths.getDataStorageRoot(), TARGET_SOURCES_STATE_FILE_NAME);
   }
 
   public void reportSourcesState(@NotNull CompileContext context) {
     if (!PORTABLE_CACHES || myProjectStamps == null) return;
 
     long start = System.currentTimeMillis();
-    Map<String, Map<String, String>> targetTypeHashMap = new HashMap<>();
+    Map<String, Map<String, BuildTargetState>> targetTypeHashMap = new HashMap<>();
     myBuildTargetIndex.getAllTargets().stream().filter(target -> context.getScope().isAffected(target)).forEach(target -> {
       BuildTargetType<?> buildTargetType = target.getTargetType();
       String typeTypeId = buildTargetType.getTypeId();
-      Map<String, String> buildTargetHashMap = targetTypeHashMap.get(typeTypeId);
+      Map<String, BuildTargetState> buildTargetHashMap = targetTypeHashMap.get(typeTypeId);
       if (buildTargetHashMap == null) {
         buildTargetHashMap = new HashMap<>();
         targetTypeHashMap.put(typeTypeId, buildTargetHashMap);
       }
       getBuildTargetHash(target, context).ifPresent(buildTargetHash -> {
-        targetTypeHashMap.get(typeTypeId).put(target.getId(), StringUtil.toHexString(buildTargetHash));
+        String hexString = StringUtil.toHexString(buildTargetHash);
+
+        // Now in project each build target has single output root
+        String relativePath = target.getOutputRoots(context).stream().map(file -> toRelative(file, myProjectFolder)).findFirst().orElse("");
+        targetTypeHashMap.get(typeTypeId).put(target.getId(), new BuildTargetState(hexString, relativePath));
       });
     });
 
     try {
-      FileUtil.writeToFile(mySourceStateStorageRoot, gson.toJson(targetTypeHashMap));
+      FileUtil.writeToFile(myTargetStateStorage, gson.toJson(targetTypeHashMap));
     }
     catch (IOException e) {
       LOG.warn("Unable to save sources state", e);
     }
-    LOG.info("Build target sources report took: " + (System.currentTimeMillis() - start) + "ms");
+    LOG.info("Build target sources report took: " + (System.currentTimeMillis() - start) + " ms");
   }
 
   @NotNull
@@ -98,8 +106,8 @@ public class BuildTargetSourcesState {
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             return myBuildRootIndex.isDirectoryAccepted(dir.toFile(), rootDescriptor)
-                                     ? FileVisitResult.CONTINUE
-                                     : FileVisitResult.SKIP_SUBTREE;
+                   ? FileVisitResult.CONTINUE
+                   : FileVisitResult.SKIP_SUBTREE;
           }
 
           @Override
@@ -141,5 +149,15 @@ public class BuildTargetSourcesState {
       result[i] += secondHash[i];
     }
     return result;
+  }
+
+  private static class BuildTargetState {
+    private final String hash;
+    private final String relativePath;
+
+    private BuildTargetState(String hash, String relativePath) {
+      this.hash = hash;
+      this.relativePath = relativePath;
+    }
   }
 }
