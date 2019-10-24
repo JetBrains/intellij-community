@@ -30,7 +30,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
-import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
@@ -218,7 +217,6 @@ public abstract class UsefulTestCase extends TestCase {
         }
       },
       () -> UIUtil.removeLeakingAppleListeners(),
-      () -> EdtTestUtil.runInEdtAndWait(() -> {EditorNotificationsImpl.completeAsyncTasks();}),
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
     ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
