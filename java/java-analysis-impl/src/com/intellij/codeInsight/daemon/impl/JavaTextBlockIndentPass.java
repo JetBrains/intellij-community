@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -200,11 +202,56 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       private static TextBlockModel create(@Nullable PsiLiteralExpression expression) {
         PsiLiteralExpressionImpl literal = tryCast(expression, PsiLiteralExpressionImpl.class);
         if (literal == null || literal.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL) return null;
-        int baseIndent = literal.getTextBlockIndent();
+        int baseIndent = getIndent(literal);
         if (baseIndent == -1) return null;
         TextRange range = literal.getTextRange();
         if (range == null) return null;
         return new TextBlockModel(baseIndent, range);
+      }
+
+      private static int getIndent(@NotNull PsiLiteralExpressionImpl literal) {
+        int indent = literal.getTextBlockIndent();
+        if (indent <= 0) return indent;
+        String[] lines = literal.getTextBlockLines();
+        if (lines == null) return -1;
+        IndentType indentType = findIndentType(lines, indent);
+        if (indentType == null) return -1;
+        if (indentType == IndentType.TABS) {
+          indent *= CodeStyle.getSettings(literal.getProject()).getTabSize(StdFileTypes.JAVA);
+        }
+        return indent;
+      }
+
+      @Nullable
+      private static IndentType findIndentType(@NotNull String[] lines, int indent) {
+        IndentType indentType = null;
+        for (String line : lines) {
+          for (int i = 0; i < indent; i++) {
+            char c = line.charAt(i);
+            IndentType currentType = IndentType.of(c);
+            if (currentType == null) return null;
+            if (indentType == null) {
+              indentType = currentType;
+            }
+            else if (indentType != currentType) {
+              return null;
+            }
+          }
+        }
+        return indentType;
+      }
+
+      private enum IndentType {
+        SPACES,
+        TABS;
+
+        @Nullable
+        @Contract(pure = true)
+        private static IndentType of(char c) {
+          if (c == ' ') return SPACES;
+          if (c == '\t') return TABS;
+          return null;
+        }
       }
 
       @Override

@@ -1,8 +1,10 @@
 package com.intellij.java.codeInsight.daemon.indentGuide;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.java.codeInsight.daemon.indentGuide.IndentGuidesProvider.Guide;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -21,7 +23,7 @@ public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTes
 
   protected void doTest(@NotNull String text,
                         @NotNull Function<JavaCodeInsightTestFixture, IndentGuidesProvider> guidesProviderFactory) {
-    IndentGuideTestData testData = parse(text);
+    IndentGuideTestData testData = parse(text, myFixture.getProject());
     myFixture.configureByText(getTestName(false) + ".java", testData.myText);
     CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtilRt.EMPTY_INT_ARRAY, false);
     IndentGuidesProvider provider = guidesProviderFactory.apply(myFixture);
@@ -45,8 +47,8 @@ public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTes
   }
 
   @NotNull
-  @Contract("_ -> new")
-  private static IndentGuideTestData parse(@NotNull String text) {
+  @Contract("_, _ -> new")
+  private static IndentGuideTestData parse(@NotNull String text, Project project) {
     StringBuilder sb = new StringBuilder();
     List<Guide> guides = new ArrayList<>();
     Map<Integer, Integer> prevLineIndents = new HashMap<>();
@@ -56,8 +58,17 @@ public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTes
       int shift = 0;
       int textStart = 0;
       Map<Integer, Integer> endedGuides = new HashMap<>(prevLineIndents);
-      for (int i = line.indexOf('|'); i >= 0; i = StringUtil.indexOf(line, '|', textStart)) {
-        int indent = i - shift;
+      int tabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
+      int tabs = 0;
+      for (int i = 0; i < line.length(); i++) {
+        char c = line.charAt(i);
+        if (c == '\t') {
+          // i was already incremented, so we need to decrement tab size
+          tabs += (tabSize - 1);
+          continue;
+        }
+        if (c != '|') continue;
+        int indent = i + tabs - shift;
         if (prevLineIndents.containsKey(indent)) endedGuides.remove(indent);
         else prevLineIndents.put(indent, nLine - 1);
         shift++;

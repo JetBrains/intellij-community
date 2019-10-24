@@ -191,7 +191,8 @@ public class PsiLiteralExpressionImpl
     return prefix;
   }
 
-  private String[] getTextBlockLines() {
+  @Nullable
+  public String[] getTextBlockLines() {
     String rawText = getText();
     if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
     int start = 3;
