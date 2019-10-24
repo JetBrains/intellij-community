@@ -166,10 +166,9 @@ private fun push(repo: File, spec: String) =
 private fun beforePushRetry(e: Throwable, repo: File, spec: String): Boolean {
   if (!isGitServerUnavailable(e)) {
     val specParts = spec.split(':')
-    if (specParts.count() == 2) {
-      val flippedSpec = "${specParts[1]}:${specParts[0]}"
-      execute(repo, GIT, "pull", "--rebase=true", "origin", flippedSpec)
-    }
+    execute(repo, GIT, "pull", "--rebase=true", "origin", if (specParts.count() == 2) {
+      "${specParts[1]}:${specParts[0]}"
+    } else spec)
   }
   return true
 }
