@@ -11,10 +11,10 @@ object PyMlCompletionHelpers {
   private val LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.completion.mlcompletion")
 
   // imports and builtins popularity was calculated on github by number of search results for each present builtins or import
-  val importPopularity = initMapFromJsonResource("/mlcompletion/importPopularityWeights.json")
-  val builtinsPopularity = initMapFromJsonResource("/mlcompletion/builtinsPopularityWeights.json")
+  val importPopularity = initMapFromJsonResource("importPopularityWeights.json")
+  val builtinsPopularity = initMapFromJsonResource("builtinsPopularityWeights.json")
 
-  private val keyword2id = initMapFromJsonResource("/mlcompletion/keywordsNumeration.json")
+  private val keyword2id = initMapFromJsonResource("keywordsNumeration.json")
 
   fun getKeywordId(kw: String): Int? = keyword2id[kw]
 
