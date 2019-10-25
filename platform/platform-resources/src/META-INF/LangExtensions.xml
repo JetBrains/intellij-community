@@ -77,9 +77,6 @@
                         serviceImplementation="com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl"/>
     <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
 
-    <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
-                        serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
-
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
 
     <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
@@ -102,8 +99,6 @@
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
-    <projectService serviceInterface="com.intellij.psi.PsiManager"
-                    serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
                     serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="await"/>
 
@@ -187,9 +182,6 @@
     <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
                         serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
-                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
-
     <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
                         serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
 
@@ -247,16 +239,10 @@
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
                     serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
-    <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
-                    serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager"
                     serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl"/>
-    <projectService serviceInterface="com.intellij.pom.PomModel"
-                    serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.include.FileIncludeManager"
                     serviceImplementation="com.intellij.psi.impl.include.FileIncludeManagerImpl"/>
-    <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
-                    serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
                     serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl"/>
@@ -317,9 +303,6 @@
 
     <projectService serviceImplementation="com.intellij.diagnostic.logging.LogConsolePreferences"/>
 
-    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
-                        serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl"/>
-
     <projectService serviceInterface="com.intellij.find.FindManager"
                     serviceImplementation="com.intellij.find.impl.FindManagerImpl"/>
 
@@ -355,7 +338,6 @@
     <testSourcesFilter implementation="com.intellij.openapi.roots.ProjectRootTestSourcesFilter"/>
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
-    <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootModificationTracker"
                     serviceImplementation="com.intellij.openapi.roots.ProjectRootModificationTrackerImpl"/>
 
@@ -1011,9 +993,6 @@
 
     <editorTabTitleProvider implementation="com.intellij.openapi.vcs.vfs.VcsFileEditorTabTitleProvider"/>
     <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider" order="last"/>
-
-    <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"
-                    serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>
 
     <itemPresentationProvider forClass="com.intellij.psi.PsiDirectory"
                               implementationClass="com.intellij.navigation.DirectoryPresentationProvider"/>
