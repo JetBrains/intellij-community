@@ -11,7 +11,7 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.tree.TreeUtil
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -22,7 +22,7 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel, project: 
   : ChangesBrowserBase(project, false, false),
     ComponentWithEmptyText {
 
-  var diffReviewThreadsProvider: GHPRDiffReviewThreadsProvider? = null
+  var diffReviewThreadsProvider: GHPRDiffReviewSupport? = null
 
   init {
     init()
@@ -34,7 +34,7 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel, project: 
   override fun updateDiffContext(chain: DiffRequestChain) {
     super.updateDiffContext(chain)
     if (model.changes != null) {
-      chain.putUserData(GHPRDiffReviewThreadsProvider.KEY, diffReviewThreadsProvider)
+      chain.putUserData(GHPRDiffReviewSupport.KEY, diffReviewThreadsProvider)
     }
     else {
       //TODO: commits comments provider

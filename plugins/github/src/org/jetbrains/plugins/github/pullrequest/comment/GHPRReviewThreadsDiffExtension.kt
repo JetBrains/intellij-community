@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 
 class GHPRReviewThreadsDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
-    val commentsProvider = context.getUserData(GHPRDiffReviewThreadsProvider.KEY) ?: return
+    val commentsProvider = context.getUserData(GHPRDiffReviewSupport.KEY) ?: return
     val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
     if (viewer !is ListenerDiffViewerBase) return
 

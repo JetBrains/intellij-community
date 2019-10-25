@@ -17,9 +17,9 @@ import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffVi
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.util.handleOnEdt
 
-class GHPRDiffReviewThreadsProviderImpl(private val dataProvider: GithubPullRequestDataProvider,
-                                        private val componentFactory: GHPREditorReviewCommentsComponentFactory)
-  : GHPRDiffReviewThreadsProvider {
+class GHPRDiffReviewSupportImpl(private val dataProvider: GithubPullRequestDataProvider,
+                                private val componentFactory: GHPREditorReviewCommentsComponentFactory)
+  : GHPRDiffReviewSupport {
 
   override fun install(viewer: DiffViewerBase, change: Change) {
     val commentsHandler = when (viewer) {
@@ -70,6 +70,6 @@ class GHPRDiffReviewThreadsProviderImpl(private val dataProvider: GithubPullRequ
   }
 
   companion object {
-    val LOG = logger<GHPRDiffReviewThreadsProviderImpl>()
+    val LOG = logger<GHPRDiffReviewSupportImpl>()
   }
 }

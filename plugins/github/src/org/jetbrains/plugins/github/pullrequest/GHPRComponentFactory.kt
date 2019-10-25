@@ -32,7 +32,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProviderImpl
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
@@ -217,7 +217,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                                                    dataContext.securityService.currentUser)
     dataProviderModel.addValueChangedListener {
       changesBrowser.diffReviewThreadsProvider = dataProviderModel.value?.let {
-        GHPRDiffReviewThreadsProviderImpl(it, diffCommentComponentFactory)
+        GHPRDiffReviewSupportImpl(it, diffCommentComponentFactory)
       }
     }
 
