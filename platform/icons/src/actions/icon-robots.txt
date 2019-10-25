@@ -39,7 +39,7 @@ deprecated: reset-to-default.png -> /actions/rollback.svg; to be removed in IDEA
 deprecated: Reset_to_empty.png -> /actions/uninstall.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Uninstall
 deprecated: right.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
 deprecated: showChangesOnly.png -> /actions/preview.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Preview
-deprecated: showViewer.png
+deprecated: showViewer.png; to be removed in IDEA 2021 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/)
 deprecated: sortAsc.png -> /actions/moveUp.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp
 deprecated: sortDesc.png -> /actions/moveDown.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown
 deprecated: submit1.png -> /actions/setDefault.svg; to be removed in IDEA 2020 - use AllIcons.Actions.SetDefault
