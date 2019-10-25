@@ -99,6 +99,7 @@ fun findExpression(place: PsiElement): GrExpression? {
   val parent = place.parent
   return when {
     parent is GrAssignmentExpression && parent.lValue === place -> parent
+    place is GrIndexProperty -> place
     parent is GrMethodCall -> parent
     parent is GrNewExpression -> parent
     parent is GrClassTypeElement -> parent.parent as? GrSafeCastExpression
