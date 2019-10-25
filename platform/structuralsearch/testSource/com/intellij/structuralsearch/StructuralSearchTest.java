@@ -2819,16 +2819,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testMultipleFieldsInOneDeclaration() {
     String source = "class A {" +
                     "  int i;" +
-                    "  int j, k;" +
-                    "  int l, m, n;" +
-                    "  int o, p, q;" +
+                    "  int j, /*1*/ k;" +
+                    "  int l, /*2*/ m, n;" +
+                    "  {" +
+                    "    int o, p, q;" +
+                    "  }" +
                     "}";
     assertEquals("find multiple fields in one declaration 1", 3, findMatchesCount(source, "'_a '_b{2,100};"));
     assertEquals("find multiple fields in one declaration 2", 3, findMatchesCount(source, "int '_b{2,100};"));
     assertEquals("find multiple fields in one declaration 2", 2, findMatchesCount(source, "int '_b{3,3};"));
     assertEquals("find declarations with only one field", 1, findMatchesCount(source, "int '_a;"));
     assertEquals("find all declarations", 4, findMatchesCount(source, "int '_a+;"));
-    assertEquals("find all fields", 9, findMatchesCount(source, "int 'a+;"));
+    assertEquals("find all fields & vars", 9, findMatchesCount(source, "int 'a+;"));
+    options.setPatternContext(JavaStructuralSearchProfile.MEMBER_CONTEXT);
+    assertEquals("find all fields", 6, findMatchesCount(source, "int 'x+;"));
+    options.setPatternContext(JavaStructuralSearchProfile.DEFAULT_CONTEXT);
 
     String source2 = "class ABC {" +
                      "    String u;" +
