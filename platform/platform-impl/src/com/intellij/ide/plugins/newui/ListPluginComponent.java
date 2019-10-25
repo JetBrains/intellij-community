@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
@@ -58,6 +57,7 @@ public class ListPluginComponent extends JPanel {
   private JLabel myDownloads;
   private JLabel myVersion;
   private JLabel myVendor;
+  private LicensePanel myLicensePanel;
   private LicensePanel myUpdateLicensePanel;
   private JPanel myErrorPanel;
   private JComponent myErrorComponent;
@@ -290,6 +290,7 @@ public class ListPluginComponent extends JPanel {
       licensePanel.setBorder(JBUI.Borders.emptyTop(3));
       //licensePanel.setLink("Manage licenses", () -> { XXX }, false);
       myLayout.addLineComponent(licensePanel);
+      myLicensePanel = licensePanel;
     }
   }
 
@@ -305,7 +306,8 @@ public class ListPluginComponent extends JPanel {
         myVersion.setText(myPlugin.getVersion());
       }
       if (myUpdateLicensePanel != null) {
-        myUpdateLicensePanel.setVisible(false);
+        myLayout.removeLineComponent(myUpdateLicensePanel);
+        myUpdateLicensePanel = null;
       }
       if (myUpdateButton != null) {
         myUpdateButton.setVisible(false);
@@ -322,14 +324,14 @@ public class ListPluginComponent extends JPanel {
         if (myUpdateLicensePanel == null) {
           myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
           myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));
+          myUpdateLicensePanel.setVisible(myErrorPanel == null);
           if (myEventHandler != null) {
             myEventHandler.addAll(myUpdateLicensePanel);
           }
         }
 
-        myUpdateLicensePanel.setText("Next plugin version is paid.\nThe 30-day trial is available.", true, false);
-        myUpdateLicensePanel.setLink("Buy plugin", () ->
-          BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + myUpdateDescriptor.getProductCode()), true);
+        myUpdateLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myUpdateLicensePanel.setVisible(true);
       }
       if (myUpdateButton == null) {
@@ -430,6 +432,13 @@ public class ListPluginComponent extends JPanel {
       myLayout.removeLineComponent(myErrorPanel);
       myErrorPanel = null;
       myErrorComponent = null;
+    }
+
+    if (myLicensePanel != null) {
+      myLicensePanel.setVisible(!errors);
+    }
+    if (myUpdateLicensePanel != null) {
+      myUpdateLicensePanel.setVisible(!errors);
     }
   }
 
@@ -861,9 +870,11 @@ public class ListPluginComponent extends JPanel {
       }
 
       for (JComponent component : myLineComponents) {
-        Dimension size = component.getPreferredSize();
-        result.width = Math.max(result.width, size.width);
-        result.height += size.height;
+        if (component.isVisible()) {
+          Dimension size = component.getPreferredSize();
+          result.width = Math.max(result.width, size.width);
+          result.height += size.height;
+        }
       }
 
       Dimension iconSize = myIconComponent.getPreferredSize();
@@ -922,9 +933,11 @@ public class ListPluginComponent extends JPanel {
       int lineWidth = width - x - insets.right;
 
       for (JComponent component : myLineComponents) {
-        int lineHeight = component.getPreferredSize().height;
-        component.setBounds(x, y, lineWidth, lineHeight);
-        y += lineHeight;
+        if (component.isVisible()) {
+          int lineHeight = component.getPreferredSize().height;
+          component.setBounds(x, y, lineWidth, lineHeight);
+          y += lineHeight;
+        }
       }
     }
 

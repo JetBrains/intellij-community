@@ -38,7 +38,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
@@ -409,16 +408,17 @@ public class PluginDetailsPageComponent extends MultiPanel {
     String productCode = myPlugin.getProductCode();
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
-        myLicensePanel.setText("Next plugin version is paid.\nThe 30-day trial is available.", true, false);
-        showBuyPlugin(() -> myUpdateDescriptor);
+        myLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myLicensePanel.setVisible(true);
       }
       else {
-        myLicensePanel.setVisible(false);
+        myLicensePanel.hideWithChildren();
       }
     }
     else if (myMarketplace) {
-      myLicensePanel.setText("The 30-day trial is available.", false, false);
-      showBuyPlugin(() -> myPlugin);
+      myLicensePanel.setText("Use the trial for up to 30 days or", false, false);
+      myLicensePanel.showBuyPlugin(() -> myPlugin);
       myLicensePanel.setVisible(true);
     }
     else {
@@ -475,19 +475,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     else {
       fullRepaint();
     }
-  }
-
-  private void showBuyPlugin(@NotNull Supplier<IdeaPluginDescriptor> getPlugin) {
-    IdeaPluginDescriptor plugin = getPlugin.get();
-
-    myLicensePanel.setLink("Buy plugin", () ->
-      BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode()), true);
-
-    PluginPriceService.getPrice(plugin, price -> myLicensePanel.updateLink("Buy plugin from " + price, false), price -> {
-      if (plugin == getPlugin.get()) {
-        myLicensePanel.updateLink("Buy plugin from " + price, true);
-      }
-    });
   }
 
   public void updateButtons() {
