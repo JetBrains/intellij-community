@@ -5,22 +5,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.rValueProcessor
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.resolveKinds
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference
 import org.jetbrains.plugins.groovy.lang.resolve.processReceiverType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodProcessor
-
-fun GroovyMethodCallReference.resolveImpl2(incomplete: Boolean): Collection<GroovyResolveResult> {
-  val place = element
-  val receiver = receiver ?: TypesUtil.getJavaLangObject(place)
-  val methodName = methodName
-  val arguments = if (incomplete) null else arguments
-
-  return resolveWithArguments(receiver, methodName, arguments, place)
-}
 
 fun resolveWithArguments(receiver: PsiType,
                          methodName: String,
