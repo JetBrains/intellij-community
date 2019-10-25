@@ -159,7 +159,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       else if (call is GrConstructorInvocation) {
         val resolveResult = call.constructorReference.advancedResolve()
         if (resolveResult is GroovyMethodResult) {
-          constraintCollector.add(MethodCallConstraint(null, resolveResult, method))
+          constraintCollector.add(MethodCallConstraint(null, resolveResult, call))
         }
       }
     }
