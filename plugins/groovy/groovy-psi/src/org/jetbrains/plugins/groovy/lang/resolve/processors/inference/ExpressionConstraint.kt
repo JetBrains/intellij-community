@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 
 class ExpressionConstraint(
   private val expectedType: ExpectedType?,
@@ -33,8 +34,22 @@ class ExpressionConstraint(
           constraints += TypePositionConstraint(expectedType, expression.type, expression)
         }
       }
+      is GrIndexProperty -> {
+        val result = expression.rValueReference?.advancedResolve()
+        if (result is GroovyMethodResult) {
+          constraints += MethodCallConstraint(expectedType, result, expression)
+        }
+        else if (expectedType != null) {
+          constraints += TypePositionConstraint(expectedType, expression.type, expression)
+        }
+      }
       is GrAssignmentExpression -> {
-        val result = (expression.lValue as? GrReferenceExpression)?.lValueReference?.advancedResolve() as? GroovyMethodResult ?: return true
+        val lValueReference = when (val lValue = expression.lValue) {
+          is GrReferenceExpression -> lValue.lValueReference
+          is GrIndexProperty -> lValue.lValueReference
+          else -> return true
+        }
+        val result = lValueReference?.advancedResolve() as? GroovyMethodResult ?: return true
         constraints.add(MethodCallConstraint(null, result, expression))
       }
       else -> if (expectedType != null) constraints.add(TypePositionConstraint(expectedType, expression.type, expression))
