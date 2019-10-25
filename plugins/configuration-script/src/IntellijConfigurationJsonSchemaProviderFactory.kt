@@ -47,7 +47,9 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 
   inner class MyJsonSchemaFileProvider : JsonSchemaFileProvider, DumbAware {
     private val schemeFile = lazy {
-      LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemeContent, Charsets.UTF_8, 0)
+      object: LightVirtualFile("ij-scheme.json", JsonFileType.INSTANCE, "", Charsets.UTF_8, 0) {
+        override fun getContent(): CharSequence = schemeContent
+      }
     }
 
     override fun getName() = "IntelliJ Configuration"
