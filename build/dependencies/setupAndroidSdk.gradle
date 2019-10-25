@@ -77,7 +77,7 @@ task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo],
 }
 
 task syncAndroidSdk(dependsOn: [configurations.androidSdk, syncOfflineRepo], type: Sync) {
-  from tarTree(resources.gzip(configurations.androidSdk.singleFile))
+  from { tarTree(resources.gzip(configurations.androidSdk.singleFile)) }
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
 }
 
