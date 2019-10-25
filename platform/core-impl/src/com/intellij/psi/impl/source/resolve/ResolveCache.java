@@ -12,14 +12,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ConcurrentWeakKeySofterValueHashMap;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.ReferenceQueue;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -80,17 +79,17 @@ public class ResolveCache {
 
   @NotNull
   private static <K,V> Map<K, V> createWeakMap() {
-    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy()){
+    return new ConcurrentWeakKeySofterValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy()){
       @NotNull
       @Override
-      protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
+      protected ValueReference<K, V> createValueReference(@NotNull V value) {
         ValueReference<K, V> result;
         if (value == NULL_RESULT || value instanceof Object[] && ((Object[])value).length == 0) {
           // no use in creating SoftReference to null
           result = createStrongReference(value);
         }
         else {
-          result = super.createValueReference(value, queue);
+          result = super.createValueReference(value);
         }
         return result;
       }
@@ -271,7 +270,7 @@ public class ResolveCache {
 
   private static final StrongValueReference NULL_VALUE_REFERENCE = new StrongValueReference<>(NULL_RESULT);
   private static final StrongValueReference EMPTY_RESOLVE_RESULT = new StrongValueReference<>(ResolveResult.EMPTY_ARRAY);
-  private static class StrongValueReference<K, V> implements ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
+  private static class StrongValueReference<K, V> implements ConcurrentWeakKeySofterValueHashMap.ValueReference<K, V> {
     private final V myValue;
 
     StrongValueReference(@NotNull V value) {
@@ -280,7 +279,7 @@ public class ResolveCache {
 
     @NotNull
     @Override
-    public ConcurrentWeakKeySoftValueHashMap.KeyReference<K, V> getKeyReference() {
+    public ConcurrentWeakKeySofterValueHashMap.KeyReference<K, V> getKeyReference() {
       throw new UnsupportedOperationException(); // will never GC so this method will never be called so no implementation is necessary
     }
 
