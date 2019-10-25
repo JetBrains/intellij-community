@@ -1,6 +1,9 @@
 package com.intellij.jps.cache.loader;
 
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.model.AffectedModule;
+import com.intellij.jps.cache.model.BuildTargetState;
+import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;

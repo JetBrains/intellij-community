@@ -1,4 +1,4 @@
-package com.intellij.jps.cache.loader;
+package com.intellij.jps.cache.model;
 
 import java.util.Objects;
 

@@ -8,7 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.jps.cache.JpsCachesUtils;
-import com.intellij.jps.cache.loader.AffectedModule;
+import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,8 +24,6 @@ import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
-import com.sun.webkit.plugin.PluginManager;
-import javafx.scene.shape.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

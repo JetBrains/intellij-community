@@ -1,6 +1,6 @@
 package com.intellij.jps.cache.client;
 
-import com.intellij.jps.cache.loader.AffectedModule;
+import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;

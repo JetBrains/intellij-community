@@ -2,6 +2,7 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;

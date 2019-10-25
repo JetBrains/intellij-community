@@ -6,6 +6,8 @@ import com.intellij.jps.cache.client.ArtifactoryJpsServerClient;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
+import com.intellij.jps.cache.model.BuildTargetState;
+import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;

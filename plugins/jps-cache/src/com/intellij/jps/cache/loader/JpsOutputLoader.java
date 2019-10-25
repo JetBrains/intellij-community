@@ -1,6 +1,6 @@
 package com.intellij.jps.cache.loader;
 
-import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
+import com.intellij.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.annotations.NotNull;
 
 interface JpsOutputLoader {
