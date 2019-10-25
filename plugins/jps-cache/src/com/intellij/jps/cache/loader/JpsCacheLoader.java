@@ -32,7 +32,7 @@ class JpsCacheLoader implements JpsOutputLoader {
     myTmpCacheFolder = null;
 
     File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
-    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(myProject, context.getIndicatorManager(), context.getCommitId(), targetDir);
+    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(context.getIndicatorManager(), context.getCommitId(), targetDir);
     myTmpCacheFolder = downloadResultPair.second;
     if (!downloadResultPair.first) return LoaderStatus.FAILED;
     return LoaderStatus.COMPLETE;

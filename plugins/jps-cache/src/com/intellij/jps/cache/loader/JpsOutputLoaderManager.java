@@ -26,10 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -87,8 +84,10 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       Pair<String, Integer> commitInfo = getNearestCommit(false);
       if (commitInfo == null) return;
 
-      String notificationContent = commitInfo.second == 0 ? "Compile server contains caches for the current commit. Do you want to update your data?"
-                                                      : "Compile server contains caches for the " + commitInfo.second + "th commit behind of yours. Do you want to update your data?";
+      String notificationContent = commitInfo.second == 0
+                                   ? "Compile server contains caches for the current commit. Do you want to update your data?"
+                                   : "Compile server contains caches for the " + commitInfo.second + "th commit behind of yours. Do you want to update your data?";
+
       ApplicationManager.getApplication().invokeLater(() -> {
         Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compile Output Loader", notificationContent,
                                                                                  NotificationType.INFORMATION, null);
@@ -132,14 +131,14 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     indicator.setFraction(0.05);
 
     // Loading metadata for commit
-    SourcesState commitSourcesState = myMetadataLoader.loadMetadataForCommit(commitId);
+    Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(commitId);
     if (commitSourcesState == null) {
       LOG.warn("Couldn't load metadata for commit: " + commitId);
       //indicator.stop();
       hasRunningTask.set(false); // TODO :: Move calling to method
       return;
     }
-    SourcesState currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
+    Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
 
     List<JpsOutputLoader> loaders = getLoaders(myProject);
     List<CompletableFuture<LoaderStatus>> completableFutures =
@@ -218,8 +217,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
     myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, project),
-                                              new JpsProductionOutputLoader(myServerClient, project),
-                                              new JpsTestOutputLoader(myServerClient, project));
+                                              new JpsCompilationOutputLoader(myServerClient, project));
     return myJpsOutputLoadersLoaders;
   }
 

@@ -7,11 +7,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.jps.cache.JpsCachesUtils;
+import com.intellij.jps.cache.loader.AffectedModule;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -22,6 +24,8 @@ import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
+import com.sun.webkit.plugin.PluginManager;
+import javafx.scene.shape.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,8 +119,8 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   }
 
   @Override
-  public Pair<Boolean, File> downloadCacheById(@NotNull Project project, @NotNull SegmentedProgressIndicatorManager indicatorManager,
-                                               @NotNull String cacheId, @NotNull File targetDir) {
+  public Pair<Boolean, File> downloadCacheById(@NotNull SegmentedProgressIndicatorManager indicatorManager, @NotNull String cacheId,
+                                               @NotNull File targetDir) {
     String downloadUrl = stringThree + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     File tmpFolder = new File(targetDir, "tmp");
@@ -154,17 +158,19 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   }
 
   @Override
-  public Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull Project project, @NotNull SegmentedProgressIndicatorManager indicatorManager,
-                                                                  @NotNull String prefix, @NotNull Map<String, String> affectedModules,
-                                                                  @NotNull File targetDir) {
-    Map<String, String> urlToModuleNameMap = affectedModules.entrySet().stream().collect(Collectors.toMap(
-                            entry -> stringThree + REPOSITORY_NAME + "/binaries/" + entry.getKey() + "/" + prefix + "/" + entry.getValue(),
-                            entry -> entry.getKey()));
+  public Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager indicatorManager,
+                                                                  @NotNull List<AffectedModule> affectedModules) {
+    File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesUtils.PLUGIN_NAME);
+    if (!targetDir.exists()) targetDir.mkdirs();
+
+    Map<String, AffectedModule> urlToModuleNameMap = affectedModules.stream().collect(Collectors.toMap(
+                            module -> stringThree + REPOSITORY_NAME + "/" + module.getType() + "/" + module.getName() + "/" + module.getHash(),
+                            module -> module));
 
     DownloadableFileService service = DownloadableFileService.getInstance();
     List<DownloadableFileDescription> descriptions = ContainerUtil.map(urlToModuleNameMap.entrySet(),
                                                                        entry -> service.createFileDescription(entry.getKey(),
-                                                                       entry.getValue() + ".zip"));
+                                                                       entry.getValue().getOutPath().getName() + ".zip"));
     JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(descriptions, indicatorManager);
 
     Map<File, String> result = new HashMap<>();
@@ -178,12 +184,13 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
         indicator.checkCanceled();
         File zipFile = pair.first;
         String downloadUrl = pair.second.getDownloadUrl();
-        String moduleName = urlToModuleNameMap.get(downloadUrl);
+        AffectedModule affectedModule = urlToModuleNameMap.get(downloadUrl);
+        File outPath = affectedModule.getOutPath();
         LOG.debug("Downloaded JPS compiled module from: " + downloadUrl);
-        File tmpFolder = new File(targetDir, moduleName + "_tmp");
+        File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");
         ZipUtil.extract(zipFile, tmpFolder, null);
         FileUtil.delete(zipFile);
-        result.put(tmpFolder, moduleName);
+        result.put(tmpFolder, affectedModule.getName());
       }
       indicatorManager.finished(this);
       return new Pair<>(true, result);
