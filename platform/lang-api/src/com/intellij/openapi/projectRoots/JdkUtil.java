@@ -9,9 +9,14 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.remote.IR;
-import com.intellij.execution.remote.RemoteTargetConfiguration;
-import com.intellij.execution.remote.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.RemoteTargetConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
+import com.intellij.execution.target.value.TargetValue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -149,15 +154,15 @@ public class JdkUtil {
 
   @ApiStatus.Internal
   @NotNull
-  public static IR.NewCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
-                                                      @NotNull IR.RemoteEnvironmentRequest request,
-                                                      @Nullable RemoteTargetConfiguration targetConfiguration)
+  public static TargetedCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
+                                                        @NotNull TargetEnvironmentRequest request,
+                                                        @Nullable RemoteTargetConfiguration targetConfiguration)
     throws CantRunException {
-    IR.NewCommandLine commandLine = new IR.NewCommandLine();
+    TargetedCommandLine commandLine = new TargetedCommandLine();
     JavaLanguageRuntimeConfiguration javaConfiguration = targetConfiguration != null
                                                          ? targetConfiguration.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class)
                                                          : null;
-    if (request instanceof IR.LocalRunner.LocalEnvironmentRequest || targetConfiguration == null) {
+    if (request instanceof LocalTargetEnvironmentRequest || targetConfiguration == null) {
       Sdk jdk = javaParameters.getJdk();
       if (jdk == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
       SdkTypeId type = jdk.getSdkType();
@@ -170,7 +175,7 @@ public class JdkUtil {
       if (javaConfiguration == null) {
         throw new CantRunException("Cannot find Java configuration in " + targetConfiguration.getDisplayName() + " target");
       }
-      Platform platform = request.getRemotePlatform().getPlatform();
+      Platform platform = request.getTargetPlatform().getPlatform();
       String java = platform == Platform.WINDOWS ? "java.exe" : "java";
       commandLine.setExePath(StringUtil.join(new String[]{javaConfiguration.getHomePath(), "bin", java},
                                              String.valueOf(platform.fileSeparator)));
@@ -181,22 +186,22 @@ public class JdkUtil {
 
   @NotNull
   public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
-    IR.LocalRunner runner = new IR.LocalRunner();
-    IR.RemoteEnvironmentRequest request = runner.createRequest();
+    LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
+    TargetEnvironmentRequest request = runner.createRequest();
     return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
       .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null));
   }
 
-  private static void setupCommandLine(@NotNull IR.NewCommandLine commandLine,
-                                       @NotNull IR.RemoteEnvironmentRequest request,
+  private static void setupCommandLine(@NotNull TargetedCommandLine commandLine,
+                                       @NotNull TargetEnvironmentRequest request,
                                        @NotNull SimpleJavaParameters javaParameters,
                                        @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration) throws CantRunException {
     commandLine.setWorkingDirectory(request.createUpload(javaParameters.getWorkingDirectory()));
     javaParameters.getEnv().forEach((key, value) -> commandLine.addEnvironmentVariable(key, value));
 
-    if (request instanceof IR.LocalRunner.LocalEnvironmentRequest) {
+    if (request instanceof LocalTargetEnvironmentRequest) {
       ParentEnvironmentType type = javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE;
-      ((IR.LocalRunner.LocalEnvironmentRequest)request).setParentEnvironmentType(type);
+      ((LocalTargetEnvironmentRequest)request).setParentEnvironmentType(type);
     }
 
     ParametersList vmParameters = javaParameters.getVMParametersList();
@@ -207,7 +212,7 @@ public class JdkUtil {
 
     // copies 'javaagent' .jar files to the beginning of the classpath to load agent classes faster
     if (isUrlClassloader(vmParameters)) {
-      if (!(request instanceof IR.LocalRunner.LocalEnvironmentRequest)) {
+      if (!(request instanceof LocalTargetEnvironmentRequest)) {
         throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
       }
       for (String parameter : vmParameters.getParameters()) {
@@ -248,7 +253,7 @@ public class JdkUtil {
     }
 
     if (!dynamicMainClass) {
-      for (IR.RemoteValue<String> parameter : getMainClassParams(javaParameters, request)) {
+      for (TargetValue<String> parameter : getMainClassParams(javaParameters, request)) {
         commandLine.addParameter(parameter);
       }
     }
@@ -262,12 +267,12 @@ public class JdkUtil {
 
   private static void setupCommandLine(@NotNull GeneralCommandLine commandLine, @NotNull SimpleJavaParameters javaParameters)
     throws CantRunException {
-    IR.NewCommandLine newCommandLine = new IR.NewCommandLine();
-    IR.LocalRunner runner = new IR.LocalRunner();
-    IR.RemoteEnvironmentRequest request = runner.createRequest();
-    setupCommandLine(newCommandLine, request, javaParameters, null);
-    IR.LocalRemoteEnvironment environment = runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
-    GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(newCommandLine);
+    TargetedCommandLine targetedCommandLine = new TargetedCommandLine();
+    LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
+    TargetEnvironmentRequest request = runner.createRequest();
+    setupCommandLine(targetedCommandLine, request, javaParameters, null);
+    LocalTargetEnvironment environment = runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
+    GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(targetedCommandLine);
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
     commandLine.getParametersList().addAll(generalCommandLine.getParametersList().getList());
     commandLine.getEnvironment().putAll(generalCommandLine.getEnvironment());
@@ -285,8 +290,8 @@ public class JdkUtil {
     return vmParameters.hasParameter("-p") || vmParameters.hasParameter("--module-path");
   }
 
-  private static void setArgFileParams(@NotNull IR.NewCommandLine commandLine,
-                                       @NotNull IR.RemoteEnvironmentRequest request,
+  private static void setArgFileParams(@NotNull TargetedCommandLine commandLine,
+                                       @NotNull TargetEnvironmentRequest request,
                                        @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                        @NotNull SimpleJavaParameters javaParameters,
                                        @NotNull ParametersList vmParameters,
@@ -294,34 +299,34 @@ public class JdkUtil {
                                        boolean dynamicParameters,
                                        Charset cs) throws CantRunException {
     try {
-      String pathSeparator = String.valueOf(request.getRemotePlatform().getPlatform().pathSeparator);
-      Collection<Promise<IR.RemoteValue<String>>> promises = new ArrayList<>();
-      IR.RemoteValue<String> classPathParameter;
+      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
+      Collection<Promise<TargetValue<String>>> promises = new ArrayList<>();
+      TargetValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-        List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-        classPathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, pathSeparator));
+        List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
+        classPathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(classPathParameter.promise());
       }
       else {
         classPathParameter = null;
       }
 
-      IR.RemoteValue<String> modulePathParameter;
+      TargetValue<String> modulePathParameter;
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-        List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-        modulePathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, pathSeparator));
+        List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
+        modulePathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(modulePathParameter.promise());
       }
       else {
         modulePathParameter = null;
       }
 
-      List<IR.RemoteValue<String>> mainClassParameters = dynamicParameters ? getMainClassParams(javaParameters, request)
-                                                                           : Collections.emptyList();
+      List<TargetValue<String>> mainClassParameters = dynamicParameters ? getMainClassParams(javaParameters, request)
+                                                                        : Collections.emptyList();
 
-      promises.addAll(ContainerUtil.map(mainClassParameters, IR.RemoteValue::promise));
+      promises.addAll(ContainerUtil.map(mainClassParameters, TargetValue::promise));
 
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
       Promises.collectResults(promises).onSuccess(__ -> {
@@ -335,17 +340,17 @@ public class JdkUtil {
           }
           if (classPathParameter != null) {
             fileArgs.add("-classpath");
-            fileArgs.add(classPathParameter.getRemoteValue());
+            fileArgs.add(classPathParameter.getTargetValue());
             
           }
           if (modulePathParameter != null) {
             fileArgs.add("-p");
-            fileArgs.add(modulePathParameter.getRemoteValue());
+            fileArgs.add(modulePathParameter.getTargetValue());
             
           }
 
-          for (IR.RemoteValue<String> mainClassParameter : mainClassParameters) {
-            fileArgs.add(mainClassParameter.getRemoteValue());
+          for (TargetValue<String> mainClassParameter : mainClassParameters) {
+            fileArgs.add(mainClassParameter.getTargetValue());
           }
           if (dynamicParameters) {
             fileArgs.addAll(javaParameters.getProgramParametersList().getList());
@@ -355,8 +360,8 @@ public class JdkUtil {
       });
 
       appendEncoding(javaParameters, commandLine, vmParameters);
-      IR.RemoteValue<String> argFileParameter = request.createUpload(argFile.getAbsolutePath());
-      commandLine.addParameter(new IR.MapValue<>(argFileParameter, s -> "@" + s));
+      TargetValue<String> argFileParameter = request.createUpload(argFile.getAbsolutePath());
+      commandLine.addParameter(TargetValue.map(argFileParameter, s -> "@" + s));
       //todo[remoteServers]: support COMMAND_LINE_CONTENT
       //commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(argFile.getAbsolutePath(), FileUtil.loadFile(argFile)));
 
@@ -368,8 +373,8 @@ public class JdkUtil {
     }
   }
 
-  private static void setCommandLineWrapperParams(@NotNull IR.NewCommandLine commandLine,
-                                                  @NotNull IR.RemoteEnvironmentRequest request,
+  private static void setCommandLineWrapperParams(@NotNull TargetedCommandLine commandLine,
+                                                  @NotNull TargetEnvironmentRequest request,
                                                   @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                   @NotNull SimpleJavaParameters javaParameters,
                                                   @NotNull ParametersList vmParameters,
@@ -407,11 +412,11 @@ public class JdkUtil {
       }
 
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
-      Collection<IR.RemoteValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      Promises.collectResults(ContainerUtil.map(classPathParameters, IR.RemoteValue::promise)).onSuccess(__ -> {
+      Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
+      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
         List<String> pathList = new ArrayList<>();
-        for (IR.RemoteValue<String> parameter : classPathParameters) {
-          pathList.add(parameter.getRemoteValue());
+        for (TargetValue<String> parameter : classPathParameters) {
+          pathList.add(parameter.getTargetValue());
         }
         CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, cs);
       });
@@ -421,15 +426,15 @@ public class JdkUtil {
       //todo[remoteServers]: support COMMAND_LINE_CONTENT
       //commandLine.putUserData(COMMAND_LINE_CONTENT, map);
 
-      Set<IR.RemoteValue<String>> classpath = new LinkedHashSet<>();
+      Set<TargetValue<String>> classpath = new LinkedHashSet<>();
       classpath.add(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)));
       if (isUrlClassloader(vmParameters)) {
-        if (!(request instanceof IR.LocalRunner.LocalEnvironmentRequest)) {
+        if (!(request instanceof LocalTargetEnvironmentRequest)) {
           throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
         }
-        classpath.add(new IR.FixedValue<>(PathUtil.getJarPathForClass(UrlClassLoader.class)));
-        classpath.add(new IR.FixedValue<>(PathUtil.getJarPathForClass(StringUtilRt.class)));
-        classpath.add(new IR.FixedValue<>(PathUtil.getJarPathForClass(THashMap.class)));
+        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader.class)));
+        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt.class)));
+        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(THashMap.class)));
         //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
         //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
         Sdk jdk = javaParameters.getJdk();
@@ -437,14 +442,14 @@ public class JdkUtil {
           for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
             String path = PathUtil.getLocalPath(file);
             if (StringUtil.isNotEmpty(path)) {
-              classpath.add(new IR.FixedValue<>(path));
+              classpath.add(TargetValue.fixed(path));
             }
           }
         }
       }
       commandLine.addParameter("-classpath");
-      String pathSeparator = String.valueOf(request.getRemotePlatform().getPlatform().pathSeparator);
-      commandLine.addParameter(new IR.CompositeValue<>(classpath, values -> StringUtil.join(values, pathSeparator)));
+      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
+      commandLine.addParameter(TargetValue.composite(classpath, values -> StringUtil.join(values, pathSeparator)));
 
       commandLine.addParameter(commandLineWrapper.getName());
       commandLine.addParameter(request.createUpload(classpathFile.getAbsolutePath()));
@@ -472,8 +477,8 @@ public class JdkUtil {
     }
   }
 
-  private static void setClasspathJarParams(@NotNull IR.NewCommandLine commandLine,
-                                            @NotNull IR.RemoteEnvironmentRequest request,
+  private static void setClasspathJarParams(@NotNull TargetedCommandLine commandLine,
+                                            @NotNull TargetEnvironmentRequest request,
                                             @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                             @NotNull SimpleJavaParameters javaParameters,
                                             @NotNull ParametersList vmParameters,
@@ -511,14 +516,14 @@ public class JdkUtil {
       }
 
       File classpathJarFile = FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
-      Collection<IR.RemoteValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      Promises.collectResults(ContainerUtil.map(classPathParameters, IR.RemoteValue::promise)).onSuccess(__ -> {
+      Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
+      Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
         try {
           boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
           StringBuilder classPath = new StringBuilder();
-          for (IR.RemoteValue<String> parameter : classPathParameters) {
+          for (TargetValue<String> parameter : classPathParameters) {
             if (classPath.length() > 0) classPath.append(' ');
-            File file = new File(parameter.getRemoteValue());
+            File file = new File(parameter.getTargetValue());
             String url = (notEscape ? file.toURL() : file.toURI().toURL()).toString();
             classPath.append(!StringUtil.endsWithChar(url, '/') && new File(parameter.getLocalValue()).isDirectory() ? url + "/" : url);
           }
@@ -532,7 +537,7 @@ public class JdkUtil {
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
       if (dynamicVMOptions || dynamicParameters) {
-        char pathSeparator = request.getRemotePlatform().getPlatform().pathSeparator;
+        char pathSeparator = request.getTargetPlatform().getPlatform().pathSeparator;
         commandLine.addParameter(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
         commandLine.addParameter(request.createUpload(commandLineWrapper.getName()));
       }
@@ -558,8 +563,8 @@ public class JdkUtil {
     throw new CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
-  private static void appendParamsEncodingClasspath(@NotNull IR.NewCommandLine commandLine,
-                                                    @NotNull IR.RemoteEnvironmentRequest request,
+  private static void appendParamsEncodingClasspath(@NotNull TargetedCommandLine commandLine,
+                                                    @NotNull TargetEnvironmentRequest request,
                                                     @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                     @NotNull SimpleJavaParameters javaParameters,
                                                     @NotNull ParametersList vmParameters) {
@@ -568,9 +573,9 @@ public class JdkUtil {
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
-      List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      String pathSeparator = String.valueOf(request.getRemotePlatform().getPlatform().pathSeparator);
-      commandLine.addParameter(new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, pathSeparator)));
+      List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
+      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
+      commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
 
     PathsList modulePath = javaParameters.getModulePath();
@@ -580,16 +585,16 @@ public class JdkUtil {
     }
   }
 
-  private static void appendVmParameters(@NotNull IR.NewCommandLine commandLine,
-                                         @NotNull IR.RemoteEnvironmentRequest request,
+  private static void appendVmParameters(@NotNull TargetedCommandLine commandLine,
+                                         @NotNull TargetEnvironmentRequest request,
                                          @NotNull ParametersList vmParameters) {
     for (String vmParameter : vmParameters.getList()) {
       appendVmParameter(commandLine, request, vmParameter);
     }
   }
 
-  private static void appendVmParameter(@NotNull IR.NewCommandLine commandLine,
-                                        @NotNull IR.RemoteEnvironmentRequest request,
+  private static void appendVmParameter(@NotNull TargetedCommandLine commandLine,
+                                        @NotNull TargetEnvironmentRequest request,
                                         @NotNull String vmParameter) {
     if (SystemProperties.getBooleanProperty("remote.servers.ignore.vm.parameter", false)) {
       commandLine.addParameter(vmParameter);
@@ -607,8 +612,8 @@ public class JdkUtil {
     }
   }
 
-  private static void appendVmAgentParameter(@NotNull IR.NewCommandLine commandLine,
-                                             @NotNull IR.RemoteEnvironmentRequest request,
+  private static void appendVmAgentParameter(@NotNull TargetedCommandLine commandLine,
+                                             @NotNull TargetEnvironmentRequest request,
                                              @NotNull String vmParameter, 
                                              @NotNull String prefix) {
     String value = StringUtil.trimStart(vmParameter, prefix);
@@ -619,31 +624,31 @@ public class JdkUtil {
       return;
     }
     String suffix = equalsSign > -1 ? value.substring(equalsSign) : "";
-    commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> prefix + v + suffix));
+    commandLine.addParameter(TargetValue.map(request.createUpload(path), v -> prefix + v + suffix));
   }
 
   @NotNull
-  private static List<IR.RemoteValue<String>> getClassPathValues(@NotNull IR.RemoteEnvironmentRequest request,
-                                                                 @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                                                 @NotNull SimpleJavaParameters javaParameters) {
+  private static List<TargetValue<String>> getClassPathValues(@NotNull TargetEnvironmentRequest request,
+                                                              @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
+                                                              @NotNull SimpleJavaParameters javaParameters) {
     String localJdkPath = ObjectUtils.doIfNotNull(javaParameters.getJdk(), jdk -> jdk.getHomePath());
     String remoteJdkPath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : "";
 
-    ArrayList<IR.RemoteValue<String>> result = new ArrayList<>();
+    ArrayList<TargetValue<String>> result = new ArrayList<>();
     for (String path : javaParameters.getClassPath().getPathList()) {
       if (localJdkPath == null || !path.startsWith(localJdkPath)) {
         result.add(request.createUpload(path));
       }
       else {
-        char separator = request.getRemotePlatform().getPlatform().fileSeparator;
-        result.add(new IR.FixedValue<>(remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath)));
+        char separator = request.getTargetPlatform().getPlatform().fileSeparator;
+        result.add(TargetValue.fixed(remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath)));
       }
     }
     return result;
   }
 
   private static void appendEncoding(@NotNull SimpleJavaParameters javaParameters,
-                                     @NotNull IR.NewCommandLine commandLine,
+                                     @NotNull TargetedCommandLine commandLine,
                                      @NotNull ParametersList parametersList) {
     // for correct handling of process's input and output, values of file.encoding and charset of CommandLine object should be in sync
     String encoding = parametersList.getPropertyValue("file.encoding");
@@ -662,19 +667,19 @@ public class JdkUtil {
     }
   }
 
-  private static List<IR.RemoteValue<String>> getMainClassParams(SimpleJavaParameters javaParameters,
-                                                                 @NotNull IR.RemoteEnvironmentRequest request) throws CantRunException {
+  private static List<TargetValue<String>> getMainClassParams(SimpleJavaParameters javaParameters,
+                                                              @NotNull TargetEnvironmentRequest request) throws CantRunException {
     String mainClass = javaParameters.getMainClass();
     String moduleName = javaParameters.getModuleName();
     String jarPath = javaParameters.getJarPath();
     if (mainClass != null && moduleName != null) {
-      return Arrays.asList(new IR.FixedValue<>("-m"), new IR.FixedValue<>(moduleName + '/' + mainClass));
+      return Arrays.asList(TargetValue.fixed("-m"), TargetValue.fixed(moduleName + '/' + mainClass));
     }
     else if (mainClass != null) {
-      return Collections.singletonList(new IR.FixedValue<>(mainClass));
+      return Collections.singletonList(TargetValue.fixed(mainClass));
     }
     else if (jarPath != null) {
-      return Arrays.asList(new IR.FixedValue<>("-jar"), request.createUpload(jarPath));
+      return Arrays.asList(TargetValue.fixed("-jar"), request.createUpload(jarPath));
     }
     else {
       throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));

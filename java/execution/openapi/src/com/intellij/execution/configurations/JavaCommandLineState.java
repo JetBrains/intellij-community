@@ -3,10 +3,11 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.remote.IR;
-import com.intellij.execution.remote.RemoteTargetConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.execution.target.RemoteTargetConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +44,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
-  protected IR.NewCommandLine createNewCommandLine(@NotNull IR.RemoteEnvironmentRequest request,
-                                                   @Nullable RemoteTargetConfiguration configuration) throws ExecutionException {
+  protected TargetedCommandLine createNewCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                     @Nullable RemoteTargetConfiguration configuration) throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
@@ -53,12 +54,12 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   }
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    IR.LocalRunner runner = new IR.LocalRunner();
+    LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
-    IR.RemoteEnvironmentRequest request = runner.createRequest();
-    IR.NewCommandLine newCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
+    TargetEnvironmentRequest request = runner.createRequest();
+    TargetedCommandLine targetedCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
     return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
-      .createGeneralCommandLine(newCommandLine)
+      .createGeneralCommandLine(targetedCommandLine)
       .withRedirectErrorStream(redirectErrorStream);
   }
 

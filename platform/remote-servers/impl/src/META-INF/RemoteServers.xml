@@ -10,9 +10,9 @@
     <extensionPoint name="remoteServer.runConfigurationExtension"
                     interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
     <extensionPoint name="ir.targetType"
-                    interface="com.intellij.execution.remote.RemoteTargetType"/>
+                    interface="com.intellij.execution.target.RemoteTargetType"/>
     <extensionPoint name="ir.languageRuntime"
-                    interface="com.intellij.execution.remote.LanguageRuntimeType"/>
+                    interface="com.intellij.execution.target.LanguageRuntimeType"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -43,12 +43,11 @@
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
 
     <!--todo[remoteServers]: move to lang-impl-->
-    <projectConfigurable groupId="build" instance="com.intellij.execution.remote.RemoteTargetsListConfigurable"/>
-    <executionTargetProvider implementation="com.intellij.execution.remote.RemoteRunnersExecutionTargetProvider"/>
-    <applicationService serviceImplementation="com.intellij.execution.remote.RemoteTargetsManager"/>
-    <ir.languageRuntime implementation="com.intellij.execution.remote.java.JavaLanguageRuntimeType" />
-    <applicationService serviceInterface="com.intellij.execution.remote.java.JavaLanguageRuntimeUIFactory"
-                        serviceImplementation="com.intellij.execution.remote.java.JavaLanguageRuntimeUIFactoryImpl"/>
+    <projectConfigurable groupId="build" instance="com.intellij.execution.target.RemoteTargetsListConfigurable"/>
+    <applicationService serviceImplementation="com.intellij.execution.target.RemoteTargetsManager"/>
+    <ir.languageRuntime implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType" />
+    <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
+                        serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
   </extensions>
 
   <actions>

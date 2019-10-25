@@ -4,17 +4,15 @@ package com.intellij.execution.application;
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
-import com.intellij.execution.configuration.RemoteTargetAwareRunProfile;
+import com.intellij.execution.configuration.TargetAwareRunProfile;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.execution.remote.IR;
-import com.intellij.execution.remote.RemoteTargetConfiguration;
-import com.intellij.execution.remote.RemoteTargetsManager;
-import com.intellij.execution.remote.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.execution.remote.target.IRExecutionTarget;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.*;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -34,7 +32,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
 
   @NotNull protected final T myConfiguration;
 
-  @Nullable private IR.RemoteRunner myRemoteRunner;
+  @Nullable private TargetEnvironmentFactory myRemoteRunner;
   @Nullable private RemoteConnection myRemoteConnection;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
@@ -55,8 +53,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
     try {
-      IR.RemoteRunner runner = getRemoteRunner(environment);
-      if (!(runner instanceof IR.LocalRunner)) {
+      TargetEnvironmentFactory runner = getRemoteRunner(environment);
+      if (!(runner instanceof LocalTargetEnvironmentFactory)) {
         final String remotePort = "12345";
         final String remoteAddressForVmParams;
 
@@ -104,50 +102,46 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    IR.RemoteRunner runner = getRemoteRunner(getEnvironment());
-    IR.RemoteEnvironmentRequest request = runner.createRequest();
+    TargetEnvironmentFactory runner = getRemoteRunner(getEnvironment());
+    TargetEnvironmentRequest request = runner.createRequest();
     if (myRemoteConnection != null) {
       final int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationPort(), -1);
       if (remotePort > 0) {
-        request.bindRemotePort(remotePort).promise().onSuccess(it -> {
+        request.bindTargetPort(remotePort).promise().onSuccess(it -> {
           myRemoteConnection.setDebuggerHostName("0.0.0.0");
           myRemoteConnection.setDebuggerPort(String.valueOf(it.getLocalValue()));
         });
       }
     }
 
-    IR.NewCommandLine newCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
+    TargetedCommandLine targetedCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
 
     File inputFile = InputRedirectAware.getInputFile(myConfiguration);
     if (inputFile != null) {
-      newCommandLine.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+      targetedCommandLine.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
     }
 
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-    IR.RemoteEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
-    Process process = remoteEnvironment.createProcess(newCommandLine, indicator);
+    TargetEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
+    Process process = remoteEnvironment.createProcess(targetedCommandLine, indicator);
 
     //todo[remoteServers]: invent the new method for building presentation string
-    String commandRepresentation = StringUtil.join(newCommandLine.prepareCommandLine(remoteEnvironment), " ");
+    String commandRepresentation = StringUtil.join(targetedCommandLine.prepareCommandLine(remoteEnvironment), " ");
 
-    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation, newCommandLine.getCharset());
+    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation, targetedCommandLine.getCharset());
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
   }
 
   @NotNull
-  private IR.RemoteRunner getRemoteRunner(@NotNull ExecutionEnvironment environment)
+  private TargetEnvironmentFactory getRemoteRunner(@NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     if (myRemoteRunner != null) {
       return myRemoteRunner;
     }
-    ExecutionTarget target = environment.getExecutionTarget();
-    if (target instanceof IRExecutionTarget) {
-      return myRemoteRunner = ((IRExecutionTarget)target).createRemoteRunner();
-    }
-    if (myConfiguration instanceof RemoteTargetAwareRunProfile) {
-      String targetName = ((RemoteTargetAwareRunProfile)myConfiguration).getDefaultTargetName();
+    if (myConfiguration instanceof TargetAwareRunProfile) {
+      String targetName = ((TargetAwareRunProfile)myConfiguration).getDefaultTargetName();
       if (targetName != null) {
         RemoteTargetConfiguration config = RemoteTargetsManager.getInstance().getTargets().findByName(targetName);
         if (config == null) {
@@ -156,7 +150,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
         return myRemoteRunner = config.createRunner(environment.getProject());
       }
     }
-    return myRemoteRunner = new IR.LocalRunner();
+    return myRemoteRunner = new LocalTargetEnvironmentFactory();
   }
 
   @Override
