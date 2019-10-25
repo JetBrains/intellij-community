@@ -86,7 +86,7 @@
                     interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter"/>
 
     <extensionPoint name="joinLinesHandler"
-                    interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate"/>
+                    interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
     <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
     <extensionPoint name="enterBetweenBracesDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate"/>
