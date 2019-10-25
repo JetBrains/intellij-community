@@ -10,9 +10,9 @@
     <extensionPoint name="remoteServer.runConfigurationExtension"
                     interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
     <extensionPoint name="ir.targetType"
-                    interface="com.intellij.execution.target.RemoteTargetType"/>
+                    interface="com.intellij.execution.target.RemoteTargetType" dynamic="true"/>
     <extensionPoint name="ir.languageRuntime"
-                    interface="com.intellij.execution.target.LanguageRuntimeType"/>
+                    interface="com.intellij.execution.target.LanguageRuntimeType" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
