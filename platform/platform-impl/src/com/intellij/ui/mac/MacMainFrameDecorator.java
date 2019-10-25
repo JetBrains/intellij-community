@@ -100,12 +100,24 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private static boolean HAS_FULLSCREEN_UTILITIES;
 
   private static Method requestToggleFullScreenMethod;
+  private static Method enterFullScreenMethod;
+  private static Method leaveFullScreenMethod;
 
   static {
     try {
       Class.forName("com.apple.eawt.FullScreenUtilities");
       //noinspection JavaReflectionMemberAccess
       requestToggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
+      HAS_FULLSCREEN_UTILITIES = true;
+    }
+    catch (Exception e) {
+      HAS_FULLSCREEN_UTILITIES = false;
+    }
+    try {
+      Class.forName("com.apple.eawt.FullScreenUtilities");
+      //noinspection JavaReflectionMemberAccess
+      enterFullScreenMethod = Application.class.getMethod("requestEnterFullScreen", Window.class);
+      leaveFullScreenMethod = Application.class.getMethod("requestLeaveFullScreen", Window.class);
       HAS_FULLSCREEN_UTILITIES = true;
     }
     catch (Exception e) {
@@ -329,13 +341,31 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       }
     });
 
-    myFullscreenQueue.runOrEnqueue(() -> toggleFullScreenNow());
+    myFullscreenQueue.runOrEnqueue(state ? this::enterFullScreenNow : this::leaveFullScreenNow );
     return promise;
   }
 
   public void toggleFullScreenNow() {
     try {
       requestToggleFullScreenMethod.invoke(Application.getApplication(), myFrame);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  public void enterFullScreenNow() {
+    try {
+      enterFullScreenMethod.invoke(Application.getApplication(), myFrame);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  public void leaveFullScreenNow() {
+    try {
+      leaveFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
     catch (Exception e) {
       LOG.error(e);
