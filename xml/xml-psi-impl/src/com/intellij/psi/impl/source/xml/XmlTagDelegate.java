@@ -282,7 +282,6 @@ public abstract class XmlTagDelegate {
   @NotNull
   private Map<String, CachedValue<XmlNSDescriptor>> getNSDescriptorsMap() {
     XmlTag tag = myTag;
-    myTag.getAttributes();
     return CachedValuesManager.getCachedValue(tag, () ->
       Result.create(computeNsDescriptorMap(tag),
                     PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker(tag)));
