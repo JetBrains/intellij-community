@@ -25,16 +25,25 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class ErrorDiffTool implements FrameDiffTool {
   public static final ErrorDiffTool INSTANCE = new ErrorDiffTool();
@@ -73,8 +82,12 @@ public class ErrorDiffTool implements FrameDiffTool {
 
     @NotNull
     private JComponent createComponent(@NotNull DiffRequest request) {
-      if (request instanceof MessageDiffRequest) {
+      if (request instanceof ErrorDiffRequest) {
         // TODO: explain some of ErrorDiffRequest exceptions ?
+        String message = ((ErrorDiffRequest)request).getMessage();
+        return createReloadMessagePanel(myContext, message, "Reload", null);
+      }
+      if (request instanceof MessageDiffRequest) {
         String message = ((MessageDiffRequest)request).getMessage();
         return DiffUtil.createMessagePanel(message);
       }
@@ -135,5 +148,31 @@ public class ErrorDiffTool implements FrameDiffTool {
     @Override
     public void dispose() {
     }
+  }
+
+  @NotNull
+  public static JComponent createReloadMessagePanel(@Nullable DiffContext context, @NotNull String message,
+                                                    @NotNull String reloadMessage, @Nullable Runnable beforeReload) {
+    if (context instanceof DiffContextEx) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      Color linkColor = chooseNotNull(scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor(),
+                                      JBUI.CurrentTheme.Link.linkColor());
+
+      SimpleColoredComponent textLabel = new SimpleColoredComponent();
+      textLabel.setTextAlign(SwingConstants.CENTER);
+      textLabel.setOpaque(false);
+      textLabel.append(message);
+
+      SimpleColoredComponent reloadLabel = new SimpleColoredComponent();
+      reloadLabel.setTextAlign(SwingConstants.CENTER);
+      reloadLabel.setOpaque(false);
+      reloadLabel.append(reloadMessage, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, linkColor), (Runnable)() -> {
+        if (beforeReload != null) beforeReload.run();
+        ((DiffContextEx)context).reloadDiffRequest();
+      });
+      LinkMouseListenerBase.installSingleTagOn(reloadLabel);
+      return DiffUtil.createMessagePanel(JBUI.Panels.simplePanel(textLabel).addToBottom(reloadLabel).andTransparent());
+    }
+    return DiffUtil.createMessagePanel(message);
   }
 }

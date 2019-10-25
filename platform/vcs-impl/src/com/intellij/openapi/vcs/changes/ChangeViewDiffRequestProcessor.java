@@ -84,7 +84,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   private static boolean isRequestValid(@Nullable DiffRequest request) {
-    if (request instanceof ErrorDiffRequest) return false;
     if (request instanceof ContentDiffRequest) {
       for (DiffContent content : ((ContentDiffRequest)request).getContents()) {
         // We compare CurrentContentRevision by their FilePath in cache map
