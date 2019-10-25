@@ -62,7 +62,7 @@ public class LowMemoryNotifier implements Disposable {
       notification.addAction(new NotificationAction(IdeBundle.message("low.memory.notification.analyze.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          new HeapDumpSnapshotRunnable(MemoryReportReason.LowMemory, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run();
+          new HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run();
           notification.expire();
         }
       });
