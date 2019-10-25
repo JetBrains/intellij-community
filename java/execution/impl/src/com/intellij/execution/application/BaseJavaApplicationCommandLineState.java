@@ -57,23 +57,36 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     try {
       IR.RemoteRunner runner = getRemoteRunner(environment);
       if (!(runner instanceof IR.LocalRunner)) {
-        String remotePort = "12345";
+        final String remotePort = "12345";
+        final String remoteAddressForVmParams;
 
-        JavaSdkVersion javaVersion = Optional.ofNullable(runner.getTargetConfiguration())
+        final boolean java9plus = Optional.ofNullable(runner.getTargetConfiguration())
           .map(RemoteTargetConfiguration::getRuntimes)
           .map(list -> list.findByType(JavaLanguageRuntimeConfiguration.class))
           .map(JavaLanguageRuntimeConfiguration::getJavaVersionString)
           .filter(StringUtil::isNotEmpty)
           .map(JavaSdkVersion::fromVersionString)
-          .orElse(null);
+          .map(v -> v.isAtLeast(JavaSdkVersion.JDK_1_9))
+          .orElse(false);
 
-        if (javaVersion != null && javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
-          remotePort = "*:" + remotePort;
+        if (java9plus) {
+          // IDEA-225182 - hack: pass "host:port" to construct correct VM params, then adjust the connection
+          remoteAddressForVmParams = "*:" + remotePort;
+        }
+        else {
+          remoteAddressForVmParams = remotePort;
         }
 
-        return myRemoteConnection = new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remotePort)
+        myRemoteConnection = new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remoteAddressForVmParams)
           .suspend(true)
           .create(getJavaParameters());
+
+        myRemoteConnection.setApplicationPort(remotePort);
+        if (java9plus) {
+          myRemoteConnection.setApplicationHostName("*");
+        }
+
+        return myRemoteConnection;
       }
     }
     catch (ExecutionException e) {
@@ -94,14 +107,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     IR.RemoteRunner runner = getRemoteRunner(getEnvironment());
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     if (myRemoteConnection != null) {
-      String maybeHostAndPort = myRemoteConnection.getApplicationPort();
-      final int remotePort;
-      if (maybeHostAndPort.contains(":")) {
-        remotePort = StringUtil.parseInt(StringUtil.substringAfterLast(maybeHostAndPort, ":"), -1);
-      }
-      else {
-        remotePort = StringUtil.parseInt(maybeHostAndPort, -1);
-      }
+      final int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationPort(), -1);
       if (remotePort > 0) {
         request.bindRemotePort(remotePort).promise().onSuccess(it -> {
           myRemoteConnection.setDebuggerHostName("0.0.0.0");
