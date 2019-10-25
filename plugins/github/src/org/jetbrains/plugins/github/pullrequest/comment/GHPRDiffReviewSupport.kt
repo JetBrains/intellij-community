@@ -3,12 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.annotations.CalledInAwt
 
 interface GHPRDiffReviewSupport {
   @CalledInAwt
-  fun install(viewer: DiffViewerBase, change: Change)
+  fun install(viewer: DiffViewerBase)
 
   companion object {
     val KEY = Key.create<GHPRDiffReviewSupport>("Github.PullRequest.Diff.Review.Support")

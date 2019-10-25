@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
-import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.ComponentWithEmptyText
@@ -18,11 +21,11 @@ import java.awt.event.FocusListener
 import javax.swing.border.Border
 import javax.swing.tree.DefaultTreeModel
 
-internal class GHPRChangesBrowser(private val model: GHPRChangesModel, project: Project)
+internal class GHPRChangesBrowser(private val model: GHPRChangesModel,
+                                  private val diffHelper: GHPRChangesDiffHelper,
+                                  private val project: Project)
   : ChangesBrowserBase(project, false, false),
     ComponentWithEmptyText {
-
-  var diffReviewThreadsProvider: GHPRDiffReviewSupport? = null
 
   init {
     init()
@@ -31,14 +34,16 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel, project: 
     }
   }
 
-  override fun updateDiffContext(chain: DiffRequestChain) {
-    super.updateDiffContext(chain)
-    if (model.changes != null) {
-      chain.putUserData(GHPRDiffReviewSupport.KEY, diffReviewThreadsProvider)
+  override fun canShowDiff(): Boolean {
+    val selection = VcsTreeModelData.getListSelectionOrAll(myViewer)
+    return selection.list.any { it is Change && ChangeDiffRequestProducer.canCreate(project, it) }
+  }
+
+  override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
+    return if (userObject is Change) {
+      ChangeDiffRequestProducer.create(myProject, userObject, mapOf(GHPRDiffReviewSupport.KEY to diffHelper.getReviewSupport(userObject)))
     }
-    else {
-      //TODO: commits comments provider
-    }
+    else null
   }
 
   override fun getEmptyText() = myViewer.emptyText

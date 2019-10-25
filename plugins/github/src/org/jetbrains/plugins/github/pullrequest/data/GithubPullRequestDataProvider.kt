@@ -2,14 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.vcs.changes.Change
 import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -22,10 +19,6 @@ interface GithubPullRequestDataProvider {
   val logCommitsRequest: CompletableFuture<List<GitCommit>>
   val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
   val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
-  val diffRangesRequest: CompletableFuture<Map<Change, List<GHPRDiffRangeMapping>>>
-  val filesReviewThreadsRequest: CompletableFuture<Map<Change, List<GHPRDiffReviewThreadMapping>>>
-
-  val reviewService: GHPRReviewServiceAdapter
 
   fun addRequestsChangesListener(listener: RequestsChangedListener)
   fun addRequestsChangesListener(disposable: Disposable, listener: RequestsChangedListener)

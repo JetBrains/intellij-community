@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import javax.swing.JComponent
 
 interface GHPRDiffEditorReviewComponentsFactory {
-  fun createThreadComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent
-  fun createCommentComponent(reviewService: GHPRReviewServiceAdapter, commitSha: String, path: String, diffLine: Int,
-                             onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent
+  fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent
+  fun createCommentComponent(diffLine: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent
 }

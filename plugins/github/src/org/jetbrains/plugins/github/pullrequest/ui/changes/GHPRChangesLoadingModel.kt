@@ -8,7 +8,9 @@ import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
-class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel, zipChanges: Boolean)
+class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
+                              private val diffHelper: GHPRChangesDiffHelper,
+                              zipChanges: Boolean)
   : GHEventDispatcherLoadingModel() {
 
   var zipChanges by Delegates.observable(zipChanges) { _, _, _ ->
@@ -48,6 +50,7 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel, zipCha
       error = null
       changesModel.commits = null
       changesModel.changes = null
+      diffHelper.reset()
       eventDispatcher.multicaster.onReset()
     }
     else {
@@ -56,9 +59,13 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel, zipCha
 
       val newUpdateFuture =
         if (zipChanges) {
-          dataProvider.changesProviderRequest.successOnEdt { changesModel.changes = it.changes }
+          dataProvider.changesProviderRequest.successOnEdt {
+            changesModel.changes = it.changes
+            diffHelper.setUp(dataProvider, it)
+          }
         }
         else {
+          diffHelper.reset()
           dataProvider.logCommitsRequest.successOnEdt { changesModel.commits = it }
         }
 

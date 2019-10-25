@@ -73,8 +73,7 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
                                         searchHolder)
 
     val dataLoader = GithubPullRequestsDataLoaderImpl {
-      GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates,
-                                        GHPRReviewServiceAdapter.create(reviewService, it), it)
+      GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates, it)
     }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(number: Long) {
@@ -99,7 +98,7 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
 
     return GHPullRequestsDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
                                      requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
-                                     busyStateTracker, metadataService, stateService)
+                                     busyStateTracker, metadataService, stateService, reviewService)
   }
 
   companion object {

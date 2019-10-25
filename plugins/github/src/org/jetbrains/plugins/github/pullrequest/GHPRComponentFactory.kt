@@ -32,18 +32,13 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModel
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDescriptionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -210,16 +205,11 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     val changesModel = GHPRChangesModelImpl(project)
-    val changesLoadingModel = createChangesLoadingModel(changesModel, dataProviderModel, projectUiSettings, disposable)
-    val changesBrowser = GHPRChangesBrowser(changesModel, project)
-
-    val diffCommentComponentFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, avatarIconsProviderFactory,
-                                                                                dataContext.securityService.currentUser)
-    dataProviderModel.addValueChangedListener {
-      changesBrowser.diffReviewThreadsProvider = dataProviderModel.value?.let {
-        GHPRDiffReviewSupportImpl(it, diffCommentComponentFactory)
-      }
-    }
+    val diffHelper = GHPRChangesDiffHelperImpl(project, dataContext.reviewService,
+                                               avatarIconsProviderFactory, dataContext.securityService.currentUser)
+    val changesLoadingModel = createChangesLoadingModel(changesModel, diffHelper,
+                                                        dataProviderModel, projectUiSettings, disposable)
+    val changesBrowser = GHPRChangesBrowser(changesModel, diffHelper, project)
 
     val changesLoadingPanel = GHLoadingPanel(changesLoadingModel, changesBrowser, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
@@ -340,10 +330,11 @@ internal class GHPRComponentFactory(private val project: Project) {
   }
 
   private fun createChangesLoadingModel(changesModel: GHPRChangesModel,
+                                        diffHelper: GHPRChangesDiffHelper,
                                         dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
                                         uiSettings: GithubPullRequestsProjectUISettings,
                                         disposable: Disposable): GHPRChangesLoadingModel {
-    val model = GHPRChangesLoadingModel(changesModel, uiSettings.zipChanges)
+    val model = GHPRChangesLoadingModel(changesModel, diffHelper, uiSettings.zipChanges)
     projectUiSettings.addChangesListener(disposable) { model.zipChanges = projectUiSettings.zipChanges }
 
     val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {

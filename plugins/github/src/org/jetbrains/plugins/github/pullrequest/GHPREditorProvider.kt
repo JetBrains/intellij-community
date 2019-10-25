@@ -30,6 +30,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
                           context.dataContext.securityService,
                           context.dataContext.busyStateTracker,
                           context.dataContext.stateService,
+                          context.dataContext.reviewService,
                           context.pullRequestDataProvider!!,
                           context.requestExecutor,
                           context.repositoryCoordinates,

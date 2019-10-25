@@ -24,7 +24,7 @@ import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import kotlin.math.min
 
-class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable {
+class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
   private val editorTextWidth: Int
   private val verticalScrollbarFlipped: Boolean
 

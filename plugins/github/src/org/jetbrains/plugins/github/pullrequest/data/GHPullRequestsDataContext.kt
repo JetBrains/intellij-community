@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
@@ -28,7 +29,8 @@ internal class GHPullRequestsDataContext(val gitRepositoryCoordinates: GitRemote
                                          val securityService: GithubPullRequestsSecurityService,
                                          val busyStateTracker: GithubPullRequestsBusyStateTracker, //TODO: move to ui
                                          val metadataService: GithubPullRequestsMetadataService,
-                                         val stateService: GithubPullRequestsStateService) : Disposable {
+                                         val stateService: GithubPullRequestsStateService,
+                                         val reviewService: GHPRReviewService) : Disposable {
 
   override fun dispose() {
     Disposer.dispose(messageBus)

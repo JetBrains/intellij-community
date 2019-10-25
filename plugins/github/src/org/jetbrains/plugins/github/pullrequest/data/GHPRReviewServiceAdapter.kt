@@ -1,13 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewServiceAdapter {
+
+  @CalledInAwt
+  fun loadReviewThreads(): CompletableFuture<List<GHPullRequestReviewThread>>
+
   @CalledInAny
   fun canComment(): Boolean
 
@@ -19,10 +26,18 @@ interface GHPRReviewServiceAdapter {
   fun addComment(progressIndicator: ProgressIndicator, body: String, commitSha: String, fileName: String, diffLine: Int)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
+  @CalledInAwt
+  fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit)
+
   companion object {
     @CalledInAny
-    fun create(reviewService: GHPRReviewService, pullRequest: Long): GHPRReviewServiceAdapter {
+    fun create(reviewService: GHPRReviewService, dataProvider: GithubPullRequestDataProvider): GHPRReviewServiceAdapter {
       return object : GHPRReviewServiceAdapter {
+
+        override fun loadReviewThreads(): CompletableFuture<List<GHPullRequestReviewThread>> {
+          return dataProvider.reviewThreadsRequest
+        }
+
         override fun canComment() = reviewService.canComment()
 
         override fun addComment(progressIndicator: ProgressIndicator,
@@ -30,13 +45,21 @@ interface GHPRReviewServiceAdapter {
                                 commitSha: String,
                                 fileName: String,
                                 diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> {
-          return reviewService.addComment(progressIndicator, pullRequest, body, commitSha, fileName, diffLine)
+          return reviewService.addComment(progressIndicator, dataProvider.number, body, commitSha, fileName, diffLine)
         }
 
         override fun addComment(progressIndicator: ProgressIndicator,
                                 body: String,
                                 replyToCommentId: Long): CompletableFuture<GithubPullRequestCommentWithHtml> {
-          return reviewService.addComment(progressIndicator, pullRequest, body, replyToCommentId)
+          return reviewService.addComment(progressIndicator, dataProvider.number, body, replyToCommentId)
+        }
+
+        override fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit) {
+          dataProvider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
+            override fun reviewThreadsRequestChanged() {
+              listener()
+            }
+          })
         }
       }
     }

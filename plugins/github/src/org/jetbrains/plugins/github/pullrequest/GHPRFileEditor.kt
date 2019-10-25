@@ -34,6 +34,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
@@ -56,6 +57,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
                               securityService: GithubPullRequestsSecurityService,
                               busyStateTracker: GithubPullRequestsBusyStateTracker,
                               stateService: GithubPullRequestsStateService,
+                              reviewService: GHPRReviewService,
                               private val dataProvider: GithubPullRequestDataProvider,
                               requestExecutor: GithubApiRequestExecutor,
                               repository: GHRepositoryCoordinates,
@@ -101,7 +103,8 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
     val timeline = GHPRTimelineComponent(timelineModel,
-                                         createItemComponentFactory(dataProvider.reviewService, timelineModel, avatarIconsProvider))
+                                         createItemComponentFactory(GHPRReviewServiceAdapter.create(reviewService, dataProvider),
+                                                                    timelineModel, avatarIconsProvider))
     val loadingIcon = AsyncProcessIcon("Loading").apply {
       isVisible = false
     }

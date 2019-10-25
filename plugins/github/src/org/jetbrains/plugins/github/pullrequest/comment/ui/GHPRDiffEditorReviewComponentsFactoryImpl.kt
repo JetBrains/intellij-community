@@ -24,11 +24,14 @@ import javax.swing.JComponent
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
+                     private val reviewService: GHPRReviewServiceAdapter,
+                     private val lastCommitSha: String,
+                     private val filePath: String,
                      private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
-  override fun createThreadComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent {
+  override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel().apply {
       border = BorderFactory.createCompoundBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP),
                                                   IdeBorderFactory.createRoundedBorder(10, 1))
@@ -55,8 +58,7 @@ internal constructor(private val project: Project,
     return wrapper
   }
 
-  override fun createCommentComponent(reviewService: GHPRReviewServiceAdapter, commitSha: String, path: String, diffLine: Int,
-                                      onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
+  override fun createCommentComponent(diffLine: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
     val wrapper = RoundedPanel().apply {
       border = BorderFactory.createCompoundBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP),
                                                   IdeBorderFactory.createRoundedBorder(10, 1))
@@ -64,7 +66,7 @@ internal constructor(private val project: Project,
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
     val commentField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Comment") { text ->
-      reviewService.addComment(EmptyProgressIndicator(), text, commitSha, path, diffLine).successOnEdt {
+      reviewService.addComment(EmptyProgressIndicator(), text, lastCommitSha, filePath, diffLine).successOnEdt {
         onSuccess(it)
       }
     }.apply {

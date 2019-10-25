@@ -21,7 +21,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
@@ -37,7 +36,6 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val requestExecutor: GithubApiRequestExecutor,
                                                  private val gitRemote: GitRemoteUrlCoordinates,
                                                  private val repository: GHRepositoryCoordinates,
-                                                 override val reviewService: GHPRReviewServiceAdapter,
                                                  override val number: Long) : GithubPullRequestDataProvider {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
@@ -98,22 +96,6 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
 
-  private val diffRangesProviderRequestValue = backingValue {
-    GHPRCommentsUtil.getDiffRangesMapping(project,
-                                          gitRemote.repository,
-                                          detailsRequestValue.value.joinCancellable().headRefOid,
-                                          diffFileRequestValue.value.joinCancellable())
-  }
-  override val diffRangesRequest by backgroundProcessValue(diffRangesProviderRequestValue)
-
-  private val filesReviewThreadsRequestValue = backingValue {
-    GHPRCommentsUtil.buildThreadsAndMapLines(gitRemote.repository,
-                                             logCommitsRequestValue.value.joinCancellable(),
-                                             diffFileRequestValue.value.joinCancellable(),
-                                             reviewThreadsRequestValue.value.joinCancellable())
-  }
-  override val filesReviewThreadsRequest by backgroundProcessValue(filesReviewThreadsRequestValue)
-
   @CalledInAwt
   override fun reloadDetails() {
     detailsRequestValue.drop()
@@ -125,16 +107,14 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     branchFetchRequestValue.drop()
     apiCommitsRequestValue.drop()
     logCommitsRequestValue.drop()
+    changesProviderValue.drop()
     requestsChangesEventDispatcher.multicaster.commitsRequestChanged()
     reloadComments()
   }
 
   @CalledInAwt
   override fun reloadComments() {
-    diffFileRequestValue.drop()
     reviewThreadsRequestValue.drop()
-    diffRangesProviderRequestValue.drop()
-    filesReviewThreadsRequestValue.drop()
     requestsChangesEventDispatcher.multicaster.reviewThreadsRequestChanged()
   }
 

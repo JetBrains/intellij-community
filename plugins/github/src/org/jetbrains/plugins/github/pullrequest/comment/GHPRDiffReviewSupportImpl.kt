@@ -4,69 +4,68 @@ package org.jetbrains.plugins.github.pullrequest.comment
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
-import com.intellij.diff.tools.util.base.ListenerDiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.Range
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.Change
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactory
-import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRDiffViewerBaseReviewThreadsHandler
+import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
 
-class GHPRDiffReviewSupportImpl(private val dataProvider: GithubPullRequestDataProvider,
-                                private val componentFactory: GHPRDiffEditorReviewComponentsFactory)
+class GHPRDiffReviewSupportImpl(private val project: Project,
+                                private val reviewService: GHPRReviewServiceAdapter,
+                                private val diffRanges: List<Range>,
+                                private val fileLinesMapper: GHPRChangedFileLinesMapper,
+                                private val lastCommitSha: String,
+                                private val filePath: String,
+                                private val reviewThreadsFilter: (String, String) -> Boolean,
+                                private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
 
-  override fun install(viewer: DiffViewerBase, change: Change) {
-    val commentsHandler = when (viewer) {
+  override fun install(viewer: DiffViewerBase) {
+    val diffRangesModel = SingleValueModel(if (reviewService.canComment()) diffRanges else null)
+    val reviewThreadsModel = SingleValueModel<List<GHPullRequestReviewThread>?>(null)
+    loadReviewThreads(reviewThreadsModel, viewer)
+
+    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, reviewService, lastCommitSha, filePath,
+                                                                      avatarIconsProviderFactory, currentUser)
+    when (viewer) {
       is SimpleOnesideDiffViewer ->
-        GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer, dataProvider.reviewService, componentFactory)
+        GHPRSimpleOnesideDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, fileLinesMapper, componentsFactory)
       is UnifiedDiffViewer ->
-        GHPRUnifiedDiffViewerReviewThreadsHandler(viewer, dataProvider.reviewService, componentFactory)
+        GHPRUnifiedDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, fileLinesMapper, componentsFactory)
       is TwosideTextDiffViewer ->
-        GHPRTwosideDiffViewerReviewThreadsHandler(viewer, dataProvider.reviewService, componentFactory)
+        GHPRTwosideDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, fileLinesMapper, componentsFactory)
       else -> return
     }
-    Disposer.register(viewer, commentsHandler)
-
-    loadAndShowComments(commentsHandler, change)
-    dataProvider.addRequestsChangesListener(commentsHandler, object : GithubPullRequestDataProvider.RequestsChangedListener {
-      override fun reviewThreadsRequestChanged() {
-        loadAndShowComments(commentsHandler, change)
-      }
-    })
-    if (dataProvider.reviewService.canComment()) loadAndShowCommentableRanges(commentsHandler, change)
   }
 
-  private fun loadAndShowCommentableRanges(handler: GHPRDiffViewerBaseReviewThreadsHandler<out ListenerDiffViewerBase>, change: Change) {
-    val disposable = Disposer.newDisposable()
-    dataProvider.diffRangesRequest.handleOnEdt(disposable) { result, error ->
-      if (result != null) {
-        handler.commentableRangesMappings = result[change].orEmpty()
-      }
-      if (error != null) {
-        LOG.info("Failed to load diff ranges", error)
-      }
+  private fun loadReviewThreads(threadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>, disposable: Disposable) {
+    doLoadReviewThreads(threadsModel, disposable)
+    reviewService.addReviewThreadsListener(disposable) {
+      doLoadReviewThreads(threadsModel, disposable)
     }
-    Disposer.register(handler, disposable)
   }
 
-  private fun loadAndShowComments(commentsHandler: GHPRDiffViewerBaseReviewThreadsHandler<out ListenerDiffViewerBase>,
-                                  change: Change) {
-    val disposable = Disposer.newDisposable()
-    dataProvider.filesReviewThreadsRequest.handleOnEdt(disposable) { result, error ->
+  private fun doLoadReviewThreads(threadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>, disposable: Disposable) {
+    reviewService.loadReviewThreads().handleOnEdt(disposable) { result, error ->
       if (result != null) {
-        commentsHandler.reviewThreadsMappings = result[change].orEmpty()
+        threadsModel.value = result.filter { it.position != null && reviewThreadsFilter(it.commit.oid, it.path) }
       }
       if (error != null) {
-        LOG.info("Failed to load and process file comments", error)
+        LOG.info("Failed to load review threads", error)
       }
     }
-    Disposer.register(commentsHandler, disposable)
   }
 
   companion object {
