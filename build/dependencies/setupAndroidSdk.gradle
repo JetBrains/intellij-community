@@ -66,7 +66,7 @@ dependencies {
 task syncOfflineRepo(dependsOn: configurations.androidOfflineRepo, type: Copy) {
   outputs.upToDateWhen { file("${project.buildDir}/android-sdk/${android_m2_version}.version").exists() }
   doFirst { file("${project.buildDir}/android-sdk").deleteDir() }
-  from zipTree(configurations.androidOfflineRepo.singleFile)
+  from { zipTree(configurations.androidOfflineRepo.singleFile) }
   into "${project.buildDir}/android-sdk"
   doLast { file("${project.buildDir}/android-sdk/${android_m2_version}.version").write(android_m2_version) }
 }
