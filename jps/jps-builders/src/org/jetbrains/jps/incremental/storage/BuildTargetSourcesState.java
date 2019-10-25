@@ -14,8 +14,7 @@ import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,20 +43,20 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
 public class BuildTargetSourcesState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ModuleSourcesState");
   private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
+  private final PathRelativizerService myRelativizer;
   private final BuildTargetIndex myBuildTargetIndex;
   private final BuildRootIndex myBuildRootIndex;
   private final ProjectStamps myProjectStamps;
   private final File myTargetStateStorage;
-  private final File myProjectFolder;
   private final Gson gson;
 
-  public BuildTargetSourcesState(@NotNull JpsProject project, @NotNull BuildTargetIndex buildTargetIndex, @NotNull BuildRootIndex buildRootIndex,
-                                 ProjectStamps projectStamps, @NotNull BuildDataPaths dataPaths) {
+  public BuildTargetSourcesState(@NotNull BuildTargetIndex buildTargetIndex, @NotNull BuildRootIndex buildRootIndex,
+                                 ProjectStamps projectStamps, @NotNull BuildDataPaths dataPaths, @NotNull PathRelativizerService relativizer) {
     gson = new Gson();
+    myRelativizer = relativizer;
     myProjectStamps = projectStamps;
     myBuildRootIndex = buildRootIndex;
     myBuildTargetIndex = buildTargetIndex;
-    myProjectFolder = JpsModelSerializationDataService.getBaseDirectory(project);
     myTargetStateStorage = new File(dataPaths.getDataStorageRoot(), TARGET_SOURCES_STATE_FILE_NAME);
   }
 
@@ -78,7 +77,7 @@ public class BuildTargetSourcesState {
         String hexString = StringUtil.toHexString(buildTargetHash);
 
         // Now in project each build target has single output root
-        String relativePath = target.getOutputRoots(context).stream().map(file -> toRelative(file, myProjectFolder)).findFirst().orElse("");
+        String relativePath = target.getOutputRoots(context).stream().map(file -> myRelativizer.toRelative(file.getAbsolutePath())).findFirst().orElse("");
         targetTypeHashMap.get(typeTypeId).put(target.getId(), new BuildTargetState(hexString, relativePath));
       });
     });
