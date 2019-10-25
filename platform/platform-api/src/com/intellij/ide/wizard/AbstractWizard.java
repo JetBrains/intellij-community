@@ -282,9 +282,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myContentPanel, BorderLayout.CENTER);
+    JPanel panel = new JPanel(new BorderLayout());
     panel.add(myIcon, BorderLayout.WEST);
+    panel.add(myContentPanel, BorderLayout.CENTER);
     return panel;
   }
 
@@ -324,7 +324,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
 
-  protected String addStepComponent(final Component component) {
+  protected String addStepComponent(@NotNull Component component) {
     String id = myComponentToIdMap.get(component);
     if (id == null) {
       id = Integer.toString(myComponentToIdMap.size());
