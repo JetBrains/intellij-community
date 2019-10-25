@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
@@ -80,31 +79,25 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         return false;
       }
 
-      final boolean caretInParameterList = PsiTreeUtil.isAncestor(function.getParameterList(), element, true);
+      final Usages usages = findKeywordContainerUsages(function, false);
 
-      final Trinity<List<PyReferenceExpression>, List<PyCallExpression>, List<PySubscriptionExpression>> usages =
-        findKeywordContainerUsages(function);
-
-      final Set<PyReferenceExpression> references = new HashSet<>(usages.getFirst());
-      boolean available = false;
-
-      for (PyCallExpression call : usages.getSecond()) {
-        if ((caretInParameterList || PsiTreeUtil.isAncestor(call, element, true)) && getIndexValueToReplace(call) != null) {
-          available = true;
-        }
-        //noinspection SuspiciousMethodCalls
-        references.remove(call.getReceiver(null));
+      if (usages.hasMoreReferences) return false;
+      if (PsiTreeUtil.isAncestor(function.getParameterList(), element, true) &&
+          (!usages.calls.isEmpty() || !usages.subscriptions.isEmpty())) {
+        return true;
       }
 
-      for (PySubscriptionExpression subscription : usages.getThird()) {
-        if ((caretInParameterList || PsiTreeUtil.isAncestor(subscription, element, true)) && getIndexValueToReplace(subscription) != null) {
-          available = true;
+      for (PyCallExpression call : usages.calls.values()) {
+        if (PsiTreeUtil.isAncestor(call, element, true)) {
+          return true;
         }
-        //noinspection SuspiciousMethodCalls
-        references.remove(subscription.getOperand());
       }
 
-      return available && references.isEmpty();
+      for (PySubscriptionExpression subscription : usages.subscriptions.values()) {
+        if (PsiTreeUtil.isAncestor(subscription, element, true)) {
+          return true;
+        }
+      }
     }
 
     return false;
@@ -130,31 +123,50 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   }
 
   @NotNull
-  private static Trinity<List<PyReferenceExpression>, List<PyCallExpression>, List<PySubscriptionExpression>> findKeywordContainerUsages(@NotNull PyFunction function) {
+  private static Usages findKeywordContainerUsages(@NotNull PyFunction function, boolean skipReferencesToContainer) {
     final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
-    if (keywordContainer == null) return new Trinity<>(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+    if (keywordContainer == null) return new Usages(false, new LinkedHashSet<>(), MultiMap.empty(), MultiMap.empty());
 
-    final List<PyReferenceExpression> all = new ArrayList<>();
-    final List<PyCallExpression> calls = new ArrayList<>();
-    final List<PySubscriptionExpression> subscriptions = new ArrayList<>();
+    final Set<PyExpression> allReferences = new HashSet<>();
+    final Set<PyExpression> referencesAsOperandOrReceiver = new HashSet<>();
+    final LinkedHashSet<String> names = new LinkedHashSet<>();
+    final MultiMap<String, PyCallExpression> calls = MultiMap.create();
+    final MultiMap<String, PySubscriptionExpression> subscriptions = MultiMap.create();
 
     SyntaxTraverser
       .psiTraverser(function.getStatementList())
       .forEach(
         e -> {
-          if (e instanceof PyReferenceExpression && ((PyReferenceExpression)e).getReference().isReferenceTo(keywordContainer)) {
-            all.add((PyReferenceExpression)e);
+          if (!skipReferencesToContainer &&
+              e instanceof PyReferenceExpression &&
+              ((PyReferenceExpression)e).getReference().isReferenceTo(keywordContainer)) {
+            allReferences.add((PyReferenceExpression)e);
           }
           else if (isKeywordContainerCall(e, keywordContainer)) {
-            calls.add((PyCallExpression)e);
+            final PyCallExpression call = (PyCallExpression)e;
+            referencesAsOperandOrReceiver.add(call.getReceiver(null));
+
+            final String name = getIndexValueToReplace(call);
+            if (name != null) {
+              names.add(name);
+              calls.putValue(name, call);
+            }
           }
           else if (isKeywordContainerSubscription(e, keywordContainer)) {
-            subscriptions.add((PySubscriptionExpression)e);
+            final PySubscriptionExpression subscription = (PySubscriptionExpression)e;
+            referencesAsOperandOrReceiver.add(subscription.getOperand());
+
+            final String name = getIndexValueToReplace(subscription);
+            if (name != null) {
+              names.add(name);
+              subscriptions.putValue(name, subscription);
+            }
           }
         }
       );
 
-    return new Trinity<>(all, calls, subscriptions);
+    allReferences.removeAll(referencesAsOperandOrReceiver);
+    return new Usages(!allReferences.isEmpty(), names, calls, subscriptions);
   }
 
   @Nullable
@@ -179,40 +191,13 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   }
 
   private static void replaceKeywordContainerUsages(@NotNull PyFunction function, @NotNull Project project) {
-    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
-    if (keywordContainer == null) return;
+    final Usages usages = findKeywordContainerUsages(function, true);
 
-    final Set<String> names = new LinkedHashSet<>();
-    final MultiMap<String, PySubscriptionExpression> subscriptions = MultiMap.create();
-    final MultiMap<String, PyCallExpression> calls = MultiMap.create();
-
-    SyntaxTraverser
-      .psiTraverser(function.getStatementList())
-      .forEach(
-        e -> {
-          if (isKeywordContainerSubscription(e, keywordContainer)) {
-            final PySubscriptionExpression subscription = (PySubscriptionExpression)e;
-            final String indexValue = getIndexValueToReplace(subscription);
-
-            if (indexValue != null) {
-              names.add(indexValue);
-              subscriptions.putValue(indexValue, subscription);
-            }
-          }
-          else if (isKeywordContainerCall(e, keywordContainer)) {
-            final PyCallExpression call = (PyCallExpression)e;
-            final String indexValue = getIndexValueToReplace(call);
-
-            if (indexValue != null) {
-              names.add(indexValue);
-              calls.putValue(indexValue, call);
-            }
-          }
-        }
-      );
+    final MultiMap<String, PySubscriptionExpression> subscriptions = usages.subscriptions;
+    final MultiMap<String, PyCallExpression> calls = usages.calls;
 
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    for (String name : names) {
+    for (String name : usages.names) {
       final Collection<PySubscriptionExpression> currentSubscriptions = subscriptions.get(name);
       final Collection<PyCallExpression> currentCalls = calls.get(name);
 
@@ -324,5 +309,29 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
     return ContainerUtil.find(parameterList.getParameters(),
                               p -> p.hasDefaultValue() || p instanceof PyNamedParameter && ((PyNamedParameter)p).isKeywordContainer());
+  }
+
+  private static class Usages {
+
+    private final boolean hasMoreReferences;
+
+    @NotNull
+    private final LinkedHashSet<String> names;
+
+    @NotNull
+    private final MultiMap<String, PyCallExpression> calls;
+
+    @NotNull
+    private final MultiMap<String, PySubscriptionExpression> subscriptions;
+
+    private Usages(boolean hasMoreReferences,
+                   @NotNull LinkedHashSet<String> names,
+                   @NotNull MultiMap<String, PyCallExpression> calls,
+                   @NotNull MultiMap<String, PySubscriptionExpression> subscriptions) {
+      this.hasMoreReferences = hasMoreReferences;
+      this.names = names;
+      this.calls = calls;
+      this.subscriptions = subscriptions;
+    }
   }
 }
