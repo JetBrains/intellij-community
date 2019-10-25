@@ -174,6 +174,59 @@ class GHPRChangesProviderImpl(private val repository: GitRepository, commits: Li
 
   override fun findFileLinesMapper(change: Change) = patchesByChanges[change]?.let { GHPRChangedFileLinesMapperImpl(it) }
 
+  override fun findDiffRangesWithoutContext(change: Change): List<Range>? {
+    val patch = patchesByChanges[change] ?: return null
+    return patch.hunks.map(::getChangeOnlyRanges).flatten()
+  }
+
+  private fun getChangeOnlyRanges(hunk: PatchHunk): List<Range> {
+    val ranges = mutableListOf<Range>()
+    var start1 = hunk.startLineBefore
+    var start2 = hunk.startLineAfter
+    var end1 = hunk.startLineBefore
+    var end2 = hunk.startLineAfter
+    var changeFound = false
+    var newLine1 = false
+    var newLine2 = false
+
+    for (line in hunk.lines) {
+      when (line.type!!) {
+        PatchLine.Type.REMOVE -> {
+          end1++
+          changeFound = true
+          newLine1 = !line.isSuppressNewLine
+        }
+        PatchLine.Type.ADD -> {
+          end2++
+          changeFound = true
+          newLine2 = !line.isSuppressNewLine
+        }
+        PatchLine.Type.CONTEXT -> {
+          if (changeFound) {
+            ranges.add(Range(start1, end1, start2, end2))
+            start1 = end1
+            start2 = end2
+          }
+          start1++
+          start2++
+          end1++
+          end2++
+          changeFound = false
+          newLine1 = !line.isSuppressNewLine
+          newLine2 = !line.isSuppressNewLine
+        }
+      }
+    }
+    if (changeFound) {
+      if (newLine1 != newLine2) {
+        if (newLine1) end1++
+        if (newLine2) end2++
+      }
+      ranges.add(Range(start1, end1, start2, end2))
+    }
+    return ranges
+  }
+
   private fun findChangeForPatch(changes: Collection<MutableChange>, patch: FilePatch): MutableChange? {
     var beforeName = patch.beforeName
     var afterName = patch.afterName

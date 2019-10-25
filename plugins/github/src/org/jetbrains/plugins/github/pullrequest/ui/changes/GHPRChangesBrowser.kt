@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -41,7 +42,9 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel,
 
   override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     return if (userObject is Change) {
-      ChangeDiffRequestProducer.create(myProject, userObject, mapOf(GHPRDiffReviewSupport.KEY to diffHelper.getReviewSupport(userObject)))
+      ChangeDiffRequestProducer.create(myProject, userObject,
+                                       mapOf(GHPRDiffReviewSupport.KEY to diffHelper.getReviewSupport(userObject),
+                                             DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER to diffHelper.getDiffComputer(userObject)))
     }
     else null
   }

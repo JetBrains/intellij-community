@@ -1,6 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
+import com.intellij.diff.comparison.ComparisonManagerImpl
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -40,5 +44,21 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
     return GHPRDiffReviewSupportImpl(project, reviewService, diffRanges, fileLinesMapper, lastCommitSha, filePath,
                                      { commitSha, path -> changesProvider?.findChange(commitSha, path) == change },
                                      avatarIconsProviderFactory, currentUser)
+  }
+
+  override fun getDiffComputer(change: Change): DiffUserDataKeysEx.DiffComputer? {
+    val diffRanges = changesProvider?.findDiffRangesWithoutContext(change) ?: return null
+
+    return DiffUserDataKeysEx.DiffComputer { text1, text2, policy, innerChanges, indicator ->
+      val comparisonManager = ComparisonManagerImpl.getInstanceImpl()
+      val lineOffsets1 = LineOffsetsUtil.create(text1)
+      val lineOffsets2 = LineOffsetsUtil.create(text2)
+
+      val iterable = DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount, lineOffsets2.lineCount)
+      DiffIterableUtil.iterateAll(iterable).map {
+        comparisonManager.compareLinesInner(it.first, text1, text2, lineOffsets1, lineOffsets2, policy, innerChanges,
+                                            indicator)
+      }.flatten()
+    }
   }
 }
