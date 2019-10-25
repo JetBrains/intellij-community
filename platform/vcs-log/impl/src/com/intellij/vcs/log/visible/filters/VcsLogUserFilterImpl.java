@@ -68,8 +68,9 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
         users.addAll(getUsers(vcsUser.getName())); // do not just add vcsUser, also add synonyms
         String emailNamePart = VcsUserUtil.getNameFromEmail(vcsUser.getEmail());
         if (emailNamePart != null) {
-          for (VcsUser candidateUser: getUsers(emailNamePart)) {
-            if (candidateUser.getEmail().equals(vcsUser.getEmail())) {
+          Set<String> emails = ContainerUtil.map2Set(users, user -> VcsUserUtil.emailToLowerCase(user.getEmail()));
+          for (VcsUser candidateUser : getUsers(emailNamePart)) {
+            if (emails.contains(VcsUserUtil.emailToLowerCase(candidateUser.getEmail()))) {
               users.add(candidateUser);
             }
           }
