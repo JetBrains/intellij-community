@@ -489,6 +489,7 @@
     <completion.ml.contextFeatures language="Python" implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyLocationFeatures"/>
     <completion.ml.elementFeatures language="Python" implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyElementFeatures"/>
     <completion.confidence language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyCompletionConfidence"/>
+    <completion.ml.model implementation="com.jetbrains.python.codeInsight.mlcompletion.PythonMLRankingProvider"/>
     <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
                   order="first, before completionAutoPopup"/>
 
