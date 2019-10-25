@@ -11,6 +11,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.HttpRequests
 import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.lang.RuntimeException
 
 data class JDKVendor(
   val vendor: String
@@ -24,22 +26,16 @@ data class JDKDownloadItem(
   //TODO: include vendor specific version too (e.g. Zulu 13.12.123)
   //TODO: add vendor specific flavour (OpenJ9, JavaFX)
   val arch: String,
-  val fileType: String,
+  val archiveType: String, //TODO: rename in JSON
   val url: String,
   val size: Long,
   val sha256: String
 ) {
-  val installFolderName get() = url.split("/").last() //TODO: use feed for it
-}
+  val unpackedSize: Long get() = size //TODO: implement it in the feed
+  val archiveSize: Long get() = size //TODO: implement it in the feed
 
-class JDKList private constructor(
-  val feedError: String? = null,
-  val items: List<JDKDownloadItem> = listOf()
-) {
-  companion object {
-    fun error(error: String) = JDKList(feedError = error)
-    fun ok(items: List<JDKDownloadItem>) = JDKList(items = items)
-  }
+  val installFileName get() = url.split("/").last() //TODO: use feed for it
+  val installFolderName get() = installFileName.removeSuffix(".zip").removeSuffix(".tar.gz") //TODO: use feed for it
 }
 
 object JDKListDownloader {
@@ -54,20 +50,17 @@ object JDKListDownloader {
       return "https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_Service_GenerateJDKsJson/lasest.lastSuccessful/feed.zip!/jdks.json.xz"
     }
 
-  fun downloadModel(progress: ProgressIndicator?, feedUrl : String = this.feedUrl): JDKList {
+  fun downloadModel(progress: ProgressIndicator?, feedUrl : String = this.feedUrl): List<JDKDownloadItem> {
     //we download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
     val rawData = try {
+      //timeouts are handled inside
       HttpRequests
         .request(feedUrl)
-        .connectTimeout(5_000)
-        .readTimeout(5_000)
-        .forceHttps(true)
-        .throwStatusCodeException(true)
+        .productNameAsUserAgent()
         .readBytes(progress)
         .unXZ()
-    } catch (t: Throwable) {
-      LOG.warn("Failed to download and process the JDKs list from $feedUrl. ${t.message}", t)
-      return JDKList.error("Failed to download and process the JDKs list from $feedUrl")
+    } catch (t: IOException) {
+      throw RuntimeException("Failed to download and process the JDKs list from $feedUrl. ${t.message}", t)
     }
 
     try {
@@ -96,20 +89,20 @@ object JDKListDownloader {
         result += JDKDownloadItem(vendor = JDKVendor(vendor),
                                   version = version,
                                   arch = arch,
-                                  fileType = fileType,
+                                  archiveType = fileType,
                                   url = url,
                                   size = size,
                                   sha256 = sha256)
       }
 
-      return JDKList.ok(result)
+      return result
     } catch (t: Throwable) {
-      LOG.warn("Failed to parse downloaded JDKs list from $feedUrl. ${t.message}", t)
-      return JDKList.error("Failed to parse downloaded JDKs list")
+      throw RuntimeException("Failed to parse downloaded JDKs list from $feedUrl. ${t.message}", t)
     }
+  }
+
+  private fun ByteArray.unXZ() = ByteArrayInputStream(this).use { input ->
+    XZInputStream(input).use { it.readBytes() }
   }
 }
 
-private fun ByteArray.unXZ() = ByteArrayInputStream(this).use { input ->
-  XZInputStream(input).use { it.readBytes() }
-}
