@@ -45,7 +45,7 @@ public class CucumberJvmSMFormatterUtil {
     if (source == null) {
       return "";
     }
-    return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'");
+    return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("]", "|]");
   }
 
   /**
