@@ -38,7 +38,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
    * <em>
    * Important note about caching: If you intend the components to be cached, you should pass
    * in a factory that creates {@link CachingComponentAdapter} instances, such as for example
-   * {@link CachingComponentAdapterFactory}. CachingComponentAdapterFactory can delegate to
    * other ComponentAdapterFactories.
    * </em>
    *
@@ -56,7 +55,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
    * <em>
    * Important note about caching: If you intend the components to be cached, you should pass
    * in a factory that creates {@link CachingComponentAdapter} instances, such as for example
-   * {@link CachingComponentAdapterFactory}. CachingComponentAdapterFactory can delegate to
    * other ComponentAdapterFactories.
    * </em>
    *

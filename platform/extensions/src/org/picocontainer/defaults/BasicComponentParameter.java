@@ -16,8 +16,7 @@ import org.picocontainer.PicoInitializationException;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,115 +34,121 @@ import java.util.List;
  * @version $Revision: 2817 $
  */
 public class BasicComponentParameter
-        implements Parameter, Serializable {
+  implements Parameter, Serializable {
 
-    private Object componentKey;
+  private final Object componentKey;
 
-    /**
-     * Expect a parameter matching a component of a specific key.
-     *
-     * @param componentKey the key of the desired component
-     */
-    public BasicComponentParameter(Object componentKey) {
-        this.componentKey = componentKey;
+  /**
+   * Expect a parameter matching a component of a specific key.
+   *
+   * @param componentKey the key of the desired component
+   */
+  public BasicComponentParameter(Object componentKey) {
+    this.componentKey = componentKey;
+  }
+
+  /**
+   * Check wether the given Parameter can be statisfied by the container.
+   *
+   * @return <code>true</code> if the Parameter can be verified.
+   * @throws PicoInitializationException {@inheritDoc}
+   * @see Parameter#isResolvable(PicoContainer,
+   * ComponentAdapter, Class)
+   */
+  @Override
+  public boolean isResolvable(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
+    return resolveAdapter(container, adapter, expectedType) != null;
+  }
+
+  @Override
+  public Object resolveInstance(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
+    final ComponentAdapter componentAdapter = resolveAdapter(container, adapter, expectedType);
+    if (componentAdapter != null) {
+      return container.getComponentInstance(componentAdapter.getComponentKey());
+    }
+    return null;
+  }
+
+  @Override
+  public void verify(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
+    final ComponentAdapter componentAdapter = resolveAdapter(container, adapter, expectedType);
+    if (componentAdapter == null) {
+      throw new UnsatisfiableDependenciesException(adapter, Collections.singleton(expectedType), container);
+    }
+  }
+
+  private ComponentAdapter resolveAdapter(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
+
+    final ComponentAdapter result = getTargetAdapter(container, expectedType, adapter);
+    if (result == null) {
+      return null;
     }
 
-    /**
-     * Check wether the given Parameter can be statisfied by the container.
-     *
-     * @return <code>true</code> if the Parameter can be verified.
-     * @throws PicoInitializationException {@inheritDoc}
-     * @see Parameter#isResolvable(PicoContainer,
-     *           ComponentAdapter, Class)
-     */
-    @Override
-    public boolean isResolvable(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
-        return resolveAdapter(container, adapter, expectedType) != null;
-    }
-
-    @Override
-    public Object resolveInstance(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
-        final ComponentAdapter componentAdapter = resolveAdapter(container, adapter, expectedType);
-        if (componentAdapter != null) {
-            return container.getComponentInstance(componentAdapter.getComponentKey());
+    if (!expectedType.isAssignableFrom(result.getComponentImplementation())) {
+      // check for primitive value
+      if (expectedType.isPrimitive()) {
+        try {
+          final Field field = result.getComponentImplementation().getField("TYPE");
+          final Class type = (Class)field.get(result.getComponentInstance(null));
+          if (expectedType.isAssignableFrom(type)) {
+            return result;
+          }
         }
-        return null;
-    }
-
-    @Override
-    public void verify(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
-        final ComponentAdapter componentAdapter = resolveAdapter(container, adapter, expectedType);
-        if (componentAdapter == null) {
-            final HashSet set = new HashSet();
-            set.add(expectedType);
-            throw new UnsatisfiableDependenciesException(adapter, set, container);
+        catch (NoSuchFieldException ignored) {
         }
-        componentAdapter.verify(container);
-    }
-
-    private ComponentAdapter resolveAdapter(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
-
-        final ComponentAdapter result = getTargetAdapter(container, expectedType,adapter);
-        if (result == null) {
-            return null;
+        catch (IllegalArgumentException ignored) {
         }
-
-        if (!expectedType.isAssignableFrom(result.getComponentImplementation())) {
-            // check for primitive value
-            if (expectedType.isPrimitive()) {
-                try {
-                    final Field field = result.getComponentImplementation().getField("TYPE");
-                    final Class type = (Class) field.get(result.getComponentInstance(null));
-                    if (expectedType.isAssignableFrom(type)) {
-                        return result;
-                    }
-                } catch (NoSuchFieldException e) {
-                } catch (IllegalArgumentException e) {
-                } catch (IllegalAccessException e) {
-                } catch (ClassCastException e) {
-                }
-            }
-            return null;
+        catch (IllegalAccessException ignored) {
         }
-        return result;
-    }
-
-    private ComponentAdapter getTargetAdapter(PicoContainer container, Class expectedType, ComponentAdapter excludeAdapter) {
-        if (componentKey != null) {
-            // key tells us where to look so we follow
-            return container.getComponentAdapter(componentKey);
-        } else if(excludeAdapter == null) {
-            return container.getComponentAdapterOfType(expectedType);
-        } else {
-            Object excludeKey = excludeAdapter.getComponentKey();
-            ComponentAdapter byKey = container.getComponentAdapter(expectedType);
-            if(byKey != null && !excludeKey.equals(byKey.getComponentKey())) {
-                return byKey;
-            }
-            List found = container.getComponentAdaptersOfType(expectedType);
-            ComponentAdapter exclude = null;
-            for(Iterator iterator = found.iterator(); iterator.hasNext();) {
-                ComponentAdapter work = (ComponentAdapter) iterator.next();
-                if( work.getComponentKey().equals(excludeKey)) {
-                    exclude = work;
-                }
-            }
-            found.remove(exclude);
-            if(found.size() == 0) {
-                if( container.getParent() != null) {
-                    return container.getParent().getComponentAdapterOfType(expectedType);
-                } else {
-                    return null;
-                }
-            } else if(found.size() == 1) {
-                return (ComponentAdapter)found.get(0);
-            } else {
-                Class[] foundClasses = new Class[found.size()];
-                for (int i = 0; i < foundClasses.length; i++) {
-                    foundClasses[i] = ((ComponentAdapter) found.get(i)).getComponentImplementation();
-                }
-                throw new AmbiguousComponentResolutionException(expectedType, foundClasses);
-            }
+        catch (ClassCastException ignored) {
         }
+      }
+      return null;
     }
+    return result;
+  }
+
+  private ComponentAdapter getTargetAdapter(PicoContainer container, Class expectedType, ComponentAdapter excludeAdapter) {
+    if (componentKey != null) {
+      // key tells us where to look so we follow
+      return container.getComponentAdapter(componentKey);
+    }
+    else if (excludeAdapter == null) {
+      return container.getComponentAdapterOfType(expectedType);
+    }
+    else {
+      Object excludeKey = excludeAdapter.getComponentKey();
+      ComponentAdapter byKey = container.getComponentAdapter(expectedType);
+      if (byKey != null && !excludeKey.equals(byKey.getComponentKey())) {
+        return byKey;
+      }
+      List found = container.getComponentAdaptersOfType(expectedType);
+      ComponentAdapter exclude = null;
+      for (Object o : found) {
+        ComponentAdapter work = (ComponentAdapter)o;
+        if (work.getComponentKey().equals(excludeKey)) {
+          exclude = work;
+        }
+      }
+      found.remove(exclude);
+      if (found.size() == 0) {
+        if (container.getParent() != null) {
+          return container.getParent().getComponentAdapterOfType(expectedType);
+        }
+        else {
+          return null;
+        }
+      }
+      else if (found.size() == 1) {
+        return (ComponentAdapter)found.get(0);
+      }
+      else {
+        Class[] foundClasses = new Class[found.size()];
+        for (int i = 0; i < foundClasses.length; i++) {
+          foundClasses[i] = ((ComponentAdapter)found.get(i)).getComponentImplementation();
+        }
+        throw new AmbiguousComponentResolutionException(expectedType, foundClasses);
+      }
+    }
+  }
 }

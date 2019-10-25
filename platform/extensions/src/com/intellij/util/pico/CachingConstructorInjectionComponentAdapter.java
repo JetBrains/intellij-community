@@ -167,7 +167,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
       }
     }
     if (!conflicts.isEmpty()) {
-      throw new TooManySatisfiableConstructorsException(getComponentImplementation(), conflicts);
+      throw new TooManySatisfiableConstructorsException(conflicts);
     }
     if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
       throw new UnsatisfiableDependenciesException(this, unsatisfiedDependencyType, unsatisfiableDependencyTypes, container);

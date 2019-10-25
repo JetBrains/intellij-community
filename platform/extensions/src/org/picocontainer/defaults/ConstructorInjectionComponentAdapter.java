@@ -169,7 +169,7 @@ public class ConstructorInjectionComponentAdapter extends InstantiatingComponent
       }
     }
     if (!conflicts.isEmpty()) {
-      throw new TooManySatisfiableConstructorsException(getComponentImplementation(), conflicts);
+      throw new TooManySatisfiableConstructorsException(conflicts);
     }
     else if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
       throw new UnsatisfiableDependenciesException(this, unsatisfiedDependencyType, unsatisfiableDependencyTypes, container);
@@ -205,9 +205,7 @@ public class ConstructorInjectionComponentAdapter extends InstantiatingComponent
           }
           try {
             Object[] parameters = getConstructorArguments(guardedContainer, constructor);
-            long startTime = System.currentTimeMillis();
-            Object inst = newInstance(constructor, parameters);
-            return inst;
+            return newInstance(constructor, parameters);
           }
           catch (InvocationTargetException e) {
             if (e.getTargetException() instanceof RuntimeException) {
@@ -249,11 +247,10 @@ public class ConstructorInjectionComponentAdapter extends InstantiatingComponent
   }
 
   private List getSortedMatchingConstructors() {
-    List matchingConstructors = new ArrayList();
+    List<Constructor<?>> matchingConstructors = new ArrayList<>();
     Constructor[] allConstructors = getConstructors();
     // filter out all constructors that will definately not match
-    for (int i = 0; i < allConstructors.length; i++) {
-      Constructor constructor = allConstructors[i];
+    for (Constructor<?> constructor : allConstructors) {
       if ((parameters == null || constructor.getParameterTypes().length == parameters.length) &&
           (allowNonPublicClasses || (constructor.getModifiers() & Modifier.PUBLIC) != 0)) {
         matchingConstructors.add(constructor);
@@ -261,20 +258,15 @@ public class ConstructorInjectionComponentAdapter extends InstantiatingComponent
     }
     // optimize list of constructors moving the longest at the beginning
     if (parameters == null) {
-      Collections.sort(matchingConstructors, new Comparator() {
-        @Override
-        public int compare(Object arg0, Object arg1) {
-          return ((Constructor)arg1).getParameterTypes().length - ((Constructor)arg0).getParameterTypes().length;
-        }
-      });
+      Collections.sort(matchingConstructors, (arg0, arg1) -> arg1.getParameterTypes().length - arg0.getParameterTypes().length);
     }
     return matchingConstructors;
   }
 
   private Constructor[] getConstructors() {
-    return (Constructor[])AccessController.doPrivileged(new PrivilegedAction() {
+    return AccessController.doPrivileged(new PrivilegedAction<Constructor[]>() {
       @Override
-      public Object run() {
+      public Constructor[] run() {
         return getComponentImplementation().getDeclaredConstructors();
       }
     });
