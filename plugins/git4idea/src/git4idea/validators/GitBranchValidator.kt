@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.validators
 
+import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.GitUtil.HEAD
@@ -27,21 +28,24 @@ private fun conflictsWithLocalOrRemote(repositories: Collection<GitRepository>,
                                        inputString: String,
                                        local: Boolean,
                                        message: String): ValidationInfo? {
-  for (repository in repositories) {
-    if (findConflictingBranch(inputString, repository, local) != null) {
-      var errorText = "Branch name $inputString$message"
-      if (repositories.size > 1 && !allReposHaveBranch(repositories, inputString, local)) {
-        errorText += " in repository ${repository.presentableUrl}"
-        if (local) return ValidationInfo(errorText).asWarning().withOKEnabled()
-      }
-      return ValidationInfo(errorText)
-    }
+  val reposWithConflictingBranch = getReposWithConflictingBranch(repositories, inputString, local)
+  if (reposWithConflictingBranch.isEmpty()) return null
+  var errorText = "Branch name $inputString$message"
+  if (repositories.size > reposWithConflictingBranch.size) {
+    errorText += getAdditionalDescription(reposWithConflictingBranch)
+    if (local) return ValidationInfo(errorText).asWarning().withOKEnabled()
   }
-  return null
+  return ValidationInfo(errorText)
 }
 
-internal fun allReposHaveBranch(repositories: Collection<GitRepository>, inputString: String, local: Boolean): Boolean {
-  return repositories.all { repository -> findConflictingBranch(inputString, repository, local) != null }
+private fun getAdditionalDescription(repositories: List<GitRepository>) =
+  if (repositories.size > 1) " in ${repositories.size} repositories"
+  else " in ${getShortRepositoryName(repositories.first())}"
+
+private fun getReposWithConflictingBranch(repositories: Collection<GitRepository>,
+                                          inputString: String,
+                                          local: Boolean): List<GitRepository> {
+  return repositories.filter { repository -> findConflictingBranch(inputString, repository, local) != null }
 }
 
 private fun findConflictingBranch(inputString: String, repository: GitRepository, local: Boolean) =
