@@ -47,6 +47,8 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 
   inner class MyJsonSchemaFileProvider : JsonSchemaFileProvider, DumbAware {
     private val schemeFile = lazy {
+      //do not pass schemeContent directory directly because the initialization for the content is very slow (500ms)
+      //use the lazy initialized field schemeContent only on demand 
       object: LightVirtualFile("ij-scheme.json", JsonFileType.INSTANCE, "", Charsets.UTF_8, 0) {
         override fun getContent(): CharSequence = schemeContent
       }
