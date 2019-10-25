@@ -472,7 +472,7 @@ class Foo {
     assert !lookup
   }
 
-  void testArrows(String toType, Lookup.FocusDegree focusDegree, int indexDown, int indexUp) {
+  void testArrows(String toType, LookupImpl.FocusDegree focusDegree, int indexDown, int indexUp) {
     Closure checkArrow = { String action, int expectedIndex ->
       myFixture.configureByText("a.java", """
       class A {
@@ -505,11 +505,11 @@ class Foo {
 
   void "test vertical arrows in non-focused lookup"() {
     String toType = "ArrayIndexOutOfBoundsException ind"
-    testArrows toType, Lookup.FocusDegree.UNFOCUSED, 0, 2
+    testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 2
 
     UISettings.instance.cycleScrolling = false
     try {
-      testArrows toType, Lookup.FocusDegree.UNFOCUSED, 0, -1
+      testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, -1
     }
     finally {
       UISettings.instance.cycleScrolling = true
@@ -521,11 +521,11 @@ class Foo {
     UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
-    testArrows toType, Lookup.FocusDegree.SEMI_FOCUSED, 2, 0
+    testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
 
     UISettings.instance.cycleScrolling = false
     try {
-      testArrows toType, Lookup.FocusDegree.SEMI_FOCUSED, 2, 0
+      testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
     }
     finally {
       UISettings.instance.cycleScrolling = true
@@ -1713,7 +1713,7 @@ class Cls {
     myFixture.configureByText "a.properties", "myprop=ja<caret>"
     type 'v'
     myFixture.assertPreferredCompletionItems 0, 'java'
-    lookup.focusDegree = Lookup.FocusDegree.FOCUSED
+    lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
     type '.'
     myFixture.checkResult 'myprop=java.<caret>'
     assert lookup
