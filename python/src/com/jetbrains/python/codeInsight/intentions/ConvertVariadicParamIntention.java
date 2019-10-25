@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -123,8 +125,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
     if (function != null) {
-      replaceKeywordContainerSubscriptions(function, project);
-      replaceKeywordContainerCalls(function, project);
+      replaceKeywordContainerUsages(function, project);
     }
   }
 
@@ -177,53 +178,63 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       .orElse(null);
   }
 
-  private static void replaceKeywordContainerSubscriptions(@NotNull PyFunction function, @NotNull Project project) {
+  private static void replaceKeywordContainerUsages(@NotNull PyFunction function, @NotNull Project project) {
     final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
     if (keywordContainer == null) return;
 
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    final Set<String> names = new LinkedHashSet<>();
+    final MultiMap<String, PySubscriptionExpression> subscriptions = MultiMap.create();
+    final MultiMap<String, PyCallExpression> calls = MultiMap.create();
 
     SyntaxTraverser
       .psiTraverser(function.getStatementList())
-      .filter(e -> isKeywordContainerSubscription(e, keywordContainer))
-      .filter(PySubscriptionExpression.class)
       .forEach(
-        subscription -> {
-          final String indexValue = getIndexValueToReplace(subscription);
-          if (indexValue != null) {
-            final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
+        e -> {
+          if (isKeywordContainerSubscription(e, keywordContainer)) {
+            final PySubscriptionExpression subscription = (PySubscriptionExpression)e;
+            final String indexValue = getIndexValueToReplace(subscription);
 
-            insertParameter(function.getParameterList(), parameter, false, elementGenerator);
-            subscription.replace(parameter);
+            if (indexValue != null) {
+              names.add(indexValue);
+              subscriptions.putValue(indexValue, subscription);
+            }
           }
-        }
-      );
-  }
+          else if (isKeywordContainerCall(e, keywordContainer)) {
+            final PyCallExpression call = (PyCallExpression)e;
+            final String indexValue = getIndexValueToReplace(call);
 
-  private static void replaceKeywordContainerCalls(@NotNull PyFunction function, @NotNull Project project) {
-    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
-    if (keywordContainer == null) return;
-
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-
-    SyntaxTraverser
-      .psiTraverser(function.getStatementList())
-      .filter(e -> isKeywordContainerCall(e, keywordContainer))
-      .filter(PyCallExpression.class)
-      .forEach(
-        call -> {
-          final String indexValue = getIndexValueToReplace(call);
-          if (indexValue != null) {
-            final PyNamedParameter parameter = createParameter(elementGenerator, call, indexValue);
-            if (parameter != null) {
-              final PyExpression parameterUsage = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
-
-              insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
-              call.replace(parameterUsage);
+            if (indexValue != null) {
+              names.add(indexValue);
+              calls.putValue(indexValue, call);
             }
           }
         }
       );
+
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    for (String name : names) {
+      final Collection<PySubscriptionExpression> currentSubscriptions = subscriptions.get(name);
+      final Collection<PyCallExpression> currentCalls = calls.get(name);
+
+      if (!currentSubscriptions.isEmpty()) {
+        final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), name);
+        insertParameter(function.getParameterList(), parameter, false, elementGenerator);
+
+        currentSubscriptions.forEach(e -> e.replace(parameter));
+        currentCalls.forEach(e -> e.replace(parameter));
+      }
+      else if (!currentCalls.isEmpty()) {
+        final Ref<String> defaultValue = getCommonDefaultKeyValue(currentCalls);
+        if (defaultValue == null) return;
+
+        final LanguageLevel languageLevel = LanguageLevel.forElement(function);
+        final PyNamedParameter parameter = elementGenerator.createParameter(name, defaultValue.get(), null, languageLevel);
+        final PyExpression parameterUsage = elementGenerator.createExpressionFromText(languageLevel, name);
+
+        insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
+        currentCalls.forEach(e -> e.replace(parameterUsage));
+      }
+    }
   }
 
   private static boolean isKeywordContainerSubscription(@Nullable PsiElement element, @NotNull PyParameter keywordContainer) {
@@ -263,22 +274,40 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     parameterList.addBefore((PsiElement)elementGenerator.createComma(), placeToInsertParameter);
   }
 
+  /**
+   * @return null when <code>calls</code> is empty or there are different default values.
+   */
   @Nullable
-  private static PyNamedParameter createParameter(@NotNull PyElementGenerator elementGenerator,
-                                                  @NotNull PyCallExpression call,
-                                                  @NotNull String parameterName) {
+  private static Ref<String> getCommonDefaultKeyValue(@NotNull Collection<PyCallExpression> calls) {
+    Ref<String> defaultValue = null;
+
+    for (PyCallExpression call : calls) {
+      final String currentDefaultValue = getDefaultKeyValue(call);
+      if (defaultValue == null) {
+        defaultValue = Ref.create(currentDefaultValue);
+      }
+      else if (!Objects.equals(defaultValue.get(), currentDefaultValue)) {
+        return null;
+      }
+    }
+
+    return defaultValue;
+  }
+
+  @Nullable
+  private static String getDefaultKeyValue(@NotNull PyCallExpression call) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
       final PyExpression argument = PyUtil.peelArgument(arguments[1]);
-      return argument == null ? null : elementGenerator.createParameter(parameterName + "=" + argument.getText());
+      return argument == null ? null : argument.getText();
     }
 
     final PyQualifiedExpression callee = PyUtil.as(call.getCallee(), PyQualifiedExpression.class);
     if (callee != null && "get".equals(callee.getReferencedName())) {
-      return elementGenerator.createParameter(parameterName + "=" + PyNames.NONE);
+      return PyNames.NONE;
     }
 
-    return elementGenerator.createParameter(parameterName);
+    return null;
   }
 
   @Nullable

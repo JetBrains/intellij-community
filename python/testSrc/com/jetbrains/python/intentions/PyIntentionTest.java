@@ -239,7 +239,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertVariadicParamPositionalContainerInPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
   }
 
   // PY-26284
@@ -265,6 +265,41 @@ public class PyIntentionTest extends PyTestCase {
   // PY-2264
   public void testConvertVariadicParamUnpackedKwargsReused() {
     doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptions() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCalls() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCallsWithSameDefaultValue() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCallsWithDifferentDefaultValue() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptionsAndCalls() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptionsAndCallsWithSameDefaultValue() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptionsAndCallsWithDifferentDefaultValue() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertTripleQuotedString() { //PY-2697
