@@ -1013,6 +1013,22 @@
         <constraint name="e" nameOfExprType="java\.util\.concurrent\.ExecutorService" expressionTypes="java.util.concurrent.ExecutorService" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="d" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="APP" within="" contains="" />
+        <constraint name="APP2" within="" contains="" />
+        <constraint name="INV" regexp="(invoke.*)|(.*Later.*)" within="" contains="" />
+        <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
+        <constraint name="DO" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests 2" text="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$);&#10;} else {&#10;  $DO$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="APP" within="" contains="" />
+        <constraint name="APP2" within="" contains="" />
+        <constraint name="INV" regexp="(invoke.*)|(.*Later.*)" within="" contains="" />
+        <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
+        <constraint name="DO" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
