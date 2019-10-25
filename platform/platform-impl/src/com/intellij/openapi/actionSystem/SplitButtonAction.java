@@ -248,11 +248,11 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
     @Override
     public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == this) {
-        selectedAction = action;
-        update(event);
-        repaint();
-      }
+      //if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == this) {
+      //  selectedAction = action;
+      //  update(event);
+      //  repaint();
+      //}
     }
   }
 }
