@@ -272,6 +272,10 @@ public class PluginGroups {
     featuredPlugins.put("Markdown", "Custom Languages:Markdown language support:org.intellij.plugins.markdown");
   }
 
+  public static void addRPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("R", "Custom Languages:R language support:R4Intellij");
+  }
+
   protected static void addConfigurationServerPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("Configuration Server",
                         "Team Work:Supports sharing settings between installations of IntelliJ Platform based products used by the same developer on different computers:IdeaServerPlugin");
