@@ -57,7 +57,7 @@ fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
 
     override val unitSize = JBUI.scale(4)
 
-    override val dialogTopBottom = JBUI.scale(8)
+    override val dialogTopBottom = JBUI.scale(10)
     override val dialogLeftRight = JBUI.scale(12)
 
     override val commentVerticalTopGap = JBUI.scale(6)
