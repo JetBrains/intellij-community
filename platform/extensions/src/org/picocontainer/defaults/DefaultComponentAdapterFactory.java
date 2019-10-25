@@ -24,7 +24,7 @@ import java.io.Serializable;
  * @author Aslak Helles&oslash;y
  * @version $Revision: 2779 $
  */
-public class DefaultComponentAdapterFactory implements ComponentAdapterFactory, Serializable {
+public final class DefaultComponentAdapterFactory implements ComponentAdapterFactory, Serializable {
   private final LifecycleStrategy lifecycleStrategy;
 
   public DefaultComponentAdapterFactory() {
@@ -35,5 +35,10 @@ public class DefaultComponentAdapterFactory implements ComponentAdapterFactory, 
   public ComponentAdapter createComponentAdapter(Object componentKey, Class componentImplementation, Parameter[] parameters)
     throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
     return new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, false, lifecycleStrategy));
+  }
+
+  public static ComponentAdapter createAdapter(Object componentKey, Class<?> componentImplementation, Parameter[] parameters)
+    throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
+    return new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, false, new DefaultLifecycleStrategy()));
   }
 }

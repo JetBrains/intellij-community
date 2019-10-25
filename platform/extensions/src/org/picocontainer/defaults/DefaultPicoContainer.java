@@ -14,41 +14,11 @@ import org.picocontainer.*;
 import java.io.Serializable;
 import java.util.*;
 
-/**
- * <p/>
- * The Standard {@link PicoContainer}/{@link MutablePicoContainer} implementation.
- * Constructing a container c with a parent p container will cause c to look up components
- * in p if they cannot be found inside c itself.
- * </p>
- * <p/>
- * Using {@link Class} objects as keys to the various registerXXX() methods makes
- * a subtle semantic difference:
- * </p>
- * <p/>
- * If there are more than one registered components of the same type and one of them are
- * registered with a {@link Class} key of the corresponding type, this component
- * will take precedence over other components during type resolution.
- * </p>
- * <p/>
- * Another place where keys that are classes make a subtle difference is in
- * </p>
- * <p/>
- * This implementation of {@link MutablePicoContainer} also supports
- * {@link ComponentMonitorStrategy}.
- * </p>
- *
- * @author Paul Hammant
- * @author Aslak Helles&oslash;y
- * @author Jon Tirs&eacute;n
- * @author Thomas Heller
- * @author Mauro Talevi
- * @version $Revision: 1.8 $
- */
 public class DefaultPicoContainer implements MutablePicoContainer, Serializable {
   private final Map componentKeyToAdapterCache = new HashMap();
   private final ComponentAdapterFactory componentAdapterFactory;
   private final PicoContainer parent;
-  private final Set children = new HashSet();
+  private final Set<PicoContainer> children = new HashSet<>();
 
   private final List componentAdapters = new ArrayList();
   // Keeps track of instantiation order.
@@ -58,8 +28,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   private boolean started = false;
   // Keeps track of the container disposed status
   private boolean disposed = false;
-  // Keeps track of child containers started status
-  private final Set childrenStarted = new HashSet();
 
   private final LifecycleManager lifecycleManager = new OrderedComponentAdapterLifecycleManager();
   private LifecycleStrategy lifecycleStrategyForInstanceRegistrations;
@@ -111,7 +79,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
    * Creates a new container with the DefaultComponentAdapterFactory using a
    * custom ComponentMonitor
    *
-   * @param monitor the ComponentMonitor to use
    * @param parent  the parent container (used for component dependency lookups).
    */
   public DefaultPicoContainer(PicoContainer parent) {
@@ -123,7 +90,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
    * Creates a new container with the DefaultComponentAdapterFactory using a
    * custom ComponentMonitor and lifecycle strategy
    *
-   * @param monitor           the ComponentMonitor to use
    * @param lifecycleStrategy the lifecycle strategy to use.
    * @param parent            the parent container (used for component dependency lookups).
    */
@@ -199,8 +165,8 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
       return Collections.EMPTY_LIST;
     }
     List found = new ArrayList();
-    for (Iterator iterator = getComponentAdapters().iterator(); iterator.hasNext(); ) {
-      ComponentAdapter componentAdapter = (ComponentAdapter)iterator.next();
+    for (Object o : getComponentAdapters()) {
+      ComponentAdapter componentAdapter = (ComponentAdapter)o;
 
       if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
         found.add(componentAdapter);
@@ -289,7 +255,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
    * but with parameters as a {@link List}. Makes it possible to use with Groovy arrays (which are actually Lists).
    */
   public ComponentAdapter registerComponentImplementation(Object componentKey, Class componentImplementation, List parameters) {
-    Parameter[] parametersAsArray = (Parameter[])parameters.toArray(new Parameter[parameters.size()]);
+    Parameter[] parametersAsArray = (Parameter[])parameters.toArray(new Parameter[0]);
     return registerComponentImplementation(componentKey, componentImplementation, parametersAsArray);
   }
 
@@ -311,8 +277,8 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     }
 
     Map adapterToInstanceMap = new HashMap();
-    for (Iterator iterator = componentAdapters.iterator(); iterator.hasNext(); ) {
-      ComponentAdapter componentAdapter = (ComponentAdapter)iterator.next();
+    for (Object adapter : componentAdapters) {
+      ComponentAdapter componentAdapter = (ComponentAdapter)adapter;
       if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
         Object componentInstance = getInstance(componentAdapter);
         adapterToInstanceMap.put(componentAdapter, componentInstance);
@@ -323,8 +289,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
       }
     }
     List result = new ArrayList();
-    for (Iterator iterator = orderedComponentAdapters.iterator(); iterator.hasNext(); ) {
-      Object componentAdapter = iterator.next();
+    for (Object componentAdapter : orderedComponentAdapters) {
       final Object componentInstance = adapterToInstanceMap.get(componentAdapter);
       if (componentInstance != null) {
         // may be null in the case of the "implicit" adapter
@@ -399,8 +364,8 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   @Override
   public ComponentAdapter unregisterComponentByInstance(Object componentInstance) {
     Collection componentAdapters = getComponentAdapters();
-    for (Iterator iterator = componentAdapters.iterator(); iterator.hasNext(); ) {
-      ComponentAdapter componentAdapter = (ComponentAdapter)iterator.next();
+    for (Object adapter : componentAdapters) {
+      ComponentAdapter componentAdapter = (ComponentAdapter)adapter;
       if (getInstance(componentAdapter).equals(componentInstance)) {
         return unregisterComponent(componentAdapter.getComponentKey());
       }
@@ -428,11 +393,6 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     if (disposed) throw new IllegalStateException("Already disposed");
     if (started) throw new IllegalStateException("Already started");
     started = true;
-    childrenStarted.clear();
-    for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-      PicoContainer child = (PicoContainer)iterator.next();
-      childrenStarted.add(new Integer(child.hashCode()));
-    }
   }
 
   /**
@@ -491,16 +451,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   @Override
   public boolean addChildContainer(PicoContainer child) {
-    if (children.add(child)) {
-      // @todo Should only be added if child container has also be started
-      if (started) {
-        childrenStarted.add(new Integer(child.hashCode()));
-      }
-      return true;
-    }
-    else {
-      return false;
-    }
+    return children.add(child);
   }
 
   @Override
@@ -528,12 +479,14 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     @Override
     public void dispose(PicoContainer node) {
       List adapters = orderedComponentAdapters;
-      for (int i = adapters.size() - 1; 0 <= i; i--) {
+      int i = adapters.size() - 1;
+      while (0 <= i) {
         Object adapter = adapters.get(i);
         if (adapter instanceof LifecycleManager) {
           LifecycleManager manager = (LifecycleManager)adapter;
           manager.dispose(node);
         }
+        i--;
       }
     }
 
