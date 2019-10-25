@@ -749,6 +749,8 @@
 
     <extensionPoint name="defaultLiveTemplatesProvider"
                     interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
+    <extensionPoint name="defaultLiveTemplates"
+                    beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP"/>
 
     <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
