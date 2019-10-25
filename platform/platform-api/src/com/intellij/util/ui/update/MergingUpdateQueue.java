@@ -13,6 +13,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,8 +110,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myMergingTimeSpan = mergingTimeSpan;
     myModalityStateComponent = modalityStateComponent;
     myName = name;
-    Application app = ApplicationManager.getApplication();
-    myPassThrough = app == null || app.isUnitTestMode();
     myExecuteInDispatchThread = thread == Alarm.ThreadToUse.SWING_THREAD;
 
     if (parent != null) {
@@ -163,10 +162,23 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   /**
-   * @param passThrough if {@code true} the tasks won't be postponed but executed immediately instead (this is default mode for tests)
+   * @param passThrough if {@code true} the tasks won't be postponed but executed immediately instead
    */
   public final void setPassThrough(boolean passThrough) {
     myPassThrough = passThrough;
+  }
+
+  /**
+   * Switches on the PassThrough mode if this method is called during testing.
+   * It is needed to support some old tests, which expect such behaviour.
+   *
+   * @return this instance for the sequential creation (the Builder pattern)
+   */
+  @ApiStatus.Internal
+  public final MergingUpdateQueue usePassThroughInUnitTestMode() {
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode()) myPassThrough = true;
+    return this;
   }
 
   public void activate() {
