@@ -237,6 +237,9 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     update |= settings.getShowTreeIndentGuides() != myComponent.myShowTreeIndentGuides.isSelected();
     settings.setShowTreeIndentGuides(myComponent.myShowTreeIndentGuides.isSelected());
 
+    update |= settings.getCompactTreeIndents() != myComponent.myCompactTreeIndents.isSelected();
+    settings.setCompactTreeIndents(myComponent.myCompactTreeIndents.isSelected());
+
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
       update = true;
@@ -343,6 +346,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.getShowIconInQuickNavigation());
     myComponent.myShowTreeIndentGuides.setSelected(settings.getShowTreeIndentGuides());
+    myComponent.myCompactTreeIndents.setSelected(settings.getCompactTreeIndents());
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
@@ -423,6 +427,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
     isModified |= myComponent.myShowTreeIndentGuides.isSelected() != settings.getShowTreeIndentGuides();
+    isModified |= myComponent.myCompactTreeIndents.isSelected() != settings.getCompactTreeIndents();
 
     isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.getPresentationModeFontSize()));
 
@@ -481,6 +486,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     private JCheckBox myHideIconsInQuickNavigation;
     private JCheckBox myShowTreeIndentGuides;
+    private JCheckBox myCompactTreeIndents;
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
     private JCheckBox myDisableMnemonicInControlsCheckBox;

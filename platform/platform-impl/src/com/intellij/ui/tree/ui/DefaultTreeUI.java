@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
@@ -52,6 +53,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
       if (painter != null) return painter;
       // painter is not specified for the whole application
     }
+    UISettings settings = UISettings.getInstanceOrNull();
+    if (settings != null && settings.getCompactTreeIndents()) return Control.Painter.COMPACT;
     if (is("ide.tree.painter.classic.compact")) return Control.Painter.COMPACT;
     if (is("ide.tree.painter.compact.default")) return CompactPainter.DEFAULT;
     return Control.Painter.DEFAULT;
