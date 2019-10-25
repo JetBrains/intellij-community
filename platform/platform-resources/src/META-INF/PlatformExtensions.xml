@@ -219,8 +219,6 @@
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapGroupFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.impl.ActionShortcutRestrictions"
                         serviceImplementation="com.intellij.openapi.keymap.impl.ActionShortcutRestrictionsImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
-                        serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ide.dnd.DnDManager"
                         serviceImplementation="com.intellij.ide.dnd.DnDManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
@@ -307,9 +305,6 @@
     <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager"
                         serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>
     <statistics.counterUsagesCollector groupId="ide.script.engine" version="2"/>
-
-    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings" preload="true"/>
-    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
 
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
 
@@ -450,15 +445,12 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState"/>
-    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
     <applicationConfigurable
         groupId="editor"
         groupWeight="189"
         displayName="Font"
         instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"
     />
-    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
-                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.keymap.KeyboardSettingsExternalizable"/>
