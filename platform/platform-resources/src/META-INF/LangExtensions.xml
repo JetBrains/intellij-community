@@ -51,9 +51,6 @@
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
-                        serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
-
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
@@ -96,8 +93,6 @@
     <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
                         serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
-                    serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
                     serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="await"/>
 
@@ -156,9 +151,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTypeService"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl"/>
-
-    <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ModifiableModelCommitterServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                         serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
@@ -329,8 +321,6 @@
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
     <testSourcesFilter implementation="com.intellij.openapi.roots.ProjectRootTestSourcesFilter"/>
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
