@@ -16,6 +16,7 @@ class CircletIdeaAGraphExecutionEntity(
     override val branch: String,
     override val commit: String,
     override val repoId: String,
+    override val projectId: String,
     val jobsList: MutableList<AJobExecutionEntity<*>>
 ) : AGraphExecutionEntity {
 

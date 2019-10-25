@@ -57,6 +57,7 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
             "master",
             "commit-hash",
             "repoId",
+            "projectId",
             jobs
         )
 
