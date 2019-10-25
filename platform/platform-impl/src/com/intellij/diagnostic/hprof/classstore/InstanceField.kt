@@ -15,4 +15,6 @@
  */
 package com.intellij.diagnostic.hprof.classstore
 
-class InstanceField(val name: String, val offset: Int)
+import com.intellij.diagnostic.hprof.parser.Type
+
+class InstanceField(val name: String, val offset: Int, val type: Type)

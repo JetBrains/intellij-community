@@ -18,7 +18,8 @@ package com.intellij.diagnostic.hprof.navigator
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 
 class RootReason
-private constructor(val description: String) {
+private constructor(val description: String, val javaFrame: Boolean = false) {
+
   companion object {
     fun createConstantReferenceReason(classDefinition: ClassDefinition, constantNumber: Int): RootReason {
       return RootReason("Class constant: ${classDefinition.name}.#$constantNumber")
@@ -32,14 +33,16 @@ private constructor(val description: String) {
       return RootReason("Class definition: ${classDefinition.name}")
     }
 
+    fun createJavaFrameReason(frameDescription: String): RootReason {
+      return RootReason("Java Frame: $frameDescription", true)
+    }
+
     val rootUnknown: RootReason = RootReason(
       "Unknown")
     val rootGlobalJNI: RootReason = RootReason(
       "Global JNI")
     val rootLocalJNI: RootReason = RootReason(
       "Local JNI")
-    val rootJavaFrame: RootReason = RootReason(
-      "Java Frame")
     val rootNativeStack: RootReason = RootReason(
       "Native stack")
     val rootStickyClass: RootReason = RootReason(
@@ -50,10 +53,6 @@ private constructor(val description: String) {
       "Thread object")
     val rootMonitorUsed: RootReason = RootReason(
       "Monitor used")
-  }
-
-  override fun toString(): String {
-    return description
   }
 }
 

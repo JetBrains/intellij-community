@@ -33,7 +33,7 @@ enum class RecordType(val value: Int) {
   ControlSettings(0x0E);
 
   companion object {
-    private val map = RecordType.values().associateBy(RecordType::value)
+    private val map = values().associateBy(RecordType::value)
     fun fromInt(type: Int) = map[type]!!
   }
 

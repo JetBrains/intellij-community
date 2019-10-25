@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diagnostic.hprof.visitors
+package com.intellij.diagnostic.hprof.classstore
 
-import com.intellij.diagnostic.hprof.parser.HProfVisitor
-import com.intellij.diagnostic.hprof.parser.RecordType
-import gnu.trove.TLongObjectHashMap
-
-class CollectStringValuesVisitor(val output: TLongObjectHashMap<String>) : HProfVisitor() {
-  override fun preVisit() {
-    disableAll()
-    enable(RecordType.StringInUTF8)
-  }
-
-  override fun visitStringInUTF8(id: Long, s: String) {
-    assert(output[id] == null)
-    output.put(id, s)
-  }
-}
+class ThreadInfo(val frames: List<String>)

@@ -103,12 +103,16 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
         }
         RecordType.EndThread -> visitor.visitEndThread(readUnsignedInt())
         RecordType.StackFrame -> {
-          visitor.visitStackFrame()
-          skip(length)
+          visitor.visitStackFrame(readRawId(), readRawId(), readRawId(), readRawId(), readUnsignedInt(), readInt())
         }
         RecordType.StackTrace -> {
-          visitor.visitStackTrace()
-          skip(length)
+          val stackTraceSerialNumber = readUnsignedInt()
+          val threadSerialNumber = readUnsignedInt()
+          val numberOfFrames = readInt()
+          val frameIds = LongArray(numberOfFrames) {
+            readRawId()
+          }
+          visitor.visitStackTrace(stackTraceSerialNumber, threadSerialNumber, numberOfFrames, frameIds)
         }
         RecordType.CPUSamples -> {
           visitor.visitCPUSamples()
