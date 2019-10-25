@@ -32,7 +32,7 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
   @Override
   public void setOptionState(boolean enabled) {
     Registry.get(myKey).setValue(enabled);
-    suggestRestartIfNecessary(null);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) suggestRestartIfNecessary(null);
   }
 
   @Override
