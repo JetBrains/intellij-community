@@ -216,38 +216,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
-    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
-    return ourThreadExecutorsService.submit(new Runnable() {
-      @Override
-      public String toString() {
-        return action.toString();
-      }
-
-      @Override
-      public void run() {
-        if (isDisposedOrDisposeInProgress()) {
-          return;
-        }
-
-        // see the comment in "executeOnPooledThread(Callable)"
-        try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
-          if (isDisposedOrDisposeInProgress()) {
-            return;
-          }
-
-          action.run();
-        }
-        catch (ProcessCanceledException e) {
-          // ignore
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
-      }
-    });
+    return executeOnPooledThread(new RunnableCallable(action));
   }
 
   @NotNull
