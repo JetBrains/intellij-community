@@ -2,34 +2,42 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiReference
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.ui.AppUIUtil
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlTag
+import com.intellij.usages.*
+import com.intellij.usages.rules.PsiElementUsage
+import com.intellij.util.xml.DomManager
+import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.uast.*
+import java.awt.Font
+import javax.swing.Icon
 
 /**
  * @author yole
  */
 
 private sealed class EPUsage {
-  data class Unknown(val reason: String): EPUsage()
+  data class Unknown(val reason: String, val targetElement: PsiElement?): EPUsage()
   object Safe : EPUsage()
 }
 
@@ -63,14 +71,17 @@ private fun analyzeEPUsage(reference: PsiReference): EPUsage {
   if (ProjectRootManager.getInstance(containingFile.project).fileIndex.isInTestSourceContent(containingFile.virtualFile)) {
     return EPUsage.Safe
   }
+  if (PsiTreeUtil.getNonStrictParentOfType(reference.element, PsiComment::class.java) != null) {
+    return EPUsage.Safe
+  }
 
-  val qualifiedCall = findQualifiedCall(reference) ?: return EPUsage.Unknown("No call found")
+  val qualifiedCall = findQualifiedCall(reference) ?: return EPUsage.Unknown("No call found", reference.element)
   val methodName = qualifiedCall.callExpression.methodName
   if (methodName == "getExtensions" || methodName == "getExtensionList") {
     return analyzeGetExtensionsCall(qualifiedCall.callExpression, qualifiedCall.fullExpression)
   }
 
-  return EPUsage.Unknown("Unknown call found")
+  return EPUsage.Unknown("Unknown call found", reference.element)
 }
 
 private data class SafeCall(val methodQName: String, val paramName: String)
@@ -82,8 +93,8 @@ private val safeCalls = listOf(
 private fun analyzeGetExtensionsCall(call: UCallExpression, fullExpression: UExpression): EPUsage {
   val loop = call.getParentOfType<UForEachExpression>()
   if (loop != null) {
-    if (fullExpression != loop.iteratedValue) return EPUsage.Unknown("Call is not loop's iterated value")
-    val parameter = loop.variable.sourcePsi ?: return EPUsage.Unknown("Can't resolve loop variable")
+    if (fullExpression != loop.iteratedValue) return EPUsage.Unknown("Call is not loop's iterated value", fullExpression.sourcePsi)
+    val parameter = loop.variable.sourcePsi ?: return EPUsage.Unknown("Can't resolve loop variable", loop.sourcePsi)
     for (psiReference in ReferencesSearch.search(parameter).findAll()) {
       val usage = analyzeExtensionInstanceUsage(psiReference)
       if (usage != EPUsage.Safe) return usage
@@ -93,77 +104,206 @@ private fun analyzeGetExtensionsCall(call: UCallExpression, fullExpression: UExp
 
   val enclosingCall = fullExpression.getParentOfType<UCallExpression>()
   if (enclosingCall != null) {
-    val callee = enclosingCall.resolve() ?: return EPUsage.Unknown("Unresolved method call")
+    val callee = enclosingCall.resolve() ?: return EPUsage.Unknown("Unresolved method call", enclosingCall.sourcePsi)
     val qName = "${callee.containingClass?.qualifiedName}.${callee.name}"
-    val param = enclosingCall.getParameterForArgument(fullExpression) ?: return EPUsage.Unknown("Can't find parameter")
+    val param = enclosingCall.getParameterForArgument(fullExpression) ?: return EPUsage.Unknown("Can't find parameter", enclosingCall.sourcePsi)
     if (safeCalls.any { it.methodQName == qName && it.paramName == param.name }) {
       return EPUsage.Safe
     }
-    return EPUsage.Unknown("Extension list passed to unknown method")
+    return EPUsage.Unknown("Extension list passed to unknown method", enclosingCall.sourcePsi)
   }
 
-  return EPUsage.Unknown("Unknown usage of extension list")
+  return EPUsage.Unknown("Unknown usage of extension list", call.sourcePsi)
 }
 
 private fun analyzeExtensionInstanceUsage(ref: PsiReference): EPUsage {
   val qualifiedCall = findQualifiedCall(ref) ?: run {
     findQualifiedCall(ref)
-    return EPUsage.Unknown("Unknown usage of extension instance")
+    return EPUsage.Unknown("Unknown usage of extension instance", ref.element.parent)
   }
-  val returnType = qualifiedCall.callExpression.returnType ?: return EPUsage.Unknown("Unknown call return type")
+  val returnType = qualifiedCall.callExpression.returnType ?: return EPUsage.Unknown("Unknown call return type", qualifiedCall.callExpression.sourcePsi)
   if (returnType is PsiPrimitiveType) return EPUsage.Safe
-  val returnTypeClass = (returnType as? PsiClassType)?.resolve() ?: return EPUsage.Unknown("Unresolved return type class")
+  val returnTypeClass = (returnType as? PsiClassType)?.resolve() ?: return EPUsage.Unknown("Unresolved return type class", qualifiedCall.callExpression.sourcePsi)
   val project = ref.element.project
   val psiElementClass = JavaPsiFacade.getInstance(project).findClass("com.intellij.psi.PsiElement",
                                                                      GlobalSearchScope.projectScope(project))
-                        ?: return EPUsage.Unknown("No PSI element?")
-  if (returnTypeClass.isEquivalentTo(psiElementClass) || returnTypeClass.isInheritor(psiElementClass, true)) return EPUsage.Safe
-  return EPUsage.Unknown("Unknown return type " + returnTypeClass.qualifiedName)
+  if (psiElementClass != null) {
+    if (returnTypeClass.isEquivalentTo(psiElementClass) || returnTypeClass.isInheritor(psiElementClass, true)) return EPUsage.Safe
+  }
+  if (returnTypeClass.qualifiedName == CommonClassNames.JAVA_LANG_STRING) return EPUsage.Safe
+  return EPUsage.Unknown("Unknown return type " + returnTypeClass.qualifiedName, qualifiedCall.callExpression.sourcePsi)
 }
 
 class AnalyzeEPUsageAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
-    val target = file.findElementAt(editor.caretModel.offset)?.getUastParentOfType<UField>() ?: return
+    val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return
+    val target = elementAtCaret.getUastParentOfType<UField>()
+    if (target != null) {
+      analyzeEPFieldUsages(target, file, editor)
+    }
+
+    val xmlTag = PsiTreeUtil.getParentOfType(elementAtCaret, XmlTag::class.java)
+    if (xmlTag != null) {
+      analyzeEPTagUsages(xmlTag, file, editor)
+    }
+  }
+
+  private fun isEPField(field: PsiField?): Boolean {
+    val fieldType = (field?.type as? PsiClassReferenceType)?.rawType() ?: return false
+    return fieldType.canonicalText == ExtensionPointName::class.java.name ||
+           fieldType.canonicalText == ProjectExtensionPointName::class.java.name
+  }
+
+  private fun analyzeEPFieldUsages(target: UField, file: PsiFile, editor: Editor) {
     val sourcePsi = target.sourcePsi ?: return
-    val fieldType = (target.type as? PsiClassReferenceType)?.rawType() ?: return
-    if (fieldType.canonicalText == ExtensionPointName::class.java.name ||
-        fieldType.canonicalText == ProjectExtensionPointName::class.java.name) {
-      val unsafeUsages = mutableListOf<Pair<PsiReference, EPUsage.Unknown>>()
-      val safeUsages = mutableListOf<PsiReference>()
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        {
-          ReferencesSearch.search(sourcePsi).forEach { ref ->
-            val usage = runReadAction { analyzeEPUsage(ref) }
-            when (usage) {
-              is EPUsage.Unknown -> unsafeUsages.add(ref to usage)
-              is EPUsage.Safe -> safeUsages.add(ref)
-            }
+    if (!isEPField(target.javaPsi as? PsiField)) {
+      HintManager.getInstance().showErrorHint(editor, "Not an ExtensionPointName reference")
+      return
+    }
+
+    val unsafeUsages = mutableListOf<Pair<PsiReference, EPUsage.Unknown>>()
+    val safeUsages = mutableListOf<PsiReference>()
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      {
+        ReferencesSearch.search(sourcePsi).forEach { ref ->
+          val usage = runReadAction { analyzeEPUsage(ref) }
+          when (usage) {
+            is EPUsage.Unknown -> unsafeUsages.add(ref to usage)
+            is EPUsage.Safe -> safeUsages.add(ref)
           }
-        }, "Analyzing EP usages", true, file.project
-      )
-      if (unsafeUsages.isEmpty()) {
-        if (safeUsages.isEmpty()) {
-          HintManager.getInstance().showErrorHint(editor, "No usages found")
         }
-        else {
-          HintManager.getInstance().showInformationHint(editor, "All usages are dynamic-safe")
-        }
+      }, "Analyzing EP usages", true, file.project
+    )
+    if (unsafeUsages.isEmpty()) {
+      if (safeUsages.isEmpty()) {
+        HintManager.getInstance().showErrorHint(editor, "No usages found")
       }
       else {
-        val (ref, usage) = unsafeUsages.first()
-        val navigationElement = ref.element.navigationElement
-        (navigationElement as? Navigatable)?.navigate(true)
-        val selectedFileEditor = FileEditorManager.getInstance(file.project).getSelectedEditor(navigationElement.containingFile.virtualFile)
-        val selectedTextEditor = (selectedFileEditor as? TextEditor)?.editor
-        selectedTextEditor?.let {
-          HintManager.getInstance().showInformationHint(it, usage.toString())
-        }
+        HintManager.getInstance().showInformationHint(editor, "All usages are dynamic-safe")
       }
     }
     else {
-      HintManager.getInstance().showErrorHint(editor, "Not an ExtensionPointName reference")
+      val usages = unsafeUsages.map { UnsafeEPUsage(it.second.targetElement ?: it.first.element, it.second.reason) }
+      val usageTarget = EPUsageTarget(target)
+      UsageViewManager.getInstance(file.project).showUsages(arrayOf(usageTarget), usages.toTypedArray(),
+                                                            UsageViewPresentation().apply {
+                                                              tabText = "Unsafe usages of ${target.getContainingUClass()?.qualifiedName}.${target.name}"
+                                                            })
     }
+  }
+
+  private fun analyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Editor) {
+    val domElement = DomManager.getDomManager(file.project).getDomElement(xmlTag) as? ExtensionPoint
+    if (domElement == null) {
+      HintManager.getInstance().showErrorHint(editor, "Not an <extensionPoint>")
+      return
+    }
+
+    val effectiveClass = domElement.effectiveClass ?: run {
+      HintManager.getInstance().showErrorHint(editor, "Can't resolve class for EP")
+      return
+    }
+
+    val epField = effectiveClass.fields.find { isEPField(it) } ?: run {
+      HintManager.getInstance().showErrorHint(editor, "Can't find ExtensionPointName field")
+      return
+    }
+
+    val epUField = epField.toUElementOfType<UField>() ?: return
+    analyzeEPFieldUsages(epUField, file, editor)
+  }
+
+  private class UnsafeEPUsage(private val psiElement: PsiElement, private val reason: String) : PsiElementUsage {
+    override fun getElement() = psiElement
+
+    override fun getPresentation(): UsagePresentation {
+      return object : UsagePresentation {
+        override fun getTooltipText(): String = ""
+
+        override fun getIcon(): Icon? = null
+
+        override fun getPlainText(): String = psiElement.text
+
+        override fun getText(): Array<TextChunk> = arrayOf(TextChunk(TextAttributes(), psiElement.text),
+                                                           TextChunk(TextAttributes().apply { fontType = Font.ITALIC }, reason))
+      }
+    }
+
+    override fun getLocation(): FileEditorLocation? = null
+
+    override fun canNavigate(): Boolean = psiElement is Navigatable && psiElement.canNavigate()
+
+    override fun canNavigateToSource() = psiElement is Navigatable && psiElement.canNavigateToSource()
+
+    override fun highlightInEditor() {
+    }
+
+    override fun selectInEditor() {
+    }
+
+    override fun isReadOnly() = false
+
+    override fun navigate(requestFocus: Boolean) {
+      (psiElement as? Navigatable)?.navigate(requestFocus)
+    }
+
+    override fun isNonCodeUsage(): Boolean = false
+
+    override fun isValid(): Boolean = psiElement.isValid
+  }
+
+  private class EPUsageTarget(private val field: UField) : UsageTarget {
+    override fun getFiles(): Array<VirtualFile>? {
+      return field.sourcePsi?.containingFile?.virtualFile?.let { arrayOf(it) }
+    }
+
+    override fun getPresentation(): ItemPresentation? {
+      return object : ItemPresentation {
+        override fun getLocationString(): String? = null
+
+        override fun getIcon(unused: Boolean): Icon? = field.sourcePsi?.getIcon(0)
+
+        override fun getPresentableText(): String? {
+          return "${field.getContainingUClass()?.qualifiedName}.${field.name}"
+        }
+      }
+    }
+
+    override fun canNavigate(): Boolean {
+      return (field.sourcePsi as? Navigatable)?.canNavigate() ?: false
+    }
+
+    override fun getName(): String? {
+      return "${field.getContainingUClass()?.qualifiedName}.${field.name}"
+    }
+
+    override fun findUsages() {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun canNavigateToSource(): Boolean {
+      return (field.sourcePsi as? Navigatable)?.canNavigateToSource() ?: false
+    }
+
+    override fun isReadOnly(): Boolean = false
+
+    override fun navigate(requestFocus: Boolean) {
+      (field.sourcePsi as? Navigatable)?.navigate(true)
+    }
+
+    override fun update() {
+    }
+
+    override fun highlightUsages(file: PsiFile, editor: Editor, clearHighlights: Boolean) {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun findUsagesInEditor(editor: FileEditor) {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun isValid(): Boolean = field.sourcePsi?.isValid == true
   }
 }
