@@ -81,8 +81,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean REFRAIN_FROM_SCROLLING = false;
 
-    private boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
-    private boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
+    public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
+    public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
