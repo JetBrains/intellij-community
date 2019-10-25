@@ -91,7 +91,7 @@
     <extensionPoint name="enterBetweenBracesDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate"/>
     </extensionPoint>
-    <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate"/>
+    <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate" dynamic="true"/>
     <extensionPoint name="editor.backspaceModeOverride" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.BackspaceModeOverride"/>
     </extensionPoint>
@@ -385,7 +385,7 @@
 
     <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider"/>
 
-    <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor"/>
+    <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor" dynamic="true"/>
     <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor"/>
 
     <extensionPoint name="commentCompleteHandler" interface="com.intellij.codeInsight.editorActions.CommentCompleteHandler"/>
@@ -462,7 +462,7 @@
     <extensionPoint name="refactoring.changeSignatureUsageProcessor"
                     interface="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor"/>
 
-    <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider"/>
+    <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
 
     <extensionPoint name="structureViewBuilder"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
@@ -587,7 +587,7 @@
                     interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider"/>
 
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>
-    <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
+    <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>
     <extensionPoint name="originInfoProvider" interface="com.intellij.codeInsight.completion.originInfo.OriginInfoProvider"/>
 
