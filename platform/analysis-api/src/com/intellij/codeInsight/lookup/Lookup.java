@@ -3,7 +3,6 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -90,4 +89,27 @@ public interface Lookup {
   boolean isSelectionTouched();
 
   List<String> getAdvertisements();
+
+  /**
+   * Specifies how lookup behaves on `enter`, `tab`, and other context-dependent keys.
+   */
+  enum FocusDegree {
+    /**
+     * The top lookup item matching the input is preselected and is inserted on `enter`,
+     * `tab`, or other context-dependent keys like space or dot.
+     */
+    FOCUSED,
+
+    /**
+     * Similar to {@link FocusDegree#FOCUSED} but the top matching lookup item is not inserted on
+     * context-dependent keys. Becomes {@link FocusDegree#FOCUSED} on `up` or `down`.
+     */
+    SEMI_FOCUSED,
+
+    /**
+     * The top lookup item matching the input is not preselected. `Tab` inserts the top item,
+     * `enter` closes lookup without changing the prefix typed in the editor.
+     */
+    UNFOCUSED
+  }
 }
