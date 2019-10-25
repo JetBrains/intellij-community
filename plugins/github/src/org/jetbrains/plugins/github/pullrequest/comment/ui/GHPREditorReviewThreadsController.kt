@@ -25,7 +25,7 @@ import javax.swing.KeyStroke
 class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
                                         private val commentableRanges: SingleValueModel<List<GHPRDiffRangeMapping>>,
                                         private val reviewService: GHPRReviewServiceAdapter,
-                                        private val componentFactory: GHPREditorReviewCommentsComponentFactory,
+                                        private val componentFactory: GHPRDiffEditorReviewComponentsFactory,
                                         private val editor: EditorEx) {
   private val inlaysManager = EditorComponentInlaysManager(editor as EditorImpl)
 

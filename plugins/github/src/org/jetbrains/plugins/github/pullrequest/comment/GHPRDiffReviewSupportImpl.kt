@@ -9,7 +9,7 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactory
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRDiffViewerBaseReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
@@ -18,7 +18,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvid
 import org.jetbrains.plugins.github.util.handleOnEdt
 
 class GHPRDiffReviewSupportImpl(private val dataProvider: GithubPullRequestDataProvider,
-                                private val componentFactory: GHPREditorReviewCommentsComponentFactory)
+                                private val componentFactory: GHPRDiffEditorReviewComponentsFactory)
   : GHPRDiffReviewSupport {
 
   override fun install(viewer: DiffViewerBase, change: Change) {

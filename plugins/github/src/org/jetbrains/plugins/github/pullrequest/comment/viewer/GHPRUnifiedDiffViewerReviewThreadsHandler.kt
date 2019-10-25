@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerListener
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 class GHPRUnifiedDiffViewerReviewThreadsHandler(private val viewer: UnifiedDiffViewer,
                                                 reviewService: GHPRReviewServiceAdapter,
-                                                componentFactory: GHPREditorReviewCommentsComponentFactory)
+                                                componentFactory: GHPRDiffEditorReviewComponentsFactory)
   : GHPRDiffViewerBaseReviewThreadsHandler<UnifiedDiffViewer>() {
 
   private val editorThreads = GHPREditorReviewThreadsModel()

@@ -22,11 +22,11 @@ import java.awt.geom.RoundRectangle2D
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
-class GHPREditorReviewCommentsComponentFactoryImpl
+class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
                      private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                      private val currentUser: GHUser)
-  : GHPREditorReviewCommentsComponentFactory {
+  : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel().apply {

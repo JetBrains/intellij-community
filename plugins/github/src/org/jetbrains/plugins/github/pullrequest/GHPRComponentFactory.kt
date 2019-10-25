@@ -33,7 +33,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactoryImpl
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
@@ -213,8 +213,8 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesLoadingModel = createChangesLoadingModel(changesModel, dataProviderModel, projectUiSettings, disposable)
     val changesBrowser = GHPRChangesBrowser(changesModel, project)
 
-    val diffCommentComponentFactory = GHPREditorReviewCommentsComponentFactoryImpl(project, avatarIconsProviderFactory,
-                                                                                   dataContext.securityService.currentUser)
+    val diffCommentComponentFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, avatarIconsProviderFactory,
+                                                                                dataContext.securityService.currentUser)
     dataProviderModel.addValueChangedListener {
       changesBrowser.diffReviewThreadsProvider = dataProviderModel.value?.let {
         GHPRDiffReviewSupportImpl(it, diffCommentComponentFactory)
