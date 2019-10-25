@@ -81,7 +81,6 @@
 
     <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
                         serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
-    <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.ExportableTemplateSettings"/>
     <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
@@ -315,9 +314,6 @@
 
     <projectService serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager"/>
 
-    <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
-    <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
-                    serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
     <projectService serviceImplementation="com.intellij.packageDependencies.DependenciesToolWindow"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>
@@ -611,8 +607,6 @@
                             id="comboEditor" order="first"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.WordCompletionContributor"
                             id="wordCompletion" order="last"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"
-                            order="last"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor"
                             id="filePath" order="before javaClassName"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor"

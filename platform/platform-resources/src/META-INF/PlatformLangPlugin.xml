@@ -16,6 +16,8 @@
 
   <xi:include href="/META-INF/core-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/core-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/analysis-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/analysis-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
