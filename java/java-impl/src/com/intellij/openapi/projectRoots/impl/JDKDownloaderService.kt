@@ -209,7 +209,7 @@ private class SelectOrDownloadJDKDialog(
 
   // returns unpacked JDK location (if any) or null if cancelled
   fun selectOrDownloadAndUnpackJDK(): String? = when {
-    showAndGet() -> selectedPath
+    showAndGet() -> resultingJDKHome
     else -> null
   }
 
@@ -278,6 +278,7 @@ object JDKInstaller {
       }
       //handle cancellation via postProcessor (instead of inheritance)
       decompressor.postprocessor { indicator?.checkCanceled() }
+      decompressor.cutDirs(item.archiveCutDirs)
       decompressor.extract(targetDir)
     } catch (t: Throwable) {
       //if we were cancelled in the middle or failed, let's clean up

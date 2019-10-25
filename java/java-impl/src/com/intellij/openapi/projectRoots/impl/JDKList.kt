@@ -34,6 +34,9 @@ data class JDKDownloadItem(
   val unpackedSize: Long get() = size //TODO: implement it in the feed
   val archiveSize: Long get() = size //TODO: implement it in the feed
 
+  // archives normally have an empty directory inside, we need to get rid of it for some cases
+  val archiveCutDirs: Int = 1 // TODO: implement in the feed
+
   val installFileName get() = url.split("/").last() //TODO: use feed for it
   val installFolderName get() = installFileName.removeSuffix(".zip").removeSuffix(".tar.gz") //TODO: use feed for it
 }
