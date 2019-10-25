@@ -64,7 +64,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
     nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
     assert(!nav.isNull())
-    nav.goToInstanceField("com.intellij.openapi.util.objectTree.ObjectTree", "myObject2NodeMap")
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myObject2NodeMap")
     nav.goToInstanceField("gnu.trove.THashMap", "_values")
 
     val groupingToObjectStats = HashMap<Grouping, InstanceStats>()
@@ -74,15 +74,15 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       if (it == 0L) return@forEach true
 
       nav.goTo(it)
-      val objectNodeParentId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myParent")
-      val objectNodeObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myObject")
+      val objectNodeParentId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myParent")
+      val objectNodeObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
       nav.goTo(objectNodeParentId)
 
       val parentId =
         if (nav.isNull())
           0L
         else
-          nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myObject")
+          nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
 
       val parentClass =
         if (parentId == 0L)
@@ -108,8 +108,8 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
         var iterationCount = 0
         do {
           nav.goTo(rootObjectNodeId)
-          rootObjectNodeId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myParent")
-          rootObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.objectTree.ObjectNode", "myObject")
+          rootObjectNodeId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myParent")
+          rootObjectId = nav.getInstanceFieldObjectId("com.intellij.openapi.util.ObjectNode", "myObject")
           iterationCount++
         }
         while (rootObjectNodeId != 0L && iterationCount < maxTreeDepth)
@@ -202,7 +202,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
 
     nav.goToStaticField("com.intellij.openapi.util.Disposer", "ourTree")
     assert(!nav.isNull())
-    nav.goToInstanceField("com.intellij.openapi.util.objectTree.ObjectTree", "myDisposedObjects")
+    nav.goToInstanceField("com.intellij.openapi.util.ObjectTree", "myDisposedObjects")
     nav.goToInstanceField("com.intellij.util.containers.WeakHashMap", "myMap")
     nav.goToInstanceField("com.intellij.util.containers.RefHashMap\$MyMap", "_set")
     val weakKeyClass = nav.classStore["com.intellij.util.containers.WeakHashMap\$WeakKey"]
