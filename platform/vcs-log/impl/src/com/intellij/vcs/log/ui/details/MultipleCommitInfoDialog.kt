@@ -101,7 +101,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
 
   @CalledInBackground
   @Throws(VcsException::class)
-  abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
+  protected abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
 
   fun setFilter(condition: (VcsCommitMetadata) -> Boolean) {
     val selectedCommits = commitsList.selectedValuesList.toSet()

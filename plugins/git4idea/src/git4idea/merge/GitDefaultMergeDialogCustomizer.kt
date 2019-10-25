@@ -44,7 +44,7 @@ import java.io.IOException
 import java.util.*
 import javax.swing.JPanel
 
-open class GitDefaultMergeDialogCustomizer(
+internal open class GitDefaultMergeDialogCustomizer(
   private val project: Project
 ) : MergeDialogCustomizer() {
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
@@ -193,7 +193,7 @@ open class GitDefaultMergeDialogCustomizer(
   private data class CherryPickDetails(val shortHash: String, val authorName: String, val commitMessage: String)
 }
 
-fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, baseHash: Hash?): String {
+internal fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, baseHash: Hash?): String {
   return buildString {
     append("<html>Rebasing ")
     if (rebasingBranch != null) append("branch <b>${escapeString(rebasingBranch)}</b> ")
@@ -202,12 +202,12 @@ fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, baseHa
   }
 }
 
-fun getDefaultLeftPanelTitleForBranch(branchName: String): String {
+internal fun getDefaultLeftPanelTitleForBranch(branchName: String): String {
   return "<html>${escapeString(DiffBundle.message("merge.version.title.our"))}, branch <b>" +
          "${escapeString(branchName)}</b>"
 }
 
-fun getDefaultRightPanelTitleForBranch(branchName: String?, baseHash: Hash?): String {
+internal fun getDefaultRightPanelTitleForBranch(branchName: String?, baseHash: Hash?): String {
   return buildString {
     append("<html>Changes from ")
     appendBranchName(branchName, baseHash)
@@ -273,14 +273,14 @@ private fun tryResolveRef(repository: GitRepository, ref: String): Hash? {
   }
 }
 
-fun getSingleMergeBranchName(roots: Collection<GitRepository>): String? {
+internal fun getSingleMergeBranchName(roots: Collection<GitRepository>): String? {
   return roots.asSequence()
     .mapNotNull { repo -> resolveMergeBranchOrCherryPick(repo) }
     .distinct()
     .singleOrNull()
 }
 
-fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? {
+internal fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? {
   return roots.asSequence()
     .mapNotNull { repo -> repo.currentBranchName }
     .distinct()
