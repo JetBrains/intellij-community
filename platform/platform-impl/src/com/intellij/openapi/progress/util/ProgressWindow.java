@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -142,12 +141,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     Timer timer =
       TimerUtil.createNamedTimer("Progress window timer", myDelayInMillis, e -> ApplicationManager.getApplication().invokeLater(() -> {
         if (isRunning()) {
-          if (myDialog != null) {
-            final DialogWrapper popup = myDialog.myPopup;
-            if (popup != null && popup.isShowing()) {
-              myDialog.setWasShown();
-            }
-          }
           showDialog();
         }
         else {
