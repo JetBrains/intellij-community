@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
@@ -82,19 +81,18 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       final Usages usages = findKeywordContainerUsages(function, false);
 
       if (usages.hasMoreReferences) return false;
-      if (PsiTreeUtil.isAncestor(function.getParameterList(), element, true) &&
-          (!usages.calls.isEmpty() || !usages.subscriptions.isEmpty())) {
+
+      final boolean caretInParameterList = PsiTreeUtil.isAncestor(function.getParameterList(), element, true);
+      if (caretInParameterList && ContainerUtil.exists(usages.names.values(), n -> !n.unableToHasDefaultValue)) {
         return true;
       }
 
-      for (PyCallExpression call : usages.calls.values()) {
-        if (PsiTreeUtil.isAncestor(call, element, true)) {
-          return true;
-        }
-      }
+      for (Map.Entry<String, DefaultValue> nameAndValue : usages.names.entrySet()) {
+        if (nameAndValue.getValue().unableToHasDefaultValue) continue;
 
-      for (PySubscriptionExpression subscription : usages.subscriptions.values()) {
-        if (PsiTreeUtil.isAncestor(subscription, element, true)) {
+        final String name = nameAndValue.getKey();
+        if (ContainerUtil.exists(usages.calls.get(name), c -> PsiTreeUtil.isAncestor(c, element, true)) ||
+            ContainerUtil.exists(usages.subscriptions.get(name), s -> PsiTreeUtil.isAncestor(s, element, true))) {
           return true;
         }
       }
@@ -125,11 +123,11 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   @NotNull
   private static Usages findKeywordContainerUsages(@NotNull PyFunction function, boolean skipReferencesToContainer) {
     final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
-    if (keywordContainer == null) return new Usages(false, new LinkedHashSet<>(), MultiMap.empty(), MultiMap.empty());
+    if (keywordContainer == null) return new Usages(false, new LinkedHashMap<>(), MultiMap.empty(), MultiMap.empty());
 
     final Set<PyExpression> allReferences = new HashSet<>();
     final Set<PyExpression> referencesAsOperandOrReceiver = new HashSet<>();
-    final LinkedHashSet<String> names = new LinkedHashSet<>();
+    final LinkedHashMap<String, DefaultValue> names = new LinkedHashMap<>();
     final MultiMap<String, PyCallExpression> calls = MultiMap.create();
     final MultiMap<String, PySubscriptionExpression> subscriptions = MultiMap.create();
 
@@ -148,7 +146,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
             final String name = getIndexValueToReplace(call);
             if (name != null) {
-              names.add(name);
+              names.merge(name, getDefaultKeyValue(call), DefaultValue::merge);
               calls.putValue(name, call);
             }
           }
@@ -158,7 +156,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
             final String name = getIndexValueToReplace(subscription);
             if (name != null) {
-              names.add(name);
+              names.merge(name, DefaultValue.noDefault(), DefaultValue::merge);
               subscriptions.putValue(name, subscription);
             }
           }
@@ -197,28 +195,20 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     final MultiMap<String, PyCallExpression> calls = usages.calls;
 
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    for (String name : usages.names) {
-      final Collection<PySubscriptionExpression> currentSubscriptions = subscriptions.get(name);
-      final Collection<PyCallExpression> currentCalls = calls.get(name);
+    for (Map.Entry<String, DefaultValue> nameAndValue : usages.names.entrySet()) {
+      if (nameAndValue.getValue().unableToHasDefaultValue) continue;
 
-      if (!currentSubscriptions.isEmpty()) {
-        final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), name);
-        insertParameter(function.getParameterList(), parameter, false, elementGenerator);
+      final String name = nameAndValue.getKey();
+      final String defaultValue = nameAndValue.getValue().defaultValue;
 
-        currentSubscriptions.forEach(e -> e.replace(parameter));
-        currentCalls.forEach(e -> e.replace(parameter));
-      }
-      else if (!currentCalls.isEmpty()) {
-        final Ref<String> defaultValue = getCommonDefaultKeyValue(currentCalls);
-        if (defaultValue == null) return;
+      final LanguageLevel languageLevel = LanguageLevel.forElement(function);
 
-        final LanguageLevel languageLevel = LanguageLevel.forElement(function);
-        final PyNamedParameter parameter = elementGenerator.createParameter(name, defaultValue.get(), null, languageLevel);
-        final PyExpression parameterUsage = elementGenerator.createExpressionFromText(languageLevel, name);
+      final PyNamedParameter parameter = elementGenerator.createParameter(name, defaultValue, null, languageLevel);
+      insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
 
-        insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
-        currentCalls.forEach(e -> e.replace(parameterUsage));
-      }
+      final PyExpression parameterUsage = elementGenerator.createExpressionFromText(languageLevel, name);
+      subscriptions.get(name).forEach(e -> e.replace(parameterUsage));
+      calls.get(name).forEach(e -> e.replace(parameterUsage));
     }
   }
 
@@ -259,40 +249,21 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     parameterList.addBefore((PsiElement)elementGenerator.createComma(), placeToInsertParameter);
   }
 
-  /**
-   * @return null when <code>calls</code> is empty or there are different default values.
-   */
-  @Nullable
-  private static Ref<String> getCommonDefaultKeyValue(@NotNull Collection<PyCallExpression> calls) {
-    Ref<String> defaultValue = null;
-
-    for (PyCallExpression call : calls) {
-      final String currentDefaultValue = getDefaultKeyValue(call);
-      if (defaultValue == null) {
-        defaultValue = Ref.create(currentDefaultValue);
-      }
-      else if (!Objects.equals(defaultValue.get(), currentDefaultValue)) {
-        return null;
-      }
-    }
-
-    return defaultValue;
-  }
-
-  @Nullable
-  private static String getDefaultKeyValue(@NotNull PyCallExpression call) {
+  @NotNull
+  private static DefaultValue getDefaultKeyValue(@NotNull PyCallExpression call) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
       final PyExpression argument = PyUtil.peelArgument(arguments[1]);
-      return argument == null ? null : argument.getText();
+      final String value = argument == null ? null : argument.getText();
+      return value == null ? DefaultValue.noDefault() : DefaultValue.defaultValue(value);
     }
 
     final PyQualifiedExpression callee = PyUtil.as(call.getCallee(), PyQualifiedExpression.class);
     if (callee != null && "get".equals(callee.getReferencedName())) {
-      return PyNames.NONE;
+      return DefaultValue.defaultValue(PyNames.NONE);
     }
 
-    return null;
+    return DefaultValue.noDefault();
   }
 
   @Nullable
@@ -316,7 +287,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     private final boolean hasMoreReferences;
 
     @NotNull
-    private final LinkedHashSet<String> names;
+    private final LinkedHashMap<String, DefaultValue> names;
 
     @NotNull
     private final MultiMap<String, PyCallExpression> calls;
@@ -325,13 +296,49 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     private final MultiMap<String, PySubscriptionExpression> subscriptions;
 
     private Usages(boolean hasMoreReferences,
-                   @NotNull LinkedHashSet<String> names,
+                   @NotNull LinkedHashMap<String, DefaultValue> names,
                    @NotNull MultiMap<String, PyCallExpression> calls,
                    @NotNull MultiMap<String, PySubscriptionExpression> subscriptions) {
       this.hasMoreReferences = hasMoreReferences;
       this.names = names;
       this.calls = calls;
       this.subscriptions = subscriptions;
+    }
+  }
+
+  private static class DefaultValue {
+
+    private final boolean unableToHasDefaultValue;
+
+    @Nullable
+    private final String defaultValue;
+
+    @NotNull
+    private static DefaultValue noDefault() {
+      return new DefaultValue(false, null);
+    }
+
+    @NotNull
+    private static DefaultValue defaultValue(@NotNull String defaultValue) {
+      return new DefaultValue(false, defaultValue);
+    }
+
+    private DefaultValue(boolean unableToHasDefaultValue, @Nullable String defaultValue) {
+      this.unableToHasDefaultValue = unableToHasDefaultValue;
+      this.defaultValue = defaultValue;
+    }
+
+    @NotNull
+    private static DefaultValue merge(@NotNull DefaultValue self, @NotNull DefaultValue other) {
+      if (self.unableToHasDefaultValue) return self;
+      if (other.unableToHasDefaultValue) return other;
+
+      if (self.defaultValue == null) return self;
+      if (other.defaultValue == null) return other;
+
+      if (Objects.equals(self.defaultValue, other.defaultValue)) return self;
+
+      return new DefaultValue(true, null);
     }
   }
 }
