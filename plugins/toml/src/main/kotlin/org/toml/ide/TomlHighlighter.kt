@@ -11,15 +11,16 @@ import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributes
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
+import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import gnu.trove.THashMap
-import org.toml.lang.lexer.TomlLexer
+import org.toml.lang.lexer.TomlHighlightingLexer
 import org.toml.lang.psi.TomlElementTypes.*
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 
 class TomlHighlighter : SyntaxHighlighterBase() {
     override fun getHighlightingLexer(): Lexer =
-        TomlLexer()
+        TomlHighlightingLexer()
 
     override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> =
         pack(tokenMap[tokenType])
@@ -35,11 +36,12 @@ class TomlHighlighter : SyntaxHighlighterBase() {
             put(NUMBER, createTextAttributesKey("TOML_NUMBER", Default.NUMBER))
             put(BOOLEAN, createTextAttributesKey("TOML_BOOLEAN", Default.PREDEFINED_SYMBOL))
             put(DATE_TIME, createTextAttributesKey("TOML_DATE", Default.PREDEFINED_SYMBOL))
+            put(INVALID_CHARACTER_ESCAPE_TOKEN, createTextAttributesKey("TOML_INVALID_STRING_ESCAPE", Default.INVALID_STRING_ESCAPE))
+            put(INVALID_UNICODE_ESCAPE_TOKEN, createTextAttributesKey("TOML_INVALID_STRING_ESCAPE", Default.INVALID_STRING_ESCAPE))
+            put(VALID_STRING_ESCAPE_TOKEN, createTextAttributesKey("TOML_VALID_STRING_ESCAPE", Default.VALID_STRING_ESCAPE))
         }
 }
 
 class TomlHighlighterFactory : SingleLazyInstanceSyntaxHighlighterFactory() {
     override fun createHighlighter(): SyntaxHighlighter = TomlHighlighter()
 }
-
-
