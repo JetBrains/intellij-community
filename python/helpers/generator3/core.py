@@ -7,10 +7,11 @@ from generator3.util_methods import *
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from typing import List, Dict, Any, NewType
+    from typing import List, Dict, Any, NewType, Tuple, Optional, TextIO
 
     SkeletonStatusId = NewType('SkeletonStatusId', str)
     GenerationStatusId = NewType('GenerationStatusId', str)
+    GeneratorVersion = Tuple[int, int]
 
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
@@ -190,6 +191,8 @@ def physical_module_hash(mod_path):
 
 
 def version_to_tuple(version):
+    # type: (str) -> GeneratorVersion
+    # noinspection PyTypeChecker
     return tuple(map(int, version.split('.')))
 
 
@@ -265,6 +268,7 @@ def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
 
 
 def read_used_generator_version_from_skeleton_header(base_dir, mod_qname):
+    # type: (str, str) -> Optional[GeneratorVersion]
     for path in skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=True):
         with ignored_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:
@@ -273,6 +277,7 @@ def read_used_generator_version_from_skeleton_header(base_dir, mod_qname):
 
 
 def read_generator_version_from_header(skeleton_file):
+    # type: (TextIO) -> Optional[GeneratorVersion]
     for line in skeleton_file:
         if not line.startswith('#'):
             break
@@ -293,6 +298,7 @@ def skeleton_path_candidates(base_dir, mod_qname, init_for_pkg=False):
 
 
 def read_failed_version_from_stamp(base_dir, mod_qname):
+    # type: (str, str) -> Optional[GeneratorVersion]
     with ignored_os_errors(errno.ENOENT):
         with fopen(os.path.join(base_dir, FAILED_VERSION_STAMP_PREFIX + mod_qname), 'r') as f:
             return version_to_tuple(f.read().strip())
@@ -301,11 +307,13 @@ def read_failed_version_from_stamp(base_dir, mod_qname):
 
 
 def read_failed_version_and_mtime_from_legacy_blacklist(sdk_skeletons_dir, mod_path):
+    # type: (str, str) -> Optional[Tuple[GeneratorVersion, int]]
     blacklist = read_legacy_blacklist_file(sdk_skeletons_dir, mod_path)
     return blacklist.get(mod_path)
 
 
 def read_legacy_blacklist_file(sdk_skeletons_dir, mod_path):
+    # type: (str, str) -> Dict[str, Tuple[GeneratorVersion, int]]
     results = {}
     with ignored_os_errors(errno.ENOENT):
         with fopen(os.path.join(sdk_skeletons_dir, '.blacklist'), 'r') as f:
@@ -330,6 +338,7 @@ def read_legacy_blacklist_file(sdk_skeletons_dir, mod_path):
 
 
 def read_required_version(mod_qname):
+    # type: (str) -> Optional[GeneratorVersion]
     mod_id = '(built-in)' if mod_qname in sys.builtin_module_names else mod_qname
     versions = read_required_gen_version_file()
     # TODO use glob patterns here
@@ -337,6 +346,7 @@ def read_required_version(mod_qname):
 
 
 def read_required_gen_version_file():
+    # type: () -> Dict[str, GeneratorVersion]
     result = {}
     with fopen(required_gen_version_file_path(), 'r') as f:
         for line in f:
