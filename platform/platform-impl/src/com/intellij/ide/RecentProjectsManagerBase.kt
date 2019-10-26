@@ -10,7 +10,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
@@ -24,11 +27,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.FrameInfo
-import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.SystemDock
-import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ProjectSelfieUtil
@@ -340,7 +339,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       val appInfo = ApplicationInfoEx.getInstanceEx()
       info.displayName = getProjectDisplayName(project)
       info.projectWorkspaceId = project.stateStore.projectWorkspaceId
-      info.frame = getInstance(project).state
+      info.frame = ProjectFrameBounds.getInstance(project).state
       info.build = appInfo!!.build.asString()
       info.productionCode = appInfo.build.productCode
       info.eap = appInfo.isEAP
@@ -500,7 +499,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     val workspaceId = project.stateStore.projectWorkspaceId
 
     // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
-    val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager)
+    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager)
     val path = getProjectPath(project)
     synchronized(stateLock) {
       val info = state.additionalInfo.get(path)
@@ -611,15 +610,14 @@ int32 "extendedState"
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       val manager = instanceEx
-      val openProjects = serviceIfCreated<ProjectManager>()?.openProjects ?: return
+      val openProjects = ProjectUtil.getOpenProjects()
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
       if (openProjects.isEmpty() || !isUseProjectFrameAsSplash()) {
         Files.deleteIfExists(getLastProjectFrameInfoFile())
       }
-      else {
-        for ((index, project) in openProjects.withIndex()) {
-          manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0)
-        }
+
+      for ((index, project) in openProjects.withIndex()) {
+        manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0)
       }
     }
 
