@@ -34,7 +34,6 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
