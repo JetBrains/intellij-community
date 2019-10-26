@@ -112,6 +112,13 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
+        for (String name : JAVA_IDE_API_MODULES) {
+          withModule(name)
+        }
+        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
+          withModule(name)
+        }
+
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
         withModule("intellij.java.rt", "idea_rt.jar", null)
 

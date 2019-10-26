@@ -36,12 +36,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       commonCustomizer.accept(layout)
       layout.customize {
-        for (String name : JAVA_IDE_API_MODULES) {
-          withModule(name)
-        }
-        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
-          withModule(name)
-        }
         withModule("intellij.platform.duplicates.analysis")
         withModule("intellij.platform.structuralSearch")
       }
