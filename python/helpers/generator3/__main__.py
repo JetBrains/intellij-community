@@ -1,5 +1,6 @@
 import atexit
 import json
+import logging
 import os
 import sys
 
@@ -13,6 +14,25 @@ def _cleanup_sys_path():
 
 def _bootstrap_sys_path():
     sys.path.insert(0, _helpers_dir)
+
+
+def _setup_logging():
+    logging.addLevelName(logging.DEBUG - 1, 'TRACE')
+
+    class JsonFormatter(logging.Formatter):
+        def format(self, record):
+            s = super(JsonFormatter, self).format(record)
+            return json.dumps({
+                'type': 'log',
+                'level': record.levelname.lower(),
+                'message': s
+            })
+
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    root.addHandler(handler)
 
 
 def get_help_text():
@@ -173,4 +193,5 @@ def main():
 
 if __name__ == "__main__":
     _bootstrap_sys_path()
+    _setup_logging()
     main()
