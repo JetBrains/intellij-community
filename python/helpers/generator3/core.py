@@ -5,6 +5,10 @@ import json
 
 from generator3.util_methods import *
 
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from typing import List, Dict, Any
+
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
 quiet = False
@@ -148,53 +152,6 @@ def walk_python_path(path):
                 dirs.remove(d)
         # some files show up but are actually non-existent symlinks
         yield root, [f for f in files if os.path.exists(os.path.join(root, f))]
-
-
-def collect_binaries(paths):
-    """
-    Finds binaries in the given list of paths.
-    Understands nested paths, as sys.paths have it (both "a/b" and "a/b/c").
-    Tries to be case-insensitive, but case-preserving.
-    @param paths: list of paths.
-    @return: list of ``BinaryItem``s
-    """
-    SEP = os.path.sep
-    res = {}  # {name.upper(): (name, full_path)} # b/c windows is case-oblivious
-    if not paths:
-        return {}
-    if IS_JAVA:  # jython can't have binary modules
-        return {}
-    paths = sorted_no_case(paths)
-    for path in paths:
-        for root, files in walk_python_path(path):
-            cutpoint = path.rfind(SEP)
-            if cutpoint > 0:
-                preprefix = path[(cutpoint + len(SEP)):] + '.'
-            else:
-                preprefix = ''
-            prefix = root[(len(path) + len(SEP)):].replace(SEP, '.')
-            if prefix:
-                prefix += '.'
-            binaries = ((f, cut_binary_lib_suffix(root, f)) for f in files)
-            binaries = [(f, name) for (f, name) in binaries if name]
-            if binaries:
-                debug("root: %s path: %s prefix: %s preprefix: %s" % (root, path, prefix, preprefix))
-                for f, name in binaries:
-                    the_name = prefix + name
-                    if is_skipped_module(root, f, the_name):
-                        debug('skipping module %s' % the_name)
-                        continue
-                    debug("cutout: %s" % name)
-                    if preprefix:
-                        debug("prefixes: %s %s" % (prefix, preprefix))
-                        pre_name = (preprefix + prefix + name).upper()
-                        if pre_name in res:
-                            res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
-                        debug("done with %s" % name)
-                    file_path = os.path.join(root, f)
-
-                    res[the_name.upper()] = BinaryModule(the_name, file_path)
-    return list(res.values())
 
 
 def file_modification_timestamp(path):
@@ -474,97 +431,6 @@ def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_sk
     return GenerationStatus.GENERATED
 
 
-def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_json=None):
-    sdk_skeleton_state = state_json['sdk_skeletons'].setdefault(name, {}) if state_json else None
-    status = process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, sdk_skeleton_state)
-    control_message('generation_result', {
-        'module_name': name,
-        'module_origin': get_module_origin(mod_file_name, name),
-        'generation_status': status
-    })
-    if sdk_skeleton_state is not None:
-        if mod_file_name:
-            sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_file_name)
-
-        # If we skipped generation for already failing module, we can safely set
-        # the current generator version in ".state.json" as skipping means that this
-        # version is not greater (i.e. we don't need to distinguish between "skipped as failing"
-        # and "failed during generation").
-        if status not in (GenerationStatus.UP_TO_DATE, GenerationStatus.COPIED):
-            # TODO use the actual generator version when a skeleton was copied from the cache
-            # TODO don't update state_json inplace
-            sdk_skeleton_state['gen_version'] = version()
-
-        sdk_skeleton_state['status'] = status
-
-        if is_test_mode():
-            sdk_skeleton_state.pop('bin_mtime', None)
-    return status
-
-
-# noinspection PyBroadException
-def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_json=None):
-    """
-    Processes a single module named name defined in file_name (autodetect if not given).
-    Returns True on success.
-    """
-    if has_regular_python_ext(name):
-        report("Ignored a regular Python file %r", name)
-        return True
-    if not quiet:
-        info('%s (%r)' % (name, mod_file_name or 'built-in'))
-    action("doing nothing")
-
-    # Normalize the path to directory for os.path functions
-    sdk_skeletons_dir = sdk_skeletons_dir.rstrip(os.path.sep)
-    try:
-        python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
-        global_cache_dir = os.path.join(python_stubs_dir, CACHE_DIR_NAME)
-        mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
-
-        sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, name, mod_file_name, state_json)
-        if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
-            return GenerationStatus.UP_TO_DATE
-        elif sdk_skeleton_status == SkeletonStatus.FAILING:
-            return GenerationStatus.FAILED
-
-        # At this point we will either generate skeleton anew all take it from the cache.
-        # In either case state.json is supposed to be populated by this results.
-        if state_json:
-            state_json.clear()
-
-        cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name, state_json)
-        if cached_skeleton_status == SkeletonStatus.OUTDATED:
-            return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
-                                                       func=generate_skeleton,
-                                                       args=(name,
-                                                             mod_file_name,
-                                                             doing_builtins,
-                                                             mod_cache_dir,
-                                                             sdk_skeletons_dir),
-                                                       kwargs={},
-                                                       failure_result=GenerationStatus.FAILED)
-        elif cached_skeleton_status == SkeletonStatus.FAILING:
-            info('Cache entry for %s at %r indicates failed generation' % (name, mod_cache_dir))
-            return GenerationStatus.FAILED
-        else:
-            # Copy entire skeletons directory if nothing needs to be updated
-            info('Copying cached stubs for %s from %r to %r' % (name, mod_cache_dir, sdk_skeletons_dir))
-            copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_file_name, name))
-            return GenerationStatus.COPIED
-    except:
-        exctype, value = sys.exc_info()[:2]
-        msg = "Failed to process %r while %s: %s"
-        args = name, CURRENT_ACTION, str(value)
-        report(msg, *args)
-        if debug_mode:
-            if sys.platform == 'cli':
-                import traceback
-                traceback.print_exc(file=sys.stderr)
-            raise
-        return GenerationStatus.FAILED
-
-
 def get_module_origin(mod_path, mod_qname):
     if mod_qname in sys.builtin_module_names:
         return OriginType.BUILTIN
@@ -631,9 +497,13 @@ def trace(msg):
 
 
 class SkeletonGenerator(object):
-    def __init__(self, output_dir, roots=None, state_json=None):
+    def __init__(self,
+                 output_dir,  # type: str
+                 roots=None,  # type: List[str]
+                 state_json=None  # type: Dict[str, Any]
+                 ):
         self.output_dir = output_dir
-        # TODO make cache directory customizable via CLI
+        # TODO make cache directory configurable via CLI
         self.cache_dir = os.path.join(os.path.dirname(output_dir), CACHE_DIR_NAME)
         self.roots = roots
         # TODO split in and out state.json files
@@ -668,6 +538,7 @@ class SkeletonGenerator(object):
 
     @staticmethod
     def collect_builtin_modules():
+        # type: () -> List[BinaryModule]
         names = list(sys.builtin_module_names)
         if BUILTIN_MOD_NAME not in names:
             names.append(BUILTIN_MOD_NAME)
@@ -676,11 +547,128 @@ class SkeletonGenerator(object):
         return [BinaryModule(name, None) for name in names]
 
     def discover_binary_modules(self):
-        return collect_binaries(self.roots)
+        # type: () -> List[BinaryModule]
+        """
+        Finds binaries in the given list of paths.
+        Understands nested paths, as sys.paths have it (both "a/b" and "a/b/c").
+        Tries to be case-insensitive, but case-preserving.
+        """
+        SEP = os.path.sep
+        res = {}  # {name.upper(): (name, full_path)} # b/c windows is case-oblivious
+        if not self.roots:
+            return []
+        # TODO Move to future InterpreterHandler
+        if IS_JAVA:  # jython can't have binary modules
+            return []
+        paths = sorted_no_case(self.roots)
+        for path in paths:
+            for root, files in walk_python_path(path):
+                cutpoint = path.rfind(SEP)
+                if cutpoint > 0:
+                    preprefix = path[(cutpoint + len(SEP)):] + '.'
+                else:
+                    preprefix = ''
+                prefix = root[(len(path) + len(SEP)):].replace(SEP, '.')
+                if prefix:
+                    prefix += '.'
+                binaries = ((f, cut_binary_lib_suffix(root, f)) for f in files)
+                binaries = [(f, name) for (f, name) in binaries if name]
+                if binaries:
+                    debug("root: %s path: %s prefix: %s preprefix: %s" % (root, path, prefix, preprefix))
+                    for f, name in binaries:
+                        the_name = prefix + name
+                        if is_skipped_module(root, f, the_name):
+                            debug('skipping module %s' % the_name)
+                            continue
+                        debug("cutout: %s" % name)
+                        if preprefix:
+                            debug("prefixes: %s %s" % (prefix, preprefix))
+                            pre_name = (preprefix + prefix + name).upper()
+                            if pre_name in res:
+                                res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
+                            debug("done with %s" % name)
+                        file_path = os.path.join(root, f)
+
+                        res[the_name.upper()] = BinaryModule(the_name, file_path)
+        return list(res.values())
 
     def process_module(self, mod_name, mod_path=None):
-        return process_one_with_results_reporting(mod_name,
-                                                  mod_path,
-                                                  mod_path is None,
-                                                  self.output_dir,
-                                                  self.in_state_json)
+        sdk_skeleton_state = self.in_state_json['sdk_skeletons'].setdefault(mod_name, {}) if self.in_state_json else None
+        status = self.reuse_or_generate_skeleton(mod_name, mod_path, sdk_skeleton_state)
+        control_message('generation_result', {
+            'module_name': mod_name,
+            'module_origin': get_module_origin(mod_path, mod_name),
+            'generation_status': status
+        })
+        if sdk_skeleton_state is not None:
+            if mod_path:
+                sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_path)
+
+            # If we skipped generation for already failing module, we can safely set
+            # the current generator version in ".state.json" as skipping means that this
+            # version is not greater (i.e. we don't need to distinguish between "skipped as failing"
+            # and "failed during generation").
+            if status not in (GenerationStatus.UP_TO_DATE, GenerationStatus.COPIED):
+                # TODO don't update state_json inplace
+                sdk_skeleton_state['gen_version'] = version()
+
+            sdk_skeleton_state['status'] = status
+
+            if is_test_mode():
+                sdk_skeleton_state.pop('bin_mtime', None)
+        return status
+
+    def reuse_or_generate_skeleton(self, mod_name, mod_path, mod_state_json):
+        if not quiet:
+            info('%s (%r)' % (mod_name, mod_path or 'built-in'))
+        action("doing nothing")
+
+        # Normalize the path to directory for os.path functions
+        sdk_skeletons_dir = self.output_dir.rstrip(os.path.sep)
+        try:
+            mod_cache_dir = build_cache_dir_path(self.cache_dir, mod_name, mod_path)
+
+            sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, mod_name, mod_path, mod_state_json)
+            if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
+                return GenerationStatus.UP_TO_DATE
+            elif sdk_skeleton_status == SkeletonStatus.FAILING:
+                return GenerationStatus.FAILED
+
+            # At this point we will either generate skeleton anew all take it from the cache.
+            # In either case state.json is supposed to be populated by this results.
+            if mod_state_json:
+                mod_state_json.clear()
+
+            cached_skeleton_status = skeleton_status(mod_cache_dir, mod_name, mod_path, mod_state_json)
+            if cached_skeleton_status == SkeletonStatus.OUTDATED:
+                return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
+                                                           func=generate_skeleton,
+                                                           args=(mod_name,
+                                                                 mod_path,
+                                                                 mod_path is None,
+                                                                 mod_cache_dir,
+                                                                 sdk_skeletons_dir),
+                                                           kwargs={},
+                                                           failure_result=GenerationStatus.FAILED)
+            elif cached_skeleton_status == SkeletonStatus.FAILING:
+                info('Cache entry for %s at %r indicates failed generation' % (mod_name, mod_cache_dir))
+                return GenerationStatus.FAILED
+            else:
+                # Copy entire skeletons directory if nothing needs to be updated
+                info('Copying cached stubs for %s from %r to %r' % (mod_name, mod_cache_dir, sdk_skeletons_dir))
+                copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_path, mod_name))
+                return GenerationStatus.COPIED
+        except:
+            exctype, value = sys.exc_info()[:2]
+            msg = "Failed to process %r while %s: %s"
+            args = mod_name, CURRENT_ACTION, str(value)
+            report(msg, *args)
+            if debug_mode:
+                if sys.platform == 'cli':
+                    import traceback
+                    traceback.print_exc(file=sys.stderr)
+                raise
+            return GenerationStatus.FAILED
+
+
+
