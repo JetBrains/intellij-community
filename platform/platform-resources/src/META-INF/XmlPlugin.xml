@@ -37,9 +37,9 @@
                     interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
 
     <extensionPoint name="xml.xmlSuppressionProvider"
-                    interface="com.intellij.codeInspection.XmlSuppressionProvider"/>
+                    interface="com.intellij.codeInspection.XmlSuppressionProvider" dynamic="true"/>
     <extensionPoint name="xml.nsColorProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider"/>
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider" dynamic="true"/>
 
     <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
 

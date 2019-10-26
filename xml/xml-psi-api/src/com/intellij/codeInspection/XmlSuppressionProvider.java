@@ -12,17 +12,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public abstract class XmlSuppressionProvider implements InspectionSuppressor {
-
   public static final ExtensionPointName<XmlSuppressionProvider> EP_NAME =
     new ExtensionPointName<>("com.intellij.xml.xmlSuppressionProvider");
 
   public static boolean isSuppressed(@NotNull PsiElement element, @NotNull String inspectionId) {
-    for (XmlSuppressionProvider provider : EP_NAME.getExtensionList()) {
-      if (provider.isProviderAvailable(element.getContainingFile()) && provider.isSuppressedFor(element, inspectionId)) {
-        return true;
-      }
-    }
-    return false;
+    return EP_NAME.getExtensionList().stream().anyMatch(provider -> provider.isProviderAvailable(element.getContainingFile()) &&
+                                                                    provider.isSuppressedFor(element, inspectionId));
   }
 
   public abstract boolean isProviderAvailable(@NotNull PsiFile file);
@@ -39,6 +34,4 @@ public abstract class XmlSuppressionProvider implements InspectionSuppressor {
   public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     return XmlSuppressableInspectionTool.getSuppressFixes(toolId, this);
   }
-
-
 }
