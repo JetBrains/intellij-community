@@ -13,7 +13,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.tree.IElementType
 import gnu.trove.THashMap
-import org.toml.lang.parse.TomlLexer
+import org.toml.lang.lexer.TomlLexer
 import org.toml.lang.psi.TomlElementTypes.*
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 

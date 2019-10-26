@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.search.IndexPatternBuilder
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import org.toml.lang.parse.TomlLexer
+import org.toml.lang.lexer.TomlLexer
 import org.toml.lang.psi.TOML_COMMENTS
 import org.toml.lang.psi.TomlFile
 

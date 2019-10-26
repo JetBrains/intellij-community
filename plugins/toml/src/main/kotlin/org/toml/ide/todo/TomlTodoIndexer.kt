@@ -10,7 +10,7 @@ import com.intellij.psi.impl.cache.impl.BaseFilterLexer
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer
 import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer
 import com.intellij.psi.search.UsageSearchContext
-import org.toml.lang.parse.TomlLexer
+import org.toml.lang.lexer.TomlLexer
 import org.toml.lang.psi.TOML_COMMENTS
 
 class TomlTodoIndexer : LexerBasedTodoIndexer() {

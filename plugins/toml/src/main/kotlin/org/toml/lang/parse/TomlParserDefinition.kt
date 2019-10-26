@@ -18,8 +18,9 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.toml.lang.TomlLanguage
-import org.toml.lang.psi.TomlFile
+import org.toml.lang.lexer.TomlLexer
 import org.toml.lang.psi.TomlElementTypes
+import org.toml.lang.psi.TomlFile
 
 class TomlParserDefinition : ParserDefinition {
     override fun createParser(project: Project?): PsiParser = TomlParser()
