@@ -630,45 +630,57 @@ def trace(msg):
     log(msg, level='trace')
 
 
-def process_builtin_modules(sdk_skeletons_dir, name_pattern=None, state_json=None):
-    names = list(sys.builtin_module_names)
-    if BUILTIN_MOD_NAME not in names:
-        names.append(BUILTIN_MOD_NAME)
-    if '__main__' in names:
-        names.remove('__main__')
-    result = True
-    if name_pattern is None:
-        name_pattern = '*'
-    for name in names:
-        if fnmatch.fnmatchcase(name, name_pattern):
-            status = process_one_with_results_reporting(name, None, True, sdk_skeletons_dir, state_json)
-            # Assume that if a skeleton for one built-in module was copied, all of them were copied.
-            if status == GenerationStatus.COPIED:
-                break
-            elif status == GenerationStatus.FAILED:
-                result = False
-    return result
+class SkeletonGenerator(object):
+    def __init__(self, output_dir, roots=None, state_json=None):
+        self.output_dir = output_dir
+        # TODO make cache directory customizable via CLI
+        self.cache_dir = os.path.join(os.path.dirname(output_dir), CACHE_DIR_NAME)
+        self.roots = roots
+        # TODO split in and out state.json files
+        self.in_state_json = state_json
+        self.write_state_json = state_json is not None
 
+    def discover_and_process_all_modules(self, name_pattern=None):
+        if name_pattern is None:
+            name_pattern = '*'
 
-def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
-    if name_pattern is None:
-        name_pattern = '*'
+        interpreter_descr = collapse_user(sys.executable)
 
-    interpreter = collapse_user(sys.executable)
-    progress("Updating skeletons of builtins for {}...".format(interpreter))
-    process_builtin_modules(sdk_skeletons_dir, name_pattern, state_json)
-    progress("Querying skeleton generator for {}...".format(interpreter))
-    binaries = collect_binaries(roots)
-    progress("Updating skeletons for {}...".format(interpreter))
-    binaries = [b for b in binaries if fnmatch.fnmatchcase(b.qname, name_pattern)]
-    binaries.sort(key=(lambda b: b.qname))
-    for i, binary in enumerate(binaries):
-        progress(text=binary.qname, fraction=float(i) / len(binaries), minor=True)
-        process_one_with_results_reporting(binary.qname, binary.path, False, sdk_skeletons_dir, state_json)
-    progress(fraction=1.0)
-    if state_json is not None:
-        mkdir(sdk_skeletons_dir)
-        state_json_path = os.path.join(sdk_skeletons_dir, STATE_FILE_NAME)
-        info('Writing skeletons state to {!r}'.format(state_json_path))
-        with fopen(state_json_path, 'w') as f:
-            json.dump(state_json, f, sort_keys=True)
+        builtin_modules = sorted(self.collect_builtin_modules(), key=(lambda b: b.qname))
+
+        progress("Discovering binary modules for {}...".format(interpreter_descr))
+        binary_modules = sorted(self.discover_binary_modules(), key=(lambda b: b.qname))
+
+        matching_modules = [m for m in builtin_modules + binary_modules if fnmatch.fnmatchcase(m.qname, name_pattern)]
+
+        progress("Updating skeletons for {}...".format(interpreter_descr))
+        for i, mod in enumerate(matching_modules):
+            progress(text=mod.qname, fraction=float(i) / len(matching_modules), minor=True)
+            self.process_module(mod.qname, mod.path)
+        progress(fraction=1.0)
+
+        if self.write_state_json:
+            mkdir(self.output_dir)
+            state_json_path = os.path.join(self.output_dir, STATE_FILE_NAME)
+            info('Writing skeletons state to {!r}'.format(state_json_path))
+            with fopen(state_json_path, 'w') as f:
+                json.dump(self.in_state_json, f, sort_keys=True)
+
+    @staticmethod
+    def collect_builtin_modules():
+        names = list(sys.builtin_module_names)
+        if BUILTIN_MOD_NAME not in names:
+            names.append(BUILTIN_MOD_NAME)
+        if '__main__' in names:
+            names.remove('__main__')
+        return [BinaryModule(name, None) for name in names]
+
+    def discover_binary_modules(self):
+        return collect_binaries(self.roots)
+
+    def process_module(self, mod_name, mod_path=None):
+        return process_one_with_results_reporting(mod_name,
+                                                  mod_path,
+                                                  mod_path is None,
+                                                  self.output_dir,
+                                                  self.in_state_json)
