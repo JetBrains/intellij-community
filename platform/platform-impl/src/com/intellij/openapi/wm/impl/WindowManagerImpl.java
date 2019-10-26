@@ -103,6 +103,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
           || UIUtil.isClientPropertyTrue(frame.getRootPane(), IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS)) {
         return;
       }
+
       int extendedState = frame.getExtendedState();
       Rectangle bounds = frame.getBounds();
       JRootPane rootPane = frame.getRootPane();
@@ -111,7 +112,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       }
 
       ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(frame);
-      Project project = frameHelper == null ? null : frameHelper.getProject();
+      if (frameHelper == null) {
+        return;
+      }
+
+      Project project = frameHelper.getProject();
       if (project == null) {
         // Component moved during project loading - update myDefaultFrameInfo directly.
         // Cannot mark as dirty and compute later, because to convert user space info to device space,
