@@ -2,6 +2,7 @@
 import collections
 import fnmatch
 import json
+import logging
 
 from generator3.util_methods import *
 
@@ -397,20 +398,16 @@ def control_message(msg_type, data):
     say(json.dumps(data))
 
 
-def log(msg, level='debug'):
-    control_message('log', {'level': level, 'message': msg})
-
-
 def info(msg):
-    log(msg, level='info')
+    logging.info(msg)
 
 
 def debug(msg):
-    log(msg, level='debug')
+    logging.debug(msg)
 
 
 def trace(msg):
-    log(msg, level='trace')
+    logging.log(logging.getLevelName('TRACE'), msg)
 
 
 class SkeletonGenerator(object):
