@@ -7,7 +7,10 @@ from generator3.util_methods import *
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from typing import List, Dict, Any
+    from typing import List, Dict, Any, NewType
+
+    SkeletonStatusId = NewType('SkeletonStatusId', str)
+    GenerationStatusId = NewType('GenerationStatusId', str)
 
 # TODO: Move all CLR-specific functions to clr_tools
 debug_mode = True
@@ -197,21 +200,22 @@ class OriginType(object):
 
 
 class SkeletonStatus(object):
-    UP_TO_DATE = 'UP_TO_DATE'
+    UP_TO_DATE = 'UP_TO_DATE'  # type: SkeletonStatusId
     """
     Skeleton is up-to-date and doesn't need to be regenerated.
     """
-    FAILING = 'FAILING'
+    FAILING = 'FAILING'  # type: SkeletonStatusId
     """
     Skeleton generation is known to fail for this module.
     """
-    OUTDATED = 'OUTDATED'
+    OUTDATED = 'OUTDATED'  # type: SkeletonStatusId
     """
     Skeleton needs to be regenerated.
     """
 
 
 def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
+    # type: (str, str, str, Dict[str, Any]) -> SkeletonStatusId
     gen_version = version_to_tuple(version())
     used_version = None
 
@@ -346,29 +350,31 @@ def read_required_gen_version_file():
 
 
 class GenerationStatus(object):
-    FAILED = 'FAILED'
+    FAILED = 'FAILED'  # type: GenerationStatusId
     """
     Either generation of a skeleton was attempted and failed or cache markers and/or .blacklist indicate that
     it was impossible to generate it for the current version of the generator last time.
     """
 
-    GENERATED = 'GENERATED'
+    GENERATED = 'GENERATED'  # type: GenerationStatusId
     """
     Skeleton was successfully generated anew and copied both to the cache and a per-sdk skeletons directory.
     """
 
-    COPIED = 'COPIED'
+    COPIED = 'COPIED'  # type: GenerationStatusId
     """
     Skeleton was successfully copied from the cache to a per-sdk skeletons directory.
     """
 
-    UP_TO_DATE = 'UP_TO_DATE'
+    UP_TO_DATE = 'UP_TO_DATE'  # type: GenerationStatusId
     """
     Existing skeleton is up to date and, therefore, wasn't touched.
     """
 
 
 def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir):
+    # type: (str, str, bool, str, str) -> GenerationStatusId
+
     info('Updating cache for %s at %r' % (name, mod_cache_dir))
     # All builtin modules go into the same directory
     if not doing_builtins:
@@ -593,7 +599,9 @@ class SkeletonGenerator(object):
         return list(res.values())
 
     def process_module(self, mod_name, mod_path=None):
-        sdk_skeleton_state = self.in_state_json['sdk_skeletons'].setdefault(mod_name, {}) if self.in_state_json else None
+        # type: (str, str) -> GenerationStatusId
+        sdk_skeleton_state = self.in_state_json['sdk_skeletons'].setdefault(mod_name,
+                                                                            {}) if self.in_state_json else None
         status = self.reuse_or_generate_skeleton(mod_name, mod_path, sdk_skeleton_state)
         control_message('generation_result', {
             'module_name': mod_name,
@@ -619,6 +627,7 @@ class SkeletonGenerator(object):
         return status
 
     def reuse_or_generate_skeleton(self, mod_name, mod_path, mod_state_json):
+        # type: (str, str, Dict[str, Any]) -> GenerationStatusId
         if not quiet:
             info('%s (%r)' % (mod_name, mod_path or 'built-in'))
         action("doing nothing")
