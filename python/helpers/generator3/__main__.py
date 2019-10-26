@@ -53,7 +53,7 @@ def main():
     import generator3.extra
     from generator3.clr_tools import get_namespace_by_name
     from generator3.constants import Timer
-    from generator3.core import version, process_one_with_results_reporting, GenerationStatus, process_all
+    from generator3.core import version, GenerationStatus, SkeletonGenerator
     from generator3.util_methods import set_verbose, say, report, note, print_profile
 
     try:
@@ -132,15 +132,15 @@ def main():
 
     # build skeleton(s)
 
+    generator = SkeletonGenerator(output_dir=subdir, roots=target_roots, state_json=state_json)
+
     timer = Timer()
     # determine names
     if len(args) > 2:
         report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
         sys.exit(1)
     elif not args:
-        process_all(target_roots, subdir,
-                    name_pattern=opts.get('--name-pattern'),
-                    state_json=state_json)
+        generator.discover_and_process_all_modules(name_pattern=opts.get('--name-pattern'))
         sys.exit(0)
     else:
         name = args[0]
@@ -165,7 +165,7 @@ def main():
         # We take module name from import statement
         name = get_namespace_by_name(name)
 
-    if process_one_with_results_reporting(name, mod_file_name, False, subdir) == GenerationStatus.FAILED:
+    if generator.process_module(name, mod_file_name) == GenerationStatus.FAILED:
         sys.exit(1)
 
     say("Generation completed in %d ms", timer.elapsed())
