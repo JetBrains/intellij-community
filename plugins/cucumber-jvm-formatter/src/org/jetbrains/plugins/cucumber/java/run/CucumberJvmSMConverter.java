@@ -50,7 +50,7 @@ public class CucumberJvmSMConverter {
           !currentFilePath.equals(getEventUri(event))) {
         closeCurrentScenarioOutline();
         currentScenarioOutlineLine = mainScenarioLine;
-        currentScenarioOutlineName = event.getTestCase().getScenarioName();
+        currentScenarioOutlineName = "Scenario Outline: " + event.getTestCase().getScenarioName();
         outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event) + ":" + currentScenarioOutlineLine,
                    currentScenarioOutlineName);
         outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), "", EXAMPLES_CAPTION);
@@ -61,11 +61,11 @@ public class CucumberJvmSMConverter {
     currentFilePath = getEventUri(event);
 
     outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event) + ":" + event.getTestCase().getLine(),
-               event.getTestCase().getScenarioName());
+               getScenarioName(event.getTestCase()));
   }
 
   protected void handleTestCaseFinished(CucumberJvmAdapter.IdeaTestCaseEvent event) {
-    outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), event.getTestCase().getScenarioName());
+    outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getScenarioName(event.getTestCase()));
     outCommand(TEMPLATE_SCENARIO_FINISHED, getCurrentTime());
   }
 
@@ -159,7 +159,7 @@ public class CucumberJvmSMConverter {
     if (testCase.isScenarioOutline()) {
       return SCENARIO_OUTLINE_CAPTION + testCase.getLine();
     }
-    return testCase.getScenarioName();
+    return "Scenario: " + testCase.getScenarioName();
   }
 
   protected String getEventUri(CucumberJvmAdapter.IdeaTestCaseEvent event) {

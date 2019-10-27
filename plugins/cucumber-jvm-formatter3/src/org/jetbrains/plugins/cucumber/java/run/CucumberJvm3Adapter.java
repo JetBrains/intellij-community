@@ -116,7 +116,7 @@ public class CucumberJvm3Adapter {
 
     @Override
     public String getScenarioName() {
-      return "Scenario: " + myRealTestCase.getName();
+      return myRealTestCase.getName();
     }
   }
 
@@ -161,9 +161,29 @@ public class CucumberJvm3Adapter {
       if (myRealStep instanceof HookTestStep) {
         stepName = "Hook: " + ((HookTestStep)myRealStep).getHookType().toString();
       } else {
-        stepName = ((PickleStepTestStep) myRealStep).getPickleStep().getText();
+        stepName = getStepKeyword() + " " + ((PickleStepTestStep) myRealStep).getPickleStep().getText();
       }
       return stepName;
+    }
+
+    private String getStepKeyword() {
+      try {
+        PickleStepTestStep pickleStep = (PickleStepTestStep) myRealStep;
+        String location = pickleStep.getStepLocation();
+        if (location.startsWith("file://")) {
+          location = location.substring("file://".length());
+        }
+        else if (location.startsWith("file:")) {
+          location = location.substring("file:".length());
+        }
+        String[] fileAndLine = location.split(":");
+        String result = CucumberJvmSMFormatterUtil.getStepKeyword(fileAndLine[0], Integer.parseInt(fileAndLine[1]));
+        if (result != null) {
+          return result;
+        }
+      } catch (Throwable ignored) {
+      }
+      return "Given";
     }
   }
 
