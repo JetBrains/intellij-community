@@ -21,9 +21,9 @@ public class IndexPatternUtil {
   public static IndexPattern[] getIndexPatterns() {
     IndexPattern[] result = new IndexPattern[getIndexPatternCount()];
     int destIndex = 0;
-    for(IndexPatternProvider provider: getIndexPatternProviders()) {
-      for(IndexPattern pattern: provider.getIndexPatterns()) {
-        result [destIndex++] = pattern;
+    for (IndexPatternProvider provider : getIndexPatternProviders()) {
+      for (IndexPattern pattern : provider.getIndexPatterns()) {
+        result[destIndex++] = pattern;
       }
     }
     return result;
