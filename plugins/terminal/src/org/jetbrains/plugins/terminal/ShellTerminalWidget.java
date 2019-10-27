@@ -44,12 +44,15 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private boolean myPromptUpdateNeeded = true;
   private String myPrompt = "";
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
+  @Nullable private String myWorkingDirectory;
 
   public ShellTerminalWidget(@NotNull Project project,
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
     myProject = project;
+    myWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(this, null);
+
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     ((JBTerminalPanel)getTerminalPanel()).addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
@@ -58,6 +61,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       }
       if (myPromptUpdateNeeded) {
         myPrompt = getLineAtCursor();
+        myWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(this, null);
         if (LOG.isDebugEnabled()) {
           LOG.info("Guessed shell prompt: " + myPrompt);
         }
@@ -90,7 +94,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     //highlight matched command
     String command = getTypedShellCommand();
     SubstringFinder.FindResult result =
-      TerminalShellCommandHandler.Companion.matches(project, command) ? searchMatchedCommand(command, true) : null;
+      TerminalShellCommandHandler.Companion.matches(project, myWorkingDirectory, command) ? searchMatchedCommand(command, true) : null;
     getTerminalPanel().setFindResult(result);
 
     //show notification
@@ -145,26 +149,25 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return finder.getResult();
   }
 
-  private void executeMatchedCommand(@NotNull String shellCommand, @NotNull KeyEvent enterEvent) {
+  private void executeMatchedCommand(@NotNull String command, @NotNull KeyEvent enterEvent) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("typed shell command to execute: " + shellCommand);
+      LOG.debug("typed shell command to execute: " + command);
     }
 
-    if (!TerminalShellCommandHandler.Companion.matches(myProject, shellCommand)) {
+    if (!TerminalShellCommandHandler.Companion.matches(myProject, myWorkingDirectory, command)) {
       return;
     }
 
-    TerminalShellCommandHandler.Companion
-      .executeShellCommandHandler(myProject, shellCommand, () -> TerminalWorkingDirectoryManager.getWorkingDirectory(this, null));
+    TerminalShellCommandHandler.Companion.executeShellCommandHandler(myProject, myWorkingDirectory, command);
     enterEvent.consume(); // do not send <CTRL ENTER> to shell
     TtyConnector connector = getTtyConnector();
-    byte[] array = new byte[shellCommand.length()];
+    byte[] array = new byte[command.length()];
     Arrays.fill(array, Ascii.BS);
     try {
       connector.write(array);
     }
     catch (IOException e) {
-      LOG.info("Cannot clear shell command " + shellCommand, e);
+      LOG.info("Cannot clear shell command " + command, e);
     }
   }
 

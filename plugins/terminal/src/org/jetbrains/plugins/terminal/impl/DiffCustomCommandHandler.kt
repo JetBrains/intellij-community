@@ -5,11 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.TerminalShellCommandHandler
 
 class DiffCustomCommandHandler : TerminalShellCommandHandler {
-  override fun execute(project: Project, getWorkingDirectory: () -> String?, command: String): Boolean {
+  override fun execute(project: Project, workingDirectory: String?, command: String): Boolean {
     return "diff" == command
   }
 
-  override fun isAvailable(project: Project, command: String): Boolean {
+  override fun matches(project: Project, workingDirectory: String?, command: String): Boolean {
     return command == "diff"
   }
 }
