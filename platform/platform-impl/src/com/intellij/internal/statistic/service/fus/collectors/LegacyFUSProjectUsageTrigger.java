@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ final public class LegacyFUSProjectUsageTrigger implements PersistentStateCompon
 
   final static class State {
     @Transient
-    List<String> sessions = ContainerUtil.newSmartList();
+    List<String> sessions = new SmartList<>();
   }
 
   public static void cleanup(@NotNull Project project) {

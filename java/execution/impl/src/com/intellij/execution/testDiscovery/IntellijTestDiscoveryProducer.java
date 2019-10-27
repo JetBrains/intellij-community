@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
@@ -42,8 +43,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return MultiMap.empty();
     }
     try {
-      List<String> bareClasses = ContainerUtil.newSmartList();
-      List<Couple<String>> allTogether = ContainerUtil.newSmartList();
+      List<String> bareClasses = new SmartList<>();
+      List<Couple<String>> allTogether = new SmartList<>();
 
       classesAndMethods.forEach(couple -> {
         if (couple.second == null) bareClasses.add(couple.first);
@@ -214,7 +215,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     private String className;
 
     @Nullable
-    private List<String> files = ContainerUtil.newSmartList();
+    private List<String> files = new SmartList<>();
 
     @Nullable
     private String message;

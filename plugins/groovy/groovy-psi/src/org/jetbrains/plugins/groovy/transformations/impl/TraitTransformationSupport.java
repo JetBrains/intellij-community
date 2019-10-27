@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -87,7 +88,7 @@ public class TraitTransformationSupport implements AstTransformationSupport {
   private static List<PsiMethod> getExpandingMethods(@NotNull PsiClass containingClass,
                                                      @NotNull PsiMethod method,
                                                      @NotNull PsiSubstitutor substitutor) {
-    List<PsiMethod> result = ContainerUtil.newSmartList();
+    List<PsiMethod> result = new SmartList<>();
     for (PsiMethod expanded : GrClassImplUtil.expandReflectedMethods(method)) {
       result.add(new GrTraitMethod(containingClass, expanded, substitutor));
     }

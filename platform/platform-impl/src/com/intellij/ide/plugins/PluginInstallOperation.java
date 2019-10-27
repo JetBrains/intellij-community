@@ -89,7 +89,7 @@ public class PluginInstallOperation {
     }
     if (!unknownNodes) return;
 
-    List<String> hosts = ContainerUtil.newSmartList();
+    List<String> hosts = new SmartList<>();
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
     Map<PluginId, IdeaPluginDescriptor> allPlugins = new HashMap<>();

@@ -430,7 +430,7 @@ public class VfsUtil extends VfsUtilCore {
     List<VirtualFile> result = null;
     for (VirtualFile child : dir.getChildren()) {
       if (filter.accept(child)) {
-        if (result == null) result = ContainerUtil.newSmartList();
+        if (result == null) result = new SmartList<>();
         result.add(child);
       }
     }

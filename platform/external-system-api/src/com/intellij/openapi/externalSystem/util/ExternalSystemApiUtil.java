@@ -700,7 +700,7 @@ public class ExternalSystemApiUtil {
     DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
     if (projectStructure == null) return Collections.emptyList();
 
-    List<TaskData> tasks = ContainerUtil.newSmartList();
+    List<TaskData> tasks = new SmartList<>();
 
     DataNode<ModuleData> moduleDataNode = findAll(projectStructure, ProjectKeys.MODULE).stream()
       .filter(moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath()))
