@@ -159,9 +159,22 @@ public class CucumberJvm2Adapter {
       if (myRealStep.isHook()) {
         stepName = "Hook: " + myRealStep.getHookType().toString();
       } else {
-        stepName = myRealStep.getStepText();
+        stepName = getStepKeyword() + " " + myRealStep.getStepText();
       }
       return stepName;
+    }
+
+    private String getStepKeyword() {
+      try {
+        String filePath = myRealStep.getStepLocation().substring(0, myRealStep.getStepLocation().indexOf(':'));
+        String line = CucumberJvmSMFormatterUtil.getStepKeyword(filePath, myRealStep.getStepLine());
+        if (line != null) {
+          return line;
+        }
+      }
+      catch (Throwable ignored) {
+      }
+      return "Given";
     }
   }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.cucumber.java.run;
 
-import gherkin.events.PickleEvent;
+import gherkin.pickles.Pickle;
 import io.cucumber.plugin.event.*;
 
 import java.lang.reflect.Field;
@@ -89,8 +89,8 @@ public class CucumberJvm5Adapter {
 
     @Override
     public boolean isScenarioOutline() {
-      PickleEvent pickleEvent = getPickleEvent(myRealTestCase);
-      return pickleEvent != null && pickleEvent.pickle.getLocations().size() > 1;
+      Pickle pickle = getPickleEvent(myRealTestCase);
+      return pickle != null && pickle.getLocations().size() > 1;
     }
 
     @Override
@@ -100,9 +100,9 @@ public class CucumberJvm5Adapter {
 
     @Override
     public int getScenarioOutlineLine() {
-      PickleEvent pickleEvent = getPickleEvent(myRealTestCase);
-      if (pickleEvent != null) {
-        return pickleEvent.pickle.getLocations().get(pickleEvent.pickle.getLocations().size() - 1).getLine();
+      Pickle pickle = getPickleEvent(myRealTestCase);
+      if (pickle != null) {
+        return pickle.getLocations().get(pickle.getLocations().size() - 1).getLine();
       }
       return 0;
     }
@@ -114,7 +114,7 @@ public class CucumberJvm5Adapter {
 
     @Override
     public String getScenarioName() {
-      return "Scenario: " + myRealTestCase.getName();
+      return myRealTestCase.getName();
     }
   }
 
@@ -159,17 +159,21 @@ public class CucumberJvm5Adapter {
       if (myRealStep instanceof HookTestStep) {
         stepName = "Hook: " + ((HookTestStep)myRealStep).getHookType().toString();
       } else {
-        stepName = ((PickleStepTestStep) myRealStep).getStepText();
+        PickleStepTestStep pickleStep = (PickleStepTestStep)myRealStep;
+        stepName = pickleStep.getStep().getKeyWord() + pickleStep.getStepText();
       }
       return stepName;
     }
   }
 
-  private static PickleEvent getPickleEvent(TestCase testCase) {
+  private static Pickle getPickleEvent(TestCase testCase) {
     try {
-      Field pickleEventField = testCase.getClass().getDeclaredField("pickleEvent");
-      pickleEventField.setAccessible(true);
-      return (PickleEvent)pickleEventField.get(testCase);
+      Field cucumberPickleField = testCase.getClass().getDeclaredField("pickle");
+      cucumberPickleField.setAccessible(true);
+      Object cucumberPickle = cucumberPickleField.get(testCase);
+      Field pickleField = cucumberPickle.getClass().getDeclaredField("pickle");
+      pickleField.setAccessible(true);
+      return (Pickle) pickleField.get(cucumberPickle);
     }
     catch (Exception ignored) {
     }
