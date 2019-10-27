@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -23,7 +21,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-public class ResolveCache {
+public class ResolveCache implements Disposable {
   private final AtomicReferenceArray<Map> myPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
   private final AtomicReferenceArray<Map> myNonPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
 
@@ -34,6 +32,7 @@ public class ResolveCache {
 
   public ResolveCache(@NotNull Project project) {
     this(project.getMessageBus());
+    LowMemoryWatcher.register(() -> onLowMemory(), this);
   }
 
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
@@ -45,6 +44,15 @@ public class ResolveCache {
         clearCache(isPhysical);
       }
     });
+  }
+
+  private void onLowMemory() {
+    clearArray(myPhysicalMaps);
+    clearArray(myNonPhysicalMaps);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @FunctionalInterface
