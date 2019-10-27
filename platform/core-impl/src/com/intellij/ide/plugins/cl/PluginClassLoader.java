@@ -70,8 +70,8 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
-    Class c = tryLoadingClass(name, resolve, null);
+  public Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
+    Class<?> c = tryLoadingClass(name, resolve, null);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
     }
@@ -126,26 +126,26 @@ public final class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
-  private static final ActionWithPluginClassLoader<Class, Void> loadClassInPluginCL = new ActionWithPluginClassLoader<Class, Void>() {
+  private static final ActionWithPluginClassLoader<Class<?>, Void> loadClassInPluginCL = new ActionWithPluginClassLoader<Class<?>, Void>() {
     @Override
-    Class execute(String name,
+    Class<?> execute(String name,
                   PluginClassLoader classloader,
                   Set<ClassLoader> visited,
-                  ActionWithPluginClassLoader<Class, Void> actionWithPluginClassLoader,
-                  ActionWithClassloader<Class, Void> actionWithClassloader,
+                  ActionWithPluginClassLoader<Class<?>, Void> actionWithPluginClassLoader,
+                  ActionWithClassloader<Class<?>, Void> actionWithClassloader,
                   Void parameter) {
       return classloader.tryLoadingClass(name, false, visited);
     }
 
     @Override
-    protected Class doExecute(String name, PluginClassLoader classloader, Void parameter) {
+    protected Class<?> doExecute(String name, PluginClassLoader classloader, Void parameter) {
       return null;
     }
   };
 
-  private static final ActionWithClassloader<Class, Void> loadClassInCl = new ActionWithClassloader<Class, Void>() {
+  private static final ActionWithClassloader<Class<?>, Void> loadClassInCl = new ActionWithClassloader<Class<?>, Void>() {
     @Override
-    public Class execute(String name, ClassLoader classloader, Void parameter) {
+    public Class<?> execute(String name, ClassLoader classloader, Void parameter) {
       try {
         return classloader.loadClass(name);
       }
@@ -159,9 +159,9 @@ public final class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+  private Class<?> tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
     long startTime = StartUpMeasurer.getCurrentTime();
-    Class c = null;
+    Class<?> c = null;
     if (!mustBeLoadedByPlatform(name)) {
       c = loadClassInsideSelf(name);
     }
@@ -208,9 +208,9 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   @Nullable
-  private Class loadClassInsideSelf(@NotNull String name) {
+  private Class<?> loadClassInsideSelf(@NotNull String name) {
     synchronized (getClassLoadingLock(name)) {
-      Class c = findLoadedClass(name);
+      Class<?> c = findLoadedClass(name);
       if (c != null) {
         return c;
       }

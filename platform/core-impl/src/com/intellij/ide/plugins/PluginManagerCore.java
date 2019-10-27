@@ -515,13 +515,14 @@ public class PluginManagerCore {
   }
 
   @Nullable
-  private static ClassLoader createPluginClassLoader(@NotNull File[] classPath,
+  private static ClassLoader createPluginClassLoader(@NotNull List<File> classPath,
                                                      @NotNull ClassLoader[] parentLoaders,
                                                      @NotNull IdeaPluginDescriptor descriptor) {
     if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
       return null;
     }
-    else if (descriptor.getUseIdeaClassLoader()) {
+
+    if (descriptor.getUseIdeaClassLoader()) {
       getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
       ClassLoader loader = PluginManagerCore.class.getClassLoader();
       try {
@@ -537,7 +538,7 @@ public class PluginManagerCore {
       }
     }
     else {
-      List<URL> urls = new ArrayList<>(classPath.length);
+      List<URL> urls = new ArrayList<>(classPath.size());
       for (File pathElement : classPath) {
         urls.add(classpathElementToUrl(pathElement, descriptor));
       }
@@ -593,18 +594,20 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static ClassLoader[] getParentLoaders(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginTraverser traverser) {
-    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return new ClassLoader[0];
+  private static Collection<ClassLoader> getParentLoaders(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginTraverser traverser) {
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
+      return Collections.emptyList();
+    }
+
     JBIterable<PluginId> dependencies = traverser.children(descriptor.getPluginId());
-
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>();
-
     for (PluginId depId : dependencies) {
       IdeaPluginDescriptor dep = traverser.idMap.get(depId);
       if (dep == null) {
         // might be an optional dependency
         continue;
       }
+
       ClassLoader loader = dep.getPluginClassLoader();
       if (loader == null) {
         getLogger().error("Plugin \"" + toPresentableName(descriptor) + "\" requires missing class loader for " + toPresentableName(dep));
@@ -613,7 +616,7 @@ public class PluginManagerCore {
         loaders.add(loader);
       }
     }
-    return loaders.toArray(new ClassLoader[0]);
+    return loaders;
   }
 
   public static boolean isRunningFromSources() {
@@ -1214,15 +1217,15 @@ public class PluginManagerCore {
   public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
                                      @NotNull ClassLoader coreLoader,
                                      @NotNull JBTreeTraverser<PluginId> traverser) {
-    File[] classPath = descriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
-    ClassLoader[] parentLoaders = getParentLoaders(descriptor, (PluginTraverser)traverser);
-    if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
-    descriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, descriptor));
+    Collection<ClassLoader> parentLoaders = getParentLoaders(descriptor, (PluginTraverser)traverser);
+    if (parentLoaders.isEmpty()) {
+      parentLoaders = Collections.singletonList(coreLoader);
+    }
+    descriptor.setLoader(createPluginClassLoader(descriptor.getClassPath(), parentLoaders.toArray(new ClassLoader[0]), descriptor));
   }
 
   private static void initClassLoaderForDisabledPlugin(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
-    File[] classPath = descriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
-    descriptor.setLoader(createPluginClassLoader(classPath, new ClassLoader[]{parentLoader}, descriptor));
+    descriptor.setLoader(createPluginClassLoader(descriptor.getClassPath(), new ClassLoader[]{parentLoader}, descriptor));
   }
 
   static BuildNumber getBuildNumber() {

@@ -691,39 +691,38 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   public List<File> getClassPath() {
-    if (myPath.isDirectory()) {
-      final List<File> result = new ArrayList<>();
-      final File classesDir = new File(myPath, "classes");
-
-      if (classesDir.exists()) {
-        result.add(classesDir);
-      }
-
-      final File[] files = new File(myPath, "lib").listFiles();
-      if (files != null && files.length > 0) {
-        for (final File f : files) {
-          if (f.isFile()) {
-            final String name = f.getName();
-            if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
-              result.add(f);
-            }
-          }
-          else {
-            // hack for IDEA-219113, to be removed after merging jre11-compatible Android plugin
-            if ("org.jetbrains.android".equals(getPluginId().getIdString())) {
-              if (f.getName().equals(SystemInfo.isJavaVersionAtLeast(11) ? "jdk11" : "jdk8"))
-                result.add(new File(f, "layoutlib.jar"));
-            }
-            result.add(f);
-          }
-        }
-      }
-
-      return result;
-    }
-    else {
+    if (!myPath.isDirectory()) {
       return Collections.singletonList(myPath);
     }
+
+    List<File> result = new ArrayList<>();
+    File classesDir = new File(myPath, "classes");
+    if (classesDir.exists()) {
+      result.add(classesDir);
+    }
+
+    File[] files = new File(myPath, "lib").listFiles();
+    if (files == null || files.length <= 0) {
+      return result;
+    }
+
+    for (File f : files) {
+      if (f.isFile()) {
+        String name = f.getName();
+        if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
+          result.add(f);
+        }
+      }
+      else {
+        // hack for IDEA-219113, to be removed after merging jre11-compatible Android plugin
+        if ("org.jetbrains.android".equals(getPluginId().getIdString())) {
+          if (f.getName().equals(SystemInfo.isJavaVersionAtLeast(11) ? "jdk11" : "jdk8"))
+            result.add(new File(f, "layoutlib.jar"));
+        }
+        result.add(f);
+      }
+    }
+    return result;
   }
 
   @Override
