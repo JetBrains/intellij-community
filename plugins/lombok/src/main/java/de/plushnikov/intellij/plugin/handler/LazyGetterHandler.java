@@ -12,10 +12,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.InitializationUtils;
-import org.jetbrains.annotations.NotNull;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 public class LazyGetterHandler {
 
@@ -61,7 +61,7 @@ public class LazyGetterHandler {
     return isInitializedInConstructors((PsiField) field, containingClass);
   }
 
-  public static boolean isInitializedInConstructors(@NotNull PsiField field, @NotNull PsiClass aClass) {
+  private static boolean isInitializedInConstructors(@NotNull PsiField field, @NotNull PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
       return false;
