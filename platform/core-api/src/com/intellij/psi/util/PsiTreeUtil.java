@@ -422,7 +422,7 @@ public class PsiTreeUtil {
     List<T> result = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(child, classes)) {
-        if (result == null) result = ContainerUtil.newSmartList();
+        if (result == null) result = new SmartList<>();
         @SuppressWarnings("unchecked") T t = (T)child;
         result.add(t);
       }

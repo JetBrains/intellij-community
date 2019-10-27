@@ -56,7 +56,7 @@ public class PsiImplUtil {
     List<PsiMethod> result = null;
     for (PsiMethod method : aClass.getMethods()) {
       if (method.isConstructor() && method.getName().equals(aClass.getName())) {
-        if (result == null) result = ContainerUtil.newSmartList();
+        if (result == null) result = new SmartList<>();
         result.add(method);
       }
     }

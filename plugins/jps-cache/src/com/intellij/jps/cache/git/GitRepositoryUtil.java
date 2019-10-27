@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterator;
 import git4idea.GitUtil;
@@ -90,7 +91,7 @@ public class GitRepositoryUtil {
       catch (VcsException e) {
         LOG.warn("Can't get Git hashes for commits", e);
       }
-      commits = ContainerUtil.newSmartList();
+      commits = new SmartList<>();
     }
   }
 }

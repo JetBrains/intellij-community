@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -26,7 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +41,11 @@ public class FocusModeModel implements Disposable {
   public static final Key<TextAttributes> FOCUS_MODE_ATTRIBUTES = Key.create("editor.focus.mode.attributes");
   public static final int LAYER = 10_000;
 
-  private final List<RangeHighlighter> myFocusModeMarkup = ContainerUtil.newSmartList();
+  private final List<RangeHighlighter> myFocusModeMarkup = new SmartList<>();
   @NotNull private final EditorImpl myEditor;
   private RangeMarker myFocusModeRange;
 
-  private final List<FocusModeModelListener> mySegmentListeners = ContainerUtil.newSmartList();
+  private final List<FocusModeModelListener> mySegmentListeners = new SmartList<>();
   private final RangeMarkerTree<FocusRegion> myFocusMarkerTree;
 
   public FocusModeModel(@NotNull EditorImpl editor) {

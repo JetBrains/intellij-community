@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -333,7 +334,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final class CallTreeNode {
     private final StackTraceElement myStackTraceElement;
     private final CallTreeNode myParent;
-    private final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
+    private final List<CallTreeNode> myChildren = new SmartList<>();
     private final int myDepth;
     private long myTime;
     private final ThreadInfo myThreadInfo;

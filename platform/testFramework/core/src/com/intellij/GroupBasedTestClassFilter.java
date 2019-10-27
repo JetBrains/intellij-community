@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -43,7 +44,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
-  private final List<Group> myGroups = ContainerUtil.newSmartList();
+  private final List<Group> myGroups = new SmartList<>();
   private final Set<String> myTestGroupNames;
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {

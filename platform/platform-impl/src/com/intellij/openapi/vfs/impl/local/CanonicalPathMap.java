@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ class CanonicalPathMap {
     myRecursiveWatchRoots = new ArrayList<>(recursive);
     myFlatWatchRoots = new ArrayList<>(flat);
 
-    List<Pair<String, String>> mapping = ContainerUtil.newSmartList();
+    List<Pair<String, String>> mapping = new SmartList<>();
     Map<String, String> resolvedPaths = resolvePaths(recursive, flat);
     myCanonicalRecursiveWatchRoots = mapPaths(resolvedPaths, recursive, mapping);
     myCanonicalFlatWatchRoots = mapPaths(resolvedPaths, flat, mapping);
@@ -109,7 +110,7 @@ class CanonicalPathMap {
     if (myFlatWatchRoots.isEmpty() && myRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     Collection<String> affectedPaths = applyMapping(reportedPath);
-    Collection<String> changedPaths = ContainerUtil.newSmartList();
+    Collection<String> changedPaths = new SmartList<>();
 
     ext:
     for (String path : affectedPaths) {
@@ -158,7 +159,7 @@ class CanonicalPathMap {
       return Collections.singletonList(reportedPath);
     }
 
-    List<String> results = ContainerUtil.newSmartList(reportedPath);
+    List<String> results = new SmartList<>(reportedPath);
     List<String> pathComponents = FileUtil.splitPath(reportedPath);
 
     File runningPath = null;

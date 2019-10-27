@@ -1044,7 +1044,7 @@ public class PluginManagerCore {
   @TestOnly
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
-    List<IdeaPluginDescriptorImpl> descriptors = ContainerUtil.newSmartList();
+    List<IdeaPluginDescriptorImpl> descriptors = new SmartList<>();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
     loadDescriptorsFromClassPath(urlsFromClassPath, descriptors, new LoadDescriptorsContext(false), platformPluginURL);
