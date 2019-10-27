@@ -2,11 +2,11 @@
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Function;
 
 @ApiStatus.Experimental
 public interface ConfigurableWithOptionDescriptors {
