@@ -40,4 +40,6 @@ public abstract class IdeDocumentHistory {
   public abstract void removeBackPlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
 
   public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info);
+
+  public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info, boolean focusEditor);
 }
