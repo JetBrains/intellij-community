@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@amcharts/amcharts4@4.7.4":
-  version "4.7.4"
-  resolved "https://registry.yarnpkg.com/@amcharts/amcharts4/-/amcharts4-4.7.4.tgz#565436d924d019077637eb644a9811cb27a93ce7"
-  integrity sha512-q64Ppd2kQrOy/vtdulJIDEtZEBnA2zQDGYMiWMI8b1n7W5oC1ESgNr0mJvaHE0hsv/m+g8H3HCZtxktg2JjH9Q==
+"@amcharts/amcharts4@4.7.5":
+  version "4.7.5"
+  resolved "https://registry.yarnpkg.com/@amcharts/amcharts4/-/amcharts4-4.7.5.tgz#98c8ab409076c7c61ee603263fe4b963a48824a2"
+  integrity sha512-d9t3/gn0zhoWZ85WgjlXNf4noh9k1GH+iGptGg49sOkq6RaGfm0wz5yrk1bbUGx1r9/TwW6XtQE5XxlrSpNPMw==
   dependencies:
     "@types/regression" "^2.0.0"
     canvg "^2.0.0"
@@ -147,10 +147,10 @@
   resolved "https://registry.yarnpkg.com/@types/regression/-/regression-2.0.0.tgz#0677ea78d7bdb37039c02ebbccf062042f756ae3"
   integrity sha512-Ch2FD53M1HpFLL6zSTc/sfuyqQcIPy+/PV3xFT6QYtk9EOiMI29XOYmLNxBb1Y0lfMOR/NNa86J1gRc/1jGLyw==
 
-"@types/semver@^6.0.2":
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-6.0.2.tgz#5e8b09f0e4af53034b1d0fb9977a277847836205"
-  integrity sha512-G1Ggy7/9Nsa1Jt2yiBR2riEuyK2DFNnqow6R7cromXPMNynackRY1vqFTLz/gwnef1LHokbXThcPhqMRjUbkpQ==
+"@types/semver@^6.2.0":
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-6.2.0.tgz#d688d574400d96c5b0114968705366f431831e1a"
+  integrity sha512-1OzrNb4RuAzIT7wHSsgZRlMBlNsJl+do6UblR7JMW4oB7bbR+uBEYtUh7gEc/jM84GGilh68lSOokyM/zNUlBA==
 
 "@types/webpack-env@^1.13.9":
   version "1.14.1"
