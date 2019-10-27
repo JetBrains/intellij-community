@@ -69,10 +69,14 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         highlightMatchedCommand(project);
       }, 50);
 
-      if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
-        executeMatchedCommand(getTypedShellCommand(), e);
-        myPromptUpdateNeeded = true;
-        myEscapePressed = false;
+      if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
+          executeMatchedCommand(getTypedShellCommand(), e);
+        }
+        else {
+          myPromptUpdateNeeded = true;
+          myEscapePressed = false;
+        }
       }
     });
   }
