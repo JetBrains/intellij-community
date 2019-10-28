@@ -15,7 +15,11 @@ class GrUnaryOperatorReference(element: GrUnaryExpression) : GroovyMethodCallRef
 
   override val receiver: PsiType? get() = element.operand?.type
 
-  override val methodName: String get() = unaryOperatorMethodNames[element.operationTokenType]!!
+  override val methodName: String
+    get() {
+      val tokenType = element.operationTokenType
+      return unaryOperatorMethodNames[tokenType] ?: error("unexpected token type: $tokenType")
+    }
 
   override val arguments: Arguments? get() = emptyList()
 
