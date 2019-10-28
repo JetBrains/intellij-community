@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -18,7 +18,7 @@ import static com.intellij.util.ArrayUtil.getLastElement;
 public interface BaseTest {
 
   @NotNull
-  CodeInsightTestFixture getFixture();
+  JavaCodeInsightTestFixture getFixture();
 
   @NotNull
   default Project getProject() {
