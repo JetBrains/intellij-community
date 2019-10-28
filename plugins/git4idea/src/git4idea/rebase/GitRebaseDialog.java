@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitRebaseParams;
@@ -327,7 +328,7 @@ public class GitRebaseDialog extends DialogWrapper {
       else {
         LOG.error("Repository is null for root " + root);
       }
-      myTags.addAll(GitTag.list(myProject, root));
+      myTags.addAll(ContainerUtil.map(GitBranchUtil.getAllTags(myProject, root), GitTag::new));
     }
     catch (VcsException e) {
       GitUIUtil.showOperationError(myProject, e, "git branch -a");
