@@ -94,7 +94,8 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     //highlight matched command
     String command = getTypedShellCommand();
     SubstringFinder.FindResult result =
-      TerminalShellCommandHandler.Companion.matches(project, myWorkingDirectory, command) ? searchMatchedCommand(command, true) : null;
+      TerminalShellCommandHandler.Companion.matches(project, myWorkingDirectory, !hasRunningCommands(), command)
+      ? searchMatchedCommand(command, true) : null;
     getTerminalPanel().setFindResult(result);
 
     //show notification
@@ -154,11 +155,11 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       LOG.debug("typed shell command to execute: " + command);
     }
 
-    if (!TerminalShellCommandHandler.Companion.matches(myProject, myWorkingDirectory, command)) {
+    if (!TerminalShellCommandHandler.Companion.matches(myProject, myWorkingDirectory, !hasRunningCommands(), command)) {
       return;
     }
 
-    TerminalShellCommandHandler.Companion.executeShellCommandHandler(myProject, myWorkingDirectory, command);
+    TerminalShellCommandHandler.Companion.executeShellCommandHandler(myProject, myWorkingDirectory, !hasRunningCommands(), command);
     enterEvent.consume(); // do not send <CTRL ENTER> to shell
     TtyConnector connector = getTtyConnector();
     byte[] array = new byte[command.length()];
