@@ -376,7 +376,7 @@ private class MergeDialogCustomizer(private val commitHash: String,
                                     private val commitMessage: String,
                                     private val operationName: String) : MergeDialogCustomizer() {
 
-  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>) =
+  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) =
     "<html>Conflicts during ${operationName}ing commit <code>$commitHash</code> " +
     "made by $commitAuthor<br/><code>\"$commitMessage\"</code></html>"
 
