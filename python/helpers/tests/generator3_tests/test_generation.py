@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import collections
 import errno
-import json
 import os
 import subprocess
 import sys
@@ -10,6 +9,7 @@ import textwrap
 import unittest
 
 import generator3.core
+import json
 import six
 from generator3.constants import (
     CACHE_DIR_NAME,
@@ -426,7 +426,7 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
 
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):
-    default_generator_extra_args = ['--read-state-from-stdin', '--name-pattern', 'mod?']
+    default_generator_extra_args = ['--state-file-policy', 'readwrite', '--name-pattern', 'mod?']
     default_generator_extra_syspath = ['mocks', 'binaries']
 
     def test_existing_updated_due_to_required_gen_version(self):
@@ -520,7 +520,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                 }
             }
         }
-        self.check_generator_output(extra_args=['--read-state-from-stdin', '--name-pattern', 'mod'],
+        self.check_generator_output(extra_args=['--state-file-policy', 'readwrite', '--name-pattern', 'mod'],
                                     gen_version='0.1',
                                     custom_required_gen=True,
                                     input=json.dumps(state))
@@ -539,16 +539,16 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     gen_version='0.1')
 
     def test_only_leaving_state_file_no_read(self):
-        self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod?'])
+        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod?'])
 
     def test_state_indication_for_builtin_module(self):
-        result = self.run_generator(extra_args=['--write-state-file', '--name-pattern', '_ast'])
+        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', '_ast'])
         self.assertIsNotNone(result.state_json)
         self.assertIn('_ast', result.state_json['sdk_skeletons'])
         self.assertEqual('GENERATED', result.state_json['sdk_skeletons']['_ast']['status'])
 
     def test_modification_time_left_in_state_json_for_new_binaries(self):
-        result = self.run_generator(extra_args=['--write-state-file', '--name-pattern', 'mod'],
+        result = self.run_generator(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
                                     extra_env={ENV_TEST_MODE_FLAG: None})
         self.assertIsNotNone(result.state_json)
         self.assertIn('bin_mtime', result.state_json['sdk_skeletons']['mod'])
@@ -569,6 +569,6 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     input=json.dumps(state))
 
     def test_state_json_for_up_to_date_skeletons_retains_original_gen_version(self):
-        self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod'],
+        self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod'],
                                     gen_version='0.2',
                                     custom_required_gen=True)
