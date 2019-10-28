@@ -108,11 +108,13 @@ def main():
         # We can't completely shut off stdin in case Docker-based interpreter to use json.load()
         # and have to retreat to reading the content line-wise
         state_json = json.loads(sys.stdin.readline(), encoding='utf-8')
+        write_state_json = True
     elif state_file_policy == 'write':
-        state_json = {'sdk_skeletons': {}}
+        state_json = None
+        write_state_json = True
     else:
         state_json = None
-
+        write_state_json = False
 
     # patch sys.path?
     extra_path = opts.get('-s', None)
@@ -153,7 +155,10 @@ def main():
 
     # build skeleton(s)
 
-    generator = SkeletonGenerator(output_dir=subdir, roots=target_roots, state_json=state_json)
+    generator = SkeletonGenerator(output_dir=subdir,
+                                  roots=target_roots,
+                                  state_json=state_json,
+                                  write_state_json=write_state_json)
 
     timer = Timer()
     # determine names
