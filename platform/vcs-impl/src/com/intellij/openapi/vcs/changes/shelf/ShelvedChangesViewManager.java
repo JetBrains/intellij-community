@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -66,6 +67,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.text.html.ObjectView;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -133,9 +135,7 @@ public class ShelvedChangesViewManager implements Disposable {
   void updateViewContent() {
     if (myShelveChangesManager.getAllLists().isEmpty()) {
       if (myContent != null) {
-        ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-        contentManager.removeContent(myContent);
-        contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
+        removeContent(myContent);
         VcsNotifier.getInstance(myProject).hideAllNotificationsByType(ShelfNotification.class);
       }
       myContent = null;
@@ -146,8 +146,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myContent = new MyShelfContent(panel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContent.setDisposer(panel);
-        ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-        contentManager.addContent(myContent);
+        addContent(myContent);
         DnDSupport.createBuilder(panel.myTree)
           .setImageProvider(panel::createDraggedImage)
           .setBeanProvider(panel::createDragStartBean)
@@ -159,6 +158,26 @@ public class ShelvedChangesViewManager implements Disposable {
       updateTreeIfShown(tree -> {
         tree.rebuildTree();
       });
+    }
+  }
+
+  protected void removeContent(Content content) {
+    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
+    contentManager.removeContent(content);
+    contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
+  }
+
+  protected void addContent(Content content) {
+    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
+    contentManager.addContent(content);
+  }
+
+  protected void activateContent() {
+    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
+    contentManager.setSelectedContent(myContent);
+    ToolWindow window = getVcsToolWindow();
+    if (window != null && !window.isVisible()) {
+      window.activate(null);
     }
   }
 
@@ -246,12 +265,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (list != null) {
         selectShelvedList(list);
       }
-      ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-      contentManager.setSelectedContent(myContent);
-      ToolWindow window = getVcsToolWindow();
-      if (window != null && !window.isVisible()) {
-        window.activate(null);
-      }
+      activateContent();
     });
   }
 
@@ -603,7 +617,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private final ShelfTree myTree;
     private final JPanel myRootPanel;
 
-    private final PreviewDiffSplitterComponent mySplitterComponent;
+    private final ChangesViewPreview myDiffPreview;
 
     private ShelfToolWindowPanel(@NotNull Project project) {
       myProject = project;
@@ -654,17 +668,56 @@ public class ShelvedChangesViewManager implements Disposable {
 
       MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
       Disposer.register(this, changeProcessor);
-      mySplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
-                                                             myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
 
       myRootPanel = new JPanel(new BorderLayout());
       myRootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
-      myRootPanel.add(mySplitterComponent, BorderLayout.CENTER);
+
+      if (Registry.is("show.diff.preview.as.editor.tab")) {
+        myDiffPreview = new EditorTabPreview(changeProcessor, project, pane, myTree){
+
+          @Override
+          protected String getCurrentName() {
+            return "Shelf";
+          }
+
+          @Override
+          protected void doRefresh() {
+            changeProcessor.refresh(false);
+          }
+        };
+
+        myRootPanel.add(pane);
+      } else {
+        PreviewDiffSplitterComponent previewDiffSplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
+          myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+
+        myDiffPreview = new ChangesViewPreview() {
+
+          @Override
+          public void updatePreview(boolean fromModelRefresh) {
+            previewDiffSplitterComponent.updatePreview(fromModelRefresh);
+          }
+
+          @Override
+          public void setAllowExcludeFromCommit(boolean value) {
+            throw new UnsupportedOperationException("should not be called in shelved view");
+          }
+
+          @Override
+          public void setDiffPreviewVisible(boolean isVisible) {
+            previewDiffSplitterComponent.setDetailsOn(isVisible);
+          }
+        };
+
+        myRootPanel.add(previewDiffSplitterComponent, BorderLayout.CENTER);
+        myTree.addSelectionListener(() -> myDiffPreview.updatePreview(false));
+      }
+
       DataManager.registerDataProvider(myRootPanel, myTree);
 
       PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
-      myTree.addSelectionListener(() -> mySplitterComponent.updatePreview(false));
     }
 
     @Override
@@ -690,7 +743,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        mySplitterComponent.setDetailsOn(state);
+        myDiffPreview.setDiffPreviewVisible(state);
         myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
       }
 
