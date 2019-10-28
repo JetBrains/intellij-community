@@ -140,4 +140,9 @@ public class PyiInspectionsTest extends PyTestCase {
     myRootsDisposable = PyiTypeTest.addPyiStubsToContentRoot(myFixture);
     doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
+
+  // PY-16868
+  public void testPropertyDefinition() {
+    doPyiTest(PyPropertyDefinitionInspection.class);
+  }
 }
