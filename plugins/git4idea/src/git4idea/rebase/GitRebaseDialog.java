@@ -3,6 +3,7 @@ package git4idea.rebase;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -314,25 +315,28 @@ public class GitRebaseDialog extends DialogWrapper {
    * Load tags and branches
    */
   protected void loadRefs() {
-    try {
-      myLocalBranches.clear();
-      myRemoteBranches.clear();
-      myTags.clear();
-      final VirtualFile root = gitRoot();
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-      if (repository != null) {
-        myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
-        myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
-        myCurrentBranch = repository.getCurrentBranch();
-      }
-      else {
-        LOG.error("Repository is null for root " + root);
-      }
-      myTags.addAll(ContainerUtil.map(GitBranchUtil.getAllTags(myProject, root), GitTag::new));
+    myLocalBranches.clear();
+    myRemoteBranches.clear();
+    myTags.clear();
+    final VirtualFile root = gitRoot();
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    if (repository != null) {
+      myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
+      myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
+      myCurrentBranch = repository.getCurrentBranch();
     }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(myProject, e, "git branch -a");
+    else {
+      LOG.error("Repository is null for root " + root);
     }
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        myTags.addAll(ContainerUtil.map(GitBranchUtil.getAllTags(myProject, root), GitTag::new));
+      }
+      catch (VcsException e) {
+        LOG.warn(e);
+      }
+    }, "Loading Tags...", true, myProject);
   }
 
   /**
