@@ -397,7 +397,8 @@
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
 
     <extensionPoint name="fileTemplateGroup"
-                    interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"/>
+                    interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"
+                    dynamic="true"/>
     <extensionPoint name="iconProvider"
                     interface="com.intellij.ide.IconProvider"
                     dynamic="true"/>
