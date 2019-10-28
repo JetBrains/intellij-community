@@ -4,7 +4,6 @@ package com.intellij.execution.application;
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
-import com.intellij.execution.configuration.TargetAwareRunProfile;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
@@ -59,7 +58,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
         final String remoteAddressForVmParams;
 
         final boolean java9plus = Optional.ofNullable(runner.getTargetConfiguration())
-          .map(RemoteTargetConfiguration::getRuntimes)
+          .map(TargetEnvironmentConfiguration::getRuntimes)
           .map(list -> list.findByType(JavaLanguageRuntimeConfiguration.class))
           .map(JavaLanguageRuntimeConfiguration::getJavaVersionString)
           .filter(StringUtil::isNotEmpty)
@@ -140,10 +139,10 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (myRemoteRunner != null) {
       return myRemoteRunner;
     }
-    if (myConfiguration instanceof TargetAwareRunProfile) {
-      String targetName = ((TargetAwareRunProfile)myConfiguration).getDefaultTargetName();
+    if (myConfiguration instanceof TargetEnvironmentAwareRunProfile) {
+      String targetName = ((TargetEnvironmentAwareRunProfile)myConfiguration).getDefaultTargetName();
       if (targetName != null) {
-        RemoteTargetConfiguration config = RemoteTargetsManager.getInstance().getTargets().findByName(targetName);
+        TargetEnvironmentConfiguration config = RemoteTargetsManager.getInstance().getTargets().findByName(targetName);
         if (config == null) {
           throw new ExecutionException("Cannot find target " + targetName);
         }

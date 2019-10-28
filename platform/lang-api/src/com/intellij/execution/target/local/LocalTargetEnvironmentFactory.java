@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
-import com.intellij.execution.target.RemoteTargetConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentFactory;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetPlatform;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class LocalTargetEnvironmentFactory implements TargetEnvironmentFactory {
   @Nullable
   @Override
-  public RemoteTargetConfiguration getTargetConfiguration() {
+  public TargetEnvironmentConfiguration getTargetConfiguration() {
     return null;
   }
 

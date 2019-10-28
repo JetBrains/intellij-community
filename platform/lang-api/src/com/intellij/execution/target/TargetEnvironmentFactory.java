@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A factory for creating target environment ({@link TargetEnvironment}) for given
- * target configuration ({@link RemoteTargetConfiguration}.
+ * target configuration ({@link TargetEnvironmentConfiguration}.
  * <p>
  * The creating happens in two phases:
  * 1. first, environment request should be created and fulfilled – {@link this#createRequest()};
@@ -31,7 +31,7 @@ public interface TargetEnvironmentFactory {
    * @return a configuration of target to create. Might be null for default settings.
    */
   @Nullable
-  RemoteTargetConfiguration getTargetConfiguration();
+  TargetEnvironmentConfiguration getTargetConfiguration();
 
   /**
    * @return a platform of the remote environment that factory builds.

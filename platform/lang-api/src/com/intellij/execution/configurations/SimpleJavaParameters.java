@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.execution.target.RemoteTargetConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.openapi.project.Project;
@@ -169,7 +169,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   /**
-   * Consider using {@link #toCommandLine(TargetEnvironmentRequest, RemoteTargetConfiguration)} instead with request created by {@link com.intellij.execution.target.local.LocalTargetEnvironmentFactory} as an argument
+   * Consider using {@link #toCommandLine(TargetEnvironmentRequest, TargetEnvironmentConfiguration)} instead with request created by {@link com.intellij.execution.target.local.LocalTargetEnvironmentFactory} as an argument
    *
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
@@ -184,7 +184,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
   @NotNull
-  public TargetedCommandLine toCommandLine(@NotNull TargetEnvironmentRequest request, @Nullable RemoteTargetConfiguration configuration)
+  public TargetedCommandLine toCommandLine(@NotNull TargetEnvironmentRequest request, @Nullable TargetEnvironmentConfiguration configuration)
     throws CantRunException {
     return JdkUtil.setupJVMCommandLine(this, request, configuration);
   }

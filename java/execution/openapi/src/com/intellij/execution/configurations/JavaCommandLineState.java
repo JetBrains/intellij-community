@@ -4,7 +4,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.RemoteTargetConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
@@ -45,7 +45,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   protected TargetedCommandLine createNewCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                     @Nullable RemoteTargetConfiguration configuration) throws ExecutionException {
+                                                     @Nullable TargetEnvironmentConfiguration configuration) throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());

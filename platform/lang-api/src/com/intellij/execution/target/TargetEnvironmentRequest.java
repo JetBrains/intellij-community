@@ -2,6 +2,7 @@
 package com.intellij.execution.target;
 
 import com.intellij.execution.target.value.TargetValue;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,9 +11,11 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Can be filled with the requirements for target environment like files to upload,
  * ports to bind and locations to imported from another environents.
+ *
+ * Implementations must cancel promises of all created TargetValues
  */
 @ApiStatus.Experimental
-public interface TargetEnvironmentRequest {
+public interface TargetEnvironmentRequest extends Disposable {
   /**
    * @return a platform of the environment to be prepared.
    * The result heavily depends on the {@link TargetEnvironmentFactory#getTargetPlatform()}

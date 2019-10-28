@@ -4,7 +4,7 @@ package com.intellij.execution.target
 import com.intellij.execution.target.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.openapi.project.Project
 
-abstract class RemoteTargetConfiguration(typeId: String) : BaseExtendableConfiguration(typeId, RemoteTargetType.EXTENSION_NAME) {
+abstract class TargetEnvironmentConfiguration(typeId: String) : BaseExtendableConfiguration(typeId, RemoteTargetType.EXTENSION_NAME) {
 
   val runtimes = BaseExtendableList(LanguageRuntimeType.EXTENSION_NAME)
 
@@ -15,4 +15,4 @@ abstract class RemoteTargetConfiguration(typeId: String) : BaseExtendableConfigu
   fun createRunner(project: Project): TargetEnvironmentFactory = getTargetType().createRunner(project, this)
 }
 
-fun <C : RemoteTargetConfiguration, T : RemoteTargetType<C>> C.getTargetType(): T = this.getTypeImpl()
+fun <C : TargetEnvironmentConfiguration, T : RemoteTargetType<C>> C.getTargetType(): T = this.getTypeImpl()

@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.target.RemoteTargetConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
@@ -156,7 +156,7 @@ public class JdkUtil {
   @NotNull
   public static TargetedCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
                                                         @NotNull TargetEnvironmentRequest request,
-                                                        @Nullable RemoteTargetConfiguration targetConfiguration)
+                                                        @Nullable TargetEnvironmentConfiguration targetConfiguration)
     throws CantRunException {
     TargetedCommandLine commandLine = new TargetedCommandLine();
     JavaLanguageRuntimeConfiguration javaConfiguration = targetConfiguration != null
