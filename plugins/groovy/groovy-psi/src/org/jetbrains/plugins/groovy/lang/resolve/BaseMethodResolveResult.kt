@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.impl.MethodCandidateImpl
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.THIS_TYPE
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RECEIVER
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
@@ -36,7 +36,7 @@ open class BaseMethodResolveResult(
   }
 
   protected val myCandidate: GroovyMethodCandidate by recursionAwareLazy {
-    MethodCandidateImpl(state[THIS_TYPE], method, contextSubstitutor, arguments, place)
+    MethodCandidateImpl(state[RECEIVER], method, contextSubstitutor, arguments, place)
   }
 
   final override fun getCandidate(): GroovyMethodCandidate? = myRealCandidate
