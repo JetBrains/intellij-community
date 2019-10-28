@@ -49,9 +49,9 @@ fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
     return ExpressionArgument(qualifierExpression)
   }
 
-  val resolvedThis = state[ClassHint.THIS_TYPE]
-  if (resolvedThis != null) {
-    return JustTypeArgument(resolvedThis)
+  val receiver = state[ClassHint.RECEIVER]
+  if (receiver != null) {
+    return receiver
   }
 
   val type = ref?.let(::getQualifierType)

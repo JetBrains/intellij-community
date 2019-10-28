@@ -10,13 +10,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processClassDeclarations
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GroovyMapPropertyImpl
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.STATIC_CONTEXT
 
 fun PsiType?.processReceiverType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
   if (this == null) return true
-  val newState = state.put(ClassHint.THIS_TYPE, this)
+  val newState = state.put(ClassHint.RECEIVER, JustTypeArgument(this))
   if (!doProcessReceiverType(processor, newState, place)) return false
   return !state.processNonCodeMembers() || processNonCodeMembers(this, processor, place, newState)
 }
