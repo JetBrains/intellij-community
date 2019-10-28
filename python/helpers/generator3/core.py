@@ -416,9 +416,9 @@ class SkeletonGenerator(object):
                  roots=None,  # type: List[str]
                  state_json=None  # type: Dict[str, Any]
                  ):
-        self.output_dir = output_dir
+        self.output_dir = output_dir.rstrip(os.path.sep)
         # TODO make cache directory configurable via CLI
-        self.cache_dir = os.path.join(os.path.dirname(output_dir), CACHE_DIR_NAME)
+        self.cache_dir = os.path.join(os.path.dirname(self.output_dir), CACHE_DIR_NAME)
         self.roots = roots
         # TODO split in and out state.json files
         self.in_state_json = state_json
@@ -540,12 +540,8 @@ class SkeletonGenerator(object):
             info('%s (%r)' % (mod_name, mod_path or 'built-in'))
         action("doing nothing")
 
-        # Normalize the path to directory for os.path functions
-        sdk_skeletons_dir = self.output_dir.rstrip(os.path.sep)
         try:
-            mod_cache_dir = build_cache_dir_path(self.cache_dir, mod_name, mod_path)
-
-            sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, mod_name, mod_path, mod_state_json)
+            sdk_skeleton_status = skeleton_status(self.output_dir, mod_name, mod_path, mod_state_json)
             if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
                 return GenerationStatus.UP_TO_DATE
             elif sdk_skeleton_status == SkeletonStatus.FAILING:
@@ -556,6 +552,7 @@ class SkeletonGenerator(object):
             if mod_state_json:
                 mod_state_json.clear()
 
+            mod_cache_dir = build_cache_dir_path(self.cache_dir, mod_name, mod_path)
             cached_skeleton_status = skeleton_status(mod_cache_dir, mod_name, mod_path, mod_state_json)
             if cached_skeleton_status == SkeletonStatus.OUTDATED:
                 return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
@@ -570,8 +567,8 @@ class SkeletonGenerator(object):
                 return GenerationStatus.FAILED
             else:
                 # Copy entire skeletons directory if nothing needs to be updated
-                info('Copying cached stubs for %s from %r to %r' % (mod_name, mod_cache_dir, sdk_skeletons_dir))
-                copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_path, mod_name))
+                info('Copying cached stubs for %s from %r to %r' % (mod_name, mod_cache_dir, self.output_dir))
+                copy_skeletons(mod_cache_dir, self.output_dir, get_module_origin(mod_path, mod_name))
                 return GenerationStatus.COPIED
         except:
             exctype, value = sys.exc_info()[:2]

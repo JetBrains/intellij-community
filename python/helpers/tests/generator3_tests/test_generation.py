@@ -61,12 +61,16 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
     default_generator_extra_syspath = []
 
     @property
+    def temp_python_stubs_root(self):
+        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR)
+
+    @property
     def temp_skeletons_dir(self):
-        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
+        return os.path.join(self.temp_python_stubs_root, self.SDK_SKELETONS_DIR)
 
     @property
     def temp_cache_dir(self):
-        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, CACHE_DIR_NAME)
+        return os.path.join(self.temp_python_stubs_root, CACHE_DIR_NAME)
 
     def setUp(self):
         super(FunctionalGeneratorTestCase, self).setUp()
@@ -196,7 +200,7 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
 class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_layout_for_builtin_module(self):
         self.run_generator(mod_qname='_ast')
-        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
             {hash}/
                 _ast.py
@@ -216,7 +220,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_layout_for_toplevel_physical_module(self):
         mod_path = self.get_test_data_path('mod.py')
         self.run_generator(mod_qname='mod', mod_path=mod_path)
-        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
             {hash}/
                 mod.py
@@ -227,7 +231,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_layout_for_physical_module_inside_package(self):
         mod_path = self.get_test_data_path('pkg/subpkg/mod.py')
         self.run_generator(mod_qname='pkg.subpkg.mod', mod_path=mod_path)
-        self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
         cache/
             {hash}/
                 pkg/
@@ -388,6 +392,16 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
             'module_origin': 'mod.py',
             'generation_status': 'GENERATED'
         }, result.control_messages)
+        
+    def test_trailing_slash_in_sdk_skeletons_path_does_not_affect_cache_location(self):
+        self.run_generator('mod', 'mod.py', output_dir=self.temp_skeletons_dir + os.path.sep)
+        self.assertDirLayoutEquals(self.temp_python_stubs_root, """
+        cache/
+            e3b0c44298/
+                mod.py
+        sdk_skeletons/
+            mod.py
+        """)
 
 
 class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
