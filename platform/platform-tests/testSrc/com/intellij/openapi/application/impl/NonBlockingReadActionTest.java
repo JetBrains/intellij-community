@@ -16,6 +16,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -159,5 +160,20 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       return;
     }
     fail();
+  }
+
+  public void testDoNotBlockExecutorThreadDuringWriteAction() throws Exception {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("a", 1);
+    Semaphore mayFinish = new Semaphore();
+    Promise<Void> promise = ReadAction.nonBlocking(() -> {
+      while (!mayFinish.waitFor(1)) {
+        ProgressManager.checkCanceled();
+      }
+    }).submit(executor);
+    for (int i = 0; i < 100; i++) {
+      UIUtil.dispatchAllInvocationEvents();
+      WriteAction.run(() -> executor.submit(() -> {}).get(1, TimeUnit.SECONDS));
+    }
+    waitForPromise(promise);
   }
 }

@@ -38,6 +38,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -275,7 +276,7 @@ public class NonBlockingReadActionImpl<T>
     void transferToBgThread() {
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if (app.isWriteActionInProgress() || app.isWriteActionPending()) {
-        dispatchLaterUnconstrained(() -> reschedule());
+        rescheduleLater();
         return;
       }
 
@@ -283,25 +284,12 @@ public class NonBlockingReadActionImpl<T>
         acquire();
       }
       backendExecutor.execute(() -> {
-        final ProgressIndicator indicator = myProgressIndicator != null ? new SensitiveProgressWrapper(myProgressIndicator) {
-          @NotNull
-          @Override
-          public ModalityState getModalityState() {
-            return creationModality;
-          }
-        } : new EmptyProgressIndicator(creationModality);
-
-        currentIndicator = indicator;
         try {
-          ReadAction.run(() -> {
-            boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> insideReadAction(indicator), indicator);
-            if (!success && Promises.isPending(promise)) {
-              reschedule();
-            }
-          });
+          if (!attemptComputation()) {
+            rescheduleLater();
+          }
         }
         finally {
-          currentIndicator = null;
           if (myCoalesceEquality != null) {
             release();
           }
@@ -309,19 +297,46 @@ public class NonBlockingReadActionImpl<T>
       });
     }
 
-    private void reschedule() {
-      if (!checkObsolete()) {
-        scheduleWithinConstraints(() -> dispatchLaterUnconstrained(() -> transferToBgThread()), null);
+    private boolean attemptComputation() {
+      ProgressIndicator indicator = myProgressIndicator != null ? new SensitiveProgressWrapper(myProgressIndicator) {
+        @NotNull
+        @Override
+        public ModalityState getModalityState() {
+          return creationModality;
+        }
+      } : new EmptyProgressIndicator(creationModality);
+
+      currentIndicator = indicator;
+      try {
+        AtomicBoolean shouldReschedule = new AtomicBoolean();
+        boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> insideReadAction(indicator, shouldReschedule),
+                                                                                        indicator);
+        return success && !shouldReschedule.get();
+      }
+      finally {
+        currentIndicator = null;
       }
     }
 
-    private void insideReadAction(ProgressIndicator indicator) {
+    private void rescheduleLater() {
+      if (Promises.isPending(promise)) {
+        dispatchLaterUnconstrained(() -> reschedule());
+      }
+    }
+
+    private void reschedule() {
+      if (!checkObsolete()) {
+        scheduleWithinConstraints(() -> transferToBgThread(), null);
+      }
+    }
+
+    private void insideReadAction(ProgressIndicator indicator, AtomicBoolean shouldReschedule) {
       try {
         if (checkObsolete()) {
           return;
         }
         if (!constraintsAreSatisfied()) {
-          reschedule();
+          shouldReschedule.set(true);
           return;
         }
 
