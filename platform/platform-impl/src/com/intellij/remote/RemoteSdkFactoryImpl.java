@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = SdkConfigurationUtil.createSdk(existingSdks, generateSdkHomePath(data), sdkType, data, name);
+    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
 
     sdk.setVersionString(sdkVersion);
 
@@ -61,12 +60,30 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = SdkConfigurationUtil.createSdk(existingSdks, generateSdkHomePath(data), sdkType, data, name);
+    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
 
     data.setValid(false);
 
     return sdk;
   }
+
+  /**
+   * Creates new SDK.
+   * <p>
+   * Note that this method is introduced because of the unavailability of
+   * {@code SdkConfigurationUtil.createSdk()}.
+   *
+   * @param existingSdks the existing SDKs
+   * @param sdkType      the type of SDK
+   * @param data         the additional data of SDK
+   * @param sdkName      the name of SDK
+   * @return the SDK with the corresponding data
+   */
+  @NotNull
+  protected abstract ProjectJdkImpl createSdk(@NotNull Collection<Sdk> existingSdks,
+                                              @NotNull SdkType sdkType,
+                                              @NotNull T data,
+                                              @Nullable String sdkName);
 
   /**
    * Returns default name for "unfinished" SDK.
