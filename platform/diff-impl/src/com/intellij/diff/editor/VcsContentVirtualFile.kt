@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.testFramework.LightVirtualFile
 import javax.swing.JComponent
 
-class VCSContentVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc: () -> String)
-  : LightVirtualFile(getTabNameFunc(), VCSContentFileType.INSTANCE, "") {
+class VcsContentVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc: () -> String)
+  : LightVirtualFile(getTabNameFunc(), VcsContentFileType.INSTANCE, "") {
   companion object {
     @JvmField
     val TabSelector: Key<() -> Unit> = Key("TabContentId")

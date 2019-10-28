@@ -16,7 +16,7 @@ public class VcsEditorTabColorProvider implements EditorTabColorProvider, DumbAw
   @Nullable
   @Override
   public Color getEditorTabColor(@NotNull Project project, @NotNull VirtualFile file) {
-    if (file instanceof VCSContentVirtualFile) {
+    if (file instanceof VcsContentVirtualFile) {
       return FileColorManager.getInstance(project).getColor("Violet");
     }
 

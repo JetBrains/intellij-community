@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl
 
-import com.intellij.diff.editor.VCSContentVirtualFile
+import com.intellij.diff.editor.VcsContentVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -37,7 +37,7 @@ class VcsToolWindowEditorSynchronizer() {
       }
 
       val file = e.newFile
-      val tabSelector = file?.getUserData(VCSContentVirtualFile.TabSelector)
+      val tabSelector = file?.getUserData(VcsContentVirtualFile.TabSelector)
       if (tabSelector != null) {
         tabSelector()
       }

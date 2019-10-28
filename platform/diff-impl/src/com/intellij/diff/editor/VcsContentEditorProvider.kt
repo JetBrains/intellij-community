@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 
-class GraphViewEditorProvider : FileEditorProvider, DumbAware {
+class VcsContentEditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is VCSContentVirtualFile
+    return file is VcsContentVirtualFile
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return VCSContentEditor(file as VCSContentVirtualFile)
+    return VcsContentEditor(file as VcsContentVirtualFile)
   }
 
   override fun disposeEditor(editor: FileEditor) {

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.diff.editor.VCSContentVirtualFile
+import com.intellij.diff.editor.VcsContentVirtualFile
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -67,7 +67,7 @@ internal class GHPRComponentFactory(private val project: Project) {
   private val avatarLoader = CachingGithubUserAvatarLoader.getInstance()
   private val imageResizer = GithubImageResizer.getInstance()
 
-  private var ghprVirtualFile: VCSContentVirtualFile? = null
+  private var ghprVirtualFile: VcsContentVirtualFile? = null
   private var ghprEditorContent: JComponent? = null
 
   private val autoPopupController = AutoPopupController.getInstance(project)
@@ -146,8 +146,8 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     if (ghprVirtualFile == null) {
       val content = ghprEditorContent ?: error("editor content should be created by this time")
-      ghprVirtualFile = VCSContentVirtualFile(content) { "GitHub Pull Requests" }
-      ghprVirtualFile?.putUserData(VCSContentVirtualFile.TabSelector) {
+      ghprVirtualFile = VcsContentVirtualFile(content) { "GitHub Pull Requests" }
+      ghprVirtualFile?.putUserData(VcsContentVirtualFile.TabSelector) {
         GithubUIUtil.findAndSelectGitHubContent(project, true)
       }
     }
@@ -172,7 +172,7 @@ internal class GHPRComponentFactory(private val project: Project) {
   }
 
   fun tryCloseGHPREditorTab() {
-    val file = getOrCreateGHPRViewFile() ?: return
+    val file = ghprVirtualFile ?: return
     FileEditorManager.getInstance(project).closeFile(file)
   }
 

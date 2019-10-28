@@ -4,8 +4,8 @@ import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
-class VCSContentEditor(
-  private val file: VCSContentVirtualFile
+class VcsContentEditor(
+  private val file: VcsContentVirtualFile
 ) : FileEditorBase() {
   init {
 

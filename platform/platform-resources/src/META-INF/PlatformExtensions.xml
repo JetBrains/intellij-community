@@ -204,12 +204,12 @@
 
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffEditorProvider"/>
 
-    <fileEditorProvider implementation="com.intellij.diff.editor.GraphViewEditorProvider"/>
+    <fileEditorProvider implementation="com.intellij.diff.editor.VcsContentEditorProvider"/>
 
     <editorTabColorProvider implementation="com.intellij.diff.editor.VcsEditorTabColorProvider" order="first"/>
 
-    <fileType name="GraphView" implementationClass="com.intellij.diff.editor.VCSContentFileType" fieldName="INSTANCE" extensions="GraphView" />
-    <fileIconProvider implementation="com.intellij.diff.editor.GraphViewFileIconProvider"/>
+    <fileType name="GraphView" implementationClass="com.intellij.diff.editor.VcsContentFileType" fieldName="INSTANCE" extensions="GraphView" />
+    <fileIconProvider implementation="com.intellij.diff.editor.VcsContentFileIconProvider"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
 

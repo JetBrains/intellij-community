@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
-import com.intellij.diff.editor.VCSContentVirtualFile;
+import com.intellij.diff.editor.VcsContentVirtualFile;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -108,7 +108,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final AbstractVcsLogUi myLogUi;
 
   @Nullable DiffPreviewProvider myDiffPreviewProvider;
-  @Nullable private VCSContentVirtualFile myGraphViewFile;
+  @Nullable private VcsContentVirtualFile myVcsContentFile;
   @NotNull private final JComponent myToolbarsAndTable;
 
   public MainFrame(@NotNull VcsLogData logData,
@@ -255,12 +255,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   public void closeEditorTab() {
-    VirtualFile file = getOrCreateGraphViewFile();
-    if (file == null) {
+    if (myVcsContentFile == null) {
       return;
     }
 
-    FileEditorManager.getInstance(myLogData.getProject()).closeFile(file);
+    FileEditorManager.getInstance(myLogData.getProject()).closeFile(myVcsContentFile);
   }
 
   public void openLogEditorTab() {
@@ -282,24 +281,21 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private VirtualFile getOrCreateGraphViewFile() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myGraphViewFile == null || !myGraphViewFile.isValid()) {
-      myGraphViewFile = new VCSContentVirtualFile(myToolbarsAndTable, () -> {
-        return getTabName();
-      });
+    if (myVcsContentFile == null || !myVcsContentFile.isValid()) {
+      myVcsContentFile = new VcsContentVirtualFile(myToolbarsAndTable, this::getTabName);
 
-      myGraphViewFile.putUserData(VCSContentVirtualFile.TabSelector, () -> {
+      myVcsContentFile.putUserData(VcsContentVirtualFile.TabSelector, () -> {
 
-        VcsLogContentUtil.findAndSelect(myLogData.getProject(), AbstractVcsLogUi.class, ui1 -> {
-          return ui1.getId() == myLogUi.getId();
-        });
+        VcsLogContentUtil.findAndSelect(myLogData.getProject(),
+          AbstractVcsLogUi.class, ui1 -> ui1.getId().equals(myLogUi.getId()));
 
         return Unit.INSTANCE;
       });
     }
 
-    Disposer.register(this, () -> myGraphViewFile = null);
+    Disposer.register(this, () -> myVcsContentFile = null);
 
-    return myGraphViewFile;
+    return myVcsContentFile;
   }
 
   //todo move it out from MainFrame

@@ -5,10 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
-class GraphViewFileIconProvider : FileIconProvider {
+class VcsContentFileIconProvider : FileIconProvider {
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
-    if (file is VCSContentVirtualFile) {
+    if (file is VcsContentVirtualFile) {
       return AllIcons.Vcs.Branch
     }
 
