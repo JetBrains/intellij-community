@@ -406,7 +406,8 @@
     <extensionPoint name="defaultTemplatePropertiesProvider"
                     interface="com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider"/>
     <extensionPoint name="internalFileTemplate"
-                    beanClass="com.intellij.ide.fileTemplates.InternalTemplateBean"/>
+                    beanClass="com.intellij.ide.fileTemplates.InternalTemplateBean"
+                    dynamic="true"/>
     <extensionPoint name="saveFileAsTemplateHandler"
                     interface="com.intellij.ide.actions.SaveFileAsTemplateHandler"/>
 
