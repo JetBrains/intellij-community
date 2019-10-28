@@ -2,7 +2,6 @@
 package com.intellij.execution.target;
 
 import com.intellij.execution.target.value.TargetValue;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * Implementations must cancel promises of all created TargetValues
  */
 @ApiStatus.Experimental
-public interface TargetEnvironmentRequest extends Disposable {
+public interface TargetEnvironmentRequest {
   /**
    * @return a platform of the environment to be prepared.
    * The result heavily depends on the {@link TargetEnvironmentFactory#getTargetPlatform()}

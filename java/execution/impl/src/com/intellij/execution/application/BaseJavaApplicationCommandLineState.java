@@ -13,6 +13,7 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
@@ -139,7 +140,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (myRemoteRunner != null) {
       return myRemoteRunner;
     }
-    if (myConfiguration instanceof TargetEnvironmentAwareRunProfile) {
+    if (myConfiguration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("runtime.environments")) {
       String targetName = ((TargetEnvironmentAwareRunProfile)myConfiguration).getDefaultTargetName();
       if (targetName != null) {
         TargetEnvironmentConfiguration config = RemoteTargetsManager.getInstance().getTargets().findByName(targetName);

@@ -16,6 +16,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <experimentalFeature id="runtime.environments" percentOfUsers="0">
+      <description>Makes available running on remote runtime environments (Java on Docker or SSH server)</description>
+    </experimentalFeature>
+
     <applicationService serviceInterface="com.intellij.remoteServer.configuration.RemoteServersManager"
                         serviceImplementation="com.intellij.remoteServer.impl.configuration.RemoteServersManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.ServerConnectionManager"
@@ -42,8 +46,6 @@
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
 
-    <!--todo[remoteServers]: move to lang-impl-->
-    <projectConfigurable groupId="build" instance="com.intellij.execution.target.RemoteTargetsListConfigurable"/>
     <applicationService serviceImplementation="com.intellij.execution.target.RemoteTargetsManager"/>
     <ir.languageRuntime implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType" />
     <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"

@@ -648,6 +648,7 @@
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
     <projectService serviceImplementation="com.intellij.execution.RunConfigurationProducerService"/>
     <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>
+    <projectConfigurable groupId="build" id="Runtime.Targets.Configurable" displayName="Runtime Targets" provider="com.intellij.execution.target.TargetEnvironmentsConfigurableProvider"/>
 
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
