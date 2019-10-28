@@ -275,7 +275,7 @@ public abstract class Decompressor {
     if (cutDirs == 0 || entryName == null) return entryName;
 
     ensureValidPath(entryName);
-    List<String> pathElements = FileUtil.splitPath(FileUtil.toCanonicalPath(entryName, '/'));
+    List<String> pathElements = FileUtil.splitPath(FileUtil.toCanonicalPath(entryName, '/'), '/');
     if (pathElements.size() <= cutDirs) return null;
     return StringUtil.join(pathElements.subList(cutDirs, pathElements.size()), "/");
   }
