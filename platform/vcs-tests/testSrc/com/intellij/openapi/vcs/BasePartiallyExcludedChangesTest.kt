@@ -20,7 +20,6 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
     val paths = HashSet<FilePath>()
 
     init {
-      myUpdateQueue.isPassThrough = false
       Disposer.register(testRootDisposable, this)
     }
 

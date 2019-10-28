@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -64,7 +64,6 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
     myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);
-    myUpdateQueue.setPassThrough(false); // disable passthrough in tests
 
     OverheadTimings.addListener(new OverheadTimings.OverheadTimingsListener() {
                                   @Override
