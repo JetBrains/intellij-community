@@ -5,10 +5,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+
+import java.util.Objects;
 
 public class SerializableCtorInspection extends DevKitInspectionBase {
 
@@ -30,9 +33,15 @@ public class SerializableCtorInspection extends DevKitInspectionBase {
           StringBuilder builder = new StringBuilder("@PropertyMapping({");
           JvmParameter[] parameters = constructor.getParameters();
           for (int i = 0; i < parameters.length; i++) {
-            JvmParameter parameter = parameters[i];
             if (i > 0) builder.append(',');
-            builder.append('"').append(parameter.getName()).append('"');
+            String name = Objects.requireNonNull(parameters[i].getName());
+            if (aClass.findFieldByName(name, false) == null) {
+              name = "my" + StringUtil.capitalize(name);
+            }
+            if (aClass.findFieldByName(name, false) == null) {
+              name = "??" + name;
+            }
+            builder.append('"').append(name).append('"');
           }
           PsiAnnotation annotation = JavaPsiFacade.getElementFactory(aClass.getProject())
             .createAnnotationFromText(builder.append("})").toString(), aClass);
