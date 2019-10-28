@@ -239,8 +239,17 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
     // do not trigger move via VcsVFSListener
     rm("RENAME.txt")
+    assertFalse(child("RENAME.txt").exists())
+    assertFalse(child("rename.txt").exists())
+
+    LOG.debug("STATUS BEFORE\n" + git("status"))
+    LOG.debug("STATUS BEFORE\n" + git("status --short"))
+
     touch("rename.txt", "rename_file_content")
     repo.git("add -N rename.txt")
+
+    LOG.debug("STATUS AFTER\n" + git("status"))
+    LOG.debug("STATUS AFTER\n" + git("status --short"))
 
     VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
     dirty(projectRoot)
