@@ -9,6 +9,8 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
@@ -17,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
@@ -120,6 +123,8 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     val logPrefix = "=== Start: StartUp Measurement ===\n"
     stringWriter.write(logPrefix)
 
+    val publicStatMetrics = ObjectIntHashMap<String>()
+
     val writer = JsonFactory().createGenerator(stringWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
@@ -151,6 +156,10 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
                 totalDuration += duration
               }
 
+              if (item.name == "bootstrap" || item.name == "app initialization") {
+                publicStatMetrics.put(item.name, TimeUnit.NANOSECONDS.toMillis(duration).toInt())
+              }
+
               item.pluginId?.let {
                 StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
               }
@@ -160,10 +169,13 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
           totalDuration += writeUnknown(writer, items.last().end, end, startTime)
         }
 
-        writeParallelActivities(activities, startTime, writer, pluginCostMap)
+        writeParallelActivities(activities, startTime, writer, pluginCostMap, publicStatMetrics)
 
         writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
-        writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
+        val totalDurationActual = TimeUnit.NANOSECONDS.toMillis(end - startTime)
+        writer.writeNumberField("totalDurationActual", totalDurationActual)
+
+        publicStatMetrics.put("totalDuration", totalDurationActual.toInt())
       }
     }
 
@@ -172,6 +184,18 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
       stringWriter.write("\n=== Stop: StartUp Measurement ===")
       LOG.info(stringWriter.toString())
+    }
+
+    val usageLogger = FUCounterUsageLogger.getInstance()
+    publicStatMetrics.forEachEntry { name, value ->
+      val usageData = FeatureUsageData()
+      usageData.addData("duration", value)
+      var eventId = name
+      if (eventId == "app initialization") {
+        eventId = "appInit"
+      }
+      usageLogger.logEvent("startup", eventId, usageData)
+      true
     }
   }
 
@@ -216,7 +240,8 @@ private class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
   }
 }
 
-private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonGenerator, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
+private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonGenerator,
+                                    pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>, publicStatMetrics: ObjectIntHashMap<String>) {
   val ownDurations = ObjectLongHashMap<ActivityImpl>()
 
   // sorted to get predictable JSON
@@ -231,7 +256,7 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
     }
 
     val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
-    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap, measureThreshold = measureThreshold)
+    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap, measureThreshold, publicStatMetrics)
   }
 }
 
@@ -247,7 +272,8 @@ private fun writeActivities(activities: List<ActivityImpl>,
                             fieldName: String,
                             ownDurations: ObjectLongHashMap<ActivityImpl>,
                             pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
-                            measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD) {
+                            measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD,
+                            publicStatMetrics: ObjectIntHashMap<String>) {
   if (activities.isEmpty()) {
     return
   }
@@ -260,6 +286,10 @@ private fun writeActivities(activities: List<ActivityImpl>,
       if (duration <= measureThreshold) {
         skippedDuration += duration
         continue
+      }
+
+      if (fieldName == "prepareAppInitActivities" && item.name == "splash initialization") {
+        publicStatMetrics.put("splash", TimeUnit.NANOSECONDS.toMillis(duration).toInt())
       }
 
       item.pluginId?.let {
