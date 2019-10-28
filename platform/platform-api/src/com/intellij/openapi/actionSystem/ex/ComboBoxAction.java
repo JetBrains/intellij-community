@@ -195,6 +195,16 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                e.getY()));
         }
       });
+
+      myPresentation.addPropertyChangeListener(e -> {
+        if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
+          setText((String)e.getNewValue());
+        } else if (Presentation.PROP_ICON.equals(e.getPropertyName())) {
+          setIcon((Icon)e.getNewValue());
+        } else if (Presentation.PROP_ENABLED.equals(e.getPropertyName())) {
+          setEnabled((Boolean)e.getNewValue());
+        }
+      });
     }
 
     @Override
