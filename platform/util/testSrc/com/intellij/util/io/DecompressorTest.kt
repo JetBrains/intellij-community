@@ -142,7 +142,7 @@ class DecompressorTest {
     testNoTraversal(Decompressor.Tar(tar).withSymlinks(), dir, File(dir, "rogue"))
   }
 
-  @Test fun mapsFilesInZip() {
+  @Test fun cutDirsFilesInZip() {
     val zip = tempDir.newFile("test.zip")
     ZipOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/b/c.txt") }
     val dir = tempDir.newFolder("unpacked")
@@ -154,7 +154,26 @@ class DecompressorTest {
     assertThat(File(dir, "b")).doesNotExist()
   }
 
-  @Test fun mapsFilesInTarWithSymlinks() {
+  @Test fun cutDirsFilesInZipWitFilter() {
+    val zip = tempDir.newFile("test.zip")
+    ZipOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "a/b/c.txt")
+      writeEntry(it, "skip.txt")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    val filterLog = mutableListOf<String>()
+    Decompressor.Zip(zip).cutDirs(2).filter { filterLog.add(it) }.extract(dir)
+
+    assertThat(File(dir, "c.txt")).isFile()
+    assertThat(File(dir, "a")).doesNotExist()
+    assertThat(File(dir, "a/b")).doesNotExist()
+    assertThat(File(dir, "b")).doesNotExist()
+
+    //it must call filter before cut-dirs
+    Assert.assertEquals(setOf("a/b/c.txt", "skip.txt"), filterLog.toSet())
+  }
+
+  @Test fun cutDirsFilesInTarWithSymlinks() {
     assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
@@ -169,7 +188,7 @@ class DecompressorTest {
     assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
   }
 
-  @Test fun mapRogueSymlinks() {
+  @Test fun cutDirRogueSymlinks() {
     assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
@@ -178,7 +197,7 @@ class DecompressorTest {
     testNoTraversal(Decompressor.Tar(tar).cutDirs(3), dir, File(dir, "rogue"))
   }
 
-  @Test fun mapSkipsTooShortPaths() {
+  @Test fun cutDirSkipsTooShortPaths() {
     assumeSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")

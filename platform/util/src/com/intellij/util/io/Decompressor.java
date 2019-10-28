@@ -19,8 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.StringJoiner;
-import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -156,7 +154,9 @@ public abstract class Decompressor {
   /**
    * Removes several leading directories from the archive during extraction.
    * Some entries may clash, so use {@link #overwrite(boolean)} to control it.
-   * Some short file entries may be lost
+   * Some short file entries may be lost.
+   *
+   * Executed AFTER filter test!
    *
    * @param dirsToCut how many directories has to be removed from archive entry names
    * @return self
@@ -172,19 +172,17 @@ public abstract class Decompressor {
     try {
       Entry entry;
       while ((entry = nextEntry()) != null) {
-        entry = entry.cutDirs(myCutDirs);
-        if (entry == null) continue;
-
-        String name = entry.name;
-
         if (myFilter != null) {
-          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(name, '/') ? name + '/' : name;
+          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
           if (!myFilter.value(entryName)) {
             continue;
           }
         }
 
-        File outputFile = entryFile(outputDir, name);
+        entry = entry.cutDirs(myCutDirs);
+        if (entry == null) continue;
+
+        File outputFile = entryFile(outputDir, entry.name);
 
         switch (entry.type) {
           case DIR:
@@ -215,7 +213,7 @@ public abstract class Decompressor {
           case SYMLINK:
             if (StringUtil.isEmpty(entry.linkTarget) ||
                 !FileUtil.isAncestor(outputDir, new File(FileUtil.toCanonicalPath(outputFile.getParent() + '/' + entry.linkTarget)), true)) {
-              throw new IOException("Invalid symlink entry: " + name + " -> " + entry.linkTarget);
+              throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget);
             }
             FileUtil.createParentDirs(outputFile);
             Files.createSymbolicLink(outputFile.toPath(), Paths.get(entry.linkTarget));
