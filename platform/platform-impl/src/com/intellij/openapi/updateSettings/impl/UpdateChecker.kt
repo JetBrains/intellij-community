@@ -213,7 +213,7 @@ object UpdateChecker {
           }
         }
         if (incompatiblePlugins != null && buildNumber != null) {
-          updateable.values.filterTo(incompatiblePlugins) {
+          updateable.values.asSequence().filterNotNull().filterTo(incompatiblePlugins) {
             it.isEnabled && !PluginManagerCore.isCompatible(it, buildNumber)
           }
         }
@@ -231,7 +231,7 @@ object UpdateChecker {
    * Returns a list of plugins that are currently installed or were installed in the previous installation from which
    * we're importing the settings.
    */
-  private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
+  private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor?> {
     val updateable = THashMap<PluginId, IdeaPluginDescriptor>()
 
     updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateBy { it.pluginId }
