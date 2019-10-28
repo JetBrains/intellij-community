@@ -99,7 +99,7 @@ open class MultipleFileMergeDialog(
 
   init {
     StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges()
-    title = mergeDialogCustomizer.multipleFileDialogTitle
+    title = mergeDialogCustomizer.getMultipleFileDialogTitle()
     virtualFileRenderer.font = UIUtil.getListFont()
 
     @Suppress("LeakingThis")
@@ -190,7 +190,7 @@ open class MultipleFileMergeDialog(
 
     val mergeInfoColumns = mergeSession?.mergeInfoColumns
     if (mergeInfoColumns != null) {
-      var customColumnNames = mergeDialogCustomizer.columnNames
+      var customColumnNames = mergeDialogCustomizer.getColumnNames()
       if (customColumnNames != null && customColumnNames.size != mergeInfoColumns.size) {
         LOG.error("Custom column names ($customColumnNames) don't match default columns ($mergeInfoColumns)")
         customColumnNames = null
