@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -348,8 +349,14 @@ public class GitRebaseDialog extends DialogWrapper {
       String currentBranch = (String)myBranchComboBox.getSelectedItem();
       GitBranch trackedBranch = null;
       if (currentBranch != null) {
-        String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
-        String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
+        Pair<String, String> remoteAndMerge = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
+          String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
+          return Pair.create(remote, mergeBranch);
+        }, "Loading Branch Configuration...", true, myProject);
+        String remote = remoteAndMerge.first;
+        String mergeBranch = remoteAndMerge.second;
+
         if (remote == null || mergeBranch == null) {
           trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
         }
