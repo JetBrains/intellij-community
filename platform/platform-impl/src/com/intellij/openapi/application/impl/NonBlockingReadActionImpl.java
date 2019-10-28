@@ -211,14 +211,14 @@ public class NonBlockingReadActionImpl<T>
       myExpireCondition = composeCancellationCondition();
     }
 
-    void acquire() {
+    private void acquire() {
       assert myCoalesceEquality != null;
       synchronized (ourTasksByEquality) {
         myUseCount++;
       }
     }
 
-    void release() {
+    private void release() {
       assert myCoalesceEquality != null;
       synchronized (ourTasksByEquality) {
         if (--myUseCount == 0 && ourTasksByEquality.get(myCoalesceEquality) == this) {
@@ -227,7 +227,7 @@ public class NonBlockingReadActionImpl<T>
       }
     }
 
-    void scheduleReplacementIfAny() {
+    private void scheduleReplacementIfAny() {
       if (myReplacement == null) {
         ourTasksByEquality.remove(myCoalesceEquality, this);
       } else {
@@ -261,7 +261,8 @@ public class NonBlockingReadActionImpl<T>
                 "Please make them more unique.");
     }
 
-    String getComputationOrigin() {
+    @NotNull
+    private String getComputationOrigin() {
       Object computation = myComputation;
       if (computation instanceof RunnableCallable) {
         computation = ((RunnableCallable)computation).getDelegate();
@@ -314,7 +315,7 @@ public class NonBlockingReadActionImpl<T>
       }
     }
 
-    void insideReadAction(ProgressIndicator indicator) {
+    private void insideReadAction(ProgressIndicator indicator) {
       try {
         if (checkObsolete()) {
           return;
@@ -360,7 +361,7 @@ public class NonBlockingReadActionImpl<T>
       return false;
     }
 
-    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish) {
+    private void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish) {
       if (Promises.isRejected(promise)) return;
 
       long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
