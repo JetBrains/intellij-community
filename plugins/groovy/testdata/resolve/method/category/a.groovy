@@ -3,5 +3,5 @@ class MyCategory {
 }
 
 use MyCategory, {
-    print ("somecode".fo<ref>o(2))
+    print ("somecode".fo<caret>o(2))
 }
