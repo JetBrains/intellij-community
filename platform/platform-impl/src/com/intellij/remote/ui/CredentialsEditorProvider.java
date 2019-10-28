@@ -18,7 +18,8 @@ public interface CredentialsEditorProvider {
                                  StatusPanel statusPanel,
                                  @Nullable Runnable validator,
                                  @NotNull Disposable disposable,
-                                 @Nullable BundleAccessor bundleAccessor);
+                                 @Nullable BundleAccessor bundleAccessor,
+                                 @NotNull SdkScopeController sdkScopeController);
 
   String getDefaultInterpreterPath(BundleAccessor bundleAccessor);
 }
