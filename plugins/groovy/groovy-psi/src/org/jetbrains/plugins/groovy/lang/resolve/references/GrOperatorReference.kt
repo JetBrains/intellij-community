@@ -5,7 +5,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.psi.PsiType
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyDependentReference
@@ -14,10 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
-import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
 class GrOperatorReference(
   element: GrOperatorExpression
@@ -26,7 +22,15 @@ class GrOperatorReference(
 
   override fun getRangeInElement(): TextRange = element.operationToken.textRangeInParent
 
-  override val receiver: PsiType? get() = element.leftType
+  override val receiverArgument: Argument?
+    get() {
+      val operand = when (val element = element) {
+        is GrBinaryExpression -> element.leftOperand
+        is GrAssignmentExpression -> element.lValue
+        else -> return null
+      }
+      return ExpressionArgument(operand)
+    }
 
   override val methodName: String = binaryOperatorMethodNames[element.operator] ?: error(element.text)
 

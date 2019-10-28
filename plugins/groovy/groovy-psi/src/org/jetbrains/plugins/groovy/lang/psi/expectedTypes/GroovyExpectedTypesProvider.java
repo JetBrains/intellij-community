@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -455,7 +456,7 @@ public class GroovyExpectedTypesProvider {
         public boolean satisfied(PsiType type, @NotNull PsiElement context) {
           final PsiType boxed = TypesUtil.boxPrimitiveType(type, context.getManager(), context.getResolveScope());
           final GroovyMethodCallReference reference = expression.getReference();
-          return !resolveWithArguments(boxed, reference.getMethodName(), reference.getArguments(), reference.getElement()).isEmpty();
+          return !resolveWithArguments(new JustTypeArgument(boxed), reference.getMethodName(), reference.getArguments(), reference.getElement()).isEmpty();
         }
 
         @NotNull
