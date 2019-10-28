@@ -121,11 +121,12 @@ private fun Iterable<Int>.maxOrDefault(): Int {
 /**
  * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
  */
-fun LiteLinearGraph.exclusiveNodes(headNode: Int): TIntHashSet {
+fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): TIntHashSet {
   val result = TIntHashSet()
   BfsWalk(headNode, this).walk { it ->
     val upNodes = getNodes(it, LiteLinearGraph.NodeFilter.UP)
-    if (upNodes.isEmpty() || upNodes.all { result.contains(it) }) {
+    if ((upNodes.isEmpty() || upNodes.all { result.contains(it) }) &&
+        (it == headNode || !isHead(it))) {
       result.add(it)
       true
     }
@@ -139,4 +140,6 @@ fun LiteLinearGraph.exclusiveNodes(headNode: Int): TIntHashSet {
 /**
  * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
  */
-fun LinearGraph.exclusiveNodes(headNode: Int): TIntHashSet = LinearGraphUtils.asLiteLinearGraph(this).exclusiveNodes(headNode)
+fun LinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): TIntHashSet {
+  return LinearGraphUtils.asLiteLinearGraph(this).exclusiveNodes(headNode, isHead)
+}

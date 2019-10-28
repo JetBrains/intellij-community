@@ -420,5 +420,5 @@ private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: G
   val ref = dataPack.findBranch(branchName, repo.root) ?: return null
   if (!ref.type.isBranch) return null
 
-  return dataPack.exclusiveCommits(ref, log.dataManager!!.storage)
+  return dataPack.exclusiveCommits(ref, dataPack.refsModel, log.dataManager!!.storage)
 }

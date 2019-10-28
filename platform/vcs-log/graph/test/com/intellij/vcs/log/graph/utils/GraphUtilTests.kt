@@ -175,9 +175,10 @@ class GraphUtilTests {
     }
   }
 
-  private fun assertExclusiveNodes(node: Int, expectedExclusiveNodes: TIntHashSet, graphBuilder: TestGraphBuilder.() -> Unit) {
+  private fun assertExclusiveNodes(node: Int, expectedExclusiveNodes: TIntHashSet,
+                                   otherHeads: TIntHashSet, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
-    val actualExclusiveNodes = graph.exclusiveNodes(node)
+    val actualExclusiveNodes = graph.exclusiveNodes(node) { n -> otherHeads.contains(n) }
     assertEquals(expectedExclusiveNodes, actualExclusiveNodes,
                  "Incorrect exclusive nodes for ${node} ${graph.asString(true)}")
   }
@@ -209,8 +210,10 @@ class GraphUtilTests {
       8(9)
       9()
     }
-    assertExclusiveNodes(0, troveSetOf(0, 2, 4, 6), graphBuilder)
-    assertExclusiveNodes(1, troveSetOf(1, 3, 5), graphBuilder)
+    assertExclusiveNodes(0, troveSetOf(0, 2, 4, 6), TIntHashSet(), graphBuilder)
+    assertExclusiveNodes(0, troveSetOf(0, 2), troveSetOf(0, 1, 4), graphBuilder)
+    assertExclusiveNodes(1, troveSetOf(1, 3, 5), TIntHashSet(), graphBuilder)
+    assertExclusiveNodes(1, troveSetOf(1, 3), troveSetOf(0, 1, 5), graphBuilder)
   }
 
   /*
@@ -239,8 +242,10 @@ class GraphUtilTests {
       7(8)
       8()
     }
-    assertExclusiveNodes(0, troveSetOf(0, 2, 3, 4, 6), graphBuilder)
-    assertExclusiveNodes(1, troveSetOf(1, 5), graphBuilder)
+    assertExclusiveNodes(0, troveSetOf(0, 2, 3, 4, 6), TIntHashSet(), graphBuilder)
+    assertExclusiveNodes(0, troveSetOf(0, 2, 4), troveSetOf(0, 1, 3), graphBuilder)
+    assertExclusiveNodes(1, troveSetOf(1, 5), TIntHashSet(), graphBuilder)
+    assertExclusiveNodes(1, troveSetOf(1), troveSetOf(0, 1, 5), graphBuilder)
   }
 
   private fun troveSetOf(vararg elements: Int) = TIntHashSet(intArrayOf(*elements))
