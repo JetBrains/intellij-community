@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.STATIC_CONTEXT
 
 fun Argument.processReceiver(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-  val receiverType: PsiType = type ?: TypesUtil.getJavaLangObject(place) ?: return true
+  val receiverType: PsiType = topLevelType ?: TypesUtil.getJavaLangObject(place) ?: return true
   return receiverType.doProcessReceiverType0(processor, state.put(ClassHint.RECEIVER, this), place)
 }
 
