@@ -232,7 +232,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (pluginBean.dependencies != null) {
       myOptionalConfigs = new LinkedHashMap<>();
       for (PluginDependency dependency : pluginBean.dependencies) {
-        String text = dependency.pluginId;
+        String text = StringUtil.trim(dependency.pluginId);
         if (!StringUtil.isEmptyOrSpaces(text)) {
           PluginId id = PluginId.getId(text);
           dependentPlugins.add(id);
