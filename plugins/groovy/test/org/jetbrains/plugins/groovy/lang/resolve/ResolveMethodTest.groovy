@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.idea.Bombed
 import com.intellij.psi.*
-import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
@@ -167,22 +166,6 @@ class ResolveMethodTest extends GroovyResolveTestCase {
     PsiClass clazz = ((PsiClassType) type).resolve()
     assertNotNull(clazz)
     assertEquals("java.util.ArrayList", clazz.qualifiedName)
-  }
-
-
-  void testSwingBuilderMethod() {
-    PsiReference ref = configureByFile("swingBuilderMethod/A.groovy")
-    PsiElement resolved = ref.resolve()
-    assertTrue(resolved instanceof PsiMethod)
-    assertFalse(resolved.physical)
-  }
-
-  void testSwingProperty() {
-    PsiReference ref = configureByFile("swingProperty/A.groovy")
-    PsiElement resolved = ref.resolve()
-    assertTrue(resolved instanceof PsiMethod)
-    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved))
-    assertEquals("javax.swing.JComponent", ((PsiMethod)resolved).containingClass.qualifiedName)
   }
 
   void testLangClass() {
