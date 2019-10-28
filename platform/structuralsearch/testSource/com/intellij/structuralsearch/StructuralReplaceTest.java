@@ -2063,7 +2063,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s3 = "$st$;\n" +
                 "$c$ = $i$;";
 
-    String expected = "2 = 1;\nint b = a;\nb2 = 3;";
+    String expected = "2 = 1;\n" +
+                      "int b = a;\n" +
+                      "b2 = 3;";
 
     assertEquals(expected, replace(s1, s2, s3));
 
@@ -2072,7 +2074,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                   "int '_c = '_a;";
     String s3_2 = "$st$;\n" +
                   "int $c$ = $i$;";
-    String expected_2 = "a = 2;\nint b = 1;\nb2 = 3;";
+    String expected_2 = "a = 2;\n" +
+                        "int b = 1;\n" +
+                        "b2 = 3;";
 
     assertEquals(expected_2, replace(s1, s2_2, s3_2));
   }
@@ -2309,20 +2313,34 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceMultipleVariablesInOneDeclaration() {
-    final String in = "class A {" +
-                      "  private int i, j, k;" +
-                      "  void m() {" +
-                      "    int i,j,k;" +
-                      "  }" +
-                      "}";
+    final String in = "class A {\n" +
+                      "  private int i, /*1*/j, k;\n" +
+                      "  void m() {\n" +
+                      "    int i,\n" +
+                      "        j,// 2\n" +
+                      "        k;\n" +
+                      "  }\n" +
+                      "}\n";
     final String what1 = "int '_i+;";
     final String by1 = "float $i$;";
-    assertEquals("class A {  private float i, j, k;  void m() {    float i,j,k;  }}",
+    assertEquals("class A {\n" +
+                 "  private float i, /*1*/j, k;\n" +
+                 "  void m() {\n" +
+                 "    float i,\n" +
+                 "        j,// 2\n" +
+                 "        k;\n" +
+                 "  }\n" +
+                 "}\n",
                  replace(in, what1, by1));
 
     final String what2 = "int '_a, '_b, '_c = '_d?;";
     final String by2 = "float $a$, $b$, $c$ = $d$;";
-    assertEquals("class A {  private float i, j, k;  void m() {    float i, j, k;  }}",
+    assertEquals("class A {\n" +
+                 "  private float i, j, k;\n" +
+                 "  void m() {\n" +
+                 "    float i, j, k;\n" +
+                 "  }\n" +
+                 "}\n",
                  replace(in, what2, by2));
   }
 

@@ -63,6 +63,11 @@ public class DeclarationStatementHandler extends MatchingHandler {
         new ArrayBackedNodeIterator(declared),
         new ArrayBackedNodeIterator(matchNodes.toArray(PsiElement.EMPTY_ARRAY))
       );
+      if (result) {
+        for (PsiElement matchNode : matchNodes) {
+          context.addMatchedNode(matchNode);
+        }
+      }
 
       if (result && declared[0] instanceof PsiVariable) {
         // we may have comments behind to match!
