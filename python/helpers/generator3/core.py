@@ -488,19 +488,19 @@ class SkeletonGenerator(object):
                 binaries = ((f, cut_binary_lib_suffix(root, f)) for f in files)
                 binaries = [(f, name) for (f, name) in binaries if name]
                 if binaries:
-                    debug("root: %s path: %s prefix: %s preprefix: %s" % (root, path, prefix, preprefix))
+                    trace("root: %s path: %s prefix: %s preprefix: %s" % (root, path, prefix, preprefix))
                     for f, name in binaries:
                         the_name = prefix + name
                         if is_skipped_module(root, f, the_name):
-                            debug('skipping module %s' % the_name)
+                            trace('skipping module %s' % the_name)
                             continue
-                        debug("cutout: %s" % name)
+                        trace("cutout: %s" % name)
                         if preprefix:
-                            debug("prefixes: %s %s" % (prefix, preprefix))
+                            trace("prefixes: %s %s" % (prefix, preprefix))
                             pre_name = (preprefix + prefix + name).upper()
                             if pre_name in res:
                                 res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
-                            debug("done with %s" % name)
+                            trace("done with %s" % name)
                         file_path = os.path.join(root, f)
 
                         res[the_name.upper()] = BinaryModule(the_name, file_path)
