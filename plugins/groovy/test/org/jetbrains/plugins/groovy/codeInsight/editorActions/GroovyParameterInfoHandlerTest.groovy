@@ -2,35 +2,20 @@
 package org.jetbrains.plugins.groovy.codeInsight.editorActions
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.EditorHintFixture
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.util.EdtRule
-import org.jetbrains.plugins.groovy.util.FixtureRule
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.ResolveTest
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
-import org.junit.rules.TestName
-import org.junit.rules.TestRule
 
 import static com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
 import static org.jetbrains.plugins.groovy.util.TestUtils.readInput
 
 @CompileStatic
-class GroovyParameterInfoHandlerTest implements ResolveTest {
+class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements ResolveTest {
 
-  public final FixtureRule myFixtureRule = new FixtureRule(GroovyProjectDescriptors.GROOVY_3_0, 'parameterInfo/')
-  public final TestName myNameRule = new TestName()
-  @Rule
-  public final TestRule myRules = RuleChain.outerRule(myNameRule).around(myFixtureRule).around(new EdtRule())
-
-  @NotNull
-  @Override
-  CodeInsightTestFixture getFixture() {
-    myFixtureRule.fixture
+  GroovyParameterInfoHandlerTest() {
+    super("parameterInfo/")
   }
 
   @Test
@@ -64,12 +49,11 @@ class GroovyParameterInfoHandlerTest implements ResolveTest {
   }
 
   private void testParameterHint() {
-    def name = myNameRule.methodName.split(" ")*.capitalize().join('').uncapitalize()
-    def testName = name + ".test"
-    def input = readInput("$fixture.testDataPath$testName")[0]
+    def name = testName.split(" ")*.capitalize().join('').uncapitalize() + ".test"
+    def input = readInput("$fixture.testDataPath$name")[0]
     def hint = getParameterHint(input)
     configureByText "$input\n-----\n$hint"
-    fixture.checkResultByFile(testName)
+    fixture.checkResultByFile(name)
   }
 
   private String getParameterHint(String text) {
