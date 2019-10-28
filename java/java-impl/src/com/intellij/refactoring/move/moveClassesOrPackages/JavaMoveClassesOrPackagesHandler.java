@@ -253,6 +253,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
               return null;
             }
             return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments, searchForTextOccurences, true, callback) {
+              @NotNull
               @Override
               public TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
                 final PsiDirectory targetDirectory = destination.getTargetDirectory(dir);

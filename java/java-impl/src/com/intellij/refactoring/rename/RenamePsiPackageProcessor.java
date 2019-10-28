@@ -90,6 +90,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
 
     return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments,
                                                  searchInNonJavaFiles, false, null) {
+      @NotNull
       @Override
       public TargetDirectoryWrapper getTargetDirectory(final PsiDirectory dir) {
         final VirtualFile vFile = dir.getVirtualFile();

@@ -100,7 +100,8 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the created directory instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException;
+  @NotNull
+  PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a subdirectory with the specified name in the directory,
