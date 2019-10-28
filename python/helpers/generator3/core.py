@@ -415,7 +415,8 @@ class SkeletonGenerator(object):
     def __init__(self,
                  output_dir,  # type: str
                  roots=None,  # type: List[str]
-                 state_json=None  # type: Dict[str, Any]
+                 state_json=None,  # type: Dict[str, Any]
+                 write_state_json=False,
                  ):
         self.output_dir = output_dir.rstrip(os.path.sep)
         # TODO make cache directory configurable via CLI
@@ -423,7 +424,7 @@ class SkeletonGenerator(object):
         self.roots = roots
         self.in_state_json = state_json
         self.out_state_json = {'sdk_skeletons': {}}
-        self.write_state_json = state_json is not None
+        self.write_state_json = write_state_json
 
     def discover_and_process_all_modules(self, name_pattern=None):
         if name_pattern is None:
@@ -513,7 +514,7 @@ class SkeletonGenerator(object):
             existing_skeleton_meta = self.in_state_json['sdk_skeletons'].get(mod_name, {})
             sdk_skeleton_state = self.out_state_json['sdk_skeletons'][mod_name] = deepcopy(existing_skeleton_meta)
         else:
-            sdk_skeleton_state = None
+            sdk_skeleton_state = self.out_state_json['sdk_skeletons'][mod_name] = {}
 
         status = self.reuse_or_generate_skeleton(mod_name, mod_path, sdk_skeleton_state)
         control_message('generation_result', {
@@ -521,22 +522,21 @@ class SkeletonGenerator(object):
             'module_origin': get_module_origin(mod_path, mod_name),
             'generation_status': status
         })
-        if sdk_skeleton_state is not None:
-            if mod_path:
-                sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_path)
+        if mod_path:
+            sdk_skeleton_state['bin_mtime'] = file_modification_timestamp(mod_path)
 
-            # If we skipped generation for already failing module, we can safely set
-            # the current generator version in ".state.json" as skipping means that this
-            # version is not greater (i.e. we don't need to distinguish between "skipped as failing"
-            # and "failed during generation").
-            if status not in (GenerationStatus.UP_TO_DATE, GenerationStatus.COPIED):
-                # TODO don't update state_json inplace
-                sdk_skeleton_state['gen_version'] = version()
+        # If we skipped generation for already failing module, we can safely set
+        # the current generator version in ".state.json" as skipping means that this
+        # version is not greater (i.e. we don't need to distinguish between "skipped as failing"
+        # and "failed during generation").
+        if status not in (GenerationStatus.UP_TO_DATE, GenerationStatus.COPIED):
+            # TODO don't update state_json inplace
+            sdk_skeleton_state['gen_version'] = version()
 
-            sdk_skeleton_state['status'] = status
+        sdk_skeleton_state['status'] = status
 
-            if is_test_mode():
-                sdk_skeleton_state.pop('bin_mtime', None)
+        if is_test_mode():
+            sdk_skeleton_state.pop('bin_mtime', None)
         return status
 
     def reuse_or_generate_skeleton(self, mod_name, mod_path, mod_state_json):
