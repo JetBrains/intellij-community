@@ -228,17 +228,8 @@ class GHPRChangesProviderImpl(private val repository: GitRepository, commits: Li
   }
 
   private fun findChangeForPatch(changes: Collection<MutableChange>, patch: FilePatch): MutableChange? {
-    var beforeName = patch.beforeName
-    var afterName = patch.afterName
-    //workaround for empty "binary patches"
-    if (patch is TextFilePatch && patch.hunks.isEmpty()) {
-      if (patch.beforeVersionId == "0000000") beforeName = null
-      if (patch.afterVersionId == "0000000") afterName = null
-    }
-    else {
-      if (patch.isNewFile) beforeName = null
-      if (patch.isDeletedFile) afterName = null
-    }
+    val beforeName = if (patch.isNewFile) null else patch.beforeName
+    val afterName = if (patch.isDeletedFile) null else patch.afterName
 
     val beforePath = beforeName?.let { VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(it)) }
     val afterPath = afterName?.let { VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(it)) }
