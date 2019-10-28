@@ -146,7 +146,7 @@ NSArray *allVms() {
             }
         }
         if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
-        NSLog(@"Can't get bundled java version. It is probably corrupted: %@", jvmBundlePaths[jvmBundlePaths.count-1]);
+        NSLog(@"Can't get bundled java version. It is probably corrupted.");
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
         appendJvmBundlesAt(@"/Library/Java/JavaVirtualMachines", jvmBundlePaths);
