@@ -31,7 +31,7 @@ public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
 
   @NotNull
   @Override
-  default String getPresentation() {
+  default String getDisplayText() {
     return StringUtil.join(getFiles(), FilePath::getName, ", ");
   }
 }
