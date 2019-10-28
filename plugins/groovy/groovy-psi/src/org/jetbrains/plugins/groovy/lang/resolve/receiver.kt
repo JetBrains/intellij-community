@@ -58,7 +58,7 @@ private fun PsiClassType.processClassType(processor: PsiScopeProcessor, state: R
     return false
   }
 
-  return processClassDeclarations(clazz, processor, newState.put(ClassHint.THIS_TYPE, this), null, place)
+  return processClassDeclarations(clazz, processor, newState, null, place)
 }
 
 private fun PsiClassType.processMapType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
