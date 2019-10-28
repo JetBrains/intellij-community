@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,15 +101,15 @@ public class GitPatchParser {
   }
 
   private static void applyPatchInfo(@NotNull FilePatch patch, @NotNull GitPatchParser.PatchInfo patchInfo) {
-    patch.setBeforeName(patchInfo.myBeforeName);
-    patch.setAfterName(patchInfo.myAfterName);
+    if (patch instanceof TextFilePatch) ((TextFilePatch)patch).setFileStatus(patchInfo.myFileStatus);
+
+    if (patch.getBeforeName() == null && !patch.isNewFile()) patch.setBeforeName(patchInfo.myBeforeName);
+    if (patch.getAfterName() == null && !patch.isDeletedFile()) patch.setAfterName(patchInfo.myAfterName);
     //remember sha-1 as version ids or set null if no info
     patch.setBeforeVersionId(patchInfo.myBeforeIndex);
     patch.setAfterVersionId(patchInfo.myAfterIndex);
     //set new file mode
     patch.setNewFileMode(patchInfo.myNewFileMode);
-
-    if (patch instanceof TextFilePatch) ((TextFilePatch)patch).setFileStatus(patchInfo.myFileStatus);
   }
 
 
@@ -116,8 +117,14 @@ public class GitPatchParser {
   private static Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
     Matcher m = ourGitHeaderLinePattern.matcher(start);
     return m.matches()
-           ? Couple.of(stripPatchNameIfNeeded(m.group(1), true, true), stripPatchNameIfNeeded(m.group(2), true, false))
+           ? Couple.of(getFileNameFromGitHeaderLine(m.group(1), true),
+                       getFileNameFromGitHeaderLine(m.group(2), false))
            : null;
+  }
+
+  @Nullable
+  private static String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
+    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), true, before);
   }
 
   @NotNull

@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
 import git4idea.GitContentRevision
-import git4idea.GitUtil
 import git4idea.repo.GitRepository
 
 class GHPRChangesProviderImpl(private val repository: GitRepository, commits: List<GitCommit>, diffFile: String)
@@ -231,8 +230,8 @@ class GHPRChangesProviderImpl(private val repository: GitRepository, commits: Li
     val beforeName = if (patch.isNewFile) null else patch.beforeName
     val afterName = if (patch.isDeletedFile) null else patch.afterName
 
-    val beforePath = beforeName?.let { VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(it)) }
-    val afterPath = afterName?.let { VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(it)) }
+    val beforePath = beforeName?.let { VcsUtil.getFilePath(repository.root, it) }
+    val afterPath = afterName?.let { VcsUtil.getFilePath(repository.root, it) }
 
     return changes.find { it.firstRevision?.file == beforePath && it.lastRevision?.file == afterPath }
   }
