@@ -423,8 +423,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       LicensingFacade instance = LicensingFacade.getInstance();
-      if (instance == null) {
-        myLicensePanel.setText("No license in EAP build.", false, false);
+      if (instance == null || ApplicationManager.getApplication().isEAP()) {
+        ((JComponent)myTagPanel.getComponent(0)).setToolTipText("The license is not required for EAP version");
+        myLicensePanel.hideWithChildren();
       }
       else {
         String stamp = instance.getConfirmationStamp(productCode);
@@ -434,11 +435,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
         else {
           myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
         }
-        //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
-      }
-      myLicensePanel.setVisible(true);
 
-      ((JComponent)myTagPanel.getComponent(0)).setToolTipText(myLicensePanel.getMessage());
+        //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
+        myLicensePanel.setVisible(true);
+
+        ((JComponent)myTagPanel.getComponent(0)).setToolTipText(myLicensePanel.getMessage());
+      }
     }
 
     if (bundled) {

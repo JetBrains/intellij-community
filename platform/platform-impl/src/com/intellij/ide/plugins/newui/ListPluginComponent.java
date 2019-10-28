@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
@@ -270,8 +271,8 @@ public class ListPluginComponent extends JPanel {
     }
 
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (instance == null) {
-      setTagTooltip("No license in EAP build");
+    if (instance == null || ApplicationManager.getApplication().isEAP()) {
+      setTagTooltip("The license is not required for EAP version");
       return;
     }
 
