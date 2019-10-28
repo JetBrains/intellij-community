@@ -50,7 +50,7 @@ public enum ShortenCommandLine {
     return myPresentableName;
   }
 
-  public static ShortenCommandLine getDefaultMethod(@Nullable Project project, String rootPath) {
+  public static @NotNull ShortenCommandLine getDefaultMethod(@Nullable Project project, String rootPath) {
     if (!JdkUtil.useDynamicClasspath(project)) return NONE;
     if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) return ARGS_FILE;
     if (JdkUtil.useClasspathJar()) return MANIFEST;
