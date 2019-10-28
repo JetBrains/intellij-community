@@ -411,12 +411,21 @@ public class FrameWrapper implements Disposable, DataProvider {
     @NotNull
     @Override
     public Rectangle suggestChildFrameBounds() {
-      return myParent.suggestChildFrameBounds();
+      return myParent != null ? myParent.suggestChildFrameBounds() : getOnScreenBounds();
+    }
+
+    private static Rectangle getOnScreenBounds() {
+      Rectangle r = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        .getDefaultScreenDevice()
+        .getDefaultConfiguration()
+        .getBounds();
+      int margin = r.width / 20; // 1/20th or 5% from each side
+      return new Rectangle(r.x + margin, r.y + margin, r.width - margin * 2, r.height - margin * 2);
     }
 
     @Override
     public Project getProject() {
-      return myParent.getProject();
+      return myParent != null ? myParent.getProject() : ProjectManager.getInstance().getDefaultProject();
     }
 
     @Override
