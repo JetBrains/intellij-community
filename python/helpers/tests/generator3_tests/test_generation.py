@@ -539,7 +539,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     custom_required_gen=True,
                                     input=json.dumps(state))
 
-    def test_non_existing_skeleton(self):
+    def test_new_modules_are_added_to_state_json(self):
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -551,6 +551,21 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
         self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.1')
+
+    def test_not_found_modules_are_removed_from_state_json(self):
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                }
+            }
+        }
+        self.check_generator_output(input=json.dumps(state), gen_version='0.1', custom_required_gen=True)
 
     def test_only_leaving_state_file_no_read(self):
         self.check_generator_output(extra_args=['--state-file-policy', 'write', '--name-pattern', 'mod?'])
