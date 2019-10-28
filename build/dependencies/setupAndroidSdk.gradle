@@ -39,10 +39,11 @@ def osFamily = currentOs.familyName
 
 ext.kotlin_version = "1.3.50"
 ext.android_m2_version = "26.5.0.1"
+ext.android_sdk_version = "${osFamily}.3.3.3"
 
 dependencies {
   androidOfflineRepo "org.jetbrains.intellij.deps.android.tools:android-sdk-offline-repo:${android_m2_version}@zip"
-  androidSdk "android-sdk:android-sdk:${osFamily}.3.3.3:@tar.gz"
+  androidSdk "android-sdk:android-sdk:${android_sdk_version}:@tar.gz"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
@@ -63,32 +64,56 @@ dependencies {
 
 /* First we setup an offline-repo. This will remove all the alien files from .../android-sdk.
    Later we will create an overlay with Android SDK and KotlinPlugin artifacts */
-task syncOfflineRepo(dependsOn: configurations.androidOfflineRepo, type: Copy) {
-  outputs.upToDateWhen { file("${project.buildDir}/android-sdk/${android_m2_version}.version").exists() }
-  doFirst { file("${project.buildDir}/android-sdk").deleteDir() }
+task syncOfflineRepo(dependsOn: configurations.androidOfflineRepo, type: VersionedCopyTask) {
+  versionStr android_m2_version
   from { zipTree(configurations.androidOfflineRepo.singleFile) }
   into "${project.buildDir}/android-sdk"
-  doLast { file("${project.buildDir}/android-sdk/${android_m2_version}.version").write(android_m2_version) }
 }
 
-task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo], type: Sync) {
+task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo], type: VersionedCopyTask) {
+  versionStr kotlin_version
   from "$buildDir/kotlin"
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
 }
 
-task syncAndroidSdk(dependsOn: [configurations.androidSdk, syncOfflineRepo], type: Sync) {
+task syncAndroidSdk(dependsOn: [configurations.androidSdk, syncOfflineRepo], type: VersionedCopyTask) {
+  versionStr android_sdk_version
   from { tarTree(resources.gzip(configurations.androidSdk.singleFile)) }
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
 }
 
 task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncOfflineRepo], type: OfflineMavenRepository) {
-  outputs.upToDateWhen { false }
+  onlyIf {
+    !(file("${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/${kotlin_version}").isDirectory())
+  }
   configurationName = "kotlinDeps"
   repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
 }
 
 task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk, updateKotlinLibs]) {
   // This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
+}
+
+class VersionedCopyTask extends Copy {
+  void setVersionStr(String versionStr) {
+    def versionFile = { return new File("${getDestinationDir()}/${versionStr}.version") }
+    onlyIf {
+      !(versionFile.call().exists())
+    }
+
+    doFirst {
+      getDestinationDir().deleteDir()
+    }
+
+    doLast {
+      versionFile.call().write(versionStr)
+    }
+  }
+
+  @Override
+  AbstractCopyTask into(Object destDir) {
+    return super.into(destDir)
+  }
 }
 
 class OfflineMavenRepository extends DefaultTask {
@@ -108,7 +133,7 @@ class OfflineMavenRepository extends DefaultTask {
   private void copyJars(Configuration configuration) {
     configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
       def moduleVersionId = artifact.moduleVersion.id
-      File moduleDir = new File(repoDir, "${moduleVersionId.group.replace('.','/')}/${moduleVersionId.name}/${moduleVersionId.version}")
+      File moduleDir = new File(repoDir, "${moduleVersionId.group.replace('.', '/')}/${moduleVersionId.name}/${moduleVersionId.version}")
       GFileUtils.mkdirs(moduleDir)
 
       File target = new File(moduleDir, artifact.file.name)
@@ -125,11 +150,11 @@ class OfflineMavenRepository extends DefaultTask {
       .withArtifacts(MavenModule, MavenPomArtifact)
       .execute()
 
-    for(component in result.resolvedComponents) {
+    for (component in result.resolvedComponents) {
       def componentId = component.id
 
-      if(componentId instanceof ModuleComponentIdentifier) {
-        File moduleDir = new File(repoDir, "${componentId.group.replace('.','/')}/${componentId.module}/${componentId.version}")
+      if (componentId instanceof ModuleComponentIdentifier) {
+        File moduleDir = new File(repoDir, "${componentId.group.replace('.', '/')}/${componentId.module}/${componentId.version}")
         GFileUtils.mkdirs(moduleDir)
         File pomFile = component.getArtifacts(MavenPomArtifact)[0].file
         GFileUtils.copyFile(pomFile, new File(moduleDir, pomFile.name))
