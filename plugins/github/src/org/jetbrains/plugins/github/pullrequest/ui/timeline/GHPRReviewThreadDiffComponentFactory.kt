@@ -101,7 +101,7 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
     val toRemoveIdx = hunk.lines.lastIndex - DIFF_SIZE
     for (i in 0..toRemoveIdx) {
       val line = hunk.lines[i]
-      when (line.type!!) {
+      when (line.type) {
         PatchLine.Type.CONTEXT -> {
           startLineBefore++
           startLineAfter++

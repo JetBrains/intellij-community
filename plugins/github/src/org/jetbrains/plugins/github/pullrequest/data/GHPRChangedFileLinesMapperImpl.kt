@@ -81,13 +81,13 @@ class GHPRChangedFileLinesMapperImpl(private val diff: TextFilePatch) : GHPRChan
 
     for (line in hunk.lines) {
       if (hunkLineIterator == hunkLineIndex) {
-        return when (line.type!!) {
+        return when (line.type) {
           PatchLine.Type.REMOVE -> Side.LEFT to lineNumberLeft
           PatchLine.Type.CONTEXT, PatchLine.Type.ADD -> Side.RIGHT to lineNumberRight
         }
       }
 
-      when (line.type!!) {
+      when (line.type) {
         PatchLine.Type.REMOVE -> lineNumberLeft++
         PatchLine.Type.ADD -> lineNumberRight++
         PatchLine.Type.CONTEXT -> {

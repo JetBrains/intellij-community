@@ -189,7 +189,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository, commits: Li
     var newLine2 = false
 
     for (line in hunk.lines) {
-      when (line.type!!) {
+      when (line.type) {
         PatchLine.Type.REMOVE -> {
           end1++
           changeFound = true
