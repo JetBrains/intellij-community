@@ -32,8 +32,7 @@ class GrOperatorReference(
 
   override val arguments: Arguments?
     get() {
-      val element = element
-      val operand = when (element) {
+      val operand = when (val element = element) {
         is GrBinaryExpression -> element.rightOperand
         is GrAssignmentExpression -> element.rValue
         else -> null
