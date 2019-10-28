@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Posit
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
@@ -355,7 +356,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
           GroovyMethodCallReference reference = call.getImplicitCallReference();
           if (reference != null) {
-            checkCallApplicability(reference.getReceiver(), true, info);
+            Argument receiver = reference.getReceiverArgument();
+            PsiType receiverType = receiver != null ? receiver.getType() : null;
+            checkCallApplicability(receiverType, true, info);
           }
           else {
             checkMethodApplicability(resolveResult, true, info);

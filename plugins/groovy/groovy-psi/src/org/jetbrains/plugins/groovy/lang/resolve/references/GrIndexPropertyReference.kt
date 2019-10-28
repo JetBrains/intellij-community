@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
@@ -24,12 +22,12 @@ abstract class GrIndexPropertyReference(element: GrIndexProperty) : GroovyMethod
    */
   abstract override fun getRangeInElement(): TextRange
 
-  final override val receiver: PsiType? get() = element.invokedExpression.type
+  final override val receiverArgument: Argument get() = ExpressionArgument(element.invokedExpression)
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     val place = element
 
-    val receiver = receiver ?: TypesUtil.getJavaLangObject(element)
+    val receiver = receiverArgument
     val methodName = methodName
 
     val arguments: Arguments? = if (incomplete) null else arguments
