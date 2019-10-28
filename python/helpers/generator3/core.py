@@ -3,6 +3,7 @@ import collections
 import fnmatch
 import json
 import logging
+from copy import deepcopy
 
 from generator3.util_methods import *
 
@@ -420,8 +421,8 @@ class SkeletonGenerator(object):
         # TODO make cache directory configurable via CLI
         self.cache_dir = os.path.join(os.path.dirname(self.output_dir), CACHE_DIR_NAME)
         self.roots = roots
-        # TODO split in and out state.json files
         self.in_state_json = state_json
+        self.out_state_json = {'sdk_skeletons': {}}
         self.write_state_json = state_json is not None
 
     def discover_and_process_all_modules(self, name_pattern=None):
@@ -448,7 +449,7 @@ class SkeletonGenerator(object):
             state_json_path = os.path.join(self.output_dir, STATE_FILE_NAME)
             info('Writing skeletons state to {!r}'.format(state_json_path))
             with fopen(state_json_path, 'w') as f:
-                json.dump(self.in_state_json, f, sort_keys=True)
+                json.dump(self.out_state_json, f, sort_keys=True)
 
     @staticmethod
     def collect_builtin_modules():
@@ -508,8 +509,12 @@ class SkeletonGenerator(object):
 
     def process_module(self, mod_name, mod_path=None):
         # type: (str, str) -> GenerationStatusId
-        sdk_skeleton_state = self.in_state_json['sdk_skeletons'].setdefault(mod_name,
-                                                                            {}) if self.in_state_json else None
+        if self.in_state_json:
+            existing_skeleton_meta = self.in_state_json['sdk_skeletons'].get(mod_name, {})
+            sdk_skeleton_state = self.out_state_json['sdk_skeletons'][mod_name] = deepcopy(existing_skeleton_meta)
+        else:
+            sdk_skeleton_state = None
+
         status = self.reuse_or_generate_skeleton(mod_name, mod_path, sdk_skeleton_state)
         control_message('generation_result', {
             'module_name': mod_name,
