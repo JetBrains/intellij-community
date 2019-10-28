@@ -1,8 +1,9 @@
 import atexit
-import json
 import logging
 import os
 import sys
+
+import json
 
 _containing_dir = os.path.dirname(os.path.abspath(__file__))
 _helpers_dir = os.path.dirname(_containing_dir)
@@ -88,8 +89,7 @@ def main():
 
     helptext = get_help_text()
     opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzuV", longopts=['name-pattern=',
-                                                                      'read-state-from-stdin',
-                                                                      'write-state-file'])
+                                                                      'state-file-policy='])
     opts = dict(opts)
 
     generator3.core.quiet = '-q' in opts
@@ -103,11 +103,12 @@ def main():
     if "-x" in opts:
         debug_mode = True
 
-    if '--read-state-from-stdin' in opts:
+    state_file_policy = opts.get('--state-file-policy')
+    if state_file_policy == 'readwrite':
         # We can't completely shut off stdin in case Docker-based interpreter to use json.load()
         # and have to retreat to reading the content line-wise
         state_json = json.loads(sys.stdin.readline(), encoding='utf-8')
-    elif '--write-state-file' in opts:
+    elif state_file_policy == 'write':
         state_json = {'sdk_skeletons': {}}
     else:
         state_json = None
