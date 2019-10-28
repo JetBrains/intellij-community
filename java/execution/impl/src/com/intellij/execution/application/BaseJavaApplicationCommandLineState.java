@@ -143,7 +143,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (myConfiguration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("runtime.environments")) {
       String targetName = ((TargetEnvironmentAwareRunProfile)myConfiguration).getDefaultTargetName();
       if (targetName != null) {
-        TargetEnvironmentConfiguration config = RemoteTargetsManager.getInstance().getTargets().findByName(targetName);
+        TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
         if (config == null) {
           throw new ExecutionException("Cannot find target " + targetName);
         }

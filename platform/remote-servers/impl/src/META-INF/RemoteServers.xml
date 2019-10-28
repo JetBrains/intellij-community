@@ -46,7 +46,7 @@
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
 
-    <applicationService serviceImplementation="com.intellij.execution.target.RemoteTargetsManager"/>
+    <applicationService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
     <ir.languageRuntime implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType" />
     <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
                         serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
