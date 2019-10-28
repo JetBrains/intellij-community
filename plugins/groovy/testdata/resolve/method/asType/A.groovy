@@ -16,4 +16,4 @@ class D {
 
 
 
-print(new C() a<ref>s D)
+print(new C() a<caret>s D)
