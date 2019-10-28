@@ -16,8 +16,12 @@
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.remote.RemoteSdkAdditionalData;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public interface CredentialsEditor<T> {
 
@@ -26,6 +30,9 @@ public interface CredentialsEditor<T> {
   void onSelected();
 
   ValidationInfo validate();
+
+  String validateFinal(@NotNull Supplier<? extends RemoteSdkAdditionalData<?>> supplier,
+                       @NotNull Consumer<String> helpersPathUpdateCallback);
 
   void saveCredentials(T credentials);
 
