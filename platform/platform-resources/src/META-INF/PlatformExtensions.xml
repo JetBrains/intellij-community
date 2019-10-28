@@ -834,5 +834,8 @@
 
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
     <statistics.counterUsagesCollector groupId="intellij.cds" version="2"/>
+
+    <statistics.counterUsagesCollector groupId="startup" version="1"/>
+    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
   </extensions>
 </idea-plugin>

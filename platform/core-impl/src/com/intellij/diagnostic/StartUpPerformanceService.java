@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectLongHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,9 @@ public interface StartUpPerformanceService extends StartupActivity {
 
   @NotNull
   Map<String, ObjectLongHashMap<String>> getPluginCostMap();
+
+  @Nullable
+  ObjectIntHashMap<String> getMetrics();
 
   @Nullable
   ByteBuffer getLastReport();
