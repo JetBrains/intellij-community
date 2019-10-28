@@ -38,7 +38,6 @@ object UpdateInfoPanelUI {
   private val DIVIDER_COLOR = JBColor(0xd9d9d9, 0x515151)
   private const val DEFAULT_HEIGHT = 600
   private const val DEFAULT_WIDTH = 700
-  private val jbDomains = listOf("jetbrains.com", "intellij.net", "intellij.com", "kotlinlang.com", "jb.gg")
 
   fun createPanel(newBuild: BuildInfo,
                   patches: UpdateChain?,
@@ -59,10 +58,8 @@ object UpdateInfoPanelUI {
         it.text = """<html><head>$cssFontDeclaration</head><body>$updateHighlightsContent</body></html>"""
         it.addHyperlinkListener(HyperlinkListener { event: HyperlinkEvent ->
           if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-            if (jbDomains.any { domain -> event.url.host.endsWith(domain) }) {
-              FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog", "link.clicked",
-                                                          FeatureUsageData().addData("url", event.url.toString()))
-            }
+            FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog", "link.clicked",
+                                                        FeatureUsageData().addData("url", event.url.toString()))
           }
         })
 
