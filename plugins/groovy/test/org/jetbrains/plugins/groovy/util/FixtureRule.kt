@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.util
 // Android Studio: translated from Kotlin to Java to work around b/111900968
 // import com.intellij.testFramework.LightProjectDescriptor
 // import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+// import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 // import org.jetbrains.plugins.groovy.LightGroovyTestCase
 // import org.junit.rules.ExternalResource
 // 
@@ -14,7 +15,7 @@ package org.jetbrains.plugins.groovy.util
 //     override fun getBasePath(): String = TestUtils.getTestDataPath() + path
 //   }
 // 
-//   val fixture: CodeInsightTestFixture get() = testCase.fixture
+//   val fixture: JavaCodeInsightTestFixture get() = testCase.fixture
 // 
 //   override fun before(): Unit = testCase.setUp()
 // 
