@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -53,7 +54,8 @@ public class OffsetMap implements Disposable {
       if (marker == null) throw new IllegalArgumentException("Offset " + key + " is not registered");
       if (!marker.isValid()) {
         removeOffset(key);
-        throw new IllegalStateException("Offset " + key + " is invalid: " + marker);
+        throw new IllegalStateException("Offset " + key + " is invalid: " + marker +
+                                        ", document.valid=" + (!(myDocument instanceof DocumentWindow) || ((DocumentWindow)myDocument).isValid()));
       }
 
       final int endOffset = marker.getEndOffset();
