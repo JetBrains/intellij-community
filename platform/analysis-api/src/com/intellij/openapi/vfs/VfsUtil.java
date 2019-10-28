@@ -379,7 +379,7 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
     List<VirtualFile> result = new ArrayList<>();
-    visitChildrenRecursively(root, new VirtualFileVisitor<Object>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+    visitChildrenRecursively(root, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         result.add(file);
