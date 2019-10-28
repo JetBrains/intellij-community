@@ -824,5 +824,8 @@
     <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
                         serviceImplementation="com.intellij.configurationStore.StoreReloadManagerImpl"/>
     <virtualFileManagerListener implementation="com.intellij.configurationStore.StoreReloadManagerImpl$MyVirtualFileManagerListener"/>
+
+    <statistics.counterUsagesCollector groupId="startup" version="1"/>
+    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
   </extensions>
 </idea-plugin>
