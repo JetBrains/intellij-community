@@ -79,6 +79,10 @@ public class ScopeUtil {
     if (element == null) {
       return null;
     }
+    if (element instanceof PyExpressionCodeFragment) {
+      final PsiElement context = element.getContext();
+      return context instanceof ScopeOwner ? (ScopeOwner)context : getScopeOwner(context);
+    }
     if (element instanceof StubBasedPsiElement) {
       final StubElement stub = ((StubBasedPsiElement)element).getStub();
       if (stub != null) {

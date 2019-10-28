@@ -49,6 +49,11 @@ public class PythonDoctestCompletionTest extends PyTestCase {
     doDoctestTest("foo");
   }
 
+  // PY-31517
+  public void testFunctionDeclaredInDoctest() {
+    doDoctestTest("foo");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion/doctest";
