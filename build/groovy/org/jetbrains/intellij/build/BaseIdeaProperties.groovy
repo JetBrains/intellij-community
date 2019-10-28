@@ -73,7 +73,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "lib/util.jar"                                              : "1.8",
     "lib/external-system-rt.jar"                                : "1.6",
     "lib/jshell-frontend.jar"                                   : "1.9",
-    "plugins/java/lib/sa-jdwp-1.13.jar"                         : "",  // ignored
+    "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
     "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
     "plugins/Groovy/lib/groovy_rt.jar"                          : "1.5",
