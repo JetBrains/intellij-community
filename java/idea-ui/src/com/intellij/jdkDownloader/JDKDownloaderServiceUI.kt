@@ -27,11 +27,9 @@ import com.intellij.util.Consumer
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
-import java.util.function.Supplier
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 private const val DIALOG_TITLE = "Add new JDK"
 
@@ -42,7 +40,7 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
                                    sdkModel: SdkModel,
                                    parentComponent: JComponent,
                                    callback: Consumer<Sdk>) {
-    val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent)) ?: return
+    val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
 
     fun addSdkIfNotNull(jdkHome: String?) {
       if (jdkHome == null) return
@@ -71,8 +69,9 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
           return
         }
 
+        indicator.checkCanceled()
         invokeLater {
-          if (project.isDisposedOrDisposeInProgress) return@invokeLater
+          if (project?.isDisposedOrDisposeInProgress == true) return@invokeLater
           val jdkHome = SelectOrDownloadJDKDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJDK()
           addSdkIfNotNull(jdkHome)
         }
@@ -90,7 +89,7 @@ private fun showJDKSelectorFromDisk(sdkType: SdkType, project: Project?, compone
 }
 
 private class SelectOrDownloadJDKDialog(
-  val project: Project,
+  val project: Project?,
   val parentComponent: Component?,
   val sdkType: SdkType,
   val items: List<JDKItem>
@@ -98,6 +97,7 @@ private class SelectOrDownloadJDKDialog(
   private val LOG = logger<SelectOrDownloadJDKDialog>()
 
   private val panel: JComponent
+  private var installDirTextField: TextFieldWithBrowseButton
 
   private val selectFromDiskAction = object : DialogWrapperAction("Find on the disk...") {
     override fun doAction(e: ActionEvent?) = doSelectFromDiskAction()
@@ -105,10 +105,7 @@ private class SelectOrDownloadJDKDialog(
 
   private lateinit var selectedItem: JDKItem
   private lateinit var selectedPath: String
-
   private lateinit var resultingJDKHome: String
-
-  private lateinit var installDirTextField: TextFieldWithBrowseButton
 
   init {
     title = DIALOG_TITLE
