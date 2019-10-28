@@ -8,18 +8,28 @@ import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processClassDeclarations
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GroovyMapPropertyImpl
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.STATIC_CONTEXT
 
+fun Argument.processReceiver(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+  val receiverType: PsiType = type ?: TypesUtil.getJavaLangObject(place) ?: return true
+  return receiverType.doProcessReceiverType0(processor, state.put(ClassHint.RECEIVER, this), place)
+}
+
 fun PsiType?.processReceiverType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
   if (this == null) return true
-  val newState = state.put(ClassHint.RECEIVER, JustTypeArgument(this))
-  if (!doProcessReceiverType(processor, newState, place)) return false
-  return !state.processNonCodeMembers() || processNonCodeMembers(this, processor, place, newState)
+  return doProcessReceiverType0(processor, state.put(ClassHint.RECEIVER, JustTypeArgument(this)), place)
+}
+
+private fun PsiType.doProcessReceiverType0(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+  if (!doProcessReceiverType(processor, state, place)) return false
+  return !state.processNonCodeMembers() || processNonCodeMembers(this, processor, place, state)
 }
 
 private fun PsiType.doProcessReceiverType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
