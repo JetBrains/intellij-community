@@ -467,7 +467,6 @@ internal class GHCloneDialogExtensionComponent(
   private fun onSelectedUrlChanged() {
     val urlSelected = selectedUrl != null
     dialogStateListener.onOkActionEnabled(urlSelected)
-    directoryField.isEnabled = urlSelected
     if (urlSelected) {
       val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl!!), GitUtil.DOT_GIT)
       directoryField.trySetChildPath(path)
