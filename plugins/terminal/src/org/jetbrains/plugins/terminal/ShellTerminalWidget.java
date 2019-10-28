@@ -77,7 +77,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
           executeMatchedCommand(getTypedShellCommand(), e);
         }
-        else {
+        if (!e.isConsumed()) {
           myPromptUpdateNeeded = true;
           myEscapePressed = false;
         }
