@@ -11,7 +11,6 @@ import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 import kotlin.properties.Delegates
 
 abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManager)
@@ -41,7 +40,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
         when {
           error != null && !GithubAsyncUtil.isCancellation(error) -> {
             loading = false
-            this.error = if (error is CompletionException) error.cause!! else error
+            this.error = error
           }
           list != null -> {
             loading = false

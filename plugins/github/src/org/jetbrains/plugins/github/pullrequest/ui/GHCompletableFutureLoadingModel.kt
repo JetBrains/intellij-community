@@ -32,7 +32,7 @@ class GHCompletableFutureLoadingModel<T> : GHLoadingModel<T> {
     updateFuture = future.let {
       it.handleOnEdt { result, error ->
         when {
-          error != null && !GithubAsyncUtil.isCancellation(error) -> this.error = error.cause
+          error != null && !GithubAsyncUtil.isCancellation(error) -> this.error = error
           result != null -> this.result = result
         }
         loading = false

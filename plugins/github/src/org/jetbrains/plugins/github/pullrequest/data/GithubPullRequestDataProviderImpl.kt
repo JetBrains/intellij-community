@@ -141,7 +141,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     }
     catch (e: CompletionException) {
       if (GithubAsyncUtil.isCancellation(e)) throw ProcessCanceledException(e)
-      throw e.cause ?: e
+      throw GithubAsyncUtil.extractError(e)
     }
   }
 
