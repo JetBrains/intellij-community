@@ -36,6 +36,15 @@ def _setup_logging():
     root.addHandler(handler)
 
 
+def _enable_segfault_tracebacks():
+    try:
+        import faulthandler
+
+        faulthandler.enable()
+    except ImportError:
+        pass
+
+
 def get_help_text():
     return (
         # 01234567890123456789012345678901234567890123456789012345678901234567890123456789
@@ -76,14 +85,6 @@ def main():
     from generator3.constants import Timer
     from generator3.core import version, GenerationStatus, SkeletonGenerator
     from generator3.util_methods import set_verbose, say, report, note, print_profile
-
-    try:
-        # Get traces after segmentation faults
-        import faulthandler
-
-        faulthandler.enable()
-    except ImportError:
-        pass
 
     from getopt import getopt
 
@@ -200,4 +201,5 @@ def main():
 if __name__ == "__main__":
     _bootstrap_sys_path()
     _setup_logging()
+    _enable_segfault_tracebacks()
     main()
