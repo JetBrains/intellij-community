@@ -50,7 +50,7 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
   @NotNull
   @Override
   public TextRange getRangeInElement(@NotNull PyStringLiteralExpressionImpl element) {
-    return PyStringLiteralUtil.getStringValueTextRange(element.getText());
+    return element.getStringValueTextRange();
   }
 
   @NotNull

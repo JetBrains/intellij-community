@@ -299,6 +299,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     public boolean isOneLine() {
       return true;
     }
+
+    @NotNull
+    @Override
+    public TextRange getRelevantTextRange() {
+      return myHost.getStringValueTextRange();
+    }
   }
 
   @Override
