@@ -103,7 +103,7 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         else:
             output_dir = os.path.join(self.temp_dir, output_dir)
 
-        if not extra_syspath:
+        if extra_syspath is None:
             extra_syspath = self.default_generator_extra_syspath
         if not extra_syspath:
             extra_syspath = [self.test_data_dir]
@@ -132,7 +132,7 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
             '-s', os.pathsep.join(extra_syspath),
         ]
 
-        if not extra_args:
+        if extra_args is None:
             extra_args = self.default_generator_extra_args
 
         if extra_args:
@@ -169,9 +169,12 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         if mod_name and not mod_root:
             mod_root = self.test_data_dir
 
-        roots = kwargs.pop('extra_syspath', [])
+        roots = kwargs.pop('extra_syspath', None)
         if mod_root:
-            roots.insert(0, mod_root)
+            if roots:
+                roots.insert(0, mod_root)
+            else:
+                roots = [mod_root]
 
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
             result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath=roots, **kwargs)
@@ -204,16 +207,6 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         sdk_skeletons/
             _ast.py
         """.format(hash=generator3.core.module_hash('_ast', None)))
-
-    # TODO move to MultiModuleGenerationTest
-    def test_builtins_generation_mode_stores_all_skeletons_in_same_cache_directory(self):
-        self.run_generator()
-        builtins_hash = generator3.core.module_hash('sys', None)
-        builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
-        self.assertTrue(os.path.isdir(builtins_cache_dir))
-        builtin_mod_skeletons = os.listdir(builtins_cache_dir)
-        self.assertIn('_ast.py', builtin_mod_skeletons)
-        self.assertIn('sys.py', builtin_mod_skeletons)
 
     def test_layout_for_toplevel_physical_module(self):
         mod_path = self.get_test_data_path('mod.py')
@@ -361,17 +354,6 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
 
-    # TODO Move to MultiModuleGenerationTest
-    # TODO figure out why this is not true for some interpreters
-    @unittest.skipUnless('pyexpat' in sys.builtin_module_names, "pyexpat must be a built-in module")
-    def test_pyexpat_layout_in_builtins(self):
-        self.run_generator()
-        self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
-        self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
-        self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
-        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
-        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
-
     @python3_only
     def test_introspecting_submodule_modifies_sys_modules(self):
         self.check_generator_output('mod', 'mod.py')
@@ -409,6 +391,25 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     # (which can't be distributed with tests in a platform-independent manner), but user their .py
     # counterparts for actual importing and introspection
     default_generator_extra_syspath = ['mocks', 'binaries']
+
+    def test_skeletons_for_builtins_are_stored_in_same_cache_directory(self):
+        self.run_generator(extra_args=[], extra_syspath=[])
+        builtins_hash = generator3.core.module_hash('sys', None)
+        builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
+        self.assertTrue(os.path.isdir(builtins_cache_dir))
+        builtin_mod_skeletons = os.listdir(builtins_cache_dir)
+        self.assertIn('_ast.py', builtin_mod_skeletons)
+        self.assertIn('sys.py', builtin_mod_skeletons)
+
+    # TODO figure out why this is not true for some interpreters
+    @unittest.skipUnless('pyexpat' in sys.builtin_module_names, "pyexpat must be a built-in module")
+    def test_pyexpat_layout_in_builtins(self):
+        self.run_generator(extra_args=[], extra_syspath=[])
+        self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
+        self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
+        self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
+        self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
 
     @test_data_dir('simple')
     def test_progress_indication(self):
