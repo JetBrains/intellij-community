@@ -324,7 +324,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
           if (myCloseOnEnter) {
             closePopup(e, true);
           }
-          else {
+          else if (myItemChosenRunnable != null) {
             myItemChosenRunnable.run();
           }
         }
