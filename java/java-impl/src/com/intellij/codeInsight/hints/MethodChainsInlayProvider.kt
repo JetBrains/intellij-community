@@ -13,6 +13,8 @@ import com.intellij.util.ui.JBUI
 import com.siyeh.ig.psiutils.ExpressionUtils
 import org.intellij.lang.annotations.Language
 import javax.swing.JPanel
+import javax.swing.JSpinner
+import javax.swing.text.DefaultFormatter
 
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink) =
@@ -65,6 +67,9 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
 
     override fun createComponent(listener: ChangeListener): JPanel {
       reset()
+      // Workaround to get immediate change, not only when focus is lost. To be changed after moving to polling model
+      val formatter = (uniqueTypeCount.editor as JSpinner.NumberEditor).textField.formatter as DefaultFormatter
+      formatter.commitsOnValidEdit = true
       uniqueTypeCount.addChangeListener {
         handleChange(listener)
       }
