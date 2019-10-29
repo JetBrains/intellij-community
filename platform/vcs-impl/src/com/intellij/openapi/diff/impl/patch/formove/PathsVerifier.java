@@ -111,15 +111,19 @@ public class PathsVerifier {
     }
   }
 
-   List<FilePatch> nonWriteActionPreCheck() {
+  List<FilePatch> nonWriteActionPreCheck() {
+    List<String> failedMessages = new ArrayList<>();
     List<FilePatch> failedToApply = new ArrayList<>();
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
       final CheckPath checker = getChecker(patch);
       if (!checker.canBeApplied(myDelayedPrecheckContext)) {
-        PatchApplier.showError(myProject, checker.getErrorMessage());
+        ContainerUtil.addIfNotNull(failedMessages, checker.getErrorMessage());
         failedToApply.add(patch);
       }
+    }
+    if (!failedMessages.isEmpty()) {
+      PatchApplier.showError(myProject, StringUtil.join(failedMessages, "\n"));
     }
     final Collection<FilePatch> skipped = myDelayedPrecheckContext.doDelayed();
     mySkipped.addAll(skipped);
@@ -133,6 +137,7 @@ public class PathsVerifier {
   }
 
   List<FilePatch> execute() {
+    List<String> failedMessages = new ArrayList<>();
     List<FilePatch> failedPatches = new ArrayList<>();
     try {
       final List<CheckPath> checkers = new ArrayList<>(myPatches.size());
@@ -143,12 +148,17 @@ public class PathsVerifier {
       for (CheckPath checker : checkers) {
         if (!checker.check()) {
           failedPatches.add(checker.getPatch());
-          PatchApplier.showError(myProject, checker.getErrorMessage());
+          ContainerUtil.addIfNotNull(failedMessages, checker.getErrorMessage());
         }
       }
     }
     catch (IOException e) {
-      PatchApplier.showError(myProject, e.getMessage());
+      ContainerUtil.addIfNotNull(failedMessages, e.getMessage());
+    }
+    finally {
+      if (!failedMessages.isEmpty()) {
+        PatchApplier.showError(myProject, StringUtil.join(failedMessages, "\n"));
+      }
     }
     myPatches.removeAll(failedPatches);
     return failedPatches;
