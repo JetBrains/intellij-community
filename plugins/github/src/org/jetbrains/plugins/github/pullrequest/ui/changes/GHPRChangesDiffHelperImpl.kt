@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.diff.comparison.ComparisonManagerImpl
+import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -54,6 +55,9 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
       val lineOffsets1 = LineOffsetsUtil.create(text1)
       val lineOffsets2 = LineOffsetsUtil.create(text2)
 
+      if (!ComparisonUtil.isValidRanges(text1, text2, lineOffsets1, lineOffsets2, diffRanges)) {
+        error("Invalid diff line ranges for change $change")
+      }
       val iterable = DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount, lineOffsets2.lineCount)
       DiffIterableUtil.iterateAll(iterable).map {
         comparisonManager.compareLinesInner(it.first, text1, text2, lineOffsets1, lineOffsets2, policy, innerChanges,
