@@ -11,7 +11,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="false"
-                 description="Enable new entities-based project model"/>
+                 description="Enable new entities-based project model (workspace model)"/>
 
     <cachesInvalidator implementation="com.intellij.workspace.legacyBridge.intellij.ProjectModelCachesInvalidator"/>
 
