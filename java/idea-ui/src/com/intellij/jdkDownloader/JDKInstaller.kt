@@ -22,7 +22,7 @@ object JDKInstaller {
   fun validateInstallDir(selectedPath: String): Pair<File?, String?> {
     if (selectedPath.isBlank()) return null to "Target path is empty"
 
-    val targetDir = kotlin.runCatching { File(FileUtil.expandUserHome(selectedPath)) }.getOrElse { t ->
+    val targetDir = runCatching { File(FileUtil.expandUserHome(selectedPath)) }.getOrElse { t ->
       LOG.warn("Failed to resolve user path: $selectedPath. ${t.message}", t)
       return null to (t.message ?: "Failed to resolve path")
     }
@@ -64,7 +64,7 @@ object JDKInstaller {
 
       val actualHashCode = Files.asByteSource(downloadPath).hash(Hashing.sha256()).toString()
       if (!actualHashCode.equals(item.sha256, ignoreCase = true)) {
-        throw RuntimeException("SHA-256 checksum does not match. Actual value is $actualHashCode, expected ${item.sha256}")
+        throw RuntimeException("SHA-256 checksums does not match. Actual value is $actualHashCode, expected ${item.sha256}")
       }
 
       indicator?.isIndeterminate = true

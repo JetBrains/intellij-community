@@ -58,11 +58,13 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
         }
         catch (t: Exception) {
           LOG.warn(t.message, t)
-          Messages.showMessageDialog(parentComponent,
-                                     "Failed to download the list of installable JDKs. You could still locate installed JDK in the disk",
-                                     DIALOG_TITLE,
-                                     Messages.getErrorIcon()
-          )
+          invokeLater {
+            Messages.showMessageDialog(parentComponent,
+                                       "Failed to download the list of installable JDKs. You could still locate installed JDK on the disk",
+                                       DIALOG_TITLE,
+                                       Messages.getErrorIcon()
+            )
+          }
 
           val jdkHome = showJDKSelectorFromDisk(javaSdkType, project, parentComponent)
           addSdkIfNotNull(jdkHome)
