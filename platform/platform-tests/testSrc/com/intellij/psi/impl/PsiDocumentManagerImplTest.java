@@ -567,24 +567,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(getPsiDocumentManager().isCommitted(document));
   }
 
-  public void testBackgroundCommitInDialogInTransaction() throws IOException {
-    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = findFile(vFile);
-    Document document = getDocument(psiFile);
-
-    TransactionGuard.submitTransaction(myProject, () -> {
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        document.insertString(0, "x");
-        LaterInvocator.enterModal(new Object());
-        assertFalse(getPsiDocumentManager().isCommitted(document));
-      });
-
-      waitForCommits();
-      assertTrue(getPsiDocumentManager().isCommitted(document));
-    });
-    UIUtil.dispatchAllInvocationEvents();
-  }
-
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
     PsiFile psiFile = findFile(vFile);

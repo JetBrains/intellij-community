@@ -103,6 +103,8 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
 
   private void enable(@NonNls @NotNull Object reason) {
     synchronized (lock) {
+      if (myEnabled) return;
+
       myEnabled = true;
       wakeUpQueue();
     }
@@ -124,24 +126,27 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
   public void commitAsynchronously(@NotNull final Project project,
                                    @NotNull final Document document,
                                    @NonNls @NotNull Object reason,
-                                   @Nullable TransactionId context) {
+                                   @NotNull ModalityState modality) {
     assert !isDisposed : "already disposed";
 
     if (!project.isInitialized()) return;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     PsiFile psiFile = documentManager.getCachedPsiFile(document);
     if (psiFile == null || psiFile instanceof PsiCompiledElement) return;
-    doQueue(project, document, reason, context, documentManager.getLastCommittedText(document));
+    doQueue(project, document, reason, modality, documentManager.getLastCommittedText(document));
+    if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      enable("commitAsynchronously outside write action");
+    }
   }
 
   private void doQueue(@NotNull Project project,
                        @NotNull Document document,
                        @NotNull Object reason,
-                       @Nullable TransactionId context,
+                       @NotNull ModalityState modality,
                        @NotNull CharSequence lastCommittedText) {
     synchronized (lock) {
       if (!project.isInitialized()) return;  // check the project is disposed under lock.
-      CommitTask newTask = createNewTaskAndCancelSimilar(project, document, reason, context, lastCommittedText, false);
+      CommitTask newTask = createNewTaskAndCancelSimilar(project, document, reason, modality, lastCommittedText, false);
 
       documentsToCommit.offer(newTask);
       log(project, "Queued", newTask, reason);
@@ -154,10 +159,10 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
   private CommitTask createNewTaskAndCancelSimilar(@NotNull Project project,
                                                    @NotNull Document document,
                                                    @NotNull Object reason,
-                                                   @Nullable TransactionId context,
+                                                   @NotNull ModalityState modality,
                                                    @NotNull CharSequence lastCommittedText, boolean canReQueue) {
     synchronized (lock) {
-      CommitTask newTask = new CommitTask(project, document, createProgressIndicator(), reason, context, lastCommittedText);
+      CommitTask newTask = new CommitTask(project, document, createProgressIndicator(), reason, modality, lastCommittedText);
       cancelAndRemoveFromDocsToCommit(newTask, reason, canReQueue);
       cancelAndRemoveCurrentTask(newTask, reason, canReQueue);
       cancelAndRemoveFromDocsToApplyInEDT(newTask, reason, canReQueue);
@@ -168,7 +173,7 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
 
   @SuppressWarnings("unused")
   private void log(Project project, @NonNls String msg, @Nullable CommitTask task, @NonNls Object... args) {
-    //System.out.println(msg + "; task: "+task + "; args: "+StringUtil.first(Arrays.toString(args), 80, true));
+    //System.out.println(msg + "; task: "+task + "; args: "+StringUtil.first(java.util.Arrays.toString(args), 80, true));
   }
 
 
@@ -285,8 +290,7 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
 
         if (success) {
           assert !ApplicationManager.getApplication().isDispatchThread();
-          TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
-          guard.submitTransaction(task.project, task.myCreationContext, finishRunnable);
+          ApplicationManager.getApplication().invokeLater(finishRunnable, task.myCreationModality, task.project.getDisposed());
         }
       }
     }
@@ -314,10 +318,10 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
         List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes = file == null ? null : getAllFileNodes(file);
         if (oldFileNodes != null) {
           // somebody's told us explicitly not to beat the dead horse again,
-          // e.g. when submitted the same document with the different transaction context
+          // e.g. when submitted the same document with the different modality
           if (task.dead) return;
 
-          doQueue(project, document, reQueuedReason, task.myCreationContext, lastCommittedText);
+          doQueue(project, document, reQueuedReason, task.myCreationModality, lastCommittedText);
         }
       });
     }
@@ -348,7 +352,7 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
     CommitTask task;
     synchronized (lock) {
       // synchronized to ensure no new similar tasks can start before we hold the document's lock
-      task = createNewTaskAndCancelSimilar(project, document, SYNC_COMMIT_REASON, TransactionGuard.getInstance().getContextTransaction(),
+      task = createNewTaskAndCancelSimilar(project, document, SYNC_COMMIT_REASON, ModalityState.defaultModalityState(),
                                            PsiDocumentManager.getInstance(project).getLastCommittedText(document), true);
     }
 
@@ -504,7 +508,7 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
       }
       else {
         // add document back to the queue
-        commitAsynchronously(project, document, "Re-added back", task.myCreationContext);
+        commitAsynchronously(project, document, "Re-added back", task.myCreationModality);
       }
     };
   }
@@ -548,7 +552,7 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
 
     ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
     UIUtil.dispatchAllInvocationEvents();
-    disable("waitForAllCommits() called in the tearDown()");
+    disable("after waitForAllCommits()");
   }
 
   private static final Key<Object> CANCEL_REASON = Key.create("CANCEL_REASON");
@@ -562,7 +566,7 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
     // when failed it's canceled
     @NotNull final ProgressIndicator indicator; // progress to commit this doc under.
     @NotNull final Object reason;
-    @Nullable final TransactionId myCreationContext;
+    @NotNull final ModalityState myCreationModality;
     private final CharSequence myLastCommittedText;
     private volatile boolean dead; // the task was explicitly removed from the queue; no attempts to re-queue should be made
 
@@ -570,13 +574,13 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
                @NotNull final Document document,
                @NotNull ProgressIndicator indicator,
                @NotNull Object reason,
-               @Nullable TransactionId context,
+               @NotNull ModalityState modality,
                @NotNull CharSequence lastCommittedText) {
       this.document = document;
       this.project = project;
       this.indicator = indicator;
       this.reason = reason;
-      myCreationContext = context;
+      myCreationModality = modality;
       myLastCommittedText = lastCommittedText;
       modificationSequence = ((DocumentEx)document).getModificationSequence();
     }
@@ -589,7 +593,7 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
       String removedInfo = dead ? " (dead)" : "";
       String reasonInfo = " task reason: " + StringUtil.first(String.valueOf(reason), 180, true) +
                           (isStillValid() ? "" : "; changed: old seq=" + modificationSequence + ", new seq=" + ((DocumentEx)document).getModificationSequence());
-      String contextInfo = " Context: "+myCreationContext;
+      String contextInfo = " modality: " + myCreationModality;
       return System.identityHashCode(this)+"; " + indicatorInfo + removedInfo + contextInfo + reasonInfo;
     }
 
@@ -616,7 +620,9 @@ public final class DocumentCommitThread implements Runnable, Disposable, Documen
     }
 
     private void cancel(@NotNull Object reason, boolean canReQueue) {
-      dead |= !canReQueue; // set the flag before cancelling indicator
+      if (!canReQueue) {
+        dead = true; // set the flag before cancelling indicator
+      }
       if (!isCanceled()) {
         log(project, "cancel", this, reason);
 
