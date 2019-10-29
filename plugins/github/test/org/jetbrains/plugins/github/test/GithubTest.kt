@@ -186,20 +186,16 @@ abstract class GithubTest : GitPlatformTest() {
     private const val RETRIES = 3
 
     internal fun retry(LOG: Logger, action: () -> Unit) {
-      var exception: Exception? = null
       for (i in 1..RETRIES) {
         try {
           LOG.debug("Attempt #$i")
-          action()
-          exception = null
-          break
+          return action()
         }
-        catch (e: Exception) {
-          exception = e
+        catch (e: Throwable) {
+          if (i == RETRIES) throw e
           Thread.sleep(1000L)
         }
       }
-      exception?.let { throw it }
     }
   }
 }
