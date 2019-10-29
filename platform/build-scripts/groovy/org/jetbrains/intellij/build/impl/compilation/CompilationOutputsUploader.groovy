@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.google.common.io.Files
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.intellij.openapi.fileTypes.impl.IgnoredPatternSet
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -14,7 +13,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.jps.model.impl.JpsFileTypesConfigurationImpl
 
 import java.lang.reflect.Type
 import java.security.MessageDigest
@@ -22,14 +20,13 @@ import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
+  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>()
   private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json"
+  private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
+  private static final List<String> TEST_TYPES = ["java-test", "resources-test"]
   private static final String IDENTIFIER = "\$PROJECT_DIR\$"
   private static final String PRODUCTION = "production"
   private static final String TEST = "test"
-  private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
-  private static final List<String> TEST_TYPES = ["java-test", "resources-test"]
-  private final IgnoredPatternSet ignoredPatterns
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
@@ -47,9 +44,6 @@ class CompilationOutputsUploader {
     gson = new Gson()
 
     myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
-    JpsFileTypesConfigurationImpl configuration = new JpsFileTypesConfigurationImpl()
-    ignoredPatterns = new IgnoredPatternSet()
-    ignoredPatterns.setIgnoreMasks(configuration.getIgnoredPatternString())
   }
 
   def upload() {
@@ -124,6 +118,7 @@ class CompilationOutputsUploader {
     def firstParamKeys = new HashSet<>(firstParamMap.keySet())
     def secondParamKeys = new HashSet<>(secondParamMap.keySet())
     def intersection = firstParamKeys.intersect(secondParamKeys)
+
     intersection.each { buildTargetName ->
       def firstParamState = firstParamMap.get(buildTargetName)
       def secondParamState = secondParamMap.get(buildTargetName)
