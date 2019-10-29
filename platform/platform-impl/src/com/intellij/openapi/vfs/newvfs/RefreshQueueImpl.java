@@ -56,7 +56,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   public void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      queueSession(session, session.getTransaction());
+      queueSession(session, session.getModality());
     }
     else {
       Application app = ApplicationManager.getApplication();
@@ -71,13 +71,13 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
                     "this will cause a deadlock if there are any events to fire.");
           return;
         }
-        queueSession(session, TransactionGuard.getInstance().getContextTransaction());
+        queueSession(session, ModalityState.defaultModalityState());
         session.waitFor();
       }
     }
   }
 
-  private void queueSession(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+  private void queueSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     myQueue.execute(() -> {
       startRefreshActivity();
       try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session)) {
@@ -86,23 +86,22 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       finally {
         finishRefreshActivity();
         if (Registry.is("vfs.async.event.processing")) {
-          scheduleAsynchronousPreprocessing(session, transaction);
+          scheduleAsynchronousPreprocessing(session, modality);
         }
         else {
-          TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction,
-                                                           () -> session.fireEvents(session.getEvents(), null));
+          ApplicationManager.getApplication().invokeLater(() -> session.fireEvents(session.getEvents(), null), modality);
         }
       }
     });
     myEventCounter.eventHappened(session);
   }
 
-  private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+  private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     try {
       myEventProcessingQueue.execute(() -> {
         startRefreshActivity();
         try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
-          processAndFireEvents(session, transaction);
+          processAndFireEvents(session, modality);
         }
         finally {
           finishRefreshActivity();
@@ -126,10 +125,10 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private void processAndFireEvents(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+  private void processAndFireEvents(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     while (true) {
       ProgressIndicator progress = new SensitiveProgressWrapper(myRefreshIndicator);
-      boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> tryProcessingEvents(session, transaction), progress);
+      boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> tryProcessingEvents(session, modality), progress);
       if (success) {
         break;
       }
@@ -138,7 +137,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private void tryProcessingEvents(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+  private void tryProcessingEvents(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     List<? extends VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       return file == null || file.isValid();
@@ -147,14 +146,14 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(events);
 
     long stamp = myWriteActionCounter.get();
-    TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (stamp == myWriteActionCounter.get()) {
         session.fireEvents(events, appliers);
       }
       else {
-        scheduleAsynchronousPreprocessing(session, transaction);
+        scheduleAsynchronousPreprocessing(session, modality);
       }
-    });
+    }, modality);
   }
 
   private void doScan(@NotNull RefreshSessionImpl session) {
