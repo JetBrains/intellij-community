@@ -76,6 +76,7 @@ public class EditorWindow {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
     myPanel.setOpaque(false);
+    myPanel.setFocusable(false);
 
     myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), myOwner);
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
