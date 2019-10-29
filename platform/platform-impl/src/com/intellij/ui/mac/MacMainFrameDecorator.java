@@ -107,21 +107,24 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     try {
       Class.forName("com.apple.eawt.FullScreenUtilities");
       //noinspection JavaReflectionMemberAccess
-      requestToggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
-      HAS_FULLSCREEN_UTILITIES = true;
-    }
-    catch (Exception e) {
-      HAS_FULLSCREEN_UTILITIES = false;
-    }
-    try {
-      Class.forName("com.apple.eawt.FullScreenUtilities");
-      //noinspection JavaReflectionMemberAccess
       enterFullScreenMethod = Application.class.getMethod("requestEnterFullScreen", Window.class);
       leaveFullScreenMethod = Application.class.getMethod("requestLeaveFullScreen", Window.class);
       HAS_FULLSCREEN_UTILITIES = true;
     }
     catch (Exception e) {
       HAS_FULLSCREEN_UTILITIES = false;
+    }
+    // temporary solution for the old Runtime
+    if (!HAS_FULLSCREEN_UTILITIES) {
+      try {
+        Class.forName("com.apple.eawt.FullScreenUtilities");
+        //noinspection JavaReflectionMemberAccess
+        requestToggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
+        HAS_FULLSCREEN_UTILITIES = true;
+      }
+      catch (Exception e) {
+        HAS_FULLSCREEN_UTILITIES = false;
+      }
     }
   }
 
@@ -341,7 +344,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       }
     });
 
-    myFullscreenQueue.runOrEnqueue(state ? this::enterFullScreenNow : this::leaveFullScreenNow );
+    // temporary solution for the old Runtime
+    if (enterFullScreenMethod == null || leaveFullScreenMethod == null) {
+      myFullscreenQueue.runOrEnqueue(this::toggleFullScreenNow);
+    } else {
+      myFullscreenQueue.runOrEnqueue(state ? this::enterFullScreenNow : this::leaveFullScreenNow);
+    }
+
     return promise;
   }
 
@@ -350,7 +359,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       requestToggleFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.warn(e);
     }
   }
 
@@ -359,7 +368,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       enterFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.warn(e);
     }
   }
 
@@ -368,7 +377,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       leaveFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.warn(e);
     }
   }
 }
