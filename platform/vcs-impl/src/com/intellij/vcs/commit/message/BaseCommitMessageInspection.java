@@ -114,7 +114,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
   }
 
   protected static abstract class BaseCommitMessageQuickFix extends LocalQuickFixBase {
-    protected BaseCommitMessageQuickFix(@NotNull String name) {
+    protected BaseCommitMessageQuickFix(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name) {
       super(name);
     }
 
