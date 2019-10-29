@@ -17,7 +17,9 @@ package com.jetbrains.python.codeInsight.runLineMarker;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
@@ -30,15 +32,18 @@ public class PyRunLineMarkerTest extends PyTestCase {
     PsiElement elementWithInfo = lineMarkerInfo.getElement();
     assertNotNull(elementWithInfo);
     assertTrue(elementWithInfo.getParent().getText().startsWith("if"));
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
   public void testWithManyIfs() {
     List<LineMarkerInfo<?>> infos = getInfos("runnable_with_ifs.py");
     assertEquals("There should be only one marker", 1, infos.size());
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
   public void testNotRunnable() {
     assertEquals(0, getInfos("not_runnable.py").size());
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
   public void testIncorrectName() {
