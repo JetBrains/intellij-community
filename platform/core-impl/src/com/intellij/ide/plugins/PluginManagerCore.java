@@ -32,7 +32,6 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.JDOMException;
@@ -758,49 +757,6 @@ public class PluginManagerCore {
                                                          @Nullable LoadDescriptorsContext parentContext) {
     try (LoadingContext context = new LoadingContext(parentContext, bundled, essential, ignoreDisabled)) {
       return loadDescriptor(file, fileName, context);
-    }
-  }
-
-  static class LoadingContext implements AutoCloseable {
-    final Map<File, ZipFile> openedFiles = new THashMap<>();
-    final LoadDescriptorsContext parentContext;
-    final boolean isBundled;
-    final boolean isEssential;
-    final boolean ignoreDisabled;
-    final List<Pair<String, IdeaPluginDescriptorImpl>> visitedFiles = new ArrayList<>(3);
-
-    File lastZipWithDescriptor;
-
-    /**
-     * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
-     */
-    LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential, boolean ignoreDisabled) {
-      this.parentContext = parentContext;
-      this.isBundled = isBundled;
-      this.isEssential = isEssential;
-      this.ignoreDisabled = ignoreDisabled;
-    }
-
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    ZipFile open(File file) throws IOException {
-      ZipFile zipFile = openedFiles.get(file);
-      if (zipFile == null) {
-        openedFiles.put(file, zipFile = new ZipFile(file));
-      }
-      return zipFile;
-    }
-
-    @Nullable
-    SafeJdomFactory getXmlFactory() {
-      return parentContext != null ? parentContext.getXmlFactory() : null;
-    }
-
-    @Override
-    public void close() {
-      for (ZipFile file : openedFiles.values()) {
-        try { file.close(); }
-        catch (IOException ignore) { }
-      }
     }
   }
 
@@ -1698,7 +1654,7 @@ public class PluginManagerCore {
       .skip(1);
   }
 
-  private static class PluginTraverser extends JBTreeTraverser<PluginId> {
+  private static final class PluginTraverser extends JBTreeTraverser<PluginId> {
     final Map<PluginId, IdeaPluginDescriptorImpl> idMap;
 
     PluginTraverser(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
