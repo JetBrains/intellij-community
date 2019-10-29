@@ -426,18 +426,19 @@ class SkeletonGenerator(object):
         self.out_state_json = {'sdk_skeletons': {}}
         self.write_state_json = write_state_json
 
-    def discover_and_process_all_modules(self, name_pattern=None):
+    def discover_and_process_all_modules(self, name_pattern=None, builtins_only=False):
         if name_pattern is None:
             name_pattern = '*'
 
         interpreter_descr = collapse_user(sys.executable)
 
-        builtin_modules = sorted(self.collect_builtin_modules(), key=(lambda b: b.qname))
+        all_modules = sorted(self.collect_builtin_modules(), key=(lambda b: b.qname))
 
-        progress("Discovering binary modules for {}...".format(interpreter_descr))
-        binary_modules = sorted(self.discover_binary_modules(), key=(lambda b: b.qname))
+        if not builtins_only:
+            progress("Discovering binary modules for {}...".format(interpreter_descr))
+            all_modules.extend(sorted(self.discover_binary_modules(), key=(lambda b: b.qname)))
 
-        matching_modules = [m for m in builtin_modules + binary_modules if fnmatch.fnmatchcase(m.qname, name_pattern)]
+        matching_modules = [m for m in all_modules if fnmatch.fnmatchcase(m.qname, name_pattern)]
 
         progress("Updating skeletons for {}...".format(interpreter_descr))
         for i, mod in enumerate(matching_modules):
