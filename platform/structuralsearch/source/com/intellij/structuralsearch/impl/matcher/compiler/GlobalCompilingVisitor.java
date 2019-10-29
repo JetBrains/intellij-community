@@ -130,6 +130,10 @@ public class GlobalCompilingVisitor {
     assert context.getPattern().getStrategy() != null;
   }
 
+  public boolean hasFragments(String pattern) {
+    return ourSubstitutionPattern.matcher(pattern).find();
+  }
+
   @Nullable
   public MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
     return processPatternStringWithFragments(pattern, kind, ourSubstitutionPattern);
