@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,5 +165,30 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
       varCopy.normalizeDeclaration();
     }
     return varCopy;
+  }
+
+  /**
+   * Join declaration and assignment
+   * @param variable variable
+   * @param assignment assignment (assuming its parent is expression statement)
+   * @return new variable
+   */
+  public static PsiLocalVariable joinDeclarationAndAssignment(@NotNull PsiLocalVariable variable, @NotNull PsiAssignmentExpression assignment) {
+    PsiExpression initializer = getInitializerExpression(variable, assignment);
+    PsiElement elementToReplace = assignment.getParent();
+    if (elementToReplace != null) {
+      PsiLocalVariable varCopy = copyVarWithInitializer(variable, initializer);
+      if (varCopy != null) {
+        String text = varCopy.getText();
+
+        CommentTracker tracker = new CommentTracker();
+        tracker.markUnchanged(initializer);
+        tracker.markUnchanged(variable);
+        tracker.delete(variable);
+        PsiDeclarationStatement decl = (PsiDeclarationStatement)tracker.replaceAndRestoreComments(elementToReplace, text);
+        return ((PsiLocalVariable)decl.getDeclaredElements()[0]);
+      }
+    }
+    return variable;
   }
 }
