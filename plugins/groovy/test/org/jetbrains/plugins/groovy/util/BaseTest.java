@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -26,8 +27,13 @@ public interface BaseTest {
   }
 
   @NotNull
+  default PsiFile getPsiFile() {
+    return getFixture().getFile();
+  }
+
+  @NotNull
   default GroovyFile getGroovyFile() {
-    return (GroovyFile)getFixture().getFile();
+    return (GroovyFile)getPsiFile();
   }
 
   @NotNull
