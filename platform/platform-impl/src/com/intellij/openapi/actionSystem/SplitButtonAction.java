@@ -44,10 +44,13 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    myActionGroup.update(e);
     Presentation presentation = e.getPresentation();
-    JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-    if (component instanceof SplitButton) {
-      ((SplitButton)component).update(e);
+    if (presentation.isVisible()) {
+      JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+      if (component instanceof SplitButton) {
+        ((SplitButton)component).update(e);
+      }
     }
   }
 
@@ -247,12 +250,12 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     }
 
     @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      //if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == this) {
-      //  selectedAction = action;
-      //  update(event);
-      //  repaint();
-      //}
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == this) {
+        selectedAction = action;
+        update(event);
+        repaint();
+      }
     }
   }
 }
