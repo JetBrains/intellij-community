@@ -91,7 +91,6 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
 
     def run_generator(self, mod_qname=None,
                       mod_path=None,
-                      builtins=False,
                       extra_syspath=None,
                       gen_version=None,
                       required_gen_version_file_path=None,
@@ -139,8 +138,6 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         if extra_args:
             args.extend(extra_args)
 
-        if builtins:
-            args.append('-b')
         elif mod_qname:
             args.append(mod_qname)
             if mod_path:
@@ -208,8 +205,9 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
             _ast.py
         """.format(hash=generator3.core.module_hash('_ast', None)))
 
+    # TODO move to MultiModuleGenerationTest
     def test_builtins_generation_mode_stores_all_skeletons_in_same_cache_directory(self):
-        self.run_generator(builtins=True)
+        self.run_generator()
         builtins_hash = generator3.core.module_hash('sys', None)
         builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
         self.assertTrue(os.path.isdir(builtins_cache_dir))
@@ -255,7 +253,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
 
     # PY-36884
     def test_pregenerated_skeletons_mode_for_builtin_module(self):
-        self.run_generator('sys', builtins=True, extra_env={
+        self.run_generator('sys', extra_env={
             'IS_PREGENERATED_SKELETONS': '1'
         })
         sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.core.module_hash('sys', None), 'sys.py')
@@ -351,7 +349,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         with open(os.path.join(cache_entry_dir, '_ast.py'), 'w') as f:
             f.write(template.format(origin='(pre-generated)'))
 
-        self.run_generator('_ast', None, True)
+        self.run_generator('_ast', None)
         with open(os.path.join(self.temp_skeletons_dir, '_ast.py')) as f:
             self.assertEquals(template.format(origin='(built-in)'), f.read())
 
@@ -363,10 +361,11 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
 
+    # TODO Move to MultiModuleGenerationTest
     # TODO figure out why this is not true for some interpreters
     @unittest.skipUnless('pyexpat' in sys.builtin_module_names, "pyexpat must be a built-in module")
     def test_pyexpat_layout_in_builtins(self):
-        self.run_generator(builtins=True)
+        self.run_generator()
         self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
         self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
         self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
