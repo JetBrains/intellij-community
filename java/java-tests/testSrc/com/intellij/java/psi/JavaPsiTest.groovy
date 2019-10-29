@@ -136,7 +136,7 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert immediate instanceof PsiImmediateClassType
     assert ref instanceof PsiClassReferenceType
 
-    IdempotenceChecker.checkEquivalence((PsiType)immediate, (PsiType)ref, getClass()) // shouldn't throw
+    IdempotenceChecker.checkEquivalence((PsiType)immediate, (PsiType)ref, getClass(), null) // shouldn't throw
   }
 
   private PsiJavaFile configureFile(String text) {

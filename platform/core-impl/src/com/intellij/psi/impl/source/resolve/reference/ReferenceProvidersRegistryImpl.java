@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -163,6 +164,9 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
       }
       if (refs.length > 0) {
         map.putValue(trinity.priority, refs);
+        if (IdempotenceChecker.isLoggingEnabled()) {
+          IdempotenceChecker.logTrace(trinity.provider + " returned " + Arrays.toString(refs));
+        }
       }
     }
     return map;
