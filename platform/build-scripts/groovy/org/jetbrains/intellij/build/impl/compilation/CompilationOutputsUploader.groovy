@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.fileTypes.impl.IgnoredPatternSet
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
@@ -16,11 +17,18 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.model.impl.JpsFileTypesConfigurationImpl
 
 import java.lang.reflect.Type
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private static final String SOURCES_STATE_FILE_NAME = "sources_state.json"
+  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
+  private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json"
+  private static final String IDENTIFIER = "\$PROJECT_DIR\$"
+  private static final String PRODUCTION = "production"
+  private static final String TEST = "test"
+  private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
+  private static final List<String> TEST_TYPES = ["java-test", "resources-test"]
   private final IgnoredPatternSet ignoredPatterns
   private final String agentPersistentStorage
   private final CompilationContext context
@@ -92,23 +100,80 @@ class CompilationOutputsUploader {
     }
   }
 
-  def uploadCompilationOutputs(File root,
-                               Map<String, Map<String, BuildTargetState>> currentSourcesState,
-                               JpsCompilationPartsUploader uploader,
-                               NamedThreadPoolExecutor executor) {
+  def uploadCompilationOutputs(File root, Map<String, Map<String, BuildTargetState>> currentSourcesState,
+                               JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
     currentSourcesState.each { type, map ->
+      if (PRODUCTION_TYPES.contains(type) || TEST_TYPES.contains(type)) return
       map.each { name, state ->
-        executor.submit {
-          def sourceFolder = new File(root, state.relativePath)
-          def sourcePath = "$type/$name/$state.hash"
-          if (uploader.isExist(sourcePath)) return
-          File zipFile = new File(sourceFolder.getParent(), state.hash)
-          zipBinaryData(zipFile, sourceFolder)
-          uploader.upload(sourcePath, zipFile)
-          FileUtil.delete(zipFile)
-        }
+        def outputPath = state.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
+
+        uploadCompilationOutput(name, type, state.hash, new File(outputPath), uploader, executor)
       }
     }
+
+    uploadCompilationOutputsByParams(PRODUCTION, PRODUCTION_TYPES[0], PRODUCTION_TYPES[1], root, currentSourcesState, uploader, executor)
+    uploadCompilationOutputsByParams(TEST, TEST_TYPES[0], TEST_TYPES[1], root, currentSourcesState, uploader, executor)
+  }
+
+  private void uploadCompilationOutputsByParams(String prefix, String firstUploadParam, String secondUploadParam, File root,
+                                               Map<String, Map<String, BuildTargetState>> currentSourcesState,
+                                               JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+    def firstParamMap = currentSourcesState.get(firstUploadParam)
+    def secondParamMap = currentSourcesState.get(secondUploadParam)
+
+    def firstParamKeys = new HashSet<>(firstParamMap.keySet())
+    def secondParamKeys = new HashSet<>(secondParamMap.keySet())
+    def intersection = firstParamKeys.intersect(secondParamKeys)
+    intersection.each { buildTargetName ->
+      def firstParamState = firstParamMap.get(buildTargetName)
+      def secondParamState = secondParamMap.get(buildTargetName)
+      def outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
+
+      def hash = calculateStringHash(firstParamState.hash + secondParamState.hash)
+      uploadCompilationOutput(buildTargetName, prefix, hash, new File(outputPath), uploader, executor)
+    }
+
+    firstParamKeys.removeAll(intersection)
+    firstParamKeys.each { buildTargetName ->
+      def firstParamState = firstParamMap.get(buildTargetName)
+      def outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
+
+      uploadCompilationOutput(buildTargetName, firstUploadParam, firstParamState.hash, new File(outputPath), uploader, executor)
+    }
+
+    secondParamKeys.removeAll(intersection)
+    secondParamKeys.each { buildTargetName ->
+      def secondParamState = secondParamMap.get(buildTargetName)
+      def outputPath = secondParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
+
+      uploadCompilationOutput(buildTargetName, secondUploadParam, secondParamState.hash, new File(outputPath), uploader, executor)
+    }
+  }
+
+  private void uploadCompilationOutput(String buildTargetName, String prefix, String hash, File outputFolder,
+                                       JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+    executor.submit {
+      def sourcePath = "$prefix/$buildTargetName/$hash"
+      if (uploader.isExist(sourcePath)) return
+      File zipFile = new File(outputFolder.getParent(), hash)
+      zipBinaryData(zipFile, outputFolder)
+      uploader.upload(sourcePath, zipFile)
+      FileUtil.delete(zipFile)
+    }
+  }
+
+  private static String calculateStringHash(String content) {
+    MessageDigest md = messageDigest
+    md.reset()
+    return StringUtil.toHexString(md.digest(content.getBytes()))
+  }
+
+  private static MessageDigest getMessageDigest() throws IOException {
+    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get()
+    if (messageDigest != null) return messageDigest
+    messageDigest = MessageDigest.getInstance("MD5")
+    MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest)
+    return messageDigest
   }
 
   private void zipBinaryData(File zipFile, File dir) {
