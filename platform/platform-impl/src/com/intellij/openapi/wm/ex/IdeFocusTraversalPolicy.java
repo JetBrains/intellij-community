@@ -1,20 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.ex;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.util.List;
+
+import static com.intellij.util.ui.FocusUtil.findFocusableComponentIn;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy");
 
   @Override
   public Component getDefaultComponent(Container focusCycleRoot) {
@@ -35,17 +33,11 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return findFocusableComponentIn(aContainer, aComponent);
   }
 
-  private static Component findFocusableComponentIn(Container searchIn, Component toSkip) {
-    List<Component> components = UIUtil.uiTraverser(searchIn).toList();
-    for (Component component : components) {
-      if (component.equals(toSkip)) {
-        continue;
-      }
-      if (component.isFocusable()) {
-        return component;
-      }
-    }
-    return searchIn;
+  @Override
+  public Component getComponentBefore(Container aContainer, Component aComponent) {
+    Component before = super.getComponentBefore(aContainer, aComponent);
+    if (before != null) return before.isFocusable() ? before : findFocusableComponentIn((JComponent)before, null);
+    return findFocusableComponentIn(aContainer, aComponent);
   }
 
   /**
