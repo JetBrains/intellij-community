@@ -205,6 +205,9 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     val activeKeymapName = child?.getAttributeValue(NAME_ATTRIBUTE)
     if (!activeKeymapName.isNullOrBlank()) {
       schemeManager.currentSchemeName = activeKeymapName
+      if (schemeManager.currentSchemeName != activeKeymapName) {
+        notifyAboutMissingKeymap(activeKeymapName, "Cannot find keymap \"$activeKeymapName\"")
+      }
     }
   }
 
