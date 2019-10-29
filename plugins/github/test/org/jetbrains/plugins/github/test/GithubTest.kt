@@ -196,6 +196,7 @@ abstract class GithubTest : GitPlatformTest() {
         }
         catch (e: Exception) {
           exception = e
+          Thread.sleep(1000L)
         }
       }
       exception?.let { throw it }
