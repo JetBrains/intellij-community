@@ -1,0 +1,25 @@
+<idea-plugin use-idea-classloader="true">
+  <id>com.intellij.workspace</id>
+  <name>com.intellij.workspace</name>
+  <vendor>JetBrains</vendor>
+
+  <description>
+    Tree Project Model (new project model implementation), see com.intellij.workspace.ide module
+  </description>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="false"
+                 description="Enable new entities-based project model"/>
+
+    <cachesInvalidator implementation="com.intellij.workspace.legacyBridge.intellij.ProjectModelCachesInvalidator"/>
+
+    <projectServiceContainerCustomizer
+        implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener"/>
+
+    <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                        serviceImplementation="com.intellij.workspace.jps.LegacyBridgeStoreReloadManager"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>
