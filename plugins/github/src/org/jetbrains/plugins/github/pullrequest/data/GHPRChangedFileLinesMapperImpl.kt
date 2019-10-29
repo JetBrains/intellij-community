@@ -5,6 +5,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
 class GHPRChangedFileLinesMapperImpl(private val diff: TextFilePatch) : GHPRChangedFileLinesMapper {
 
@@ -18,8 +19,9 @@ class GHPRChangedFileLinesMapperImpl(private val diff: TextFilePatch) : GHPRChan
   private fun findHunkWithOffset(side: Side, fileLineIndex: Int): Pair<PatchHunk, Int>? {
     var diffLineCounter = 0
     for (hunk in diff.hunks) {
-      val start = side.select(hunk.startLineBefore, hunk.startLineAfter)
-      val end = side.select(hunk.endLineBefore, hunk.endLineAfter)
+      val range = GHPatchHunkUtil.getRange(hunk)
+      val start = side.select(range.start1, range.start2)
+      val end = side.select(range.end1, range.end2)
 
       if (fileLineIndex in start until end) {
         return hunk to diffLineCounter
@@ -38,16 +40,19 @@ class GHPRChangedFileLinesMapperImpl(private val diff: TextFilePatch) : GHPRChan
     // +1 for header
     var hunkLineIndex = 1
 
+    var lastMatchedLineWithNewline: Int? = null
     for (line in hunk.lines) {
       if (line.type == PatchLine.Type.ADD && side == Side.RIGHT ||
           line.type == PatchLine.Type.REMOVE && side == Side.LEFT ||
           line.type == PatchLine.Type.CONTEXT) {
         if (sideFileLineCounter == sideFileLineIndex) return hunkLineIndex
         sideFileLineCounter++
+        //potentially a comment on a newline
+        if (sideFileLineCounter == sideFileLineIndex && !line.isSuppressNewLine) lastMatchedLineWithNewline = hunkLineIndex
       }
       hunkLineIndex += if (line.isSuppressNewLine) 2 else 1
     }
-    return null
+    return lastMatchedLineWithNewline
   }
 
   override fun findFileLocation(diffLineIndex: Int): Pair<Side, Int>? {
