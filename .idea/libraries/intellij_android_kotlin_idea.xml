@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="intellij.android.kotlin.idea">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/android/android/lib/intellij.android.kotlin.idea.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/intellij.android.kotlin.output.parser.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/intellij.android.kotlin.extensions.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
