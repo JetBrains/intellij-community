@@ -97,7 +97,7 @@ class ProjectTaskManagerTest {
           override fun getContext(): ProjectTaskContext = context
           override fun hasErrors(): Boolean = false
           override fun isAborted(): Boolean = false
-          override fun contains(predicate: BiPredicate<in ProjectTask, in ProjectTaskState>): Boolean = false
+          override fun anyTaskMatches(predicate: BiPredicate<in ProjectTask, in ProjectTaskState>): Boolean = false
         })
         return promise
       }

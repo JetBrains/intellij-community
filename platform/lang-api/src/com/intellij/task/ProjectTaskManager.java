@@ -45,7 +45,7 @@ public abstract class ProjectTaskManager {
     boolean hasErrors();
 
     @ApiStatus.Experimental
-    boolean contains(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate);
+    boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate);
   }
 
   public static final ProjectTask[] EMPTY_TASKS_ARRAY = new ProjectTask[0];
@@ -299,7 +299,7 @@ public abstract class ProjectTaskManager {
         }
 
         @Override
-        public boolean contains(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
+        public boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
           return executionResult.anyMatch(predicate);
         }
       });
