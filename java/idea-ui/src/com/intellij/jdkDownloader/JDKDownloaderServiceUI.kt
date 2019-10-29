@@ -64,10 +64,10 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
                                        DIALOG_TITLE,
                                        Messages.getErrorIcon()
             )
-          }
 
-          val jdkHome = showJDKSelectorFromDisk(javaSdkType, project, parentComponent)
-          addSdkIfNotNull(jdkHome)
+            val jdkHome = showJDKSelectorFromDisk(javaSdkType, project, parentComponent)
+            addSdkIfNotNull(jdkHome)
+          }
           return
         }
 
