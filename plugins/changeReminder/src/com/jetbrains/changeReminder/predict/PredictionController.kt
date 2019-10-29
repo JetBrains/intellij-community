@@ -27,8 +27,8 @@ internal abstract class PredictionController(private val project: Project,
       override fun run(indicator: ProgressIndicator) {
         inProgress = true
         val result = mutableListOf<FilePath>()
+        val request = popRequest() ?: return
         try {
-          val request = popRequest() ?: return
           val prediction = request.calculate()
           result.addAll(prediction)
         }
@@ -38,7 +38,10 @@ internal abstract class PredictionController(private val project: Project,
         catch (_: Exception) {
         }
         finally {
-          complete(PredictionResult(result))
+          complete(PredictionResult(
+            requestedFiles = request.changeListFiles,
+            prediction = result
+          ))
         }
       }
     }
