@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.DateTimeFormatManager;
 import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -26,6 +27,7 @@ public enum VcsLogColumn {
   DATE("Date", String.class) {
     @Override
     public String getContentSample() {
+      if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed()) return null;
       return JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime());
     }
   },
