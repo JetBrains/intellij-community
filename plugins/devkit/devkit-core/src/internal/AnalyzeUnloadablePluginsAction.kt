@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -16,14 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
-import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
-import javax.swing.JScrollPane
-import javax.swing.JTextArea
 
 /**
  * @author yole
@@ -129,11 +129,10 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
     }
 
-    dialog("Plugin Analysis Report", project = project, panel = panel {
-      row {
-        JScrollPane(JTextArea(report, 20, 80))()
-      }
-    }).show()
+    val fileName = String.format("AnalyzeUnloadablePlugins-Report-%s.txt", DateFormatUtil.formatDateTime(System.currentTimeMillis()))
+    val file = LightVirtualFile(fileName, report)
+    val descriptor = OpenFileDescriptor(project, file)
+    FileEditorManager.getInstance(project).openEditor(descriptor, true)
   }
 
   private fun analyzeUnloadable(ideaPlugin: IdeaPlugin, extensionPointOwners: ExtensionPointOwners): PluginUnloadabilityStatus {
