@@ -58,6 +58,8 @@ def parse_args(gen_version):
     parser.add_argument('--name-pattern', metavar='PATTERN',
                         help='Shell-like glob pattern restricting generation only to modules with matching qualified '
                              'names, e.g, "_ast" or "numpy.*".')
+    parser.add_argument('--builtins-only', action='store_true',
+                        help='Limit generation only to the modules in `sys.builtin_module_names`.')
     parser.add_argument('--state-file-policy', metavar='TYPE', choices=('readwrite', 'write'),
                         help='Controls the behavior regarding ".state.json" files: '
                              '"readwrite" means that the initial state will be read from stdin '
@@ -141,7 +143,7 @@ def main():
 
     timer = Timer()
     if not args.mod_name:
-        generator.discover_and_process_all_modules(name_pattern=args.name_pattern)
+        generator.discover_and_process_all_modules(name_pattern=args.name_pattern, builtins_only=args.builtins_only)
         sys.exit(0)
 
     if sys.platform == 'cli':
