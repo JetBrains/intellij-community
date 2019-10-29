@@ -10,6 +10,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import com.intellij.ui.LightColors
 import com.intellij.uiDesigner.editor.UIFormEditor
 import org.jetbrains.idea.devkit.util.PsiUtil
 
@@ -31,11 +32,10 @@ class ConvertFormNotificationProvider : EditorNotifications.Provider<EditorNotif
     val classToBind = fileEditor.editor.rootContainer.classToBind ?: return null
     val psiClass = JavaPsiFacade.getInstance(project).findClass(classToBind, ProjectScope.getProjectScope(project)) ?: return null
 
-    return EditorNotificationPanel().apply {
-      setText("The use of UI Designer in the IntelliJ project is now discouraged")
+    return EditorNotificationPanel(LightColors.RED).apply {
+      setText("The use of UI Designer in IntelliJ project is now discouraged")
       createActionLabel("Convert to UI DSL") {
         convertFormToUiDsl(psiClass, formPsiFile)
-
       }
     }
   }
