@@ -123,5 +123,5 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
     return null;
   }
 
-  public static ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
+  public static final ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
 }
