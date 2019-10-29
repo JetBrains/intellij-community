@@ -410,7 +410,6 @@
       <module fileurl="file://$PROJECT_DIR$/../data-binding/baseLibrarySupport/db-baseLibrarySupport.iml" filepath="$PROJECT_DIR$/../data-binding/baseLibrarySupport/db-baseLibrarySupport.iml" />
       <module fileurl="file://$PROJECT_DIR$/../data-binding/compiler/db-compiler.iml" filepath="$PROJECT_DIR$/../data-binding/compiler/db-compiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/../data-binding/compilerCommon/db-compilerCommon.iml" filepath="$PROJECT_DIR$/../data-binding/compilerCommon/db-compilerCommon.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/devicelib/devicelib.iml" filepath="$PROJECT_DIR$/../base/devicelib/devicelib.iml" />
       <module fileurl="file://$PROJECT_DIR$/../swing-testing/fest-swing/fest-swing.iml" filepath="$PROJECT_DIR$/../swing-testing/fest-swing/fest-swing.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/firebase/firebase.iml" filepath="$PROJECT_DIR$/../vendor/google/firebase/firebase.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/cloud/testing/firebase-testing/firebase-testing.iml" filepath="$PROJECT_DIR$/../studio/google/cloud/testing/firebase-testing/firebase-testing.iml" />

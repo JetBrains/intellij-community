@@ -185,7 +185,6 @@ iml_project(
         "//tools/base/ddmlib:studio.android.sdktools.ddmlib",
         "//tools/base/deploy/deployer:studio.android.sdktools.deployer",
         "//tools/base/device_validator:studio.android.sdktools.dvlib",
-        "//tools/base/devicelib:studio.devicelib",
         "//tools/base/draw9patch:studio.android.sdktools.draw9patch",
         "//tools/base/fakeadbserver:studio.android.sdktools.fakeadbserver",
         "//tools/base/flags:studio.android.sdktools.flags",
