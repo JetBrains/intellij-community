@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 abstract class EnvironmentVariablesIndex extends FileBasedIndexExtension<String, Void> {
-    private final KeyDescriptor<String> myKeyDescriptor = new EnumeratorStringDescriptor();
+    private final KeyDescriptor<String> myKeyDescriptor = EnumeratorStringDescriptor.INSTANCE;
 
     @NotNull
     @Override
