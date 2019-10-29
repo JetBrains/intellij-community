@@ -161,23 +161,12 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         self.process_stderr.write(stderr)
         return ProcessResult(process.returncode, stdout, stderr)
 
-    def check_generator_output(self, mod_name=None, mod_path=None, mod_root=None,
-                               custom_required_gen=False, success=True, **kwargs):
+    def check_generator_output(self, mod_name=None, mod_path=None, custom_required_gen=False, success=True, **kwargs):
         if custom_required_gen:
             kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
 
-        if mod_name and not mod_root:
-            mod_root = self.test_data_dir
-
-        roots = kwargs.pop('extra_syspath', None)
-        if mod_root:
-            if roots:
-                roots.insert(0, mod_root)
-            else:
-                roots = [mod_root]
-
         with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath=roots, **kwargs)
+            result = self.run_generator(mod_name, mod_path=mod_path, **kwargs)
             self.assertEqual(success, result.exit_code == 0)
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
@@ -260,7 +249,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
             self.assertTrue('# from (built-in)\n' in f.read())
 
     def test_skeleton_regenerated_for_changed_module(self):
-        self.check_generator_output('mod', mod_path='mod.py', mod_root='versions/v2')
+        self.check_generator_output('mod', mod_path='mod.py', extra_syspath=['versions/v2'])
 
     def test_skeleton_regenerated_for_upgraded_generator_with_explicit_update_stamp(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.2', custom_required_gen=True)
