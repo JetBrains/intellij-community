@@ -44,6 +44,11 @@ import static com.intellij.task.ProjectTaskManager.EMPTY_TASKS_ARRAY;
 public abstract class ProjectTaskRunner {
   public static final ExtensionPointName<ProjectTaskRunner> EP_NAME = ExtensionPointName.create("com.intellij.projectTaskRunner");
 
+  /**
+   * Describes {@link ProjectTaskRunner} execution result.
+   *
+   * @see TaskRunnerResults
+   */
   public interface Result {
     boolean isAborted();
 
