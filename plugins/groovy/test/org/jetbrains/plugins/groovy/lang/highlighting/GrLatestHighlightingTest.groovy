@@ -677,4 +677,35 @@ def m() {
 }
 '''
   }
+
+  void 'test IDEA-221874'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m() {
+    def clazz = Thread
+    clazz.declaredFields
+        .findAll { !it.synthetic }
+        .each {
+            it.name
+        }
+}
+'''
+  }
+
+  void 'test IDEA-221874-2'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m2() {
+    def all = Thread.declaredFields
+            .findAll { !it.synthetic }
+
+    print all.<error>get</error>(0)
+}
+
+''',  true, false, false
+  }
 }
