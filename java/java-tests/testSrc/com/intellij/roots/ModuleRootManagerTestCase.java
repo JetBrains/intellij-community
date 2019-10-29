@@ -146,7 +146,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   }
 
   protected boolean underTreeProjectModel() {
-    return ModuleManager.getInstance(myProject).getClass().getName() == "com.intellij.treeProjectModel.legacyBridge.intellij.LegacyBridgeModuleManagerComponent";
+    return ModuleManager.getInstance(myProject).getClass().getName() == "com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent";
   }
 
   protected void ignoreTestUnderTreeProjectModel() {
