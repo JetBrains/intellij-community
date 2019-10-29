@@ -40,4 +40,8 @@ public class GroupingElement extends ErrorTreeElement {
   public VirtualFile getFile() {
     return myFile;
   }
+
+  public boolean isRenderWithBoldFont() {
+    return true;
+  }
 }

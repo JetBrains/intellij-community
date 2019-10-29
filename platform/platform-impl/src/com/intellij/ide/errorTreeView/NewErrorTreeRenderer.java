@@ -236,7 +236,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   @Override
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final ErrorTreeElement element = getElement(value);
-    if(element instanceof GroupingElement) {
+    if(element instanceof GroupingElement && ((GroupingElement)element).isRenderWithBoldFont()) {
       setFont(getFont().deriveFont(Font.BOLD));
     }
 
