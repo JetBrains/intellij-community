@@ -16,8 +16,8 @@ import com.jetbrains.changeReminder.stats.logEvent
 internal abstract class PredictionController(private val project: Project,
                                              name: String,
                                              parent: Disposable,
-                                             handler: (Collection<FilePath>) -> Unit
-) : SingleTaskController<PredictionRequest, Collection<FilePath>>(name, Consumer { handler(it) }, parent) {
+                                             handler: (PredictionResult) -> Unit
+) : SingleTaskController<PredictionRequest, PredictionResult>(name, Consumer { handler(it) }, parent) {
   var inProgress = false
     private set(value) {
       field = value
@@ -43,7 +43,7 @@ internal abstract class PredictionController(private val project: Project,
         catch (_: Exception) {
         }
         finally {
-          complete(result)
+          complete(PredictionResult(result))
         }
       }
     }
@@ -54,7 +54,7 @@ internal abstract class PredictionController(private val project: Project,
 
   abstract fun inProgressChanged(value: Boolean)
 
-  private fun complete(result: Collection<FilePath>) {
+  private fun complete(result: PredictionResult) {
     inProgress = false
     taskCompleted(result)
   }
