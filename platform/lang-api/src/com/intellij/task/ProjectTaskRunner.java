@@ -80,7 +80,9 @@ public abstract class ProjectTaskRunner {
     return false;
   }
 
-  private static final Key<Boolean> REQ_KEY = KeyWithDefaultValue.create("req key", false);
+  //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
+  private static final Key<Boolean> RECURSION_GUARD_KEY = KeyWithDefaultValue.create("recursion guard key", false);
+
   /**
    * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
    */
@@ -90,10 +92,10 @@ public abstract class ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
-    if (!REQ_KEY.get(context)) {
-      REQ_KEY.set(context, true);
+    if (!RECURSION_GUARD_KEY.get(context)) {
+      RECURSION_GUARD_KEY.set(context, true);
       run(project, context, callback, tasks.toArray(EMPTY_TASKS_ARRAY));
-      REQ_KEY.set(context, false);
+      RECURSION_GUARD_KEY.set(context, false);
     }
     else {
       assertUnsupportedOperation(callback);
@@ -110,10 +112,10 @@ public abstract class ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull ProjectTask... tasks) {
-    if (!REQ_KEY.get(context)) {
-      REQ_KEY.set(context, true);
+    if (!RECURSION_GUARD_KEY.get(context)) {
+      RECURSION_GUARD_KEY.set(context, true);
       run(project, context, callback, Arrays.asList(tasks));
-      REQ_KEY.set(context, false);
+      RECURSION_GUARD_KEY.set(context, false);
     }
     else {
       assertUnsupportedOperation(callback);
@@ -160,4 +162,5 @@ public abstract class ProjectTaskRunner {
       throw new UnsupportedOperationException("Please, provide implementation for non-deprecated methods");
     }
   }
+  //</editor-fold>
 }
