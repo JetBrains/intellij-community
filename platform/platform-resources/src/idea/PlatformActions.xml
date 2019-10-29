@@ -1337,7 +1337,7 @@
       <separator/>
       <group id="CopyExternalReferenceGroup">
         <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" text="Toolbox URL"
-                icon="AllIcons.Actions.Copy"/>
+                icon="AllIcons.Nodes.Toolbox"/>
       </group>
     </group>
   </actions>
