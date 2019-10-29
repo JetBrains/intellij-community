@@ -16,7 +16,6 @@
 package com.intellij.usageView;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -317,7 +316,7 @@ public class UsageInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!getClass().equals(o.getClass())) return false;
+    if (o == null || !getClass().equals(o.getClass())) return false;
 
     final UsageInfo usageInfo = (UsageInfo)o;
 
