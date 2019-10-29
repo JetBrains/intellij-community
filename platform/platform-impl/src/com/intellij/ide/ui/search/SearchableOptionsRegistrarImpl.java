@@ -2,7 +2,6 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -332,10 +331,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     if (helpIds != null) {
       for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext();) {
         Configurable configurable = it.next();
-        if (CodeStyleFacade.getInstance(project).isUnsuitableCodeStyleConfigurable(configurable)) {
-          it.remove();
-          continue;
-        }
         if (!(configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId()))) {
           it.remove();
         }

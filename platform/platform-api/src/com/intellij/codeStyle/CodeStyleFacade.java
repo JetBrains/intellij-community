@@ -124,5 +124,4 @@ public abstract class CodeStyleFacade {
   @Deprecated
   public abstract String getLineSeparator();
 
-  public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);
 }
