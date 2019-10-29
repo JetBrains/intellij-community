@@ -4,56 +4,93 @@ import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.module.*
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.*
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.IdeUiEntitySource
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.storagePlace
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener
 import com.intellij.workspace.legacyBridge.intellij.ProjectModel
 import com.intellij.workspace.legacyBridge.intellij.ProjectModelInitialTestContent
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import org.junit.Assert
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
+class LegacyBridgeModulesTest {
+  @Rule
+  @JvmField
+  var edtRule = EdtRule()
+
+  @Rule
+  @JvmField
+  var application = ApplicationRule()
+
+  @Rule
+  @JvmField
+  var temporaryDirectoryRule = TemporaryDirectory()
+
+  @Rule
+  @JvmField
+  var disposableRule = DisposableRule()
+
+  private lateinit var project: Project
+
+  @Before
+  fun prepareProject() {
+    val registryValue = Registry.get(LegacyBridgeProjectLifecycleListener.ENABLED_REGISTRY_KEY)
+    val oldEnabledValue = registryValue.asBoolean()
+    registryValue.setValue(true)
+    disposableRule.disposable.attach { registryValue.setValue(oldEnabledValue) }
+
+    val tempDir = temporaryDirectoryRule.newPath("project").toFile()
+    project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
+    runInEdt { ProjectManagerEx.getInstanceEx().openProject(project) }
+    disposableRule.disposable.attach { runInEdt { ProjectUtil.closeAndDispose(project) } }
+  }
+
   @Test
   fun `test that module continues to receive updates after being created in modifiable model`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
       val module = moduleManager.modifiableModel.let {
-        val m = it.newModule("/xxx", moduleType.id, null) as LegacyBridgeModule
+        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
         it.commit()
         m
       }
 
-      Assert.assertTrue(moduleManager.modules.contains(module))
-      Assert.assertSame(ProjectModel.getInstance(project).entityStore, module.entityStore)
+      assertTrue(moduleManager.modules.contains(module))
+      assertSame(ProjectModel.getInstance(project).entityStore, module.entityStore)
 
-      val contentRootUrl = createTempDir("contentRoot").toVirtualFileUrl()
+      val contentRootUrl = temporaryDirectoryRule.newPath("contentRoot").toVirtualFileUrl()
 
       ProjectModel.getInstance(project).updateProjectModel {
         val moduleEntity = it.resolve(module.moduleEntityId)!!
         it.addContentRootEntity(contentRootUrl, emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
       }
 
-      Assert.assertArrayEquals(
+      assertArrayEquals(
         ModuleRootManager.getInstance(module).contentRootUrls,
         arrayOf(contentRootUrl.url)
       )
@@ -71,14 +108,14 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
 
       val modulesModifiableModel = moduleManager.modifiableModel
       try {
-        val m = modulesModifiableModel.newModule("/xxx", moduleType.id, null) as LegacyBridgeModule
+        val m = modulesModifiableModel.newModule(File(project.basePath, "xxx.iml").path, ModuleType.EMPTY.id, null) as LegacyBridgeModule
         val rootModel = m.rootManager.modifiableModel
 
-        val temp = createTempDirectory()
+        val temp = temporaryDirectoryRule.newPath()
         rootModel.addContentEntry(temp.toVirtualFileUrl().url)
         rootModel.commit()
 
-        Assert.assertArrayEquals(arrayOf(temp.toVirtualFileUrl().url), m.rootManager.contentRootUrls)
+        assertArrayEquals(arrayOf(temp.toVirtualFileUrl().url), m.rootManager.contentRootUrls)
       } finally {
         modulesModifiableModel.dispose()
       }
@@ -91,29 +128,29 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
       val moduleManager = ModuleManager.getInstance(project)
 
       val module = moduleManager.modifiableModel.let { model ->
-        val module = model.newModule(File(myProject.basePath, "oldName.iml").path, moduleType.id)
+        val module = model.newModule(File(project.basePath, "oldName.iml").path, ModuleType.EMPTY.id)
         model.commit()
         module
       }
 
-      Assert.assertEquals("oldName", module.name)
+      assertEquals("oldName", module.name)
 
       moduleManager.modifiableModel.let { model ->
-        Assert.assertSame(module, model.findModuleByName("oldName"))
-        Assert.assertNull(model.getModuleToBeRenamed("oldName"))
+        assertSame(module, model.findModuleByName("oldName"))
+        assertNull(model.getModuleToBeRenamed("oldName"))
 
         model.renameModule(module, "newName")
 
-        Assert.assertSame(module, model.findModuleByName("oldName"))
-        Assert.assertSame(module, model.getModuleToBeRenamed("newName"))
-        Assert.assertSame("newName", model.getNewName(module))
+        assertSame(module, model.findModuleByName("oldName"))
+        assertSame(module, model.getModuleToBeRenamed("newName"))
+        assertSame("newName", model.getNewName(module))
 
         model.commit()
       }
 
-      Assert.assertNull(moduleManager.findModuleByName("oldName"))
-      Assert.assertSame(module, moduleManager.findModuleByName("newName"))
-      Assert.assertEquals("newName", module.name)
+      assertNull(moduleManager.findModuleByName("oldName"))
+      assertSame(module, moduleManager.findModuleByName("newName"))
+      assertEquals("newName", module.name)
     }
 
   @Test
@@ -124,14 +161,14 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
         moduleManager.disposeModule(module)
       }
 
-      val modulePath = File(myProject.basePath, "oldName.iml").toVirtualFileUrl()
+      val modulePath = File(project.basePath, "oldName.iml").toVirtualFileUrl()
       val projectModel = ProjectModel.getInstance(project)
 
       projectModel.updateProjectModel {
         it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, project.storagePlace!!))
       }
 
-      Assert.assertNotNull(moduleManager.findModuleByName("name"))
+      assertNotNull(moduleManager.findModuleByName("name"))
 
       projectModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class).single()
@@ -139,8 +176,8 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
         it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, project.storagePlace!!))
       }
 
-      Assert.assertEquals(1, moduleManager.modules.size)
-      Assert.assertNotNull(moduleManager.findModuleByName("name"))
+      assertEquals(1, moduleManager.modules.size)
+      assertNotNull(moduleManager.findModuleByName("name"))
     }
 
   @Test
@@ -148,11 +185,11 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
-      val dir = File(myProject.basePath, "dir")
-      val modulePath = File(myProject.basePath, "oldName.iml").toVirtualFileUrl()
+      val dir = File(project.basePath, "dir")
+      val modulePath = File(project.basePath, "oldName.iml").toVirtualFileUrl()
       val projectModel = ProjectModel.getInstance(project)
 
-      val projectPlace = myProject.storagePlace!!
+      val projectPlace = project.storagePlace!!
 
       projectModel.updateProjectModel {
         val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, projectPlace))
@@ -160,26 +197,27 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
       }
 
       val module = moduleManager.findModuleByName("name")
-      Assert.assertNotNull(module)
+      assertNotNull(module)
 
-      Assert.assertArrayEquals(
+      assertArrayEquals(
         arrayOf(dir.toVirtualFileUrl().url),
         ModuleRootManager.getInstance(module!!).contentRootUrls
       )
 
       val sourceRootUrl = ModuleRootManager.getInstance(module).contentEntries.single()
         .sourceFolders.single().url
-      Assert.assertEquals(dir.toVirtualFileUrl().url, sourceRootUrl)
+      assertEquals(dir.toVirtualFileUrl().url, sourceRootUrl)
     }
 
   @Test
+  @RunsInEdt
   fun `test module component serialized into module iml`() {
-    val moduleFile = File(myProject.basePath, "test.iml")
+    val moduleFile = File(project.basePath, "test.iml")
 
     val moduleManager = ModuleManager.getInstance(project)
     val module = WriteAction.computeAndWait<Module, Exception> { moduleManager.newModule (moduleFile.path, ModuleTypeId.JAVA_MODULE) }
 
-    StoreUtil.saveDocumentsAndProjectSettings(myProject)
+    StoreUtil.saveDocumentsAndProjectSettings(project)
 
     assertEquals(
       "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
@@ -207,31 +245,39 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
     )
   }
 
+  @Test
+  @RunsInEdt
   fun `test module extensions`() {
     TestModuleExtension.commitCalled.set(0)
 
-    val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+    val module = ApplicationManager.getApplication().runWriteAction<Module> {
+      ModuleManager.getInstance(project).newModule(File(project.basePath, "test.iml").path, ModuleType.EMPTY.id)
+    }
+
+    val modifiableModel = ApplicationManager.getApplication().runReadAction<ModifiableRootModel> { ModuleRootManager.getInstance(module).modifiableModel }
     val moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
     moduleExtension.languageLevel = LanguageLevel.JDK_1_5
     ApplicationManager.getApplication().runWriteAction { modifiableModel.commit() }
 
-    Assert.assertEquals(
+    assertEquals(
       LanguageLevel.JDK_1_5,
       ModuleRootManager.getInstance(module).getModuleExtension(TestModuleExtension::class.java).languageLevel
     )
 
-    Assert.assertEquals(
+    assertEquals(
       LanguageLevel.JDK_1_5,
       ModuleRootManager.getInstance(module).modifiableModel.getModuleExtension(TestModuleExtension::class.java).languageLevel
     )
 
-    Assert.assertEquals(1, TestModuleExtension.commitCalled.get())
+    assertEquals(1, TestModuleExtension.commitCalled.get())
   }
 
+  @Test
+  @RunsInEdt
   fun `test module libraries loaded from cache`() {
     val builder = TypedEntityStorageBuilder.create()
 
-    val tempDir = this.createTempDirectory()
+    val tempDir = temporaryDirectoryRule.newPath().toFile()
 
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = IdeUiEntitySource)
     val moduleLibraryEntity = builder.addLibraryEntity(
@@ -249,7 +295,7 @@ class LegacyBridgeModulesTest : HeavyPlatformTestCase() {
     ProjectModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
       ProjectManagerEx.getInstanceEx().openProject(project)
-      testRootDisposable.attach { ProjectUtil.closeAndDispose(project) }
+      disposableRule.disposable.attach { ProjectUtil.closeAndDispose(project) }
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
 

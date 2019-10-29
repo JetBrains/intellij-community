@@ -17,13 +17,15 @@ import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRoots
 
 internal class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
+    const val ENABLED_REGISTRY_KEY = "ide.new.project.model"
+
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
 
     fun enabled(project: Project) = ModuleManager.getInstance(project) is LegacyBridgeModuleManagerComponent
   }
 
   override fun serviceContainerInitialized(project: Project) {
-    val enabled = Registry.`is`("ide.new.project.model")
+    val enabled = Registry.`is`(ENABLED_REGISTRY_KEY)
     if (!enabled) {
       LOG.info("Using legacy project model to open project")
       return

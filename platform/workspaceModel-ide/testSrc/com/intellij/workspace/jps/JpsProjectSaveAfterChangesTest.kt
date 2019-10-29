@@ -1,6 +1,6 @@
 package com.intellij.workspace.jps
 
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.*
@@ -139,7 +139,7 @@ class JpsProjectSaveAfterChangesTest {
     val expectedDir = FileUtil.createTempDirectory("jpsProjectTest", "expected")
     FileUtil.copyDir(projectData.originalProjectDir, expectedDir)
     if (changedFilesDirectoryName != null) {
-      val changedDir = File(PathManager.getHomePath(), "treeProjectModel/ide/testData/serialization/reload/$changedFilesDirectoryName")
+      val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/reload/$changedFilesDirectoryName")
       FileUtil.copyDir(changedDir, expectedDir)
     }
     pathsToRemove.forEach {

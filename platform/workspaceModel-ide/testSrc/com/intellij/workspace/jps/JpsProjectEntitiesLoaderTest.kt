@@ -1,6 +1,7 @@
 package com.intellij.workspace.jps
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspace.api.*
 import org.jetbrains.jps.util.JpsPathUtil
@@ -145,7 +146,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   }
 
   fun `test custom source root`() {
-    val projectDir = File(PathManager.getHomePath(), "treeProjectModel/ide/testData/serialization/customSourceRoot/customSourceRoot.ipr")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/customSourceRoot/customSourceRoot.ipr")
     val storage = loadProject(projectDir)
     val module = assertOneElement(storage.entities(ModuleEntity::class).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())

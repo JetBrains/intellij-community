@@ -1,6 +1,6 @@
 package com.intellij.workspace.jps
 
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspace.api.ModuleEntity
@@ -109,7 +109,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
 
   private fun reload(originalProjectDir: File, directoryName: String): ReloadedProjectData {
     return reload(originalProjectDir) { projectData ->
-      val changedDir = File(PathManager.getHomePath(), "treeProjectModel/ide/testData/serialization/reload/$directoryName")
+      val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/reload/$directoryName")
       val newUrls = collectFileUrls(changedDir, projectData.projectDirUrl)
       val oldUrls = collectFileUrls(projectData.projectDir, projectData.projectDirUrl)
       FileUtil.copyDir(changedDir, projectData.projectDir)

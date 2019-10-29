@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -122,6 +123,8 @@ data class VirtualFileUrl(internal val id: Int)
 // TODO It's possible to write it without additional string allocations besides absolutePath
 fun File.toVirtualFileUrl(): VirtualFileUrl =
   VirtualFileUrlManager.fromUrl("file://${absolutePath.replace('\\', '/')}")
+
+fun Path.toVirtualFileUrl(): VirtualFileUrl = toFile().toVirtualFileUrl()
 
 val VirtualFile.virtualFileUrl
   get() = VirtualFileUrlManager.fromVirtualFile(this)
