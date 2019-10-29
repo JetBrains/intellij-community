@@ -10,7 +10,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +17,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -144,20 +143,21 @@ public class PluginManagerTest {
     assertNull(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild));
   }
 
-  private static List<IdeaPluginDescriptorImpl> loadDescriptors(@NotNull String testDataName) throws IOException, JDOMException {
-    File file = new File(getTestDataPath(), testDataName);
+  @NotNull
+  private static List<IdeaPluginDescriptorImpl> loadDescriptors(@NotNull String testDataName)
+    throws IOException, JDOMException {
+    Path file = Paths.get(getTestDataPath(), testDataName);
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-    LoadDescriptorsContext context = new LoadDescriptorsContext(false);
+    LoadDescriptorsContext context = new LoadDescriptorsContext(false, null);
     Element root = JDOMUtil.load(file, context.getXmlFactory());
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
-      IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(new File(url), true);
-      d.readExternal(element, new URL(url), JDOMXIncluder.DEFAULT_PATH_RESOLVER,
-                     context.getXmlFactory().stringInterner(), false);
+      IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(Paths.get(url), true);
+      d.readExternal(element, Paths.get(url), true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER,
+                     context.getXmlFactory().stringInterner(), PluginManagerCore.disabledPlugins());
       result.add(d);
     }
-    Collections.sort(result, (o1, o2) -> Comparing.compare(String.valueOf(o1.getPluginId()),
-                                                           String.valueOf(o2.getPluginId())));
+    result.sort((o1, o2) -> Comparing.compare(String.valueOf(o1.getPluginId()), String.valueOf(o2.getPluginId())));
     return result;
   }
 

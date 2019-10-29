@@ -2,13 +2,17 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.util.Functions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -17,12 +21,14 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author Dmitry Avdeev
@@ -32,7 +38,8 @@ public class PluginDescriptorTest {
     return PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor";
   }
 
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  @Rule
+  public final InMemoryFsRule inMemoryFs = new InMemoryFsRule();
 
   @Test
   public void testDescriptorLoading() {
@@ -84,9 +91,39 @@ public class PluginDescriptorTest {
   @Test
   public void testFilteringDuplicates() throws Exception {
     URL[] urls = {
-      new File(getTestDataPath(), "duplicate1.jar").toURI().toURL(),
-      new File(getTestDataPath(), "duplicate2.jar").toURI().toURL()};
-    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls, null)).size());
+      Paths.get(getTestDataPath(), "duplicate1.jar").toUri().toURL(),
+      Paths.get(getTestDataPath(), "duplicate2.jar").toUri().toURL()
+    };
+    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls, null))).hasSize(1);
+  }
+
+  @Test
+  public void testProductionPlugins() throws Exception {
+    Assume.assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
+
+    List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"));
+    assertThat(descriptors).isNotEmpty();
+    assertThat(ContainerUtil.find(descriptors, it -> it.getPluginId().getIdString().equals("com.intellij.java"))).isNotNull();
+  }
+
+  @Test
+  public void testProductionProductLib() throws Exception {
+    Assume.assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
+
+    List<URL> urls = new ArrayList<>();
+    for (File it : new File("/Applications/Idea.app/Contents/lib").listFiles()) {
+      urls.add(it.toURI().toURL());
+    }
+    List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls.toArray(new URL[0]), null));
+    assertThat(descriptors).hasSize(1);
+  }
+
+  @Test
+  public void testProduction2() throws Exception {
+    Assume.assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
+
+    List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"));
+    assertThat(descriptors).isNotEmpty();
   }
 
   @Test
@@ -163,27 +200,28 @@ public class PluginDescriptorTest {
     assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader3).size());
 
     ClassLoader loader4 = new TestLoader("jar:", "/jar spaces.jar!/");
-    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader4).size());
+    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(loader4)).hasSize(1);
   }
 
   @Test
   public void testEqualityById() throws IOException {
-    File tempFile = tempDir.newFile(PluginManagerCore.PLUGIN_XML_PATH);
-    FileUtil.writeToFile(tempFile, "<idea-plugin>\n<id>ID</id>\n<name>A</name>\n</idea-plugin>");
-    IdeaPluginDescriptorImpl impl1 = loadDescriptor(tempDir.getRoot());
-    FileUtil.writeToFile(tempFile, "<idea-plugin>\n<id>ID</id>\n<name>B</name>\n</idea-plugin>");
-    IdeaPluginDescriptorImpl impl2 = loadDescriptor(tempDir.getRoot());
+    FileSystem fs = inMemoryFs.getFs();
+    Path tempFile = fs.getPath("/", PluginManagerCore.PLUGIN_XML_PATH);
+    PathKt.write(tempFile, "<idea-plugin>\n<id>ID</id>\n<name>A</name>\n</idea-plugin>");
+    IdeaPluginDescriptorImpl impl1 = loadDescriptor(fs.getPath("/"));
+    PathKt.write(tempFile, "<idea-plugin>\n<id>ID</id>\n<name>B</name>\n</idea-plugin>");
+    IdeaPluginDescriptorImpl impl2 = loadDescriptor(fs.getPath("/"));
     assertEquals(impl1, impl2);
     assertEquals(impl1.hashCode(), impl2.hashCode());
     assertNotSame(impl1.getName(), impl2.getName());
   }
 
   private static IdeaPluginDescriptorImpl loadDescriptor(String dirName) {
-    return loadDescriptor(new File(getTestDataPath(), dirName));
+    return loadDescriptor(Paths.get(getTestDataPath(), dirName));
   }
 
-  private static IdeaPluginDescriptorImpl loadDescriptor(File dir) {
-    assertTrue(dir + " does not exist", dir.exists());
+  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path dir) {
+    assertTrue(dir + " does not exist", Files.exists(dir));
     PluginManagerCore.ourPluginError = null;
     IdeaPluginDescriptorImpl result = PluginManagerCore.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
     if (result == null) {

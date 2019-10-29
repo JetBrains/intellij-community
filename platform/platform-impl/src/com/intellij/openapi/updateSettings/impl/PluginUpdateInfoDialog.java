@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * @author pti
  */
-class PluginUpdateInfoDialog extends AbstractUpdateDialog {
+final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   private final Collection<PluginDownloader> myUploadedPlugins;
   private final boolean myPlatformUpdate;
 

@@ -25,7 +25,12 @@ final class LoadDescriptorsContext implements AutoCloseable {
   private final ThreadLocal<SafeJdomFactory> myThreadLocalXmlFactory;
   private final int myMaxThreads;
 
-  LoadDescriptorsContext(boolean isParallel) {
+  @Nullable
+  final Set<String> disabledPlugins;
+
+  LoadDescriptorsContext(boolean isParallel, @Nullable Set<String> disabledPlugins) {
+    this.disabledPlugins = disabledPlugins;
+
     myMaxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (myMaxThreads > 1) {
       myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", myMaxThreads, false);

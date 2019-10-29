@@ -29,8 +29,6 @@ public class JDOMXIncluder {
     }
   };
 
-  @NonNls private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
-  @NonNls private static final String XI = "xi";
   @NonNls private static final String INCLUDE = "include";
   @NonNls private static final String HREF = "href";
   @NonNls private static final String BASE = "base";
@@ -38,7 +36,7 @@ public class JDOMXIncluder {
   @NonNls private static final String XML = "xml";
   @NonNls private static final String XPOINTER = "xpointer";
 
-  public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
+  private static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace("xi", "http://www.w3.org/2001/XInclude");
   private final boolean myIgnoreMissing;
   private final PathResolver myPathResolver;
 
@@ -72,12 +70,6 @@ public class JDOMXIncluder {
   @ApiStatus.ScheduledForRemoval
   public static Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
     return new Document(resolveRoot(original.getRootElement(), new URL((base))));
-  }
-
-  @NotNull
-  public static List<Element> resolve(@NotNull Element original, String base, boolean ignoreMissing, PathResolver pathResolver)
-    throws XIncludeException, MalformedURLException {
-    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, new URL(base));
   }
 
   /**

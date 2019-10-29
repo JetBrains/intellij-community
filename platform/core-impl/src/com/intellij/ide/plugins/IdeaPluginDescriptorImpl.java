@@ -4,8 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.OldComponentConfig;
@@ -23,7 +21,6 @@ import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.xmlb.BeanBinding;
-import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
 import org.jdom.Content;
@@ -34,13 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,7 +57,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
 
-  private final File myPath;
+  private final Path myPath;
   private final boolean myBundled;
   private String myName;
   private PluginId myId;
@@ -100,10 +98,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private boolean myEnabled = true;
   private boolean myDeleted;
-  private Boolean mySkipped;
   private boolean myExtensionsCleared = false;
 
-  public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
+  public IdeaPluginDescriptorImpl(@NotNull Path pluginPath, boolean bundled) {
     myPath = pluginPath;
     myBundled = bundled;
   }
@@ -128,38 +125,36 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public File getPath() {
+    return myPath.toFile();
+  }
+
+  @NotNull
+  public Path getPluginPath() {
     return myPath;
   }
 
-  public void readExternal(@NotNull Element element,
-                           @NotNull URL url,
-                           @NotNull JDOMXIncluder.PathResolver pathResolver,
-                           @Nullable Interner<String> stringInterner,
-                           boolean ignoreDisabled) throws InvalidDataException, MalformedURLException {
-    Application app = ApplicationManager.getApplication();
-    readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner, ignoreDisabled);
+  /**
+   * @deprecated Use {@link #loadFromFile(Path, SafeJdomFactory, boolean, Set)}
+   */
+  @Deprecated
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude)
+    throws IOException, JDOMException {
+    loadFromFile(file.toPath(), factory, ignoreMissingInclude, PluginManagerCore.disabledPlugins());
   }
 
-  public void loadFromFile(@NotNull File file,
-                           @Nullable SafeJdomFactory factory,
-                           boolean ignoreMissingInclude) throws IOException, JDOMException {
-    loadFromFile(file, factory, ignoreMissingInclude, false);
-  }
-
-  public void loadFromFile(@NotNull File file,
+  public void loadFromFile(@NotNull Path file,
                            @Nullable SafeJdomFactory factory,
                            boolean ignoreMissingInclude,
-                           boolean ignoreDisabledPlugins) throws IOException, JDOMException {
-    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), ignoreMissingInclude,
-                 JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner(), ignoreDisabledPlugins);
+                           @Nullable Set<String> disabledPlugins) throws IOException, JDOMException {
+    readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner(), disabledPlugins);
   }
 
-  private void readExternal(@NotNull Element element,
-                            @NotNull URL url,
+  public void readExternal(@NotNull Element element,
+                            @Nullable Path basePath,
                             boolean ignoreMissingInclude,
-                            @NotNull JDOMXIncluder.PathResolver pathResolver,
+                            @Nullable PathBasedJdomXIncluder.PathResolver pathResolver,
                             @Nullable Interner<String> stringInterner,
-                            boolean ignoreDisabledPlugins) throws InvalidDataException, MalformedURLException {
+                            @Nullable Set<String> disabledPlugins) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -167,12 +162,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     String pluginId = element.getChildTextTrim("id");
-    if (pluginId == null) pluginId = element.getChildTextTrim("name");
-    if (pluginId == null || !PluginManagerCore.disabledPlugins().contains(pluginId) || ignoreDisabledPlugins) {
-      JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
+    if (pluginId == null) {
+      pluginId = element.getChildTextTrim("name");
+    }
+
+    if (pluginId == null || disabledPlugins == null || !disabledPlugins.contains(pluginId)) {
+      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, Objects.requireNonNull(pathResolver));
     }
     else if (LOG.isDebugEnabled()) {
-      LOG.debug("Skipping resolving of " + pluginId + " from " + url);
+      LOG.debug("Skipping resolving of " + pluginId + " from " + basePath);
     }
     readExternal(element, stringInterner);
   }
@@ -187,9 +185,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myName = ObjectUtils.chooseNotNull(nameString, idString);
 
     ProductDescriptor pd = pluginBean.productDescriptor;
-    myProductCode = pd != null? pd.code : null;
+    myProductCode = pd == null ? null : StringUtil.nullize(pd.code);
     myReleaseDate = parseReleaseDate(pluginBean);
-    myReleaseVersion = pd != null? pd.releaseVersion : 0;
+    myReleaseVersion = pd == null ? 0 : pd.releaseVersion;
 
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
@@ -688,34 +686,35 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
-  public List<File> getClassPath() {
-    if (!myPath.isDirectory()) {
+  public List<Path> getClassPath() {
+    if (!Files.isDirectory(myPath)) {
       return Collections.singletonList(myPath);
     }
 
-    List<File> result = new ArrayList<>();
-    File classesDir = new File(myPath, "classes");
-    if (classesDir.exists()) {
+    List<Path> result = new ArrayList<>();
+    Path classesDir = myPath.resolve("classes");
+    if (Files.exists(classesDir)) {
       result.add(classesDir);
     }
 
-    File[] files = new File(myPath, "lib").listFiles();
-    if (files == null || files.length <= 0) {
-      return result;
-    }
-
-    for (File f : files) {
-      if (f.isFile()) {
-        String name = f.getName();
-        if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
+    try (DirectoryStream<Path> childStream = Files.newDirectoryStream(myPath.resolve("lib"))) {
+      for (Path f : childStream) {
+        if (Files.isRegularFile(f)) {
+          String name = f.getFileName().toString();
+          if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
+            result.add(f);
+          }
+        }
+        else {
           result.add(f);
         }
       }
-      else {
-        result.add(f);
-      }
+    }
+    catch (FileNotFoundException ignore) {
+    }
+    catch (IOException e) {
+      LOG.debug(e);
     }
     return result;
   }
@@ -915,19 +914,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String toString() {
     return "PluginDescriptor(name=" + myName + ", classpath=" + myPath + ")";
-  }
-
-  @ApiStatus.Internal
-  public void processExtensionPoints(@NotNull Consumer<Element> consumer) {
-    if (myAppContainerDescriptor.extensionsPoints != null) {
-      myAppContainerDescriptor.extensionsPoints.forEach(consumer);
-    }
-    if (myProjectContainerDescriptor.extensionsPoints != null) {
-      myProjectContainerDescriptor.extensionsPoints.forEach(consumer);
-    }
-    if (myModuleContainerDescriptor.extensionsPoints != null) {
-      myModuleContainerDescriptor.extensionsPoints.forEach(consumer);
-    }
   }
 
   private static boolean isComponentSuitableForOs(@Nullable String os) {

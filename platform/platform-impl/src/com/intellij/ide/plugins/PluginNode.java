@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author stathik
  */
-public class PluginNode implements IdeaPluginDescriptor {
+public final class PluginNode implements IdeaPluginDescriptor {
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }

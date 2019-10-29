@@ -29,6 +29,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -162,7 +163,7 @@ public final class PluginDownloader {
       return false;
     }
 
-    IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile);
+    IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile.toPath());
     if (actualDescriptor != null) {
       InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
       if (state != null && state.wasUpdated(actualDescriptor.getPluginId())) {
@@ -200,16 +201,16 @@ public final class PluginDownloader {
   }
 
   @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptionFromJar(final File file) throws IOException {
+  public static IdeaPluginDescriptorImpl loadDescriptionFromJar(@NotNull Path file) throws IOException {
     IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
     if (descriptor == null) {
-      if (file.getName().endsWith(".zip")) {
+      if (file.getFileName().toString().endsWith(".zip")) {
         final File outputDir = FileUtil.createTempDirectory("plugin", "");
         try {
-          ZipUtil.extract(file, outputDir, null);
+          ZipUtil.extract(file.toFile(), outputDir, null);
           final File[] files = outputDir.listFiles();
           if (files != null && files.length == 1) {
-            descriptor = PluginManagerCore.loadDescriptor(files[0], PluginManagerCore.PLUGIN_XML);
+            descriptor = PluginManagerCore.loadDescriptor(files[0].toPath(), PluginManagerCore.PLUGIN_XML);
           }
         }
         finally {
@@ -238,9 +239,11 @@ public final class PluginDownloader {
     if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptorImpl)) return false;
 
     if (myOldFile != null) {
-      final IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(myDescriptor.getPluginId());
-      if (installedPlugin == null) return false;
-      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManagerCore.loadDescriptor(installedPlugin.getPath(), PluginManagerCore.PLUGIN_XML, true);
+      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(myDescriptor.getPluginId());
+      if (installedPlugin == null) {
+        return false;
+      }
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManagerCore.loadDescriptor(((IdeaPluginDescriptorImpl)installedPlugin).getPluginPath(), PluginManagerCore.PLUGIN_XML, null);
       if (installedPluginDescriptor == null) return false;
       if (!DynamicPlugins.unloadPlugin(installedPluginDescriptor)) return false;
     }

@@ -14,8 +14,10 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.jdom.JDOMException;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -41,11 +43,11 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     assertEquals("0.1", downloader.getPluginVersion());
   }
 
-  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, IOException, JDOMException {
+  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, IOException, JDOMException, URISyntaxException {
     String path = PlatformTestUtil.getPlatformTestDataPath() + "updates/customRepositories/" + getTestName(true);
-    File descriptorFile = new File(path, filePath);
-    IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParentFile(), false);
-    descriptor.loadFromFile(descriptorFile, null, true, true);
+    Path descriptorFile = Paths.get(path, filePath);
+    IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParent(), false);
+    descriptor.loadFromFile(descriptorFile, null, true, null);
     return descriptor;
   }
 }

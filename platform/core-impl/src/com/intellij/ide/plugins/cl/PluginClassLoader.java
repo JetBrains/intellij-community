@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,16 +48,27 @@ public final class PluginClassLoader extends UrlClassLoader {
                            @NotNull ClassLoader[] parents,
                            PluginId pluginId,
                            String version,
-                           File pluginRoot) {
+                           @Nullable Path pluginRoot) {
     super(build().urls(urls).allowLock().useCache());
     myParents = parents;
     myPluginId = pluginId;
     myPluginVersion = version;
     myLibDirectories = new SmartList<>();
-    File libDir = new File(pluginRoot, "lib");
-    if (libDir.exists()) {
-      myLibDirectories.add(libDir.getAbsolutePath());
+
+    if (pluginRoot != null) {
+      Path libDir = pluginRoot.resolve("lib");
+      if (Files.exists(libDir)) {
+        myLibDirectories.add(libDir.toAbsolutePath().toString());
+      }
     }
+  }
+
+  /**
+   * @deprecated Use {@link #PluginClassLoader(List, ClassLoader[], PluginId, String, Path)}
+   */
+  @Deprecated
+  public PluginClassLoader(@NotNull List<URL> urls, @NotNull ClassLoader[] parents, PluginId pluginId, String version, File pluginRoot) {
+    this(urls, parents, pluginId, version, pluginRoot == null ? null : pluginRoot.toPath());
   }
 
   public long getEdtTime() {
@@ -113,7 +126,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
       if (parent instanceof PluginClassLoader) {
         Result resource = actionWithPluginClassLoader.execute(name, (PluginClassLoader)parent, visited, actionWithPluginClassLoader,
-                                                              actionWithClassloader, parameter);
+          actionWithClassloader, parameter);
         if (resource != null) {
           return resource;
         }
@@ -130,11 +143,11 @@ public final class PluginClassLoader extends UrlClassLoader {
   private static final ActionWithPluginClassLoader<Class<?>, Void> loadClassInPluginCL = new ActionWithPluginClassLoader<Class<?>, Void>() {
     @Override
     Class<?> execute(String name,
-                  PluginClassLoader classloader,
-                  Set<ClassLoader> visited,
-                  ActionWithPluginClassLoader<Class<?>, Void> actionWithPluginClassLoader,
-                  ActionWithClassloader<Class<?>, Void> actionWithClassloader,
-                  Void parameter) {
+                     PluginClassLoader classloader,
+                     Set<ClassLoader> visited,
+                     ActionWithPluginClassLoader<Class<?>, Void> actionWithPluginClassLoader,
+                     ActionWithClassloader<Class<?>, Void> actionWithClassloader,
+                     Void parameter) {
       return classloader.tryLoadingClass(name, false, visited);
     }
 
@@ -204,7 +217,8 @@ public final class PluginClassLoader extends UrlClassLoader {
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
-                                               (className.startsWith("kotlin.reflect.") && className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
+                                               (className.startsWith("kotlin.reflect.") &&
+                                                className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
@@ -297,7 +311,9 @@ public final class PluginClassLoader extends UrlClassLoader {
                              List<Enumeration<URL>> enumerations) {
       try {
         enumerations.add(classloader.findOwnResources(name));
-      } catch (IOException ignore) {}
+      }
+      catch (IOException ignore) {
+      }
       return null;
     }
   };
@@ -309,7 +325,8 @@ public final class PluginClassLoader extends UrlClassLoader {
       try {
         enumerations.add(classloader.getResources(name));
       }
-      catch (IOException ignore) {}
+      catch (IOException ignore) {
+      }
       return null;
     }
   };

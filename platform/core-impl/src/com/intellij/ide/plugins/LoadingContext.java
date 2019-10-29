@@ -4,54 +4,80 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SafeJdomFactory;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipFile;
+import java.util.Set;
 
 final class LoadingContext implements AutoCloseable {
-  final Map<File, ZipFile> openedFiles = new THashMap<>();
+  final Map<Path, FileSystem> openedFiles = new THashMap<>();
   final LoadDescriptorsContext parentContext;
   final boolean isBundled;
   final boolean isEssential;
-  final boolean ignoreDisabled;
+  final Set<String> disabledPlugins;
   final List<Pair<String, IdeaPluginDescriptorImpl>> visitedFiles = new ArrayList<>(3);
 
-  File lastZipWithDescriptor;
+  Path lastZipWithDescriptor;
+
+  final PathBasedJdomXIncluder.PathResolver pathResolver;
 
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
    */
-  LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential, boolean ignoreDisabled) {
+  LoadingContext(@Nullable LoadDescriptorsContext parentContext,
+                 boolean isBundled,
+                 boolean isEssential,
+                 @Nullable Set<String> disabledPlugins) {
+    this(parentContext, isEssential, isBundled, disabledPlugins, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
+  }
+
+  LoadingContext(@Nullable LoadDescriptorsContext parentContext,
+                 boolean isBundled,
+                 boolean isEssential,
+                 @Nullable Set<String> disabledPlugins,
+                 @NotNull PathBasedJdomXIncluder.PathResolver pathResolver) {
     this.parentContext = parentContext;
     this.isBundled = isBundled;
     this.isEssential = isEssential;
-    this.ignoreDisabled = ignoreDisabled;
+    this.disabledPlugins = disabledPlugins;
+    this.pathResolver = pathResolver;
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  ZipFile open(File file) throws IOException {
-    ZipFile zipFile = openedFiles.get(file);
-    if (zipFile == null) {
-      openedFiles.put(file, zipFile = new ZipFile(file));
+  @NotNull
+  FileSystem open(@NotNull Path file) throws IOException {
+    FileSystem result = openedFiles.get(file);
+    if (result == null) {
+      result = FileSystems.newFileSystem(file, null);
+      openedFiles.put(file, result);
     }
-    return zipFile;
+    return result;
   }
 
   @Nullable
   SafeJdomFactory getXmlFactory() {
-    return parentContext != null ? parentContext.getXmlFactory() : null;
+    return parentContext == null ? null : parentContext.getXmlFactory();
   }
 
   @Override
   public void close() {
-    for (ZipFile file : openedFiles.values()) {
-      try { file.close(); }
-      catch (IOException ignore) { }
+    for (FileSystem file : openedFiles.values()) {
+      try {
+        file.close();
+      }
+      catch (IOException ignore) {
+      }
     }
+  }
+
+  @NotNull
+  public LoadingContext copy(boolean isEssential) {
+    return new LoadingContext(parentContext, isBundled, isEssential, disabledPlugins, pathResolver);
   }
 }

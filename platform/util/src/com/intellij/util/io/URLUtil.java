@@ -310,8 +310,19 @@ public class URLUtil {
 
   @NotNull
   public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
-    String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+    return getJarEntryURL(file.toURI(), pathInJar);
+  }
+
+  @NotNull
+  public static URL getJarEntryURL(@NotNull URI file, @NotNull String pathInJar) throws MalformedURLException {
+    String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
     return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
+  }
+
+  @NotNull
+  public static URI getJarEntryUri(@NotNull URI file, @NotNull String pathInJar) throws URISyntaxException {
+    String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
+    return new URI(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
   }
 
   /**
