@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.data.SingleTaskController
 
@@ -26,7 +26,7 @@ internal abstract class PredictionController(private val project: Project,
     val task: Task.Backgroundable = object : Task.Backgroundable(project, "ChangeReminder Prediction Calculating") {
       override fun run(indicator: ProgressIndicator) {
         inProgress = true
-        val result = mutableListOf<FilePath>()
+        val result = mutableListOf<VirtualFile>()
         val request = popRequest() ?: return
         try {
           val prediction = request.calculate()

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing.haveEqualElements
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -32,18 +31,9 @@ class PredictionService(val project: Project) : Disposable {
   private val userSettings = service<UserSettings>()
   private val LOCK = Object()
 
-  private var _prediction: Collection<FilePath> = emptyList()
+  var prediction: Collection<VirtualFile> = emptyList()
+    private set
   private var lastPredictionResult: PredictionResult? = null
-
-  // prediction contains only unmodified files
-  val prediction: List<VirtualFile>
-    get() {
-      return synchronized(LOCK) {
-        _prediction.mapNotNull {
-          if (changeListManager.getChange(it) == null) it.virtualFile else null
-        }
-      }
-    }
 
   val isReady: Boolean
     get() = synchronized(LOCK) { predictionRequirements?.dataManager?.dataPack?.isFull ?: false }
@@ -163,8 +153,8 @@ class PredictionService(val project: Project) : Disposable {
     Disposer.dispose(projectLogListenerDisposable)
   }
 
-  private fun setPrediction(newPrediction: Collection<FilePath>) {
-    _prediction = newPrediction
+  private fun setPrediction(newPrediction: Collection<VirtualFile>) {
+    prediction = newPrediction
     changesViewManager.scheduleRefresh()
   }
 
