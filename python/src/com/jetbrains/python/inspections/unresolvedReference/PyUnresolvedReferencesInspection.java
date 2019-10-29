@@ -1045,7 +1045,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           continue;
         }
         if (element.getTextLength() > 0) {
-          registerProblem(element, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new OptimizeImportsQuickFix());
+          registerProblem(element, PyBundle.message("INSP.unused.import.statement"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new OptimizeImportsQuickFix());
         }
       }
     }
