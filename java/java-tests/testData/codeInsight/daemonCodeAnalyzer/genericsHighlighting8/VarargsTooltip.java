@@ -4,6 +4,6 @@ class MyTest {
   }
 
   void test() {
-    processStrings(<error descr="'processStrings(java.lang.String...)' in 'MyTest' cannot be applied to '(int, java.lang.String, java.lang.String)'">1</error>, "str", "s");
+    processStrings("", <error descr="'processStrings(java.lang.String...)' in 'MyTest' cannot be applied to '(java.lang.String, int, java.lang.String, java.lang.String)'">1</error>, "str", "s");
   }
 }

@@ -1036,12 +1036,20 @@ public class HighlightMethodUtil {
       parameterNameStyle += "background-color: " + ColorUtil.toHtmlColor(paramBgColor) + ";";
     }
 
+    boolean varargAdded = false;
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
-      PsiParameter parameter = i < parameters.length ? parameters[i] : null;
-      PsiExpression expression = i < expressions.length ? expressions[i] : null;
       boolean varargs = info != null && info.isVarargs();
       if (assignmentCompatible(i, parameters, expressions, substitutor, varargs)) continue;
+      PsiParameter parameter = null;
+      if (i < parameters.length) {
+        parameter = parameters[i];
+      }
+      else if (!varargAdded) {
+        parameter = parameters[parameters.length - 1];
+        varargAdded = true;
+      }
       PsiType parameterType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
+      PsiExpression expression = i < expressions.length ? expressions[i] : null;
       boolean showShortType = HighlightUtil.showShortType(parameterType,
                                                           expression != null ? expression.getType() : null);
       s.append("<tr>");
