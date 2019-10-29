@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
@@ -39,7 +40,9 @@ public class MarkdownCodeFencePluginCache implements Disposable {
   }
 
   public MarkdownCodeFencePluginCache() {
-    scheduleClearCache();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      scheduleClearCache();
+    }
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
