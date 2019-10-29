@@ -4,5 +4,6 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.vcs.FilePath
 
 data class PredictionResult(
+  val requestedFiles: Collection<FilePath>,
   val prediction: Collection<FilePath>
 )

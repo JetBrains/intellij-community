@@ -4,8 +4,6 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.VcsLogData
 import com.jetbrains.changeReminder.getGitRootFiles
@@ -15,9 +13,7 @@ import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 internal class PredictionRequest(private val project: Project,
                                  private val dataManager: VcsLogData,
                                  private val filesHistoryProvider: FilesHistoryProvider,
-                                 changes: Collection<Change>) {
-  private val changeListFiles = changes.map { ChangesUtil.getFilePath(it) }
-
+                                 val changeListFiles: Collection<FilePath>) {
   private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): Collection<FilePath> =
     PredictionProvider(minProb = Registry.doubleValue("vcs.changeReminder.prediction.threshold"))
       .predictForgottenFiles(Commit(-1,

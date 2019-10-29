@@ -4,11 +4,13 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing.haveEqualElements
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.DataPackChangeListener
@@ -31,6 +33,7 @@ class PredictionService(val project: Project) : Disposable {
   private val LOCK = Object()
 
   private var _prediction: Collection<FilePath> = emptyList()
+  private var lastPredictionResult: PredictionResult? = null
 
   // prediction contains only unmodified files
   val prediction: List<VirtualFile>
@@ -48,6 +51,7 @@ class PredictionService(val project: Project) : Disposable {
   private val taskController = object : PredictionController(project, "ChangeReminder Calculation", this, {
     synchronized(LOCK) {
       setPrediction(it.prediction)
+      lastPredictionResult = it
     }
   }) {
     override fun inProgressChanged(value: Boolean) {
@@ -67,6 +71,7 @@ class PredictionService(val project: Project) : Disposable {
   private val dataPackChangeListener = DataPackChangeListener {
     synchronized(LOCK) {
       predictionRequirements?.filesHistoryProvider?.clear()
+      lastPredictionResult = null
       calculatePrediction()
     }
   }
@@ -121,6 +126,8 @@ class PredictionService(val project: Project) : Disposable {
 
     dataManager.index.removeListener(indexingFinishedListener)
     dataManager.removeDataPackChangeListener(dataPackChangeListener)
+
+    lastPredictionResult = null
   }
 
   private fun calculatePrediction() = synchronized(LOCK) {
@@ -128,8 +135,14 @@ class PredictionService(val project: Project) : Disposable {
     val changes = changeListManager.defaultChangeList.changes
     if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) return
     val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
+    val changeListFiles = changes.map { ChangesUtil.getFilePath(it) }
+    val lastPrediction = lastPredictionResult
+    if (lastPrediction != null && haveEqualElements(lastPrediction.requestedFiles, changeListFiles)) {
+      setPrediction(lastPrediction.prediction)
+      return
+    }
     if (dataManager.dataPack.isFull) {
-      taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changes))
+      taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changeListFiles))
     }
   }
 
