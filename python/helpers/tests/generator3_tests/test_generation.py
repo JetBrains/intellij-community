@@ -393,7 +393,7 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_syspath = ['mocks', 'binaries']
 
     def test_skeletons_for_builtins_are_stored_in_same_cache_directory(self):
-        self.run_generator(extra_args=[], extra_syspath=[])
+        self.run_generator(extra_args=['--builtins-only'], extra_syspath=[])
         builtins_hash = generator3.core.module_hash('sys', None)
         builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
         self.assertTrue(os.path.isdir(builtins_cache_dir))
@@ -404,7 +404,7 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     # TODO figure out why this is not true for some interpreters
     @unittest.skipUnless('pyexpat' in sys.builtin_module_names, "pyexpat must be a built-in module")
     def test_pyexpat_layout_in_builtins(self):
-        self.run_generator(extra_args=[], extra_syspath=[])
+        self.run_generator(extra_args=['--builtins-only'], extra_syspath=[])
         self.assertFalse(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat.py')))
         self.assertTrue(os.path.isdir(os.path.join(self.temp_skeletons_dir, 'pyexpat')))
         self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
