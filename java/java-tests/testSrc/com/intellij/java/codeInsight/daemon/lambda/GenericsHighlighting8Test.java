@@ -1068,6 +1068,28 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
       .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
   }
 
+  public void testVarargsTooltip() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String expected = "<html><body><table>" +
+                      "<tr>" +
+                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed+ "'>Required type:</td>" +
+                      "<td style='padding: 0px 4px 8px 0px;'><font color='" + toolTipForeground + "'>String...</font></td>" +
+                      "</tr>" +
+                      "<tr>" +
+                      "<td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
+                      "<td style='padding: 0px 4px 0px 0px;'><font color='" + red + "'>int</font></td>" +
+                      "</tr>" +
+                      "</table></body></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
   public void testTooltipShortTypeNames() {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
