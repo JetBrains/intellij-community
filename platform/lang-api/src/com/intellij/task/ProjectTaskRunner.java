@@ -180,7 +180,7 @@ public abstract class ProjectTaskRunner {
   @SuppressWarnings("deprecation")
   private static void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
     if (callback instanceof ProjectTaskNotificationAdapter) {
-      throw new UnsupportedOperationException("Please, provide implementation for non-deprecated methods");
+      throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method");
     }
   }
   //</editor-fold>
