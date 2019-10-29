@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatus.*
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.VfsTestUtil.createDir
@@ -232,6 +233,10 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
   fun testCaseOnlyRevertedTwiceRenamed() {
     assumeWorktreeRenamesSupported()
 
+    val clm = ChangeListManagerImpl.getInstanceImpl(project)
+    clm.waitEverythingDoneInTestMode()
+    clm.forceStopInTestMode()
+
     touch("rename.txt", "rename_file_content")
     addCommit("init rename")
 
@@ -253,6 +258,7 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
     VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
     dirty(projectRoot)
+    clm.forceGoInTestMode()
 
     if (SystemInfo.isWindows) {
       assertProviderChangesIn(listOf("rename.txt", "RENAME.txt"),
