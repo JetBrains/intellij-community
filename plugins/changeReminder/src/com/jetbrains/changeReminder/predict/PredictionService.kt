@@ -47,7 +47,7 @@ class PredictionService(val project: Project) : Disposable {
 
   private val taskController = object : PredictionController(project, "ChangeReminder Calculation", this, {
     synchronized(LOCK) {
-      setPrediction(it)
+      setPrediction(it.prediction)
     }
   }) {
     override fun inProgressChanged(value: Boolean) {
