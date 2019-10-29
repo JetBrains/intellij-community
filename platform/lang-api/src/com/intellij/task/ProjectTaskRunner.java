@@ -33,6 +33,12 @@ import java.util.Collection;
 import static com.intellij.task.ProjectTaskManager.EMPTY_TASKS_ARRAY;
 
 /**
+ * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
+ * Typical usecase is delegation of common IDE activities(e.g. (re)build project) to external tools/plugins.
+ * But it can be used for any other IDE activity which is described by some inheritor of {@link ProjectTask}.
+ *
+ * @see ProjectTaskManager
+ *
  * @author Vladislav.Soroka
  */
 public abstract class ProjectTaskRunner {
@@ -44,6 +50,14 @@ public abstract class ProjectTaskRunner {
     boolean hasErrors();
   }
 
+  /**
+   * The implementation should provide execution of the specified {@link ProjectTask}s by either means.
+   * Only tasks which this {@link ProjectTaskRunner} {@link #canRun} will be passed.
+   * It's expected that the {@link ProjectTaskRunner} will supply the returning {@link Promise} with the {@link Result} asynchronously when all tasks will be completed.
+   *
+   * @return promise of the execution result
+   * @see #canRun
+   */
   public Promise<Result> run(@NotNull Project project,
                              @NotNull ProjectTaskContext context,
                              @NotNull ProjectTask... tasks) {
@@ -52,12 +66,19 @@ public abstract class ProjectTaskRunner {
     return promise;
   }
 
+  /**
+   * @return true if the task should be executed by this runner, false otherwise
+   */
   public abstract boolean canRun(@NotNull ProjectTask projectTask);
 
   public boolean canRun(@SuppressWarnings("unused") @NotNull Project project, @NotNull ProjectTask projectTask) {
     return canRun(projectTask);
   }
 
+  /**
+   * This method can be used when execution of some "Run Configuration" should be delegated to another tool.
+   * E.g. delegated run of an "ApplicationConfiguration" by external tool.
+   */
   @Nullable
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask task,
