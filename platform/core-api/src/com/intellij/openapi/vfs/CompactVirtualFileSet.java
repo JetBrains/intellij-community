@@ -12,6 +12,7 @@ import java.util.*;
 /**
  * Set of VirtualFiles optimized for compact storage of very large number of files
  * Remove operations are not supported.
+ * NOT thread-safe.
  */
 public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
   // all non-VirtualFileWithId files and first several files are stored here
