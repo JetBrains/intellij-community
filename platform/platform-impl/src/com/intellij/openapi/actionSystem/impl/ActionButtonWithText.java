@@ -36,7 +36,7 @@ public class ActionButtonWithText extends ActionButton {
                               final String place,
                               final Dimension minimumSize) {
     super(action, presentation, place, minimumSize);
-    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+    setupFont(action);
     setForeground(UIUtil.getLabelForeground());
     myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -56,6 +56,16 @@ public class ActionButtonWithText extends ActionButton {
     });
     updateMnemonic(0, myPresentation.getMnemonic());
     UIUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    setupFont(getAction());
+  }
+
+  private void setupFont(AnAction action) {
+    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
   }
 
   @NotNull
