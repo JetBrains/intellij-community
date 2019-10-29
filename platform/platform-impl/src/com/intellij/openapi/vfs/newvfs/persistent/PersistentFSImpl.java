@@ -1560,7 +1560,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @TestOnly
-  public ConcurrentIntObjectMap<VirtualFileSystemEntry> getIdToDirCache() {
+  ConcurrentIntObjectMap<VirtualFileSystemEntry> getIdToDirCache() {
     return myIdToDirCache;
   }
 }
