@@ -1,9 +1,9 @@
+import argparse
 import atexit
+import json
 import logging
 import os
 import sys
-
-import json
 
 _containing_dir = os.path.dirname(os.path.abspath(__file__))
 _helpers_dir = os.path.dirname(_containing_dir)
@@ -45,37 +45,52 @@ def _enable_segfault_tracebacks():
         pass
 
 
-def get_help_text():
-    return (
-        # 01234567890123456789012345678901234567890123456789012345678901234567890123456789
-        'Generates interface skeletons for python modules.' '\n'
-        'Usage: ' '\n'
-        '  generator [options] [module_name [file_name]]' '\n'
-        '  generator [options] -L ' '\n'
-        'module_name is fully qualified, and file_name is where the module is defined.' '\n'
-        'E.g. foo.bar /usr/lib/python/foo_bar.so' '\n'
-        'For built-in modules file_name is not provided.' '\n'
-        'Output files will be named as modules plus ".py" suffix.' '\n'
-        'Normally every name processed will be printed and stdout flushed.' '\n'
-        'directory_list is one string separated by OS-specific path separtors.' '\n'
-        '\n'
-        'Options are:' '\n'
-        ' -h -- prints this help message.' '\n'
-        ' -d dir -- output dir, must be writable. If not given, current dir is used.' '\n'
-        ' -q -- quiet, do not print anything on stdout. Errors still go to stderr.' '\n'
-        ' -x -- die on exceptions with a stacktrace; only for debugging.' '\n'
-        ' -v -- be verbose, print lots of debug output to stderr' '\n'
-        ' -c modules -- import CLR assemblies with specified names' '\n'
-        ' -p -- run CLR profiler ' '\n'
-        ' -s path_list -- add paths to sys.path before run; path_list lists directories' '\n'
-        '    separated by path separator char, e.g. "c:\\foo;d:\\bar;c:\\with space"' '\n'
-        ' -S -- lists all python sources found in sys.path and in directories in directory_list\n'
-        ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>\n'
-        '--name-pattern pattern -- shell-like glob pattern restricting generation only to binaries with matching qualified names\n'
-        '--read-state-from-stdin -- read the current state of generated skeletons in JSON format from stdin, '
-        'this option implies "--write-json-file"\n'
-        '--write-json-file -- leave ".state.json" file in an SDK skeletons directory\n'
-    )
+def parse_args(gen_version):
+    parser = argparse.ArgumentParser(prog='generator3',
+                                     description='Generates interface skeletons (binary stubs) for binary and '
+                                                 'built-in Python modules.')
+    parser.add_argument('-d', metavar='PATH', dest='output_dir',
+                        help='Output dir, must be writable. If not given, current dir is used.')
+    # TODO using os.pathsep might cause problems with remote interpreters when host and target OS don't match
+    parser.add_argument('-s', metavar='PATH_LIST', dest='roots', type=(lambda s: s.split(os.pathsep)), default=[],
+                        help='List of root directories to scan for binaries separated with `os.pathsep` character. '
+                             'These directories will be added in `sys.path`.')
+    parser.add_argument('--name-pattern', metavar='PATTERN',
+                        help='Shell-like glob pattern restricting generation only to modules with matching qualified '
+                             'names, e.g, "_ast" or "numpy.*".')
+    parser.add_argument('--state-file-policy', metavar='TYPE', choices=('readwrite', 'write'),
+                        help='Controls the behavior regarding ".state.json" files: '
+                             '"readwrite" means that the initial state will be read from stdin '
+                             'and the resulting one will written in the output directory '
+                             'together with skeletons, with "write" it will only be written.')
+
+    # Common flags
+    # TODO evaluate these flags, some of them seem redundant now with proper logging
+    parser.add_argument('-q', dest='quiet', action='store_true',
+                        help='Be quiet, do not print anything on stdout. Errors still go to stderr.')
+    parser.add_argument('-v', dest='verbose', action='store_true',
+                        help='Be verbose, print lots of debug output to stderr.')
+
+    parser.add_argument('-V', action='version', version=gen_version)
+
+    extra_modes = parser.add_argument_group('extra modes')
+    extra_modes.add_argument('-S', dest='list_sources_mode', action='store_true',
+                             help='Lists all python sources found in `sys.path` and directories specified with -s.')
+    extra_modes.add_argument('-z', dest='zip_sources_archive', metavar='ARCHIVE',
+                             help='Zip files to specified archive. Accepts files to be archived from stdin in '
+                                  'format: <filepath> <name in archive>.')
+    extra_modes.add_argument('-u', dest='zip_roots_archive', metavar='ARCHIVE',
+                             help='Zip all source files from `sys.path` and provided roots in the specified archive.')
+
+    clr_specific = parser.add_argument_group('CLR specific options')
+    clr_specific.add_argument('-c', dest='clr_assemblies', metavar='MODULES', type=(lambda s: s.split(';')), default=[],
+                              help='Semicolon separated list of CLR assemblies to be imported.')
+    clr_specific.add_argument('-p', dest='run_clr_profiler', action='store_true',
+                              help='Run CLR profiler.')
+
+    parser.add_argument("mod_name", nargs='?', help='Qualified name of a single module to analyze.', default=None)
+    parser.add_argument("mod_path", nargs='?', help='Path to the specified module if it\'s not builtin.', default=None)
+    return parser.parse_args()
 
 
 def main():
@@ -84,115 +99,65 @@ def main():
     from generator3.clr_tools import get_namespace_by_name
     from generator3.constants import Timer
     from generator3.core import version, GenerationStatus, SkeletonGenerator
-    from generator3.util_methods import set_verbose, say, report, note, print_profile
+    from generator3.util_methods import set_verbose, say, note, print_profile
 
-    from getopt import getopt
+    args = parse_args(version())
 
-    helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzuV", longopts=['name-pattern=',
-                                                                      'state-file-policy='])
-    opts = dict(opts)
+    generator3.core.quiet = args.quiet
+    set_verbose(args.verbose)
 
-    generator3.core.quiet = '-q' in opts
-    set_verbose('-v' in opts)
-    subdir = opts.get('-d', '')
-
-    if not opts or '-h' in opts:
-        say(helptext)
-        sys.exit(0)
-
-    if "-x" in opts:
-        debug_mode = True
-
-    state_file_policy = opts.get('--state-file-policy')
-    if state_file_policy == 'readwrite':
-        # We can't completely shut off stdin in case Docker-based interpreter to use json.load()
-        # and have to retreat to reading the content line-wise
-        state_json = json.loads(sys.stdin.readline(), encoding='utf-8')
-        write_state_json = True
-    elif state_file_policy == 'write':
-        state_json = None
-        write_state_json = True
-    else:
-        state_json = None
-        write_state_json = False
-
-    # patch sys.path?
-    extra_path = opts.get('-s', None)
-    if extra_path:
-        source_dirs = extra_path.split(os.path.pathsep)
-        for p in source_dirs:
+    if args.roots:
+        for p in args.roots:
             if p and p not in sys.path:
                 sys.path.append(p)  # we need this to make things in additional dirs importable
         note("Altered sys.path: %r", sys.path)
 
+    if args.state_file_policy == 'readwrite':
+        # We can't completely shut off stdin in case Docker-based interpreter to use json.load()
+        # and have to retreat to reading the content line-wise
+        state_json = json.loads(sys.stdin.readline(), encoding='utf-8')
+    else:
+        state_json = None
+
     target_roots = _cleanup_sys_path()
 
-    if "-S" in opts:
-        if len(args) > 0:
-            report("Expected no args with -S, got %d args", len(args))
-            sys.exit(1)
+    if args.list_sources_mode:
         say(version())
         generator3.extra.list_sources(target_roots)
         sys.exit(0)
 
-    if "-z" in opts:
-        if len(args) != 1:
-            report("Expected 1 arg with -z, got %d args", len(args))
-            sys.exit(1)
-        generator3.extra.zip_sources(args[0])
+    if args.zip_sources_archive:
+        generator3.extra.zip_sources(args.zip_sources_archive)
         sys.exit(0)
 
-    if "-u" in opts:
-        if len(args) != 1:
-            report("Expected 1 arg with -u, got %d args", len(args))
-            sys.exit(1)
-        generator3.extra.zip_stdlib(target_roots, args[0])
+    if args.zip_roots_archive:
+        generator3.extra.zip_stdlib(target_roots, args.zip_roots_archive)
         sys.exit(0)
 
-    if "-V" in opts:
-        say(version())
-        sys.exit(0)
-
-    # build skeleton(s)
-
-    generator = SkeletonGenerator(output_dir=subdir,
+    generator = SkeletonGenerator(output_dir=args.output_dir,
                                   roots=target_roots,
                                   state_json=state_json,
-                                  write_state_json=write_state_json)
+                                  write_state_json=args.state_file_policy is not None)
 
     timer = Timer()
-    # determine names
-    if len(args) > 2:
-        report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
-        sys.exit(1)
-    elif not args:
-        generator.discover_and_process_all_modules(name_pattern=opts.get('--name-pattern'))
+    if not args.mod_name:
+        generator.discover_and_process_all_modules(name_pattern=args.name_pattern)
         sys.exit(0)
-    else:
-        name = args[0]
-
-        if len(args) == 2:
-            mod_file_name = args[1]
-        else:
-            mod_file_name = None
-
-        refs = opts.get('-c', '')
 
     if sys.platform == 'cli':
         # noinspection PyUnresolvedReferences
         import clr
 
-        if refs:
-            for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
+        for ref in args.clr_assemblies:
+            clr.AddReferenceByPartialName(ref)
 
-        if '-p' in opts:
+        if args.run_clr_profiler:
             atexit.register(print_profile)
 
         # We take module name from import statement
-        name = get_namespace_by_name(name)
+        args.mod_name = get_namespace_by_name(args.mod_name)
 
-    if generator.process_module(name, mod_file_name) == GenerationStatus.FAILED:
+    if generator.process_module(args.mod_name, args.mod_path) == GenerationStatus.FAILED:
         sys.exit(1)
 
     say("Generation completed in %d ms", timer.elapsed())
