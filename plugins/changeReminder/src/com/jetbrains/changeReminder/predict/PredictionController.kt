@@ -8,10 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.data.SingleTaskController
-import com.jetbrains.changeReminder.measureSupplierTimeMillis
-import com.jetbrains.changeReminder.stats.ChangeReminderData
-import com.jetbrains.changeReminder.stats.ChangeReminderEvent
-import com.jetbrains.changeReminder.stats.logEvent
 
 internal abstract class PredictionController(private val project: Project,
                                              name: String,
@@ -33,8 +29,7 @@ internal abstract class PredictionController(private val project: Project,
         val result = mutableListOf<FilePath>()
         try {
           val request = popRequest() ?: return
-          val (time, prediction) = measureSupplierTimeMillis { request.calculate() }
-          logEvent(project, ChangeReminderEvent.PREDICTION_CALCULATED, ChangeReminderData.EXECUTION_TIME, time)
+          val prediction = request.calculate()
           result.addAll(prediction)
         }
         catch (e: ProcessCanceledException) {
