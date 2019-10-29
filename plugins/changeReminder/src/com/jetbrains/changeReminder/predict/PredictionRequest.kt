@@ -14,7 +14,7 @@ internal class PredictionRequest(private val project: Project,
                                  private val dataManager: VcsLogData,
                                  private val filesHistoryProvider: FilesHistoryProvider,
                                  val changeListFiles: Collection<FilePath>) {
-  private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): Collection<FilePath> =
+  private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): Collection<VirtualFile> =
     PredictionProvider(minProb = Registry.doubleValue("vcs.changeReminder.prediction.threshold"))
       .predictForgottenFiles(Commit(-1,
                                     System.currentTimeMillis(),
@@ -22,7 +22,7 @@ internal class PredictionRequest(private val project: Project,
                                     changeListFiles.toSet()),
                              filesHistoryProvider.getFilesHistory(root, files))
 
-  private fun getPredictedFiles(rootFiles: Map<VirtualFile, Collection<FilePath>>): Collection<FilePath> =
+  private fun getPredictedFiles(rootFiles: Map<VirtualFile, Collection<FilePath>>): Collection<VirtualFile> =
     rootFiles.mapNotNull { (root, files) ->
       if (dataManager.index.isIndexed(root)) {
         getPredictedFiles(files, root)
@@ -32,7 +32,7 @@ internal class PredictionRequest(private val project: Project,
       }
     }.flatten()
 
-  fun calculate(): Collection<FilePath> {
+  fun calculate(): Collection<VirtualFile> {
     val rootFiles = getGitRootFiles(project, changeListFiles)
     return getPredictedFiles(rootFiles)
   }

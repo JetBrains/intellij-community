@@ -2,8 +2,9 @@
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 
 data class PredictionResult(
   val requestedFiles: Collection<FilePath>,
-  val prediction: Collection<FilePath>
+  val prediction: Collection<VirtualFile>
 )
