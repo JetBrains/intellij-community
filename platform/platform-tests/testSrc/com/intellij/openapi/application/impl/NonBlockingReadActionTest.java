@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
@@ -10,8 +11,10 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -175,5 +178,28 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       WriteAction.run(() -> executor.submit(() -> {}).get(1, TimeUnit.SECONDS));
     }
     waitForPromise(promise);
+  }
+
+  public void testDoNotLeakFirstCancelledCoalescedAction() {
+    Object leak = new Object(){};
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.dispose(disposable);
+    CancellablePromise<String> p = ReadAction
+      .nonBlocking(() -> "a")
+      .expireWith(disposable)
+      .coalesceBy(leak)
+      .submit(AppExecutorUtil.getAppExecutorService());
+    assertTrue(p.isCancelled());
+    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+  }
+
+  public void testDoNotLeakSecondCancelledCoalescedAction() {
+    Object leak = new Object(){};
+    CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(AppExecutorUtil.getAppExecutorService());
+    WriteAction.run(() -> {
+      ReadAction.nonBlocking(() -> "b").coalesceBy(leak).submit(AppExecutorUtil.getAppExecutorService()).cancel();
+    });
+    assertTrue(p.isDone());
+    LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
   }
 }

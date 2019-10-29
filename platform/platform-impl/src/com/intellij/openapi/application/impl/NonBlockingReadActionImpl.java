@@ -229,7 +229,7 @@ public class NonBlockingReadActionImpl<T>
     }
 
     private void scheduleReplacementIfAny() {
-      if (myReplacement == null) {
+      if (myReplacement == null || myReplacement.promise.isDone()) {
         ourTasksByEquality.remove(myCoalesceEquality, this);
       } else {
         ourTasksByEquality.put(myCoalesceEquality, myReplacement);
@@ -239,6 +239,8 @@ public class NonBlockingReadActionImpl<T>
 
     void submitOrScheduleCoalesced(@NotNull List<Object> coalesceEquality) {
       synchronized (ourTasksByEquality) {
+        if (promise.isDone()) return;
+
         NonBlockingReadActionImpl<?>.Submission current = ourTasksByEquality.get(coalesceEquality);
         if (current == null) {
           ourTasksByEquality.put(coalesceEquality, this);
@@ -441,4 +443,8 @@ public class NonBlockingReadActionImpl<T>
     }
   }
 
+  @TestOnly
+  static Map<List<Object>, NonBlockingReadActionImpl<?>.Submission> getTasksByEquality() {
+    return ourTasksByEquality;
+  }
 }
