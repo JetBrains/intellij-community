@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * @author anna
  */
-public class PluginDownloader {
+public final class PluginDownloader {
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private static final String FILENAME = "filename=";

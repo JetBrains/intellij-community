@@ -50,9 +50,9 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * @author pti
  */
-class UpdateInfoDialog extends AbstractUpdateDialog {
+final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
-  private final Collection<? extends PluginDownloader> myUpdatedPlugins;
+  private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
   private final boolean myWriteProtected;
@@ -65,7 +65,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @NotNull BuildInfo newBuild,
                    @Nullable UpdateChain patches,
                    boolean enableLink,
-                   @Nullable Collection<? extends PluginDownloader> updatedPlugins,
+                   @Nullable Collection<PluginDownloader> updatedPlugins,
                    @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -22,10 +22,10 @@ import java.util.Set;
  * @author pti
  */
 class PluginUpdateInfoDialog extends AbstractUpdateDialog {
-  private final Collection<? extends PluginDownloader> myUploadedPlugins;
+  private final Collection<PluginDownloader> myUploadedPlugins;
   private final boolean myPlatformUpdate;
 
-  PluginUpdateInfoDialog(Collection<? extends PluginDownloader> uploadedPlugins, boolean enableLink) {
+  PluginUpdateInfoDialog(Collection<PluginDownloader> uploadedPlugins, boolean enableLink) {
     super(enableLink);
     myUploadedPlugins = uploadedPlugins;
     myPlatformUpdate = false;
@@ -35,7 +35,7 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   /**
    * Used from {@link UpdateInfoDialog} when both platform and plugin updates are available.
    */
-  PluginUpdateInfoDialog(@NotNull Collection<? extends PluginDownloader> updatePlugins) {
+  PluginUpdateInfoDialog(@NotNull Collection<PluginDownloader> updatePlugins) {
     super(false);
     myUploadedPlugins = updatePlugins;
     myPlatformUpdate = true;
