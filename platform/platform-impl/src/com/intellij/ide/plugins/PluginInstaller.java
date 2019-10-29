@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.CommonBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -54,11 +55,27 @@ public class PluginInstaller {
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
                                          List<? extends IdeaPluginDescriptor> allPlugins,
+                                         boolean allowInstallWithoutRestart,
                                          PluginManagerMain.PluginEnabler pluginEnabler,
+                                         Runnable onSuccess,
                                          @NotNull ProgressIndicator indicator) {
     PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, pluginEnabler, indicator);
+    operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
     operation.run();
-    return operation.isSuccess();
+    boolean success = operation.isSuccess();
+    if (success) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (allowInstallWithoutRestart) {
+          for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+            installAndLoadDynamicPlugin(install.getFile(), null, install.getPluginDescriptor());
+          }
+        }
+        if (onSuccess != null) {
+          onSuccess.run();
+        }
+      });
+    }
+    return success;
   }
 
   /**
