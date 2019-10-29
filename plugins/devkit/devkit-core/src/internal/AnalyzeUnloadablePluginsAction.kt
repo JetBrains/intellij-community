@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.internal
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -32,6 +33,9 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
+    val view = e.getData(LangDataKeys.IDE_VIEW)
+    val dir = view?.orChooseDirectory
+
     val result = mutableListOf<PluginUnloadabilityStatus>()
     val extensionPointOwners = ExtensionPointOwners()
     val show = ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -40,8 +44,12 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
           val pi = ProgressManager.getInstance().progressIndicator
           pi.isIndeterminate = false
 
-          val pluginXmlFiles = FilenameIndex.getFilesByName(project, PluginManagerCore.PLUGIN_XML,
-                                                            GlobalSearchScopesCore.projectProductionScope(project))
+          val searchScope = when (dir) {
+            null -> GlobalSearchScopesCore.projectProductionScope(project)
+            else -> GlobalSearchScopesCore.directoryScope(dir, true)
+          }
+          val pluginXmlFiles = FilenameIndex.getFilesByName(project, PluginManagerCore.PLUGIN_XML, searchScope)
+
           for ((processed, pluginXmlFile) in pluginXmlFiles.withIndex()) {
             pi.checkCanceled()
             pi.fraction = (processed.toDouble() / pluginXmlFiles.size)
@@ -58,7 +66,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             pi.text = status.pluginId
           }
         }
-      }, "Analyzing Plugins", true, e.project)
+      }, "Analyzing Plugins (${dir?.name ?: "Project"})", true, e.project)
 
     if (show) showReport(project, result, extensionPointOwners)
     extensionPointOwners.dispose()
@@ -97,7 +105,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         it.unspecifiedDynamicEPs.isNotEmpty()
       }
       if (closePlugins.isNotEmpty()) {
-        appendln("Plugins closest to being unloadable (40 out of ${closePlugins.size}):")
+        appendln("Plugins closest to being unloadable (${closePlugins.size.coerceAtMost(40)} out of ${closePlugins.size}):")
         for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }.take(40)) {
           appendln("${status.pluginId} - ${status.unspecifiedDynamicEPs.joinToString()}")
         }
