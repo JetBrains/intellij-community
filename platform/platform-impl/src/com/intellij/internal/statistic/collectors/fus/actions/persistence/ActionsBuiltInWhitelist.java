@@ -22,7 +22,7 @@ class ActionsBuiltInWhitelist {
 
   private final Set<String> ourXmlActionIds = new HashSet<>();
   private final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
-    "regexp.help", "ShowUsagesPopup.showSettings",
+    "ShowUsagesPopup.showSettings",
     "Reload Classes", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
