@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -101,6 +102,22 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
       }
       final boolean chainingConstructor = InlineUtil.isChainingConstructor(method);
       if (!chainingConstructor) {
+        InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
+        if (processor != null) {
+          if (Messages.showOkCancelDialog("Do you want to inline the object and the subsequent call?", "Inline Object", "Inline", "Cancel",
+                                      Messages.getQuestionIcon()) == Messages.OK) {
+            processor = InlineObjectProcessor.create(reference, method);
+            if (processor == null) {
+              // Code changed while dialog was displayed?
+              String message = RefactoringBundle.message("refactoring.cannot.be.applied", REFACTORING_NAME);
+              CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
+            } else {
+              processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
+              processor.run();
+            }
+          }
+          return;
+        }
         if (!isThisReference(reference)) {
           String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
           CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
