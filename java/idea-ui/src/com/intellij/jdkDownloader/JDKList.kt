@@ -107,9 +107,7 @@ object JDKListDownloader {
     get() {
       val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
       if (!registry.isNullOrBlank()) return registry
-
-      //TODO: let's use CDN URL in once it'd be established
-      return "https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_Service_GenerateJDKsJson/lasest.lastSuccessful/feed.zip!/jdks.json.xz"
+      return "http://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
     }
 
   fun downloadModel(progress: ProgressIndicator?, feedUrl: String = JDKListDownloader.feedUrl): List<JDKItem> {
