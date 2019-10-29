@@ -1179,17 +1179,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                        "  private int value; " +
                        "} " +
                        "class D {" +
-                       "  /** @serializable */ private int value;" +
+                       "  /** @serial */ private int value;" +
                        "private int value2; " +
                        "  /** @since 1.4 */ void a() {} "+
                        "}" +
                        "class F { " +
                        "  /** @since 1.4 */ void a() {} "+
-                       "  /** @serializable */ private int value2; " +
+                       "  /** @serial */ private int value2; " +
                        "}" +
                        "class G { /** @param a*/ void a() {} }";
     assertEquals("java doc comment in class in file", 1, findMatchesCount(s57, "/** @'T '_T2 */ class '_ { }"));
-    assertEquals("javadoc comment for field", 2, findMatchesCount(s57, "class '_ { /** @serializable '_* */ '_ '_; }"));
+    assertEquals("javadoc comment for field", 2, findMatchesCount(s57, "class '_ { /** @serial '_* */ '_ '_; }"));
     assertEquals("javadoc comment for method", 2, findMatchesCount(s57, "class '_ { /** @'T 1.4 */ '_ '_() {} }"));
     assertEquals("javadoc comment for method 2", 2, findMatchesCount(s57, "/** @'T 1.4 */ '_t '_m();"));
     assertEquals("just javadoc comment search", 4, findMatchesCount(s57, "/** @'T '_T2 */"));
@@ -1261,6 +1261,54 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                           "}";
     final String pattern = "class '_A { /** '_Text */class 'B {}}";
     assertEquals("match inner class with javadoc", 1, findMatchesCount(source, pattern));
+
+    final String in = "class X {\n" +
+                      "  /**\n" +
+                      "   * cool\n" +
+                      "  */\n" +
+                      "  void x1() {}\n" +
+                      "\n" +
+                      "  /**\n" +
+                      "   * cool\n" +
+                      "   * @since 1.1\n" +
+                      "   */\n" +
+                      "  void x2() {}\n" +
+                      "\n" +
+                      "  /**\n" +
+                      "   * uncool\n" +
+                      "   * @since 2.1\n" +
+                      "   */\n" +
+                      "  void x3() {}\n" +
+                      "}";
+    assertEquals("match text & tag", 1, findMatchesCount(in, "/** '_c:cool\n" +
+                                                             " * @since '_x\n" +
+                                                             " */"));
+    assertEquals("match text & tag 2", 1, findMatchesCount(in, "/**\n" +
+                                                               " * cool\n" +
+                                                               " * @since '_x\n" +
+                                                               " */"));
+    assertEquals("match tag, ignore text", 1, findMatchesCount(in, "/** '_c\n" +
+                                                                   " * @since 2.1 */"));
+
+    final String in2 = "class X {\n" +
+                       "  /**\n" +
+                       "   *\n" +
+                       "   */\n" +
+                       "  void empty() {}\n" +
+                       "\n" +
+                       "  /**\n" +
+                       "   * @since 1.1\n" +
+                       "   */\n" +
+                       "  void x() {}\n" +
+                       "\n" +
+                       "  /**\n" +
+                       "   * text\n" +
+                       "   */\n" +
+                       "  void y() {}\n" +
+                       "}";
+    assertEquals("match empty javadoc", 1, findMatchesCount(in2, "/**\n" +
+                                                                 " * @'_tag{0,0}\n" +
+                                                                 " */"));
   }
 
   public void testNamedPatterns() {
