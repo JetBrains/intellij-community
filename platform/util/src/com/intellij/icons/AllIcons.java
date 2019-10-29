@@ -2293,6 +2293,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon C_private = load("/nodes/c_private.svg");
     /** 16x16 */ public static final Icon C_protected = load("/nodes/c_protected.svg");
     /** 16x16 */ public static final Icon C_public = load("/nodes/c_public.svg");
+    /** 16x16 */ public static final Icon Circlet = load("/nodes/circlet.svg");
     /** 16x16 */ public static final Icon Class = load("/nodes/class.svg");
     /** 16x16 */ public static final Icon ClassInitializer = load("/nodes/classInitializer.svg");
     /** 16x16 */ public static final Icon CompiledClassesFolder = load("/nodes/compiledClassesFolder.svg");
@@ -2463,6 +2464,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon TestGroup = load("/nodes/testGroup.svg");
     /** 16x16 */ public static final Icon TestIgnored = load("/nodes/testIgnored.svg");
     /** 16x16 */ public static final Icon TestSourceFolder = load("/nodes/testSourceFolder.svg");
+    /** 16x16 */ public static final Icon Toolbox = load("/nodes/toolbox.svg");
     /** 16x16 */ public static final Icon Type = load("/nodes/type.svg");
     /** 16x16 */ public static final Icon Undeploy = load("/nodes/undeploy.svg");
     /** 16x16 */ public static final Icon Unknown = load("/nodes/unknown.svg");
