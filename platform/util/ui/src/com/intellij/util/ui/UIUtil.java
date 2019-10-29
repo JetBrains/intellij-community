@@ -131,7 +131,7 @@ public final class UIUtil {
           graphics.setColor(color);
           int controlButtonsWidth = 70;
           String windowTitle = getWindowTitle(window);
-          double widthToFit = (controlButtonsWidth*2 + GraphicsUtil.stringWidth(windowTitle, g.getFont())) - c.getWidth();
+          double widthToFit = controlButtonsWidth * 2 + GraphicsUtil.stringWidth(windowTitle, g.getFont()) - c.getWidth();
           if (widthToFit <= 0) {
             drawCenteredString(graphics, headerRectangle, windowTitle);
           } else {
@@ -780,7 +780,7 @@ public final class UIUtil {
       currentAtom.append(ch);
 
       if (ch == separator) {
-        currentLine.append(currentAtom.toString());
+        currentLine.append(currentAtom);
         currentAtom.setLength(0);
       }
 
@@ -1910,12 +1910,7 @@ public final class UIUtil {
 
   public static void addAwtListener(@NotNull final AWTEventListener listener, long mask, @NotNull Disposable parent) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
-      }
-    });
+    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
@@ -2313,7 +2308,7 @@ public final class UIUtil {
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
-    if (toRender instanceof String && StringUtil.toLowerCase(((String)toRender)).startsWith("<html>")) {
+    if (toRender instanceof String && StringUtil.toLowerCase((String)toRender).startsWith("<html>")) {
       //noinspection unchecked
       return (T) ("<html>" + StringUtil.escapeXmlEntities((String)toRender));
     }
@@ -2452,9 +2447,8 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
-  public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
+  public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable<?> runnable) throws Throwable {
     if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
@@ -2495,23 +2489,8 @@ public final class UIUtil {
     }
   }
 
-  public static void addKeyboardShortcut(@NotNull final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
-    target.registerKeyboardAction(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (button.isEnabled()) {
-            button.doClick();
-          }
-        }
-      },
-      keyStroke,
-      JComponent.WHEN_FOCUSED
-    );
-  }
-
   @Nullable
-  public static ComboPopup getComboBoxPopup(@NotNull JComboBox comboBox) {
+  public static ComboPopup getComboBoxPopup(@NotNull JComboBox<?> comboBox) {
     final ComboBoxUI ui = comboBox.getUI();
     if (ui instanceof BasicComboBoxUI) {
       return ReflectionUtil.getField(BasicComboBoxUI.class, ui, ComboPopup.class, "popup");
@@ -2620,7 +2599,7 @@ public final class UIUtil {
 
   @NotNull
   public static JBIterable<Component> uiParents(@Nullable Component c, boolean strict) {
-    return strict ? JBIterable.generate(c, COMPONENT_PARENT).skip(1) : JBIterable.generate(c, COMPONENT_PARENT);
+    return strict ? JBIterable.generate(c, c1 -> c1.getParent()).skip(1) : JBIterable.generate(c, c1 -> c1.getParent());
   }
 
   @NotNull
@@ -2659,15 +2638,8 @@ public final class UIUtil {
     return result;
   });
 
-  private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
-    @Override
-    public Component fun(Component c) {
-      return c.getParent();
-    }
-  };
 
-
-  public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
+  public static void scrollListToVisibleIfNeeded(@NotNull final JList<?> list) {
     SwingUtilities.invokeLater(() -> {
       final int selectedIndex = list.getSelectedIndex();
       if (selectedIndex >= 0) {
@@ -3821,12 +3793,9 @@ public final class UIUtil {
           runnable.run();
         }
       };
-      HierarchyListener hierarchyListener = new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(HierarchyEvent e) {
-          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !component.isShowing()) {
-            Disposer.dispose(disposable);
-          }
+      HierarchyListener hierarchyListener = e -> {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !component.isShowing()) {
+          Disposer.dispose(disposable);
         }
       };
       component.addFocusListener(focusListener);

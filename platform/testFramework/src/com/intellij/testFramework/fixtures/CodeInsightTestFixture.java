@@ -282,7 +282,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void openFileInEditor(@NotNull VirtualFile file);
 
-  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper toolWrapper);
+  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?,?> toolWrapper);
 
   /**
    * @return all highlight infos for current file
@@ -450,13 +450,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from the usages
-   * @param usages
    */
   @NotNull
   String getUsageViewTreeTextRepresentation(@NotNull Collection<? extends UsageInfo> usages);
 
   /**
-   * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of <code>to</code>
+   * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of {@code to}
    * <p>
    * The result of the method could be more verbose than {@code getUsageViewTreeTextRepresentation(findUsages(to))}
    */
