@@ -633,7 +633,7 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.IndentStrategy"/>
     </extensionPoint>
 
-    <extensionPoint name="gotoDeclarationHandler"
+    <extensionPoint name="gotoDeclarationHandler" dynamic="true"
                     interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
     <extensionPoint name="typeDeclarationProvider"
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
@@ -658,10 +658,12 @@
     <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator" dynamic="true"/>
     <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider"/>
 
-    <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
+    <extensionPoint name="findUsagesHandlerFactory" area="IDEA_PROJECT" dynamic="true"
+                    interface="com.intellij.find.findUsages.FindUsagesHandlerFactory"/>
     <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher"/>
 
-    <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector"/>
+    <extensionPoint name="readWriteAccessDetector" dynamic="true"
+                    interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector"/>
 
     <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
 
@@ -730,7 +732,7 @@
                     interface="com.intellij.usages.rules.ImportFilteringRule"/>
     <extensionPoint name="usageGroupingRuleProvider"
                     interface="com.intellij.usages.rules.UsageGroupingRuleProvider"/>
-    <extensionPoint name="usageTypeProvider"
+    <extensionPoint name="usageTypeProvider" dynamic="true"
                     interface="com.intellij.usages.impl.rules.UsageTypeProvider"/>
     <extensionPoint name="fileStructureGroupRuleProvider"
                     interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
@@ -882,7 +884,7 @@
                     interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 
     <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender"/>
-    <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="targetElementEvaluator" dynamic="true" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
 
