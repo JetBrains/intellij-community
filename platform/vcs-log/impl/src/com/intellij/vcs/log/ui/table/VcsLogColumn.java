@@ -26,7 +26,7 @@ public enum VcsLogColumn {
   DATE("Date", String.class) {
     @Override
     public String getContentSample() {
-      return JBDateFormat.getFormatter("vcs.log").formatDateTime(DateFormatUtil.getSampleDateTime());
+      return JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime());
     }
   },
   HASH("Hash", String.class) {

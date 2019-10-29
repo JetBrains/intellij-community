@@ -163,7 +163,7 @@ public class GraphTableModel extends AbstractTableModel {
       long timeStamp = myProperties.exists(CommonUiProperties.PREFER_COMMIT_DATE) &&
                        Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
                        data.getCommitTime() : data.getAuthorTime();
-      return timeStamp < 0 ? "" : JBDateFormat.getFormatter("vcs.log").formatDateTime(timeStamp);
+      return timeStamp < 0 ? "" : JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp);
     }, "");
   }
 
