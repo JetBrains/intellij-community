@@ -405,6 +405,7 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
 
+    <statistics.counterUsagesCollector groupId="java.find.usages" version="1"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
 
