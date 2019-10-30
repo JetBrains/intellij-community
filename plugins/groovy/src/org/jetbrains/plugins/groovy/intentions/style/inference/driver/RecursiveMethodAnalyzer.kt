@@ -24,12 +24,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.OK
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.*
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -65,7 +66,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private fun processArgumentConstraints(parameterType: PsiType, argument: Argument, resolveResult: GroovyMethodResult) {
     val argumentTypes = when (argument) {
       is ExpressionArgument ->
-        unwrapExpression(argument.expression).flatMap { it.type?.flattenComponents() ?: emptyList() }
+        unwrapElvisExpression(argument.expression).flatMap { it.type?.flattenComponents() ?: emptyList() }
       else -> argument.type?.flattenComponents() ?: emptyList()
     }.filterNotNull()
     val erasureSubstitutor = lazy(NONE) { methodTypeParametersErasureSubstitutor(resolveResult.element) }
@@ -176,12 +177,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   override fun visitCallExpression(callExpression: GrCallExpression) {
     processMethod(callExpression.advancedResolve())
-    builder.addConstraint(ExpressionConstraint(null, callExpression))
+    builder.addConstrainingExpression(callExpression)
     super.visitCallExpression(callExpression)
   }
 
   override fun visitAssignmentExpression(expression: GrAssignmentExpression) {
-    builder.addConstraint(ExpressionConstraint(null, expression))
+    builder.addConstrainingExpression(expression)
     val lValueReference = (expression.lValue as? GrReferenceExpression)?.lValueReference
     if (lValueReference != null) {
       processSetter(lValueReference)
@@ -198,18 +199,17 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
   private fun processFieldAssignment(fieldReference: GroovyReference, expression: GrAssignmentExpression) {
     val fieldResult = fieldReference.resolve() as? GrField ?: return
     val leftType = fieldResult.type
-    val rightExpressions = unwrapExpression(expression.rValue)
+    val rightExpressions = unwrapElvisExpression(expression.rValue)
     for (rightExpression in rightExpressions) {
       val rightType = rightExpression.type ?: continue
       processRequiredParameters(rightType, leftType)
-      builder.addConstraint(TypeConstraint(leftType, rightType, method))
     }
   }
 
-  private fun unwrapExpression(expression: GrExpression?): List<GrExpression> =
+  private fun unwrapElvisExpression(expression: GrExpression?): List<GrExpression> =
     when (expression) {
       null -> emptyList()
-      is GrConditionalExpression -> listOfNotNull(expression.thenBranch, expression.elseBranch).flatMap { unwrapExpression(it) }
+      is GrConditionalExpression -> listOfNotNull(expression.thenBranch, expression.elseBranch).flatMap { unwrapElvisExpression(it) }
       else -> listOf(expression)
     }
 
@@ -223,9 +223,6 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val initializer = variable.initializerGroovy ?: continue
       val initializerType = initializer.type ?: continue
       processRequiredParameters(initializerType, variable.type)
-      val declaredType = variable.declaredType
-      val expectedType = if (declaredType == null) null else ExpectedType(declaredType, ASSIGNMENT)
-      builder.addConstraint(ExpressionConstraint(expectedType, initializer))
     }
     super.visitVariableDeclaration(variableDeclaration)
   }
@@ -237,7 +234,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       if (operatorMethodResolveResult != null) {
         processMethod(operatorMethodResolveResult)
       }
-      builder.addConstraint(OperatorExpressionConstraint(expression))
+      builder.addConstrainingExpression(expression)
     }
     if (expression is GrIndexProperty) {
       expression.lValueReference?.advancedResolve()?.run {
@@ -345,7 +342,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
 
   private fun processExitExpression(expression: GrExpression) {
     val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
-    builder.addConstraint(ExpressionConstraint(ExpectedType(returnType, RETURN_VALUE), expression))
+    builder.addConstrainingExpression(expression)
     val typeParameter = expression.type.typeParameter() ?: return
     builder.generateRequiredTypes(typeParameter, returnType, UPPER)
   }
