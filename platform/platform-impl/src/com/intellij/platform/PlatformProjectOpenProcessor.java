@@ -211,6 +211,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   public static Project openExistingProject(@NotNull Path file,
                                             @Nullable("null for IPR project") Path projectDir,
                                             @NotNull OpenProjectTask options) {
+    if (options.getProject() != null && ProjectManagerEx.getInstanceEx().isProjectOpened(options.getProject())) {
+      return null;
+    }
     Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
       Project[] openProjects = ProjectUtil.getOpenProjects();
