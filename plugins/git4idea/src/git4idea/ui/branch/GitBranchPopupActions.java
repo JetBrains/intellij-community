@@ -61,7 +61,7 @@ import static git4idea.ui.branch.GitBranchActionsUtilKt.checkCommitsUnderProgres
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
-class GitBranchPopupActions {
+public class GitBranchPopupActions {
 
   private final Project myProject;
   private final GitRepository myRepository;
@@ -271,7 +271,7 @@ class GitBranchPopupActions {
   /**
    * Actions available for local branches.
    */
-  static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
+  public static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
 
     protected final Project myProject;
     protected final List<GitRepository> myRepositories;
@@ -280,7 +280,7 @@ class GitBranchPopupActions {
     private final GitBranchManager myGitBranchManager;
     @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
-    LocalBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
+    public LocalBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
       myProject = project;
       myRepositories = immutableList(repositories);
@@ -375,12 +375,12 @@ class GitBranchPopupActions {
       return myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
     }
 
-    private static class CheckoutAction extends DumbAwareAction {
+    public static class CheckoutAction extends DumbAwareAction {
       private final Project myProject;
       private final List<? extends GitRepository> myRepositories;
       private final String myBranchName;
 
-      CheckoutAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+      public CheckoutAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
         super("Checkout");
         myProject = project;
         myRepositories = repositories;
@@ -487,8 +487,8 @@ class GitBranchPopupActions {
     }
   }
 
-  static class CurrentBranchActions extends LocalBranchActions {
-    CurrentBranchActions(@NotNull Project project,
+  public static class CurrentBranchActions extends LocalBranchActions {
+    public CurrentBranchActions(@NotNull Project project,
                          @NotNull List<? extends GitRepository> repositories,
                          @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
@@ -509,7 +509,7 @@ class GitBranchPopupActions {
   /**
    * Actions available for remote branches
    */
-  static class RemoteBranchActions extends BranchActionGroup {
+  public static class RemoteBranchActions extends BranchActionGroup {
 
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
@@ -517,7 +517,7 @@ class GitBranchPopupActions {
     @NotNull private final GitRepository mySelectedRepository;
     @NotNull private final GitBranchManager myGitBranchManager;
 
-    RemoteBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
+    public RemoteBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                         @NotNull GitRepository selectedRepository) {
 
       myProject = project;

@@ -56,7 +56,7 @@ import static java.util.stream.Collectors.toList;
  * The popup which allows to quickly switch and control Git branches.
  * <p/>
  */
-class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
+public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
   static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
   static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
@@ -67,7 +67,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
    *                          In the case of synchronized branch operations current repository matter much less, but sometimes is used,
    *                          for example, it is preselected in the repositories combobox in the compare branches dialog.
    */
-  static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
+  public static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
     final GitVcsSettings vcsSettings = GitVcsSettings.getInstance(project);
     Condition<AnAction> preselectActionCondition = action -> {
      GitBranchPopupActions.LocalBranchActions branchAction = getBranchAction(action);
@@ -169,7 +169,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @NotNull
-  private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<? extends GitRepository> allRepositories,
+  public GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<? extends GitRepository> allRepositories,
                                                                             @NotNull String branch) {
     return new GitBranchPopupActions.LocalBranchActions(myProject, allRepositories, branch, myCurrentRepository);
   }
