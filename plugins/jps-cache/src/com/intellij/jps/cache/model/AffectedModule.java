@@ -30,4 +30,28 @@ public class AffectedModule {
   public File getOutPath() {
     return outPath;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AffectedModule module = (AffectedModule)o;
+
+    if (type != null ? !type.equals(module.type) : module.type != null) return false;
+    if (name != null ? !name.equals(module.name) : module.name != null) return false;
+    if (hash != null ? !hash.equals(module.hash) : module.hash != null) return false;
+    if (outPath != null ? !outPath.equals(module.outPath) : module.outPath != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = type != null ? type.hashCode() : 0;
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    result = 31 * result + (hash != null ? hash.hashCode() : 0);
+    result = 31 * result + (outPath != null ? outPath.hashCode() : 0);
+    return result;
+  }
 }

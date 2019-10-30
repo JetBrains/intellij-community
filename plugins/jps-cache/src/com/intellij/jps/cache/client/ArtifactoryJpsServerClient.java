@@ -184,7 +184,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
         String downloadUrl = pair.second.getDownloadUrl();
         AffectedModule affectedModule = urlToModuleNameMap.get(downloadUrl);
         File outPath = affectedModule.getOutPath();
-        LOG.debug("Downloaded JPS compiled module from: " + downloadUrl);
+        LOG.info("Downloaded JPS compiled module from: " + downloadUrl);
         File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");
         ZipUtil.extract(zipFile, tmpFolder, null);
         FileUtil.delete(zipFile);

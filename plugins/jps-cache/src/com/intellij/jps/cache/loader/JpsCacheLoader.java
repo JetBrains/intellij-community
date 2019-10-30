@@ -29,7 +29,7 @@ class JpsCacheLoader implements JpsOutputLoader {
 
   @Override
   public LoaderStatus load(@NotNull JpsLoaderContext context) {
-    LOG.debug("Loading JPS caches for commit: " + context.getCommitId());
+    LOG.info("Loading JPS caches for commit: " + context.getCommitId());
     myTmpCacheFolder = null;
 
     File targetDir = myBuildManager.getBuildSystemDirectory().toFile();

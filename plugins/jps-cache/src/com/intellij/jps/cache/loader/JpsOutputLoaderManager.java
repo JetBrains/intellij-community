@@ -161,7 +161,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     try {
       // Computation with loaders results. If at least one of them failed rollback all job
       initialFuture.thenAccept(loaderStatus -> {
-        LOG.debug("Loading finished with " + loaderStatus + " status");
+        LOG.info("Loading finished with " + loaderStatus + " status");
         CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
           indicator.setFraction(0.97);
           if (loaderStatus == LoaderStatus.FAILED) {
@@ -181,7 +181,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
                                                                                        NotificationType.INFORMATION, null);
                 Notifications.Bus.notify(notification);
               });
-              LOG.debug("Loading finished");
+              LOG.info("Loading finished");
             } else onFail();
           });
       }).handle((result, ex) -> {

@@ -1,6 +1,7 @@
 package com.intellij.jps.cache.loader;
 
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.hashing.ModuleHashingService;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.BuildTargetState;
 import com.intellij.jps.cache.model.JpsLoaderContext;
@@ -18,11 +19,11 @@ import java.util.*;
 
 class JpsCompilationOutputLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
-  protected final JpsServerClient myClient;
-  protected final Project myProject;
-  protected final String myProjectPath;
-  protected List<File> myOldModulesPaths;
-  protected Map<File, String> myTmpFolderToModuleName;
+  private final JpsServerClient myClient;
+  private final Project myProject;
+  private final String myProjectPath;
+  private List<File> myOldModulesPaths;
+  private Map<File, String> myTmpFolderToModuleName;
 
   JpsCompilationOutputLoader(JpsServerClient client, Project project) {
     myClient = client;
@@ -42,7 +43,9 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     progressIndicatorManager.getProgressIndicator().checkCanceled();
 
     if (affectedModules.size() > 0) {
+      long l = System.currentTimeMillis();
       Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(progressIndicatorManager, affectedModules);
+      LOG.warn("Compilationms download took :" + (System.currentTimeMillis() - l));
       myTmpFolderToModuleName = downloadResultsPair.second;
       if (!downloadResultsPair.first) return LoaderStatus.FAILED;
     }
@@ -65,11 +68,11 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
 
   @Override
   public void apply() {
-    if (myOldModulesPaths != null) {
-      LOG.debug("Removing old compilation outputs " + myOldModulesPaths.size() + " counts");
-      myOldModulesPaths.forEach(file -> { if (file.exists()) FileUtil.delete(file); });
-    }
-
+    //if (myOldModulesPaths != null) {
+    //  LOG.debug("Removing old compilation outputs " + myOldModulesPaths.size() + " counts");
+    //  myOldModulesPaths.forEach(file -> { if (file.exists()) FileUtil.delete(file); });
+    //}
+    long l = System.currentTimeMillis();
     if (myTmpFolderToModuleName == null) {
       LOG.debug("Nothing to apply, download results are empty");
       return;
@@ -86,9 +89,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         LOG.warn("Couldn't replace compilation output for module: " + moduleName, e);
       }
     });
+    LOG.warn("Apply took took :" + (System.currentTimeMillis() - l));
   }
 
-  protected List<AffectedModule> getAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
+  private List<AffectedModule> getAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
                                                     @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
     long start = System.currentTimeMillis();
 
@@ -102,7 +106,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         });
       });
       LOG.warn("Project doesn't contain metadata, force to download " + affectedModules.size() + " modules.");
-      return affectedModules;
+      List<AffectedModule> result = mergeAffectedModules(affectedModules, commitModulesState);
+      long total = System.currentTimeMillis() - start;
+      LOG.info("Compilation output affected for the " + result.size() + " modules. Computation took " + total + "ms");
+      return result;
     }
 
     // Add new build types
@@ -156,12 +163,58 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         }
       });
     });
+
+    List<AffectedModule> result = mergeAffectedModules(affectedModules, commitModulesState);
     long total = System.currentTimeMillis() - start;
-    LOG.debug("Compilation output affected for the " + affectedModules.size() + " modules. Computation took " + total + "ms");
-    return affectedModules;
+    LOG.info("Compilation output affected for the " + affectedModules.size() + " modules. Computation took " + total + "ms");
+    return result;
+  }
+
+  private static List<AffectedModule> mergeAffectedModules(List<AffectedModule> affectedModules,
+                                                           @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
+    Set<AffectedModule> result = new HashSet<>();
+    affectedModules.forEach(affectedModule -> {
+      if (affectedModule.getType().equals("java-production")) {
+        BuildTargetState targetState = commitModulesState.get("resources-production").get(affectedModule.getName());
+        if (targetState == null) {
+          result.add(affectedModule);
+          return;
+        }
+        String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
+        result.add(new AffectedModule("production", affectedModule.getName(), hash, affectedModule.getOutPath()));
+      }
+      if (affectedModule.getType().equals("resources-production")) {
+        BuildTargetState targetState = commitModulesState.get("java-production").get(affectedModule.getName());
+        if (targetState == null) {
+          result.add(affectedModule);
+          return;
+        }
+        String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
+        result.add(new AffectedModule("production", affectedModule.getName(), hash, affectedModule.getOutPath()));
+      }
+      if (affectedModule.getType().equals("java-test")) {
+        BuildTargetState targetState = commitModulesState.get("resources-test").get(affectedModule.getName());
+        if (targetState == null) {
+          result.add(affectedModule);
+          return;
+        }
+        String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
+        result.add(new AffectedModule("test", affectedModule.getName(), hash, affectedModule.getOutPath()));
+      }
+      if (affectedModule.getType().equals("resources-test")) {
+        BuildTargetState targetState = commitModulesState.get("java-test").get(affectedModule.getName());
+        if (targetState == null) {
+          result.add(affectedModule);
+          return;
+        }
+        String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
+        result.add(new AffectedModule("test", affectedModule.getName(), hash, affectedModule.getOutPath()));
+      }
+    });
+    return new ArrayList<>(result);
   }
 
   private File getProjectRelativeFile(String projectRelativePath) {
-    return new File(myProjectPath, projectRelativePath);
+    return new File(projectRelativePath.replace("$PROJECT_DIR$", myProjectPath));
   }
 }
