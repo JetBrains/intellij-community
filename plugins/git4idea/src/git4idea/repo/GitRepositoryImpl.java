@@ -26,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
@@ -36,6 +34,8 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
+
+  private static final Map<MyInstanceKey, GitRepositoryImpl> ourInstanceCache = new HashMap<>();
 
   @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
@@ -105,7 +105,16 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                                           @NotNull Project project,
                                           @NotNull Disposable parentDisposable,
                                           boolean listenToRepoChanges) {
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
+    MyInstanceKey key = new MyInstanceKey(root, gitDir, project, parentDisposable, listenToRepoChanges);
+    GitRepositoryImpl repository = ourInstanceCache.get(key);
+    if (repository != null) {
+      return repository;
+    }
+
+    repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
+    ourInstanceCache.put(key, repository);
+    Disposer.register(repository, ourInstanceCache.remove(key));
+
     if (listenToRepoChanges) {
       repository.getUntrackedFilesHolder().setupVfsListener(project);
       repository.getIgnoredFilesHolder().setupListeners();
@@ -319,6 +328,47 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       if(myProject.isDisposed()) return;
 
       myChangesViewI.scheduleRefresh();
+    }
+  }
+
+  private static final class MyInstanceKey {
+    @NotNull private final VirtualFile myRootDir;
+    @NotNull private final VirtualFile myGitDir;
+    @NotNull private final Project myProject;
+    @NotNull private final Disposable myParentDisposable;
+    private final boolean myListenToChanges;
+
+    MyInstanceKey(@NotNull VirtualFile rootDir,
+                  @NotNull VirtualFile gitDir,
+                  @NotNull Project project,
+                  @NotNull Disposable parentDisposable,
+                  boolean listenToChanges) {
+      myRootDir = rootDir;
+      myGitDir = gitDir;
+      myProject = project;
+      myParentDisposable = parentDisposable;
+      myListenToChanges = listenToChanges;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyInstanceKey key = (MyInstanceKey)o;
+      return myRootDir.equals(key.myRootDir) &&
+             myGitDir.equals(key.myGitDir) &&
+             myProject.equals(key.myProject) &&
+             myParentDisposable.equals(key.myParentDisposable) &&
+             myListenToChanges == key.myListenToChanges;
+    }
+
+    @Override
+    public int hashCode() {
+      return ((((Objects.hashCode(myRootDir) * 31 +
+                 Objects.hashCode(myGitDir)) * 31) +
+                 Objects.hashCode(myProject) * 31) +
+                 Objects.hashCode(myParentDisposable) * 31) +
+                 Boolean.hashCode(myListenToChanges);
     }
   }
 }
