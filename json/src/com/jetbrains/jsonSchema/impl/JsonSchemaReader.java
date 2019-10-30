@@ -163,6 +163,7 @@ public class JsonSchemaReader {
   }
 
   private static void fillMap() {
+    READERS_MAP.put("$anchor", createFromStringValue((object, s) -> object.setId(s)));
     READERS_MAP.put("$id", createFromStringValue((object, s) -> object.setId(s)));
     READERS_MAP.put("id", createFromStringValue((object, s) -> object.setId(s)));
     READERS_MAP.put("$schema", createFromStringValue((object, s) -> object.setSchema(s)));
@@ -176,9 +177,11 @@ public class JsonSchemaReader {
     });
     READERS_MAP.put("title", createFromStringValue((object, s) -> object.setTitle(s)));
     READERS_MAP.put("$ref", createFromStringValue((object, s) -> object.setRef(s)));
+    READERS_MAP.put("$recursiveRef", createFromStringValue((object, s) -> object.setRef(s)));
     READERS_MAP.put("default", createDefault());
     READERS_MAP.put("format", createFromStringValue((object, s) -> object.setFormat(s)));
     READERS_MAP.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
+    READERS_MAP.put(JsonSchemaObject.DEFINITIONS_v9, createDefinitionsConsumer());
     READERS_MAP.put(JsonSchemaObject.PROPERTIES, createPropertiesConsumer());
     READERS_MAP.put("multipleOf", createFromNumber((object, i) -> object.setMultipleOf(i)));
     READERS_MAP.put("maximum", createFromNumber((object, i) -> object.setMaximum(i)));

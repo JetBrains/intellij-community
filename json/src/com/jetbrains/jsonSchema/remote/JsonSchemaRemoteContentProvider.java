@@ -24,6 +24,7 @@ public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvide
   static final String STORE_URL_PREFIX_HTTP = "http://json.schemastore.org";
   static final String STORE_URL_PREFIX_HTTPS = "https://schemastore.azurewebsites.net";
   private static final String SCHEMA_URL_PREFIX = "http://json-schema.org/";
+  private static final String SCHEMA_URL_PREFIX_HTTPS = "https://json-schema.org/";
   private static final String ETAG_HEADER = "ETag";
   private static final String LAST_MODIFIED_HEADER = "Last-Modified";
 
@@ -35,6 +36,7 @@ public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvide
     return externalForm.startsWith(STORE_URL_PREFIX_HTTP)
            || externalForm.startsWith(STORE_URL_PREFIX_HTTPS)
            || externalForm.startsWith(SCHEMA_URL_PREFIX)
+           || externalForm.startsWith(SCHEMA_URL_PREFIX_HTTPS)
            || externalForm.endsWith(".json");
   }
 
@@ -48,9 +50,12 @@ public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvide
   @Nullable
   @Override
   protected FileType adjustFileType(@Nullable FileType type, @NotNull Url url) {
-    if (type == null && url.toExternalForm().startsWith(SCHEMA_URL_PREFIX)) {
-      // json-schema.org doesn't provide a mime-type for schemas
-      return JsonFileType.INSTANCE;
+    if (type == null) {
+      String fullUrl = url.toExternalForm();
+      if (fullUrl.startsWith(SCHEMA_URL_PREFIX) || fullUrl.startsWith(SCHEMA_URL_PREFIX_HTTPS)) {
+        // json-schema.org doesn't provide a mime-type for schemas
+        return JsonFileType.INSTANCE;
+      }
     }
     return super.adjustFileType(type, url);
   }

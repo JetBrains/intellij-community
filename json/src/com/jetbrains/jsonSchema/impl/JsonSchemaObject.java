@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
+import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -36,6 +38,7 @@ public class JsonSchemaObject {
   public static final String MOCK_URL = "mock:///";
   public static final String TEMP_URL = "temp:///";
   @NonNls public static final String DEFINITIONS = "definitions";
+  @NonNls public static final String DEFINITIONS_v9 = "$defs";
   @NonNls public static final String PROPERTIES = "properties";
   @NonNls public static final String ITEMS = "items";
   @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
@@ -860,7 +863,7 @@ public class JsonSchemaObject {
     for (int i = 0; i < parts.size(); i++) {
       if (current == null) return null;
       final String part = parts.get(i);
-      if (DEFINITIONS.equals(part)) {
+      if (DEFINITIONS.equals(part) || DEFINITIONS_v9.equals(part)) {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         final String nextPart = parts.get(++i);
@@ -1068,7 +1071,8 @@ public class JsonSchemaObject {
   public JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service) {
     final String ref = getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
-    if (!myComputedRefs.containsKey(ref)){
+    JsonSchemaObject schemaObject = myComputedRefs.getOrDefault(ref, NULL_OBJ);
+    if (schemaObject == NULL_OBJ) {
       JsonSchemaObject value = fetchSchemaFromRefDefinition(ref, this, service);
       if (!mySubscribed.get()) {
         service.getProject().getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> myComputedRefs.clear());
@@ -1085,9 +1089,9 @@ public class JsonSchemaObject {
         }
       }
       myComputedRefs.put(ref, value == null ? NULL_OBJ : value);
+      return value;
     }
-    JsonSchemaObject object = myComputedRefs.getOrDefault(ref, null);
-    return object == NULL_OBJ ? null : object;
+    return schemaObject;
   }
 
   @Nullable
@@ -1120,6 +1124,19 @@ public class JsonSchemaObject {
     if (refFile == null) {
       LOG.debug(String.format("Schema file not found by reference: '%s' from %s", schemaId, schemaFile.getPath()));
       return null;
+    }
+    if (refFile instanceof HttpVirtualFile) {
+      RemoteFileInfo info = ((HttpVirtualFile)refFile).getFileInfo();
+      if (info != null) {
+        RemoteFileState state = info.getState();
+        if (state == RemoteFileState.DOWNLOADING_NOT_STARTED) {
+          JsonFileResolver.startFetchingHttpFileIfNeeded(refFile, service.getProject());
+          return NULL_OBJ;
+        }
+        else if (state == RemoteFileState.DOWNLOADING_IN_PROGRESS) {
+          return NULL_OBJ;
+        }
+      }
     }
     final JsonSchemaObject refSchema = service.getSchemaObjectForSchemaFile(refFile);
     if (refSchema == null) {
