@@ -346,9 +346,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     @Nullable
-    protected String getTypeParameter(@NotNull PsiMethodCallExpression qualifierCall) {
-      PsiType[] parameters = qualifierCall.getMethodExpression().getTypeParameters();
-      return parameters.length == 1 ? parameters[0].getCanonicalText() : null;
+    protected String getTypeParameter(@NotNull CommentTracker ct, @NotNull PsiMethodCallExpression qualifierCall) {
+      PsiReferenceParameterList parameterList = qualifierCall.getMethodExpression().getParameterList();
+      if (parameterList == null) return null;
+      PsiTypeElement[] elements = parameterList.getTypeParameterElements();
+      return elements.length == 1 ? ct.text(elements[0]) : null;
     }
 
     @Nullable
@@ -356,8 +358,9 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     public PsiElement simplify(PsiMethodCallExpression streamCall) {
       PsiMethodCallExpression collectionCall = getQualifierMethodCall(streamCall);
       if (collectionCall == null) return null;
-      streamCall.getArgumentList().replace(collectionCall.getArgumentList());
-      String typeParameter = getTypeParameter(collectionCall);
+      CommentTracker ct = new CommentTracker();
+      ct.replace(streamCall.getArgumentList(), collectionCall.getArgumentList());
+      String typeParameter = getTypeParameter(ct, collectionCall);
       String replacement;
       if (typeParameter != null) {
         replacement = myClassName + ".<" + typeParameter + ">" + myMethodName;
@@ -366,8 +369,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         replacement = myClassName + "." + myMethodName;
       }
       Project project = streamCall.getProject();
-      PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, streamCall);
-      return JavaCodeStyleManager.getInstance(project).shortenClassReferences(streamCall.getMethodExpression().replace(newMethodExpression));
+      PsiElement result = ct.replaceAndRestoreComments(streamCall.getMethodExpression(), replacement);
+      return JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
     }
 
     public static CallHandler<CallChainSimplification> handler() {
@@ -423,8 +426,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Nullable
     @Override
-    protected String getTypeParameter(@NotNull PsiMethodCallExpression qualifierCall) {
-      String typeParameter = super.getTypeParameter(qualifierCall);
+    protected String getTypeParameter(@NotNull CommentTracker ct, @NotNull PsiMethodCallExpression qualifierCall) {
+      String typeParameter = super.getTypeParameter(ct, qualifierCall);
       if (typeParameter != null) {
         return typeParameter;
       }
