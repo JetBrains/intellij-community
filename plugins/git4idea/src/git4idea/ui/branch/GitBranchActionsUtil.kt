@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.branch.GitBrancher
+import git4idea.branch.GitNewBranchOptions
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 
@@ -50,4 +52,25 @@ internal fun checkout(project: Project, repositories: List<GitRepository>, start
   }
   //checkout new
   if (reposWithoutLocalBranch.isNotEmpty()) brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null)
+}
+
+internal fun checkoutOrReset(project: Project,
+                             repositories: List<GitRepository>,
+                             startPoint: String,
+                             newBranchOptions: GitNewBranchOptions) {
+  if (repositories.isEmpty()) return
+  val name = newBranchOptions.name
+  if (!newBranchOptions.reset) {
+    checkout(project, repositories, startPoint, name, false)
+  }
+  else {
+    val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
+    if (hasCommits) {
+      VcsNotifier.getInstance(project)
+        .notifyError("Checkout Failed", "Can't overwrite $name branch because some commits can be lost")
+      return
+    }
+    val brancher = GitBrancher.getInstance(project)
+    brancher.checkoutNewBranchStartingFrom(name, startPoint, true, repositories, null)
+  }
 }

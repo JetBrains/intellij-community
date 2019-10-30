@@ -57,8 +57,7 @@ import static git4idea.GitReference.BRANCH_NAME_HASHING_STRATEGY;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
-import static git4idea.ui.branch.GitBranchActionsUtilKt.checkCommitsUnderProgress;
-import static git4idea.ui.branch.GitBranchActionsUtilKt.checkout;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.*;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
@@ -675,25 +674,6 @@ public class GitBranchPopupActions {
       if (newBranchOptions != null) {
         checkoutOrReset(myProject, myRepositories, myBranchName + "^0", newBranchOptions);
       }
-    }
-  }
-
-  static void checkoutOrReset(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                              @NotNull String startPoint, GitNewBranchOptions newBranchOptions) {
-    if (repositories.isEmpty()) return;
-    String name = newBranchOptions.getName();
-    if (!newBranchOptions.shouldReset()) {
-      checkout(project, repositories, startPoint, name, false);
-    }
-    else {
-      boolean hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name);
-      if (hasCommits) {
-        VcsNotifier.getInstance(project)
-          .notifyError("Checkout Failed", "Can't overwrite " + name + " branch because some commits can be lost");
-        return;
-      }
-      GitBrancher brancher = GitBrancher.getInstance(project);
-      brancher.checkoutNewBranchStartingFrom(name, startPoint, true, repositories, null);
     }
   }
 
