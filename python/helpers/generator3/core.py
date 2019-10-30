@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     GeneratorVersion = Tuple[int, int]
 
 # TODO: Move all CLR-specific functions to clr_tools
-debug_mode = True
 quiet = False
 
 
@@ -581,12 +580,10 @@ class SkeletonGenerator(object):
             msg = "Failed to process %r while %s: %s"
             args = mod_name, CURRENT_ACTION, str(value)
             report(msg, *args)
-            if debug_mode:
-                if sys.platform == 'cli':
-                    import traceback
-                    traceback.print_exc(file=sys.stderr)
-                raise
-            return GenerationStatus.FAILED
+            if sys.platform == 'cli':
+                import traceback
+                traceback.print_exc(file=sys.stderr)
+            raise
 
     def generate_skeleton(self, name, mod_file_name, mod_cache_dir):
         # type: (str, str, str) -> GenerationStatusId
