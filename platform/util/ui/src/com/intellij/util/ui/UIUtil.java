@@ -17,6 +17,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -73,8 +74,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
 /**
@@ -3841,18 +3840,12 @@ public final class UIUtil {
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
-    final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
+    Semaphore lock = new Semaphore(1);
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      //noinspection CollectionAddedToSelf
-      queue.offer(queue);
+      lock.up();
     });
-    try {
-      queue.take();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    lock.waitFor();
   }
 
   public static boolean isJreHiDPI() {
