@@ -192,7 +192,13 @@ public class JsonSchemaReader {
     });
     READERS_MAP.put("title", createFromStringValue((object, s) -> object.setTitle(s)));
     READERS_MAP.put("$ref", createFromStringValue((object, s) -> object.setRef(s)));
-    READERS_MAP.put("$recursiveRef", createFromStringValue((object, s) -> object.setRef(s)));
+    READERS_MAP.put("$recursiveRef", createFromStringValue((object, s) -> {
+      object.setRef(s);
+      object.setRefRecursive(true);
+    }));
+    READERS_MAP.put("$recursiveAnchor", (element, object, queue, virtualFile) -> {
+      if (element.isBooleanLiteral()) object.setRecursiveAnchor(true);
+    });
     READERS_MAP.put("default", createDefault());
     READERS_MAP.put("format", createFromStringValue((object, s) -> object.setFormat(s)));
     READERS_MAP.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
