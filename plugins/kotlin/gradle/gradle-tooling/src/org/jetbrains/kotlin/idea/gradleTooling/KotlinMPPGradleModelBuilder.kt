@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.gradle.api.Named
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 private val MPP_BUILDER_LOGGER = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
-private val DEFAULT_IMPORTING_CHECKERS = listOf(OrphanSourceSetImportingChecker)
 
 class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
@@ -78,13 +78,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             throw throwable
         }
     }
-
-    private fun KotlinMPPGradleModel.collectDiagnostics(importingContext: MultiplatformModelImportingContext): KotlinImportingDiagnosticsContainer =
-        mutableSetOf<KotlinImportingDiagnostic>().apply {
-            DEFAULT_IMPORTING_CHECKERS.forEach {
-                it.check(this@collectDiagnostics, this, importingContext)
-            }
-        }
 
     private fun filterOrphanSourceSets(
         importingContext: MultiplatformModelImportingContext
@@ -224,6 +217,44 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
             // in all other cases, in HMPP we shouldn't coerce anything
             else -> false
+        }
+    }
+
+    companion object {
+        private val DEFAULT_IMPORTING_CHECKERS = listOf(OrphanSourceSetImportingChecker)
+
+        private fun KotlinMPPGradleModel.collectDiagnostics(importingContext: MultiplatformModelImportingContext): KotlinImportingDiagnosticsContainer =
+            mutableSetOf<KotlinImportingDiagnostic>().apply {
+                DEFAULT_IMPORTING_CHECKERS.forEach {
+                    it.check(this@collectDiagnostics, this, importingContext)
+                }
+            }
+
+        fun Project.getTargets(includeSinglePlatform: Boolean = false): Collection<Named>? {
+            val kotlinExt = project.extensions.findByName("kotlin") ?: return null
+            val getTargets = kotlinExt.javaClass.getMethodOrNull("getTargets")
+            if (getTargets == null && includeSinglePlatform) {
+                val getTarget = kotlinExt.javaClass.getMethodOrNull("getTarget")
+                val target = getTarget?.invoke(kotlinExt) as? Named
+                return if (target == null) emptyList() else listOf(target)
+            }
+            @Suppress("UNCHECKED_CAST")
+            return (getTargets?.invoke(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList()
+        }
+
+        fun getCompilations(target: Named): Collection<Named>? {
+            val getCompilationsMethod = target.javaClass.getMethodOrNull("getCompilations") ?: return null
+            @Suppress("UNCHECKED_CAST")
+            return (getCompilationsMethod.invoke(target) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList()
+        }
+
+        fun getCompileKotlinTaskName(project: Project, compilation: Named): Task? {
+            val compilationClass = compilation.javaClass
+            val getCompileKotlinTaskName = compilationClass.getMethodOrNull("getCompileKotlinTaskName") ?: return null
+
+            @Suppress("UNCHECKED_CAST")
+            val compileKotlinTaskName = (getCompileKotlinTaskName(compilation) as? String) ?: return null
+            return project.tasks.findByName(compileKotlinTaskName)
         }
     }
 }
