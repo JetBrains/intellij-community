@@ -21,7 +21,6 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -82,13 +81,15 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
     final PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(listOwner);
     LOG.assertTrue(externalAnnotations != null && externalAnnotations.length > 0);
     if (externalAnnotations.length == 1) {
-      deannotate(externalAnnotations[0], project, file, annotationsManager, listOwner);
+      deannotate(externalAnnotations[0], file, annotationsManager, listOwner);
       return;
     }
     JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(CodeInsightBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
       @Override
       public PopupStep onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
-        deannotate(selectedValue, project, file, annotationsManager, listOwner);
+        if (finalChoice) {
+          doFinalStep(() -> deannotate(selectedValue, file, annotationsManager, listOwner));
+        }
         return PopupStep.FINAL_CHOICE;
       }
 
@@ -102,19 +103,16 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
     }).showInBestPositionFor(editor);
   }
 
-  private void deannotate(final PsiAnnotation annotation,
-                          final Project project,
-                          final PsiFile file,
-                          final ExternalAnnotationsManager annotationsManager,
-                          final PsiModifierListOwner listOwner) {
-    WriteCommandAction.writeCommandAction(project).withName(getText()).run(() -> {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      String qualifiedName = annotation.getQualifiedName();
-      LOG.assertTrue(qualifiedName != null);
-      if (annotationsManager.deannotate(listOwner, qualifiedName) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
-        UndoUtil.markPsiFileForUndo(file);
-      }
-    });
+  private static void deannotate(final PsiAnnotation annotation,
+                                 final PsiFile file,
+                                 final ExternalAnnotationsManager annotationsManager,
+                                 final PsiModifierListOwner listOwner) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    String qualifiedName = annotation.getQualifiedName();
+    LOG.assertTrue(qualifiedName != null);
+    if (annotationsManager.deannotate(listOwner, qualifiedName) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
+      UndoUtil.markPsiFileForUndo(file);
+    }
   }
 
   @Override
