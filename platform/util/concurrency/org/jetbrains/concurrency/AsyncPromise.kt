@@ -33,11 +33,11 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
   }
 
-  override fun isDone() = f.isDone
+  override fun isDone(): Boolean = f.isDone
 
-  override fun get() = nullizeCancelled { f.get() }
+  override fun get(): T? = nullizeCancelled { f.get() }
 
-  override fun get(timeout: Long, unit: TimeUnit) = nullizeCancelled { f.get(timeout, unit) }
+  override fun get(timeout: Long, unit: TimeUnit): T? = nullizeCancelled { f.get(timeout, unit) }
 
   // because of the contract: get() should return null for canceled promise
   private inline fun nullizeCancelled(value: () -> T?): T? {
@@ -53,7 +53,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
   }
 
-  override fun isCancelled() = f.isCancelled
+  override fun isCancelled(): Boolean = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
   override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
@@ -158,7 +158,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     return true
   }
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
