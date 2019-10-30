@@ -106,15 +106,8 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
         if (processor != null) {
           if (Messages.showOkCancelDialog("Do you want to inline the object and the subsequent call?", "Inline Object", "Inline", "Cancel",
                                       Messages.getQuestionIcon()) == Messages.OK) {
-            processor = InlineObjectProcessor.create(reference, method);
-            if (processor == null) {
-              // Code changed while dialog was displayed?
-              String message = RefactoringBundle.message("refactoring.cannot.be.applied", REFACTORING_NAME);
-              CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
-            } else {
-              processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
-              processor.run();
-            }
+            processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
+            processor.run();
           }
           return;
         }
