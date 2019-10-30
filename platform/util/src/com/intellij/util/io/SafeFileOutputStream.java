@@ -55,7 +55,8 @@ public class SafeFileOutputStream extends OutputStream {
     myTarget = target;
     myBackupName = myTarget.getFileName() + backupExt;
     myBackupFuture = !Files.exists(target) ? null : AppExecutorUtil.getAppExecutorService().submit(() -> {
-      Path backup = myTarget.getParent().resolve(myBackupName);
+      Path parent = myTarget.getParent();
+      Path backup = parent != null ? parent.resolve(myBackupName) : Paths.get(myBackupName);
       Files.copy(myTarget, backup, BACKUP_COPY);
       return backup;
     });
