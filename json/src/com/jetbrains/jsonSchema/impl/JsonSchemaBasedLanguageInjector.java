@@ -20,13 +20,13 @@ public class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     if (!(context instanceof JsonStringLiteral)) return;
-    Language language = getLanguageToInject(context);
+    InjectedLanguageData language = getLanguageToInject(context);
     if (language == null) return;
     injectForHost(registrar, (JsonStringLiteral)context, language);
   }
 
   @Nullable
-  public static Language getLanguageToInject(@NotNull PsiElement context) {
+  public static InjectedLanguageData getLanguageToInject(@NotNull PsiElement context) {
     Project project = context.getProject();
     PsiFile containingFile = context.getContainingFile();
     JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(project).getSchemaObject(containingFile);
@@ -40,7 +40,7 @@ public class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
       String injection = schema.getLanguageInjection();
       if (injection != null) {
         Language language = Language.findLanguageByID(injection);
-        if (language != null) return language;
+        if (language != null) return new InjectedLanguageData(language, schema.getLanguageInjectionPrefix(), schema.getLanguageInjectionPostfix());
       }
     }
     return null;

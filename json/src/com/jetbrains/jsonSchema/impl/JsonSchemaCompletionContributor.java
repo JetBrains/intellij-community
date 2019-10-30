@@ -306,6 +306,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         else if (name.equals(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION)) {
           addInjectedLanguageVariants();
         }
+        else if (name.equals("language")) {
+          JsonObjectValueAdapter parent = propertyAdapter.getParentObject();
+          if (parent != null) {
+            JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(parent.getDelegate());
+            if (adapter != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(adapter.getName())) {
+              addInjectedLanguageVariants();
+            }
+          }
+        }
       }
     }
 

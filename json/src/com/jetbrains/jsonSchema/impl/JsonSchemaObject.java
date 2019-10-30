@@ -64,6 +64,8 @@ public class JsonSchemaObject {
   @Nullable private String myDescription;
   @Nullable private String myHtmlDescription;
   @Nullable private String myLanguageInjection;
+  @Nullable private String myLanguageInjectionPrefix;
+  @Nullable private String myLanguageInjectionPostfix;
 
   @Nullable private JsonSchemaType myType;
   @Nullable private Object myDefault;
@@ -189,9 +191,27 @@ public class JsonSchemaObject {
     myLanguageInjection = injection;
   }
 
+  public void setLanguageInjectionPrefix(@Nullable String prefix) {
+    myLanguageInjectionPrefix = prefix;
+  }
+
+  public void setLanguageInjectionPostfix(@Nullable String postfix) {
+    myLanguageInjectionPostfix = postfix;
+  }
+
   @Nullable
   public String getLanguageInjection() {
     return myLanguageInjection;
+  }
+
+  @Nullable
+  public String getLanguageInjectionPrefix() {
+    return myLanguageInjectionPrefix;
+  }
+
+  @Nullable
+  public String getLanguageInjectionPostfix() {
+    return myLanguageInjectionPostfix;
   }
 
   @Nullable
