@@ -73,6 +73,11 @@ class CompilationOutputsUploader {
         zipBinaryData(zipFile, dataStorageRoot)
         uploader.upload(sourcePath, zipFile)
         FileUtil.delete(zipFile)
+
+        // Upload compilation metadata
+        sourcePath = "metadata/$commitHash"
+        if (uploader.isExist(sourcePath)) return
+        uploader.upload(sourcePath, sourceStateFile)
         return
       }
 
