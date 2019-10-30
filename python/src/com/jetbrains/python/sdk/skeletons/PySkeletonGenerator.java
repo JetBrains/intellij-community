@@ -163,12 +163,6 @@ public class PySkeletonGenerator {
     }
 
     @NotNull
-    public Builder skeletonsDir(@NotNull String path) {
-      mySkeletonsPath = path;
-      return this;
-    }
-
-    @NotNull
     public Builder workingDir(@NotNull String path) {
       myCurrentFolder = path;
       return this;
