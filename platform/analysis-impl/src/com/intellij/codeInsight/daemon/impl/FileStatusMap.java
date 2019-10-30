@@ -155,11 +155,9 @@ public final class FileStatusMap implements Disposable {
   }
 
   private void assertAllowModifications() {
-    try {
-      assert myAllowDirt : CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING;
-    }
-    finally {
+    if (!myAllowDirt) {
       myAllowDirt = true; //give next test a chance
+      throw new AssertionError(CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING);
     }
   }
 
