@@ -2,13 +2,24 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.StatusText
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
+import java.awt.Graphics
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel, private val threadComponentFactory: (GHPRReviewThreadModel) -> JComponent)
-  : VerticalBox() {
+  : VerticalBox(), ComponentWithEmptyText {
+
+  private val statusText = object : StatusText(this) {
+    init {
+      text = "Loading..."
+    }
+
+    override fun isStatusVisible(): Boolean = model.isEmpty
+  }
 
   init {
     model.addListDataListener(object : ListDataListener {
@@ -37,5 +48,12 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel, private val threadCo
     for (i in 0 until model.size) {
       add(threadComponentFactory(model.getElementAt(i)), i)
     }
+  }
+
+  override fun getEmptyText() = statusText
+
+  override fun paintComponent(g: Graphics) {
+    super.paintComponent(g)
+    statusText.paint(this, g)
   }
 }
