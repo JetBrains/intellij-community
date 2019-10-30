@@ -4,6 +4,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,20 +58,22 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
 
   protected final void registerExtensionPointListeners(@NotNull Disposable disposable) {
-    FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<FileIndentOptionsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull FileIndentOptionsProvider extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
-          notifyCodeStyleSettingsChanged();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull FileIndentOptionsProvider extension,
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(
+        new ExtensionPointListener<FileIndentOptionsProvider>() {
+          @Override
+          public void extensionAdded(@NotNull FileIndentOptionsProvider extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          notifyCodeStyleSettingsChanged();
-        }
-      }, disposable);
+            notifyCodeStyleSettingsChanged();
+          }
+
+          @Override
+          public void extensionRemoved(@NotNull FileIndentOptionsProvider extension,
+                                       @NotNull PluginDescriptor pluginDescriptor) {
+            notifyCodeStyleSettingsChanged();
+          }
+        }, disposable);
+    }
   }
 
   /**
