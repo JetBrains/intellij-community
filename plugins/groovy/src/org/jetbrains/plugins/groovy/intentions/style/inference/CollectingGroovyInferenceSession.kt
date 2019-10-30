@@ -10,7 +10,9 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
@@ -123,7 +125,8 @@ class CollectingGroovyInferenceSession(
       val resultingParameter = substituteWithInferenceVariables(proxyMethodMapping[parameter?.name]?.type ?: expectedType)
       if (argument is ExpressionArgument) {
         val leftType = substitutor.substitute(contextSubstitutor.substitute(resultingParameter))
-        addConstraint(ExpressionConstraint(ExpectedType(leftType, METHOD_PARAMETER), argument.expression))
+        val argumentExpression = argument.expression.extractInnerExpression()
+        addConstraint(ExpressionConstraint(ExpectedType(leftType, METHOD_PARAMETER), argumentExpression))
       }
       else {
         val type = argument.type
@@ -131,6 +134,16 @@ class CollectingGroovyInferenceSession(
           addConstraint(TypeConstraint(substitutor.substitute(resultingParameter), type, context))
         }
       }
+    }
+  }
+
+  private fun GrExpression.extractInnerExpression(): GrExpression {
+    // we need to avoid an infinite recursion in cases of using operator `+=`
+    if (this is GrAssignmentExpression && this.isOperatorAssignment) {
+      return this.rValue ?: this
+    }
+    else {
+      return this
     }
   }
 }
