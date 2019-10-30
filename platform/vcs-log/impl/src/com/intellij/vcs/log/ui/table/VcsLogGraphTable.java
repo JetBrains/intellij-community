@@ -635,8 +635,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myController.handleGraphAnswer(answer, true, null, null);
   }
 
-  public void showTooltip(int row) {
-    myController.showTooltip(row);
+  public void showTooltip(int row, @NotNull VcsLogColumn column) {
+    myController.showTooltip(row, column);
   }
 
   public void setCompactReferencesView(boolean compact) {

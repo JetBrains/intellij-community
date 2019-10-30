@@ -188,19 +188,19 @@ public class GraphTableController {
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
-      IdeTooltip tooltip =
-        new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
+      IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
       IdeTooltipManager.getInstance().show(tooltip, now);
       return true;
     }
     return false;
   }
 
-  public void showTooltip(int row) {
-    Point point =
-      new Point(getColumnLeftXCoordinate(myTable.getColumnViewIndex(VcsLogColumn.COMMIT)) + myCommitRenderer.getTooltipXCoordinate(row),
-                row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
-    showTooltip(row, VcsLogColumn.COMMIT, point, true);
+  public void showTooltip(int row, @NotNull VcsLogColumn column) {
+    if (column != VcsLogColumn.COMMIT) return;
+
+    Point point = new Point(getColumnLeftXCoordinate(myTable.getColumnViewIndex(column)) + myCommitRenderer.getTooltipXCoordinate(row),
+                            row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
+    showTooltip(row, column, point, true);
   }
 
   private void performRootColumnAction() {
