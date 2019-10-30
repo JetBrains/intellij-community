@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -38,7 +37,6 @@ public class TriggerAdditionOrDeletion {
   private final Collection<FilePath> myDeleted;
   private final Set<FilePath> myAffected;
   private final Project myProject;
-  private final boolean mySilentAddDelete;
   private final ProjectLevelVcsManager myVcsManager;
   private final AbstractVcsHelper myVcsHelper;
   private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
@@ -49,7 +47,6 @@ public class TriggerAdditionOrDeletion {
 
   public TriggerAdditionOrDeletion(final Project project) {
     myProject = project;
-    mySilentAddDelete = Registry.is("vcs.add.remove.silent");
     myExisting = new HashSet<>();
     myDeleted = new HashSet<>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -214,7 +211,6 @@ public class TriggerAdditionOrDeletion {
   }
 
   private void askUserIfNeeded(final AbstractVcs vcs, @NotNull  final List<? extends FilePath> filePaths, @NotNull VcsConfiguration.StandardConfirmation type) {
-    if (mySilentAddDelete) return;
     final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(type, vcs);
     if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {
       filePaths.clear();
