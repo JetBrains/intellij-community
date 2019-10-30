@@ -102,6 +102,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private static final String LONG_TEXT1 = "In advance of the dogs, on wide snowshoes, toiled a man. At the rear of the sled toiled a second man.<p/>On the sled, in the box, lay a third man whose toil was over, - a man whom the Wild had conquered and beaten down until he would never move nor struggle again.";
     private static final String LONG_TEXT2 = "It is not the way of the Wild to like movement.<p/>Life is an offence to it, for life is movement; and the Wild aims always to destroy movement.";
+    private static final String LONG_TEXT3 = "<p>Help JetBrains improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on types of files, number of files per project, etc.</p>" +
+      "<br/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -240,6 +242,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(cb2).
         withTooltip("Enable full border around the tabbed pane").createPanel(), gc);
+
+      JCheckBox cb3 = new JCheckBox("Send usage statistics when using EAP versions");
+      gc.gridy++;
+      topPanel.add(UI.PanelFactory.panel(cb3).withComment(LONG_TEXT3).
+          withCommentHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              System.out.println("Long text link activated: " + e.getDescription());
+            }
+          }).createPanel(), gc);
 
       gc.gridy++;
       JButton button = new JButton("Abracadabra");
@@ -456,12 +467,20 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
         createPanel();
 
+      JPanel p3 = UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(new JComboBox<>(new String [] {"Default", "Non default"})).
+          withLabel("Plugin update policy:").withComment("Ignore by Maven 3+").moveCommentRight()).
+        add(UI.PanelFactory.panel(new JTextField()).withLabel("Thread count:").withComment("-T option").moveCommentRight()).
+        createPanel();
+
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       panel.setBorder(JBUI.Borders.emptyTop(5));
       panel.add(p1);
       panel.add(Box.createVerticalStrut(JBUIScale.scale(5)));
       panel.add(p2);
+      panel.add(Box.createVerticalStrut(JBUIScale.scale(5)));
+      panel.add(p3);
       panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
 
       return panel;
@@ -786,7 +805,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private JComponent createJSliderTab() {
       JPanel panel = new JPanel(new MigLayout("ins 0, gap 10, flowy"));
-      JSlider hSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 0){
+      JSlider hSlider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 0){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -794,7 +813,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider vSlider = new JSlider(JSlider.VERTICAL){
+      JSlider vSlider = new JSlider(SwingConstants.VERTICAL){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -802,7 +821,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
+      JSlider hSliderBase = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 0);
 
       JPanel pane1 = new JPanel(new MigLayout("debug, ins 0, gap 5"));
       pane1.add(new JLabel("A color key and IntelliJ: "), "baseline");

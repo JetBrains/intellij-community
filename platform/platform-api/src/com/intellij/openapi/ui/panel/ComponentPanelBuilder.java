@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.EditorTextComponent;
@@ -23,9 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.Supplier;
 
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
@@ -34,6 +37,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private String myLabelText;
   private boolean myLabelOnTop;
   private String myCommentText;
+  private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myCommentBelow = true;
   private String myHTDescription;
   private String myHTLinkText;
@@ -106,6 +110,17 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myCommentText = comment;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
+    return this;
+  }
+
+  /**
+   * Sets the hyperlink listener to be executed on clicking any reference in comment
+   * text. Reference is represented by the HTML <code>&lt;a href&gt;</code> tags.
+   * @param listener new <code>HyperlinkListener</code>
+   * @return <code>this</code>
+   */
+  public ComponentPanelBuilder withCommentHyperlinkListener(@NotNull HyperlinkListener listener) {
+    myHyperlinkListener = listener;
     return this;
   }
 
@@ -187,7 +202,6 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
-
   private Border getCommentBorder() {
     if (StringUtil.isNotEmpty(myCommentText)) {
       return new JBEmptyBorder(computeCommentInsets(myComponent, myCommentBelow));
@@ -251,9 +265,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   @NotNull
   public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow, int maxLineLength) {
+    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength);
+  }
+
+  private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier, @Nullable String commentText,
+                                              boolean isCommentBelow, int maxLineLength) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
     boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
-    JLabel component = new JBLabel("").setCopyable(isCopyable).setAllowAutoWrapping(true);
+    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(true);
+
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
     component.setForeground(UIUtil.getContextHelpForeground());
@@ -305,7 +325,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = createCommentComponent(myCommentText, myCommentBelow);
+      comment = createCommentComponent(() -> new JBLabel("") {
+        @Override
+        @NotNull
+        protected HyperlinkListener createHyperlinkListener() {
+          return myHyperlinkListener;
+        }
+      }, myCommentText, myCommentBelow, 70);
       comment.setBorder(getCommentBorder());
     }
 
