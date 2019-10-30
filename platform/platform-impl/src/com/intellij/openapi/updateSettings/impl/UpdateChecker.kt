@@ -191,7 +191,7 @@ object UpdateChecker {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
-    val toUpdate = THashMap<PluginId, PluginDownloader>()
+    val toUpdate = mutableMapOf<PluginId, PluginDownloader>()
 
     val state = InstalledPluginsState.getInstance()
     outer@ for (host in RepositoryHelper.getPluginHosts()) {
@@ -221,7 +221,7 @@ object UpdateChecker {
       }
     }
 
-    return if (toUpdate.isEmpty) null else toUpdate.values
+    return if (toUpdate.isEmpty()) null else toUpdate.values
   }
 
   /**
@@ -229,7 +229,7 @@ object UpdateChecker {
    * we're importing the settings.
    */
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor?> {
-    val updateable = THashMap<PluginId, IdeaPluginDescriptor>()
+    val updateable = mutableMapOf<PluginId, IdeaPluginDescriptor?>()
 
     updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateBy { it.pluginId }
 
