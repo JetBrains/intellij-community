@@ -6,6 +6,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +31,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -366,12 +369,7 @@ public class PySkeletonGenerator {
       .withEnvironment(env);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     if (stdin != null) {
-      try {
-        handler.getProcessInput().write(stdin.getBytes(StandardCharsets.UTF_8));
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
+      sendLineToProcessInput(handler, stdin);
     }
     handler.addProcessListener(new LineWiseProcessOutputListener.Adapter(listener));
     handler.runProcess(timeout);
@@ -439,4 +437,25 @@ public class PySkeletonGenerator {
       return myModuleOrigin.equals("(built-in)");
     }
   }
+
+  protected void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) {
+    final OutputStream input = handler.getProcessInput();
+    if (input != null) {
+      sendLineToStream(input, line);
+    }
+    else {
+      LOG.warn("Process " + handler.getCommandLine() + " can't accept any input");
+    }
+  }
+
+  protected void sendLineToStream(@NotNull OutputStream input, @NotNull String line) {
+    try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      PrintStream writer = new PrintStream(input, true, StandardCharsets.UTF_8.name());
+      writer.println(line);
+    }
+    catch (UnsupportedEncodingException ignored) {
+    }
+  }
+
 }
