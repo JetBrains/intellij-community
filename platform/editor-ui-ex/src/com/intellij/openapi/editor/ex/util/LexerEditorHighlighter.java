@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +50,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private EditorColorsScheme myScheme;
   private final int myInitialState;
   protected CharSequence myText;
+  private boolean myCancelable;
 
   public LexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
     myScheme = scheme;
@@ -56,6 +59,15 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myInitialState = myLexer.getState();
     myHighlighter = highlighter;
     mySegments = createSegments();
+  }
+
+  /**
+   * @param cancelable whether {@link #setText} may be interrupted by a {@link ProcessCanceledException} safely and this lexer
+   *                   won't be used after that exception and thus its internal incomplete data structures won't break anyone
+   */
+  @ApiStatus.Internal
+  public void setCancelable(boolean cancelable) {
+    myCancelable = cancelable;
   }
 
   @NotNull
@@ -429,6 +441,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     final int textLength = text.length();
     myLexer.start(text, 0, textLength, myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
     mySegments.removeAll();
+    boolean cancelable = myCancelable;
     int i = 0;
     while (true) {
       final IElementType tokenType = myLexer.getTokenType();
@@ -438,6 +451,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int data = mySegments.packData(tokenType, state, canRestart(state));
       processor.addToken(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data, tokenType);
       i++;
+      if (cancelable && i % 1024 == 0) {
+        ProgressManager.checkCanceled();
+      }
       myLexer.advance();
     }
     processor.finish();

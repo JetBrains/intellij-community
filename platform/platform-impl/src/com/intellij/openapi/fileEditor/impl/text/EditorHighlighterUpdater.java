@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -103,7 +104,13 @@ public class EditorHighlighterUpdater {
     EditorHighlighter highlighter = myFile != null
                                     ? EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile)
                                     : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
+    if (highlighter instanceof LexerEditorHighlighter) {
+      ((LexerEditorHighlighter)highlighter).setCancelable(true);
+    }
     highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
+    if (highlighter instanceof LexerEditorHighlighter) {
+      ((LexerEditorHighlighter)highlighter).setCancelable(false);
+    }
     return highlighter;
   }
 
