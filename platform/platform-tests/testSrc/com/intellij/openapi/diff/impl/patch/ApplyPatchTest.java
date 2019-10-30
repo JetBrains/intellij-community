@@ -179,6 +179,10 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
     doTest(0, ApplyPatchStatus.SUCCESS, null);
   }
 
+  public void testFileWithGitStylePathsWithSpaces() throws Exception {
+    doTest(0, ApplyPatchStatus.SUCCESS, null);
+  }
+
   private void doTest(final int skipTopDirs, final ApplyPatchStatus expectedStatus, final VirtualFileFilter fileFilter) throws Exception {
     ApplicationManager.getApplication()
       .runWriteAction(() -> FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old")));
