@@ -197,20 +197,20 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     Image image;
     if (isActive()) {
       if (myActiveImage == null || /*myActiveImage.getHeight() != r.height ||*/ type != myImageType) {
-        myActiveImage = drawToBuffer(g2d, true, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
+        myActiveImage = drawToBuffer(g2d, true, r.height, type == ToolWindowType.FLOATING);
       }
 
       image = myActiveImage;
     }
     else {
       if (myImage == null || /*myImage.getHeight() != r.height ||*/ type != myImageType) {
-        myImage = drawToBuffer(g2d, false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
+        myImage = drawToBuffer(g2d, false, r.height, type == ToolWindowType.FLOATING);
       }
 
       image = myImage;
     }
 
-    myImageType = myToolWindow.getType();
+    myImageType = type;
 
     Rectangle clipBounds = clip.getBounds();
     for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x += 150) {
