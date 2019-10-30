@@ -17,28 +17,28 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+
 public abstract class EditorTabPreview implements ChangesViewPreview {
   private final Project myProject;
   @NotNull private final PreviewDiffVirtualFile myPreviewDiffVirtualFile;
   private final VcsConfiguration myVcsConfiguration;
   private final DiffRequestProcessor myChangeProcessor;
 
-  public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor, @NotNull Project project,
+  public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor,
                    @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
-    myProject = project;
+    myProject = changeProcessor.getProject();
 
     myChangeProcessor = changeProcessor;
     MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor, this::getCurrentName);
     myPreviewDiffVirtualFile = new PreviewDiffVirtualFile(previewProvider);
-    myVcsConfiguration = VcsConfiguration.getInstance(project);
+    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
 
     //do not open file aggressively on start up, do it later
-    DumbService.getInstance(project).smartInvokeLater(() -> {
-      if (project.isDisposed()) return;
+    DumbService.getInstance(myProject).smartInvokeLater(() -> {
+      if (myProject.isDisposed()) return;
 
       changesTree.addSelectionListener(() -> {
-        if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
-
         if (shouldSkip()) return;
 
         setDiffPreviewVisible(true);
@@ -52,7 +52,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        FileEditorManager.getInstance(project).openFile(myPreviewDiffVirtualFile, true, true);
+        FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, true, true);
       }
     }.registerCustomShortcutSet(contentPanel, null);
   }
@@ -68,7 +68,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   @Override
   public void updatePreview(boolean fromModelRefresh) {
-    if (VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+    if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
       doRefresh();
     }
   }
@@ -87,15 +87,17 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   @Override
   public void setAllowExcludeFromCommit(boolean value) {
-    myChangeProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
+    myChangeProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, value);
     myChangeProcessor.updateRequest(true);
   }
 
   private static class MyDiffPreviewProvider implements DiffPreviewProvider {
+    @NotNull
     private final DiffRequestProcessor myChangeProcessor;
+    @NotNull
     private final Supplier<String> myGetName;
 
-    private MyDiffPreviewProvider(DiffRequestProcessor changeProcessor, Supplier<String> getName) {
+    private MyDiffPreviewProvider(@NotNull DiffRequestProcessor changeProcessor, @NotNull Supplier<String> getName) {
       myChangeProcessor = changeProcessor;
       myGetName = getName;
     }
@@ -114,8 +116,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
     @Override
     public String getEditorTabName() {
-      String name = myGetName.get();
-      return name == null ? "" : name;
+      return notNullize(myGetName.get());
     }
   }
 }

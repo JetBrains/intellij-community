@@ -669,13 +669,19 @@ public class ShelvedChangesViewManager implements Disposable {
       MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
       Disposer.register(this, changeProcessor);
 
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
+      boolean horizontal = Registry.is("show.diff.preview.as.editor.tab");
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, horizontal);
 
       myRootPanel = new JPanel(new BorderLayout());
-      myRootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
+      myRootPanel.add(toolbar.getComponent(), horizontal ? BorderLayout.NORTH : BorderLayout.WEST);
 
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        myDiffPreview = new EditorTabPreview(changeProcessor, project, pane, myTree){
+        myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree){
+
+          @Override
+          protected boolean shouldSkip() {
+            return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
+          }
 
           @Override
           protected String getCurrentName() {
@@ -688,7 +694,7 @@ public class ShelvedChangesViewManager implements Disposable {
           }
         };
 
-        myRootPanel.add(pane);
+        myRootPanel.add(pane, BorderLayout.CENTER);
       } else {
         PreviewDiffSplitterComponent previewDiffSplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
           myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);

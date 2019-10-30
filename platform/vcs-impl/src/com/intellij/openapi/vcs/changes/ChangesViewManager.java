@@ -328,7 +328,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       JComponent mainPanel;
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        myDiffPreview = new EditorTabPreview(changeProcessor, myProject,
+        myDiffPreview = new EditorTabPreview(changeProcessor,
           contentPanel, myView){
 
           @Override
@@ -338,7 +338,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
           @Override
           protected boolean shouldSkip() {
-            return myModelUpdateInProgress;
+            return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
           }
 
           @Override
