@@ -65,7 +65,7 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
                                        Messages.getErrorIcon()
             )
 
-            val jdkHome = showJDKSelectorFromDisk(javaSdkType, project, parentComponent)
+            val jdkHome = showJDKSelectorFromDisk(javaSdkType, parentComponent)
             addSdkIfNotNull(jdkHome)
           }
           return
@@ -82,9 +82,9 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
   }
 }
 
-private fun showJDKSelectorFromDisk(sdkType: SdkType, project: Project?, component: Component?): String? {
+private fun showJDKSelectorFromDisk(sdkType: SdkType, component: Component?): String? {
   var jdkHome: String? = null
-  SdkConfigurationUtil.selectSdkHome(sdkType, project, component) {
+  SdkConfigurationUtil.selectSdkHome(sdkType, component) {
     jdkHome = it
   }
   return jdkHome
@@ -176,7 +176,7 @@ private class SelectOrDownloadJDKDialog(
   override fun createCenterPanel() = panel
 
   private fun doSelectFromDiskAction() {
-    val jdkHome = showJDKSelectorFromDisk(sdkType, project, panel)
+    val jdkHome = showJDKSelectorFromDisk(sdkType, panel)
     if (jdkHome != null) {
       resultingJDKHome = jdkHome
       close(OK_EXIT_CODE)
