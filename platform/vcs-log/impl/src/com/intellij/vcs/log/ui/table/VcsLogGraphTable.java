@@ -750,7 +750,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     public boolean shouldSelectCell(EventObject anEvent) {
       if (!(anEvent instanceof MouseEvent)) return true;
 
-      return myController.findPrintElement((MouseEvent)anEvent) == null;
+      return myController.shouldSelectCell((MouseEvent)anEvent);
     }
 
     @Override

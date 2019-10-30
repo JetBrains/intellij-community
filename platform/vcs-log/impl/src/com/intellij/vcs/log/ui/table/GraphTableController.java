@@ -70,13 +70,12 @@ public class GraphTableController {
     table.addMouseListener(mouseAdapter);
   }
 
-  @Nullable
-  PrintElement findPrintElement(@NotNull MouseEvent e) {
+  boolean shouldSelectCell(@NotNull MouseEvent e) {
     int row = myTable.rowAtPoint(e.getPoint());
     if (row >= 0 && row < myTable.getRowCount()) {
-      return findPrintElement(row, e);
+      return findPrintElement(row, e) == null;
     }
-    return null;
+    return true;
   }
 
   @Nullable
