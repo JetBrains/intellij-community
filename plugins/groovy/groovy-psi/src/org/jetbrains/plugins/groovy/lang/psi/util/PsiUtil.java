@@ -443,8 +443,15 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static PsiClass getContextClass(@Nullable PsiElement context) {
+  public static PsiClass getContextClass(@Nullable PsiElement element) {
+    PsiElement context = element;
     while (context != null) {
+      if (context instanceof GrAnonymousClassDefinition
+          && PsiTreeUtil.isAncestor(((GrAnonymousClassDefinition)context).getArgumentListGroovy(), element, false)) {
+        context = context.getContext();
+        continue;
+      }
+
       if (context instanceof PsiClass && !isInDummyFile(context)) {
         return (PsiClass)context;
       }
