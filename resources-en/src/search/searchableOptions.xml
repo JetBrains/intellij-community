@@ -3062,11 +3062,6 @@
     <option name="jpdl" path="ActionManager" hit="Create New jPDL Process File" />
     <option name="new" path="ActionManager" hit="Create New jPDL Process File" />
     <option name="process" path="ActionManager" hit="Create New jPDL Process File" />
-    <option name="create" path="ActionManager" hit="Create OpenShift Origin (V3) project" />
-    <option name="openshift" path="ActionManager" hit="Create OpenShift Origin (V3) project" />
-    <option name="origin" path="ActionManager" hit="Create OpenShift Origin (V3) project" />
-    <option name="project" path="ActionManager" hit="Create OpenShift Origin (V3) project" />
-    <option name="v3" path="ActionManager" hit="Create OpenShift Origin (V3) project" />
     <option name="create" path="ActionManager" hit="Create Patch..." />
     <option name="patch" path="ActionManager" hit="Create Patch..." />
     <option name="create" path="ActionManager" hit="Create Pull Request" />
@@ -32853,22 +32848,20 @@
     <option name="servers" hit="Application Servers" />
   </configurable>
   <configurable id="RemoteServers" configurable_name="Clouds">
-    <option name="" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="app" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="center" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="click" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="cloudbees" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="cloudfoundry" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="configure" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="docker" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="engine" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="google" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="heroku" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="html" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="integration" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="openshift" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="to" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
-    <option name="with" hit="  To configure integration with Heroku, OpenShift, CloudBees, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="app" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="center" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="click" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="cloudfoundry" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="configure" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="docker" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="engine" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="google" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="heroku" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="html" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="integration" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="to" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
+    <option name="with" hit="  To configure integration with Heroku, CloudFoundry, Google App Engine, Docker, click +  " />
     <option name="clouds" hit="Clouds" />
   </configurable>
   <configurable id="PyConsoleConfigurable.Python Console" configurable_name="Python Console">
