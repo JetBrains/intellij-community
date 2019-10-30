@@ -42,9 +42,6 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
   public ReadOnlyStatusDialog(Project project, @NotNull List<? extends FileInfo> files) {
     super(project);
-    
-    new Exception().printStackTrace();
-    
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;
     myFileList.setPreferredSize(getDialogPreferredSize());
