@@ -2,8 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.diagnostic.IdeErrorsDialog
-import com.intellij.externalDependencies.DependencyOnPlugin
-import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -21,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
@@ -252,18 +249,12 @@ object UpdateChecker {
       onceInstalled.deleteOnExit()
     }
 
-    if (excludedFromUpdateCheckPlugins.isNotEmpty()) {
-      val required = ProjectManager.getInstance().openProjects
-        .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
-        .map { PluginId.getId(it.pluginId) }
-        .toSet()
+    if (!ApplicationManager.getApplication().isInternal && excludedFromUpdateCheckPlugins.isNotEmpty()) {
       excludedFromUpdateCheckPlugins.forEach {
         val excluded = PluginId.getId(it)
-        if (excluded !in required) {
-          val plugin = updateable[excluded]
-          if (plugin != null && plugin.isBundled) {
-            updateable.remove(excluded)
-          }
+        val plugin = updateable[excluded]
+        if (plugin != null && plugin.isBundled) {
+          updateable.remove(excluded)
         }
       }
     }
