@@ -13,6 +13,9 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
                                                addExceptionHandler: Boolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
   private val f: CompletableFuture<T>
+  private companion object {
+    val CANCELED = CancellationException()
+  }
 
   constructor() : this(CompletableFuture(), AtomicBoolean(), addExceptionHandler = false)
 
@@ -56,9 +59,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   override fun isCancelled(): Boolean = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
-  override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
-    return !isCancelled && f.cancel(mayInterruptIfRunning)
-  }
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.completeExceptionally(CANCELED)
 
   override fun cancel() {
     cancel(true)
