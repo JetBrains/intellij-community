@@ -1,11 +1,5 @@
 package de.plushnikov.intellij.plugin.extension;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -14,22 +8,33 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import de.plushnikov.intellij.plugin.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.handler.EqualsAndHashCodeCallSuperHandler;
 import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
 import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
-  private static final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFilter>>> FILTERS = new HashMap<>();
-  private static final Pattern UNINITIALIZED_MESSAGE = Pattern.compile("Variable '.+' might not have been initialized");
-  private static final Pattern LOMBOK_ANYANNOTATIONREQUIRED = Pattern.compile("Incompatible types\\. Found: '__*', required: 'lombok.*AnyAnnotation\\[\\]'");
 
-  static {
+  private static final Pattern UNINITIALIZED_MESSAGE = Pattern.compile("Variable '.+' might not have been initialized");
+  private static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED = Pattern.compile("Incompatible types\\. Found: '__*', required: 'lombok.*AnyAnnotation\\[\\]'");
+
+  private final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFilter>>> registeredFilters;
+
+  public LombokHighlightErrorFilter() {
+    registeredFilters = new HashMap<>();
+
     for (LombokHighlightFilter value : LombokHighlightFilter.values()) {
-      FILTERS.computeIfAbsent(value.severity, s -> new HashMap<>())
+      registeredFilters.computeIfAbsent(value.severity, s -> new HashMap<>())
         .computeIfAbsent(value.key, k -> new ArrayList<>())
         .add(value);
     }
@@ -57,11 +62,11 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       //Handling onX parameters
       return !OnXAnnotationHandler.isOnXParameterAnnotation(highlightInfo, file)
         && !OnXAnnotationHandler.isOnXParameterValue(highlightInfo, file)
-        && !LOMBOK_ANYANNOTATIONREQUIRED.matcher(description).matches();
+        && !LOMBOK_ANY_ANNOTATION_REQUIRED.matcher(description).matches();
     }
 
     // check other exceptions for highlights
-    Map<TextAttributesKey, List<LombokHighlightFilter>> severityMap = FILTERS
+    Map<TextAttributesKey, List<LombokHighlightFilter>> severityMap = registeredFilters
       .getOrDefault(highlightInfo.getSeverity(), Collections.emptyMap());
 
     return severityMap.getOrDefault(highlightInfo.type.getAttributesKey(), Collections.emptyList()).stream()
