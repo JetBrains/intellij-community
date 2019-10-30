@@ -2426,7 +2426,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     TestTimeOut n = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
+    AtomicInteger called = new AtomicInteger();
     Runnable checkHighlighted = () -> {
+      called.incrementAndGet();
       UIUtil.dispatchAllInvocationEvents();
       boolean highlighted = Arrays.stream(markupModel.getAllHighlighters())
         .map(highlighter -> highlighter.getErrorStripeTooltip())
@@ -2447,7 +2449,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       myDaemonCodeAnalyzer
         .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
-      fail("should have been interrupted");
+      fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + Arrays.toString(markupModel.getAllHighlighters())+"; called: "+called);
     }
     catch (DebugException ignored) {
     }
