@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 
-interface GHPRReviewsThreadsProvider {
+interface GHPRReviewsThreadsModelsProvider {
   fun setReviewsThreads(threads: List<GHPullRequestReviewThread>)
-  fun findReviewThreads(reviewId: String): GHPRReviewThreadsModel?
+  fun getReviewThreadsModel(reviewId: String): GHPRReviewThreadsModel
 }

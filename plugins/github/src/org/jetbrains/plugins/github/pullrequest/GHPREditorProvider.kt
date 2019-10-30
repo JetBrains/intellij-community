@@ -70,6 +70,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     Disposer.register(disposable, Disposable {
       timelineModel.removeAll()
     })
+    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl()
 
     val repository = context.repositoryCoordinates
     val loader = GHPRTimelineLoader(ProgressManager.getInstance(), context.requestExecutor, repository.serverPath,
@@ -79,7 +80,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     fun handleReviewsThreads() {
       dataProvider.reviewThreadsRequest.handleOnEdt(disposable) { threads, _ ->
-        if (threads != null) timelineModel.setReviewsThreads(threads)
+        if (threads != null) reviewThreadsModelsProvider.setReviewsThreads(threads)
       }
     }
 
@@ -109,8 +110,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
     val reviewService = dataProvider.let { GHPRReviewServiceAdapter.create(context.dataContext.reviewService, it) }
     val timeline = GHPRTimelineComponent(timelineModel,
-                                         createItemComponentFactory(project, reviewService, timelineModel, avatarIconsProvider,
-                                                                    context.currentUser))
+                                         createItemComponentFactory(project, reviewService, reviewThreadsModelsProvider,
+                                                                    avatarIconsProvider, context.currentUser))
     val loadingIcon = AsyncProcessIcon("Loading").apply {
       isVisible = false
     }
@@ -192,14 +193,15 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
   private fun createItemComponentFactory(project: Project,
                                          reviewService: GHPRReviewServiceAdapter,
-                                         timelineModel: GHPRTimelineMergingModel,
+                                         reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, timelineModel, diffFactory, eventsFactory,
+    return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
+                                            eventsFactory,
                                             currentUser)
   }
 

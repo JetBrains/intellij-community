@@ -41,7 +41,7 @@ import kotlin.math.floor
 class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val reviewService: GHPRReviewServiceAdapter,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
-                                       private val reviewsThreadsProvider: GHPRReviewsThreadsProvider,
+                                       private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
                                        private val currentUser: GHUser) {
@@ -69,7 +69,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
          HtmlEditorPane(model.bodyHtml))
 
   private fun createComponent(review: GHPullRequestReview): Item {
-    val threads = reviewsThreadsProvider.findReviewThreads(review.id) ?: throw IllegalStateException("Can't find threads")
+    val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
     val reviewPanel = VerticalBox().apply {
       if (review.bodyHTML.isNotEmpty()) {
@@ -78,7 +78,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         })
       }
       add(Box.createRigidArea(JBDimension(0, 6)))
-      add(GHPRReviewThreadsPanel(threads, ::createReviewThread).apply {
+      add(GHPRReviewThreadsPanel(reviewThreadsModel, ::createReviewThread).apply {
         border = JBUI.Borders.empty(2, 0)
       })
     }
