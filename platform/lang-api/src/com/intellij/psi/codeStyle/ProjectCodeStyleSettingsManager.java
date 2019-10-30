@@ -45,6 +45,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   public ProjectCodeStyleSettingsManager(Project project) {
     myProject = project;
     setMainProjectCodeStyle(null);
+    registerExtensionPointListeners(project);
   }
 
   @Override
