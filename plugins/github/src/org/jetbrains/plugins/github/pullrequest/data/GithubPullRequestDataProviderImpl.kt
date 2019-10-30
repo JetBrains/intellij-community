@@ -21,6 +21,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
@@ -36,7 +37,8 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val requestExecutor: GithubApiRequestExecutor,
                                                  private val gitRemote: GitRemoteUrlCoordinates,
                                                  private val repository: GHRepositoryCoordinates,
-                                                 override val number: Long) : GithubPullRequestDataProvider {
+                                                 override val number: Long)
+  : GithubPullRequestDataProvider {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
 
@@ -95,6 +97,17 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     }).loadAll(it)
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
+
+  private val timelineLoaderHolder = GHPRCountingTimelineLoaderHolder {
+    val timelineModel = GHPRTimelineMergingModel()
+    GHPRTimelineLoader(progressManager, requestExecutor,
+                       repository.serverPath, repository.repositoryPath, number,
+                       timelineModel)
+  }
+
+  override val timelineLoader get() = timelineLoaderHolder.timelineLoader
+
+  override fun acquireTimelineLoader(disposable: Disposable) = timelineLoaderHolder.acquireTimelineLoader(disposable)
 
   @CalledInAwt
   override fun reloadDetails() {

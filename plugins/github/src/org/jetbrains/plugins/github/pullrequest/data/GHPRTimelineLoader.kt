@@ -15,7 +15,7 @@ class GHPRTimelineLoader(progressManager: ProgressManager,
                          serverPath: GithubServerPath,
                          repoPath: GHRepositoryPath,
                          number: Long,
-                         private val listModel: GHPRTimelineMergingModel)
+                         val listModel: GHPRTimelineMergingModel)
   : GHGQLPagedListLoader<GHPRTimelineItem>(progressManager,
                                            SimpleGHGQLPagesLoader(requestExecutor, { p ->
                                              GHGQLRequests.PullRequest.Timeline.items(serverPath, repoPath.owner, repoPath.repository,

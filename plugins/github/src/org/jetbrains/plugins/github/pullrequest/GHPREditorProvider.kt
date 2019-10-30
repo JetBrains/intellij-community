@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -66,17 +65,9 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val dataProvider = context.pullRequestDataProvider!!
 
     val detailsModel = SingleValueModel(context.pullRequestDetails!!)
-    val timelineModel = GHPRTimelineMergingModel()
-    Disposer.register(disposable, Disposable {
-      timelineModel.removeAll()
-    })
     val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl()
 
-    val repository = context.repositoryCoordinates
-    val loader = GHPRTimelineLoader(ProgressManager.getInstance(), context.requestExecutor, repository.serverPath,
-                                    repository.repositoryPath,
-                                    dataProvider.number, timelineModel)
-    Disposer.register(disposable, loader)
+    val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
 
     fun handleReviewsThreads() {
       dataProvider.reviewThreadsRequest.handleOnEdt(disposable) { threads, _ ->
@@ -109,7 +100,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
     val reviewService = dataProvider.let { GHPRReviewServiceAdapter.create(context.dataContext.reviewService, it) }
-    val timeline = GHPRTimelineComponent(timelineModel,
+    val timeline = GHPRTimelineComponent(loader.listModel,
                                          createItemComponentFactory(project, reviewService, reviewThreadsModelsProvider,
                                                                     avatarIconsProvider, context.currentUser))
     val loadingIcon = AsyncProcessIcon("Loading").apply {
