@@ -307,7 +307,8 @@ public class TransactionGuardImpl extends TransactionGuard {
           myWritingAllowed = true;
           try {
             runnable.run();
-          } finally {
+          }
+          finally {
             myWritingAllowed = prev;
           }
         }

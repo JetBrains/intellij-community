@@ -116,7 +116,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       Disposer.register(parent, this);
     }
 
-    myWaiterForMerge = createAlarm(thread, myExecuteInDispatchThread ? null : this);
+    myWaiterForMerge = myExecuteInDispatchThread ? AlarmFactory.getInstance().create(thread) :
+                       AlarmFactory.getInstance().create(thread, this);
 
     if (isActive) {
       showNotify();
@@ -125,10 +126,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (activationComponent != null) {
       setActivationComponent(activationComponent);
     }
-  }
-
-  private static Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
-    return parent == null ? AlarmFactory.getInstance().create(thread) : AlarmFactory.getInstance().create(thread, parent);
   }
 
   public void setMergingTimeSpan(int timeSpan) {
