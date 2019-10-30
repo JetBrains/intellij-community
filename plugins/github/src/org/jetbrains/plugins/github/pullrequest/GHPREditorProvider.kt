@@ -143,7 +143,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
 
     val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, timelinePanel, true) {
-      override val loadingText = ""
+      override val loadingText
+        get() = ""
 
       override fun createCenterPanel(content: JComponent) = Wrapper(content)
 
