@@ -3,8 +3,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.security.MessageDigest;
-
 /**
  * Equation key (or variable)
  */
@@ -76,8 +74,8 @@ public final class EKey {
     return new EKey(member, dirKey, stable, true);
   }
 
-  public EKey hashed(MessageDigest md) {
-    HMember hMember = member.hashed(md);
+  public EKey hashed() {
+    HMember hMember = member.hashed();
     return hMember == member ? this : new EKey(hMember, dirKey, stable, negated);
   }
 
