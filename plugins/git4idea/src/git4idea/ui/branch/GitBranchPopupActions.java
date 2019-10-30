@@ -58,6 +58,7 @@ import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
 import static git4idea.ui.branch.GitBranchActionsUtilKt.checkCommitsUnderProgress;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.checkout;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
@@ -693,37 +694,6 @@ public class GitBranchPopupActions {
       }
       GitBrancher brancher = GitBrancher.getInstance(project);
       brancher.checkoutNewBranchStartingFrom(name, startPoint, true, repositories, null);
-    }
-  }
-
-  private static void checkout(@NotNull Project project,
-                               @NotNull List<? extends GitRepository> repositories,
-                               @NotNull String startPoint,
-                               @NotNull String name,
-                               boolean withRebase) {
-    GitBrancher brancher = GitBrancher.getInstance(project);
-    List<GitRepository> reposWithLocalBranch = new ArrayList<>();
-    List<GitRepository> reposWithoutLocalBranch = new ArrayList<>();
-    for (GitRepository repo : repositories) {
-      if (repo.getBranches().findLocalBranch(name) != null) {
-        reposWithLocalBranch.add(repo);
-      }
-      else {
-        reposWithoutLocalBranch.add(repo);
-      }
-    }
-    //checkout/rebase existing branch
-    if (!reposWithLocalBranch.isEmpty()) {
-      if (withRebase) {
-        brancher.rebase(reposWithLocalBranch, startPoint, name);
-      }
-      else {
-        brancher.checkout(name, false, reposWithLocalBranch, null);
-      }
-    }
-    //checkout new
-    if (!reposWithoutLocalBranch.isEmpty()) {
-      brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null);
     }
   }
 

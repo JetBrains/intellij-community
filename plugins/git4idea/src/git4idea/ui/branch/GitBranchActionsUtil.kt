@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
+import git4idea.branch.GitBrancher
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 
@@ -37,4 +38,16 @@ private fun hasCommits(project: Project, repository: GitRepository, startRef: St
     LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef")
     return true
   }
+}
+
+internal fun checkout(project: Project, repositories: List<GitRepository>, startPoint: String, name: String, withRebase: Boolean) {
+  val brancher = GitBrancher.getInstance(project)
+  val (reposWithLocalBranch, reposWithoutLocalBranch) = repositories.partition { it.branches.findLocalBranch(name) != null }
+  //checkout/rebase existing branch
+  if (reposWithLocalBranch.isNotEmpty()) {
+    if (withRebase) brancher.rebase(reposWithLocalBranch, startPoint, name)
+    else brancher.checkout(name, false, reposWithLocalBranch, null)
+  }
+  //checkout new
+  if (reposWithoutLocalBranch.isNotEmpty()) brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null)
 }
