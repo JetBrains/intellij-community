@@ -74,3 +74,29 @@ internal fun checkoutOrReset(project: Project,
     brancher.checkoutNewBranchStartingFrom(name, startPoint, true, repositories, null)
   }
 }
+
+internal fun createNewBranch(project: Project, repositories: List<GitRepository>, startPoint: String, options: GitNewBranchOptions) {
+  val brancher = GitBrancher.getInstance(project)
+  val name = options.name
+  if (options.reset) {
+    val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
+    if (hasCommits) {
+      VcsNotifier.getInstance(project).notifyError("New Branch Creation Failed",
+                                                   "Can't overwrite $name branch because some commits can be lost")
+      return
+    }
+
+    val (currentBranchOfSameName, currentBranchOfDifferentName) = repositories.partition { it.currentBranchName == name }
+    //git checkout -B for current branch conflict and execute git branch -f for others
+    if (currentBranchOfSameName.isNotEmpty()) {
+      brancher.checkoutNewBranchStartingFrom(name, startPoint, true, currentBranchOfSameName, null)
+    }
+    if (currentBranchOfDifferentName.isNotEmpty()) {
+      brancher.createBranch(name, currentBranchOfDifferentName.associateWith { startPoint }, true)
+    }
+  }
+  else {
+    // create branch for other repos
+    brancher.createBranch(name, repositories.filter { it.branches.findLocalBranch(name) == null }.associateWith { startPoint })
+  }
+}

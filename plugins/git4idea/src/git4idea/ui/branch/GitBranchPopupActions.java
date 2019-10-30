@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -171,62 +170,14 @@ public class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      // show dialog with name text field and 2 checkboxes under: checkout and 'overwrite' (initially disabled)
-      // use name^0 - NOT set tracking (the same as using hashes but faster);
-      /* no name conflicts - ok */
-
-      /* name exists -> enable overwrite checkbox +  yellow warning with a tooltip
-
-          // if checkout ON, overwrite OFF -> checkout existing and create in other repos; -> git checkout -b ref
-          // if checkout OFF, overwrite OFF -> create in other repos; -> git branch name
-          // if checkout ON, overwrite ON ->
-                check commits under progress-> commits exist -> FAIL in ALL repos;
-                                               no commits -> OVERWRITE, checkout, create
-
-          // if checkout OFF, overwrite ON -> commits exist -> FAIL in ALL repos;
-                                              no commits -> OVERWRITE (git checkout -B name startPoint), create (git branch -f name startPoint)
-       */
-
       GitNewBranchOptions options =
         new GitNewBranchDialog(myProject, myRepositories, "Create New Branch", null, true, true, true).showAndGetOptions();
       if (options != null) {
-        GitBrancher brancher = GitBrancher.getInstance(myProject);
         if (options.shouldCheckout()) {
           checkoutOrReset(myProject, myRepositories, HEAD, options);
         }
         else {
-          String name = options.getName();
-          if (options.shouldReset()) {
-            boolean hasCommits = checkCommitsUnderProgress(myProject, myRepositories, HEAD, name);
-            if (hasCommits) {
-              VcsNotifier.getInstance(myProject).notifyError("New Branch Creation Failed",
-                                                             "Can't overwrite " + name + " branch because some commits can be lost");
-              return;
-            }
-
-            List<GitRepository> currentBranchOfSameName = new ArrayList<>();
-            List<GitRepository> currentBranchOfDifferentName = new ArrayList<>();
-            for (GitRepository repo: myRepositories) {
-              if (StringUtil.equals(repo.getCurrentBranchName(), name)) {
-                currentBranchOfSameName.add(repo);
-              }
-              else {
-                currentBranchOfDifferentName.add(repo);
-              }
-            }
-
-            //git checkout -B for current branch conflict and execute git branch -f for others
-            if (!currentBranchOfSameName.isEmpty()) {
-              brancher.checkoutNewBranchStartingFrom(name, HEAD, true, currentBranchOfSameName, null);
-            }
-            if (!currentBranchOfDifferentName.isEmpty()) {
-              brancher.createBranch(name, of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
-            }
-          }
-          else {
-            brancher
-              .createBranch(name, of(myRepositories).filter(r -> r.getBranches().findLocalBranch(name) == null).toMap(position -> HEAD));
-          }
+          createNewBranch(myProject, myRepositories, HEAD, options);
         }
       }
     }
