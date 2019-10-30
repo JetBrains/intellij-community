@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.branch.GitBrancher
+import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
@@ -98,5 +99,20 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
   else {
     // create branch for other repos
     brancher.createBranch(name, repositories.filter { it.branches.findLocalBranch(name) == null }.associateWith { startPoint })
+  }
+}
+
+@JvmOverloads
+internal fun createOrCheckoutNewBranch(project: Project,
+                                       repositories: List<GitRepository>,
+                                       startPoint: String,
+                                       title: String = "Create New Branch",
+                                       initialName: String? = null) {
+  val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, true).showAndGetOptions() ?: return
+  if (options.checkout) {
+    checkoutOrReset(project, repositories, startPoint, options)
+  }
+  else {
+    createNewBranch(project, repositories, startPoint, options)
   }
 }
