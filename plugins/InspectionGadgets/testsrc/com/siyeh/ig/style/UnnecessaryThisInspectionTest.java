@@ -144,6 +144,7 @@ public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
 
 
   public void testLambdaMethodRefSelfRefs() {
+    //noinspection FunctionalExpressionCanBeFolded
     doTest("class Main {" +
            "    Runnable lambdaExpression = () -> System.out.println(this.lambdaExpression);" +
            "    Runnable methodReference = this.methodReference::run;" +
