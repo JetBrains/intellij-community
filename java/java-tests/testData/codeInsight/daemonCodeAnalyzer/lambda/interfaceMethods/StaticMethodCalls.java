@@ -67,3 +67,13 @@ class StaticMethodInterfaceExample2 {
     }
   }
 }
+
+interface StaticMethodInterfaceExample3 {
+  static void m() { }
+
+  class MyClass implements StaticMethodInterfaceExample3 {
+      {
+          m();
+      }
+  }
+}
