@@ -8,7 +8,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -215,9 +214,6 @@ public class PySkeletonGenerator {
       if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
         commandLine.add("-c");
         commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
-      }
-      if (ApplicationManager.getApplication().isInternal()) {
-        commandLine.add("-x");
       }
       if (!ContainerUtil.isEmpty(myExtraSysPath)) {
         commandLine.add("-s");
