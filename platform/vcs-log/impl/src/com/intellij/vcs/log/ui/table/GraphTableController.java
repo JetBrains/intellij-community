@@ -80,7 +80,7 @@ public class GraphTableController {
 
   @Nullable
   private PrintElement findPrintElement(int row, @NotNull MouseEvent e) {
-    Point point = calcPoint4Graph(e.getPoint());
+    Point point = getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
     Collection<? extends PrintElement> printElements = myTable.getVisibleGraph().getRowInfo(row).getPrintElements();
     return myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
   }
@@ -133,11 +133,11 @@ public class GraphTableController {
   }
 
   @NotNull
-  private Point calcPoint4Graph(@NotNull Point clickPoint) {
+  private Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn vcsLogColumn) {
     int width = 0;
     for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
       TableColumn column = myTable.getColumnModel().getColumn(i);
-      if (column.getModelIndex() == VcsLogColumn.COMMIT.ordinal()) break;
+      if (column.getModelIndex() == vcsLogColumn.ordinal()) break;
       width += column.getWidth();
     }
     return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
@@ -183,8 +183,8 @@ public class GraphTableController {
   }
 
   private boolean showTooltip(int row, @NotNull VcsLogColumn column, @NotNull Point point, boolean now) {
-    JComponent tipComponent =
-      myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(column)), calcPoint4Graph(point), row);
+    JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(column)),
+                                                          getPointInCell(point, column), row);
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
