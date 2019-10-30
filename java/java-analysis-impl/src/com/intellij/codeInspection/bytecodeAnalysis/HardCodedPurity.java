@@ -54,7 +54,7 @@ class HardCodedPurity {
   }
 
   static HardCodedPurity getInstance() {
-    return AGGRESSIVE_HARDCODED_PURITY ? new AggressiveHardCodedPurity() : new HardCodedPurity();
+    return Holder.INSTANCE;
   }
 
   Effects getHardCodedSolution(Member method) {
@@ -131,5 +131,9 @@ class HardCodedPurity {
       }
       return super.isPureMethod(method);
     }
+  }
+  
+  private static class Holder {
+    static final HardCodedPurity INSTANCE = AGGRESSIVE_HARDCODED_PURITY ? new AggressiveHardCodedPurity() : new HardCodedPurity();
   }
 }
