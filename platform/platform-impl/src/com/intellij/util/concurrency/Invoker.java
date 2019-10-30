@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
 import static com.intellij.openapi.util.registry.Registry.is;
-import static com.intellij.util.PlatformUtils.isRider;
 import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -159,7 +158,6 @@ public abstract class Invoker implements Disposable {
     }
     catch (RejectedExecutionException exception) {
       count.decrementAndGet();
-      logRiderTest("offer failed");
       LOG.debug("Executor is shutdown");
       promise.setError("shutdown");
     }
@@ -358,10 +356,8 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void dispose() {
-      logRiderTest("dispose started");
       super.dispose();
       executor.shutdown();
-      logRiderTest("dispose finished");
     }
 
     @Override
@@ -450,10 +446,8 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void dispose() {
-      logRiderTest("dispose started");
       super.dispose();
       executor.shutdown();
-      logRiderTest("dispose finished");
     }
 
     @Override
@@ -489,12 +483,5 @@ public abstract class Invoker implements Disposable {
     else {
       executor.execute(runnable);
     }
-  }
-
-  void logRiderTest(@NotNull String prefix) {
-    // experiment with flaky tests in Rider
-    Application application = isRider() ? getApplication() : null;
-    if (application == null || !application.isUnitTestMode()) return;
-    LOG.warn(new Exception(prefix + " EDT:" + isDispatchThread() + "; disposed:" + disposed + "; " + this));
   }
 }
