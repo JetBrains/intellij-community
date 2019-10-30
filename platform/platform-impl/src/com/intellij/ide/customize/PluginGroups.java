@@ -132,9 +132,8 @@ public class PluginGroups {
       "com.intellij.spring.webflow," +
       "com.intellij.spring.ws,com.intellij.aop",
 
-      "Microservices:" +
-      "com.intellij.micronaut," +
-      "com.intellij.quarkus," +
+      "com.intellij.micronaut",
+      "com.intellij.quarkus",
       "com.intellij.helidon",
 
       "Java EE:com.intellij.javaee.batch," +
@@ -172,7 +171,8 @@ public class PluginGroups {
       "org.coffeescript",
       "com.intellij.flex",
       "com.intellij.plugins.html.instantEditing",
-      "com.jetbrains.restClient"
+      "com.jetbrains.restClient",
+      "com.intellij.swagger"
     )));
 
     addVcsGroup(tree);
