@@ -193,7 +193,7 @@ public class GitBranchPopupActions {
       if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         if (options.shouldCheckout()) {
-          checkoutNewOrExistingBranch(myProject, myRepositories, HEAD, options);
+          checkoutOrReset(myProject, myRepositories, HEAD, options);
         }
         else {
           String name = options.getName();
@@ -673,13 +673,13 @@ public class GitBranchPopupActions {
         new GitNewBranchDialog(myProject, myRepositories, "Checkout New Branch From " + myBranchName, "", false, true, true)
           .showAndGetOptions();
       if (newBranchOptions != null) {
-        checkoutNewOrExistingBranch(myProject, myRepositories, myBranchName + "^0", newBranchOptions);
+        checkoutOrReset(myProject, myRepositories, myBranchName + "^0", newBranchOptions);
       }
     }
   }
 
-  static void checkoutNewOrExistingBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                          @NotNull String startPoint, GitNewBranchOptions newBranchOptions) {
+  static void checkoutOrReset(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
+                              @NotNull String startPoint, GitNewBranchOptions newBranchOptions) {
     if (repositories.isEmpty()) return;
     String name = newBranchOptions.getName();
     if (!newBranchOptions.shouldReset()) {
