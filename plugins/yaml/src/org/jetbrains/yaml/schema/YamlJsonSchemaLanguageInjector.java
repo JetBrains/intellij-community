@@ -19,7 +19,7 @@ public class YamlJsonSchemaLanguageInjector implements MultiHostInjector {
     if (!(context instanceof YAMLScalar)) {
       return;
     }
-    JsonSchemaInjectorBase.InjectedLanguageData language = JsonSchemaBasedLanguageInjector.getLanguageToInject(context);
+    JsonSchemaInjectorBase.InjectedLanguageData language = JsonSchemaBasedLanguageInjector.getLanguageToInject(context, true);
     if (language != null) {
       registrar.startInjecting(language.language);
       registrar.addPlace(language.prefix, language.postfix, (PsiLanguageInjectionHost)context, context.getTextRange().shiftLeft(context.getTextOffset()));
