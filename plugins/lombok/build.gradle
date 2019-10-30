@@ -190,4 +190,5 @@ test {
 
 runIde {
 //  jvmArgs '-agentpath:"D:\\yjpagent.dll"'
+//  jvmArgs '-Didea.ProcessCanceledException=disabled'
 }

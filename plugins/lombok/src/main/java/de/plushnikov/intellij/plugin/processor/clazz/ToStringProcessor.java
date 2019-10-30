@@ -33,8 +33,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
   private static final String INCLUDE_ANNOTATION_SKIP_NULL = "skipNull";
-  private static final String TOSTRING_INCLUDE = ToString.Include.class.getName().replace("$", ".");
-  private static final String TOSTRING_EXCLUDE = ToString.Exclude.class.getName().replace("$", ".");
+  private static final String TOSTRING_INCLUDE = ToString.Include.class.getCanonicalName();
+  private static final String TOSTRING_EXCLUDE = ToString.Exclude.class.getCanonicalName();
 
   private final EqualsAndHashCodeToStringHandler handler;
 

@@ -1,26 +1,23 @@
 package de.plushnikov.intellij.plugin.handler;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.InitializationUtils;
+import org.jetbrains.annotations.NotNull;
+import lombok.Getter;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 
 public class LazyGetterHandler {
 
-  public static boolean isLazyGetterHandled(@NotNull HighlightInfo highlightInfo, @NotNull PsiFile file) {
-    PsiElement element = file.findElementAt(highlightInfo.getStartOffset());
+  public static boolean isLazyGetterHandled(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {
       return false;
     }
@@ -33,8 +30,7 @@ public class LazyGetterHandler {
     return null != getterAnnotation && PsiAnnotationUtil.getBooleanAnnotationValue(getterAnnotation, "lazy", false);
   }
 
-  public static boolean isInitializedInConstructors(@NotNull HighlightInfo highlightInfo, @NotNull PsiFile file) {
-    PsiElement element = file.findElementAt(highlightInfo.getStartOffset());
+  public static boolean isInitializedInConstructors(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {
       return false;
     }

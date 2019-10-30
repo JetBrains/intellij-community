@@ -1,18 +1,15 @@
 package de.plushnikov.intellij.plugin.handler;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 
 public class EqualsAndHashCodeCallSuperHandler {
 
-  public static boolean isEqualsAndHashCodeCallSuperDefault(HighlightInfo highlightInfo, PsiFile file) {
-    PsiElement element = file.findElementAt(highlightInfo.getStartOffset());
-
+  public static boolean isEqualsAndHashCodeCallSuperDefault(@NotNull PsiElement element) {
     PsiNameValuePair psiNameValuePair = PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class);
     if (psiNameValuePair == null) {
       return false;

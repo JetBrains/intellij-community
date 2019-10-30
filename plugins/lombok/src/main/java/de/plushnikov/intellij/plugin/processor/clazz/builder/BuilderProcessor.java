@@ -33,7 +33,7 @@ import java.util.List;
 public class BuilderProcessor extends AbstractClassProcessor {
 
   static final String SINGULAR_CLASS = Singular.class.getName();
-  static final String BUILDER_DEFAULT_CLASS = Builder.Default.class.getName().replace("$", ".");
+  static final String BUILDER_DEFAULT_CLASS = Builder.Default.class.getCanonicalName();
 
   private final BuilderHandler builderHandler;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;

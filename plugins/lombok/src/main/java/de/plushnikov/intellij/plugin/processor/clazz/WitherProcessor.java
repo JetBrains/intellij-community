@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class WitherProcessor extends AbstractClassProcessor {
-  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getName().replace("$", ".");
+  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getCanonicalName();
 
   private final WitherFieldProcessor fieldProcessor;
 

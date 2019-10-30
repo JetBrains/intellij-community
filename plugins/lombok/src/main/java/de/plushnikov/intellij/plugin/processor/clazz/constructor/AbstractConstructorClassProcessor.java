@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * @author Plushnikov Michail
  */
 public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
-  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getName().replace("$", ".");
+  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getCanonicalName();
 
   AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass,
                                     @NotNull Class<? extends PsiElement> supportedClass) {

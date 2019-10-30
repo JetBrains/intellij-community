@@ -23,8 +23,8 @@ import java.util.Collection;
 
 public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassProcessor {
 
-  private static final String FIELD_NAME_CONSTANTS_INCLUDE = FieldNameConstants.Include.class.getName().replace("$", ".");
-  private static final String FIELD_NAME_CONSTANTS_EXCLUDE = FieldNameConstants.Exclude.class.getName().replace("$", ".");
+  private static final String FIELD_NAME_CONSTANTS_INCLUDE = FieldNameConstants.Include.class.getCanonicalName();
+  private static final String FIELD_NAME_CONSTANTS_EXCLUDE = FieldNameConstants.Exclude.class.getCanonicalName();
 
   AbstractFieldNameConstantsProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);

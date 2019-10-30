@@ -24,8 +24,8 @@ public class BuilderInfo {
   private static final String BUILDER_OBTAIN_VIA_FIELD = "field";
   private static final String BUILDER_OBTAIN_VIA_METHOD = "method";
   private static final String BUILDER_OBTAIN_VIA_STATIC = "isStatic";
-  private static final String BUILDER_OBTAIN_VIA_ANNOTATION = Builder.ObtainVia.class.getName().replace("$", ".");
-  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getName().replace("$", ".");
+  private static final String BUILDER_OBTAIN_VIA_ANNOTATION = Builder.ObtainVia.class.getCanonicalName();
+  private static final String BUILDER_DEFAULT_ANNOTATION = Builder.Default.class.getCanonicalName();
 
   private PsiVariable variableInClass;
   private PsiType fieldInBuilderType;
