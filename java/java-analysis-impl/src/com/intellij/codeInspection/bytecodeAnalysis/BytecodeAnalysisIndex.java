@@ -99,7 +99,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
 
   @Override
   public int getVersion() {
-    return 10;
+    return 11;
   }
 
   /**
