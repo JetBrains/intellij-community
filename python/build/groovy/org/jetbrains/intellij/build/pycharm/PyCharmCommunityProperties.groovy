@@ -46,7 +46,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       plugin("intellij.pycharm.community.customization") {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
-        withModule("intellij.python.configure", mainJarName)
       }
     ]
   }
