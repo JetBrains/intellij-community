@@ -75,7 +75,7 @@ public class RepositoryUtils {
       final Integer count = counts.get(root);
       counts.put(root, count != null ? count + 1 : 1);
     }
-    return Collections.max(counts.entrySet(), Comparator.comparing(Map.Entry::getValue)).getKey();
+    return Collections.max(counts.entrySet(), Map.Entry.comparingByValue()).getKey();
   }
 
   public static Promise<List<OrderRoot>> loadDependenciesToLibrary(@NotNull final Project project,
