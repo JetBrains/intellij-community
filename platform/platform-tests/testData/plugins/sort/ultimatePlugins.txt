@@ -52,7 +52,6 @@
 + -Jetty-
 + -Karma-
 + -NodeJS-
-+ -OpenShift-
 + -Osmorc-
 + -PerforceDirectPlugin-
 + -org-jetbrains-plugins-remote-run-
