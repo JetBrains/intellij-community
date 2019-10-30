@@ -529,6 +529,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   public int findFragmentAt(int x) {
     float curX = myIpad.left;
+    if (myBorder != null) {
+      curX += myBorder.getBorderInsets(this).left;
+    }
+    curX += getInsets().left;
+
     if (myIcon != null && !myIconOnTheRight) {
       final int iconRight = myIcon.getIconWidth() + myIconTextGap;
       if (x < iconRight) {
