@@ -7,9 +7,13 @@ import circlet.platform.api.oauth.*
 import circlet.platform.client.*
 import circlet.runtime.*
 import circlet.settings.*
+import circlet.settings.log
+import circlet.ui.*
 import com.intellij.dvcs.*
 import com.intellij.dvcs.repo.*
 import com.intellij.dvcs.ui.*
+import com.intellij.icons.*
+import com.intellij.ide.*
 import com.intellij.openapi.*
 import com.intellij.openapi.fileChooser.*
 import com.intellij.openapi.project.*
@@ -23,111 +27,52 @@ import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
 import com.intellij.ui.layout.*
-import com.intellij.ui.speedSearch.*
 import com.intellij.util.ui.*
+import com.intellij.util.ui.cloneDialog.*
 import git4idea.*
 import git4idea.checkout.*
 import git4idea.commands.*
+import icons.*
 import libraries.coroutines.extra.*
 import runtime.*
 import runtime.reactive.*
+import java.awt.event.*
+import java.awt.image.*
 import java.nio.file.*
-import java.util.*
 import javax.swing.*
 import javax.swing.event.*
 import kotlin.properties.*
 
 internal class CircletCloneComponent(val project: Project,
-                                     private val checkoutListener: CheckoutProvider.Listener,
                                      private val git: Git) : VcsCloneDialogExtensionComponent() {
-    // temp local configuration
-    private val showProjectWithoutRepositories: Boolean = false
-
     // state
     private val uiLifetime: LifetimeSource = LifetimeSource()
-
-    private var state = mutableProperty(initialState())
+    private var loginState: MutableProperty<CircletLoginState> = mutableProperty(initialState())
 
     private fun initialState(): CircletLoginState {
         val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("", null)
         return CircletLoginState.Connected(workspace.client.server, workspace)
     }
 
-    private var selectedUrl: String? by Delegates.observable<String?>(null) { _, _, _ ->
-        onSelectedUrlChanged()
-    }
-    private val allProjects: LinkedHashSet<PR_ProjectRepos> = linkedSetOf()
-    private val reposInfo: MutableMap<PR_RepositoryInfo, RepoDetails> = mutableMapOf()
-
-    // api
-    private lateinit var projectsVM: CircletCloneComponentVM
-
-    // UI
-    private val directoryField: SelectChildTextFieldWithBrowseButton = SelectChildTextFieldWithBrowseButton(
-        ClonePathProvider.defaultParentDirectoryPath(project, DvcsRememberedInputs())).apply {
-        val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        fcd.isShowFileSystemRoots = true
-        fcd.isHideIgnored = false
-        addBrowseFolderListener(DvcsBundle.getString("clone.destination.directory.browser.title"),
-                                DvcsBundle.getString("clone.destination.directory.browser.description"),
-                                project,
-                                fcd)
-    }
-
     private val wrapper: Wrapper = Wrapper()
-
-    private val searchTextField: SearchTextField = SearchTextField(false).apply {
-        textEditor.emptyText.appendText("Search repository")
-    }
-
-    private val listModel: CollectionListModel<CircletCloneListItem> = CollectionListModel()
-    private val list: JBList<CircletCloneListItem> = JBList(listModel).apply {
-        cellRenderer = CircletCloneListItemRenderer()
-        ScrollingUtil.installActions(this)
-        addListSelectionListener {
-            if (it.valueIsAdjusting) return@addListSelectionListener
-            val selected = selectedValue
-            if (selected == null) {
-                selectedUrl = null
-                return@addListSelectionListener
-            }
-            selectedUrl = selected.repoDetails.urls.sshUrl
-        }
-    }
+    private lateinit var cloneView: CloneView
 
     init {
         this.attachChild(Disposable { uiLifetime.terminate() })
 
-        val speedSearch = SpeedSearch()
-        val filteringListModel = NameFilteringListModel<CircletCloneListItem>(listModel,
-                                                                              { it.repoInfo.name },
-                                                                              speedSearch::shouldBeShowing,
-                                                                              { speedSearch.filter ?: "" })
-        filteringListModel.setFilter {
-            it != null && speedSearch.shouldBeShowing(it.repoInfo.name)
-        }
-        list.model = filteringListModel
-        searchTextField.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) {
-                speedSearch.updatePattern(searchTextField.text)
-                filteringListModel.refilter()
-                onSelectedUrlChanged()
-            }
-        })
-
-        val settings = CircletServerSettingsComponent.getInstance().settings
         circletWorkspace.workspace.forEach(uiLifetime) { workspace ->
             if (workspace == null) {
-                state.value = CircletLoginState.Disconnected(settings.value.server, "")
+                val settings = CircletServerSettingsComponent.getInstance().settings
+                loginState.value = CircletLoginState.Disconnected(settings.value.server, "")
             }
             else {
-                state.value = CircletLoginState.Connected(workspace.client.server, workspace)
+                loginState.value = CircletLoginState.Connected(workspace.client.server, workspace)
             }
         }
 
-        state.forEach(uiLifetime) { st ->
+        loginState.forEach(uiLifetime) { st ->
             val view = createView(st)
-            view.border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+            view.border = JBUI.Borders.empty(8, 12)
             wrapper.setContent(view)
             wrapper.repaint()
         }
@@ -138,55 +83,17 @@ internal class CircletCloneComponent(val project: Project,
         return when (st) {
             is CircletLoginState.Connected -> {
                 dialogStateListener.onListItemChanged()
-                val repositoriesPanel = panel {
-                    row {
-                        cell(isFullWidth = true) {
-                            searchTextField.textEditor(pushX, growX)
-                        }
-                    }
-                    row {
-                        val scrollableList = ScrollPaneFactory.createScrollPane(list,
-                                                                                ScrollPaneFactory.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                                ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER)
-                        scrollableList(push, grow)
-                    }
-                    row("Directory:") {
-                        directoryField(growX, pushX)
-                    }
-                }
-
-                searchTextField.addDocumentListener(object : DocumentAdapter() {
-                    override fun textChanged(event: DocumentEvent) {
-                    }
-                })
-
-                val client: KCircletClient = st.workspace.client
-                projectsVM = CircletCloneComponentVM(
-                    client.pr,
-                    client.repoService,
-                    client.star,
-                    client,
-                    uiLifetime
-                )
-
-                list.setPaintBusy(true)
-
-                projectsVM.starredProjectsWithRepos.forEach(uiLifetime) { listPrRepos ->
-                    if (listPrRepos == null) return@forEach
-                    launch(uiLifetime, ApplicationUiDispatch.coroutineContext) {
-                        listPrRepos.forEach { addProjectWithRepos(it, true) }
-                        loadAllProject()
-                    }
-                }
-
-                repositoriesPanel
+                cloneView = CloneView(uiLifetime.nested(), project, dialogStateListener, st)
+                cloneView.getView()
             }
+
             is CircletLoginState.Connecting -> {
                 buildConnectingPanel(st) {
                     st.lt.terminate()
-                    state.value = CircletLoginState.Disconnected(st.server, null)
+                    loginState.value = CircletLoginState.Disconnected(st.server, null)
                 }
             }
+
             is CircletLoginState.Disconnected -> {
                 buildLoginPanel(st) { serverName ->
                     login(serverName)
@@ -199,79 +106,207 @@ internal class CircletCloneComponent(val project: Project,
         launch(uiLifetime, Ui) {
             uiLifetime.usingSource { connectLt ->
                 try {
-                    state.value = CircletLoginState.Connecting(serverName, connectLt)
+                    loginState.value = CircletLoginState.Connecting(serverName, connectLt)
                     when (val response = circletWorkspace.signIn(connectLt, serverName)) {
                         is OAuthTokenResponse.Error -> {
-                            state.value = CircletLoginState.Disconnected(serverName, response.description)
+                            loginState.value = CircletLoginState.Disconnected(serverName, response.description)
                         }
                     }
                 } catch (th: Throwable) {
-                    circlet.settings.log.error(th)
-                    state.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
+                    log.error(th)
+                    loginState.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
                 }
             }
         }
     }
 
-    private fun loadAllProject() {
-        projectsVM.allProjectsWithReposFlux.forEach(uiLifetime) { it ->
-            if (it == null) return@forEach
-            it.hasMore.forEach(uiLifetime) { list.setPaintBusy(it) }
-
-            it.elements.forEach(uiLifetime) { prRepoList ->
-                launch(uiLifetime, ApplicationUiDispatch.coroutineContext) {
-                    prRepoList.list.forEach { prRepo -> addProjectWithRepos(prRepo, false) }
-                    it.more()
-                }
-            }
-        }
-    }
-
-    private suspend fun addProjectWithRepos(prRepo: PR_ProjectRepos, starred: Boolean) {
-        if (prRepo.repos.isEmpty() && !showProjectWithoutRepositories) return
-        if (allProjects.add(prRepo)) {
-            prRepo.repos.forEach {
-                val details = reposInfo.getOrPut(it) { projectsVM.repo.repositoryDetails(prRepo.project.key, it.name) }
-                listModel.add(CircletCloneListItem(prRepo.project, starred, it, details))
-            }
-        }
-    }
-
-    override fun doClone() {
-        selectedUrl ?: return
-        val parent = Paths.get(directoryField.text).toAbsolutePath().parent
+    override fun doClone(checkoutListener: CheckoutProvider.Listener) {
+        val url = cloneView.getUrl()
+        url ?: return
+        val directory = cloneView.getDirectory()
+        val parent = Paths.get(directory).toAbsolutePath().parent
         val lfs = LocalFileSystem.getInstance()
         var destinationParent = lfs.findFileByIoFile(parent.toFile())
         if (destinationParent == null) {
             destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
         }
         destinationParent ?: return
-        val directoryName = Paths.get(directoryField.text).fileName.toString()
+        val directoryName = Paths.get(directory).fileName.toString()
         val parentDirectory = parent.toAbsolutePath().toString()
         GitCheckoutProvider.clone(project,
                                   git,
                                   checkoutListener,
                                   destinationParent,
-                                  selectedUrl,
+                                  url,
                                   directoryName,
                                   parentDirectory)
     }
 
     override fun onComponentSelected() {
-        onSelectedUrlChanged()
+        val isConnected = loginState.value is CircletLoginState.Connected
+        dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
     }
 
     override fun doValidateAll(): List<ValidationInfo> = emptyList() // todo: add validation
 
     override fun getView(): Wrapper = wrapper
 
+}
+
+private class CloneView(
+    private val uiLifetime: Lifetime,
+    private val project: Project,
+    private val dialogStateListener: VcsCloneDialogComponentStateListener,
+    private val st: CircletLoginState.Connected) {
+    private val directoryField: SelectChildTextFieldWithBrowseButton = SelectChildTextFieldWithBrowseButton(
+        ClonePathProvider.defaultParentDirectoryPath(project, DvcsRememberedInputs())).apply {
+        val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        fcd.isShowFileSystemRoots = true
+        fcd.isHideIgnored = false
+        addBrowseFolderListener(DvcsBundle.getString("clone.destination.directory.browser.title"),
+                                DvcsBundle.getString("clone.destination.directory.browser.description"),
+                                project,
+                                fcd)
+    }
+
+    private var selectedUrl: String? by Delegates.observable<String?>(null) { _, _, _ ->
+        onSelectedUrlChanged()
+    }
+
+    private val listModel: CollectionListModel<CircletCloneListItem> = object : CollectionListModel<CircletCloneListItem>() {
+        override fun add(element: CircletCloneListItem) {
+            val index = size
+            super.add(element)
+            element.repoDetails.forEach(uiLifetime) { details ->
+                val selectedIndex = list.selectedIndex
+                details ?: return@forEach
+                fireContentsChanged(this, index, index)
+                list.selectedIndex = selectedIndex
+            }
+        }
+    }
+    val client: KCircletClient = st.workspace.client
+    val circletImageLoader = CircletImageLoader(uiLifetime, client)
+
+    private val circletProjectListWithSearch: ListWithSearchComponent<CircletCloneListItem> =
+        ListWithSearchComponent<CircletCloneListItem>(listModel, CircletCloneListItemRenderer())
+
+    private val searchTextField: SearchTextField = circletProjectListWithSearch.searchField
+    private val list: JBList<CircletCloneListItem> = circletProjectListWithSearch.list.apply {
+        addListSelectionListener {
+            if (it.valueIsAdjusting) return@addListSelectionListener
+            val selected = selectedValue
+            if (selected == null) {
+                selectedUrl = null
+                return@addListSelectionListener
+            }
+            selectedUrl = selected.repoDetails.value?.urls?.sshUrl
+        }
+    }
+
+    val accountLabel = JLabel()
+
+    init {
+        searchTextField.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                onSelectedUrlChanged()
+            }
+        })
+
+
+        val cloneViewModel = CircletCloneComponentViewModel(
+            uiLifetime,
+            st.workspace,
+            client.pr,
+            client.repoService,
+            client.star,
+            circletImageLoader
+        )
+
+        cloneViewModel.me.forEach(uiLifetime) { profile ->
+            accountLabel.toolTipText = profile.englishFullName()
+        }
+
+        cloneViewModel.allProjectsWithReposAndDetails.forEach(uiLifetime) { allProjectsWithReposAndDetails ->
+            if (allProjectsWithReposAndDetails == null) {
+                return@forEach
+            }
+            launch(uiLifetime, ApplicationUiDispatch.coroutineContext) {
+                allProjectsWithReposAndDetails.forEach(listModel::add)
+            }
+        }
+
+        cloneViewModel.profileAvatar.forEach(uiLifetime) { image: BufferedImage? ->
+            if (image == null) {
+                accountLabel.icon = resizeIcon(CircletIcons.mainIcon, VcsCloneDialogUiSpec.Components.avatarSize)
+            }
+            else {
+                val icon = CircleImageIcon(image)
+                accountLabel.icon = resizeIcon(icon, VcsCloneDialogUiSpec.Components.avatarSize)
+            }
+        }
+
+        cloneViewModel.isLoading.forEach(uiLifetime, list::setPaintBusy)
+
+        accountLabel.addMouseListener(object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent?) {
+                showPopupMenu()
+            }
+
+            private fun showPopupMenu() {
+                val serverUrl = cleanupUrl(st.server)
+                val menuItems: MutableList<AccountMenuItem> = mutableListOf()
+                menuItems += AccountMenuItem.Account(
+                    st.workspace.me.value.englishFullName(),
+                    serverUrl,
+                    resizeIcon(accountLabel.icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize))
+                menuItems += AccountMenuItem.Action("Open $serverUrl",
+                                                    { BrowserUtil.browse(st.server) },
+                                                    AllIcons.Ide.External_link_arrow,
+                                                    showSeparatorAbove = true)
+                menuItems += AccountMenuItem.Action("Projects",
+                                                    { BrowserUtil.browse("${st.server.removeSuffix("/")}/p") },
+                                                    AllIcons.Ide.External_link_arrow)
+                menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() }, showSeparatorAbove = true)
+
+                AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
+                    .showUnderneathOf(accountLabel)
+            }
+        })
+    }
+
     private fun onSelectedUrlChanged() {
         val urlSelected = selectedUrl != null
         dialogStateListener.onOkActionEnabled(urlSelected)
-        directoryField.isEnabled = urlSelected
         if (urlSelected) {
             val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl!!), GitUtil.DOT_GIT)
             directoryField.trySetChildPath(path)
         }
     }
+
+    fun getView(): DialogPanel {
+        return panel {
+            val gapLeft = JBUI.scale(VcsCloneDialogUiSpec.Components.innerHorizontalGap)
+            row {
+                cell(isFullWidth = true) {
+                    searchTextField.textEditor(pushX, growX)
+                    JSeparator(JSeparator.VERTICAL)(growY, gapLeft = gapLeft)
+                    accountLabel(gapLeft = gapLeft)
+                }
+            }
+            row {
+                val scrollableList = ScrollPaneFactory.createScrollPane(list,
+                                                                        ScrollPaneFactory.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                                        ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER)
+                scrollableList(push, grow)
+            }
+            row("Directory:") {
+                directoryField(growX, pushX)
+            }
+        }
+    }
+
+    fun getUrl(): String? = selectedUrl
+
+    fun getDirectory(): String = directoryField.text
 }
