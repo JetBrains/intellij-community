@@ -85,19 +85,15 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     try {
+      startRefreshActivity();
       ReadAction
-        .nonBlocking(() -> {
-          startRefreshActivity();
-          try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
-            return runAsyncListeners(session);
-          }
-          finally {
-            finishRefreshActivity();
-          }
-        })
+        .nonBlocking(() -> runAsyncListeners(session))
         .cancelWith(myRefreshIndicator)
         .finishOnUiThread(modality, Runnable::run)
-        .submit(myEventProcessingQueue);
+        .submit(myEventProcessingQueue)
+      .onProcessed(__ -> {
+        finishRefreshActivity();
+      });
     }
     catch (RejectedExecutionException e) {
       LOG.debug(e);
