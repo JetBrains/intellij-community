@@ -161,7 +161,7 @@ object UpdateInfoPanelUI {
     }
 
     return "$message<br><br>" + newBuildInfo.buttons.filter { !it.isDownload }
-      .joinToString("<br>") { "<a href=\"${it.url}\">${it.name}</href>" }
+      .joinToString("<br><br>") { "<a href=\"${it.url}\">${it.name}</href>" }
   }
 
   private fun calculatePatchSize(patchesChain: UpdateChain?, testPatch: File?): String {
