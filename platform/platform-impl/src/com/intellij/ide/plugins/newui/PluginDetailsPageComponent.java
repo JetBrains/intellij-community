@@ -405,43 +405,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         .linkSelected(null, "/vendor:" + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
     }
 
-    String productCode = myPlugin.getProductCode();
-    if (productCode == null) {
-      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
-        myLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
-        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
-        myLicensePanel.setVisible(true);
-      }
-      else {
-        myLicensePanel.hideWithChildren();
-      }
-    }
-    else if (myMarketplace) {
-      myLicensePanel.setText("Use the trial for up to 30 days or", false, false);
-      myLicensePanel.showBuyPlugin(() -> myPlugin);
-      myLicensePanel.setVisible(true);
-    }
-    else {
-      LicensingFacade instance = LicensingFacade.getInstance();
-      if (instance == null || ApplicationManager.getApplication().isEAP()) {
-        ((JComponent)myTagPanel.getComponent(0)).setToolTipText("The license is not required for EAP version");
-        myLicensePanel.hideWithChildren();
-      }
-      else {
-        String stamp = instance.getConfirmationStamp(productCode);
-        if (stamp == null) {
-          myLicensePanel.setText("No license.", true, false);
-        }
-        else {
-          myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
-        }
-
-        //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
-        myLicensePanel.setVisible(true);
-
-        ((JComponent)myTagPanel.getComponent(0)).setToolTipText(myLicensePanel.getMessage());
-      }
-    }
+    showLicensePanel();
 
     if (bundled) {
       myHomePage.hide();
@@ -476,6 +440,49 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       fullRepaint();
+    }
+  }
+
+  private void showLicensePanel() {
+    String productCode = myPlugin.getProductCode();
+    if (productCode == null) {
+      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
+        myLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myLicensePanel.setVisible(true);
+      }
+      else {
+        myLicensePanel.hideWithChildren();
+      }
+    }
+    else if (myMarketplace) {
+      myLicensePanel.setText("Use the trial for up to 30 days or", false, false);
+      myLicensePanel.showBuyPlugin(() -> myPlugin);
+      myLicensePanel.setVisible(true);
+    }
+    else {
+      LicensingFacade instance = LicensingFacade.getInstance();
+      if (instance == null) {
+        myLicensePanel.hideWithChildren();
+        return;
+      }
+
+      String stamp = instance.getConfirmationStamp(productCode);
+      if (stamp == null) {
+        if (ApplicationManager.getApplication().isEAP()) {
+          myTagPanel.setFirstTagTooltip("The license is not required for EAP version");
+          myLicensePanel.hideWithChildren();
+          return;
+        }
+        myLicensePanel.setText("No license.", true, false);
+      }
+      else {
+        myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
+      }
+
+      myTagPanel.setFirstTagTooltip(myLicensePanel.getMessage());
+      //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
+      myLicensePanel.setVisible(true);
     }
   }
 

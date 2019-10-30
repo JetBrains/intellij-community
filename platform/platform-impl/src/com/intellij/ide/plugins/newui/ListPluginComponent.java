@@ -266,13 +266,8 @@ public class ListPluginComponent extends JPanel {
 
   private void createLicensePanel() {
     String productCode = myPlugin.getProductCode();
-    if (myMarketplace || productCode == null) {
-      return;
-    }
-
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (instance == null || ApplicationManager.getApplication().isEAP()) {
-      setTagTooltip("The license is not required for EAP version");
+    if (myMarketplace || productCode == null || instance == null) {
       return;
     }
 
@@ -280,6 +275,10 @@ public class ListPluginComponent extends JPanel {
 
     String stamp = instance.getConfirmationStamp(productCode);
     if (stamp == null) {
+      if (ApplicationManager.getApplication().isEAP()) {
+        setTagTooltip("The license is not required for EAP version");
+        return;
+      }
       licensePanel.setText("No license.", true, false);
     }
     else {
