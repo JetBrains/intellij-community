@@ -282,6 +282,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         include(name: "build.prop")
         include(name: "data/framework_res.jar")
         include(name: "data/fonts/*")
+        include(name: "data/fonts/native/fonts.xml")
+        include(name: "data/fonts/standard/fonts.xml")
         exclude(name: "data/fonts/BUILD")
       }
     }
