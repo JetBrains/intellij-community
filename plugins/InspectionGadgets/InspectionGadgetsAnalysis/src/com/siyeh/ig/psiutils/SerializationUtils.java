@@ -37,14 +37,9 @@ public class SerializationUtils {
     if (implementsList == null) {
       return false;
     }
-    final PsiJavaCodeReferenceElement[] interfaces = implementsList.getReferenceElements();
-    for (PsiJavaCodeReferenceElement aInterfaces : interfaces) {
-      final PsiClass implemented = (PsiClass)aInterfaces.resolve();
-      if (implemented == null) {
-        continue;
-      }
-      final String name = implemented.getQualifiedName();
-      if (CommonClassNames.JAVA_IO_SERIALIZABLE.equals(name)) {
+    for (PsiJavaCodeReferenceElement aInterfaces : implementsList.getReferenceElements()) {
+      PsiElement implemented = aInterfaces.resolve();
+      if (implemented instanceof PsiClass && CommonClassNames.JAVA_IO_SERIALIZABLE.equals(((PsiClass)implemented).getQualifiedName())) {
         return true;
       }
     }
