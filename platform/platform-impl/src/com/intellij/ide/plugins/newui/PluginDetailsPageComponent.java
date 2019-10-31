@@ -538,12 +538,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateIcon() {
-    boolean jb = PluginManagerConfigurable.isJBPlugin(myPlugin);
     boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
 
     myIconLabel.setEnabled(myMarketplace || myPluginModel.isEnabled(myPlugin));
-    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, false));
-    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, true));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, false, errors, false));
+    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, false, errors, true));
   }
 
   private void updateErrors() {
