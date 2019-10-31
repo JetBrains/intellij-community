@@ -82,8 +82,8 @@
     <extensionPoint name="typedHandler"
                     interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"
                     dynamic="true"/>
-    <extensionPoint name="selectionDequotingFilter"
-                    interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter"/>
+    <extensionPoint name="selectionUnquotingFilter"
+                    interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
 
     <extensionPoint name="joinLinesHandler"
                     interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>

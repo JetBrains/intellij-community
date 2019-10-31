@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlDequotingFilter extends SelectionQuotingTypedHandler.DequotingFilter {
+public class XmlUnquotingFilter extends SelectionQuotingTypedHandler.UnquotingFilter {
   @Override
   public boolean skipReplacementQuotesOrBraces(@NotNull PsiFile file, @NotNull Editor editor, @NotNull String selectedText, char c) {
     if (selectedText.startsWith("<") && selectedText.endsWith(">")) {
