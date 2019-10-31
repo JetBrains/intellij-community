@@ -1,24 +1,30 @@
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
 import com.intellij.configurationStore.serialize
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.LibraryProperties
+import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
-import com.intellij.util.containers.ContainerUtil
+import org.jdom.Element
 
 class LegacyBridgeLibraryModifiableModelImpl(
   private val originalLibrary: LibraryViaTypedEntity,
   private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
-) : LegacyBridgeModifiableBase(originalLibrary.storage), LibraryEx.ModifiableModelEx {
+) : LegacyBridgeModifiableBase(originalLibrary.storage), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
-  var entityId = originalLibrary.libraryEntity.persistentId()
+  private var entityId = originalLibrary.libraryEntity.persistentId()
 
   private val currentLibraryValue = CachedValue { storage ->
     val newLibrary = LibraryViaTypedEntity(
@@ -274,8 +280,33 @@ class LegacyBridgeLibraryModifiableModelImpl(
     return true
   }
 
+  private var disposed = false
+
   override fun dispose() {
     // No assertions here since it is ok to call dispose twice or more
     modelIsCommittedOrDisposed = true
+
+    disposed = true
   }
+
+  override fun isDisposed(): Boolean = disposed
+
+  override fun getInvalidRootUrls(type: OrderRootType): List<String> = currentLibrary.getInvalidRootUrls(type)
+  override fun getExcludedRoots(): Array<VirtualFile> = currentLibrary.excludedRoots
+  override fun getModule(): Module? = currentLibrary.module
+
+  override fun addRootSetChangedListener(listener: RootProvider.RootSetChangedListener) = throw UnsupportedOperationException()
+  override fun addRootSetChangedListener(listener: RootProvider.RootSetChangedListener, parentDisposable: Disposable) = throw UnsupportedOperationException()
+  override fun removeRootSetChangedListener(listener: RootProvider.RootSetChangedListener) = throw UnsupportedOperationException()
+
+  override fun getExternalSource(): ProjectModelExternalSource? = originalLibrary.externalSource
+
+  override fun getModifiableModel(): LibraryEx.ModifiableModelEx = throw UnsupportedOperationException()
+
+  override fun getTable(): LibraryTable = originalLibrary.libraryTable
+
+  override fun getRootProvider(): RootProvider = this
+
+  override fun readExternal(element: Element?) = throw UnsupportedOperationException()
+  override fun writeExternal(element: Element?) = throw UnsupportedOperationException()
 }
