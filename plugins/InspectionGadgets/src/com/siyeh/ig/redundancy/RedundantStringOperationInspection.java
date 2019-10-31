@@ -27,8 +27,7 @@ import java.util.Objects;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
-import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public class RedundantStringOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   enum FixType {
@@ -49,6 +48,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER =
     instanceCall(JAVA_LANG_STRING, "indexOf", "startsWith").parameterCount(2);
   private static final CallMatcher STRING_LAST_INDEX_OF = instanceCall(JAVA_LANG_STRING, "lastIndexOf").parameterCount(2);
+  private static final CallMatcher STRING_IS_EMPTY = instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
+  private static final CallMatcher CASE_CHANGE = exactInstanceCall(JAVA_LANG_STRING, "toUpperCase", "toLowerCase");
 
   @Nls
   @NotNull
@@ -77,7 +78,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_INTERN, this::getInternProblem)
       .register(PRINTSTREAM_PRINTLN, call -> getRedundantArgumentProblem(getSingleEmptyStringArgument(call)))
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
-      .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem);
+      .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem)
+      .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem);
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -129,6 +131,15 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
                                                    new StringConstructorFix(false));
         }
+      }
+      return null;
+    }
+
+    @Nullable
+    private ProblemDescriptor getRedundantCaseChangeProblem(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (CASE_CHANGE.test(qualifierCall)) {
+        return getProblem(qualifierCall, "inspection.redundant.string.call.message");
       }
       return null;
     }
