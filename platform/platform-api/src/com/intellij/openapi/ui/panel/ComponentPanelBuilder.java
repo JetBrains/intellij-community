@@ -116,6 +116,8 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   /**
    * Sets the hyperlink listener to be executed on clicking any reference in comment
    * text. Reference is represented by the HTML <code>&lt;a href&gt;</code> tags.
+   * By default <code>BrowserHyperlinkListener.INSTANCE</code> is used which opens
+   * a web browser.
    * @param listener new <code>HyperlinkListener</code>
    * @return <code>this</code>
    */
