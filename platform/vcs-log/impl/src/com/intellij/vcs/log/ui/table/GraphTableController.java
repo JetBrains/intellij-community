@@ -85,7 +85,8 @@ public class GraphTableController {
     return myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
   }
 
-  private void performGraphAction(@Nullable PrintElement printElement, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
+  @Nullable
+  private Cursor performGraphAction(@Nullable PrintElement printElement, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
     boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
     if (isClickOnGraphElement) {
       triggerElementClick(printElement);
@@ -94,47 +95,45 @@ public class GraphTableController {
     Selection previousSelection = myTable.getSelection();
     GraphAnswer<Integer> answer =
       myTable.getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
-    handleGraphAnswer(answer, isClickOnGraphElement, previousSelection, e);
+    return handleGraphAnswer(answer, isClickOnGraphElement, previousSelection, e);
   }
 
   public void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer) {
-    handleGraphAnswer(answer, true, null, null);
+    Cursor cursor = handleGraphAnswer(answer, true, null, null);
+    if (cursor != null) myTable.setCursor(UIUtil.cursorIfNotDefault(cursor));
   }
 
-  private void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange,
-                                 @Nullable Selection previousSelection, @Nullable MouseEvent e) {
+  @Nullable
+  private Cursor handleGraphAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange,
+                                   @Nullable Selection previousSelection, @Nullable MouseEvent e) {
     if (dataCouldChange) {
       myTable.getModel().fireTableDataChanged();
 
       // since fireTableDataChanged clears selection we restore it here
       if (previousSelection != null) {
-        previousSelection
-          .restore(myTable.getVisibleGraph(), answer == null || (answer.getCommitToJump() != null && answer.doJump()), false);
+        previousSelection.restore(myTable.getVisibleGraph(),
+                                  answer == null || (answer.getCommitToJump() != null && answer.doJump()),
+                                  false);
       }
     }
 
     myTable.repaint();
 
     if (answer == null) {
-      return;
+      return null;
     }
 
-    Cursor cursorToSet = answer.getCursorToSet();
-    if (cursorToSet != null) {
-      myTable.setCursor(UIUtil.cursorIfNotDefault(cursorToSet));
-    }
     if (answer.getCommitToJump() != null) {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
       if (row != null && row >= 0 && answer.doJump()) {
         myTable.jumpToRow(row);
-        // TODO wait for the full log and then jump
-        return;
-      }
-      if (e != null) {
+      } else if (e != null) {
         VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight,
                                  getArrowTooltipText(answer.getCommitToJump(), row));
       }
     }
+
+    return answer.getCursorToSet();
   }
 
   @NotNull
@@ -270,7 +269,8 @@ public class GraphTableController {
         else if (column == VcsLogColumn.COMMIT) {
           PrintElement printElement = findPrintElement(row, e);
           if (printElement != null) {
-            performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
+            Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
+            if (cursor != null) myTable.setCursor(UIUtil.cursorIfNotDefault(cursor));
           }
         }
       }
@@ -307,8 +307,8 @@ public class GraphTableController {
         else if (column == VcsLogColumn.COMMIT) {
           PrintElement printElement = findPrintElement(row, e);
           if (printElement == null) restoreCursor(Cursor.HAND_CURSOR);
-          performGraphAction(printElement, e,
-                             GraphAction.Type.MOUSE_OVER); // if printElement is null, still need to unselect whatever was selected in a graph
+          Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
+          // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
             if (!showTooltip(row, column, e.getPoint(), false)) {
               if (IdeTooltipManager.getInstance().hasCurrent()) {
@@ -316,6 +316,7 @@ public class GraphTableController {
               }
             }
           }
+          if (cursor != null) myTable.setCursor(UIUtil.cursorIfNotDefault(cursor));
           return;
         }
       }
