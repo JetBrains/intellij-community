@@ -2,8 +2,6 @@
 
 package com.intellij.openapi.vcs.changes.conflicts;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -59,20 +57,7 @@ public class ChangelistConflictTracker {
     myCheckSetLock = new Object();
     myCheckSet = new HashSet<>();
 
-    final Application application = ApplicationManager.getApplication();
     final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, project);
-    final Runnable runnable = () -> {
-      if (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen()) {
-        return;
-      }
-      final Set<VirtualFile> localSet;
-      synchronized (myCheckSetLock) {
-        localSet = new HashSet<>();
-        localSet.addAll(myCheckSet);
-        myCheckSet.clear();
-      }
-      checkFiles(localSet);
-    };
     myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -85,7 +70,7 @@ public class ChangelistConflictTracker {
           synchronized (myCheckSetLock) {
             myCheckSet.add(file);
           }
-          zipperUpdater.queue(runnable);
+          zipperUpdater.queue(() -> checkFiles());
         }
       }
     };
@@ -121,7 +106,16 @@ public class ChangelistConflictTracker {
     myShouldIgnoreModifications.set(value);
   }
 
-  private void checkFiles(final Collection<? extends VirtualFile> files) {
+  private void checkFiles() {
+    if (myProject.isDisposed() || !myProject.isOpen()) return;
+
+    final List<VirtualFile> files;
+    synchronized (myCheckSetLock) {
+      files = new ArrayList<>(myCheckSet);
+      myCheckSet.clear();
+    }
+    if (files.isEmpty()) return;
+
     myChangeListManager.invokeAfterUpdate(() -> {
       final LocalChangeList list = myChangeListManager.getDefaultChangeList();
       for (VirtualFile file : files) {
