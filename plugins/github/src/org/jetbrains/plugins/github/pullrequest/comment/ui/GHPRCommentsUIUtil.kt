@@ -15,15 +15,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
@@ -31,6 +34,31 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 object GHPRCommentsUIUtil {
+
+  fun createTogglableCommentField(project: Project, avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
+                                  @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+                                  request: (String) -> CompletableFuture<*>): JComponent {
+    val container = BorderLayoutPanel().andTransparent()
+    val button = JButton(actionName).apply {
+      isOpaque = false
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+    val buttonWrapper = Wrapper(button).apply {
+      border = JBUI.Borders.emptyLeft(28)
+    }
+    button.addActionListener {
+      with(container) {
+        remove(buttonWrapper)
+        val commentField = createCommentField(project, avatarIconsProvider, author, actionName, request)
+        addToCenter(commentField)
+        revalidate()
+        repaint()
+        GithubUIUtil.focusPanel(commentField)
+      }
+    }
+    container.addToLeft(buttonWrapper)
+    return container
+  }
 
   fun createCommentField(project: Project, avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
                          @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
@@ -85,7 +113,7 @@ object GHPRCommentsUIUtil {
       }
       add(authorLabel, CC().alignY("top"))
       add(textField, CC().growX().pushX())
-      add(button, CC().alignY("bottom"))
+      add(button, CC().newline().skip().alignX("left"))
     }
   }
 

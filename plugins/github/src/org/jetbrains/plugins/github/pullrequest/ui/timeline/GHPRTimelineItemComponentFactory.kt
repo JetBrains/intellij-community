@@ -106,7 +106,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       .andTransparent()
 
     if (reviewService.canComment()) {
-      panel.addToBottom(GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
+      panel.addToBottom(GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
         }

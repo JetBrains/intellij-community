@@ -11,10 +11,10 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.IdeFocusManager
 import gnu.trove.TIntHashSet
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRCreateDiffCommentIconRenderer
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.KeyStroke
@@ -87,9 +87,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
 
             private fun focusInlay(inlay: Inlay<*>) {
               val component = inlaysManager.findComponent(inlay) ?: return
-              val focusManager = IdeFocusManager.findInstanceByComponent(component)
-              val toFocus = focusManager.getFocusTargetFor(component) ?: return
-              focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
+              GithubUIUtil.focusPanel(component)
             }
           })
         }

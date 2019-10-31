@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.*
@@ -22,7 +22,6 @@ import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.GHPRAccountsComponent
@@ -42,6 +41,12 @@ import javax.swing.event.DocumentEvent
 
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+
+  fun focusPanel(panel: JComponent) {
+    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
+    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
+    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
+  }
 
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)

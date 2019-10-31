@@ -44,7 +44,7 @@ internal constructor(private val project: Project,
       .andTransparent()
 
     if (reviewService.canComment()) {
-      val replyField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
+      val replyField = GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
         }
