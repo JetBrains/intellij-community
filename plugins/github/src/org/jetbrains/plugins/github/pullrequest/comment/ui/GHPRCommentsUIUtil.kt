@@ -69,7 +69,7 @@ object GHPRCommentsUIUtil {
     }.apply {
       icon = avatarIconsProvider.getIcon(author.avatarUrl)
       isFocusable = true
-      border = JBUI.Borders.empty(2, 0)
+      border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula()) 3 else 1, 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
