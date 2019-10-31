@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -59,13 +59,12 @@ public class ChangelistConflictTracker {
     myCheckSet = new HashSet<>();
 
     final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, project);
-    myDocumentListener = new DocumentListener() {
+    myDocumentListener = new BulkAwareDocumentListener.Simple() {
       @Override
-      public void documentChanged(@NotNull DocumentEvent e) {
+      public void afterDocumentChange(@NotNull Document document) {
         if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get()) {
           return;
         }
-        Document document = e.getDocument();
         VirtualFile file = myDocumentManager.getFile(document);
         if (file != null && file.isInLocalFileSystem() && ProjectUtil.guessProjectForFile(file) == myProject) {
           synchronized (myCheckSetLock) {
