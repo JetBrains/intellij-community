@@ -6,10 +6,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,6 +188,6 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   public static boolean isCustomDecorationActive() {
-    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
+    return SystemInfo.isWindows && SystemProperties.getBooleanProperty("ide.win.frame.decoration", true) && JdkEx.isCustomDecorationSupported();
   }
 }
