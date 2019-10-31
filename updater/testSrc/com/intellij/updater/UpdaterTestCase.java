@@ -8,6 +8,11 @@ import org.junit.Before;
 import org.junit.Rule;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class UpdaterTestCase {
   protected static class TestUpdaterUI extends ConsoleUpdaterUI {
@@ -38,6 +43,24 @@ public abstract class UpdaterTestCase {
     boolean windowsLineEnds = new File(dataDir, "Readme.txt").length() == 7132;
     CHECKSUMS = new CheckSums(windowsLineEnds);
     MD5CHECKSUMS = new MD5CheckSums(windowsLineEnds);
+
+    // Android Studio: Bazel sets the execute permission for test data files when
+    // running remotely, thereby breaking a lot of updater tests.
+    // (See https://github.com/bazelbuild/bazel/issues/5588 for the relevant Bazel discussion.)
+    // We work around this by explicitly removing the execute permission for the test data.
+    // This is somewhat fragile (it could break a future test which needs an executable
+    // file as test data), so we log a warning.
+    try (Stream<Path> paths = Files.walk(dataDir.toPath())) {
+      List<File> files = paths.map(Path::toFile).filter(File::isFile).collect(Collectors.toList());
+      if (files.stream().anyMatch(File::canExecute)) {
+        System.err.println("Warning: removing execute permission from all UpdaterTestCase test data " +
+                           "files in order to work around Bazel file permission quirks.");
+        for (File file : files) {
+          //noinspection ResultOfMethodCallIgnored
+          file.setExecutable(false);
+        }
+      }
+    }
   }
 
   @After
