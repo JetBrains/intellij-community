@@ -269,7 +269,8 @@ public class PlatformTestUtil {
   }
 
   private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
-    assert getMillisSince(startTimeMillis) <= timeout : "the waiting takes too long";
+    long took = getMillisSince(startTimeMillis);
+    assert took <= timeout : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms", timeout, took);
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
