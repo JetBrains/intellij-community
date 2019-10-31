@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.ClickableTreeCellRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeNodePartListener;
@@ -250,33 +249,8 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
         text[0] = "";
       }
       setText(text, prefix);
+      setIcon(element.getIcon());
     }
-
-    Icon icon = null;
-
-    if (element instanceof GroupingElement) {
-      final GroupingElement groupingElement = (GroupingElement)element;
-
-      icon = groupingElement.getFile() != null ? groupingElement.getFile().getFileType().getIcon() : AllIcons.FileTypes.Any_type;
-    }
-    else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
-      switch (element.getKind()) {
-        case ERROR:
-          icon = AllIcons.General.Error;
-          break;
-        case WARNING:
-          icon = AllIcons.General.Warning;
-          break;
-        case NOTE:
-          icon = AllIcons.General.Note;
-          break;
-        case INFO:
-          icon = AllIcons.General.Information;
-          break;
-      }
-    }
-
-    setIcon(icon);
   }
 
   private static ErrorTreeElement getElement(Object value) {
