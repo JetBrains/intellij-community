@@ -213,7 +213,7 @@
                      implementationClass="com.siyeh.ig.bugs.CovariantEqualsInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="EmptyClassInitializer" shortName="EmptyInitializer" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="empty.class.initializer.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.EmptyInitializerInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="StatementWithEmptyBody" shortName="EmptyStatementBody" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="statement.with.empty.body.display.name" groupBundle="messages.InspectionsBundle"
