@@ -320,8 +320,7 @@ public class PatchCreationTest extends PatchTestCase {
   public void testSymlinkDereferenceAndMove() throws IOException {
     byte[] data = new byte[8192];
     new Random().nextBytes(data);
-/* TODO(b/141206234): does not compile with Change I1ee6bccc / commit 1e0f72d
-    long checksum = Digester.digestStream(new ByteArrayInputStream(data));
+    long checksum = new Digester(null).digestStream(new ByteArrayInputStream(data));
 
     Files.write(new File(myOlderDir, "bin/mac_lib.jnilib").toPath(), data);
     Utils.createLink("mac_lib.jnilib", new File(myOlderDir, "bin/mac_lib.dylib"));
@@ -338,7 +337,6 @@ public class PatchCreationTest extends PatchTestCase {
       new CreateAction(patch, "plugins/whatever/"),
       new CreateAction(patch, "plugins/whatever/bin/"),
       new CreateAction(patch, "plugins/whatever/bin/mac_lib.dylib"));
-TODO(b/141206234): does not compile with Change I1ee6bccc / commit 1e0f72d */
   }
 
   private Patch createCaseOnlyRenamePatch() throws IOException {
