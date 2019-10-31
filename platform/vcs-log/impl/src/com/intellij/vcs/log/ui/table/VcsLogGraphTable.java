@@ -142,7 +142,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
     });
 
-    myController = new GraphTableController(logData, myColorManager, myProperties, this, graphCellPainter, myGraphCommitCellRenderer);
+    myController = new GraphTableController(this);
 
     getSelectionModel().addListSelectionListener(e -> mySelection = null);
     getColumnModel().setColumnSelectionAllowed(false);
