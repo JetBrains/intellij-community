@@ -5,9 +5,6 @@ import sys
 import time
 import types
 
-# !!! Don't forget to update VERSION and required_gen_version if necessary !!!
-VERSION = "1.147"
-
 OUT_ENCODING = 'utf-8'
 
 version = (
@@ -18,6 +15,7 @@ version = (
 if version[0] >= 3:
     #noinspection PyUnresolvedReferences
     import builtins as the_builtins
+    # noinspection PyUnresolvedReferences
     import queue
 
     string = "".__class__
@@ -33,6 +31,7 @@ if version[0] >= 3:
 
 else: # < 3.0
     import __builtin__ as the_builtins
+    # noinspection PyUnresolvedReferences
     import Queue as queue
 
     STR_TYPES = (getattr(the_builtins, "unicode"), str)

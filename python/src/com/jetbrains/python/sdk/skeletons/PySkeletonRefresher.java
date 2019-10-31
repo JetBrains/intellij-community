@@ -26,10 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -43,11 +45,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 
 /**
  * Handles a refresh of SDK's skeletons.
@@ -66,7 +69,7 @@ public class PySkeletonRefresher {
   @NotNull private final Sdk mySdk;
   private String mySkeletonsPath;
   private List<String> myExtraSyspath;
-  private int myGeneratorVersion;
+  private int myGeneratorVersion = -1;
   private final PySkeletonGenerator mySkeletonsGenerator;
 
   public static synchronized boolean isGeneratingSkeletons() {
@@ -152,7 +155,7 @@ public class PySkeletonRefresher {
 
     mySkeletonsGenerator.prepare();
 
-    queryAndSetGeneratorVersion();
+    myGeneratorVersion = readGeneratorVersion();
 
     final PyPregeneratedSkeletons preGeneratedSkeletons =
       PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
@@ -192,17 +195,14 @@ public class PySkeletonRefresher {
     return failedModules;
   }
 
-  /**
-   * Run generator script to find out its current version
-   */
-  public int queryAndSetGeneratorVersion() throws InvalidSdkException, ExecutionException {
-    myGeneratorVersion = fromVersionString(mySkeletonsGenerator
-                                             .commandBuilder()
-                                             .extraArgs("-V")
-                                             .runProcess()
-                                             .getStdout()
-                                             .trim());
-    return myGeneratorVersion;
+  private static int readGeneratorVersion() {
+    final File versionFile = PythonHelpersLocator.getHelperFile("generator3/version.txt");
+    try (final FileInputStream inputStream = new FileInputStream(versionFile)) {
+      return PySkeletonHeader.fromVersionString(StreamUtil.readText(inputStream, StandardCharsets.UTF_8).trim());
+    }
+    catch (IOException e) {
+      throw new AssertionError("Failed to read generator version from " + versionFile);
+    }
   }
 
   private void indicate(String msg) {
@@ -345,6 +345,9 @@ public class PySkeletonRefresher {
   }
 
   public int getGeneratorVersion() {
+    if (myGeneratorVersion == -1) {
+      myGeneratorVersion = readGeneratorVersion();
+    }
     return myGeneratorVersion;
   }
 

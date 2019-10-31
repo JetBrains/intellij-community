@@ -17,12 +17,18 @@ if TYPE_CHECKING:
 
 # TODO: Move all CLR-specific functions to clr_tools
 quiet = False
+_parent_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 # TODO move to property of Generator3 as soon as tests finished
 @cached
 def version():
-    return os.environ.get(ENV_VERSION, VERSION)
+    env_version = os.environ.get(ENV_VERSION)
+    if env_version:
+        return env_version
+
+    with fopen(os.path.join(_parent_dir, 'version.txt'), 'r') as f:
+        return f.read().strip()
 
 
 # TODO move to property of Generator3 as soon as tests finished
@@ -39,9 +45,6 @@ def is_test_mode():
 @cached
 def is_pregeneration_mode():
     return ENV_PREGENERATION_MODE_FLAG in os.environ
-
-
-_parent_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 # find_binaries functionality

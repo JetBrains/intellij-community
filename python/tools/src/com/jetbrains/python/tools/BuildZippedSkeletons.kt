@@ -40,8 +40,6 @@ fun main() {
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
       val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
-      println("Querying the current generator version")
-      refresher.queryAndSetGeneratorVersion()
       refresher.generator
         .commandBuilder()
         .inPrebuildingMode()
