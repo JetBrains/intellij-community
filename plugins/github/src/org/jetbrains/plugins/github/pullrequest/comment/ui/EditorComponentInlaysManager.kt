@@ -2,12 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
@@ -92,10 +89,6 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     val wrapper = ComponentWrapper(component)
     val inlay = editor.inlayModel.addBlockElement(offset, true, false, 1,
                                                   ComponentWrapperPlaceholder(wrapper))!!
-
-    component.background = editor.backgroundColor
-    ApplicationManager.getApplication().messageBus.connect(inlay)
-      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { component.background = editor.backgroundColor })
 
     wrapper.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) = inlay.updateSize()

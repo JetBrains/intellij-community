@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
@@ -15,11 +16,11 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.geom.RoundRectangle2D
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 
 class GHPRDiffEditorReviewComponentsFactoryImpl
@@ -33,8 +34,7 @@ internal constructor(private val project: Project,
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel().apply {
-      border = BorderFactory.createCompoundBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP),
-                                                  IdeBorderFactory.createRoundedBorder(10, 1))
+      border = JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP)
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
@@ -60,8 +60,7 @@ internal constructor(private val project: Project,
 
   override fun createCommentComponent(diffLine: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
     val wrapper = RoundedPanel().apply {
-      border = BorderFactory.createCompoundBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP),
-                                                  IdeBorderFactory.createRoundedBorder(10, 1))
+      border = JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP)
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
@@ -78,14 +77,39 @@ internal constructor(private val project: Project,
   }
 
   private class RoundedPanel : Wrapper() {
+    private var borderLineColor: Color? = null
+
+    init {
+      updateColors()
+    }
+
+    override fun updateUI() {
+      super.updateUI()
+      updateColors()
+    }
+
+    private fun updateColors() {
+      val scheme = EditorColorsManager.getInstance().globalScheme
+      background = scheme.defaultBackground
+      borderLineColor = scheme.getColor(EditorColors.TEARLINE_COLOR)
+    }
+
     override fun paintComponent(g: Graphics) {
       GraphicsUtil.setupRoundedBorderAntialiasing(g)
 
       val g2 = g as Graphics2D
       val rect = Rectangle(size)
       JBInsets.removeFrom(rect, insets)
+      // 2.25 scale is a @#$!% so we adjust sizes manually
+      val rectangle2d = RoundRectangle2D.Float(rect.x.toFloat() + 0.5f, rect.y.toFloat() + 0.5f,
+                                               rect.width.toFloat() - 1f, rect.height.toFloat() - 0.5f,
+                                               10f, 10f)
       g2.color = background
-      g2.fill(RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), 10f, 10f))
+      g2.fill(rectangle2d)
+      borderLineColor?.let {
+        g2.color = borderLineColor
+        g2.draw(rectangle2d)
+      }
     }
   }
 }
