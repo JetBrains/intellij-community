@@ -351,6 +351,15 @@ public class PsiUtilCore {
   }
 
   @Nullable
+  public static String getAbsoluteFilePath(@Nullable PsiElement element) {
+    VirtualFile file = getVirtualFile(element);
+    if (file == null) {
+      return null;
+    }
+    return file.getPath();
+  }
+
+  @Nullable
   public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
     // optimisation: call isValid() on file only to reduce walks up and down
     if (element == null) {
