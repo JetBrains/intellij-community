@@ -294,7 +294,7 @@ public class GraphTableController {
       myTable.getExpandableItemsHandler().setEnabled(true);
 
       if (myLinkListener.getTagAt(e) != null) {
-        swapCursor(Cursor.HAND_CURSOR);
+        swapCursor();
         return;
       }
 
@@ -303,7 +303,7 @@ public class GraphTableController {
         VcsLogColumn column = myTable.getVcsLogColumn(myTable.columnAtPoint(e.getPoint()));
         if (column == null) return;
         if (column == VcsLogColumn.ROOT) {
-          swapCursor(Cursor.HAND_CURSOR);
+          swapCursor();
           return;
         }
         else if (column == VcsLogColumn.COMMIT) {
@@ -322,30 +322,30 @@ public class GraphTableController {
         }
       }
 
-      restoreCursor(Cursor.HAND_CURSOR);
+      restoreCursor();
     }
 
     private void handleCursor(@Nullable Cursor cursor) {
       if (cursor != null) {
         if (cursor.getType() == Cursor.DEFAULT_CURSOR) {
-          restoreCursor(Cursor.HAND_CURSOR);
+          restoreCursor();
         }
         else if (cursor.getType() == Cursor.HAND_CURSOR) {
-          swapCursor(Cursor.HAND_CURSOR);
+          swapCursor();
         }
       }
     }
 
-    private void swapCursor(int newCursorType) {
-      if (myTable.getCursor().getType() != newCursorType && myLastCursor == null) {
-        Cursor newCursor = Cursor.getPredefinedCursor(newCursorType);
+    private void swapCursor() {
+      if (myTable.getCursor().getType() != Cursor.HAND_CURSOR && myLastCursor == null) {
+        Cursor newCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
         myLastCursor = myTable.getCursor();
         myTable.setCursor(newCursor);
       }
     }
 
-    private void restoreCursor(int newCursorType) {
-      if (myTable.getCursor().getType() == newCursorType) {
+    private void restoreCursor() {
+      if (myTable.getCursor().getType() == Cursor.HAND_CURSOR) {
         myTable.setCursor(UIUtil.cursorIfNotDefault(myLastCursor));
         myLastCursor = null;
       }
