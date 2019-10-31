@@ -5,8 +5,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.impl.LegacyBridgeModuleOrderEnumerator
-import com.intellij.openapi.roots.impl.LegacyBridgeOrderRootsCache
+import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
+import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -25,7 +25,7 @@ class LegacyBridgeModuleRootComponent(
 
   private val legacyBridgeModule = currentModule as LegacyBridgeModule
 
-  private val orderRootsCache =  LegacyBridgeOrderRootsCache(currentModule)
+  private val orderRootsCache =  OrderRootsCache(currentModule)
 
   internal val moduleLibraries = mutableListOf<LegacyBridgeLibraryImpl>()
   internal val newModuleLibraries = mutableListOf<LegacyBridgeLibraryImpl>()
@@ -109,7 +109,7 @@ class LegacyBridgeModuleRootComponent(
   override fun isDependsOn(module: Module): Boolean = dependencyModuleNames.any { it == module.name }
 
   override fun getExcludeRoots(): Array<VirtualFile> = model.excludeRoots
-  override fun orderEntries(): OrderEnumerator = LegacyBridgeModuleOrderEnumerator(this, orderRootsCache)
+  override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, orderRootsCache)
 
   private val compilerModuleExtension by lazy {
     LegacyBridgeCompilerModuleExtension(legacyBridgeModule, entityStore = legacyBridgeModule.entityStore, diff = null)

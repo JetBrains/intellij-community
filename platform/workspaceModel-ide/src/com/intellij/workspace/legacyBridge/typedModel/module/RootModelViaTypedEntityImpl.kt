@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.OrderEnumerator
-import com.intellij.openapi.roots.impl.LegacyBridgeModuleOrderEnumerator
+import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -115,7 +115,7 @@ class RootModelViaTypedEntityImpl(internal val moduleEntityId: PersistentEntityI
 
   override fun getContent() = contentEntriesList
 
-  override fun orderEntries(): OrderEnumerator = LegacyBridgeModuleOrderEnumerator(this, null)
+  override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, null)
 
   private fun toOrderEntry(
     item: ModuleDependencyItem,

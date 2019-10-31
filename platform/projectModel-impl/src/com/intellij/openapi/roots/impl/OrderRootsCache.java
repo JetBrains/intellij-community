@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,12 +24,14 @@ import java.util.function.Supplier;
 /**
  * @author nik
  */
-class OrderRootsCache {
+@ApiStatus.Internal
+public class OrderRootsCache {
   private final AtomicReference<ConcurrentMap<CacheKey, VirtualFilePointerContainer>> myRoots = new AtomicReference<>();
   private final Disposable myParentDisposable;
   private Disposable myRootsDisposable; // accessed in EDT
 
-  OrderRootsCache(@NotNull Disposable parentDisposable) {
+  @ApiStatus.Internal
+  public OrderRootsCache(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
     disposePointers();
   }
@@ -82,7 +85,8 @@ class OrderRootsCache {
     return container == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : container.getUrls();
   }
 
-  void clearCache() {
+  @ApiStatus.Internal
+  public void clearCache() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     disposePointers();
     myRoots.set(null);

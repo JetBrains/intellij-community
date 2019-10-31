@@ -1,9 +1,9 @@
-@file:Suppress("PackageDirectoryMismatch")
-package com.intellij.openapi.module.impl
+package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.ModuleId
 import com.intellij.workspace.api.TypedEntityStorageDiffBuilder
 import com.intellij.workspace.api.TypedEntityStore
-import com.intellij.workspace.legacyBridge.intellij.*
 import java.io.File
 
 class LegacyBridgeModuleImpl(
