@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
-import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -185,17 +184,9 @@ public abstract class Invoker implements Disposable {
           ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else {
-          // try to execute a task until it stops throwing ProcessCanceledException
-          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
-            if (!is("invoker.can.yield.to.pending.write.actions")) {
-              offerRestart(task, promise, attempt);
-              return;
-            }
-            if (!canInvoke(task, promise)) return; // stop execution of obsolete task
-            ProgressIndicatorUtils.yieldToPendingWriteActions();
-            if (!canRestart(task, promise, attempt)) return;
-            LOG.debug("Task is restarted");
-            attempt++;
+          if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
+            offerRestart(task, promise, attempt);
+            return;
           }
         }
         promise.setResult(null);
