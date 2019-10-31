@@ -66,7 +66,7 @@ public class ChangelistConflictTracker {
         }
         Document document = e.getDocument();
         VirtualFile file = myDocumentManager.getFile(document);
-        if (file != null && ProjectUtil.guessProjectForFile(file) == myProject) {
+        if (file != null && file.isInLocalFileSystem() && ProjectUtil.guessProjectForFile(file) == myProject) {
           synchronized (myCheckSetLock) {
             myCheckSet.add(file);
           }
