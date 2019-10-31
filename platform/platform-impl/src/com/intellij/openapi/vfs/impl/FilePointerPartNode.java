@@ -296,11 +296,15 @@ class FilePointerPartNode {
       if (!path.isEmpty() && nameFromPath.isEmpty() && SystemInfo.isUnix) {
         nameFromPath = "/";
       }
+/* Android Studio: b/144579453
       assert StringUtilRt.equal(nameFromPath, name, SystemInfo.isFileSystemCaseSensitive) : "fileAndUrl: " + fileAndUrl + "; but this: " + this+"; nameFromPath: "+nameFromPath+"; name: "+name+"; parent: "+parent+"; path: "+path+"; url: "+url;
+Android Studio: b/144579453 */
     }
     boolean hasFile = fileAndUrl != null && fileAndUrl.first != null;
     if (hasFile) {
+/* Android Studio: b/144579453
       assert fileAndUrl.first.getName().equals(name) : "fileAndUrl: " + fileAndUrl + "; but this: " + this;
+Android Studio: b/144579453 */
     }
   }
 
