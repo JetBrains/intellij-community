@@ -10,6 +10,6 @@ public class JpsUpdateCachesAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent actionEvent) {
     Project project = actionEvent.getProject();
     if (project == null) return;
-    JpsOutputLoaderManager.getInstance(project).load(false);
+    JpsOutputLoaderManager.getInstance(project).load(true);
   }
 }

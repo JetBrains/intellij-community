@@ -15,7 +15,6 @@
   <actions>
     <group id="JpsCacheLoaderActions" text="Jps Cache Loader" popup="true">
       <separator/>
-      <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches" internal="true"/>
       <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches"/>
       <action id="JpsBinaryDataUploadAction" class="com.intellij.jps.cache.action.JpsBinaryDataUploadAction" text="Upload JPS Binary Data" internal="true"/>
       <add-to-group group-id="BuildMenu" anchor="last"/>
