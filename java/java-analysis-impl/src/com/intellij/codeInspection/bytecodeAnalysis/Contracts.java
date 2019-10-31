@@ -532,9 +532,7 @@ class InOutInterpreter extends BasicInterpreter {
               }
             }
             else if (isRefRetType) {
-              HashSet<EKey> keys = new HashSet<>();
-              keys.add(new EKey(method, Out, stable));
-              return new CallResultValue(retType, keys);
+              return new CallResultValue(retType, Collections.singleton(new EKey(method, Out, stable)));
             }
           }
           break;
