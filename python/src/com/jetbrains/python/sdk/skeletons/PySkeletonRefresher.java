@@ -154,12 +154,7 @@ public class PySkeletonRefresher {
 
     mySkeletonsGenerator.prepare();
 
-    myGeneratorVersion = fromVersionString(mySkeletonsGenerator
-                                             .commandBuilder()
-                                             .extraArgs("-V")
-                                             .runProcess()
-                                             .getStdout()
-                                             .trim());
+    queryAndSetGeneratorVersion();
 
     final PyPregeneratedSkeletons preGeneratedSkeletons =
       PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
@@ -197,6 +192,19 @@ public class PySkeletonRefresher {
     }
 
     return failedModules;
+  }
+
+  /**
+   * Run generator script to find out its current version
+   */
+  public int queryAndSetGeneratorVersion() throws InvalidSdkException, ExecutionException {
+    myGeneratorVersion = fromVersionString(mySkeletonsGenerator
+                                             .commandBuilder()
+                                             .extraArgs("-V")
+                                             .runProcess()
+                                             .getStdout()
+                                             .trim());
+    return myGeneratorVersion;
   }
 
   private void indicate(String msg) {

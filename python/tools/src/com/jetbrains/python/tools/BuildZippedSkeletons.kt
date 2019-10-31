@@ -5,7 +5,6 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.Compressor
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
 import com.jetbrains.python.tools.sdkTools.PySdkTools
@@ -41,6 +40,8 @@ fun main() {
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
       val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
+      println("Querying the current generator version")
+      refresher.queryAndSetGeneratorVersion()
       refresher.generator
         .commandBuilder()
         .inPrebuildingMode()
