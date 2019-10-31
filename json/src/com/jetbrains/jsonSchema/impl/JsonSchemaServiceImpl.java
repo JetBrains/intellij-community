@@ -53,8 +53,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       @NotNull
       @Override
       protected Set<String> compute() {
-        return ContainerUtil
-          .map2SetNotNull(myState.getFiles(), f -> f instanceof LightVirtualFile ? null : JsonCachedValues.getSchemaId(f, myProject));
+        return ContainerUtil.map2SetNotNull(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
       }
     };
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
