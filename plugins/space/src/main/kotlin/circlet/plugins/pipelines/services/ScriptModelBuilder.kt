@@ -55,7 +55,11 @@ object ScriptModelBuilder : KLogging() {
             logBuildData.add(resMessage)
             logger.debug(resMessage)
         }
-        val logger = SubstituteLogger("ScriptModelBuilderLogger", events, false)
+        val eventLogger = KLogger(
+            JVMLogger(
+                SubstituteLogger("ScriptModelBuilderLogger", events, false)
+            )
+        )
 
         val dslFile = DslFileFinder.find(project)
 
@@ -70,7 +74,7 @@ object ScriptModelBuilder : KLogging() {
             val p = PathManager.getSystemPath() + "/.kotlinc/"
             val path = normalizePath(p)
 
-            val kotlinCompilerPath = KotlinCompilerFinder(logger)
+            val kotlinCompilerPath = KotlinCompilerFinder(eventLogger)
                 .find(if (path.endsWith('/')) path else "$path/")
             logger.debug("build. path to kotlinc: $kotlinCompilerPath")
 
@@ -80,7 +84,7 @@ object ScriptModelBuilder : KLogging() {
             val outputFolder = createTempDir().absolutePath + "/"
             val targetJar = outputFolder + "compiledJar.jar"
             val metadataPath = outputFolder + "compilationMetadata"
-            DslJarCompiler(logger).compile(
+            DslJarCompiler(eventLogger).compile(
                 DslSourceFileDelegatingFileProvider(dslFile.path),
                 targetJar,
                 metadataPath,
