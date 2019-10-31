@@ -16,5 +16,7 @@ interface RemoteSdkEditorForm {
 
   val sdkScopeController: SdkScopeController
 
+  val parentContainer: RemoteSdkEditorContainer
+
   fun isSdkInConsistentState(connectionType: CredentialsType<*>): Boolean
 }
