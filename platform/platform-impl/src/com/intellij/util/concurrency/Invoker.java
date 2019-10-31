@@ -126,14 +126,6 @@ public abstract class Invoker implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #runOrInvokeLater(Runnable)}
-   */
-  @Deprecated
-  public final void invokeLaterIfNeeded(@NotNull Runnable task) {
-    runOrInvokeLater(task);
-  }
-
-  /**
    * Returns a workload of the task queue.
    *
    * @return amount of tasks, which are executing or waiting for execution
@@ -299,32 +291,6 @@ public abstract class Invoker implements Disposable {
       else {
         EdtExecutorService.getInstance().execute(runnable);
       }
-    }
-  }
-
-  /**
-   * This class is the {@code Invoker} in a background thread pool.
-   * Every thread is valid for this invoker except the EDT.
-   * It allows to run background tasks in parallel,
-   * but requires a good synchronization.
-   *
-   * @deprecated use {@link Background#Background(Disposable, int)} instead
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final class BackgroundPool extends Invoker {
-    public BackgroundPool(@NotNull Disposable parent) {
-      super("Background.Pool", parent, ThreeState.YES);
-    }
-
-    @Override
-    public boolean isValidThread() {
-      return !isDispatchThread();
-    }
-
-    @Override
-    void offer(@NotNull Runnable runnable, int delay) {
-      schedule(AppExecutorUtil.getAppScheduledExecutorService(), runnable, delay);
     }
   }
 
