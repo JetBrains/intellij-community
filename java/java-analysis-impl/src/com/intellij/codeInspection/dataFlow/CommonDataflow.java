@@ -7,9 +7,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -307,9 +304,8 @@ public class CommonDataflow {
       ForkJoinPool.managedBlock(managedCompute);
     }
     catch (RejectedExecutionException ex) {
-      Attachment attachment = new Attachment("dumps.txt", ThreadDumper.dumpThreadsToString());
-      attachment.setIncluded(true);
-      throw new RuntimeExceptionWithAttachments("Rejected execution!", attachment);
+      // Too many FJP threads: execute anyway in current thread
+      managedCompute.block();
     }
     catch (InterruptedException ex) {
       // Should not happen
