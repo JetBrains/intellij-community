@@ -490,6 +490,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-templates/intellij.android.templates.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-templates/intellij.android.templates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" filepath="$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" filepath="$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" />
