@@ -143,14 +143,12 @@ public class PySkeletonRefresher {
 
   @NotNull
   public List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {
-    final String homePath = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
     if (!skeletonsDir.exists()) {
       //noinspection ResultOfMethodCallIgnored
       skeletonsDir.mkdirs();
     }
-    final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
 
     mySkeletonsGenerator.prepare();
 
@@ -159,8 +157,6 @@ public class PySkeletonRefresher {
     final PyPregeneratedSkeletons preGeneratedSkeletons =
       PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
 
-    indicate(PyBundle.message("sdk.gen.reading.versions.file"));
-
     final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
     final File builtinsFile = new File(skeletonsPath, builtinsFileName);
 
@@ -168,9 +164,11 @@ public class PySkeletonRefresher {
     final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
 
     if (preGeneratedSkeletons != null && oldOrNonExisting) {
+      indicate(PyBundle.message("sdk.gen.unpacking.prebuilt"));
       preGeneratedSkeletons.unpackPreGeneratedSkeletons(getSkeletonsPath());
     }
 
+    indicate(PyBundle.message("sdk.gen.launching.generator"));
     final List<PySkeletonGenerator.GenerationResult> results = updateOrCreateSkeletons();
     final List<String> failedModules = ContainerUtil.mapNotNull(results, result -> {
       if (result.getGenerationStatus() == PySkeletonGenerator.GenerationStatus.FAILED) {
@@ -184,7 +182,7 @@ public class PySkeletonRefresher {
     indicate(PyBundle.message("sdk.gen.reloading"));
     mySkeletonsGenerator.refreshGeneratedSkeletons();
 
-    indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
+    indicate(PyBundle.message("sdk.gen.cleaning.up"));
     cleanUpSkeletons(skeletonsDir);
 
     if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
