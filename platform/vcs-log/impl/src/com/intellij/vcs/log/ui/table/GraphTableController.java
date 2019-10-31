@@ -50,6 +50,7 @@ public class GraphTableController {
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final GraphCellPainter myGraphCellPainter;
   @NotNull private final GraphCommitCellRenderer myCommitRenderer;
+  @NotNull private final MyMouseAdapter myMouseAdapter;
 
   public GraphTableController(@NotNull VcsLogData logData,
                               @NotNull VcsLogColorManager colorManager,
@@ -65,9 +66,9 @@ public class GraphTableController {
     myGraphCellPainter = graphCellPainter;
     myCommitRenderer = commitRenderer;
 
-    MouseAdapter mouseAdapter = new MyMouseAdapter();
-    table.addMouseMotionListener(mouseAdapter);
-    table.addMouseListener(mouseAdapter);
+    myMouseAdapter = new MyMouseAdapter();
+    table.addMouseMotionListener(myMouseAdapter);
+    table.addMouseListener(myMouseAdapter);
   }
 
   boolean shouldSelectCell(@NotNull MouseEvent e) {
@@ -100,7 +101,7 @@ public class GraphTableController {
 
   public void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer) {
     Cursor cursor = handleGraphAnswer(answer, true, null, null);
-    if (cursor != null) myTable.setCursor(UIUtil.cursorIfNotDefault(cursor));
+    myMouseAdapter.handleCursor(cursor);
   }
 
   @Nullable
@@ -127,7 +128,8 @@ public class GraphTableController {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
       if (row != null && row >= 0 && answer.doJump()) {
         myTable.jumpToRow(row);
-      } else if (e != null) {
+      }
+      else if (e != null) {
         VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight,
                                  getArrowTooltipText(answer.getCommitToJump(), row));
       }
@@ -270,7 +272,7 @@ public class GraphTableController {
           PrintElement printElement = findPrintElement(row, e);
           if (printElement != null) {
             Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
-            if (cursor != null) myTable.setCursor(UIUtil.cursorIfNotDefault(cursor));
+            handleCursor(cursor);
           }
         }
       }
@@ -306,7 +308,6 @@ public class GraphTableController {
         }
         else if (column == VcsLogColumn.COMMIT) {
           PrintElement printElement = findPrintElement(row, e);
-          if (printElement == null) restoreCursor(Cursor.HAND_CURSOR);
           Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
           // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
@@ -316,12 +317,23 @@ public class GraphTableController {
               }
             }
           }
-          if (cursor != null) myTable.setCursor(UIUtil.cursorIfNotDefault(cursor));
+          handleCursor(cursor);
           return;
         }
       }
 
       restoreCursor(Cursor.HAND_CURSOR);
+    }
+
+    private void handleCursor(@Nullable Cursor cursor) {
+      if (cursor != null) {
+        if (cursor.getType() == Cursor.DEFAULT_CURSOR) {
+          restoreCursor(Cursor.HAND_CURSOR);
+        }
+        else if (cursor.getType() == Cursor.HAND_CURSOR) {
+          swapCursor(Cursor.HAND_CURSOR);
+        }
+      }
     }
 
     private void swapCursor(int newCursorType) {
