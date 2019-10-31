@@ -21,6 +21,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,7 +112,7 @@ public class ChangelistConflictTracker {
 
     final List<VirtualFile> files;
     synchronized (myCheckSetLock) {
-      files = new ArrayList<>(myCheckSet);
+      files = ContainerUtil.filter(myCheckSet, file -> VcsUtil.getVcsFor(myProject, file) != null);
       myCheckSet.clear();
     }
     if (files.isEmpty()) return;
