@@ -16,10 +16,7 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 
@@ -80,6 +77,7 @@ internal constructor(private val project: Project,
     private var borderLineColor: Color? = null
 
     init {
+      cursor = Cursor.getDefaultCursor()
       updateColors()
     }
 
