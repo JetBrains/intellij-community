@@ -567,6 +567,24 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(getPsiDocumentManager().isCommitted(document));
   }
 
+  public void testDoNotAutoCommitIfModalDialogSuddenlyAppears() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "a"));
+    assertFalse(getPsiDocumentManager().isCommitted(document));
+
+    LaterInvocator.enterModal(new Object());
+
+    waitForCommits();
+    assertFalse(getPsiDocumentManager().isCommitted(document));
+
+    LaterInvocator.leaveAllModals();
+    waitForCommits();
+    assertTrue(getPsiDocumentManager().isCommitted(document));
+  }
+
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
     PsiFile psiFile = findFile(vFile);
