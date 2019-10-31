@@ -187,6 +187,7 @@ public class CheckboxTreeHelper {
         if (!(o instanceof CheckedTreeNode)) return false;
         Rectangle rowBounds = tree.getRowBounds(row);
         cellRenderer.setBounds(rowBounds);
+        cellRenderer.validate();
         Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
         checkBounds.setLocation(rowBounds.getLocation());
 
