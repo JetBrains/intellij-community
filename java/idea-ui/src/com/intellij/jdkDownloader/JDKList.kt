@@ -107,7 +107,7 @@ object JDKListDownloader {
     get() {
       val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
       if (!registry.isNullOrBlank()) return registry
-      return "http://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
+      return "https://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
     }
 
   fun downloadModel(progress: ProgressIndicator?, feedUrl: String = JDKListDownloader.feedUrl): List<JDKItem> {
