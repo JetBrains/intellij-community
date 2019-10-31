@@ -19,6 +19,12 @@ import java.util.*;
 
 class JpsCompilationOutputLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
+  private static final String RESOURCES_PRODUCTION = "resources-production";
+  private static final String JAVA_PRODUCTION = "java-production";
+  private static final String RESOURCES_TEST = "resources-test";
+  private static final String JAVA_TEST = "java-test";
+  private static final String PRODUCTION = "production";
+  private static final String TEST = "test";
   private final JpsServerClient myClient;
   private final Project myProject;
   private final String myProjectPath;
@@ -43,9 +49,9 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     progressIndicatorManager.getProgressIndicator().checkCanceled();
 
     if (affectedModules.size() > 0) {
-      long l = System.currentTimeMillis();
+      long start = System.currentTimeMillis();
       Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(progressIndicatorManager, affectedModules);
-      LOG.warn("Compilationms download took :" + (System.currentTimeMillis() - l));
+      LOG.info("Download of compilation outputs took: " + (System.currentTimeMillis() - start));
       myTmpFolderToModuleName = downloadResultsPair.second;
       if (!downloadResultsPair.first) return LoaderStatus.FAILED;
     }
@@ -174,41 +180,41 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
                                                            @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
     Set<AffectedModule> result = new HashSet<>();
     affectedModules.forEach(affectedModule -> {
-      if (affectedModule.getType().equals("java-production")) {
-        BuildTargetState targetState = commitModulesState.get("resources-production").get(affectedModule.getName());
+      if (affectedModule.getType().equals(JAVA_PRODUCTION)) {
+        BuildTargetState targetState = commitModulesState.get(RESOURCES_PRODUCTION).get(affectedModule.getName());
         if (targetState == null) {
           result.add(affectedModule);
           return;
         }
         String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
-        result.add(new AffectedModule("production", affectedModule.getName(), hash, affectedModule.getOutPath()));
+        result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
-      if (affectedModule.getType().equals("resources-production")) {
-        BuildTargetState targetState = commitModulesState.get("java-production").get(affectedModule.getName());
+      if (affectedModule.getType().equals(RESOURCES_PRODUCTION)) {
+        BuildTargetState targetState = commitModulesState.get(JAVA_PRODUCTION).get(affectedModule.getName());
         if (targetState == null) {
           result.add(affectedModule);
           return;
         }
         String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
-        result.add(new AffectedModule("production", affectedModule.getName(), hash, affectedModule.getOutPath()));
+        result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
-      if (affectedModule.getType().equals("java-test")) {
-        BuildTargetState targetState = commitModulesState.get("resources-test").get(affectedModule.getName());
+      if (affectedModule.getType().equals(JAVA_TEST)) {
+        BuildTargetState targetState = commitModulesState.get(RESOURCES_TEST).get(affectedModule.getName());
         if (targetState == null) {
           result.add(affectedModule);
           return;
         }
         String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
-        result.add(new AffectedModule("test", affectedModule.getName(), hash, affectedModule.getOutPath()));
+        result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
-      if (affectedModule.getType().equals("resources-test")) {
-        BuildTargetState targetState = commitModulesState.get("java-test").get(affectedModule.getName());
+      if (affectedModule.getType().equals(RESOURCES_TEST)) {
+        BuildTargetState targetState = commitModulesState.get(JAVA_TEST).get(affectedModule.getName());
         if (targetState == null) {
           result.add(affectedModule);
           return;
         }
         String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
-        result.add(new AffectedModule("test", affectedModule.getName(), hash, affectedModule.getOutPath()));
+        result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
     });
     return new ArrayList<>(result);

@@ -33,7 +33,9 @@ class JpsCacheLoader implements JpsOutputLoader {
     myTmpCacheFolder = null;
 
     File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
+    long start = System.currentTimeMillis();
     Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(context.getIndicatorManager(), context.getCommitId(), targetDir);
+    LOG.info("Download of jps caches took: " + (System.currentTimeMillis() - start));
     myTmpCacheFolder = downloadResultPair.second;
     if (!downloadResultPair.first) return LoaderStatus.FAILED;
     return LoaderStatus.COMPLETE;
