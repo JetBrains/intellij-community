@@ -2,6 +2,7 @@
 package com.intellij.remote.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.remote.CredentialsType
 import com.intellij.ui.StatusPanel
 
 interface RemoteSdkEditorForm {
@@ -14,4 +15,6 @@ interface RemoteSdkEditorForm {
   val bundleAccessor: BundleAccessor
 
   val sdkScopeController: SdkScopeController
+
+  fun isSdkInConsistentState(connectionType: CredentialsType<*>): Boolean
 }
