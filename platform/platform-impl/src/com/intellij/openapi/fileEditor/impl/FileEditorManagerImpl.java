@@ -1175,11 +1175,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Nullable
   public Editor openTextEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
     TextEditor textEditor = doOpenTextEditor(descriptor, focusEditor);
-    return textEditor == null ? null : getOpenedEditor(textEditor.getEditor(), focusEditor);
-  }
-
-  protected Editor getOpenedEditor(@NotNull Editor editor, final boolean focusEditor) {
-    return editor;
+    return textEditor == null ? null : textEditor.getEditor();
   }
 
   /**
