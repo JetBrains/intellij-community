@@ -7,10 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing.haveEqualElements
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.changes.ChangeListAdapter
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
@@ -53,8 +50,13 @@ class PredictionService(val project: Project) : Disposable {
     get() = taskController.inProgress
 
   private val changeListsListener = object : ChangeListAdapter() {
+    private var lastChanges: Collection<Change> = listOf()
     override fun changeListsChanged() {
-      calculatePrediction()
+      val changes = changeListManager.defaultChangeList.changes
+      if (!haveEqualElements(changes, lastChanges)) {
+        calculatePrediction()
+        lastChanges = changes
+      }
     }
   }
 
