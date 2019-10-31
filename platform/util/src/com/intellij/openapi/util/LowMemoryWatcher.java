@@ -26,7 +26,9 @@ public class LowMemoryWatcher {
   private static final AtomicBoolean ourNotificationsSuppressed = new AtomicBoolean();
 
   public static <T> T runWithNotificationsSuppressed(Computable<T> runnable) {
-    ourNotificationsSuppressed.set(true);
+    if (ourNotificationsSuppressed.getAndSet(true)) {
+      throw new IllegalStateException("runWithNotificationsSuppressed does not support reentrancy");
+    }
     try {
       return runnable.compute();
     }
