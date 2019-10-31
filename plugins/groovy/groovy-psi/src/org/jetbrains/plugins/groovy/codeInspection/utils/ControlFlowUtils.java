@@ -778,7 +778,7 @@ public final class ControlFlowUtils {
     return result;
   }
 
-  public static boolean mayUseResolvedVariable(@NotNull final PsiElement expression, @NotNull final PsiVariable resolved) {
+  public static boolean mayUseResolvedVariable(@NotNull PsiElement expression, @NotNull PsiVariable resolved) {
     if (resolved.hasModifier(JvmModifier.FINAL)) {
       return true;
     }

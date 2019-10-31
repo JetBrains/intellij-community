@@ -1329,6 +1329,59 @@ def foo() {
 }''', null
   }
 
+  void 'test allow use of outer context for nested DGM closures'() {
+    doTest '''
+def foo(x) {
+  x = 1
+  def cl1 = 1.with { 2.with { <caret>x } }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test detect changed field'() {
+    doTest '''
+class A {
+  def field = 1
+  def foo() {
+    field = 'q'
+    1.with{ <caret>field }
+  }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test field changed inside closure'() {
+    doTest '''
+class A {
+
+    def counter
+
+    def foo() {
+        1.with { counter = it }
+        <caret>counter
+    }
+
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test field changed inside closure 2'() {
+    doTest '''
+class E {}
+class E1 extends E{}
+class E2 extends E{}
+class A {
+
+    def counter
+
+    def foo() {
+        counter = null as E1
+        [].each { counter = null as E2 }
+        <caret>counter
+    }
+
+}''', "E"
+  }
+
   void 'test parenthesized expression'() {
     doTest '''
 def foo(def p) {
@@ -1337,10 +1390,10 @@ def foo(def p) {
 }''', JAVA_LANG_INTEGER
   }
 
-  void 'test simple example'() {
+  void 'test assignment inside closure'() {
     doTest '''
   def foo() {
-    def x
+    def x = 'q'
     1.with {
       x = 1
     }
@@ -1349,7 +1402,7 @@ def foo(def p) {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test poly example'() {
+  void 'test assignment inside closure 2'() {
     doTest '''
 class A{}
 class B extends A{}
@@ -1364,7 +1417,7 @@ def foo() {
 ''', "A"
   }
 
-  void 'test poly middle'() {
+  void 'test no changes for null type inside closure'() {
     doTest '''
 def foo() {
   def x

@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -152,6 +153,17 @@ class InferenceCache {
   private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult,
                               Set<Instruction> storingInstructions) {
     myVarTypes.accumulateAndGet(dfaResult, (oldState, newState) -> addDfaResult(oldState, newState, storingInstructions));
+  }
+
+  @Nullable
+  ResolvedVariableDescriptor getResolvedDescriptor(@NotNull String name) {
+    for (Object descr : myVarIndexes.getValue().keys()) {
+      VariableDescriptor descriptor = (VariableDescriptor)descr;
+      if (descriptor instanceof ResolvedVariableDescriptor && descriptor.getName().equals(name)) {
+        return (ResolvedVariableDescriptor)descriptor;
+      }
+    }
+    return null;
   }
 
   @NotNull
