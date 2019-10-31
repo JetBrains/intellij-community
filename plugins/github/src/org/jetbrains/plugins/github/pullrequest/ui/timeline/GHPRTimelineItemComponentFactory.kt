@@ -72,15 +72,13 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
     val reviewPanel = VerticalBox().apply {
+      add(Box.createRigidArea(JBDimension(0, 4)))
       if (review.bodyHTML.isNotEmpty()) {
         add(HtmlEditorPane(review.bodyHTML).apply {
-          border = JBUI.Borders.empty(4, 0)
+          border = JBUI.Borders.emptyBottom(12)
         })
       }
-      add(Box.createRigidArea(JBDimension(0, 6)))
-      add(GHPRReviewThreadsPanel(reviewThreadsModel, ::createReviewThread).apply {
-        border = JBUI.Borders.empty(2, 0)
-      })
+      add(GHPRReviewThreadsPanel(reviewThreadsModel, ::createReviewThread))
     }
 
     val icon = when (review.state) {
@@ -101,12 +99,16 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createReviewThread(thread: GHPRReviewThreadModel): JComponent {
-    val panel = JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
-      .addToTop(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .andTransparent()
+    val panel = VerticalBox().apply {
+      isOpaque = false
+      add(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
+      add(Box.createRigidArea(JBDimension(0, 12)))
+      add(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
+    }
 
     if (reviewService.canComment()) {
-      panel.addToBottom(GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
+      panel.add(Box.createRigidArea(JBDimension(0, 12)))
+      panel.add(GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
         }

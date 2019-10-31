@@ -9,7 +9,6 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -30,14 +29,11 @@ internal constructor(private val project: Project,
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent {
-    val wrapper = RoundedPanel().apply {
-      border = JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP)
-    }
+    val wrapper = RoundedPanel()
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
-
     val panel = JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
-      .withBorder(JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP))
+      .withBorder(JBUI.Borders.empty(12, 12))
       .andTransparent()
 
     if (reviewService.canComment()) {
@@ -46,7 +42,7 @@ internal constructor(private val project: Project,
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
         }
       }.apply {
-        border = JBUI.Borders.emptyBottom(10)
+        border = JBUI.Borders.emptyTop(12)
       }
       panel.addToBottom(replyField)
     }
@@ -56,9 +52,7 @@ internal constructor(private val project: Project,
   }
 
   override fun createCommentComponent(diffLine: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
-    val wrapper = RoundedPanel().apply {
-      border = JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP)
-    }
+    val wrapper = RoundedPanel()
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
     val commentField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Comment") { text ->
@@ -66,7 +60,7 @@ internal constructor(private val project: Project,
         onSuccess(it)
       }
     }.apply {
-      border = JBUI.Borders.empty(10)
+      border = JBUI.Borders.empty(12)
     }
 
     wrapper.setContent(commentField)

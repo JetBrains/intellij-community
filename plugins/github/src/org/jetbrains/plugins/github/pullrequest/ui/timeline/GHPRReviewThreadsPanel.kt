@@ -1,17 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import java.awt.Graphics
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel, private val threadComponentFactory: (GHPRReviewThreadModel) -> JComponent)
-  : VerticalBox(), ComponentWithEmptyText {
+  : JPanel(VerticalLayout(12)), ComponentWithEmptyText {
 
   private val statusText = object : StatusText(this) {
     init {
@@ -22,6 +23,8 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel, private val threadCo
   }
 
   init {
+    isOpaque = false
+
     model.addListDataListener(object : ListDataListener {
       override fun intervalRemoved(e: ListDataEvent) {
         for (i in e.index1 downTo e.index0) {

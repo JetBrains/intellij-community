@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MacUIUtil
@@ -23,7 +23,7 @@ import javax.swing.event.ListDataListener
 
 class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRReviewCommentModel>,
                                     private val avatarIconsProvider: GHAvatarIconsProvider)
-  : JPanel(VerticalFlowLayout(0, JBUI.scale(10))) {
+  : JPanel(VerticalLayout(8)) {
 
   private val foldModel = SingleValueModel(true)
   private val foldThreshold = 2
