@@ -424,8 +424,13 @@ public class LaterInvocator {
           doRun(lastInfo);
           lastInfo.markDone();
         }
-        catch (ProcessCanceledException ignored) { }
+        catch (ProcessCanceledException ignored) {
+
+        }
         catch (Throwable t) {
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            ExceptionUtil.rethrow(t);
+          }
           LOG.error(t);
         }
         finally {

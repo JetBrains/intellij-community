@@ -358,9 +358,6 @@ public class Alarm implements Disposable {
         }
       }
       catch (ProcessCanceledException ignored) { }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
     }
 
     @Async.Execute

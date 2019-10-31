@@ -1884,7 +1884,7 @@ public final class UIUtil {
         ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
       }
       catch (Exception e) {
-        getLogger().error(e);
+        ExceptionUtil.rethrow(e);
       }
 
       if (i % 10000 == 0) {

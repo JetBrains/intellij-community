@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -109,7 +110,7 @@ public final class IdeEventQueue extends EventQueue {
   @NotNull
   private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
   @Nullable
-  private AWTEvent myCurrentSequencedEvent = null;
+  private AWTEvent myCurrentSequencedEvent;
   private volatile long myLastActiveTime = System.nanoTime();
   private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
@@ -630,6 +631,9 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void processException(@NotNull Throwable t) {
+    if (myTestMode) {
+      ExceptionUtil.rethrow(t);
+    }
     if (!myToolkitBugsProcessor.process(t)) {
       StartupAbortedException.processException(t);
     }
@@ -737,8 +741,7 @@ public final class IdeEventQueue extends EventQueue {
 
     // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
     // Key event dispatcher resets its state on KEY_RELEASED event
-    if (e.getID() == KeyEvent.KEY_TYPED &&
-        myKeyEventDispatcher.isPressedWasProcessed()) {
+    if (e.getID() == KeyEvent.KEY_TYPED && myKeyEventDispatcher.isPressedWasProcessed()) {
       assert e instanceof KeyEvent;
       ((KeyEvent)e).consume();
     }

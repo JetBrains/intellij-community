@@ -234,6 +234,9 @@ public class QueueProcessor<T> {
       throw e;
     }
     catch (Throwable e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw e;
+      }
       try {
         LOG.error(e);
       }
