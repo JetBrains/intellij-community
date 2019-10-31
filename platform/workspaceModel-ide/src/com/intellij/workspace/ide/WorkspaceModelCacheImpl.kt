@@ -1,4 +1,5 @@
-package com.intellij.workspace.legacyBridge.intellij
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.workspace.ide
 
 import com.google.common.hash.Hashing
 import com.intellij.ide.plugins.PluginManager
@@ -12,9 +13,9 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
-import com.intellij.util.pooledThreadSingleAlarm
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
@@ -23,11 +24,12 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
-internal class ProjectModelCacheImpl(private val project: Project, parentDisposable: Disposable): Disposable {
+internal class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable): Disposable {
   private val LOG = Logger.getInstance(javaClass)
 
   private val cacheFile: File
-  private val serializer: EntityStorageSerializer = KryoEntityStorageSerializer(PluginAwareEntityTypesResolver)
+  private val serializer: EntityStorageSerializer = KryoEntityStorageSerializer(
+    PluginAwareEntityTypesResolver)
 
   init {
     Disposer.register(parentDisposable, this)
@@ -43,7 +45,7 @@ internal class ProjectModelCacheImpl(private val project: Project, parentDisposa
 
     LOG.info("Project Model Cache at $cacheFile")
 
-    project.messageBus.connect(this).subscribe(ProjectModelTopics.CHANGED, object : ProjectModelChangeListener {
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) = LOG.bracket("${javaClass.simpleName}.EntityStoreChange") {
         saveAlarm.request()
       }
@@ -51,7 +53,7 @@ internal class ProjectModelCacheImpl(private val project: Project, parentDisposa
   }
 
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {
-    val storage = ProjectModel.getInstance(project).entityStore.current
+    val storage = WorkspaceModel.getInstance(project).entityStore.current
 
     if (!cachesInvalidated.get()) {
       LOG.info("Saving project model cache to $cacheFile")
@@ -118,7 +120,7 @@ internal class ProjectModelCacheImpl(private val project: Project, parentDisposa
   }
 
   companion object {
-    private val LOG = logger<ProjectModelCacheImpl>()
+    private val LOG = logger<WorkspaceModelCacheImpl>()
 
     private val cacheDir = appSystemDir.resolve("projectModelCache").toFile()
 

@@ -1,16 +1,17 @@
-package com.intellij.workspace.legacyBridge.intellij
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.workspace.ide
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.workspace.api.*
 
-class ProjectModelImpl(project: Project): ProjectModel, Disposable {
+class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
 
   private val projectEntities: TypedEntityStorageBuilder
 
   private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode
-  private val cache = if (cacheEnabled) ProjectModelCacheImpl(project, this) else null
+  private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
 
   override val entityStore: EntityStoreImpl
 
@@ -18,7 +19,7 @@ class ProjectModelImpl(project: Project): ProjectModel, Disposable {
     // TODO It's possible to load this cache from the moment we know project path
     //  Like in ProjectLifecycleListener or something
 
-    val initialContent = ProjectModelInitialTestContent.pop()
+    val initialContent = WorkspaceModelInitialTestContent.pop()
     if (initialContent != null) {
       projectEntities = TypedEntityStorageBuilder.from(initialContent)
     } else if (cache != null) {
@@ -52,14 +53,16 @@ class ProjectModelImpl(project: Project): ProjectModel, Disposable {
   private class ProjectModelEntityStore(private val project: Project, initialStorage: TypedEntityStorage)
     : EntityStoreImpl(initialStorage) {
     override fun onBeforeChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
-      project.messageBus.syncPublisher(ProjectModelTopics.CHANGED).beforeChanged(
-        EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
+      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(
+        EntityStoreChangedImpl(entityStore = this, storageBefore = before,
+                                                                             storageAfter = after, changes = changes)
       )
     }
 
     override fun onChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
-      project.messageBus.syncPublisher(ProjectModelTopics.CHANGED).changed(
-        EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
+      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(
+        EntityStoreChangedImpl(entityStore = this, storageBefore = before,
+                                                                             storageAfter = after, changes = changes)
       )
     }
   }

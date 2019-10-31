@@ -18,14 +18,13 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.graph.*
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.storagePlace
+import com.intellij.workspace.ide.*
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.graph.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
@@ -82,7 +81,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         }
       })
 
-      myMessageBusConnection.subscribe(ProjectModelTopics.CHANGED, object : ProjectModelChangeListener {
+      myMessageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
@@ -284,7 +283,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     }))
   }
 
-  private val entityStore by lazy { ProjectModel.getInstance(project).entityStore }
+  private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStore }
 
   private fun loadModules(entities: List<ModuleEntity>) {
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
@@ -388,7 +387,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     val moduleFile = File(filePath)
 
-    ProjectModel.getInstance(project).updateProjectModel { builder ->
+    WorkspaceModel.getInstance(project).updateProjectModel { builder ->
       JpsProjectEntitiesLoader.loadModule(moduleFile, project.storagePlace!!, builder)
     }
 

@@ -6,7 +6,7 @@ import kotlin.concurrent.getOrSet
 
 private val bracketIndent = ThreadLocal<Int>()
 
-fun <R> Logger.bracket(message: String, block: () -> R): R {
+internal fun <R> Logger.bracket(message: String, block: () -> R): R {
   val indentLevel = bracketIndent.getOrSet { 0 }
   val indent = "  ".repeat(indentLevel)
 
@@ -22,7 +22,7 @@ fun <R> Logger.bracket(message: String, block: () -> R): R {
 }
 
 // TODO Drop? Use standard function? Review usages.
-fun executeOrQueueOnDispatchThread(block: () -> Unit) {
+internal fun executeOrQueueOnDispatchThread(block: () -> Unit) {
   val application = ApplicationManager.getApplication()
   if (application.isDispatchThread) {
     block()

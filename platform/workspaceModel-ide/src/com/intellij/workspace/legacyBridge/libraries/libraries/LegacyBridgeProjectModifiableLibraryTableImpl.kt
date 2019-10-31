@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.ExternalEntitySource
 import com.intellij.workspace.ide.IdeUiEntitySource
-import com.intellij.workspace.legacyBridge.intellij.ProjectModel
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 
 class LegacyBridgeProjectModifiableLibraryTableImpl(
@@ -30,7 +30,7 @@ class LegacyBridgeProjectModifiableLibraryTableImpl(
   }
 
   private val libraries
-    get() = ProjectModel.getInstance(project).entityStore.cachedValue(librariesValue, myLibrariesToAdd to myLibrariesToRemove)
+    get() = WorkspaceModel.getInstance(project).entityStore.cachedValue(librariesValue, myLibrariesToAdd to myLibrariesToRemove)
 
   private fun getLibraryModifiableModel(library: LibraryViaTypedEntity): LegacyBridgeLibraryModifiableModelImpl {
     return LegacyBridgeLibraryModifiableModelImpl(
@@ -105,7 +105,7 @@ class LegacyBridgeProjectModifiableLibraryTableImpl(
     modelIsCommittedOrDisposed = true
 
     libraryTable.setNewLibraryInstances(myLibrariesToAdd)
-    ProjectModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
   }

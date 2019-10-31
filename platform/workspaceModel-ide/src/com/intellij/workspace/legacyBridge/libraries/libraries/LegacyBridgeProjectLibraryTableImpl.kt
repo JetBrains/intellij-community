@@ -10,14 +10,14 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.EventDispatcher
+import com.intellij.util.containers.ConcurrentMultiMap
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
-import com.intellij.workspace.legacyBridge.intellij.ProjectModel
-import com.intellij.workspace.legacyBridge.intellij.ProjectModelChangeListener
-import com.intellij.workspace.legacyBridge.intellij.ProjectModelTopics
-import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.ConcurrentMultiMap
+import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.WorkspaceModelChangeListener
+import com.intellij.workspace.ide.WorkspaceModelTopics
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -33,7 +33,7 @@ class LegacyBridgeProjectLibraryTableImpl(
 
   private val newLibraryInstances = mutableMapOf<LibraryId, LegacyBridgeLibraryImpl>()
 
-  private val entityStore: TypedEntityStore = ProjectModel.getInstance(parentProject).entityStore
+  private val entityStore: TypedEntityStore = WorkspaceModel.getInstance(parentProject).entityStore
 
   @ApiStatus.Internal
   internal fun setNewLibraryInstances(addedInstances: List<LegacyBridgeLibraryImpl>) {
@@ -72,7 +72,7 @@ class LegacyBridgeProjectLibraryTableImpl(
   init {
     val messageBusConnection = project.messageBus.connect(this)
 
-    messageBusConnection.subscribe(ProjectModelTopics.CHANGED, object : ProjectModelChangeListener {
+    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: EntityStoreChanged) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
           .filterIsInstance<EntityChange.Removed<LibraryEntity>>()

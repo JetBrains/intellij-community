@@ -15,9 +15,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleLibraryTable
-import com.intellij.workspace.legacyBridge.intellij.ProjectModel
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -93,7 +93,7 @@ class LegacyBridgeLibraryImpl(
       filePointerProvider = filePointerProvider,
       modifiableModelFactory = modifiableModelFactory ?: { libraryImpl ->
         LegacyBridgeLibraryModifiableModelImpl(libraryImpl, committer = { _, diff ->
-          ProjectModel.getInstance(project).updateProjectModel {
+          WorkspaceModel.getInstance(project).updateProjectModel {
             it.addDiff(diff)
           }
         })

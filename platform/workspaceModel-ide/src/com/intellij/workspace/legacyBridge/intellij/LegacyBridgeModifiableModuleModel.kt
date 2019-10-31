@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.storagePlace
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 import org.jetbrains.jps.util.JpsPathUtil
@@ -164,7 +165,7 @@ class LegacyBridgeModifiableModuleModel(
       }
     }
 
-    ProjectModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
   }

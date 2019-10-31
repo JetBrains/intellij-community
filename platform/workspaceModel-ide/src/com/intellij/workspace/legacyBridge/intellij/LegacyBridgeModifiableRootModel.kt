@@ -23,6 +23,7 @@ import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEnt
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
 import com.intellij.util.isEmpty
+import com.intellij.workspace.ide.WorkspaceModel
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -287,7 +288,7 @@ class LegacyBridgeModifiableRootModel(
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
     } else {
-      ProjectModel.getInstance(project).updateProjectModel {
+      WorkspaceModel.getInstance(project).updateProjectModel {
         it.addDiff(diff)
       }
     }

@@ -26,9 +26,9 @@ import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
 import com.intellij.workspace.ide.storagePlace
-import com.intellij.workspace.legacyBridge.intellij.ProjectModel
-import com.intellij.workspace.legacyBridge.intellij.ProjectModelChangeListener
-import com.intellij.workspace.legacyBridge.intellij.ProjectModelTopics
+import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.WorkspaceModelChangeListener
+import com.intellij.workspace.ide.WorkspaceModelTopics
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
@@ -63,7 +63,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val (changedEntities, builder) = data.reloadFromChangedFiles(changes, fileContentReader)
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       runWriteAction {
-        ProjectModel.getInstance(project).updateProjectModel { updater ->
+        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           updater.replaceBySource({ it in changedEntities }, builder.toStorage())
         }
         sourcesToSave.removeAll(changedEntities)
@@ -88,7 +88,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
       }
     })
-    project.messageBus.connect().subscribe(ProjectModelTopics.CHANGED, object : ProjectModelChangeListener {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) {
         event.getAllChanges().forEach {
           when (it) {
@@ -113,7 +113,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val builder = TypedEntityStorageBuilder.create()
     serializationData.loadAll(fileContentReader, builder)
     WriteAction.runAndWait<RuntimeException> {
-      ProjectModel.getInstance(project).updateProjectModel { updater ->
+      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
         updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
       }
     }
@@ -121,7 +121,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
     val data = serializationData.get() ?: return
-    val storage = ProjectModel.getInstance(project).entityStore.current
+    val storage = WorkspaceModel.getInstance(project).entityStore.current
     val affectedSources = synchronized(sourcesToSave) {
       val copy = HashSet(sourcesToSave)
       sourcesToSave.clear()

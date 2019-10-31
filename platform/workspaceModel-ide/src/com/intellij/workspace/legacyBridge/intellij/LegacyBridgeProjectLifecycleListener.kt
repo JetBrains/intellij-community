@@ -11,6 +11,8 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.WorkspaceModelImpl
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
@@ -48,7 +50,7 @@ internal class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCus
     container.registerComponent(ProjectRootManager::class.java, LegacyBridgeProjectRootManager::class.java, pluginDescriptor, true)
 
     container.registerService(LegacyBridgeFilePointerProvider::class.java, LegacyBridgeFilePointerProviderImpl::class.java, pluginDescriptor, false)
-    container.registerService(ProjectModel::class.java, ProjectModelImpl::class.java, pluginDescriptor, false)
+    container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, LegacyBridgeProjectLibraryTableImpl::class.java, pluginDescriptor, true)
     container.registerService(ModifiableModelCommitterService::class.java, LegacyBridgeModifiableModelCommitterService::class.java, pluginDescriptor, true)
   }

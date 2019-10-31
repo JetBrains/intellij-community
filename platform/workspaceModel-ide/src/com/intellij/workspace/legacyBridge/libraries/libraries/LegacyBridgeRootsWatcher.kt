@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
-import com.intellij.workspace.legacyBridge.intellij.ProjectModelChangeListener
-import com.intellij.workspace.legacyBridge.intellij.ProjectModelTopics
+import com.intellij.workspace.ide.WorkspaceModelChangeListener
+import com.intellij.workspace.ide.WorkspaceModelTopics
 
 /**
  * Provides rootsChanged events if roots validity was changed.
@@ -28,7 +28,7 @@ class LegacyBridgeRootsWatcher(
 
   init {
     val messageBusConnection = project.messageBus.connect(project)
-    messageBusConnection.subscribe(ProjectModelTopics.CHANGED, object : ProjectModelChangeListener {
+    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) = LOG.bracket("LibraryRootsWatcher.EntityStoreChange") {
         // TODO It's also possible to calculate it on diffs
 

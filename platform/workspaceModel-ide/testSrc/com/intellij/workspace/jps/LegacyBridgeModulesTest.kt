@@ -22,13 +22,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.IdeUiEntitySource
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.storagePlace
+import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener
-import com.intellij.workspace.legacyBridge.intellij.ProjectModel
-import com.intellij.workspace.legacyBridge.intellij.ProjectModelInitialTestContent
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.junit.Assert.*
@@ -81,11 +77,11 @@ class LegacyBridgeModulesTest {
       }
 
       assertTrue(moduleManager.modules.contains(module))
-      assertSame(ProjectModel.getInstance(project).entityStore, module.entityStore)
+      assertSame(WorkspaceModel.getInstance(project).entityStore, module.entityStore)
 
       val contentRootUrl = temporaryDirectoryRule.newPath("contentRoot").toVirtualFileUrl()
 
-      ProjectModel.getInstance(project).updateProjectModel {
+      WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = it.resolve(module.moduleEntityId)!!
         it.addContentRootEntity(contentRootUrl, emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
       }
@@ -162,7 +158,7 @@ class LegacyBridgeModulesTest {
       }
 
       val modulePath = File(project.basePath, "oldName.iml").toVirtualFileUrl()
-      val projectModel = ProjectModel.getInstance(project)
+      val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
         it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, project.storagePlace!!))
@@ -187,7 +183,7 @@ class LegacyBridgeModulesTest {
 
       val dir = File(project.basePath, "dir")
       val modulePath = File(project.basePath, "oldName.iml").toVirtualFileUrl()
-      val projectModel = ProjectModel.getInstance(project)
+      val projectModel = WorkspaceModel.getInstance(project)
 
       val projectPlace = project.storagePlace!!
 
@@ -292,7 +288,7 @@ class LegacyBridgeModulesTest {
         moduleLibraryEntity.persistentId(), false, ModuleDependencyItem.DependencyScope.COMPILE))
     }
 
-    ProjectModelInitialTestContent.withInitialContent(builder.toStorage()) {
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
       ProjectManagerEx.getInstanceEx().openProject(project)
       disposableRule.disposable.attach { ProjectUtil.closeAndDispose(project) }
