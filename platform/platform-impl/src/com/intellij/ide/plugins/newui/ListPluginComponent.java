@@ -401,11 +401,8 @@ public class ListPluginComponent extends JPanel {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
-    if (myEnableDisableButton != null) {
-      myEnableDisableButton.setVisible(!errors);
-    }
     if (myAlignButton != null) {
-      myAlignButton.setVisible(errors || myRestartButton != null);
+      myAlignButton.setVisible(myRestartButton != null);
     }
 
     if (errors) {
@@ -417,11 +414,9 @@ public class ListPluginComponent extends JPanel {
       }
 
       Ref<String> enableAction = new Ref<>();
-      Ref<String> disableAction = new Ref<>();
-      String message = myPluginModel.getErrorMessage(myPlugin, enableAction, disableAction);
+      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
       myErrorComponent = ErrorComponent.show(myErrorPanel, BorderLayout.CENTER, myErrorComponent, message, enableAction.get(),
-                                             enableAction.isNull() ? null : () -> handleErrors(true),
-                                             disableAction.get(), disableAction.isNull() ? null : () -> handleErrors(false));
+                                             enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
       myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
 
       if (addListeners) {
@@ -439,15 +434,6 @@ public class ListPluginComponent extends JPanel {
     }
     if (myUpdateLicensePanel != null) {
       myUpdateLicensePanel.setVisible(!errors);
-    }
-  }
-
-  private void handleErrors(boolean enable) {
-    if (enable) {
-      myPluginModel.enableRequiredPlugins(myPlugin);
-    }
-    else {
-      myPluginModel.disableWithRequiredPlugins(myPlugin);
     }
   }
 
@@ -590,41 +576,31 @@ public class ListPluginComponent extends JPanel {
       return;
     }
 
-    boolean showUpdateAndState = true;
-    for (ListPluginComponent component : selection) {
-      if (myPluginModel.hasErrors(component.myPlugin)) {
-        showUpdateAndState = false;
+    JButton[] updateButtons = new JButton[size];
+
+    for (int i = 0; i < size; i++) {
+      JButton button = selection.get(i).myUpdateButton;
+      if (button == null || !button.isVisible()) {
+        updateButtons = null;
         break;
       }
+      updateButtons[i] = button;
     }
 
-    if (showUpdateAndState) {
-      JButton[] updateButtons = new JButton[size];
-
-      for (int i = 0; i < size; i++) {
-        JButton button = selection.get(i).myUpdateButton;
-        if (button == null || !button.isVisible()) {
-          updateButtons = null;
-          break;
-        }
-        updateButtons[i] = button;
+    if (updateButtons != null) {
+      group.add(new ButtonAnAction(updateButtons));
+      if (size > 1) {
+        return;
       }
-
-      if (updateButtons != null) {
-        group.add(new ButtonAnAction(updateButtons));
-        if (size > 1) {
-          return;
-        }
-      }
-
-      Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-      group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          myPluginModel.changeEnableDisable(result.second, result.first);
-        }
-      });
     }
+
+    Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myPluginModel.changeEnableDisable(result.second, result.first);
+      }
+    });
 
     for (ListPluginComponent component : selection) {
       if (component.myUninstalled || component.myPlugin.isBundled()) {
@@ -704,12 +680,6 @@ public class ListPluginComponent extends JPanel {
     }
     else if (!restart && !update) {
       if (keyCode == KeyEvent.VK_SPACE) {
-        for (ListPluginComponent component : selection) {
-          if (myPluginModel.hasErrors(component.myPlugin)) {
-            return;
-          }
-        }
-
         if (selection.size() == 1) {
           myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
         }

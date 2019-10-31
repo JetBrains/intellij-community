@@ -756,13 +756,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
-    enableRows(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
-    updateAfterEnableDisable();
+    changeEnableDisable(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
   }
 
   public void changeEnableDisable(@NotNull IdeaPluginDescriptor[] plugins, boolean state) {
     enableRows(plugins, state);
     updateAfterEnableDisable();
+    runInvalidFixCallback();
   }
 
   @Override
@@ -781,33 +781,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       return;
     }
 
-    Set<IdeaPluginDescriptor> requiredPlugins = prepareRequiredPlugins(requiredPluginIds, Boolean.TRUE);
-
-    if (!requiredPlugins.isEmpty()) {
-      enablePlugins(requiredPlugins);
-      runInvalidFixCallback();
-    }
-  }
-
-  void disableWithRequiredPlugins(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId id = descriptor.getPluginId();
-    Set<PluginId> requiredPluginIds = ContainerUtil.newHashSet(id);
-
-    Set<PluginId> pluginIds = getRequiredPlugins(id);
-    if (!ContainerUtil.isEmpty(pluginIds)) {
-      requiredPluginIds.addAll(pluginIds);
-    }
-
-    Set<IdeaPluginDescriptor> requiredPlugins = prepareRequiredPlugins(requiredPluginIds, Boolean.FALSE);
-
-    if (!requiredPlugins.isEmpty()) {
-      disablePlugins(requiredPlugins);
-      runInvalidFixCallback();
-    }
-  }
-
-  @NotNull
-  private Set<IdeaPluginDescriptor> prepareRequiredPlugins(@NotNull Set<PluginId> requiredPluginIds, @NotNull Boolean state) {
     List<IdeaPluginDescriptor> allPlugins = getAllPlugins();
     Set<IdeaPluginDescriptor> requiredPlugins = new HashSet<>();
 
@@ -821,7 +794,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
           return false;
         });
         if (result != null) {
-          getEnabledMap().put(pluginId, state);
+          getEnabledMap().put(pluginId, Boolean.TRUE);
         }
       }
       if (result != null) {
@@ -829,7 +802,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
-    return requiredPlugins;
+    if (!requiredPlugins.isEmpty()) {
+      enablePlugins(requiredPlugins);
+    }
   }
 
   private void runInvalidFixCallback() {
@@ -969,9 +944,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor,
-                                @NotNull Ref<? super String> enableAction,
-                                @NotNull Ref<? super String> disableAction) {
+  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
     String message;
 
     Set<PluginId> requiredPlugins = getRequiredPlugins(pluginDescriptor.getPluginId());
@@ -982,15 +955,20 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       message = "The plugin requires IntelliJ IDEA Ultimate.";
     }
     else {
+      boolean[] enable = {true};
       String deps = StringUtil.join(requiredPlugins, id -> {
         IdeaPluginDescriptor plugin = findPlugin(id);
+        if (enable[0] && (plugin == null || PluginManagerCore.isIncompatible(plugin))) {
+          enable[0] = false;
+        }
         return StringUtil.wrapWithDoubleQuote(plugin != null ? plugin.getName() : id.getIdString());
       }, ", ");
 
       int size = requiredPlugins.size();
       message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
-      disableAction.set("Disable not loaded plugins");
+      if (enable[0]) {
+        enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
+      }
     }
 
     return message;
