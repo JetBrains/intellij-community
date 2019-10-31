@@ -36,11 +36,11 @@
                     interface="com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider" dynamic="true"/>
 
     <extensionPoint name="pathReferenceProvider"
-                    interface="com.intellij.openapi.paths.PathReferenceProvider"/>
+                    interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
     <extensionPoint name="anchorReferenceProvider"
-                    interface="com.intellij.openapi.paths.PathReferenceProvider"/>
+                    interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
     <extensionPoint name="dynamicContextProvider"
-                    interface="com.intellij.openapi.paths.DynamicContextProvider"/>
+                    interface="com.intellij.openapi.paths.DynamicContextProvider" dynamic="true"/>
 
 
     <extensionPoint name="intentionAction"
@@ -53,7 +53,7 @@
                     interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
 
     <extensionPoint name="intentionMenuContributor"
-                    interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor"/>
+                    interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor" dynamic="true"/>
 
     <extensionPoint name="wordBoundaryFilter"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
