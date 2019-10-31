@@ -16,14 +16,12 @@
 
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -39,7 +37,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-public class ResolveCache {
+public class ResolveCache implements Disposable {
   private final AtomicReferenceArray<Map> myPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
   private final AtomicReferenceArray<Map> myNonPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
 
@@ -55,6 +53,16 @@ public class ResolveCache {
         clearCache(isPhysical);
       }
     });
+    LowMemoryWatcher.register(() -> onLowMemory(), this);  // Android Studio: manual conflict resolution; should be discarded
+  }
+
+  private void onLowMemory() {
+    clearArray(myPhysicalMaps);
+    clearArray(myNonPhysicalMaps);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @FunctionalInterface
