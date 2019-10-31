@@ -183,7 +183,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     JPanel panel = new NonOpaquePanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
-    addToPanel(panel, gc);
+    addToPanel(panel, gc, false);
     return panel;
   }
 
@@ -194,13 +194,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   @Override
   public int gridWidth() {
-    return 2;
+    return myCommentBelow ? 2 : myResizeX ? 4 : 3;
   }
 
   @Override
-  public void addToPanel(JPanel panel, GridBagConstraints gc) {
+  public void addToPanel(JPanel panel, GridBagConstraints gc, boolean splitColumns) {
     if (constrainsValid()) {
-      new ComponentPanelImpl().addToPanel(panel, gc);
+      new ComponentPanelImpl(splitColumns).addToPanel(panel, gc);
     }
   }
 
@@ -317,8 +317,11 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private class ComponentPanelImpl extends ComponentPanel {
     private final JLabel label;
     private final JLabel comment;
+    private final boolean splitColumns;
 
-    private ComponentPanelImpl() {
+    private ComponentPanelImpl(boolean splitColumns) {
+      this.splitColumns = splitColumns;
+
       if ((StringUtil.isNotEmpty(myLabelText))) {
         label = new JLabel();
         LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(myLabelText).setToLabel(label);
@@ -408,10 +411,17 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       gc.fill = myResizeY ? GridBagConstraints.BOTH : myResizeX ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE;
       gc.weighty = myResizeY ? 1.0 : 0.0;
 
+      if (splitColumns) {
+        panel.add(myComponent, gc);
+      }
+
       if (StringUtil.isNotEmpty(myHTDescription) || !myCommentBelow) {
         JPanel componentPanel = new JPanel();
         componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
-        componentPanel.add(myComponent);
+
+        if (!splitColumns) {
+          componentPanel.add(myComponent);
+        }
 
         if (StringUtil.isNotEmpty(myHTDescription)) {
           ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
@@ -457,14 +467,33 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                 componentPanel.repaint();
               });
             });
+
+          panel.add(componentPanel, gc);
         }
         else if (!myCommentBelow) {
-          comment.setBorder(getCommentBorder());
-          componentPanel.add(comment);
+          if (splitColumns) {
+            gc.gridx ++;
+            gc.weightx = 0;
+            gc.fill = GridBagConstraints.NONE;
+            gc.weighty = 0.0;
+            panel.add(comment, gc);
+          }
+          else {
+            comment.setBorder(getCommentBorder());
+            componentPanel.add(comment);
+            panel.add(componentPanel, gc);
+          }
         }
-        panel.add(componentPanel, gc);
-      } else {
+      }
+      else if (!splitColumns) {
         panel.add(myComponent, gc);
+      }
+
+      if (!splitColumns && !myResizeX) {
+        gc.gridx ++;
+        gc.weightx = 1.0;
+        gc.fill = GridBagConstraints.REMAINDER;
+        panel.add(new JPanel(), gc);
       }
 
       gc.fill = GridBagConstraints.HORIZONTAL;
@@ -478,6 +507,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
         comment.setBorder(getCommentBorder());
         panel.add(comment, gc);
+
+        if (!myResizeX) {
+          gc.gridx ++;
+          gc.weightx = 1.0;
+          gc.fill = GridBagConstraints.REMAINDER;
+          panel.add(new JPanel(), gc);
+        }
       }
 
       myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);

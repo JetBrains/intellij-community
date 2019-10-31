@@ -260,7 +260,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
       gc.gridy++;
-      topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).
+      topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).resizeX(false).
         withComment("Combobox comment").createPanel(), gc);
 
       JBScrollPane pane = new JBScrollPane(createTable());
@@ -457,17 +457,17 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       rb3.addActionListener(al);
 
       JPanel p2 = UI.PanelFactory.grid().
-        add(UI.PanelFactory.panel(cb1).withComment("Comment 1").moveCommentRight()).
-        add(UI.PanelFactory.panel(cb2).withComment("Comment 2")).
-        add(UI.PanelFactory.panel(cb3).withTooltip(LONG_TEXT1)).
+        add(UI.PanelFactory.panel(cb1).resizeX(false).withComment("Comment 1").moveCommentRight()).
+        add(UI.PanelFactory.panel(cb2).resizeX(false).withComment("Comment 2")).
+        add(UI.PanelFactory.panel(cb3).resizeX(false).withTooltip(LONG_TEXT1)).
 
-        add(UI.PanelFactory.panel(rb1).withComment("No validation").moveCommentRight()).
-        add(UI.PanelFactory.panel(rb2).withComment("Warning checkbox validation").moveCommentRight()).
-        add(UI.PanelFactory.panel(rb3).withComment("Error checkbox validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb1).resizeX(false).withComment("No validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb2).resizeX(false).withComment("Warning checkbox validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb3).resizeX(false).withComment("Error checkbox validation").moveCommentRight()).
 
         createPanel();
 
-      JPanel p3 = UI.PanelFactory.grid().
+      JPanel p3 = UI.PanelFactory.grid().splitColumns().
         add(UI.PanelFactory.panel(new JComboBox<>(new String [] {"Default", "Non default"})).
           withLabel("Plugin update policy:").withComment("Ignore by Maven 3+").moveCommentRight()).
         add(UI.PanelFactory.panel(new JTextField()).withLabel("Thread count:").withComment("-T option").moveCommentRight()).
