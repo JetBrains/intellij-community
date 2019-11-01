@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
@@ -89,7 +90,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   public static GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
-    return createInstance(root, project, project, listenToRepoChanges);
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    return notNull(repository, createInstance(root, project, project, listenToRepoChanges));
   }
 
   /**
