@@ -88,6 +88,10 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   }
 
   @Override
+  public void render() {
+  }
+
+  @Override
   public void scrollToMarkdownSrcOffset(final int offset) {
     getBrowser().executeJavaScript(
       "if ('__IntelliJTools' in window) " +
@@ -102,6 +106,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
 
   @Override
   public void dispose() {
+    super.dispose();
     JBCefUtils.removeJSHandler(getBrowser().getClient(), JS_REQ_SET_SCROLL_Y);
     JBCefUtils.removeJSHandler(getBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER);
   }

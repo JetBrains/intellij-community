@@ -184,7 +184,8 @@ public class HwFacadeHelper {
       myBackBuffer = null;
       myTarget.removeComponentListener(myTargetListener);
       Window owner = SwingUtilities.getWindowAncestor(myTarget);
-      if (owner != null) owner.removeComponentListener(myOwnerListener);
+      assert owner != null;
+      owner.removeComponentListener(myOwnerListener);
     }
   }
 

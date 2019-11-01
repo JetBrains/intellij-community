@@ -40,7 +40,7 @@ public class JCEFHtmlPanel implements Disposable {
   private static final boolean USE_SIZE_WORKAROUND = SystemInfo.isWindows;
 
   static {
-    ourCefClient = JBCefApp.getCefClient();
+    ourCefClient = JBCefApp.createClient();
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
       @Override
       public void onAfterCreated(CefBrowser browser) {
@@ -113,10 +113,6 @@ public class JCEFHtmlPanel implements Disposable {
     myPanelWrapper.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
   }
 
-  public void setBackground(Color background) {
-    myPanelWrapper.setBackground(background);
-  }
-
   private boolean isHtmlLoaded() {
     // return ourUrl.equals(myCefBrowser.getURL()); 99% match due to protocols
     return myCefBrowser.getURL().contains(JCEFHtmlPanel.class.getSimpleName());
@@ -144,14 +140,6 @@ public class JCEFHtmlPanel implements Disposable {
   @NotNull
   protected String prepareHtml(@NotNull String html) {
     return html;
-  }
-
-  public void render() {
-  }
-
-  @Nullable
-  protected URL getStyle(boolean isDarcula) {
-    return null;
   }
 
   protected void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {

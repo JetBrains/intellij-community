@@ -48,7 +48,7 @@ public class JBCefApp {
     });
   }
 
-  public static CefClient getCefClient() {
+  public static CefClient createClient() {
     return ourCefApp.createClient();
   }
 }
