@@ -28,17 +28,17 @@ class PredictionService(val project: Project) : Disposable {
   private val userSettings = service<UserSettings>()
   private val LOCK = Object()
 
-  var prediction: Collection<VirtualFile> = emptyList()
-    private set
-  private var lastPredictionResult: PredictionResult? = null
+  private var predictionData: PredictionData = PredictionData.EmptyPrediction(PredictionData.EmptyPredictionReason.SERVICE_INIT)
 
-  val isReady: Boolean
-    get() = synchronized(LOCK) { predictionRequirements?.dataManager?.dataPack?.isFull ?: false }
+  val predictionToDisplay: Collection<VirtualFile>
+    get() = predictionData.predictionToDisplay
+
+  val isReadyToDisplay: Boolean
+    get() = predictionData is PredictionData.Prediction
 
   private val taskController = object : PredictionController(project, "ChangeReminder Calculation", this, {
     synchronized(LOCK) {
-      setPrediction(it.prediction)
-      lastPredictionResult = it
+      setPrediction(it)
     }
   }) {
     override fun inProgressChanged(value: Boolean) {
@@ -63,7 +63,7 @@ class PredictionService(val project: Project) : Disposable {
   private val dataPackChangeListener = DataPackChangeListener {
     synchronized(LOCK) {
       predictionRequirements?.filesHistoryProvider?.clear()
-      lastPredictionResult = null
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.DATA_PACK_CHANGED)
       calculatePrediction()
     }
   }
@@ -111,30 +111,37 @@ class PredictionService(val project: Project) : Disposable {
   }
 
   private fun removeDataManager() {
-    setPrediction(emptyList())
+    setEmptyPrediction(PredictionData.EmptyPredictionReason.DATA_MANAGER_REMOVED)
     val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
     predictionRequirements = null
     filesHistoryProvider.clear()
 
     dataManager.index.removeListener(indexingFinishedListener)
     dataManager.removeDataPackChangeListener(dataPackChangeListener)
-
-    lastPredictionResult = null
   }
 
   private fun calculatePrediction() = synchronized(LOCK) {
-    setPrediction(emptyList())
     val changes = changeListManager.defaultChangeList.changes
-    if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) return
-    val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
+    if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) {
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.TOO_MANY_FILES)
+      return
+    }
+    val (dataManager, filesHistoryProvider) = predictionRequirements ?: let {
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.REQUIREMENTS_NOT_MET)
+      return
+    }
     val changeListFiles = changes.map { ChangesUtil.getFilePath(it) }
-    val lastPrediction = lastPredictionResult
-    if (lastPrediction != null && haveEqualElements(lastPrediction.requestedFiles, changeListFiles)) {
-      setPrediction(lastPrediction.prediction)
+    val currentPredictionData = predictionData
+    if (currentPredictionData is PredictionData.Prediction &&
+        haveEqualElements(currentPredictionData.requestedFiles, changeListFiles)) {
+      setPrediction(currentPredictionData)
       return
     }
     if (dataManager.dataPack.isFull) {
       taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changeListFiles))
+    }
+    else {
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.DATA_PACK_IS_NOT_FULL)
     }
   }
 
@@ -155,8 +162,12 @@ class PredictionService(val project: Project) : Disposable {
     Disposer.dispose(projectLogListenerDisposable)
   }
 
-  private fun setPrediction(newPrediction: Collection<VirtualFile>) {
-    prediction = newPrediction
+  private fun setEmptyPrediction(reason: PredictionData.EmptyPredictionReason) {
+    setPrediction(PredictionData.EmptyPrediction(reason))
+  }
+
+  private fun setPrediction(newPrediction: PredictionData) {
+    predictionData = newPrediction
     changesViewManager.scheduleRefresh()
   }
 

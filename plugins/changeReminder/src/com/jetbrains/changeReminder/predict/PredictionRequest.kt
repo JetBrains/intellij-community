@@ -13,7 +13,7 @@ import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 internal class PredictionRequest(private val project: Project,
                                  private val dataManager: VcsLogData,
                                  private val filesHistoryProvider: FilesHistoryProvider,
-                                 val changeListFiles: Collection<FilePath>) {
+                                 private val changeListFiles: Collection<FilePath>) {
   private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): Collection<VirtualFile> =
     PredictionProvider(minProb = Registry.doubleValue("vcs.changeReminder.prediction.threshold"))
       .predictForgottenFiles(Commit(-1,
@@ -32,8 +32,11 @@ internal class PredictionRequest(private val project: Project,
       }
     }.flatten()
 
-  fun calculate(): Collection<VirtualFile> {
+  fun calculate(): PredictionData.Prediction {
     val rootFiles = getGitRootFiles(project, changeListFiles)
-    return getPredictedFiles(rootFiles)
+    return PredictionData.Prediction(
+      requestedFiles = changeListFiles,
+      prediction = getPredictedFiles(rootFiles)
+    )
   }
 }
