@@ -251,7 +251,7 @@ public class ChangesViewManager implements ChangesViewEx,
     return myToolWindowPanel.isAllowExcludeFromCommit();
   }
 
-  private static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
+  public static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
     @NotNull private static final RegistryValue isCommitSplitHorizontal =
       Registry.get("vcs.non.modal.commit.split.horizontal.if.no.diff.preview");
@@ -425,7 +425,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (isNonModal) {
         if (myCommitPanel == null) {
           myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
-          myCommitPanel = new ChangesViewCommitPanel(myView, this);
+          myCommitPanel = myChangesViewManager.createCommitPanel(myView, this);
           myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
           if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
@@ -722,6 +722,10 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
 
+  }
+
+  protected ChangesViewCommitPanel createCommitPanel(@NotNull ChangesListView myView, @NotNull ChangesViewToolWindowPanel changesViewToolWindowPanel) {
+      return new ChangesViewCommitPanel(myView, changesViewToolWindowPanel);
   }
 
   private static class MyContentDnDTarget extends VcsToolwindowDnDTarget {

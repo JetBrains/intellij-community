@@ -86,7 +86,7 @@ private fun JBPopup.showAbove(component: JComponent) {
 
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
-class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
+public open class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
   BorderLayoutPanel(), ChangesViewCommitWorkflowUi, EditorColorsListener, ComponentContainer, DataProvider {
 
   private val project get() = changesView.project
@@ -280,9 +280,13 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     changesView.isShowCheckboxes = true
     isVisible = true
 
-    contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES)
+    selectContent(contentManager)
     toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
     return true
+  }
+
+  protected open fun selectContent(contentManager: ChangesViewContentI) {
+    contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES)
   }
 
   override fun deactivate(isRestoreState: Boolean) {
@@ -308,7 +312,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     isHideToolWindowOnDeactivate = false
   }
 
-  private fun getVcsToolWindow(): ToolWindow? =
+  protected open fun getVcsToolWindow(): ToolWindow? =
     ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
 
   override fun expand(item: Any) {
