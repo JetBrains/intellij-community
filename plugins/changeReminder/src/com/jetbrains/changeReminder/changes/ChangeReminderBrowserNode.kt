@@ -40,7 +40,7 @@ class ChangeReminderBrowserNode(private val files: Collection<VirtualFile>,
     renderer.icon = AllIcons.Nodes.Related
     appendCount(renderer)
     val project = predictionService.project
-    if (predictionService.isReady) {
+    if (predictionService.isReadyToDisplay) {
       if (predictionService.inProgress) {
         renderer.appendCustomState(CALCULATING_ATTRIBUTE)
       }
