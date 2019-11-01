@@ -87,7 +87,8 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
 
         if (!doNotAddFoldingAgain) {
           for (String prefix : lastLinePrefix) {
-            if (lineText.startsWith(prefix) && (!prefix.equals("[") || (prefix.equals("[") && prevLineText.startsWith("Python")))) {
+            if (lineText.startsWith(prefix) && (!prefix.equals("[")) ||
+                (prefix.equals("[") && prevLineText != null && prevLineText.startsWith("Python"))) {
               finish = document.getLineEndOffset(line);
               finishLine = line;
               doNotAddFoldingAgain = myAddOnce;
