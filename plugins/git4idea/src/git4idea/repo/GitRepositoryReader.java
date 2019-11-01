@@ -28,6 +28,7 @@ import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 import static git4idea.GitReference.BRANCH_NAME_HASHING_STRATEGY;
 import static git4idea.repo.GitRefUtil.*;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 /**
  * <p>Reads information about the Git repository from Git service files located in the {@code .git} folder.</p>
@@ -220,14 +221,14 @@ class GitRepositoryReader {
   @NotNull
   private Map<String, String> readPackedBranches() {
     if (!myPackedRefsFile.exists()) {
-      return Collections.emptyMap();
+      return emptyMap();
     }
     try {
       String content = DvcsUtil.tryLoadFile(myPackedRefsFile, CharsetToolkit.UTF8);
       return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), GitRefUtil::parseRefsLine);
     }
     catch (RepoStateException e) {
-      return Collections.emptyMap();
+      return emptyMap();
     }
   }
 
@@ -240,11 +241,18 @@ class GitRepositoryReader {
 
   @NotNull
   private Map<String, String> readBranchRefsFromFiles() {
-    Map<String, String> result = new HashMap<>(readPackedBranches()); // reading from packed-refs first to overwrite values by values from unpacked refs
-    result.putAll(readFromBranchFiles(myRefsHeadsDir, REFS_HEADS_PREFIX));
-    result.putAll(readFromBranchFiles(myRefsRemotesDir, REFS_REMOTES_PREFIX));
-    result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
-    return result;
+    try {
+      Map<String, String> result = new HashMap<>(readPackedBranches()); // reading from packed-refs first to overwrite values by values from unpacked refs
+      result.putAll(readFromBranchFiles(myRefsHeadsDir, REFS_HEADS_PREFIX));
+      result.putAll(readFromBranchFiles(myRefsRemotesDir, REFS_REMOTES_PREFIX));
+      result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
+      return result;
+    }
+    catch (Exception e) {
+      LOG.error("Error reading refs from files", e);
+      logDebugAllRefsFiles();
+      return emptyMap();
+    }
   }
 
   @NotNull
@@ -276,7 +284,7 @@ class GitRepositoryReader {
   @NotNull
   private Map<String, String> readFromBranchFiles(@NotNull final File refsRootDir, @NotNull final String prefix) {
     if (!refsRootDir.exists()) {
-      return Collections.emptyMap();
+      return emptyMap();
     }
     final Map<String, String> result = new HashMap<>();
     Ref<Boolean> couldNotLoadFile = Ref.create(false);
