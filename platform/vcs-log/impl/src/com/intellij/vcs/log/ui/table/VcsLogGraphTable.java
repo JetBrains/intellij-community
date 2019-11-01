@@ -383,10 +383,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return Objects.requireNonNull(getTableColumn(VcsLogColumn.COMMIT));
   }
 
-  static Font getTableFont() {
-    return UIManager.getFont("Table.font");
-  }
-
   private void setRootColumnSize() {
     TableColumn column = getRootColumn();
     int rootWidth;
@@ -598,14 +594,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     });
   }
 
-  public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
-    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
-  }
-
-  public static JBColor getPathBackgroundColor(@NotNull FilePath filePath, @NotNull VcsLogColorManager colorManager) {
-    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getPathColor(filePath));
-  }
-
   @Override
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
@@ -699,6 +687,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public boolean isResizingColumns() {
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+  }
+
+  @NotNull
+  public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
+    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
+  }
+
+  @NotNull
+  public static JBColor getPathBackgroundColor(@NotNull FilePath filePath, @NotNull VcsLogColorManager colorManager) {
+    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getPathColor(filePath));
+  }
+
+  static Font getTableFont() {
+    return UIManager.getFont("Table.font");
   }
 
   private static class MyDefaultTableCellRenderer extends DefaultTableCellRenderer {
