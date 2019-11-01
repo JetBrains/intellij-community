@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.vcsUtil.VcsUtil
@@ -44,7 +45,7 @@ class GitRevisionContentPreLoaderTest : GitSingleRepoTest() {
       val bytes = cache.getFromConstantCache(VcsUtil.getFilePath(file.file), revisionNumber, GitVcs.getKey(),
                                              ContentRevisionCache.UniqueType.REPOSITORY_CONTENT)
       assertNotNull("No content recorded for $file", bytes)
-      assertEquals("Incorrect content for $file", content, String(bytes))
+      assertEquals("Incorrect content for $file", content, StringUtil.convertLineSeparators(String(bytes)))
     }
   }
 }
