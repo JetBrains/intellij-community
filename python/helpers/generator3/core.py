@@ -401,16 +401,8 @@ def control_message(msg_type, data):
     say(json.dumps(data))
 
 
-def info(msg):
-    logging.info(msg)
-
-
-def debug(msg):
-    logging.debug(msg)
-
-
-def trace(msg):
-    logging.log(logging.getLevelName('TRACE'), msg)
+def trace(msg, *args, **kwargs):
+    logging.log(logging.getLevelName('TRACE'), msg, *args, **kwargs)
 
 
 class SkeletonGenerator(object):
@@ -451,7 +443,7 @@ class SkeletonGenerator(object):
         if self.write_state_json:
             mkdir(self.output_dir)
             state_json_path = os.path.join(self.output_dir, STATE_FILE_NAME)
-            info('Writing skeletons state to {!r}'.format(state_json_path))
+            logging.info('Writing skeletons state to %r', state_json_path)
             with fopen(state_json_path, 'w') as f:
                 json.dump(self.out_state_json, f, sort_keys=True)
 
@@ -493,19 +485,19 @@ class SkeletonGenerator(object):
                 binaries = ((f, cut_binary_lib_suffix(root, f)) for f in files)
                 binaries = [(f, name) for (f, name) in binaries if name]
                 if binaries:
-                    trace("root: %s path: %s prefix: %s preprefix: %s" % (root, path, prefix, preprefix))
+                    trace("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
                     for f, name in binaries:
                         the_name = prefix + name
                         if is_skipped_module(root, f, the_name):
-                            trace('skipping module %s' % the_name)
+                            trace('skipping module %s', the_name)
                             continue
-                        trace("cutout: %s" % name)
+                        trace("cutout: %s", name)
                         if preprefix:
-                            trace("prefixes: %s %s" % (prefix, preprefix))
+                            trace("prefixes: %s %s", prefix, preprefix)
                             pre_name = (preprefix + prefix + name).upper()
                             if pre_name in res:
                                 res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
-                            trace("done with %s" % name)
+                            trace("done with %s", name)
                         file_path = os.path.join(root, f)
 
                         res[the_name.upper()] = BinaryModule(the_name, file_path)
@@ -545,7 +537,7 @@ class SkeletonGenerator(object):
     def reuse_or_generate_skeleton(self, mod_name, mod_path, mod_state_json):
         # type: (str, str, Dict[str, Any]) -> GenerationStatusId
         if not quiet:
-            info('%s (%r)' % (mod_name, mod_path or 'built-in'))
+            logging.info('%s (%r)', mod_name, mod_path or 'built-in')
         action("doing nothing")
 
         try:
@@ -571,11 +563,11 @@ class SkeletonGenerator(object):
                                                            kwargs={},
                                                            failure_result=GenerationStatus.FAILED)
             elif cached_skeleton_status == SkeletonStatus.FAILING:
-                info('Cache entry for %s at %r indicates failed generation' % (mod_name, mod_cache_dir))
+                logging.info('Cache entry for %s at %r indicates failed generation', mod_name, mod_cache_dir)
                 return GenerationStatus.FAILED
             else:
                 # Copy entire skeletons directory if nothing needs to be updated
-                info('Copying cached stubs for %s from %r to %r' % (mod_name, mod_cache_dir, self.output_dir))
+                logging.info('Copying cached stubs for %s from %r to %r', mod_name, mod_cache_dir, self.output_dir)
                 copy_skeletons(mod_cache_dir, self.output_dir, get_module_origin(mod_path, mod_name))
                 return GenerationStatus.COPIED
         except:
@@ -591,7 +583,7 @@ class SkeletonGenerator(object):
     def generate_skeleton(self, name, mod_file_name, mod_cache_dir):
         # type: (str, str, str) -> GenerationStatusId
 
-        info('Updating cache for %s at %r' % (name, mod_cache_dir))
+        logging.info('Updating cache for %s at %r', name, mod_cache_dir)
         doing_builtins = mod_file_name is None
         # All builtin modules go into the same directory
         if not doing_builtins:
@@ -640,7 +632,7 @@ class SkeletonGenerator(object):
                 # Synthetic module, not explicitly imported
                 if m not in imported_module_names and not hasattr(sys.modules[m], '__file__'):
                     if not quiet:
-                        info('Processing submodule %s of %s' % (m, name))
+                        logging.info('Processing submodule %s of %s', m, name)
                     action("opening %r", mod_cache_dir)
                     try:
                         self.redo_module(m, mod_file_name, cache_dir=mod_cache_dir)
