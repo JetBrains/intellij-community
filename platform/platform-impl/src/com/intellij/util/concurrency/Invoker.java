@@ -3,12 +3,10 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
@@ -24,6 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 import static com.intellij.openapi.util.Disposer.register;
 import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
@@ -168,18 +167,9 @@ public abstract class Invoker implements Disposable {
         else if (useReadAction != ThreeState.YES || isDispatchThread()) {
           ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
-        else if (getApplication().isReadAccessAllowed()) {
-          if (((ApplicationEx)getApplication()).isWriteActionPending()) {
-            offerRestart(task, promise, attempt);
-            return;
-          }
-          ProgressManager.getInstance().runProcess(task, indicator(promise));
-        }
-        else {
-          if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
-            offerRestart(task, promise, attempt);
-            return;
-          }
+        else if (!runInReadActionWithWriteActionPriority(task, indicator(promise))) {
+          offerRestart(task, promise, attempt);
+          return;
         }
         promise.setResult(null);
       }
