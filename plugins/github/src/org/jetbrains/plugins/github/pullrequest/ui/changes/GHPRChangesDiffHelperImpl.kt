@@ -13,9 +13,9 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 
 class GHPRChangesDiffHelperImpl(private val project: Project,
                                 private val reviewService: GHPRReviewService,

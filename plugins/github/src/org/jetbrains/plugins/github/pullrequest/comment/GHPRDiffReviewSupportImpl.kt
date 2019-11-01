@@ -17,7 +17,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOneside
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
 

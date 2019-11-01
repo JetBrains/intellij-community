@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
