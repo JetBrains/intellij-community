@@ -128,7 +128,10 @@ public class GraphTableController {
         // TODO wait for the full log and then jump
         return;
       }
-      if (e != null) showToolTip(getArrowTooltipText(answer.getCommitToJump(), row), e);
+      if (e != null) {
+        VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight,
+                                 getArrowTooltipText(answer.getCommitToJump(), row));
+      }
     }
   }
 
@@ -167,11 +170,6 @@ public class GraphTableController {
       balloonText = "Jump to " + CommitPresentationUtil.getShortSummary(details);
     }
     return balloonText;
-  }
-
-  private void showToolTip(@NotNull String text, @NotNull MouseEvent e) {
-    // standard tooltip does not allow to customize its location, and locating tooltip above can obscure some important info
-    VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight, text);
   }
 
   private void showOrHideCommitTooltip(int row, @NotNull VcsLogColumn column, @NotNull MouseEvent e) {
