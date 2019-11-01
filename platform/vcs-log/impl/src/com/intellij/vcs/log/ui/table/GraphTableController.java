@@ -74,16 +74,15 @@ public class GraphTableController {
   boolean shouldSelectCell(@NotNull MouseEvent e) {
     int row = myTable.rowAtPoint(e.getPoint());
     if (row >= 0 && row < myTable.getRowCount()) {
-      return findPrintElement(row, e) == null;
+      return findPrintElement(row, getPointInCell(e.getPoint(), VcsLogColumn.COMMIT)) == null;
     }
     return true;
   }
 
   @Nullable
-  private PrintElement findPrintElement(int row, @NotNull MouseEvent e) {
-    Point point = getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
+  private PrintElement findPrintElement(int row, @NotNull Point pointInCell) {
     Collection<? extends PrintElement> printElements = myTable.getVisibleGraph().getRowInfo(row).getPrintElements();
-    return myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
+    return myGraphCellPainter.getElementUnderCursor(printElements, pointInCell.x, pointInCell.y);
   }
 
   @Nullable
@@ -269,7 +268,7 @@ public class GraphTableController {
           performRootColumnAction();
         }
         else if (column == VcsLogColumn.COMMIT) {
-          PrintElement printElement = findPrintElement(row, e);
+          PrintElement printElement = findPrintElement(row, getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
           if (printElement != null) {
             Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
             handleCursor(cursor);
@@ -307,7 +306,7 @@ public class GraphTableController {
           return;
         }
         else if (column == VcsLogColumn.COMMIT) {
-          PrintElement printElement = findPrintElement(row, e);
+          PrintElement printElement = findPrintElement(row, getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
           Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
           // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
