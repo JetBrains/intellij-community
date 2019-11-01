@@ -18,7 +18,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.reference.SoftReference;
@@ -357,7 +357,7 @@ public class PluginManagerCore {
 
   public static void savePluginsList(@NotNull Collection<String> ids, boolean append, @NotNull File plugins) throws IOException {
     if (!plugins.isFile()) {
-      FileUtil.ensureCanCreateFile(plugins);
+      FileUtilRt.ensureCanCreateFile(plugins);
     }
     try (BufferedWriter writer = new BufferedWriter(
       new OutputStreamWriter(new FileOutputStream(plugins, append), StandardCharsets.UTF_8))) {
@@ -464,7 +464,7 @@ public class PluginManagerCore {
     for (IdeaPluginDescriptor o : getPlugins()) {
       if (!o.getUseIdeaClassLoader()) continue;
       File path = o.getPath();
-      String pluginPath = path == null ? null : FileUtil.toSystemIndependentName(path.getPath());
+      String pluginPath = path == null ? null : FileUtilRt.toSystemIndependentName(path.getPath());
       if (pluginPath == null || !root.startsWith(pluginPath)) continue;
       result = o;
       break;
@@ -795,7 +795,7 @@ public class PluginManagerCore {
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName, @Nullable Set<String> disabledPlugins) {
     try (LoadingContext context = new LoadingContext(null, false, false, disabledPlugins)) {
-      return loadDescriptorFromFileOrDir(file, fileName, context);
+      return loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }
 
@@ -805,77 +805,86 @@ public class PluginManagerCore {
                                                          @Nullable Set<String> disabledPlugins,
                                                          @Nullable LoadDescriptorsContext parentContext) {
     try (LoadingContext context = new LoadingContext(parentContext, bundled, false, disabledPlugins)) {
-      return loadDescriptorFromFileOrDir(file, PLUGIN_XML, context);
+      return loadDescriptorFromFileOrDir(file, PLUGIN_XML, context, Files.isDirectory(file));
     }
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file, @NotNull String pathName, @NotNull LoadingContext context) {
-    IdeaPluginDescriptorImpl descriptor = null;
-
-    boolean isDirectory = Files.isDirectory(file);
+  private static IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file, @NotNull String pathName, @NotNull LoadingContext context, boolean isDirectory) {
     if (isDirectory) {
-      descriptor = loadDescriptorFromDir(file, pathName, null, context);
-      if (descriptor == null) {
-        List<Path> files;
-        try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
-          files = ContainerUtil.collect(s.iterator());
-        }
-        catch (IOException e) {
-          return null;
-        }
+      return loadDescriptorFromDirAndNormalize(file, pathName, context);
+    }
+    else if (StringUtilRt.endsWithIgnoreCase(file.getFileName().toString(), ".jar")) {
+      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromJar(file, pathName, context.pathResolver, context, null);
+      return descriptor == null || !normalizeDescriptor(file, pathName, context, descriptor, false) ? null : descriptor;
+    }
+    else {
+      return null;
+    }
+  }
 
-        if (files.isEmpty()) {
-          return null;
+  @Nullable
+  private static IdeaPluginDescriptorImpl loadDescriptorFromDirAndNormalize(@NotNull Path file,
+                                                                            @NotNull String pathName,
+                                                                            @NotNull LoadingContext context) {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptorFromDir(file, pathName, null, context);
+    if (descriptor != null) {
+      return normalizeDescriptor(file, pathName, context, descriptor, true) ? descriptor : null;
+    }
+
+    List<Path> files;
+    try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
+      files = ContainerUtil.collect(s.iterator());
+    }
+    catch (IOException e) {
+      return null;
+    }
+
+    if (files.isEmpty()) {
+      return null;
+    }
+
+    putMoreLikelyPluginJarsFirst(file, files);
+
+    List<Path> pluginJarFiles = null;
+    for (Path childFile : files) {
+      if (Files.isDirectory(childFile)) {
+        IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(childFile, pathName, file, context);
+        if (otherDescriptor != null) {
+          if (descriptor != null) {
+            getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
+            return null;
+          }
+          descriptor = otherDescriptor;
         }
-
-        putMoreLikelyPluginJarsFirst(file, files);
-
-        List<Path> pluginJarFiles = null;
-        for (Path childFile : files) {
-          if (Files.isDirectory(childFile)) {
-            IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(childFile, pathName, file, context);
-            if (otherDescriptor != null) {
-              if (descriptor != null) {
-                getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
-                return null;
-              }
-              descriptor = otherDescriptor;
-            }
+      }
+      else {
+        String path = childFile.toString();
+        if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
+          if (files.size() == 1) {
+            pluginJarFiles = Collections.singletonList(childFile);
           }
           else {
-            String path = childFile.toString();
-            if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
-              if (files.size() == 1) {
-                pluginJarFiles = Collections.singletonList(childFile);
-              }
-              else {
-                if (pluginJarFiles == null) {
-                  pluginJarFiles = new ArrayList<>();
-                }
-                //noinspection ConstantConditions
-                pluginJarFiles.add(childFile);
-              }
+            if (pluginJarFiles == null) {
+              pluginJarFiles = new ArrayList<>();
             }
-          }
-        }
-
-        if (pluginJarFiles != null) {
-          PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(pluginJarFiles, context);
-          for (Path jarFile : pluginJarFiles) {
-            descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file);
-            if (descriptor != null) {
-              break;
-            }
+            //noinspection ConstantConditions
+            pluginJarFiles.add(childFile);
           }
         }
       }
     }
-    else if (StringUtilRt.endsWithIgnoreCase(file.getFileName().toString(), ".jar")) {
-      descriptor = loadDescriptorFromJar(file, pathName, context.pathResolver, context, null);
-    }
 
-    return descriptor == null || !normalizeDescriptor(file, pathName, context, descriptor, isDirectory) ? null : descriptor;
+    if (pluginJarFiles != null) {
+      PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(pluginJarFiles, context);
+      for (Path jarFile : pluginJarFiles) {
+        descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file);
+        if (descriptor != null) {
+          break;
+        }
+      }
+    }
+    return descriptor == null || !normalizeDescriptor(file, pathName, context, descriptor, true) ? null : descriptor;
   }
 
   private static boolean normalizeDescriptor(@NotNull Path file,
@@ -918,11 +927,11 @@ public class PluginManagerCore {
         IdeaPluginDescriptorImpl optionalDescriptor = null;
         // try last file that had the descriptor that worked
         if (context.lastZipWithDescriptor != null) {
-          optionalDescriptor = loadDescriptorFromFileOrDir(context.lastZipWithDescriptor, configFile, context);
+          optionalDescriptor = loadDescriptorFromFileOrDir(context.lastZipWithDescriptor, configFile, context, false);
         }
 
         if (optionalDescriptor == null) {
-          optionalDescriptor = loadDescriptorFromFileOrDir(file, configFile, context);
+          optionalDescriptor = loadDescriptorFromFileOrDir(file, configFile, context, isDirectory);
         }
 
         if (optionalDescriptor == null && (isDirectory || resolveDescriptorsInResources())) {
@@ -1147,8 +1156,8 @@ public class PluginManagerCore {
     try {
       Path file;
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(StringUtil.trimEnd(FileUtil.toSystemIndependentName(urlToFile(resource).toString()), pathName)).getParent();
-        return loadDescriptorFromFileOrDir(file, pathName, loadingContext);
+        file = Paths.get(StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(urlToFile(resource).toString()), pathName)).getParent();
+        return loadDescriptorFromFileOrDir(file, pathName, loadingContext, Files.isDirectory(file));
       }
       else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
         String path = resource.getFile();
