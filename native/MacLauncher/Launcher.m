@@ -93,7 +93,7 @@ void showWarning(NSString* messageText){
 
 BOOL appendBundle(NSString *path, NSMutableArray *sink) {
     if (! [[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        NSLog(@"The path doesn't exist: %@", path);
+        NSLog(@"Can't find bundled java.The folder doesn't exist: %@", path);
     }
     else {
         if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"] || [path hasSuffix:@"jbr"]) {
