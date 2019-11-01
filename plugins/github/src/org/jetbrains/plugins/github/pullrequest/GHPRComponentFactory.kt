@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.diff.editor.VCSContentVirtualFile
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -206,6 +207,8 @@ internal class GHPRComponentFactory(private val project: Project) {
       secondComponent = OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f).apply {
         firstComponent = detailsLoadingPanel
         secondComponent = changesLoadingPanel
+      }.also {
+        (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerShortcutOn(it)
       }
     }.also {
       changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
@@ -245,7 +248,9 @@ internal class GHPRComponentFactory(private val project: Project) {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 
-    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search)
+    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search).also {
+      (actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction).registerShortcutOn(it)
+    }
 
     Disposer.register(disposable, Disposable {
       Disposer.dispose(list)
