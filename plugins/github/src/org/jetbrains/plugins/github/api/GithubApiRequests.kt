@@ -256,9 +256,15 @@ object GithubApiRequests {
 
       object Comments : Entity("/comments") {
         @JvmStatic
+        fun create(repository: GHRepositoryCoordinates, issueId: Long, body: String) =
+          create(repository.serverPath, repository.repositoryPath.owner, repository.repositoryPath.repository, issueId.toString(), body)
+
+        @JvmStatic
         fun create(server: GithubServerPath, username: String, repoName: String, issueId: String, body: String) =
-          Post.json<GithubIssueComment>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
-                                        GithubCreateIssueCommentRequest(body))
+          Post.json<GithubIssueCommentWithHtml>(
+            getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
+            GithubCreateIssueCommentRequest(body),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
 
         @JvmStatic
         fun pages(server: GithubServerPath, username: String, repoName: String, issueId: String) =

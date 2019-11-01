@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -31,8 +32,10 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
@@ -127,6 +130,13 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         add(header)
         add(timeline)
         add(loadingIcon, CC().alignX("center"))
+
+        with(context.dataContext.commentService) {
+          if (canComment()) {
+            val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
+            add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser))
+          }
+        }
       }
 
       override fun getEmptyText() = timeline.emptyText
@@ -182,6 +192,15 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       override fun getComponent() = mainPanel
       override fun getPreferredFocusableComponent() = contentPanel
       override fun dispose() = Disposer.dispose(disposable)
+    }
+  }
+
+  private fun createCommentField(project: Project,
+                                 commentService: GHPRCommentServiceAdapter,
+                                 avatarIconsProvider: GHAvatarIconsProvider,
+                                 currentUser: GHUser): JComponent {
+    return GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser) {
+      commentService.addComment(EmptyProgressIndicator(), it)
     }
   }
 
