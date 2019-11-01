@@ -37,8 +37,6 @@ public class TriggerAdditionOrDeletion {
   private final Collection<FilePath> myDeleted;
   private final Set<FilePath> myAffected;
   private final Project myProject;
-  private final ProjectLevelVcsManager myVcsManager;
-  private final AbstractVcsHelper myVcsHelper;
   private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
@@ -49,8 +47,6 @@ public class TriggerAdditionOrDeletion {
     myProject = project;
     myExisting = new HashSet<>();
     myDeleted = new HashSet<>();
-    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myVcsHelper = AbstractVcsHelper.getInstance(myProject);
     myAffected = new HashSet<>();
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
@@ -85,7 +81,6 @@ public class TriggerAdditionOrDeletion {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeeded(vcs, filePaths, VcsConfiguration.StandardConfirmation.REMOVE);
         myAffected.addAll(filePaths);
        localChangesProvider.scheduleMissingFileForDeletion(filePaths);
       }
@@ -101,7 +96,6 @@ public class TriggerAdditionOrDeletion {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeeded(vcs, filePaths, VcsConfiguration.StandardConfirmation.ADD);
         myAffected.addAll(filePaths);
         final List<VirtualFile> virtualFiles = new ArrayList<>();
         ContainerUtil.process(filePaths, path -> {
@@ -206,33 +200,6 @@ public class TriggerAdditionOrDeletion {
           }
           myPreparedAddition.put(vcs, toBeAdded);
         }
-      }
-    }
-  }
-
-  private void askUserIfNeeded(final AbstractVcs vcs, @NotNull  final List<? extends FilePath> filePaths, @NotNull VcsConfiguration.StandardConfirmation type) {
-    final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(type, vcs);
-    if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {
-      filePaths.clear();
-    }
-    else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
-      String operation = type == VcsConfiguration.StandardConfirmation.ADD ? "addition" : "deletion";
-      String preposition = type == VcsConfiguration.StandardConfirmation.ADD ? " to " : " from ";
-      final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(filePaths, "Select files to " +
-                                                                                         StringUtil.decapitalize(type.getId()) +
-                                                                                         preposition +
-                                                                                         vcs.getDisplayName(), null,
-                                                                              "Schedule for " + operation,
-                                                                              "Do you want to schedule the following file for " +
-                                                                              operation +
-                                                                              preposition +
-                                                                              vcs.getDisplayName() +
-                                                                              "\n{0}", confirmationOption);
-      if (files == null) {
-        filePaths.clear();
-      }
-      else {
-        filePaths.retainAll(files);
       }
     }
   }
