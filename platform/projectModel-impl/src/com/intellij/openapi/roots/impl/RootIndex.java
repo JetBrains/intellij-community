@@ -46,7 +46,8 @@ class RootIndex {
 
   private final Map<VirtualFile, String> myPackagePrefixByRoot;
   private final Map<VirtualFile, DirectoryInfo> myRootInfos;
-  private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
+  // DummyFileSystem uses IDs starting from Integer.MAX_VALUE / 2 (IDEA-226021).
+  private final ConcurrentTwoRegionBitSet myNonInterestingIds = new ConcurrentTwoRegionBitSet(Integer.MAX_VALUE / 2);
   @NotNull private final Project myProject;
   final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
@@ -999,6 +1000,27 @@ class RootIndex {
         put(key, value);
       }
       return value;
+    }
+  }
+
+  /**
+   * A concurrent bit set optimized for non-zero bits contained in two compact regions.
+   */
+  private static class ConcurrentTwoRegionBitSet {
+    private final ConcurrentBitSet myFirstRegion = new ConcurrentBitSet();
+    private final ConcurrentBitSet mySecondRegion = new ConcurrentBitSet();
+    private final int mySecondRegionOffset;
+
+    private ConcurrentTwoRegionBitSet(int offset) {
+      mySecondRegionOffset = offset;
+    }
+
+    public boolean get(int bitIndex) {
+      return bitIndex < mySecondRegionOffset ? myFirstRegion.get(bitIndex) : mySecondRegion.get(bitIndex - mySecondRegionOffset);
+    }
+
+    public boolean set(final int bitIndex) {
+      return bitIndex < mySecondRegionOffset ? myFirstRegion.set(bitIndex) : mySecondRegion.set(bitIndex - mySecondRegionOffset);
     }
   }
 }
