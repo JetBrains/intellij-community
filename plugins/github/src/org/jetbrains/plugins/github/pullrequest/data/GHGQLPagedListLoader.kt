@@ -11,7 +11,7 @@ abstract class GHGQLPagedListLoader<T>(progressManager: ProgressManager,
 
   override fun canLoadMore() = !loading && (loader.hasNext || error != null)
 
-  override fun doLoadMore(indicator: ProgressIndicator) = loader.loadNext(indicator)
+  override fun doLoadMore(indicator: ProgressIndicator, update: Boolean) = loader.loadNext(indicator, update)
 
   override fun reset() {
     loader.reset()
