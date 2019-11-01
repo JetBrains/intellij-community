@@ -103,7 +103,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final String LONG_TEXT1 = "In advance of the dogs, on wide snowshoes, toiled a man. At the rear of the sled toiled a second man.<p/>On the sled, in the box, lay a third man whose toil was over, - a man whom the Wild had conquered and beaten down until he would never move nor struggle again.";
     private static final String LONG_TEXT2 = "It is not the way of the Wild to like movement.<p/>Life is an offence to it, for life is movement; and the Wild aims always to destroy movement.";
     private static final String LONG_TEXT3 = "<p>Help JetBrains improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on types of files, number of files per project, etc.</p>" +
-      "<br/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
+      "<br style=\"font-size:8;\"/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -126,6 +126,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
+      pane.addTab("Titled Border", createTiledBorderPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
       pane.addTab("Validators", createValidatorsPanel());
       pane.addTab("Multilines", createMultilinePanel());
@@ -268,7 +269,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
       BorderLayoutPanel mainPanel = JBUI.Panels.simplePanel(UI.PanelFactory.panel(pane).
-        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").resizeY(true).createPanel());
+        withLabel("Table label:").moveLabelOnTop().
+        withComment("&lt;Project&gt; is content roots of all modules, all immediate descendants<br/>of the projects base directory, and .idea directory contents").resizeY(true).createPanel());
       mainPanel.addToTop(topPanel);
 
       return mainPanel;
@@ -421,8 +423,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTopRightComponent(linkLabel)
       ).createPanel();
 
-      JCheckBox cb1 = new JCheckBox("Checkbox 1");
-      JCheckBox cb2 = new JCheckBox("Checkbox 2");
+      JCheckBox cb1 = new JCheckBox("Build project automatically");
+      JCheckBox cb2 = new JCheckBox("Compile independent modules in parallel");
       JCheckBox cb3 = new JCheckBox("Checkbox 3");
 
       ButtonGroup bg = new ButtonGroup();
@@ -457,8 +459,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       rb3.addActionListener(al);
 
       JPanel p2 = UI.PanelFactory.grid().
-        add(UI.PanelFactory.panel(cb1).resizeX(false).withComment("Comment 1").moveCommentRight()).
-        add(UI.PanelFactory.panel(cb2).resizeX(false).withComment("Comment 2")).
+        add(UI.PanelFactory.panel(cb1).resizeX(false).withComment("Works while not running / debugging").moveCommentRight()).
+        add(UI.PanelFactory.panel(cb2).resizeX(false).withComment("May require larger heap size").moveCommentRight()).
         add(UI.PanelFactory.panel(cb3).resizeX(false).withTooltip(LONG_TEXT1)).
 
         add(UI.PanelFactory.panel(rb1).resizeX(false).withComment("No validation").moveCommentRight()).
@@ -484,6 +486,20 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
 
       return panel;
+    }
+
+    private static final String INNER_COMMENT = "<p>By default IntelliJ IDEA uses Gradle to build the project and run the tasks.</p>"+
+        "<br style=\"font-size: 8;\"/><p>In a pure Java/Kotlin project, building and running by means of IDE might be faster, thanks to optimizations. Note, that the IDE doesn't support all Gradle plugins and the project might not be built correctly with some of them.</p>";
+
+    private JComponent createTiledBorderPanel() {
+      JPanel innerGrid = UI.PanelFactory.grid().splitColumns().
+        add(UI.PanelFactory.panel(new JComboBox<>(new String [] {"IntelliJ IDEA", "Gradle"})).resizeX(false).withLabel("Build and run with:")).
+        add(UI.PanelFactory.panel(new JComboBox<>(new String [] {"IntelliJ IDEA", "Gradle"})).resizeX(false).withLabel("Run tests with:")).
+        createPanel();
+
+      JPanel panel = UI.PanelFactory.panel(innerGrid).withComment(INNER_COMMENT).createPanel();
+      panel.setBorder(IdeBorderFactory.createTitledBorder("Build and Run"));
+      return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
     private JComponent createValidatorsPanel() {
@@ -579,7 +595,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       // Panels factory
       return UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(tfbb).
-          withLabel("&TextField:").withComment("Text field with browse button")).
+          withLabel("Default directory:").withComment("Preselected in \"Open ...\" and \"New | Project\" dialogs")).
 
         add(UI.PanelFactory.panel(etfbb).
           withLabel("&EditorTextField:").withComment("EditorTextField with browse button")).
