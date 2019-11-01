@@ -110,14 +110,14 @@
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
       <reference id="Github.Open.In.Browser"/>
-      <action id="Github.PullRequest.List.Refresh"
-              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
+      <action id="Github.PullRequest.List.Reload"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction"/>
     </group>
-    <action id="Github.PullRequest.Preview.Refresh"
-            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshDetailsAction"
+    <action id="Github.PullRequest.Details.Reload"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction"
             internal="true"/>
-    <action id="Github.PullRequest.Preview.Refresh.Comments"
-            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshCommentsAction"
+    <action id="Github.PullRequest.Comments.Reload"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction"
             internal="true"/>
     <group>
       <action id="Github.PullRequest.Zip.Commits.Toggle"

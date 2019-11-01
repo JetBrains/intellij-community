@@ -6,13 +6,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-class GithubPullRequestRefreshListAction : DumbAwareAction("Refresh List", null, AllIcons.Actions.Refresh) {
+class GHPRReloadCommentsAction : DumbAwareAction("Refresh Pull Request Comments", null, AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val context = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)
-    e.presentation.isEnabled = context != null
+    val selection = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
+    e.presentation.isEnabled = selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).resetAllData()
+    e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider?.reloadComments()
   }
 }
