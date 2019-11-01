@@ -818,6 +818,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-37755 PY-2700
+  public void testGlobalResolveAttribute() {
+    doTest();
+  }
+
   // PY-39078
   public void testNoneAttribute() {
     doTestByText("a = None\n" +
