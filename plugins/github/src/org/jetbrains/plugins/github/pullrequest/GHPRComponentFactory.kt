@@ -170,27 +170,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
     val actionDataContext = GHPRActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
 
-    val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
-      emptyText.clear()
-    }.also {
-      it.addFocusListener(object : FocusListener {
-        override fun focusGained(e: FocusEvent?) {
-          if (it.selectedIndex < 0 && !it.isEmpty) it.selectedIndex = 0
-        }
-
-        override fun focusLost(e: FocusEvent?) {}
-      })
-
-      installPopup(it)
-      installSelectionSaver(it, listSelectionHolder)
-      val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
-      EmptyAction.registerWithShortcutSet("Github.PullRequest.Timeline.Show", shortcuts, it)
-    }
-
-    val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
-      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
-    }
-    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search)
+    val list = createListComponent(dataContext, listSelectionHolder, avatarIconsProviderFactory, disposable)
 
     val dataProviderModel = createDataProviderModel(dataContext, listSelectionHolder, disposable)
 
@@ -218,17 +198,11 @@ internal class GHPRComponentFactory(private val project: Project) {
       resetHandler = ActionListener { dataProviderModel.value?.reloadCommits() }
     }
 
-    Disposer.register(disposable, Disposable {
-      Disposer.dispose(list)
-      Disposer.dispose(search)
-      Disposer.dispose(loaderPanel)
-    })
-
     return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
       background = UIUtil.getListBackground()
       isOpaque = true
       isFocusCycleRoot = true
-      firstComponent = loaderPanel
+      firstComponent = list
       secondComponent = OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f).apply {
         firstComponent = detailsLoadingPanel
         secondComponent = changesLoadingPanel
@@ -244,6 +218,42 @@ internal class GHPRComponentFactory(private val project: Project) {
 
       }
     }
+  }
+
+  private fun createListComponent(dataContext: GHPullRequestsDataContext,
+                                  listSelectionHolder: GithubPullRequestsListSelectionHolder,
+                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                  disposable: Disposable): JComponent {
+    val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
+      emptyText.clear()
+    }.also {
+      it.addFocusListener(object : FocusListener {
+        override fun focusGained(e: FocusEvent?) {
+          if (it.selectedIndex < 0 && !it.isEmpty) it.selectedIndex = 0
+        }
+
+        override fun focusLost(e: FocusEvent?) {}
+      })
+
+      installPopup(it)
+      installSelectionSaver(it, listSelectionHolder)
+      val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
+      EmptyAction.registerWithShortcutSet("Github.PullRequest.Timeline.Show", shortcuts, it)
+    }
+
+    val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+    }
+
+    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search)
+
+    Disposer.register(disposable, Disposable {
+      Disposer.dispose(list)
+      Disposer.dispose(search)
+      Disposer.dispose(loaderPanel)
+    })
+
+    return loaderPanel
   }
 
   private fun createDetailsPanel(dataContext: GHPullRequestsDataContext,
