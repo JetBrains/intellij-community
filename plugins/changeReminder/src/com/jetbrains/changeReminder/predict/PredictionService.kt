@@ -16,6 +16,8 @@ import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
+import com.jetbrains.changeReminder.stats.ChangeReminderChangeListChangedEvent
+import com.jetbrains.changeReminder.stats.logEvent
 
 class PredictionService(val project: Project) : Disposable {
   private val changesViewManager = ChangesViewManager.getInstance(project)
@@ -54,6 +56,11 @@ class PredictionService(val project: Project) : Disposable {
     override fun changeListsChanged() {
       val changes = changeListManager.defaultChangeList.changes
       if (!haveEqualElements(changes, lastChanges)) {
+        if (changes.size <= Registry.intValue("vcs.changeReminder.changes.limit")) {
+          val prevFiles = lastChanges.map { ChangesUtil.getFilePath(it) }
+          val curFiles = changes.map { ChangesUtil.getFilePath(it) }
+          logEvent(project, ChangeReminderChangeListChangedEvent(prevFiles, predictionData, curFiles))
+        }
         calculatePrediction()
         lastChanges = changes
       }
