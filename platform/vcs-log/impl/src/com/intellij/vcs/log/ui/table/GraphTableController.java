@@ -174,9 +174,9 @@ public class GraphTableController {
     return balloonText;
   }
 
-  private boolean showTooltip(int row, @NotNull VcsLogColumn column, @NotNull Point point, boolean now) {
+  private boolean showTooltip(int row, @NotNull VcsLogColumn column, @NotNull Point pointInCell, @NotNull Point point, boolean now) {
     JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(column)),
-                                                          getPointInCell(point, column), row);
+                                                          pointInCell, row);
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
@@ -190,9 +190,10 @@ public class GraphTableController {
   public void showTooltip(int row, @NotNull VcsLogColumn column) {
     if (column != VcsLogColumn.COMMIT) return;
 
-    Point point = new Point(getColumnLeftXCoordinate(myTable.getColumnViewIndex(column)) + myCommitRenderer.getTooltipXCoordinate(row),
-                            row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
-    showTooltip(row, column, point, true);
+    Point pointInCell = new Point(myCommitRenderer.getTooltipXCoordinate(row), myTable.getRowHeight() / 2);
+    Point point = new Point(getColumnLeftXCoordinate(myTable.getColumnViewIndex(column)) + pointInCell.x,
+                            row * myTable.getRowHeight() + pointInCell.y);
+    showTooltip(row, column, pointInCell, point, true);
   }
 
   private void performRootColumnAction() {
@@ -306,11 +307,12 @@ public class GraphTableController {
           return;
         }
         else if (column == VcsLogColumn.COMMIT) {
-          PrintElement printElement = findPrintElement(row, getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
+          Point pointInCell = getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
+          PrintElement printElement = findPrintElement(row, pointInCell);
           Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
           // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
-            if (!showTooltip(row, column, e.getPoint(), false)) {
+            if (!showTooltip(row, column, pointInCell, e.getPoint(), false)) {
               if (IdeTooltipManager.getInstance().hasCurrent()) {
                 IdeTooltipManager.getInstance().hideCurrent(e);
               }
