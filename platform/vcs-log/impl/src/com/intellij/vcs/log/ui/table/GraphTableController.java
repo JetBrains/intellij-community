@@ -97,10 +97,12 @@ public class GraphTableController {
     handleGraphAnswer(answer, isClickOnGraphElement, previousSelection, e);
   }
 
-  public void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer,
-                                boolean dataCouldChange,
-                                @Nullable Selection previousSelection,
-                                @Nullable MouseEvent e) {
+  public void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer) {
+    handleGraphAnswer(answer, true, null, null);
+  }
+
+  private void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange,
+                                 @Nullable Selection previousSelection, @Nullable MouseEvent e) {
     if (dataCouldChange) {
       myTable.getModel().fireTableDataChanged();
 

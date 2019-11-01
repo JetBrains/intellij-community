@@ -617,7 +617,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void handleAnswer(@Nullable GraphAnswer<Integer> answer) {
-    myController.handleGraphAnswer(answer, true, null, null);
+    myController.handleGraphAnswer(answer);
   }
 
   public void showTooltip(int row, @NotNull VcsLogColumn column) {
