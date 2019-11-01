@@ -5,10 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -196,6 +193,16 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (parent instanceof PyAssignmentExpression) {
         final PyExpression assignedValue = ((PyAssignmentExpression)parent).getAssignedValue();
         return assignedValue == null ? null : context.getType(assignedValue);
+      }
+      if (parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement) {
+        PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        List<PyType> collect = StreamEx.of(getReference(resolveContext).multiResolve(false))
+          .map(ResolveResult::getElement)
+          .select(PyTypedElement.class)
+          .map(context::getType)
+          .toList();
+
+        return PyUnionType.union(collect);
       }
       PyType iterType = getTypeFromIteration(context);
       if (iterType != null) {
