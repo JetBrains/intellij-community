@@ -78,7 +78,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     //  LOG.debug("Removing old compilation outputs " + myOldModulesPaths.size() + " counts");
     //  myOldModulesPaths.forEach(file -> { if (file.exists()) FileUtil.delete(file); });
     //}
-    long l = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
     if (myTmpFolderToModuleName == null) {
       LOG.debug("Nothing to apply, download results are empty");
       return;
@@ -95,7 +95,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         LOG.warn("Couldn't replace compilation output for module: " + moduleName, e);
       }
     });
-    LOG.warn("Apply took took :" + (System.currentTimeMillis() - l));
+    LOG.warn("Applying compilation output took: " + (System.currentTimeMillis() - start));
   }
 
   private List<AffectedModule> getAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
@@ -172,7 +172,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
 
     List<AffectedModule> result = mergeAffectedModules(affectedModules, commitModulesState);
     long total = System.currentTimeMillis() - start;
-    LOG.info("Compilation output affected for the " + affectedModules.size() + " modules. Computation took " + total + "ms");
+    LOG.info("Compilation output affected for the " + result.size() + " modules. Computation took " + total + "ms");
     return result;
   }
 

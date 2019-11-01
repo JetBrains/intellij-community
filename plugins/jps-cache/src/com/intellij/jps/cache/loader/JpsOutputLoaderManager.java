@@ -163,7 +163,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       initialFuture.thenAccept(loaderStatus -> {
         LOG.info("Loading finished with " + loaderStatus + " status");
         CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
-          indicator.setFraction(0.97);
+          indicator.setFraction(0.80);
           if (loaderStatus == LoaderStatus.FAILED) {
             indicator.setText("Fetching cache failed, rolling back");
             return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
@@ -172,6 +172,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
           return CompletableFuture.runAsync(() -> loader.apply(), ourThreadPool);
         }).toArray(CompletableFuture[]::new))
           .thenRun(() -> {
+            indicator.setFraction(0.97);
             if (loaderStatus == LoaderStatus.COMPLETE) {
               PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
               long endTime = (System.currentTimeMillis() - startTime) / 1000;
