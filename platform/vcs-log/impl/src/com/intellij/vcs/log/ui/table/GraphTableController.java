@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
+import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -72,7 +74,9 @@ public class GraphTableController {
   boolean shouldSelectCell(@NotNull MouseEvent e) {
     int row = myTable.rowAtPoint(e.getPoint());
     if (row >= 0 && row < myTable.getRowCount()) {
-      return findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT)) == null;
+      VcsLogColumn column = myTable.getVcsLogColumn(myTable.columnAtPoint(e.getPoint()));
+      if (column == null) return true;
+      return shouldSelectCell(column, row, e);
     }
     return true;
   }
@@ -183,11 +187,51 @@ public class GraphTableController {
     showTooltip(row, column, pointInCell, point, true);
   }
 
-  private void performRootColumnAction() {
-    if (myColorManager.hasMultiplePaths() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
-      triggerClick("root.column");
-      myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
+  private boolean shouldSelectCell(@NotNull VcsLogColumn column, int row, @NotNull MouseEvent e) {
+    if (column == VcsLogColumn.COMMIT) {
+      return findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT)) == null;
     }
+    return true;
+  }
+
+  @Nullable
+  private Cursor performMouseMove(@NotNull VcsLogColumn column, int row, @NotNull MouseEvent e) {
+    if (column == VcsLogColumn.ROOT) {
+      return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+    }
+    else if (column == VcsLogColumn.COMMIT) {
+      Point pointInCell = myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
+      PrintElement printElement = findPrintElement(row, pointInCell);
+      Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
+      // if printElement is null, still need to unselect whatever was selected in a graph
+      if (printElement == null) {
+        if (!showTooltip(row, column, pointInCell, e.getPoint(), false)) {
+          if (IdeTooltipManager.getInstance().hasCurrent()) {
+            IdeTooltipManager.getInstance().hideCurrent(e);
+          }
+        }
+      }
+      return cursor;
+    }
+    return null;
+  }
+
+  @Nullable
+  private Cursor performMouseClick(@NotNull VcsLogColumn column, int row, @NotNull MouseEvent e) {
+    if (column == VcsLogColumn.ROOT) {
+      if (myColorManager.hasMultiplePaths() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
+        triggerClick("root.column");
+        myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
+      }
+      return null;
+    }
+    else if (column == VcsLogColumn.COMMIT) {
+      PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
+      if (printElement != null) {
+        return performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
+      }
+    }
+    return null;
   }
 
   private static void triggerElementClick(@NotNull PrintElement printElement) {
@@ -244,16 +288,8 @@ public class GraphTableController {
 
       int row = myTable.rowAtPoint(e.getPoint());
       if ((row >= 0 && row < myTable.getRowCount()) && e.getClickCount() == 1) {
-        if (column == VcsLogColumn.ROOT) {
-          performRootColumnAction();
-        }
-        else if (column == VcsLogColumn.COMMIT) {
-          PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
-          if (printElement != null) {
-            Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
-            handleCursor(cursor);
-          }
-        }
+        Cursor cursor = performMouseClick(column, row, e);
+        handleCursor(cursor);
       }
     }
 
@@ -281,25 +317,9 @@ public class GraphTableController {
       if (row >= 0 && row < myTable.getRowCount()) {
         VcsLogColumn column = myTable.getVcsLogColumn(myTable.columnAtPoint(e.getPoint()));
         if (column == null) return;
-        if (column == VcsLogColumn.ROOT) {
-          swapCursor();
-          return;
-        }
-        else if (column == VcsLogColumn.COMMIT) {
-          Point pointInCell = myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
-          PrintElement printElement = findPrintElement(row, pointInCell);
-          Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
-          // if printElement is null, still need to unselect whatever was selected in a graph
-          if (printElement == null) {
-            if (!showTooltip(row, column, pointInCell, e.getPoint(), false)) {
-              if (IdeTooltipManager.getInstance().hasCurrent()) {
-                IdeTooltipManager.getInstance().hideCurrent(e);
-              }
-            }
-          }
-          handleCursor(cursor);
-          return;
-        }
+        Cursor cursor = performMouseMove(column, row, e);
+        handleCursor(cursor);
+        return;
       }
 
       restoreCursor();
