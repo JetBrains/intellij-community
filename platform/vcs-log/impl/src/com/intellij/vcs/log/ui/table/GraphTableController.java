@@ -150,7 +150,7 @@ public class GraphTableController {
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
-        if (myColorManager.hasMultiplePaths()) {
+        if (myLogData.getRoots().size() > 1) {
           balloonText += " in " + commitId.getRoot().getName();
         }
       }
