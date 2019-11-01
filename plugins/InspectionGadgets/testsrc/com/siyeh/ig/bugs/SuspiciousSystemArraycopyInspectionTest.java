@@ -45,6 +45,31 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                  "}");
   }
 
+
+  public void testLengthAlwaysGreater() {
+    doMemberTest("public int[] hardCase() {\n" +
+                 "        int[] src = new int[] { 1, 2, 3 };\n" +
+                 "        int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };\n" +
+                 "        System.arraycopy(src, 2, dest, 2, /*Length is always bigger, than dest.length - destPos{2}*/2/**/);\n" +
+                 "        return dest;\n" +
+                 "    }");
+  }
+
+  public void testLengthNotAlwaysGreater() {
+    doMemberTest("public int[] hardCase(boolean outer) {\n" +
+                 "        int[] src = new int[] { 1, 2, 3};\n" +
+                 "        int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };\n" +
+                 "        int length;\n" +
+                 "        if (outer) {\n" +
+                 "            length = 3; // maybe this branch is never reached due to outer condition\n" +
+                 "        } else {\n" +
+                 "            length = 1;\n" +
+                 "        }\n" +
+                 "        System.arraycopy(src, 2, dest, 2, length);\n" +
+                 "        return dest;\n" +
+                 "    }");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

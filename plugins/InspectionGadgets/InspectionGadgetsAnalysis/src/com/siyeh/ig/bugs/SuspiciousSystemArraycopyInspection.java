@@ -15,6 +15,11 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.SpecialFieldValue;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -75,6 +80,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
         registerError(length, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor3"));
       }
       final PsiExpression src = arguments[0];
+      final PsiExpression dest = arguments[2];
+      checkRanges(src, srcPos, dest, destPos, length);
       final PsiType srcType = src.getType();
       if (srcType == null) {
         return;
@@ -84,7 +91,6 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
         registerError(src, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor4"));
         notArrayReported = true;
       }
-      final PsiExpression dest = arguments[2];
       final PsiType destType = dest.getType();
       if (destType == null) {
         return;
@@ -111,6 +117,37 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
         registerError(dest, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor6",
                                                             srcType.getCanonicalText(),
                                                             destType.getCanonicalText()));
+      }
+    }
+
+    private void checkRanges(@NotNull PsiExpression src,
+                             @NotNull PsiExpression srcPos,
+                             @NotNull PsiExpression dest,
+                             @NotNull PsiExpression destPos,
+                             @NotNull PsiExpression length) {
+      CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(src);
+      if (result == null) return;
+      SpecialFieldValue srcFact = result.getExpressionFact(src, DfaFactType.SPECIAL_FIELD_VALUE);
+      if (srcFact == null) return;
+      SpecialField srcLengthField = srcFact.getField();
+      SpecialFieldValue destFact = result.getExpressionFact(dest, DfaFactType.SPECIAL_FIELD_VALUE);
+      if (destFact == null) return;
+      SpecialField destLengthField = destFact.getField();
+
+      LongRangeSet srcLengthSet = DfaFactType.RANGE.fromDfaValue(srcLengthField.extract(srcFact));
+      LongRangeSet destLengthSet = DfaFactType.RANGE.fromDfaValue(destLengthField.extract(destFact));
+      LongRangeSet srcPosSet = result.getExpressionFact(srcPos, DfaFactType.RANGE);
+      LongRangeSet destPosSet = result.getExpressionFact(destPos, DfaFactType.RANGE);
+      LongRangeSet lengthSet = result.getExpressionFact(length, DfaFactType.RANGE);
+      if (srcLengthSet == null || destLengthSet == null || srcPosSet == null || destPosSet == null || lengthSet == null) return;
+      LongRangeSet srcPossibleLengthToCopy = srcLengthSet.minus(srcPosSet, false);
+      LongRangeSet destPossibleLengthToCopy = srcLengthSet.minus(destPosSet, false);
+      long lengthMin = lengthSet.min();
+      if (lengthMin > destPossibleLengthToCopy.max()) {
+        registerError(length, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor.length.bigger.dest", lengthSet.toString()));
+      }
+      else if (lengthMin > srcPossibleLengthToCopy.max()) {
+        registerError(length, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor.length.bigger.src", lengthSet.toString()));
       }
     }
 
