@@ -12,9 +12,9 @@
     }
   },
   "java-production": {
-    "intellij.statsCollector": {
-      "hash": "499dff8ad66e7a4344d4dde46bc79fc5",
-      "relativePath": "$PROJECT_DIR$/out/classes/production/intellij.statsCollector"
+    "intellij.cidr.externalSystem": {
+      "hash": "9bd11b1670357c60b4f0520755597ae7",
+      "relativePath": "$PROJECT_DIR$/out/classes/production/intellij.cidr.externalSystem"
     }
   },
   "resources-production": {

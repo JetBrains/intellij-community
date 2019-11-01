@@ -146,6 +146,9 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     commitModulesState.forEach((type, map) -> {
       Map<String, BuildTargetState> currentTypeState = currentModulesState.get(type);
 
+      // New build type already added above
+      if (currentTypeState == null) return;
+
       // Add new build modules
       Set<String> newBuildModules = new HashSet<>(map.keySet());
       newBuildModules.removeAll(currentTypeState.keySet());
@@ -195,8 +198,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         }
         String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
-      }
-      if (affectedModule.getType().equals(RESOURCES_PRODUCTION)) {
+      } else if (affectedModule.getType().equals(RESOURCES_PRODUCTION)) {
         BuildTargetState targetState = commitModulesState.get(JAVA_PRODUCTION).get(affectedModule.getName());
         if (targetState == null) {
           result.add(affectedModule);
@@ -204,8 +206,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         }
         String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
-      }
-      if (affectedModule.getType().equals(JAVA_TEST)) {
+      } else if (affectedModule.getType().equals(JAVA_TEST)) {
         BuildTargetState targetState = commitModulesState.get(RESOURCES_TEST).get(affectedModule.getName());
         if (targetState == null) {
           result.add(affectedModule);
@@ -213,8 +214,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         }
         String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
-      }
-      if (affectedModule.getType().equals(RESOURCES_TEST)) {
+      } else if (affectedModule.getType().equals(RESOURCES_TEST)) {
         BuildTargetState targetState = commitModulesState.get(JAVA_TEST).get(affectedModule.getName());
         if (targetState == null) {
           result.add(affectedModule);
@@ -222,6 +222,8 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         }
         String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
+      } else {
+        result.add(affectedModule);
       }
     });
     return new ArrayList<>(result);

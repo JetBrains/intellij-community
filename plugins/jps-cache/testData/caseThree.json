@@ -22,5 +22,11 @@
       "hash": "9bd11b17f0357c60b4f0520755597ae7",
       "relativePath": "$PROJECT_DIR$/out/classes/production/intellij.cidr.externalSystem"
     }
+  },
+  "artifacts": {
+    "intellij.cidr.externalSystem": {
+      "hash": "9bd11b17f0357c60b4f0520755597ae7",
+      "relativePath": "$PROJECT_DIR$/out/classes/production/intellij.cidr.externalSystem"
+    }
   }
 }

@@ -35,27 +35,72 @@ public class JpsCompilationOutputLoaderTest extends BasePlatformTestCase {
   }
 
   public void testCurrentModelStateNull() throws IOException {
-    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(getTestDataFile("caseOne.json")))) {
-      Map<String, Map<String, BuildTargetState>> fileData = myGson.fromJson(bufferedReader, myTokenType);
-      List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(null, fileData, false);
-      assertSize(1243, affectedModules);
-      // 836 production
-      assertSize(836, ContainerUtil.filter(affectedModules, module -> module.getType().contains(PRODUCTION)));
-      // 407 test
-      assertSize(407, ContainerUtil.filter(affectedModules, module -> module.getType().contains(TEST)));
-    }
+    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(null, loadModelFromFile("caseOne.json"), false);
+    assertSize(4, affectedModules);
+    // 836 production
+    assertSize(2, ContainerUtil.filter(affectedModules, module -> module.getType().contains(PRODUCTION)));
+    // 407 test
+    assertSize(2, ContainerUtil.filter(affectedModules, module -> module.getType().contains(TEST)));
   }
 
-  public void testChangedSqlModule() throws IOException {
-    try (BufferedReader bufferedReaderCurrentState = new BufferedReader(new FileReader(getTestDataFile("caseOne.json")));
-         BufferedReader bufferedReaderCommitstate = new BufferedReader(new FileReader(getTestDataFile("caseTwo.json")))) {
-      Map<String, Map<String, BuildTargetState>> currentState = myGson.fromJson(bufferedReaderCurrentState, myTokenType);
-      Map<String, Map<String, BuildTargetState>> commitState = myGson.fromJson(bufferedReaderCommitstate, myTokenType);
-      List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(currentState, commitState, false);
-      assertSize(1, affectedModules);
-      AffectedModule affectedModule = affectedModules.get(0);
-      assertEquals(PRODUCTION, affectedModule.getType());
-      assertEquals("intellij.database.dialects.sqlite", affectedModule.getName());
+  public void testChangedStatsCollectorModule() throws IOException {
+    List<AffectedModule> affectedModules =
+      compilationOutputLoader.getAffectedModules(loadModelFromFile("caseOne.json"), loadModelFromFile("caseTwo.json"), false);
+    assertSize(1, affectedModules);
+    AffectedModule affectedModule = affectedModules.get(0);
+    assertEquals("java-production", affectedModule.getType());
+    assertEquals("intellij.statsCollector", affectedModule.getName());
+  }
+
+  public void testNewType() throws IOException {
+    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseTwo.json"),
+                                                                                      loadModelFromFile("caseThree.json"), false);
+    assertSize(1, affectedModules);
+    AffectedModule affectedModule = affectedModules.get(0);
+    assertEquals("artifacts", affectedModule.getType());
+    assertEquals("intellij.cidr.externalSystem", affectedModule.getName());
+  }
+
+  public void testChangedProductionModule() throws IOException {
+    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseTwo.json"),
+                                                                                      loadModelFromFile("caseFour.json"), false);
+    assertSize(1, affectedModules);
+    AffectedModule affectedModule = affectedModules.get(0);
+    assertEquals(PRODUCTION, affectedModule.getType());
+    assertEquals("intellij.cidr.externalSystem", affectedModule.getName());
+  }
+
+  public void testNewBuildModule() throws IOException {
+    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseFour.json"),
+                                                                                      loadModelFromFile("caseFive.json"), false);
+    assertSize(1, affectedModules);
+    AffectedModule affectedModule = affectedModules.get(0);
+    assertEquals("resources-production", affectedModule.getType());
+    assertEquals("intellij.sh", affectedModule.getName());
+  }
+
+  public void testTargetFolderNotExist() throws IOException {
+    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseFour.json"),
+                                                                                      loadModelFromFile("caseFive.json"), true);
+    assertSize(4, affectedModules);
+    List<String> types = ContainerUtil.map(affectedModules, AffectedModule::getType);
+    List<String> names = ContainerUtil.map(affectedModules, AffectedModule::getName);
+    assertSameElements(types, "java-test", "production", "resources-test", "resources-production");
+    assertSameElements(names, "intellij.cidr.externalSystem", "intellij.platform.ssh.integrationTests", "intellij.sh");
+  }
+
+  public void testChangedTest() throws IOException {
+    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseFive.json"),
+                                                                                      loadModelFromFile("caseSix.json"), false);
+    assertSize(1, affectedModules);
+    AffectedModule affectedModule = affectedModules.get(0);
+    assertEquals(TEST, affectedModule.getType());
+    assertEquals("intellij.cidr.externalSystem", affectedModule.getName());
+  }
+
+  private Map<String, Map<String, BuildTargetState>> loadModelFromFile(String fileName) throws IOException {
+    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(getTestDataFile(fileName)))) {
+      return myGson.fromJson(bufferedReader, myTokenType);
     }
   }
 
