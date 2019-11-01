@@ -88,6 +88,16 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                  "    }");
   }
 
+  public void testRangeEndMayBeBiggerStart() {
+    doMemberTest("public void hardCase(boolean outer) {\n" +
+                 "        int[] src = new int[] { 1, 2, 3, 4, 5, 6, 7 };\n" +
+                 "        int length = outer ? 1 : 3;\n" +
+                 "        int srcPos = outer ? 0 : 3;\n" +
+                 "        int destPos = outer ? 1 : 4;\n" +
+                 "        System.arraycopy(src, srcPos, src, destPos, length);\n" +
+                 "    }");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

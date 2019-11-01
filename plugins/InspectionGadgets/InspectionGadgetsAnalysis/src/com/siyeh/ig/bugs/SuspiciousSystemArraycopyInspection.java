@@ -152,6 +152,7 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       if (!isTheSameArray(src, dest)) return;
       LongRangeSet srcRange = getDefiniteRange(srcPosSet, lengthSet);
       LongRangeSet destRange = getDefiniteRange(destPosSet, lengthSet);
+      if (srcRange == null || destRange == null) return;
       if (srcRange.intersects(destRange)) {
         PsiElement name = call.getMethodExpression().getReferenceNameElement();
         PsiElement elementToHighlight = name == null ? call : name;
@@ -164,6 +165,7 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       long maxLeftBorder = startSet.max();
       LongRangeSet lengthMinusOne = lengthSet.minus(LongRangeSet.point(1), false);
       long minRightBorder = startSet.plus(lengthMinusOne, false).min();
+      if (maxLeftBorder > minRightBorder) return null;
       return LongRangeSet.range(maxLeftBorder, minRightBorder);
     }
 
