@@ -100,10 +100,12 @@ task setupCidr
 }
 
 task cleanSetupCidr() {
-  setupCidr.dependsOn.each { setupToolTask ->
-    def downloadToolTask = setupToolTask.dependsOn.first()
-    delete setupToolTask.outputs.files.singleFile
-    delete downloadToolTask.outputs.files.singleFile
+  doLast {
+    setupCidr.dependsOn.each { setupToolTask ->
+      def downloadToolTask = setupToolTask.dependsOn.first()
+      delete setupToolTask.outputs.files.singleFile
+      delete downloadToolTask.outputs.files.singleFile
+    }
   }
 }
 
