@@ -21,6 +21,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TestTimeOut;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -132,25 +133,21 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   private static class MyException extends RuntimeException {
-    MyException() {
-      super("NOW");
-    }
   }
   private void throwMyException() {
     throw new MyException();
   }
 
   private static void checkMyExceptionThrownImmediately() {
+    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
     while (true) {
       try {
         UIUtil.dispatchAllInvocationEvents();
       }
       catch (MyException e) {
-        if (e.getMessage().equals("NOW")) {
-          break;
-        }
-        throw e;
+        break;
       }
+      assertFalse(t.timedOut());
     }
   }
 
