@@ -98,6 +98,26 @@ public class JpsCompilationOutputLoaderTest extends BasePlatformTestCase {
     assertEquals("intellij.cidr.externalSystem", affectedModule.getName());
   }
 
+  public void testRemoveBuildType() throws IOException {
+    compilationOutputLoader.getAffectedModules(loadModelFromFile("removeOne.json"), loadModelFromFile("caseOne.json"), false);
+    List<File> oldModulesPaths = compilationOutputLoader.getOldModulesPaths();
+    assertSize(1, oldModulesPaths);
+    assertEquals("intellij.cidr", oldModulesPaths.get(0).getName());
+  }
+
+  public void testRemoveModuleNotExistingInOtherBuildTypes() throws IOException {
+    compilationOutputLoader.getAffectedModules(loadModelFromFile("removeTwo.json"), loadModelFromFile("removeOne.json"), false);
+    List<File> oldModulesPaths = compilationOutputLoader.getOldModulesPaths();
+    assertSize(1, oldModulesPaths);
+    assertEquals("intellij.platform.ssh.integrationTests", oldModulesPaths.get(0).getName());
+  }
+
+  public void testRemoveModuleExistingInOtherBuildTypes() throws IOException {
+    compilationOutputLoader.getAffectedModules(loadModelFromFile("removeThree.json"), loadModelFromFile("removeTwo.json"), false);
+    List<File> oldModulesPaths = compilationOutputLoader.getOldModulesPaths();
+    assertSize(0, oldModulesPaths);
+  }
+
   private Map<String, Map<String, BuildTargetState>> loadModelFromFile(String fileName) throws IOException {
     try (BufferedReader bufferedReader = new BufferedReader(new FileReader(getTestDataFile(fileName)))) {
       return myGson.fromJson(bufferedReader, myTokenType);
