@@ -396,6 +396,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
   }
 
+  int getColumnLeftXCoordinate(int viewColumnIndex) {
+    int x = 0;
+    for (int i = 0; i < viewColumnIndex; i++) {
+      x += getColumnModel().getColumn(i).getWidth();
+    }
+    return x;
+  }
+
   private void setRootColumnSize() {
     TableColumn column = getRootColumn();
     int rootWidth;

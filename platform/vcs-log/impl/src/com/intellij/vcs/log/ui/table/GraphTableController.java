@@ -178,7 +178,7 @@ public class GraphTableController {
     if (column != VcsLogColumn.COMMIT) return;
 
     Point pointInCell = new Point(myCommitRenderer.getTooltipXCoordinate(row), myTable.getRowHeight() / 2);
-    Point point = new Point(getColumnLeftXCoordinate(myTable.getColumnViewIndex(column)) + pointInCell.x,
+    Point point = new Point(myTable.getColumnLeftXCoordinate(myTable.getColumnViewIndex(column)) + pointInCell.x,
                             row * myTable.getRowHeight() + pointInCell.y);
     showTooltip(row, column, pointInCell, point, true);
   }
@@ -204,14 +204,6 @@ public class GraphTableController {
   private static void triggerClick(@NotNull String target) {
     VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TABLE_CLICKED,
                                              data -> data.addData("target", target));
-  }
-
-  protected int getColumnLeftXCoordinate(int viewColumnIndex) {
-    int x = 0;
-    for (int i = 0; i < viewColumnIndex; i++) {
-      x += myTable.getColumnModel().getColumn(i).getWidth();
-    }
-    return x;
   }
 
   private class MyMouseAdapter extends MouseAdapter {
@@ -266,11 +258,11 @@ public class GraphTableController {
     }
 
     public boolean isOnLeftBorder(@NotNull MouseEvent e, int column) {
-      return Math.abs(getColumnLeftXCoordinate(column) - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
+      return Math.abs(myTable.getColumnLeftXCoordinate(column) - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
     }
 
     public boolean isOnRightBorder(@NotNull MouseEvent e, int column) {
-      return Math.abs(getColumnLeftXCoordinate(column) +
+      return Math.abs(myTable.getColumnLeftXCoordinate(column) +
                       myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
     }
 
