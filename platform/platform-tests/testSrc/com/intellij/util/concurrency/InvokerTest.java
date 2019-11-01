@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
@@ -35,7 +36,7 @@ import static javax.swing.SwingUtilities.isEventDispatchThread;
 public class InvokerTest {
   @SuppressWarnings("unused")
   private static final IdeaTestApplication application = IdeaTestApplication.getInstance();
-  private static final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
+  private final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
   private final Disposable parent = Disposer.newDisposable();
 
   @After
@@ -48,6 +49,12 @@ public class InvokerTest {
       }
     }
     Disposer.dispose(parent);
+  }
+
+  @NotNull
+  private <T> CancellablePromise<T> register(@NotNull CancellablePromise<T> promise) {
+    futures.add(promise);
+    return promise;
   }
 
   @Test
@@ -65,7 +72,7 @@ public class InvokerTest {
     testValidThread(new Invoker.Background(parent));
   }
 
-  private static void testValidThread(Invoker invoker) {
+  private void testValidThread(Invoker invoker) {
     CountDownLatch latch = new CountDownLatch(1);
     test(invoker, latch, error -> countDown(latch, 0, error, "task on invalid thread", invoker::isValidThread));
   }
@@ -85,11 +92,11 @@ public class InvokerTest {
     testInvokeLater(new Invoker.Background(parent));
   }
 
-  private static void testInvokeLater(Invoker invoker) {
+  private void testInvokeLater(Invoker invoker) {
     CountDownLatch latch = new CountDownLatch(1);
     test(invoker, latch, error -> {
       AtomicBoolean current = new AtomicBoolean(false);
-      futures.add(invoker.invokeLater(() -> countDown(latch, 100, error, "task is not done before subtask", current::get)));
+      register(invoker.invokeLater(() -> countDown(latch, 100, error, "task is not done before subtask", current::get)));
       current.set(true);
     });
   }
@@ -109,12 +116,12 @@ public class InvokerTest {
     testSchedule(new Invoker.Background(parent));
   }
 
-  private static void testSchedule(Invoker invoker) {
+  private void testSchedule(Invoker invoker) {
     CountDownLatch latch = new CountDownLatch(1);
     test(invoker, latch, error -> {
       AtomicBoolean current = new AtomicBoolean(false);
-      futures.add(invoker.invokeLater(() -> countDown(latch, 0, error, "task is not done before subtask", current::get), 200));
-      futures.add(invoker.invokeLater(() -> current.set(true), 100));
+      register(invoker.invokeLater(() -> countDown(latch, 0, error, "task is not done before subtask", current::get), 200));
+      register(invoker.invokeLater(() -> current.set(true), 100));
     });
   }
 
@@ -133,11 +140,11 @@ public class InvokerTest {
     testInvokeLaterIfNeeded(new Invoker.Background(parent));
   }
 
-  private static void testInvokeLaterIfNeeded(Invoker invoker) {
+  private void testInvokeLaterIfNeeded(Invoker invoker) {
     CountDownLatch latch = new CountDownLatch(1);
     test(invoker, latch, error -> {
       AtomicBoolean current = new AtomicBoolean(true);
-      futures.add(invoker.runOrInvokeLater(() -> countDown(latch, 100, error, "task is done before subtask", current::get)));
+      register(invoker.runOrInvokeLater(() -> countDown(latch, 100, error, "task is done before subtask", current::get)));
       current.set(false);
     });
   }
@@ -165,12 +172,12 @@ public class InvokerTest {
     return false;
   }
 
-  private static void testReadAction(Invoker invoker, boolean expectedBefore, boolean expectedAfter) {
+  private void testReadAction(Invoker invoker, boolean expectedBefore, boolean expectedAfter) {
     CountDownLatch latch = new CountDownLatch(1);
     test(invoker, latch, error -> {
       if (isExpected(latch, error, "before", expectedBefore)) {
         getApplication().runReadAction(() -> {
-          futures.add(invoker.runOrInvokeLater(() -> {
+          register(invoker.runOrInvokeLater(() -> {
             if (isExpected(latch, error, "after", expectedAfter)) {
               latch.countDown(); // interrupt without any error
             }
@@ -195,7 +202,7 @@ public class InvokerTest {
     testRestartOnPCE(new Invoker.Background(parent));
   }
 
-  private static void testRestartOnPCE(Invoker invoker) {
+  private void testRestartOnPCE(Invoker invoker) {
     AtomicInteger value = new AtomicInteger(10);
     CountDownLatch latch = new CountDownLatch(1);
     test(invoker, latch, error -> {
@@ -219,13 +226,13 @@ public class InvokerTest {
     testQueue(new Invoker.Background(parent), true);
   }
 
-  private static void testQueue(Invoker invoker, boolean ordered) {
+  private void testQueue(Invoker invoker, boolean ordered) {
     CountDownLatch latch = new CountDownLatch(2);
     test(invoker, latch, error -> {
       long first = ordered ? 2 : 1;
-      futures.add(invoker.invokeLater(() -> countDown(latch, 100, error, "unexpected task order", () -> first == latch.getCount())));
+      register(invoker.invokeLater(() -> countDown(latch, 100, error, "unexpected task order", () -> first == latch.getCount())));
       long second = ordered ? 1 : 2;
-      futures.add(invoker.invokeLater(() -> countDown(latch, 0, error, "unexpected task order", () -> second == latch.getCount())));
+      register(invoker.invokeLater(() -> countDown(latch, 0, error, "unexpected task order", () -> second == latch.getCount())));
     });
   }
 
@@ -244,7 +251,7 @@ public class InvokerTest {
     testThreadChanging(new Invoker.Background(parent));
   }
 
-  private static void testThreadChanging(Invoker invoker) {
+  private void testThreadChanging(Invoker invoker) {
     testThreadChanging(invoker, invoker, true);
   }
 
@@ -293,7 +300,7 @@ public class InvokerTest {
     testThreadChanging(new Invoker.Background(parent), new Invoker.Background(parent), false);
   }
 
-  private static void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
+  private void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
     CountDownLatch latch = new CountDownLatch(1);
     test(foreground, latch, error
       -> new Command.Processor(foreground, background).process(Thread::currentThread, thread
@@ -307,10 +314,10 @@ public class InvokerTest {
   }
 
 
-  private static void test(Invoker invoker, CountDownLatch latch, Consumer<? super AtomicReference<String>> consumer) {
+  private void test(Invoker invoker, CountDownLatch latch, Consumer<? super AtomicReference<String>> consumer) {
     Assert.assertFalse("EDT should not be used to start this test", invoker instanceof Invoker.EDT && isEventDispatchThread());
     AtomicReference<String> error = new AtomicReference<>();
-    futures.add(invoker.invokeLater(() -> consumer.accept(error)));
+    register(invoker.invokeLater(() -> consumer.accept(error)));
     String message;
     try {
       latch.await(10, TimeUnit.SECONDS);
