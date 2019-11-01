@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
@@ -56,6 +58,20 @@ public class ActionButtonWithText extends ActionButton {
     });
     updateMnemonic(0, myPresentation.getMnemonic());
     UIUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (myPlace == ActionPlaces.EDITOR_TOOLBAR) {
+      // tweak font & color for editor toolbar to match editor tabs style
+      setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      setForeground(ColorUtil.dimmer(JBColor.BLACK));
+    }
+    else {
+      AnAction action = getAction();
+      setFont(action != null && action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+    }
   }
 
   @NotNull
