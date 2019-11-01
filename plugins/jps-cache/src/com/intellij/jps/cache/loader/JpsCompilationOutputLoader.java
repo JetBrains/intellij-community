@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +45,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
 
     SegmentedProgressIndicatorManager progressIndicatorManager = context.getIndicatorManager();
     progressIndicatorManager.setText(this, "Calculating affected modules");
-    List<AffectedModule> affectedModules = getAffectedModules(context.getCurrentSourcesState(), context.getCommitSourcesState());
+    List<AffectedModule> affectedModules = calculateAffectedModules(context.getCurrentSourcesState(), context.getCommitSourcesState(), true);
     progressIndicatorManager.finished(this);
     progressIndicatorManager.getProgressIndicator().checkCanceled();
 
@@ -98,8 +99,14 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     LOG.warn("Applying compilation output took: " + (System.currentTimeMillis() - start));
   }
 
-  private List<AffectedModule> getAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
-                                                    @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
+  @TestOnly
+  List<AffectedModule> getAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
+                                          @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState,  boolean checkExistence) {
+    return calculateAffectedModules(currentModulesState, commitModulesState, checkExistence);
+  }
+
+  private List<AffectedModule> calculateAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
+                                          @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState, boolean checkExistanse) {
     long start = System.currentTimeMillis();
 
     List<AffectedModule> affectedModules = new ArrayList<>();
@@ -164,7 +171,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         }
 
         File outFile = getProjectRelativeFile(state.getRelativePath());
-        if (!outFile.exists()) {
+        if (!outFile.exists() && checkExistanse) {
           affectedModules.add(new AffectedModule(type, name, state.getHash(), outFile));
         }
       });
