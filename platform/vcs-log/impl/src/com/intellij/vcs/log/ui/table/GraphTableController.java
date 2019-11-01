@@ -22,7 +22,6 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
-import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -74,7 +72,7 @@ public class GraphTableController {
   boolean shouldSelectCell(@NotNull MouseEvent e) {
     int row = myTable.rowAtPoint(e.getPoint());
     if (row >= 0 && row < myTable.getRowCount()) {
-      return findPrintElement(row, getPointInCell(e.getPoint(), VcsLogColumn.COMMIT)) == null;
+      return findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT)) == null;
     }
     return true;
   }
@@ -135,17 +133,6 @@ public class GraphTableController {
     }
 
     return answer.getCursorToSet();
-  }
-
-  @NotNull
-  private Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn vcsLogColumn) {
-    int width = 0;
-    for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
-      TableColumn column = myTable.getColumnModel().getColumn(i);
-      if (column.getModelIndex() == vcsLogColumn.ordinal()) break;
-      width += column.getWidth();
-    }
-    return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
   }
 
   @NotNull
@@ -269,7 +256,7 @@ public class GraphTableController {
           performRootColumnAction();
         }
         else if (column == VcsLogColumn.COMMIT) {
-          PrintElement printElement = findPrintElement(row, getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
+          PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT));
           if (printElement != null) {
             Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
             handleCursor(cursor);
@@ -307,7 +294,7 @@ public class GraphTableController {
           return;
         }
         else if (column == VcsLogColumn.COMMIT) {
-          Point pointInCell = getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
+          Point pointInCell = myTable.getPointInCell(e.getPoint(), VcsLogColumn.COMMIT);
           PrintElement printElement = findPrintElement(row, pointInCell);
           Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
           // if printElement is null, still need to unselect whatever was selected in a graph

@@ -42,6 +42,7 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
+import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -89,7 +90,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogColorManager myColorManager;
-  
+
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
@@ -101,7 +102,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final Set<VcsLogColumn> myInitializedColumns = EnumSet.noneOf(VcsLogColumn.class);
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new ArrayList<>();
-  
+
   @Nullable private Selection mySelection = null;
 
   public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
@@ -382,6 +383,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull
   public TableColumn getCommitColumn() {
     return Objects.requireNonNull(getTableColumn(VcsLogColumn.COMMIT));
+  }
+
+  @NotNull
+  Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn vcsLogColumn) {
+    int width = 0;
+    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+      TableColumn column = getColumnModel().getColumn(i);
+      if (column.getModelIndex() == vcsLogColumn.ordinal()) break;
+      width += column.getWidth();
+    }
+    return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
   }
 
   private void setRootColumnSize() {
