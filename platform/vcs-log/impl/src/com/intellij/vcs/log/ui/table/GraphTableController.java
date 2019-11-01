@@ -172,14 +172,6 @@ public class GraphTableController {
     return balloonText;
   }
 
-  private void showOrHideCommitTooltip(int row, @NotNull VcsLogColumn column, @NotNull MouseEvent e) {
-    if (!showTooltip(row, column, e.getPoint(), false)) {
-      if (IdeTooltipManager.getInstance().hasCurrent()) {
-        IdeTooltipManager.getInstance().hideCurrent(e);
-      }
-    }
-  }
-
   private boolean showTooltip(int row, @NotNull VcsLogColumn column, @NotNull Point point, boolean now) {
     JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(column)),
                                                           getPointInCell(point, column), row);
@@ -316,7 +308,11 @@ public class GraphTableController {
           performGraphAction(printElement, e,
                              GraphAction.Type.MOUSE_OVER); // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
-            showOrHideCommitTooltip(row, column, e);
+            if (!showTooltip(row, column, e.getPoint(), false)) {
+              if (IdeTooltipManager.getInstance().hasCurrent()) {
+                IdeTooltipManager.getInstance().hideCurrent(e);
+              }
+            }
           }
           return;
         }
