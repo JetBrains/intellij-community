@@ -13,12 +13,14 @@ import java.util.*
 internal data class ChangeReminderAnonymousPath(val value: String)
 
 internal enum class ChangeReminderEventType {
-  CHANGELIST_CHANGED;
+  CHANGELIST_CHANGED,
+  CHANGES_COMMITTED;
 
   override fun toString() = name.toLowerCase(Locale.ENGLISH)
 }
 
 internal enum class ChangeReminderEventDataKey {
+  COMMITTED_FILES,
   DISPLAYED_PREDICTION,
   CUR_MODIFIED_FILES,
   PREV_MODIFIED_FILES,

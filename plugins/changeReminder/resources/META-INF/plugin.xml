@@ -35,5 +35,6 @@ Suggested files are listed as <b>Related Files</b> in the <b>Local Changes</b> t
     <statistics.counterUsagesCollector groupId="vcs.change.reminder" version="1"/>
     <vcs.changes.changesViewModifier implementation="com.jetbrains.changeReminder.changes.ChangeReminderChangesViewModifier"/>
     <projectService serviceImplementation="com.jetbrains.changeReminder.predict.PredictionService"/>
+    <checkinHandlerFactory implementation="com.jetbrains.changeReminder.stats.commit.ChangeReminderStatsCheckinHandler"/>
   </extensions>
 </idea-plugin>
