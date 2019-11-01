@@ -248,8 +248,9 @@ internal class GHPRComponentFactory(private val project: Project) {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 
-    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search).also {
-      (actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction).registerShortcutOn(it)
+    val listReloadAction = actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction
+    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).also {
+      listReloadAction.registerShortcutOn(it)
     }
 
     Disposer.register(disposable, Disposable {
