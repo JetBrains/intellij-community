@@ -9,6 +9,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
       @Override
       public Cursor performMouseClick(int row, @NotNull MouseEvent e) {
         if (myColorManager.hasMultiplePaths() && myProperties.exists(SHOW_ROOT_NAMES)) {
-          GraphTableController.triggerClick("root.column");
+          VcsLogUsageTriggerCollector.triggerClick("root.column");
           myProperties.set(SHOW_ROOT_NAMES, !myProperties.get(SHOW_ROOT_NAMES));
         }
         return null;

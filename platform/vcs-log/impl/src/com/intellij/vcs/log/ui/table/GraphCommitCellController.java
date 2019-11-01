@@ -15,6 +15,7 @@ import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.paint.GraphCellPainter;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -176,11 +177,11 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   private static void triggerElementClick(@NotNull PrintElement printElement) {
     if (printElement instanceof NodePrintElement) {
-      GraphTableController.triggerClick("node");
+      VcsLogUsageTriggerCollector.triggerClick("node");
     }
     else if (printElement instanceof EdgePrintElement) {
       if (((EdgePrintElement)printElement).hasArrow()) {
-        GraphTableController.triggerClick("arrow");
+        VcsLogUsageTriggerCollector.triggerClick("arrow");
       }
     }
   }
