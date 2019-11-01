@@ -751,7 +751,7 @@ class DistributionJARsBuilder {
         }
       }
 
-      def helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext)
+      def helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext, pluginVersion)
       if (helpPlugin != null) {
         def spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, "$nonBundledPluginsArtifacts/auto-uploading", layoutBuilder)
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {

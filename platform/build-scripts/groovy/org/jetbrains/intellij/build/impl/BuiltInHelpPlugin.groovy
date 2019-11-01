@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.BuildContext
 
 final class BuiltInHelpPlugin {
 
-  static PluginLayout helpPlugin(BuildContext buildContext) {
+  static PluginLayout helpPlugin(BuildContext buildContext, String pluginVersion) {
     def productName = buildContext.applicationInfo.productName
     def moduleName = "intellij.platform.builtInHelp"
     def helpRoot = "${buildContext.paths.projectHome}/help"
@@ -42,7 +42,7 @@ final class BuiltInHelpPlugin {
         new File(patchedRoot, "META-INF/services").mkdirs()
         new File(patchedRoot, "META-INF/services/org.apache.lucene.codecs.Codec").text =
           "org.apache.lucene.codecs.lucene50.Lucene50Codec"
-        new File(patchedRoot, "META-INF/plugin.xml").text = pluginXml(context)
+        new File(patchedRoot, "META-INF/plugin.xml").text = pluginXml(context, pluginVersion)
 
         def jarName = "$buildContext.paths.temp/help/$productLowerCase-assets.jar"
         ant.jar(destfile: jarName) {
@@ -57,8 +57,7 @@ final class BuiltInHelpPlugin {
     }
   }
 
-  static String pluginXml(BuildContext buildContext) {
-    def version = buildContext.buildNumber;
+  private static String pluginXml(BuildContext buildContext, String version) {
     def productName = buildContext.applicationInfo.productName
     def productLowerCase = productName.replace(" ", "-").toLowerCase()
     def pluginId = "bundled-$productLowerCase-help"
