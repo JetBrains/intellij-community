@@ -92,36 +92,36 @@ public abstract class Invoker implements Disposable {
   /**
    * Invokes the specified task on the valid thread after the specified delay.
    *
-   * @param task  a task to execute asynchronously on the valid thread
-   * @param delay milliseconds for the initial delay
+   * @param runnable a task to execute asynchronously on the valid thread
+   * @param delay    milliseconds for the initial delay
    * @return an object to control task processing
    */
   @NotNull
-  public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
+  public final CancellablePromise<?> invokeLater(@NotNull Runnable runnable, int delay) {
     if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: " + delay);
-    AsyncPromise<?> promise = new AsyncPromise<>();
-    if (canInvoke(task, promise)) {
-      offerSafely(task, promise, 0, delay);
+    Task<?> task = new Task<>(runnable);
+    if (task.canInvoke(disposed)) {
+      offerSafely(task, 0, delay);
     }
-    return promise;
+    return task.promise;
   }
 
   /**
    * Invokes the specified task immediately if the current thread is valid,
    * or asynchronously after all pending tasks have been processed.
    *
-   * @param task a task to execute on the valid thread
+   * @param runnable a task to execute on the valid thread
    * @return an object to control task processing
    */
   @NotNull
-  public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
+  public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable runnable) {
     if (isValidThread()) {
       count.incrementAndGet();
-      AsyncPromise<?> promise = new AsyncPromise<>();
-      invokeSafely(task, promise, 0);
-      return promise;
+      Task<?> task = new Task<>(runnable);
+      invokeSafely(task, 0);
+      return task.promise;
     }
-    return invokeLater(task);
+    return invokeLater(runnable);
   }
 
   /**
@@ -137,52 +137,50 @@ public abstract class Invoker implements Disposable {
 
   /**
    * @param task    a task to execute on the valid thread
-   * @param promise an object to control task processing
    * @param attempt an attempt to run the specified task
    * @param delay   milliseconds for the initial delay
    */
-  private void offerSafely(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt, int delay) {
+  private void offerSafely(@NotNull Task<?> task, int attempt, int delay) {
     try {
       count.incrementAndGet();
-      offer(() -> invokeSafely(task, promise, attempt), delay);
+      offer(() -> invokeSafely(task, attempt), delay);
     }
     catch (RejectedExecutionException exception) {
       count.decrementAndGet();
       LOG.debug("Executor is shutdown");
-      promise.setError("shutdown");
+      task.promise.setError("shutdown");
     }
   }
 
   /**
    * @param task    a task to execute on the valid thread
-   * @param promise an object to control task processing
    * @param attempt an attempt to run the specified task
    */
-  private void invokeSafely(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
+  private void invokeSafely(@NotNull Task<?> task, int attempt) {
     try {
-      if (canInvoke(task, promise)) {
+      if (task.canInvoke(disposed)) {
         if (getApplication() == null) {
           task.run(); // is not interruptible in tests without application
         }
         else if (useReadAction != ThreeState.YES || isDispatchThread()) {
-          ProgressManager.getInstance().runProcess(task, indicator(promise));
+          ProgressManager.getInstance().runProcess(task, indicator(task.promise));
         }
-        else if (!runInReadActionWithWriteActionPriority(task, indicator(promise))) {
-          offerRestart(task, promise, attempt);
+        else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
+          offerRestart(task, attempt);
           return;
         }
-        promise.setResult(null);
+        task.promise.setResult(null);
       }
     }
     catch (ProcessCanceledException | IndexNotReadyException exception) {
-      offerRestart(task, promise, attempt);
+      offerRestart(task, attempt);
     }
     catch (Throwable throwable) {
       try {
         LOG.error(throwable);
       }
       finally {
-        promise.setError(throwable);
+        task.promise.setError(throwable);
       }
     }
     finally {
@@ -192,59 +190,65 @@ public abstract class Invoker implements Disposable {
 
   /**
    * @param task    a task to execute on the valid thread
-   * @param promise an object to control task processing
    * @param attempt an attempt to run the specified task
    */
-  private void offerRestart(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
-    if (canRestart(task, promise, attempt)) {
-      offerSafely(task, promise, attempt + 1, 10);
+  private void offerRestart(@NotNull Task<?> task, int attempt) {
+    if (task.canRestart(disposed, attempt)) {
+      offerSafely(task, attempt + 1, 10);
       LOG.debug("Task is restarted");
     }
   }
 
   /**
-   * @param task    a task to execute on the valid thread
-   * @param promise an object to control task processing
-   * @param attempt an attempt to run the specified task
-   * @return {@code false} if too many attempts to run the task,
-   * or if the given promise is already done or cancelled,
-   * or if the current invoker is disposed,
-   * or if the specified task is obsolete
+   * This data class is intended to combine a developer's task
+   * with the corresponding object used to control its processing.
    */
-  private boolean canRestart(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
-    LOG.debug("Task is canceled");
-    if (attempt < THRESHOLD) return canInvoke(task, promise);
-    LOG.warn("Task is always canceled: " + task);
-    promise.setError("timeout");
-    return false;
-  }
+  static final class Task<T> implements Runnable {
+    final AsyncPromise<T> promise = new AsyncPromise<>();
+    private final Runnable task;
 
-  /**
-   * @param task    a task to execute on the valid thread
-   * @param promise an object to control task processing
-   * @return {@code false} if the given promise is already done or cancelled,
-   * or if the current invoker is disposed,
-   * or if the specified task is obsolete
-   */
-  private boolean canInvoke(@NotNull Runnable task, @NotNull AsyncPromise<?> promise) {
-    if (promise.isDone()) {
-      LOG.debug("Promise is cancelled: ", promise.isCancelled());
-      return false;
+    Task(@NotNull Runnable runnable) {
+      task = runnable;
     }
-    if (disposed) {
-      LOG.debug("Invoker is disposed");
-      promise.setError("disposed");
-      return false;
+
+    boolean canRestart(boolean disposed, int attempt) {
+      LOG.debug("Task is canceled");
+      if (attempt < THRESHOLD) return canInvoke(disposed);
+      LOG.warn("Task is always canceled: " + task);
+      promise.setError("timeout");
+      return false; // too many attempts to run the task
     }
-    if (task instanceof Obsolescent) {
-      Obsolescent obsolescent = (Obsolescent)task;
-      if (obsolescent.isObsolete()) {
-        LOG.debug("Task is obsolete");
-        promise.setError("obsolete");
-        return false;
+
+    boolean canInvoke(boolean disposed) {
+      if (promise.isDone()) {
+        LOG.debug("Promise is cancelled: ", promise.isCancelled());
+        return false; // the given promise is already done or cancelled
       }
+      if (disposed) {
+        LOG.debug("Invoker is disposed");
+        promise.setError("disposed");
+        return false; // the current invoker is disposed
+      }
+      if (task instanceof Obsolescent) {
+        Obsolescent obsolescent = (Obsolescent)task;
+        if (obsolescent.isObsolete()) {
+          LOG.debug("Task is obsolete");
+          promise.setError("obsolete");
+          return false; // the specified task is obsolete
+        }
+      }
+      return true;
     }
-    return true;
+
+    @Override
+    public void run() {
+      task.run();
+    }
+
+    @Override
+    public String toString() {
+      return "Invoker.Task: " + task;
+    }
   }
 
   @NotNull
