@@ -76,7 +76,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
     Disposable disposable = Disposer.newDisposable();
     try {
       Project project = ProjectManager.getInstance().getDefaultProject();
-      GitRepository repository = GitRepositoryImpl.getInstance(repositoryRoot, project, disposable, false);
+      GitRepository repository = GitRepositoryImpl.createInstance(repositoryRoot, project, disposable, false);
 
       for (CloudGitDeploymentDetector deploymentDetector : CloudGitDeploymentDetector.EP_NAME.getExtensions()) {
         String applicationName = deploymentDetector.getFirstApplicationName(repository);
