@@ -33,7 +33,10 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -54,7 +57,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -741,7 +743,7 @@ public class PluginManagerCore {
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull Path file,
                                                                 @NotNull String fileName,
-                                                                @NotNull PathBasedJdomXIncluder.PathResolver pathResolver,
+                                                                @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                                                                 @NotNull LoadingContext context,
                                                                 @Nullable Path pluginPath) {
     SafeJdomFactory factory = context.getXmlFactory();
@@ -815,7 +817,14 @@ public class PluginManagerCore {
     if (isDirectory) {
       descriptor = loadDescriptorFromDir(file, pathName, null, context);
       if (descriptor == null) {
-        List<Path> files = getDirChildren(file.resolve("lib"));
+        List<Path> files;
+        try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
+          files = ContainerUtil.collect(s.iterator());
+        }
+        catch (IOException e) {
+          return null;
+        }
+
         if (files.isEmpty()) {
           return null;
         }
@@ -880,40 +889,66 @@ public class PluginManagerCore {
       return false;
     }
 
-    context.visitedFiles.add(Pair.create(pathName, descriptor));
-    resolveOptionalDescriptors(descriptor, context, (@SystemIndependent String optPathName) -> {
-      IdeaPluginDescriptorImpl optionalDescriptor = null;
-      if (context.lastZipWithDescriptor != null) { // try last file that had the descriptor that worked
-        optionalDescriptor = loadDescriptorFromFileOrDir(context.lastZipWithDescriptor, optPathName, context);
-      }
-      if (optionalDescriptor == null) {
-        optionalDescriptor = loadDescriptorFromFileOrDir(file, optPathName, context);
-      }
-      if (optionalDescriptor == null && (isDirectory || resolveDescriptorsInResources())) {
-        // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
-        // and here code supports the same behavior.
-        // Note that this code is meant for IDE development / testing purposes
-        URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + optPathName);
-        if (resource != null) {
-          try (LoadingContext childContext = context.copy(/* isEssential = */ false)) {
-            optionalDescriptor = loadDescriptorFromResource(resource, optPathName, childContext);
+    Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
+    if (optionalConfigs == null) {
+      return true;
+    }
+
+    List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> visitedFiles = context.getVisitedFiles();
+    visitedFiles.add(new AbstractMap.SimpleEntry<>(pathName, descriptor));
+    // try last file that had the descriptor that worked
+    // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
+    // and here code supports the same behavior.
+    // Note that this code is meant for IDE development / testing purposes
+
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
+    loop:
+    for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
+      for (String configFile : entry.getValue()) {
+        for (int i = 0, size = visitedFiles.size(); i < size; i++) {
+          AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl> visitedFile = visitedFiles.get(i);
+          if (visitedFile.getKey().equals(configFile)) {
+            List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> cycle = visitedFiles.subList(i, visitedFiles.size());
+            getLogger().info("Plugin " + toPresentableName(visitedFiles.get(0).getValue()) + " optional descriptors form a cycle: " +
+                             StringUtil.join(cycle, o -> o.getKey(), ", "));
+            continue loop;
           }
         }
-      }
-      return optionalDescriptor;
-    });
-    context.visitedFiles.remove(context.visitedFiles.size() - 1);
-    return true;
-  }
 
-  @NotNull
-  private static List<Path> getDirChildren(@NotNull Path dir) {
-    try (DirectoryStream<Path> s = Files.newDirectoryStream(dir)) {
-      return ContainerUtil.collect(s.iterator());
+        IdeaPluginDescriptorImpl optionalDescriptor = null;
+        // try last file that had the descriptor that worked
+        if (context.lastZipWithDescriptor != null) {
+          optionalDescriptor = loadDescriptorFromFileOrDir(context.lastZipWithDescriptor, configFile, context);
+        }
+
+        if (optionalDescriptor == null) {
+          optionalDescriptor = loadDescriptorFromFileOrDir(file, configFile, context);
+        }
+
+        if (optionalDescriptor == null && (isDirectory || resolveDescriptorsInResources())) {
+          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
+          // and here code supports the same behavior.
+          // Note that this code is meant for IDE development / testing purposes
+          URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + configFile);
+          if (resource != null) {
+            try (LoadingContext childContext = context.copy(/* isEssential = */ false)) {
+              optionalDescriptor = loadDescriptorFromResource(resource, configFile, childContext);
+            }
+          }
+        }
+
+        if (optionalDescriptor == null) {
+          getLogger().info("Plugin " + toPresentableName(descriptor) + " misses optional descriptor " + configFile);
+        }
+        else {
+          ContainerUtilRt.putValue(entry.getKey(), optionalDescriptor, descriptors);
+        }
+      }
     }
-    catch (IOException e) {
-      return Collections.emptyList();
-    }
+    descriptor.setOptionalDescriptors(descriptors);
+
+    visitedFiles.remove(visitedFiles.size() - 1);
+    return true;
   }
 
   private static boolean resolveDescriptorsInResources() {
@@ -966,38 +1001,6 @@ public class PluginManagerCore {
       return (c == 'm' || c == 'M') && i + 2 < name.length() && Character.isDigit(name.charAt(i + 2));
     }
     return false;
-  }
-
-  private static void resolveOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                 @NotNull LoadingContext context,
-                                                 @NotNull Function<String, IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
-    Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
-    if (optionalConfigs == null || optionalConfigs.isEmpty()) {
-      return;
-    }
-
-    Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
-    for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
-      for (String configFile : entry.getValue()) {
-        int idx = ContainerUtil.indexOf(context.visitedFiles, o -> o.getFirst().equals(configFile));
-        if (idx != -1) {
-          List<Pair<String, IdeaPluginDescriptorImpl>> cycle = context.visitedFiles.subList(idx, context.visitedFiles.size());
-          getLogger().info("Plugin " + toPresentableName(context.visitedFiles.get(0).second) + " optional descriptors form a cycle: " +
-                           StringUtil.join(cycle, o -> o.getFirst(), ", "));
-          continue;
-        }
-
-        IdeaPluginDescriptorImpl optionalDescriptor = optionalDescriptorLoader.apply(configFile);
-        if (optionalDescriptor == null) {
-          getLogger().info("Plugin " + toPresentableName(descriptor) + " misses optional descriptor " + configFile);
-        }
-        else {
-          descriptors.computeIfAbsent(entry.getKey(), it -> new SmartList<>()).add(optionalDescriptor);
-        }
-      }
-    }
-
-    descriptor.setOptionalDescriptors(descriptors);
   }
 
   private static void loadDescriptorsFromDir(@NotNull Path dir,

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
@@ -224,35 +225,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myVendorLogoPath = pluginBean.vendor.logo;
     }
 
-    // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
-    Set<PluginId> dependentPlugins = new LinkedHashSet<>();
-    Set<PluginId> nonOptionalDependentPlugins = new LinkedHashSet<>();
-    if (pluginBean.dependencies != null) {
-      myOptionalConfigs = new LinkedHashMap<>();
-      for (PluginDependency dependency : pluginBean.dependencies) {
-        String text = StringUtil.trim(dependency.pluginId);
-        if (!StringUtil.isEmptyOrSpaces(text)) {
-          PluginId id = PluginId.getId(text);
-          dependentPlugins.add(id);
-          if (dependency.optional) {
-            if (!StringUtil.isEmptyOrSpaces(dependency.configFile)) {
-              myOptionalConfigs.computeIfAbsent(id, it -> new SmartList<>()).add(dependency.configFile);
-            }
-          }
-          else {
-            nonOptionalDependentPlugins.add(id);
-          }
-        }
-      }
-    }
-
-    myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(PluginId.EMPTY_ARRAY);
-    if (nonOptionalDependentPlugins.size() == dependentPlugins.size()) {
-      myOptionalDependencies = PluginId.EMPTY_ARRAY;
-    }
-    else {
-      myOptionalDependencies = ContainerUtil.filter(dependentPlugins, id -> !nonOptionalDependentPlugins.contains(id)).toArray(PluginId.EMPTY_ARRAY);
-    }
+    readDependencies(pluginBean);
 
     // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
     // but it is not a problem because in any case new XmlSerializer is not used for our core classes (plugin bean, component config and so on).
@@ -372,6 +345,68 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
 
       child.getContent().clear();
+    }
+  }
+
+  private void readDependencies(@NotNull OptimizedPluginBean pluginBean) {
+    if (pluginBean.dependencies == null || pluginBean.dependencies.length == 0) {
+      return;
+    }
+
+    // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
+    Set<PluginId> dependentPlugins = null;
+    Set<PluginId> nonOptionalDependentPlugins = null;
+    for (PluginDependency dependency : pluginBean.dependencies) {
+      String text = StringUtil.trim(dependency.pluginId);
+      if (StringUtil.isEmpty(text)) {
+        continue;
+      }
+
+      PluginId id = PluginId.getId(text);
+      if (dependentPlugins == null) {
+        dependentPlugins = new LinkedHashSet<>();
+      }
+      dependentPlugins.add(id);
+
+      if (dependency.optional) {
+        if (!StringUtil.isEmptyOrSpaces(dependency.configFile)) {
+          if (myOptionalConfigs == null) {
+            myOptionalConfigs = new LinkedHashMap<>();
+          }
+          ContainerUtilRt.putValue(id, dependency.configFile, myOptionalConfigs);
+        }
+      }
+      else {
+        if (nonOptionalDependentPlugins == null) {
+          nonOptionalDependentPlugins = new LinkedHashSet<>();
+        }
+        nonOptionalDependentPlugins.add(id);
+      }
+    }
+
+    if (dependentPlugins == null) {
+      return;
+    }
+
+    myDependencies = dependentPlugins.toArray(PluginId.EMPTY_ARRAY);
+
+    if (nonOptionalDependentPlugins == null) {
+      myOptionalDependencies = myDependencies;
+      return;
+    }
+
+    if (nonOptionalDependentPlugins.size() == myDependencies.length) {
+      myOptionalDependencies = PluginId.EMPTY_ARRAY;
+    }
+    else {
+      PluginId[] list = new PluginId[myDependencies.length - nonOptionalDependentPlugins.size()];
+      int index = 0;
+      for (PluginId id : dependentPlugins) {
+        if (!nonOptionalDependentPlugins.contains(id)) {
+          list[index++] = id;
+        }
+      }
+      myOptionalDependencies = list;
     }
   }
 
@@ -835,6 +870,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUntilBuild;
   }
 
+  @Nullable
   Map<PluginId, List<String>> getOptionalConfigs() {
     return myOptionalConfigs;
   }

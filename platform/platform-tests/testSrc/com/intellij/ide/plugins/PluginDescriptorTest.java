@@ -115,7 +115,8 @@ public class PluginDescriptorTest {
       urls.add(it.toURI().toURL());
     }
     List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls.toArray(new URL[0]), null));
-    assertThat(descriptors).hasSize(1);
+    // core and com.intellij.workspace
+    assertThat(descriptors).hasSize(2);
   }
 
   @Test
