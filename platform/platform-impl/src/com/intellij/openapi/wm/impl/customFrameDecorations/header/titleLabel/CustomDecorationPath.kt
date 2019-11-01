@@ -76,6 +76,7 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
 
       disposable = ds
       checkTabPlacement()
+      checkOpenedProjects()
     }
   }
 
