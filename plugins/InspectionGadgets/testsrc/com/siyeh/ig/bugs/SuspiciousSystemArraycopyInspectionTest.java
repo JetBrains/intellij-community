@@ -24,15 +24,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspectionTestCase {
 
-  public void testStaticImport() {
-    doTest("import static java.lang.System.arraycopy;" +
-           "class X {" +
-           "  void m(int[] src, int[] dst) {" +
-           "    arraycopy(src, /*Parameter 'srcPos' may not be negative*/-1/**/, dst, 0, 1);" +
-           "  }" +
-           "}");
-  }
-
   public void testEmptyDst() {
     doMemberTest("void m(int[] src) {" +
                  "  System.arraycopy(src, 0,/*!Expression expected*/ /*!*/, 0, src.length);" +

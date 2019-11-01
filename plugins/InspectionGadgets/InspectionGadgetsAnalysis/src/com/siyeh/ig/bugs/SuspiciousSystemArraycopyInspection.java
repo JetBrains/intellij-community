@@ -71,17 +71,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
         return;
       }
       final PsiExpression srcPos = arguments[1];
-      if (isNegativeArgument(srcPos)) {
-        registerError(srcPos, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor1"));
-      }
       final PsiExpression destPos = arguments[3];
-      if (isNegativeArgument(destPos)) {
-        registerError(destPos, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor2"));
-      }
       final PsiExpression length = arguments[4];
-      if (isNegativeArgument(length)) {
-        registerError(length, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor3"));
-      }
       final PsiExpression src = arguments[0];
       final PsiExpression dest = arguments[2];
       checkRanges(src, srcPos, dest, destPos, length, expression);
@@ -185,15 +176,6 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       PsiElement destVariable = destReference.resolve();
       if (srcVariable == null || srcVariable != destVariable) return false;
       return true;
-    }
-
-    private static boolean isNegativeArgument(@NotNull PsiExpression argument) {
-      final Object constant = ExpressionUtils.computeConstantExpression(argument);
-      if (!(constant instanceof Integer)) {
-        return false;
-      }
-      final Integer integer = (Integer)constant;
-      return integer.intValue() < 0;
     }
   }
 }
