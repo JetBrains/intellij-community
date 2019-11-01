@@ -3,6 +3,7 @@ package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
+import java.util.*
 
 
 internal sealed class PredictionData(val predictionToDisplay: Collection<VirtualFile>) {
@@ -18,6 +19,8 @@ internal sealed class PredictionData(val predictionToDisplay: Collection<Virtual
     DATA_PACK_CHANGED,
     EXCEPTION_THROWN,
     CALCULATION_CANCELED,
-    UNEXPECTED_REASON
+    UNEXPECTED_REASON;
+
+    override fun toString() = name.toLowerCase(Locale.ENGLISH)
   }
 }
