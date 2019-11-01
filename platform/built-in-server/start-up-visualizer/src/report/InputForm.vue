@@ -102,6 +102,7 @@
       // Google Chrome correctly resolves localhost, but Firefox doesn't.
       loadJson(reportUrl, () => {
         this.isFetchingDev = false
+        this.isFetching = false
       }, this.$notify)
         .then(data => {
           if (data == null) {
