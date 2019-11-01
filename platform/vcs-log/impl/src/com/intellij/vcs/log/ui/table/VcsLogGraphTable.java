@@ -306,7 +306,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
     }
 
-    updateCommitColumnWidth();
+    int size = getWidth();
+    for (VcsLogColumn logColumn : VcsLogColumn.values()) {
+      if (logColumn == VcsLogColumn.COMMIT) continue;
+      TableColumn column = getTableColumn(logColumn);
+      if (column != null) size -= column.getPreferredWidth();
+    }
+
+    getCommitColumn().setPreferredWidth(size);
   }
 
   private int getColumnWidthFromData(@NotNull TableColumn column) {
@@ -378,17 +385,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   static Font getTableFont() {
     return UIManager.getFont("Table.font");
-  }
-
-  private void updateCommitColumnWidth() {
-    int size = getWidth();
-    for (VcsLogColumn logColumn : VcsLogColumn.values()) {
-      if (logColumn == VcsLogColumn.COMMIT) continue;
-      TableColumn column = getTableColumn(logColumn);
-      if (column != null) size -= column.getPreferredWidth();
-    }
-
-    getCommitColumn().setPreferredWidth(size);
   }
 
   private void setRootColumnSize() {
