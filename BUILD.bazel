@@ -161,6 +161,7 @@ iml_project(
         "//tools/adt/idea/sdk-updates:intellij.android.sdkUpdates.tests",
         "//tools/adt/idea/smali:intellij.android.smali",
         "//tools/adt/idea/swingp:intellij.android.adt.swingp",
+        "//tools/adt/idea/sync-perf-tests:intellij.android.sync-perf-tests",
         "//tools/adt/idea/transport-database:intellij.android.transportDatabase",
         "//tools/adt/idea/uitest-framework:intellij.android.guiTestFramework",
         "//tools/adt/idea/updater-ui:intellij.android.updater.ui",
