@@ -115,8 +115,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
-
+    myCurrentFlow.finish();
     return myCurrentFlow;
   }
 
