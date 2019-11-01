@@ -44,7 +44,7 @@ internal class GHPullRequestsDataContext(val gitRepositoryCoordinates: GitRemote
 
     interface PullRequestEditedListener {
       fun onPullRequestEdited(number: Long) {}
-      fun onPullRequestCommentsEdited(number: Long) {}
+      fun onPullRequestReviewsEdited(number: Long) {}
     }
   }
 }

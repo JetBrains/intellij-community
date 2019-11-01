@@ -31,7 +31,7 @@ interface GithubPullRequestDataProvider : GHPRTimelineLoaderHolder {
   fun reloadCommits()
 
   @CalledInAwt
-  fun reloadComments()
+  fun reloadReviewThreads()
 
   interface RequestsChangedListener : EventListener {
     fun detailsRequestChanged() {}

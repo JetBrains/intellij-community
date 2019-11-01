@@ -85,10 +85,10 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
         }
       }
 
-      override fun onPullRequestCommentsEdited(number: Long) {
+      override fun onPullRequestReviewsEdited(number: Long) {
         runInEdt {
           val dataProvider = dataLoader.findDataProvider(number)
-          dataProvider?.reloadComments()
+          dataProvider?.reloadReviewThreads()
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }

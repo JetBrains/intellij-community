@@ -122,11 +122,11 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     logCommitsRequestValue.drop()
     changesProviderValue.drop()
     requestsChangesEventDispatcher.multicaster.commitsRequestChanged()
-    reloadComments()
+    reloadReviewThreads()
   }
 
   @CalledInAwt
-  override fun reloadComments() {
+  override fun reloadReviewThreads() {
     reviewThreadsRequestValue.drop()
     requestsChangesEventDispatcher.multicaster.reviewThreadsRequestChanged()
   }

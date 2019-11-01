@@ -13,6 +13,6 @@ class GHPRReloadCommentsAction : RefreshAction("Refresh Pull Request Comments", 
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider?.reloadComments()
+    e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider?.reloadReviewThreads()
   }
 }
