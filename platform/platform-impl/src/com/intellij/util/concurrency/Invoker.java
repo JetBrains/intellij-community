@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
@@ -76,6 +77,44 @@ public abstract class Invoker implements Disposable {
   }
 
   /**
+   * Computes the specified task immediately if the current thread is valid,
+   * or asynchronously after all pending tasks have been processed.
+   *
+   * @param task a task to execute on the valid thread
+   * @return an object to control task processing
+   */
+  @NotNull
+  public final <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
+    return promise(new Task<>(task, null));
+  }
+
+  /**
+   * Computes the specified task asynchronously on the valid thread.
+   * Even if this method is called from the valid thread
+   * the specified task will still be deferred
+   * until all pending events have been processed.
+   *
+   * @param task a task to execute asynchronously on the valid thread
+   * @return an object to control task processing
+   */
+  @NotNull
+  public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task) {
+    return computeLater(task, 0);
+  }
+
+  /**
+   * Computes the specified task on the valid thread after the specified delay.
+   *
+   * @param task  a task to execute asynchronously on the valid thread
+   * @param delay milliseconds for the initial delay
+   * @return an object to control task processing
+   */
+  @NotNull
+  public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task, int delay) {
+    return promise(new Task<>(task, null), delay);
+  }
+
+  /**
    * Invokes the specified task asynchronously on the valid thread.
    * Even if this method is called from the valid thread
    * the specified task will still be deferred
@@ -92,36 +131,25 @@ public abstract class Invoker implements Disposable {
   /**
    * Invokes the specified task on the valid thread after the specified delay.
    *
-   * @param runnable a task to execute asynchronously on the valid thread
-   * @param delay    milliseconds for the initial delay
+   * @param task  a task to execute asynchronously on the valid thread
+   * @param delay milliseconds for the initial delay
    * @return an object to control task processing
    */
   @NotNull
-  public final CancellablePromise<?> invokeLater(@NotNull Runnable runnable, int delay) {
-    if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: " + delay);
-    Task<?> task = new Task<>(runnable);
-    if (task.canInvoke(disposed)) {
-      offerSafely(task, 0, delay);
-    }
-    return task.promise;
+  public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
+    return promise(new Task<>(null, task), delay);
   }
 
   /**
    * Invokes the specified task immediately if the current thread is valid,
    * or asynchronously after all pending tasks have been processed.
    *
-   * @param runnable a task to execute on the valid thread
+   * @param task a task to execute on the valid thread
    * @return an object to control task processing
    */
   @NotNull
-  public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable runnable) {
-    if (isValidThread()) {
-      count.incrementAndGet();
-      Task<?> task = new Task<>(runnable);
-      invokeSafely(task, 0);
-      return task.promise;
-    }
-    return invokeLater(runnable);
+  public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
+    return promise(new Task<>(null, task));
   }
 
   /**
@@ -169,7 +197,7 @@ public abstract class Invoker implements Disposable {
           offerRestart(task, attempt);
           return;
         }
-        task.promise.setResult(null);
+        task.setResult();
       }
     }
     catch (ProcessCanceledException | IndexNotReadyException exception) {
@@ -200,20 +228,54 @@ public abstract class Invoker implements Disposable {
   }
 
   /**
+   * Promises to invoke the specified task immediately if the current thread is valid,
+   * or asynchronously after all pending tasks have been processed.
+   *
+   * @param task a task to execute on the valid thread
+   * @return an object to control task processing
+   */
+  @NotNull
+  private <T> CancellablePromise<T> promise(@NotNull Task<T> task) {
+    if (!isValidThread()) return promise(task, 0);
+    count.incrementAndGet();
+    invokeSafely(task, 0);
+    return task.promise;
+  }
+
+  /**
+   * Promises to invoke the specified task on the valid thread after the specified delay.
+   *
+   * @param task  a task to execute on the valid thread
+   * @param delay milliseconds for the initial delay
+   * @return an object to control task processing
+   */
+  @NotNull
+  private <T> CancellablePromise<T> promise(@NotNull Task<T> task, int delay) {
+    if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: " + delay);
+    if (task.canInvoke(disposed)) offerSafely(task, 0, delay);
+    return task.promise;
+  }
+
+  /**
    * This data class is intended to combine a developer's task
    * with the corresponding object used to control its processing.
    */
   static final class Task<T> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
-    private final Runnable task;
+    private final Supplier<? extends T> supplier;
+    private final Runnable runnable;
+    private volatile T result;
 
-    Task(@NotNull Runnable runnable) {
-      task = runnable;
+    Task(Supplier<? extends T> supplier, Runnable runnable) {
+      assert runnable != null && supplier == null || runnable == null && supplier != null;
+      this.runnable = runnable;
+      this.supplier = supplier;
     }
 
     boolean canRestart(boolean disposed, int attempt) {
       LOG.debug("Task is canceled");
       if (attempt < THRESHOLD) return canInvoke(disposed);
+      Object task = supplier != null ? supplier : runnable;
       LOG.warn("Task is always canceled: " + task);
       promise.setError("timeout");
       return false; // too many attempts to run the task
@@ -229,6 +291,7 @@ public abstract class Invoker implements Disposable {
         promise.setError("disposed");
         return false; // the current invoker is disposed
       }
+      Object task = supplier != null ? supplier : runnable;
       if (task instanceof Obsolescent) {
         Obsolescent obsolescent = (Obsolescent)task;
         if (obsolescent.isObsolete()) {
@@ -240,13 +303,23 @@ public abstract class Invoker implements Disposable {
       return true;
     }
 
+    void setResult() {
+      promise.setResult(result);
+    }
+
     @Override
     public void run() {
-      task.run();
+      if (supplier != null) {
+        result = supplier.get();
+      }
+      else {
+        runnable.run();
+      }
     }
 
     @Override
     public String toString() {
+      Object task = supplier != null ? supplier : runnable;
       return "Invoker.Task: " + task;
     }
   }
