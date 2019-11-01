@@ -26,8 +26,11 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
@@ -81,7 +84,7 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       }
       final PsiExpression src = arguments[0];
       final PsiExpression dest = arguments[2];
-      checkRanges(src, srcPos, dest, destPos, length);
+      checkRanges(src, srcPos, dest, destPos, length, expression);
       final PsiType srcType = src.getType();
       if (srcType == null) {
         return;
@@ -124,7 +127,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
                              @NotNull PsiExpression srcPos,
                              @NotNull PsiExpression dest,
                              @NotNull PsiExpression destPos,
-                             @NotNull PsiExpression length) {
+                             @NotNull PsiExpression length,
+                             @NotNull PsiMethodCallExpression call) {
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(src);
       if (result == null) return;
       SpecialFieldValue srcFact = result.getExpressionFact(src, DfaFactType.SPECIAL_FIELD_VALUE);
@@ -144,11 +148,43 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       LongRangeSet destPossibleLengthToCopy = srcLengthSet.minus(destPosSet, false);
       long lengthMin = lengthSet.min();
       if (lengthMin > destPossibleLengthToCopy.max()) {
-        registerError(length, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor.length.bigger.dest", lengthSet.toString()));
+        registerError(length, InspectionGadgetsBundle
+          .message("suspicious.system.arraycopy.problem.descriptor.length.bigger.dest", lengthSet.toString()));
+        return;
       }
-      else if (lengthMin > srcPossibleLengthToCopy.max()) {
-        registerError(length, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor.length.bigger.src", lengthSet.toString()));
+      if (lengthMin > srcPossibleLengthToCopy.max()) {
+        registerError(length, InspectionGadgetsBundle
+          .message("suspicious.system.arraycopy.problem.descriptor.length.bigger.src", lengthSet.toString()));
+        return;
       }
+
+      if (!isTheSameArray(src, dest)) return;
+      LongRangeSet srcRange = getDefiniteRange(srcPosSet, lengthSet);
+      LongRangeSet destRange = getDefiniteRange(destPosSet, lengthSet);
+      if (srcRange.intersects(destRange)) {
+        PsiElement name = call.getMethodExpression().getReferenceNameElement();
+        PsiElement elementToHighlight = name == null ? call : name;
+        registerError(elementToHighlight,
+                      InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor.ranges.intersect"));
+      }
+    }
+
+    private static LongRangeSet getDefiniteRange(@NotNull LongRangeSet startSet, @NotNull LongRangeSet lengthSet) {
+      long maxLeftBorder = startSet.max();
+      LongRangeSet lengthMinusOne = lengthSet.minus(LongRangeSet.point(1), false);
+      long minRightBorder = startSet.plus(lengthMinusOne, false).min();
+      return LongRangeSet.range(maxLeftBorder, minRightBorder);
+    }
+
+    private static boolean isTheSameArray(@NotNull PsiExpression src,
+                                          @NotNull PsiExpression dest) {
+      PsiReferenceExpression srcReference = tryCast(ParenthesesUtils.stripParentheses(src), PsiReferenceExpression.class);
+      PsiReferenceExpression destReference = tryCast(ParenthesesUtils.stripParentheses(dest), PsiReferenceExpression.class);
+      if (srcReference == null || destReference == null) return false;
+      PsiElement srcVariable = srcReference.resolve();
+      PsiElement destVariable = destReference.resolve();
+      if (srcVariable == null || srcVariable != destVariable) return false;
+      return true;
     }
 
     private static boolean isNegativeArgument(@NotNull PsiExpression argument) {

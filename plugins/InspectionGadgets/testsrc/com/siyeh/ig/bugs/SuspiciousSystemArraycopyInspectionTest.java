@@ -50,7 +50,7 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
     doMemberTest("public int[] hardCase() {\n" +
                  "        int[] src = new int[] { 1, 2, 3 };\n" +
                  "        int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };\n" +
-                 "        System.arraycopy(src, 2, dest, 2, /*Length is always bigger, than dest.length - destPos{2}*/2/**/);\n" +
+                 "        System.arraycopy(src, 2, dest, 2, /*Length is always bigger, than dest.length - destPos {2}*/2/**/);\n" +
                  "        return dest;\n" +
                  "    }");
   }
@@ -67,6 +67,33 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                  "        }\n" +
                  "        System.arraycopy(src, 2, dest, 2, length);\n" +
                  "        return dest;\n" +
+                 "    }");
+  }
+
+  public void testRangesNotIntersect() {
+    doMemberTest("public void process() {\n" +
+                 "        int[] src = new int[] { 1, 2, 3, 4 };\n" +
+                 "        System.arraycopy(src, 0, src, 2, 2);\n" +
+                 "    }");
+  }
+
+  public void testRangesIntersect() {
+    doMemberTest("    public void rangesIntersects() {\n" +
+                 "        int[] src = new int[] { 1, 2, 3, 4 };\n" +
+                 "        System./*Ranges always intersect*/arraycopy/**/(src, 0, src, 1, 2);\n" +
+                 "    }");
+  }
+
+  public void testRangesIntersectSometimes() {
+    doMemberTest("public void rangesIntersects(boolean outer) {\n" +
+                 "        int[] src = new int[] { 1, 2, 3, 4, 5 };\n" +
+                 "        int srcPos;\n" +
+                 "        if (outer) {\n" +
+                 "            srcPos = 0;\n" +
+                 "        } else {\n" +
+                 "            srcPos = 1; // maybe this branch never reached due to outer condition\n" +
+                 "        }\n" +
+                 "        System.arraycopy(src, srcPos, src, 2, 2);\n" +
                  "    }");
   }
 
