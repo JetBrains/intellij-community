@@ -13,10 +13,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 /**
  * @author Konstantin Bulenkov
  */
-public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
+final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   private static final Logger LOG = Logger.getInstance(PluginBooleanOptionDescriptor.class);
 
   private static final NotificationGroup PLUGINS_LIST_CHANGED_GROUP =
@@ -37,10 +37,10 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   private final PluginId myId;
 
-  public PluginBooleanOptionDescriptor(PluginId id) {
-    //noinspection ConstantConditions
-    super(PluginManagerCore.getPlugin(id).getName(), PluginManagerConfigurable.ID);
-    myId = id;
+  PluginBooleanOptionDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
+    super(descriptor.getName(), PluginManagerConfigurable.ID);
+
+    myId = descriptor.getPluginId();
   }
 
   @Override
@@ -51,12 +51,9 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   @Override
   public void setOptionState(boolean enabled) {
     try {
-      Collection<PluginId> autoSwitchedIds = enabled ? getPluginsIdsToEnable(myId) : getPluginsIdsToDisable(myId);
-      Collection<PluginId> switchedPlugins = new ArrayList<>(autoSwitchedIds);
-      switchedPlugins.add(myId);
-      switchPlugins(switchedPlugins, enabled);
-
-      if (!autoSwitchedIds.isEmpty()) {
+      Collection<IdeaPluginDescriptor> autoSwitchedIds = enabled ? getPluginsIdsToEnable(myId) : getPluginsIdsToDisable(myId);
+      switchPlugins(autoSwitchedIds, enabled);
+      if (autoSwitchedIds.size() > 1) {
         showAutoSwitchNotification(autoSwitchedIds, enabled);
       }
 
@@ -67,26 +64,23 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     }
   }
 
-  private void showAutoSwitchNotification(Collection<? extends PluginId> autoSwitchedIds, boolean enabled) {
-    Collection<PluginId> switchedPlugins = new ArrayList<>(autoSwitchedIds);
-    switchedPlugins.add(myId);
-
+  private void showAutoSwitchNotification(@NotNull Collection<IdeaPluginDescriptor> autoSwitchedPlugins, boolean enabled) {
     String pluginString = idToName(myId);
-    String dependenciesString = autoSwitchedIds.stream()
-                                               .map(id -> idToName(id))
-                                               .collect(Collectors.joining(", "));
+    String dependenciesString = autoSwitchedPlugins.stream()
+      .map(descriptor -> '"' + descriptor.getName() + '"')
+      .collect(Collectors.joining(", "));
 
     String titleKey = enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title";
     String contentKey = enabled ? "plugins.auto.enabled.notification.content" : "plugins.auto.disabled.notification.content";
     Notification switchNotification = PLUGINS_AUTO_SWITCH_GROUP
       .createNotification(IdeBundle.message(contentKey, pluginString, dependenciesString), NotificationType.INFORMATION)
       .setTitle(IdeBundle.message(titleKey))
-      .addAction(new UndoPluginsSwitchAction(switchedPlugins, enabled));
+      .addAction(new UndoPluginsSwitchAction(autoSwitchedPlugins, enabled));
 
     Runnable listener = new Runnable() {
       @Override
       public void run() {
-        Stream<String> ids = switchedPlugins.stream().map(PluginId::getIdString);
+        Stream<String> ids = autoSwitchedPlugins.stream().map(descriptor -> descriptor.getPluginId().getIdString());
         boolean notificationValid = enabled ? ids.noneMatch(PluginManagerCore::isDisabled) : ids.allMatch(PluginManagerCore::isDisabled);
         if (!notificationValid) {
           switchNotification.expire();
@@ -108,67 +102,88 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     return '"' + optionalDescriptor(id).map(IdeaPluginDescriptor::getName).orElse(id.getIdString()) + '"';
   }
 
-  private static void switchPlugins(Collection<? extends PluginId> ids, boolean enabled) throws IOException {
+  private static void switchPlugins(@NotNull Collection<IdeaPluginDescriptor> descriptors, boolean enabled) throws IOException {
     Collection<String> disabledPlugins = new LinkedHashSet<>(PluginManagerCore.disabledPlugins());
-    for (PluginId id : ids) {
-      if (enabled) disabledPlugins.remove(id.getIdString());
-              else disabledPlugins.add(id.getIdString());
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      if (enabled) {
+        disabledPlugins.remove(descriptor.getPluginId().getIdString());
+      }
+      else {
+        disabledPlugins.add(descriptor.getPluginId().getIdString());
+      }
     }
     PluginManagerCore.saveDisabledPlugins(disabledPlugins, false);
 
-    ids.forEach(id -> optionalDescriptor(id).ifPresent(descriptor -> descriptor.setEnabled(enabled)));
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      descriptor.setEnabled(enabled);
+    }
   }
 
   private static Optional<IdeaPluginDescriptor> optionalDescriptor(PluginId id) {
     return Optional.ofNullable(PluginManagerCore.getPlugin(id));
   }
 
-  private static Collection<PluginId> getPluginsIdsToEnable(PluginId id) {
-    Optional<IdeaPluginDescriptor> maybeDescriptor = optionalDescriptor(id);
-    if (!maybeDescriptor.isPresent()) {
+  @NotNull
+  private static Collection<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull PluginId id) {
+    IdeaPluginDescriptor rootDescriptor = PluginManagerCore.getPlugin(id);
+    if (rootDescriptor == null) {
       return Collections.emptyList();
     }
 
-    Collection<PluginId> res = new HashSet<>();
-    IdeaPluginDescriptor descriptor = maybeDescriptor.get();
-    PluginId pluginId = descriptor.getPluginId();
-    for (PluginId depId : PluginManagerCore.pluginIdTraverser().withRoot(pluginId)) {
-      if (depId.equals(pluginId)) continue;
-      boolean enabled = optionalDescriptor(depId).map(IdeaPluginDescriptor::isEnabled).orElse(true);
-      if (!enabled) {
-        res.add(depId);
+    Set<IdeaPluginDescriptor> result = new HashSet<>();
+    result.add(rootDescriptor);
+
+    PluginManagerCore.processAllDependencies(rootDescriptor, false, descriptor -> {
+      if (!descriptor.isEnabled()) {
+        // if descriptor was already added, no need to process it's dependencies again
+        return result.add(descriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
       }
-    }
-    return res;
+      else {
+        // if descriptor is already enabled, no need to process it's dependencies
+        return FileVisitResult.SKIP_SUBTREE;
+      }
+    });
+    return result;
   }
 
-  private static Collection<PluginId> getPluginsIdsToDisable(PluginId id) {
-    Collection<PluginId> res = new LinkedHashSet<>();
-    JBTreeTraverser<PluginId> traverser = PluginManagerCore.pluginIdTraverser();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      if (!plugin.isEnabled()) continue;
-      if (traverser.withRoot(plugin.getPluginId()).unique().traverse().contains(id)) {
-        res.add(plugin.getPluginId());
-      }
+  @NotNull
+  private static Collection<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull PluginId id) {
+    IdeaPluginDescriptor rootDescriptor = PluginManagerCore.getPlugin(id);
+    if (rootDescriptor == null) {
+      return Collections.emptyList();
     }
-    return res;
+
+    Set<IdeaPluginDescriptor> result = new HashSet<>();
+    result.add(rootDescriptor);
+
+    PluginManagerCore.processAllDependencies(rootDescriptor, false, descriptor -> {
+      if (descriptor.isEnabled()) {
+        // if descriptor was already added, no need to process it's dependencies again
+        return result.add(descriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
+      }
+      else {
+        // if descriptor is already disabled, no need to process it's dependencies
+        return FileVisitResult.SKIP_SUBTREE;
+      }
+    });
+    return result;
   }
 
-  private static class UndoPluginsSwitchAction extends NotificationAction {
-
-    private final Collection<? extends PluginId> myIds;
+  private static final class UndoPluginsSwitchAction extends NotificationAction {
+    private final Collection<IdeaPluginDescriptor> myDescriptors;
     private final boolean myEnabled;
 
-    UndoPluginsSwitchAction(Collection<? extends PluginId> ids, boolean enabled) {
+    UndoPluginsSwitchAction(@NotNull Collection<IdeaPluginDescriptor> descriptors, boolean enabled) {
       super(IdeBundle.message("plugins.auto.switch.action.name"));
-      myIds = ids;
+
+      myDescriptors = descriptors;
       myEnabled = enabled;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
       try {
-        switchPlugins(myIds, !myEnabled);
+        switchPlugins(myDescriptors, !myEnabled);
         notification.expire();
         ourRestartNeededNotifier.showNotification();
       }

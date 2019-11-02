@@ -55,6 +55,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -1623,41 +1624,49 @@ public class PluginManagerCore {
 
   @NotNull
   private static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                          @NotNull List<? super String> errors) {
-    LinkedHashMap<PluginId, List<IdeaPluginDescriptorImpl>> idMultiMap = new LinkedHashMap<>(descriptors.size());
-    for (IdeaPluginDescriptorImpl o : descriptors) {
-      ContainerUtilRt.putValue(o.getPluginId(), o, idMultiMap);
-      for (String module : o.getModules()) {
-        ContainerUtilRt.putValue(PluginId.getId(module), o, idMultiMap);
+                                                                          @Nullable List<? super String> errors) {
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = new LinkedHashMap<>(descriptors.size());
+    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
+      PluginId id = descriptor.getPluginId();
+      if (id == null) {
+        if (errors != null) {
+          errors.add("No id is provided by " + toPresentableName(descriptor.getPluginPath().getFileName().toString()));
+        }
+        continue;
+      }
+
+      if (!checkAndPut(descriptor, id, idMap, errors)) {
+        continue;
+      }
+
+      for (String module : descriptor.getModules()) {
+        checkAndPut(descriptor, PluginId.getId(module), idMap, errors);
       }
     }
 
-    if (idMultiMap.get(PluginId.getId(CORE_PLUGIN_ID)).isEmpty()) {
+    if (errors != null && !idMap.containsKey(PluginId.getId(CORE_PLUGIN_ID))) {
       String message = SPECIAL_IDEA_PLUGIN_ID.getIdString() + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")";
       throw new EssentialPluginMissingException(Collections.singletonList(message));
     }
-
-    Map<PluginId, IdeaPluginDescriptorImpl> idMap = new LinkedHashMap<>();
-    for (PluginId id : idMultiMap.keySet()) {
-      Collection<IdeaPluginDescriptorImpl> values = idMultiMap.get(id);
-      if (id != null && values.size() == 1) {
-        idMap.put(id, values.iterator().next());
-      }
-      if (id == null) {
-        errors.add("No id is provided by " + StringUtil.join(values, o -> toPresentableName(o.getPath().getName()), ", "));
-      }
-      else if (values.size() > 1) {
-        if (isModuleDependency(id)) {
-          errors.add(toPresentableName(id.getIdString()) + " module is declared by plugins " +
-                     StringUtil.join(values, PluginManagerCore::toPresentableName, ", "));
-        }
-        else {
-          errors.add(toPresentableName(id.getIdString()) + " id is declared by plugins " +
-                     StringUtil.join(values, o -> toPresentableName(o.getPath().getName()), ", "));
-        }
-      }
-    }
     return idMap;
+  }
+
+  private static boolean checkAndPut(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                     @NotNull PluginId id,
+                                     @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
+                                     @Nullable List<? super String> errors) {
+    IdeaPluginDescriptorImpl existingDescriptor = idMap.put(id, descriptor);
+    if (existingDescriptor == null) {
+      return true;
+    }
+
+    // if duplicated, both are removed
+    idMap.remove(id);
+
+    if (errors != null) {
+      errors.add(descriptor + " attempts to redeclare id " + toPresentableName(id.getIdString()) + " (already declared by plugin " + existingDescriptor + ")");
+    }
+    return false;
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptor descriptor,
@@ -1863,6 +1872,45 @@ public class PluginManagerCore {
 
       result.addAll(descriptors);
     });
+  }
+
+  /**
+   * {@link FileVisitResult#SKIP_SIBLINGS} is not supported.
+   */
+  @ApiStatus.Internal
+  public static void processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                            boolean withOptionalDeps,
+                                            @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+    processAllDependencies(rootDescriptor, withOptionalDeps, buildPluginIdMap(Arrays.asList(ourPlugins), null), consumer);
+  }
+
+  private static void processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                             boolean withOptionalDeps,
+                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
+                                             @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+    loop:
+    for (PluginId id : rootDescriptor.getDependentPluginIds()) {
+      IdeaPluginDescriptorImpl descriptor = idToMap.get(id);
+      if (descriptor == null) {
+        continue;
+      }
+
+      if (!withOptionalDeps) {
+        for (PluginId otherId : rootDescriptor.getOptionalDependentPluginIds()) {
+          if (otherId == id) {
+            continue loop;
+          }
+        }
+      }
+
+      FileVisitResult result = consumer.apply(descriptor);
+      if (result == FileVisitResult.TERMINATE) {
+        return;
+      }
+      else if (result != FileVisitResult.SKIP_SUBTREE) {
+        processAllDependencies(descriptor, withOptionalDeps, idToMap, consumer);
+      }
+    }
   }
 
   private static final class PluginTraverser extends JBTreeTraverser<PluginId> {
