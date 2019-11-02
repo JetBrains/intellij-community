@@ -113,7 +113,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
-    invoker.runOrInvokeLater(() -> {
+    invoker.invoke(() -> {
       if (!disposed) {
         Result result = function.apply(structure);
         if (result != null) promise.setResult(result);

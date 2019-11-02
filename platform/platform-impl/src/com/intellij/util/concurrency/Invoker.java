@@ -115,6 +115,18 @@ public abstract class Invoker implements Disposable {
   }
 
   /**
+   * Invokes the specified task immediately if the current thread is valid,
+   * or asynchronously after all pending tasks have been processed.
+   *
+   * @param task a task to execute on the valid thread
+   * @return an object to control task processing
+   */
+  @NotNull
+  public final CancellablePromise<?> invoke(@NotNull Runnable task) {
+    return promise(new Task<>(null, task));
+  }
+
+  /**
    * Invokes the specified task asynchronously on the valid thread.
    * Even if this method is called from the valid thread
    * the specified task will still be deferred
@@ -146,10 +158,13 @@ public abstract class Invoker implements Disposable {
    *
    * @param task a task to execute on the valid thread
    * @return an object to control task processing
+   * @deprecated use {@link #invoke(Runnable)} or {@link #compute(Supplier)} instead
    */
   @NotNull
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2021.1")
   public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
-    return promise(new Task<>(null, task));
+    return invoke(task);
   }
 
   /**

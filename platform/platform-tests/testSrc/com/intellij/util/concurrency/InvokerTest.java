@@ -144,7 +144,7 @@ public class InvokerTest {
     CountDownLatch latch = new CountDownLatch(1);
     test(invoker, latch, error -> {
       AtomicBoolean current = new AtomicBoolean(true);
-      register(invoker.runOrInvokeLater(() -> countDown(latch, 100, error, "task is done before subtask", current::get)));
+      register(invoker.invoke(() -> countDown(latch, 100, error, "task is done before subtask", current::get)));
       current.set(false);
     });
   }
@@ -177,7 +177,7 @@ public class InvokerTest {
     test(invoker, latch, error -> {
       if (isExpected(latch, error, "before", expectedBefore)) {
         getApplication().runReadAction(() -> {
-          register(invoker.runOrInvokeLater(() -> {
+          register(invoker.invoke(() -> {
             if (isExpected(latch, error, "after", expectedAfter)) {
               latch.countDown(); // interrupt without any error
             }

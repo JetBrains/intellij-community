@@ -236,7 +236,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
   @Override
   public void valueForPathChanged(@NotNull TreePath path, Object value) {
-    processor.background.runOrInvokeLater(() -> model.valueForPathChanged(path, value));
+    processor.background.invoke(() -> model.valueForPathChanged(path, value));
   }
 
   @Override
@@ -307,7 +307,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
   public void onValidThread(@NotNull Runnable runnable) {
-    processor.foreground.runOrInvokeLater(runnable);
+    processor.foreground.invoke(runnable);
   }
 
   @NotNull
