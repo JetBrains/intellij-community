@@ -690,23 +690,35 @@ public class PluginManagerCore {
       .traverse();
     for (TreeTraversal.TracingIt<PluginId> it = dfs.typedIterator(); it.hasNext(); ) {
       PluginId id = it.next();
-      if (visited.add(id)) continue;
+      if (visited.add(id)) {
+        continue;
+      }
+
       List<PluginId> list = it.backtrace().skip(1).toList();
-      int idx = list.indexOf(id);
-      if (idx == -1) continue;
-      List<PluginId> cycle = list.subList(0, idx + 1);
+      int index = list.indexOf(id);
+      if (index == -1) {
+        continue;
+      }
+
+      List<PluginId> cycle = list.subList(0, index + 1);
       cycles.add(cycle);
       ignored.addAll(cycle);
     }
-    if (cycles.isEmpty()) return;
-    for (PluginId id : JBIterable.from(cycles).flatMap(o -> o)) {
-      idMap.get(id).setEnabled(false);
+
+    if (cycles.isEmpty()) {
+      return;
     }
 
     for (List<PluginId> cycle : cycles) {
-      JBIterable<String> names = JBIterable.from(cycle).map(o -> toPresentableName(idMap.get(o)));
-      String cycleText = StringUtil.join(names.sort(String::compareTo), ", ");
-      errors.add("Plugins " + cycleText + " form a dependency cycle");
+      for (PluginId id : cycle) {
+        idMap.get(id).setEnabled(false);
+      }
+    }
+
+    for (List<PluginId> cycle : cycles) {
+      List<String> names = ContainerUtil.map(cycle, o -> toPresentableName(idMap.get(o)));
+      names.sort(null);
+      errors.add("Plugins " + String.join(", ", names) + " form a dependency cycle");
     }
   }
 
@@ -1223,6 +1235,7 @@ public class PluginManagerCore {
   }
 
   @NotNull
+  @ApiStatus.Internal
   public static List<IdeaPluginDescriptorImpl> loadDescriptors() {
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
@@ -1757,11 +1770,15 @@ public class PluginManagerCore {
   private static JBIterable<IdeaPluginDescriptorImpl> optionalDescriptorRecursively(@NotNull IdeaPluginDescriptorImpl descriptor,
                                                                                     @Nullable Predicate<? super PluginId> condition) {
     Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = descriptor.getOptionalDescriptors();
-    if (optMap == null || optMap.isEmpty()) return JBIterable.empty();
+    if (optMap == null || optMap.isEmpty()) {
+      return JBIterable.empty();
+    }
 
     return JBTreeTraverser.<IdeaPluginDescriptorImpl>from(d -> {
       Map<PluginId, List<IdeaPluginDescriptorImpl>> map = d.getOptionalDescriptors();
-      if (map == null || map.isEmpty()) return JBIterable.empty();
+      if (map == null || map.isEmpty()) {
+        return JBIterable.empty();
+      }
 
       return JBIterable.from(map.entrySet())
         .filter(o -> condition == null || condition.test(o.getKey()))
@@ -1780,7 +1797,10 @@ public class PluginManagerCore {
                     boolean convertModulesToPlugins) {
       super(o -> {
         IdeaPluginDescriptorImpl descriptor = idMap.get(o);
-        if (descriptor == null) return JBIterable.empty();
+        if (descriptor == null) {
+          return JBIterable.empty();
+        }
+
         PluginId implicitDep = getImplicitDependency(descriptor, idMap);
         JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep);
         JBIterable<PluginId> selectedDeps;
@@ -1795,17 +1815,21 @@ public class PluginManagerCore {
         }
         JBIterable<PluginId> convertedDeps = selectedDeps.filterMap(id -> {
           IdeaPluginDescriptor plugin = idMap.get(id);
-          if (plugin == descriptor) return null;
+          if (plugin == descriptor) {
+            return null;
+          }
           return plugin != null && convertModulesToPlugins && isModuleDependency(id) ? plugin.getPluginId() : id;
         });
         return convertedDeps.unique();
       });
+
       this.idMap = idMap;
     }
 
-    PluginTraverser(@NotNull Meta<PluginId> meta,
-                    @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    private PluginTraverser(@NotNull Meta<PluginId> meta,
+                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
       super(meta);
+
       this.idMap = idMap;
     }
 

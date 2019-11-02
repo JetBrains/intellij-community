@@ -80,5 +80,6 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   boolean isImplementationDetail();
 
   boolean isEnabled();
+
   void setEnabled(boolean enabled);
 }
