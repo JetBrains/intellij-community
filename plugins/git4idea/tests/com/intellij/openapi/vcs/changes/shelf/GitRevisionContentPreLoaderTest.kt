@@ -13,6 +13,11 @@ import git4idea.test.TestFile
 
 class GitRevisionContentPreLoaderTest : GitSingleRepoTest() {
 
+  override fun setUp() {
+    super.setUp()
+    git("config core.autocrlf false")
+  }
+
   fun `test two files modification`() {
     val afile = file("a.txt")
     val initialA = "initialA\n"
@@ -45,7 +50,7 @@ class GitRevisionContentPreLoaderTest : GitSingleRepoTest() {
       val bytes = cache.getFromConstantCache(VcsUtil.getFilePath(file.file), revisionNumber, GitVcs.getKey(),
                                              ContentRevisionCache.UniqueType.REPOSITORY_CONTENT)
       assertNotNull("No content recorded for $file", bytes)
-      assertEquals("Incorrect content for $file", content, StringUtil.convertLineSeparators(String(bytes)))
+      assertEquals("Incorrect content for $file", content, String(bytes))
     }
   }
 }
