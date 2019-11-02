@@ -1767,26 +1767,45 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static JBIterable<IdeaPluginDescriptorImpl> optionalDescriptorRecursively(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                                    @Nullable Predicate<? super PluginId> condition) {
-    Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = descriptor.getOptionalDescriptors();
-    if (optMap == null || optMap.isEmpty()) {
-      return JBIterable.empty();
+  private static List<IdeaPluginDescriptorImpl> optionalDescriptorRecursively(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                                                              @Nullable Predicate<? super PluginId> condition) {
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = rootDescriptor.getOptionalDescriptors();
+    if (optionalDescriptors == null || optionalDescriptors.isEmpty()) {
+      return Collections.emptyList();
     }
 
-    return JBTreeTraverser.<IdeaPluginDescriptorImpl>from(d -> {
-      Map<PluginId, List<IdeaPluginDescriptorImpl>> map = d.getOptionalDescriptors();
-      if (map == null || map.isEmpty()) {
-        return JBIterable.empty();
+    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
+
+    int start = 0;
+    addOptionalDescriptors(rootDescriptor, result, condition);
+    int end = result.size();
+    do {
+      for (int i = start; i < end; i++) {
+        addOptionalDescriptors(result.get(i), result, condition);
       }
 
-      return JBIterable.from(map.entrySet())
-        .filter(o -> condition == null || condition.test(o.getKey()))
-        .flatten(o -> o.getValue());
-    })
-      .withRoot(descriptor)
-      .traverse()
-      .skip(1);
+      start = end;
+      end = result.size();
+    }
+    while (start != end);
+    return result;
+  }
+
+  private static void addOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                             @NotNull List<IdeaPluginDescriptorImpl> result,
+                                             @Nullable Predicate<? super PluginId> condition) {
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = descriptor.getOptionalDescriptors();
+    if (optionalDescriptors == null) {
+      return;
+    }
+
+    optionalDescriptors.forEach((id, descriptors) -> {
+      if (condition != null && !condition.test(id)) {
+        return;
+      }
+
+      result.addAll(descriptors);
+    });
   }
 
   private static final class PluginTraverser extends JBTreeTraverser<PluginId> {
@@ -1805,9 +1824,13 @@ public class PluginManagerCore {
         JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep);
         JBIterable<PluginId> selectedDeps;
         if (withOptionalDeps) {
-          selectedDeps = allDeps
-            .append(optionalDescriptorRecursively(descriptor, null)
-              .flatten(d -> JBIterable.of(d.getDependentPluginIds())));
+          ArrayList<PluginId> list = new ArrayList<>();
+          for (IdeaPluginDescriptorImpl d : optionalDescriptorRecursively(descriptor, null)) {
+            PluginId[] dependentPluginIds = d.getDependentPluginIds();
+            list.ensureCapacity(list.size() + dependentPluginIds.length);
+            ContainerUtil.addAll(list, dependentPluginIds);
+          }
+          selectedDeps = allDeps.append(list);
         }
         else {
           selectedDeps = allDeps
