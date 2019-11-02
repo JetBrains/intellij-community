@@ -19,17 +19,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.nio.file.NoSuchFileException;
 
+import static com.intellij.notification.NotificationsManager.getNotificationsManager;
+
 public class GitExecutableProblemsNotifier {
   public static GitExecutableProblemsNotifier getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitExecutableProblemsNotifier.class);
   }
 
   @NotNull private final Project myProject;
-  @NotNull private final NotificationsManager myNotificationsManager;
 
-  public GitExecutableProblemsNotifier(@NotNull Project project, @NotNull NotificationsManager notificationsManager) {
+  public GitExecutableProblemsNotifier(@NotNull Project project) {
     myProject = project;
-    myNotificationsManager = notificationsManager;
   }
 
   @CalledInAny
@@ -91,7 +91,7 @@ public class GitExecutableProblemsNotifier {
    */
   private boolean ensureSingularOfType(@NotNull Class<? extends BadGitExecutableNotification> notificationType) {
     BadGitExecutableNotification[] currentNotifications =
-      myNotificationsManager.getNotificationsOfType(BadGitExecutableNotification.class, myProject);
+      getNotificationsManager().getNotificationsOfType(BadGitExecutableNotification.class, myProject);
     int notificationsCount = currentNotifications.length;
     if (notificationsCount <= 0) {
       return true;
@@ -111,7 +111,7 @@ public class GitExecutableProblemsNotifier {
   }
 
   public void expireNotifications() {
-    for (BadGitExecutableNotification notification : myNotificationsManager
+    for (BadGitExecutableNotification notification : getNotificationsManager()
       .getNotificationsOfType(BadGitExecutableNotification.class, myProject)) {
       notification.expire();
     }
