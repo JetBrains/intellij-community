@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.Stack;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResolver<String> {
   private final ClassLoader classLoader;
@@ -23,19 +24,21 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
 
   @NotNull
   @Override
-  public Stack<String> createNewStack(@Nullable Path base) {
-    return new Stack<>("META-INF");
+  public List<String> createNewStack(@Nullable Path base) {
+    List<String> stack = new ArrayList<>(2);
+    stack.add("META-INF");
+    return stack;
   }
 
   @NotNull
   @Override
-  public Element resolvePath(@NotNull Stack<String> bases, @NotNull String relativePath, @Nullable String base) throws
+  public Element resolvePath(@NotNull List<String> bases, @NotNull String relativePath, @Nullable String base) throws
                                                                                                                 IOException,
                                                                                                                 JDOMException {
     String path;
     if (relativePath.charAt(0) != '/') {
       if (base == null) {
-        base = bases.peek();
+        base = bases.get(bases.size() - 1);
       }
 
       if (relativePath.startsWith("./")) {

@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.Stack;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +32,9 @@ final class PluginXmlPathResolver extends BasePathResolver {
 
   @NotNull
   @Override
-  public Element resolvePath(@NotNull Stack<Path> bases, @NotNull String relativePath, @Nullable String base) throws
-                                                                                                              IOException,
-                                                                                                              JDOMException {
+  public Element resolvePath(@NotNull List<Path> bases, @NotNull String relativePath, @Nullable String base) throws
+                                                                                                             IOException,
+                                                                                                             JDOMException {
     try {
       return super.resolvePath(bases, relativePath, base);
     }

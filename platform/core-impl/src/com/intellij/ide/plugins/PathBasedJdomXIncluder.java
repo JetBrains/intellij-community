@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.Stack;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -57,7 +56,7 @@ final class PathBasedJdomXIncluder<T> {
   }
 
   @NotNull
-  private List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<T> bases) {
+  private List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull List<T> bases) {
     String relativePath = element.getAttributeValue(HREF);
     if (relativePath == null) {
       throw new RuntimeException("Missing href attribute");
@@ -135,7 +134,7 @@ final class PathBasedJdomXIncluder<T> {
   }
 
   @NotNull
-  private List<Element> parseRemote(@NotNull Stack<T> bases, @NotNull String relativePath, @NotNull Element referrerElement) {
+  private List<Element> parseRemote(@NotNull List<T> bases, @NotNull String relativePath, @NotNull Element referrerElement) {
     try {
       int baseStackSize = bases.size();
       String base = referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
@@ -156,7 +155,7 @@ final class PathBasedJdomXIncluder<T> {
 
       // stack not modified, if, for example, pathResolver resolves element not via filesystem
       if (baseStackSize != bases.size()) {
-        bases.pop();
+        bases.remove(bases.size() - 1);
       }
       return list;
     }
@@ -179,7 +178,7 @@ final class PathBasedJdomXIncluder<T> {
     }
   }
 
-  private void resolveNonXIncludeElement(@NotNull Element original, @NotNull Stack<T> bases) {
+  private void resolveNonXIncludeElement(@NotNull Element original, @NotNull List<T> bases) {
     List<Content> contentList = original.getContent();
     for (int i = contentList.size() - 1; i >= 0; i--) {
       Content content = contentList.get(i);
@@ -198,11 +197,11 @@ final class PathBasedJdomXIncluder<T> {
 
   public interface PathResolver<T> {
     @NotNull
-    Element resolvePath(@NotNull Stack<T> bases, @NotNull String relativePath, @Nullable String base) throws
+    Element resolvePath(@NotNull List<T> bases, @NotNull String relativePath, @Nullable String base) throws
                                                                                                       IOException,
                                                                                                       JDOMException;
 
     @NotNull
-    Stack<T> createNewStack(@Nullable Path base);
+    List<T> createNewStack(@Nullable Path base);
   }
 }
