@@ -91,7 +91,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
-    return notNull(repository, createInstance(root, project, project, listenToRepoChanges));
+    return notNull(repository, () -> createInstance(root, project, project, listenToRepoChanges));
   }
 
   /**
