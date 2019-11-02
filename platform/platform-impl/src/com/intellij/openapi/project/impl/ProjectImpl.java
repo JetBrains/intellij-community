@@ -254,8 +254,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     ProjectServiceContainerCustomizer.getEp().processWithPluginDescriptor((customizer, pluginDescriptor) -> {
       String id = pluginDescriptor.getPluginId().getIdString();
-      if (!(id.equals("com.intellij.workspace") ||
-            (ApplicationManager.getApplication().isUnitTestMode() && id.equals(PluginManagerCore.CORE_PLUGIN_ID)))) {
+      if (!id.equals(PluginManagerCore.CORE_PLUGIN_ID)) {
         LOG.error("Plugin " + pluginDescriptor + " is not approved to add ProjectServiceContainerCustomizer");
       }
 
