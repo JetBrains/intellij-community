@@ -188,6 +188,80 @@ public class InvokerTest {
   }
 
   @Test
+  public void testComputeOnEDT() {
+    testCompute(new Invoker.EDT(parent));
+  }
+
+  @Test
+  public void testComputeOnBgPool() {
+    testCompute(new Invoker.Background(parent, 10));
+  }
+
+  @Test
+  public void testComputeOnBgThread() {
+    testCompute(new Invoker.Background(parent));
+  }
+
+  private void testCompute(@NotNull Invoker invoker) {
+    CountDownLatch latch = new CountDownLatch(1);
+    test(invoker, latch, error -> {
+      AtomicBoolean later = new AtomicBoolean();
+      String expected = Long.toHexString(System.currentTimeMillis());
+      register(invoker.compute(() -> {
+        try {
+          if (invoker.isValidThread()) {
+            Thread.sleep(100);
+            if (!later.get()) return expected;
+            return "unexpectedly computed later";
+          }
+          return "thread invalid";
+        }
+        catch (InterruptedException ignore) {
+          return "thread interrupted";
+        }
+      })).onSuccess(actual -> countDown(latch, 0, error, actual, () -> expected.equals(actual)));
+      later.set(true);
+    });
+  }
+
+  @Test
+  public void testComputeLaterOnEDT() {
+    testComputeLater(new Invoker.EDT(parent));
+  }
+
+  @Test
+  public void testComputeLaterOnBgPool() {
+    testComputeLater(new Invoker.Background(parent, 10));
+  }
+
+  @Test
+  public void testComputeLaterOnBgThread() {
+    testComputeLater(new Invoker.Background(parent));
+  }
+
+  private void testComputeLater(@NotNull Invoker invoker) {
+    CountDownLatch latch = new CountDownLatch(1);
+    test(invoker, latch, error -> {
+      AtomicBoolean later = new AtomicBoolean();
+      String expected = Long.toHexString(System.currentTimeMillis());
+      register(invoker.computeLater(() -> {
+        try {
+          if (invoker.isValidThread()) {
+            Thread.sleep(100);
+            if (later.get()) return expected;
+            return "unexpectedly computed now";
+          }
+          return "thread invalid";
+        }
+        catch (InterruptedException ignore) {
+          return "thread interrupted";
+        }
+      })).onSuccess(actual -> countDown(latch, 0, error, actual, () -> expected.equals(actual)));
+      later.set(true);
+    });
+  }
+
+  @Test
   public void testRestartOnEDT() {
     testRestartOnPCE(new Invoker.EDT(parent));
   }
