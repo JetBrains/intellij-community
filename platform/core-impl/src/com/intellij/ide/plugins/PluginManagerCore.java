@@ -1815,38 +1815,58 @@ public class PluginManagerCore {
                     boolean withOptionalDeps,
                     boolean convertModulesToPlugins) {
       super(o -> {
-        IdeaPluginDescriptorImpl descriptor = idMap.get(o);
-        if (descriptor == null) {
+        IdeaPluginDescriptorImpl rootDescriptor = idMap.get(o);
+        if (rootDescriptor == null) {
           return JBIterable.empty();
         }
 
-        PluginId implicitDep = getImplicitDependency(descriptor, idMap);
-        JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep);
-        JBIterable<PluginId> selectedDeps;
+        Set<PluginId> uniqueCheck = new HashSet<>();
+        List<PluginId> result = new ArrayList<>();
+
         if (withOptionalDeps) {
-          ArrayList<PluginId> list = new ArrayList<>();
-          for (IdeaPluginDescriptorImpl d : optionalDescriptorRecursively(descriptor, null)) {
-            PluginId[] dependentPluginIds = d.getDependentPluginIds();
-            list.ensureCapacity(list.size() + dependentPluginIds.length);
-            ContainerUtil.addAll(list, dependentPluginIds);
+          for (PluginId id : rootDescriptor.getDependentPluginIds()) {
+            addResult(idMap, convertModulesToPlugins, rootDescriptor, uniqueCheck, result, id);
           }
-          selectedDeps = allDeps.append(list);
         }
         else {
-          selectedDeps = allDeps
-            .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
-        }
-        JBIterable<PluginId> convertedDeps = selectedDeps.filterMap(id -> {
-          IdeaPluginDescriptor plugin = idMap.get(id);
-          if (plugin == descriptor) {
-            return null;
+          for (PluginId pluginId : rootDescriptor.getDependentPluginIds()) {
+            Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = rootDescriptor.getOptionalDescriptors();
+            if (optionalDescriptors == null || !optionalDescriptors.containsKey(pluginId)) {
+              addResult(idMap, convertModulesToPlugins, rootDescriptor, uniqueCheck, result, pluginId);
+            }
           }
-          return plugin != null && convertModulesToPlugins && isModuleDependency(id) ? plugin.getPluginId() : id;
-        });
-        return convertedDeps.unique();
+        }
+
+        addResult(idMap, convertModulesToPlugins, rootDescriptor, uniqueCheck, result, getImplicitDependency(rootDescriptor, idMap));
+
+        if (withOptionalDeps) {
+          for (IdeaPluginDescriptorImpl d : optionalDescriptorRecursively(rootDescriptor, null)) {
+            for (PluginId id : d.getDependentPluginIds()) {
+              addResult(idMap, convertModulesToPlugins, rootDescriptor, uniqueCheck, result, id);
+            }
+          }
+        }
+
+        return JBIterable.from(result);
       });
 
       this.idMap = idMap;
+    }
+
+    private static void addResult(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
+                                  boolean convertModulesToPlugins,
+                                  @NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                  @NotNull Set<PluginId> uniqueCheck,
+                                  @NotNull List<PluginId> result, PluginId id) {
+      IdeaPluginDescriptor plugin = idMap.get(id);
+      if (plugin == rootDescriptor) {
+        return;
+      }
+
+      PluginId finalId = plugin != null && convertModulesToPlugins && isModuleDependency(id) ? plugin.getPluginId() : id;
+      if (uniqueCheck.add(finalId)) {
+        result.add(finalId);
+      }
     }
 
     private PluginTraverser(@NotNull Meta<PluginId> meta,
