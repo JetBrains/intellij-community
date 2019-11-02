@@ -168,8 +168,10 @@ public class GitExecutableProblemsNotifier {
     }
 
     private void addConfigureGitActions(@NotNull Project project) {
-      addAction(new BrowseNotificationAction(GitBundle.getString("git.executable.validation.error.action.download"),
-                                             GitBundle.getString("git.executable.validation.error.action.download.link")));
+      if (SystemInfo.isWindows) {
+        addAction(new BrowseNotificationAction(GitBundle.getString("git.executable.validation.error.action.download"),
+                                               GitBundle.getString("git.executable.validation.error.action.download.link")));
+      }
       addAction(NotificationAction.createSimple(GitBundle.getString("git.executable.validation.error.action.setting"), () ->
         ShowSettingsUtil.getInstance().showSettingsDialog(project, GitVcs.NAME)));
     }
