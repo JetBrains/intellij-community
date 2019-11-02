@@ -17,7 +17,7 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   public PreviewDiffSplitterComponent(@NotNull JComponent firstComponent,
                                       @NotNull DiffPreviewUpdateProcessor processor,
                                       @NotNull String splitterDimensionKey, boolean detailsOn) {
-    super(splitterDimensionKey, 0.5f);
+    super(splitterDimensionKey, 0.3f);
     myProcessor = processor;
     setFirstComponent(firstComponent);
     setDetailsOn(detailsOn);
