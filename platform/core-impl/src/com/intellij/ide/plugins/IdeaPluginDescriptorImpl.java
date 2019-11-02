@@ -153,7 +153,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void readExternal(@NotNull Element element,
                             @Nullable Path basePath,
                             boolean ignoreMissingInclude,
-                            @Nullable PathBasedJdomXIncluder.PathResolver pathResolver,
+                            @Nullable PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                             @Nullable Interner<String> stringInterner,
                             @Nullable Set<String> disabledPlugins) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list

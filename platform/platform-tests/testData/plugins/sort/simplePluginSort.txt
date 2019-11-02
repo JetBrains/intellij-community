@@ -14,9 +14,9 @@
   missing2
   missing3
   missing4
-  optional_cycle2
   optional_cycle1
   optional_cycle0
+  optional_cycle2
 + plugin3
 + plugin0
 + plugin1
@@ -30,9 +30,7 @@ Plugin "incompatible0-alt" is incompatible (target build is 1.111).
 Plugin "incompatible1" is incompatible (target build range is 2001.0 to *.*).
 Plugin "incompatible2" is incompatible (target build range is 0.0 to 1.111111).
 Plugin "missing4" defines no module dependencies (supported only in IntelliJ IDEA).
-Plugins "cycle1", "cycle2", "cycle3" form a dependency cycle.
-Plugins "cycle4", "cycle5" form a dependency cycle.
-Plugins "optional_cycle0", "optional_cycle1", "optional_cycle2" form a dependency cycle.
+Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2 <-> optional_cycle0, cycle5 <-> cycle4, cycle2 <-> cycle3 <-> cycle1.
 Plugin "cycle0" requires disabled "cycle1".
 Plugin "missing1" requires missing "com.intellij.modules.missing".
 Plugin "missing2" requires missing "com.intellij.missing".

@@ -1,14 +1,14 @@
 + com.intellij
-+ -com-intellij-copyright-
 + -com-jetbrains-plugins-webDeployment-
 + -com-intellij-plugins-watcher-
-+ -com-intellij-css-
 + -XPathView-
++ -com-intellij-copyright-
 + -com-intellij-java-
 + -org-intellij-intelliLang-
 + -com-intellij-properties-
 + -com-intellij-diagram-
 + -org-jetbrains-plugins-terminal-
++ -com-intellij-css-
 + -JavaScript-
 + -tslint-
 + -AngularJS-
