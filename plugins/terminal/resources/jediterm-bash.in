@@ -32,13 +32,15 @@ else
 fi
 
 function override_jb_variables {
-  while IFS="=" read NAME VALUE
+  while read NAME VALUE
   do
+    NAME=${VARIABLE%%=*}
     if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
     then
       NEW_NAME=${NAME:20}
       if [ -n "$NEW_NAME" ]
       then
+        VALUE=${VARIABLE#*=}
         export "$NEW_NAME"="$VALUE"
       fi
     fi
