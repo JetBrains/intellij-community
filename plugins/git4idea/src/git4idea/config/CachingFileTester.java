@@ -42,6 +42,8 @@ abstract class CachingFileTester<T> {
         if (result == null || result.getFileLastModifiedTimestamp() != currentLastModificationDate) {
           result = new TestResult(testFileOrAbort(filePath), currentLastModificationDate);
         }
+
+        myFileTestMap.put(filePath, result);
       }
       catch (ProcessCanceledException pce) {
         throw pce;
@@ -50,7 +52,6 @@ abstract class CachingFileTester<T> {
         result = new TestResult(e, currentLastModificationDate);
       }
 
-      myFileTestMap.put(filePath, result);
       return result;
     });
   }
