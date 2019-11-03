@@ -22,9 +22,9 @@
 + plugin1
 + plugin2
 
-PluginDescriptor(name=duplicate, classpath=file:/duplicate2.xml) attempts to redeclare id "duplicate" (already declared by plugin PluginDescriptor(name=duplicate, classpath=file:/duplicate1.xml)).
-PluginDescriptor(name=duplicate0, classpath=file:/duplicate0.xml) attempts to redeclare id "com.intellij.modules.duplicate" (already declared by plugin PluginDescriptor(name=duplicate, classpath=file:/duplicate1.xml)).
 No id is provided by "missing0.xml".
+"duplicate" id is declared by plugins "duplicate2.xml".
+"com.intellij.modules.duplicate" module is declared by plugins "duplicate0".
 Plugin "incompatible0" is incompatible (target build range is 1.0 to 1.111111).
 Plugin "incompatible0-alt" is incompatible (target build is 1.111).
 Plugin "incompatible1" is incompatible (target build range is 2001.0 to *.*).

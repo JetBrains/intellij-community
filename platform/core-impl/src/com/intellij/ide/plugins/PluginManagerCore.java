@@ -1626,6 +1626,7 @@ public class PluginManagerCore {
   private static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                                           @Nullable List<? super String> errors) {
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = new LinkedHashMap<>(descriptors.size());
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateMap = null;
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       PluginId id = descriptor.getPluginId();
       if (id == null) {
@@ -1635,38 +1636,64 @@ public class PluginManagerCore {
         continue;
       }
 
-      if (!checkAndPut(descriptor, id, idMap, errors)) {
+      Map<PluginId, List<IdeaPluginDescriptorImpl>> newDuplicateMap = checkAndPut(descriptor, id, idMap, duplicateMap);
+      if (newDuplicateMap != null) {
+        duplicateMap = newDuplicateMap;
         continue;
       }
 
       for (String module : descriptor.getModules()) {
-        checkAndPut(descriptor, PluginId.getId(module), idMap, errors);
+        newDuplicateMap = checkAndPut(descriptor, PluginId.getId(module), idMap, duplicateMap);
+        if (newDuplicateMap != null) {
+          duplicateMap = newDuplicateMap;
+        }
       }
     }
 
-    if (errors != null && !idMap.containsKey(PluginId.getId(CORE_PLUGIN_ID))) {
-      String message = SPECIAL_IDEA_PLUGIN_ID.getIdString() + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")";
-      throw new EssentialPluginMissingException(Collections.singletonList(message));
+    if (errors != null) {
+      if (duplicateMap != null) {
+        duplicateMap.forEach((id, values) -> {
+          if (isModuleDependency(id)) {
+            errors.add(toPresentableName(id.getIdString()) + " module is declared by plugins " +
+                       StringUtil.join(values, PluginManagerCore::toPresentableName, ", "));
+          }
+          else {
+            errors.add(toPresentableName(id.getIdString()) + " id is declared by plugins " +
+                       StringUtil.join(values, o -> toPresentableName(o.getPath().getName()), ", "));
+          }
+        });
+      }
+
+      if (!idMap.containsKey(PluginId.getId(CORE_PLUGIN_ID))) {
+        String message = SPECIAL_IDEA_PLUGIN_ID.getIdString() + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")";
+        throw new EssentialPluginMissingException(Collections.singletonList(message));
+      }
     }
     return idMap;
   }
 
-  private static boolean checkAndPut(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                     @NotNull PluginId id,
-                                     @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                     @Nullable List<? super String> errors) {
+  @Nullable
+  private static Map<PluginId, List<IdeaPluginDescriptorImpl>> checkAndPut(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                           @NotNull PluginId id,
+                                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
+                                                                           @Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateMap) {
+    if (duplicateMap != null && duplicateMap.containsKey(id)) {
+      ContainerUtilRt.putValue(id, descriptor, duplicateMap);
+      return duplicateMap;
+    }
+
     IdeaPluginDescriptorImpl existingDescriptor = idMap.put(id, descriptor);
     if (existingDescriptor == null) {
-      return true;
+      return null;
     }
 
     // if duplicated, both are removed
     idMap.remove(id);
-
-    if (errors != null) {
-      errors.add(descriptor + " attempts to redeclare id " + toPresentableName(id.getIdString()) + " (already declared by plugin " + existingDescriptor + ")");
+    if (duplicateMap == null) {
+      duplicateMap = new LinkedHashMap<>();
     }
-    return false;
+    ContainerUtilRt.putValue(id, descriptor, duplicateMap);
+    return duplicateMap;
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptor descriptor,
