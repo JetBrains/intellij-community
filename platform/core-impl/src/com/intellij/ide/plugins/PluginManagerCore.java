@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -627,28 +628,22 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static Collection<ClassLoader> getParentLoaders(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginTraverser traverser) {
+  private static Collection<ClassLoader> getParentLoaders(@NotNull IdeaPluginDescriptor rootDescriptor, @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
     if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
       return Collections.emptyList();
     }
 
-    JBIterable<PluginId> dependencies = traverser.children(descriptor.getPluginId());
-    LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>();
-    for (PluginId depId : dependencies) {
-      IdeaPluginDescriptor dep = traverser.idMap.get(depId);
-      if (dep == null) {
-        // might be an optional dependency
-        continue;
-      }
-
-      ClassLoader loader = dep.getPluginClassLoader();
+    Set<ClassLoader> loaders = new LinkedHashSet<>();
+    processAllDependencies(rootDescriptor, true, idMap, descriptor -> {
+      ClassLoader loader = descriptor.getPluginClassLoader();
       if (loader == null) {
-        getLogger().error("Plugin \"" + toPresentableName(descriptor) + "\" requires missing class loader for " + toPresentableName(dep));
+        getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
       }
       else {
         loaders.add(loader);
       }
-    }
+      return FileVisitResult.CONTINUE;
+    });
     return loaders;
   }
 
@@ -1355,8 +1350,8 @@ public class PluginManagerCore {
   @ApiStatus.Internal
   public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
                                      @NotNull ClassLoader coreLoader,
-                                     @NotNull JBTreeTraverser<PluginId> traverser) {
-    Collection<ClassLoader> parentLoaders = getParentLoaders(descriptor, (PluginTraverser)traverser);
+                                     @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    Collection<ClassLoader> parentLoaders = getParentLoaders(descriptor, idMap);
     if (parentLoaders.isEmpty()) {
       parentLoaders = Collections.singletonList(coreLoader);
     }
@@ -1605,7 +1600,7 @@ public class PluginManagerCore {
         pluginDescriptor.setLoader(coreLoader);
       }
       else {
-        initClassLoader(pluginDescriptor, coreLoader, allDepsTraverser);
+        initClassLoader(pluginDescriptor, coreLoader, idMap);
       }
     }
     if (disabledAndPossibleToEnableConsumer != null) {
@@ -1623,7 +1618,8 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
+  @ApiStatus.Internal
+  public static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                                           @Nullable List<? super String> errors) {
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = new LinkedHashMap<>(descriptors.size());
     Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateMap = null;
@@ -1845,21 +1841,6 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  public static JBTreeTraverser<PluginId> pluginIdTraverser() {
-    IdeaPluginDescriptorImpl[] plugins = ourPlugins;
-    if (plugins == null) {
-      return new JBTreeTraverser<>(Functions.constant(null));
-    }
-    return pluginIdTraverser(Arrays.asList(plugins));
-  }
-
-  @NotNull
-  @ApiStatus.Internal
-  public static JBTreeTraverser<PluginId> pluginIdTraverser(@NotNull List<IdeaPluginDescriptorImpl> plugins) {
-    return new PluginTraverser(buildPluginIdMap(plugins, new ArrayList<>()), false, true).unique();
-  }
-
-  @NotNull
   private static List<IdeaPluginDescriptorImpl> optionalDescriptorRecursively(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                                               @Nullable Predicate<? super PluginId> condition) {
     Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = rootDescriptor.getOptionalDescriptors();
@@ -1901,20 +1882,43 @@ public class PluginManagerCore {
     });
   }
 
-  /**
-   * {@link FileVisitResult#SKIP_SIBLINGS} is not supported.
-   */
+  @NotNull
   @ApiStatus.Internal
-  public static void processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
-                                            boolean withOptionalDeps,
-                                            @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
-    processAllDependencies(rootDescriptor, withOptionalDeps, buildPluginIdMap(Arrays.asList(ourPlugins), null), consumer);
+  public static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap() {
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
+    return buildPluginIdMap(Arrays.asList(ourPlugins), null);
   }
 
-  private static void processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
-                                             boolean withOptionalDeps,
-                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
-                                             @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+  /**
+   * You must not use this method in cycle, in this case use {@link #processAllDependencies(IdeaPluginDescriptor, boolean, Map, Function)} instead
+   * (to reuse result of {@link #buildPluginIdMap()}).
+   *
+   * {@link FileVisitResult#SKIP_SIBLINGS} is not supported.
+   *
+   * Returns {@code false} if processing was terminated because of {@link FileVisitResult#TERMINATE}, and {@code true} otherwise.
+   */
+  @SuppressWarnings("UnusedReturnValue")
+  @ApiStatus.Internal
+  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                            boolean withOptionalDeps,
+                                            @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+    return processAllDependencies(rootDescriptor, withOptionalDeps, buildPluginIdMap(), consumer);
+  }
+
+  @ApiStatus.Internal
+  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                               boolean withOptionalDeps,
+                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
+                                               @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+    return processAllDependencies(rootDescriptor, withOptionalDeps, idToMap, new HashSet<>(), consumer);
+  }
+
+  @ApiStatus.Internal
+  private static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                               boolean withOptionalDeps,
+                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
+                                               @NotNull Set<IdeaPluginDescriptor> depProcessed,
+                                               @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
     loop:
     for (PluginId id : rootDescriptor.getDependentPluginIds()) {
       IdeaPluginDescriptorImpl descriptor = idToMap.get(id);
@@ -1930,14 +1934,22 @@ public class PluginManagerCore {
         }
       }
 
-      FileVisitResult result = consumer.apply(descriptor);
-      if (result == FileVisitResult.TERMINATE) {
-        return;
-      }
-      else if (result != FileVisitResult.SKIP_SUBTREE) {
-        processAllDependencies(descriptor, withOptionalDeps, idToMap, consumer);
+      switch (consumer.apply(descriptor)) {
+        case TERMINATE:
+          return false;
+        case CONTINUE:
+          if (depProcessed.add(descriptor)) {
+            processAllDependencies(descriptor, withOptionalDeps, idToMap, depProcessed, consumer);
+          }
+          break;
+        case SKIP_SUBTREE:
+          break;
+        case SKIP_SIBLINGS:
+          throw new UnsupportedOperationException("FileVisitResult.SKIP_SIBLINGS is not supported");
       }
     }
+
+    return true;
   }
 
   private static final class PluginTraverser extends JBTreeTraverser<PluginId> {

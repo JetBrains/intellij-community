@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -41,7 +42,6 @@ import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -58,6 +58,7 @@ import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
 import java.util.zip.CRC32;
@@ -680,14 +681,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static boolean morePluginsAffected(@NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
-    JBTreeTraverser<PluginId> traverser = PluginManagerCore.pluginIdTraverser();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      if (!plugin.isEnabled()) continue;
-      if (pluginsToDisable.contains(plugin)) continue;
-      for (IdeaPluginDescriptor toDisable : pluginsToDisable) {
-        if (traverser.withRoot(plugin.getPluginId()).unique().traverse().contains(toDisable.getPluginId())) {
-          return true;
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
+      if (!rootDescriptor.isEnabled() || pluginsToDisable.contains(rootDescriptor)) {
+        continue;
+      }
+
+      if (!PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, descriptor -> {
+        if (!descriptor.isEnabled()) {
+          // if disabled, no need to process it's dependencies
+          return FileVisitResult.SKIP_SUBTREE;
         }
+        return pluginsToDisable.contains(descriptor) ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
+      })) {
+        return true;
       }
     }
     return false;
