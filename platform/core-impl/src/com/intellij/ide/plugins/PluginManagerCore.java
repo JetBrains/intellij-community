@@ -656,10 +656,11 @@ public class PluginManagerCore {
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull List<String> errors, @NotNull List<String> actions) {
-    if (errors.isEmpty()) return;
-    Application app = ApplicationManager.getApplication();
-    String title = "Problems found loading plugins:";
+    if (errors.isEmpty()) {
+      return;
+    }
 
+    Application app = ApplicationManager.getApplication();
     if (app == null || !app.isHeadlessEnvironment() || isUnitTestMode) {
       String errorMessage = StringUtil.join(JBIterable.from(errors).map(o -> o + ".").append(actions), "<p/>");
       if (ourPluginError == null) {
@@ -668,11 +669,8 @@ public class PluginManagerCore {
       else {
         ourPluginError += "<p/>\n" + errorMessage;
       }
-      getLogger().warn(StringUtil.join(JBIterable.of(title).append(errors), "\n"));
     }
-    else {
-      getLogger().error(StringUtil.join(JBIterable.of(title).append(errors), "\n"));
-    }
+    getLogger().error("Problems found loading plugins:\n" + String.join("\n", errors));
   }
 
   @NotNull
