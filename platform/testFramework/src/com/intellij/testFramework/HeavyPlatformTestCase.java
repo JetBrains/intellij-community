@@ -14,6 +14,7 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -50,6 +51,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
@@ -460,7 +462,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void cleanupApplicationCaches(@Nullable Project project) {
-    if (ApplicationManager.getApplication() == null) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null) {
       return;
     }
 
@@ -476,20 +479,24 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    assert projectManager != null : "The ProjectManager is not initialized yet";
-    if (projectManager.isDefaultProjectInitialized()) {
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+    if (projectManager != null && projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
 
     NonBlockingReadActionImpl.cancelAllTasks();
 
-    ((FileBasedIndexImpl)FileBasedIndex.getInstance()).cleanupForNextTest();
+    FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
+    if (fileBasedIndex != null) {
+      ((FileBasedIndexImpl)fileBasedIndex).cleanupForNextTest();
+    }
 
-    LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
-    if (localFileSystem != null) {
-      localFileSystem.cleanupForNextTest();
+    if (app.getServiceIfCreated(VirtualFileManager.class) != null) {
+      LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+      if (localFileSystem != null) {
+        localFileSystem.cleanupForNextTest();
+      }
     }
   }
 

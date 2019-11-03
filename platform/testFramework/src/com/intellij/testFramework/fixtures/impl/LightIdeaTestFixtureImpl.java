@@ -4,11 +4,13 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -89,8 +91,12 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
       })
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
       .append(() -> {
-        if (ApplicationManager.getApplication() != null) {
-          PersistentFS.getInstance().clearIdCache();
+        Application app = ApplicationManager.getApplication();
+        if (app != null) {
+          ManagingFS managingFS = app.getServiceIfCreated(ManagingFS.class);
+          if (managingFS != null) {
+            ((PersistentFS)managingFS).clearIdCache();
+          }
         }
       })
       .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(project))
