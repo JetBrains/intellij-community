@@ -37,12 +37,10 @@ public class GitExecutableManager {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
-  @NotNull private final GitVcsApplicationSettings myApplicationSettings;
   @NotNull private final AtomicNotNullLazyValue<String> myDetectedExecutable;
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
-  public GitExecutableManager(@NotNull GitVcsApplicationSettings applicationSettings) {
-    myApplicationSettings = applicationSettings;
+  public GitExecutableManager() {
     myDetectedExecutable = AtomicNotNullLazyValue.createValue(new GitExecutableDetector()::detect);
     myVersionCache = new CachingFileTester<GitVersion>() {
       @NotNull
@@ -73,7 +71,7 @@ public class GitExecutableManager {
 
   @NotNull
   public String getPathToGit() {
-    String path = myApplicationSettings.getSavedPathToGit();
+    String path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
     return path == null ? getDetectedExecutable() : path;
   }
 
