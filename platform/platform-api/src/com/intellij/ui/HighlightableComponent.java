@@ -425,6 +425,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
     if (myIcon != null){
       height = Math.max(myIcon.getIconHeight() + defFontMetrics.getLeading(), height);
+      width += myIcon.getIconWidth();
     }
 
     return new Dimension(width + 2, height);
