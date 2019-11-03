@@ -1331,8 +1331,8 @@
       <group id="CopyFileReference">
         <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" text="Absolute Path" use-shortcut-of="CopyPaths"/>
         <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider" text="Path With Line Number"/>
-        <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider" text="Content Root Path"/>
-        <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider" text="Source Root Path"/>
+        <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider" text="Path From Content Root"/>
+        <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider" text="Path From Source Root"/>
       </group>
       <separator/>
       <group id="CopyExternalReferenceGroup">
