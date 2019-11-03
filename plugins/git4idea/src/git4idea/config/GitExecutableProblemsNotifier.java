@@ -44,16 +44,16 @@ public class GitExecutableProblemsNotifier {
 
   @CalledInAny
   public static void showExecutionErrorDialog(@NotNull Throwable e, @Nullable Project project) {
-    boolean xcodeLicenseError = isXcodeLicenseError(e);
-    GuiUtils.invokeLaterIfNeeded(
-      () -> Messages.showErrorDialog(project,
-                                     xcodeLicenseError
-                                     ? GitBundle.getString("git.executable.validation.error.xcode.message")
-                                     : getPrettyErrorMessage(e),
-                                     xcodeLicenseError
-                                     ? GitBundle.getString("git.executable.validation.error.xcode.title")
-                                     : GitBundle.getString("git.executable.validation.error.start.title")),
-      ModalityState.defaultModalityState());
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      boolean xcodeLicenseError = isXcodeLicenseError(e);
+      String message = xcodeLicenseError ?
+                       GitBundle.getString("git.executable.validation.error.xcode.message") :
+                       getPrettyErrorMessage(e);
+      String title = xcodeLicenseError ?
+                     GitBundle.getString("git.executable.validation.error.xcode.title") :
+                     GitBundle.getString("git.executable.validation.error.start.title");
+      Messages.showErrorDialog(project, message, title);
+    }, ModalityState.defaultModalityState());
   }
 
   @CalledInAny
