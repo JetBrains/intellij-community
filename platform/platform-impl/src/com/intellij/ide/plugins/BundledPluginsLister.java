@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,16 +11,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Ivan Chirkov
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class BundledPluginsLister implements ApplicationStarter {
+final class BundledPluginsLister implements ApplicationStarter {
   @Override
   public String getCommandName() {
     return "listBundledPlugins";
@@ -41,11 +42,15 @@ public class BundledPluginsLister implements ApplicationStarter {
 
       try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
         List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
-
-        List<String> modules = plugins.stream()
-          .flatMap(it -> it instanceof IdeaPluginDescriptorImpl ? ((IdeaPluginDescriptorImpl)it).getModules().stream() : Stream.empty())
-          .sorted()
-          .collect(Collectors.toList());
+        List<String> modules = new ArrayList<>();
+        for (IdeaPluginDescriptor it : plugins) {
+          if (it instanceof IdeaPluginDescriptorImpl) {
+            for (PluginId pluginId : ((IdeaPluginDescriptorImpl)it).getModules()) {
+              modules.add(pluginId.getIdString());
+            }
+          }
+        }
+        modules.sort(null);
 
         List<String> pluginIds = plugins.stream()
           .map(plugin -> plugin.getPluginId().getIdString())

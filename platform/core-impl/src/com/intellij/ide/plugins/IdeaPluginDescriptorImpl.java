@@ -87,7 +87,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private final ContainerDescriptor myProjectContainerDescriptor = new ContainerDescriptor();
   private final ContainerDescriptor myModuleContainerDescriptor = new ContainerDescriptor();
 
-  private List<String> myModules;
+  private List<PluginId> myModules;
   private ClassLoader myLoader;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
@@ -318,7 +318,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
             if (myModules == null) {
               myModules = new SmartList<>();
             }
-            myModules.add(moduleName);
+            myModules.add(PluginId.getId(moduleName));
           }
           break;
 
@@ -933,7 +933,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @NotNull
-  public List<String> getModules() {
+  public List<PluginId> getModules() {
     return ContainerUtil.notNullize(myModules);
   }
 
@@ -949,7 +949,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String toString() {
-    return "PluginDescriptor(name=" + myName + ", classpath=" + myPath + ")";
+    return "PluginDescriptor(name=" + myName + ", id=" + myId + ", path=" + myPath + ")";
   }
 
   private static boolean isComponentSuitableForOs(@Nullable String os) {

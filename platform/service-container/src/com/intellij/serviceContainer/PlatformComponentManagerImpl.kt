@@ -49,7 +49,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     protected val fakeCorePluginDescriptor = object : PluginDescriptor {
       override fun getPluginClassLoader() = null
 
-      override fun getPluginId() = PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)
+      override fun getPluginId() = PluginManagerCore.CORE_ID
     }
   }
 

@@ -40,18 +40,18 @@ public final class PluginManager extends PluginManagerCore {
       throw (StartupAbortedException)t;
     }
 
-    if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+    if (pluginId == null || CORE_ID == pluginId) {
       if (componentClassName != null) {
         pluginId = getPluginByClassName(componentClassName);
       }
     }
-    if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+    if (pluginId == null || CORE_ID == pluginId) {
       if (t instanceof ExtensionInstantiationException) {
         pluginId = ((ExtensionInstantiationException)t).getExtensionOwnerId();
       }
     }
 
-    if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+    if (pluginId != null && CORE_ID != pluginId) {
       throw new StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
     }
     else {

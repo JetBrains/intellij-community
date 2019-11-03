@@ -788,7 +788,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (result == null && PluginManagerCore.isModuleDependency(pluginId)) {
         result = ContainerUtil.find(allPlugins, d -> {
           if (d instanceof IdeaPluginDescriptorImpl) {
-            return ((IdeaPluginDescriptorImpl)d).getModules().contains(pluginId.getIdString());
+            return ((IdeaPluginDescriptorImpl)d).getModules().contains(pluginId);
           }
           return false;
         });
@@ -904,7 +904,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
         if (descriptor instanceof IdeaPluginDescriptorImpl) {
-          if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
+          if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id)) {
             return descriptor;
           }
         }

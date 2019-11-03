@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
@@ -26,7 +25,7 @@ public class ProductivityFeaturesTest extends LightPlatformTestCase {
 
     TipAndTrickBean tip = new TipAndTrickBean();
     tip.fileName = "TestTip.html";
-    tip.setPluginDescriptor(PluginManagerCore.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)));
+    tip.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), TipAndTrickBean.EP_NAME, tip, getTestRootDisposable());
   }
 

@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class GraphGenerator<Node> implements Graph<Node> {
+public final class GraphGenerator<Node> implements Graph<Node> {
   @NotNull
   public static <T> Graph<T> generate(InboundSemiGraph<T> graph) {
     return new GraphGenerator<>(graph);

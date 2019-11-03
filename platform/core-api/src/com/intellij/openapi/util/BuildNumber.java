@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class BuildNumber implements Comparable<BuildNumber> {
+public final class BuildNumber implements Comparable<BuildNumber> {
   private static final Set<String> BUILD_NUMBER_PLACEHOLDERS = ContainerUtil.set("__BUILD_NUMBER__", "__BUILD__");
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
@@ -242,6 +242,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static class Holder {
     private static final BuildNumber CURRENT_VERSION = fromFile();
 
+    @NotNull
     private static BuildNumber fromFile() {
       try {
         String home = PathManager.getHomePath();
@@ -264,6 +265,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
    * This method is for internal platform use only. In regular code use {@link com.intellij.openapi.application.ApplicationInfo#getBuild()} instead.
    */
   @ApiStatus.Internal
+  @NotNull
   public static BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
   }
