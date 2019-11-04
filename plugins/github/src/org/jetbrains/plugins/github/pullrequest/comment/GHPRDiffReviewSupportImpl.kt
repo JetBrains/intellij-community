@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
+import kotlin.properties.Delegates
 
 class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val reviewService: GHPRReviewServiceAdapter,
@@ -32,9 +33,18 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
 
+  private val reviewThreadsModel = SingleValueModel<List<GHPullRequestReviewThread>?>(null)
+
+  override var isLoadingReviewThreads: Boolean = false
+    private set
+
+  override var showReviewThreads by Delegates.observable(true) { _, _, newValue ->
+    if (newValue) reloadReviewThreads()
+    else reviewThreadsModel.value = null
+  }
+
   override fun install(viewer: DiffViewerBase) {
     val diffRangesModel = SingleValueModel(if (reviewService.canComment()) diffRanges else null)
-    val reviewThreadsModel = SingleValueModel<List<GHPullRequestReviewThread>?>(null)
     loadReviewThreads(reviewThreadsModel, viewer)
 
     val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, reviewService, lastCommitSha, filePath,
@@ -50,6 +60,10 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     }
   }
 
+  override fun reloadReviewThreads() {
+    reviewService.resetReviewThreads()
+  }
+
   private fun loadReviewThreads(threadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>, disposable: Disposable) {
     doLoadReviewThreads(threadsModel, disposable)
     reviewService.addReviewThreadsListener(disposable) {
@@ -58,13 +72,16 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
   }
 
   private fun doLoadReviewThreads(threadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>, disposable: Disposable) {
+    isLoadingReviewThreads = true
     reviewService.loadReviewThreads().handleOnEdt(disposable) { result, error ->
       if (result != null) {
-        threadsModel.value = result.filter { it.position != null && reviewThreadsFilter(it.commit.oid, it.path) }
+        if (showReviewThreads)
+          threadsModel.value = result.filter { it.position != null && reviewThreadsFilter(it.commit.oid, it.path) }
       }
       if (error != null) {
         LOG.info("Failed to load review threads", error)
       }
+      isLoadingReviewThreads = false
     }
   }
 

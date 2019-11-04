@@ -15,6 +15,9 @@ interface GHPRReviewServiceAdapter {
   @CalledInAwt
   fun loadReviewThreads(): CompletableFuture<List<GHPullRequestReviewThread>>
 
+  @CalledInAwt
+  fun resetReviewThreads()
+
   @CalledInAny
   fun canComment(): Boolean
 
@@ -37,6 +40,8 @@ interface GHPRReviewServiceAdapter {
         override fun loadReviewThreads(): CompletableFuture<List<GHPullRequestReviewThread>> {
           return dataProvider.reviewThreadsRequest
         }
+
+        override fun resetReviewThreads() = dataProvider.reloadReviewThreads()
 
         override fun canComment() = reviewService.canComment()
 
