@@ -999,7 +999,7 @@
     <extensionPoint name="module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider"/>
 
     <extensionPoint name="projectStructure.sourceRootEditHandler"
-                    interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler"/>
+                    interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler" dynamic="true"/>
 
     <extensionPoint name="toolsProvider" interface="com.intellij.tools.ToolsProvider"/>
     <extensionPoint name="toolsCustomizer" interface="com.intellij.tools.ToolsCustomizer" dynamic="true"/>
