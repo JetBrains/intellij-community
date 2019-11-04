@@ -10679,6 +10679,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceWithSafeCall/applyWithImplicitParameterFunctionCall.kt");
         }
 
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/argument.kt");
+        }
+
         @TestMetadata("assignment.kt")
         public void testAssignment() throws Exception {
             runTest("testData/quickfix/replaceWithSafeCall/assignment.kt");
@@ -10734,6 +10739,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceWithSafeCall/invokeOperator.kt");
         }
 
+        @TestMetadata("lastStatementOfLambdaAsArgument.kt")
+        public void testLastStatementOfLambdaAsArgument() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/lastStatementOfLambdaAsArgument.kt");
+        }
+
+        @TestMetadata("lastStatementOfLambdaAsLocalVariable.kt")
+        public void testLastStatementOfLambdaAsLocalVariable() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/lastStatementOfLambdaAsLocalVariable.kt");
+        }
+
+        @TestMetadata("lastStatementOfLambdaAsProperty.kt")
+        public void testLastStatementOfLambdaAsProperty() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/lastStatementOfLambdaAsProperty.kt");
+        }
+
         @TestMetadata("let.kt")
         public void testLet() throws Exception {
             runTest("testData/quickfix/replaceWithSafeCall/let.kt");
@@ -10757,6 +10777,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("normal.kt")
         public void testNormal() throws Exception {
             runTest("testData/quickfix/replaceWithSafeCall/normal.kt");
+        }
+
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/return.kt");
         }
     }
 
