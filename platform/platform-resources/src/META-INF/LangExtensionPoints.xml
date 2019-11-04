@@ -170,7 +170,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.namesValidator"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.refactoring.NamesValidator"/>
     </extensionPoint>
 
@@ -186,7 +187,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.inspectionSuppressor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.InspectionSuppressor"/>
     </extensionPoint>
 
@@ -246,7 +248,7 @@
     </extensionPoint>
     <extensionPoint name="rearranger.ui" interface="com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent$Factory"/>
 
-    <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.surroundWith.SurroundDescriptor"/>
     </extensionPoint>
 
@@ -431,7 +433,7 @@
     <extensionPoint name="fileBasedIndex.providedLocator" interface="com.intellij.util.indexing.provided.ProvidedIndexExtensionLocator"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
-    <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
+    <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate" dynamic="true"/>
     <extensionPoint name="refactoring.invertBoolean" interface="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate"/>
     <extensionPoint name="refactoring.introduceParameterObject" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass"
@@ -644,7 +646,7 @@
     <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor" dynamic="true"/>
     <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor"/>
     <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler"/>
-    <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory"/>
+    <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory" dynamic="true"/>
     <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>
     <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
@@ -836,7 +838,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.smartEnterProcessor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor"/>
     </extensionPoint>
 
@@ -886,7 +889,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
 
-    <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover"/>
+    <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover" dynamic="true"/>
 
     <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass"
