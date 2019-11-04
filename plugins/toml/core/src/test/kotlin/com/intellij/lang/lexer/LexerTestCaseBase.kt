@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.ext.lexer
+package com.intellij.lang.lexer
 
+import com.intellij.TestCase
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.pathToGoldTestFile
+import com.intellij.pathToSourceTestFile
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.ext.TestCase
-import com.intellij.ext.pathToGoldTestFile
-import com.intellij.ext.pathToSourceTestFile
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 

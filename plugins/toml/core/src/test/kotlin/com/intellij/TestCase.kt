@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.ext
+package com.intellij
 
 import java.nio.file.Path
 import java.nio.file.Paths

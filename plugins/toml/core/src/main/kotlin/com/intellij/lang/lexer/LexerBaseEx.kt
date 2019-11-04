@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.ext.lexer
+package com.intellij.lang.lexer
 
 import com.intellij.lexer.LexerBase
 import com.intellij.psi.tree.IElementType

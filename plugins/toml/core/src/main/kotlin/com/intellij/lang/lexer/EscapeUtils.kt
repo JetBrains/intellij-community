@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package com.intellij.ext.lexer
+package com.intellij.lang.lexer
 
 import com.intellij.psi.StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN
 import com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN
