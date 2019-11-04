@@ -1007,11 +1007,10 @@
     <extensionPoint name="defaultHighlightingSettingProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider"/>
 
-    <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
-    <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier"/>
-    <extensionPoint name="gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer"/>
-    <extensionPoint name="equivalenceDescriptorProvider"
-                    interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
+    <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP" dynamic="true"/>
+    <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier" dynamic="true"/>
+    <extensionPoint name="gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer" dynamic="true"/>
+    <extensionPoint name="equivalenceDescriptorProvider" interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider" dynamic="true"/>
 
     <extensionPoint name="previewPanelProvider" interface="com.intellij.openapi.preview.PreviewPanelProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger"/>
