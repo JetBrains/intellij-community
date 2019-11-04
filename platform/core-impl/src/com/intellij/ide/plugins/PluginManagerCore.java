@@ -1644,9 +1644,6 @@ public final class PluginManagerCore {
       allPlugins.add(descriptor);
       if (descriptor.isEnabled()) {
         enabledPlugins.add(descriptor);
-        if (descriptor != coreDescriptor) {
-          descriptor.insertDependency(coreDescriptor);
-        }
       }
     }
 
@@ -1674,37 +1671,39 @@ public final class PluginManagerCore {
                                             @NotNull List<IdeaPluginDescriptorImpl> enabledPlugins) {
     Set<ClassLoader> loaders = new LinkedHashSet<>();
     Set<IdeaPluginDescriptor> depProcessed = new HashSet<>(enabledPlugins.size());
+    ClassLoader[] emptyClassLoaderArray = new ClassLoader[0];
     for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
       if (rootDescriptor == coreDescriptor || rootDescriptor.isUseCoreClassLoader()) {
         rootDescriptor.setLoader(coreLoader);
         continue;
       }
 
-      ClassLoader[] parentLoaders;
       if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
+        rootDescriptor.setLoader(null);
+        continue;
+      }
+
+      loaders.clear();
+      loaders.add(coreLoader);
+      depProcessed.clear();
+
+      processAllDependencies(rootDescriptor, graph, depProcessed, descriptor -> {
+        ClassLoader loader = descriptor.getPluginClassLoader();
+        if (loader == null) {
+          getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+        }
+        else {
+          loaders.add(loader);
+        }
+        return FileVisitResult.CONTINUE;
+      });
+
+      ClassLoader[] parentLoaders;
+      if (loaders.isEmpty()) {
         parentLoaders = new ClassLoader[]{coreLoader};
       }
       else {
-        loaders.clear();
-        depProcessed.clear();
-
-        processAllDependencies(rootDescriptor, graph, depProcessed, descriptor -> {
-          ClassLoader loader = descriptor.getPluginClassLoader();
-          if (loader == null) {
-            getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
-          }
-          else {
-            loaders.add(loader);
-          }
-          return FileVisitResult.CONTINUE;
-        });
-
-        if (loaders.isEmpty()) {
-          parentLoaders = new ClassLoader[]{coreLoader};
-        }
-        else {
-          parentLoaders = loaders.toArray(new ClassLoader[0]);
-        }
+        parentLoaders = loaders.toArray(emptyClassLoaderArray);
       }
 
       rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.getClassPath(), parentLoaders, rootDescriptor));

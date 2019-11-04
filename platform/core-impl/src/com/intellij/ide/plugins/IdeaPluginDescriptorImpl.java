@@ -843,13 +843,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return CommonBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
   }
 
-  void insertDependency(@NotNull IdeaPluginDescriptor d) {
-    PluginId[] deps = new PluginId[getDependentPluginIds().length + 1];
-    deps[0] = d.getPluginId();
-    System.arraycopy(myDependencies, 0, deps, 1, deps.length - 1);
-    myDependencies = deps;
-  }
-
   @Override
   public boolean isEnabled() {
     return myEnabled;
