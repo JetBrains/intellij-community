@@ -113,8 +113,10 @@
       <action id="Github.PullRequest.List.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>
     </group>
-    <action id="Github.PullRequest.Details.Reload"
-            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
+    <group id="Github.PullRequest.Details.Popup">
+      <action id="Github.PullRequest.Details.Reload"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
+    </group>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
     <group id="Github.PullRequest.Timeline.Popup">

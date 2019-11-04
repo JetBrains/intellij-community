@@ -288,6 +288,9 @@ internal class GHPRComponentFactory(private val project: Project) {
     val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
       viewport.isOpaque = false
       isOpaque = false
+    }.also {
+      val actionGroup = actionManager.getAction("Github.PullRequest.Details.Popup") as ActionGroup
+      PopupHandler.installPopupHandler(it, actionGroup, ActionPlaces.UNKNOWN, actionManager)
     }
 
     scrollPane.isVisible = detailsModel.value != null
