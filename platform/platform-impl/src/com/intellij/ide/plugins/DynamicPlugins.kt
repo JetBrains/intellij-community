@@ -101,7 +101,8 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
+  @JvmOverloads
+  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
 
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor)
@@ -165,7 +166,13 @@ object DynamicPlugins {
     jdomSerializer.clearSerializationCaches()
     BeanBinding.clearSerializationCaches()
 
-    PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+    if (disable) {
+      // Update list of disabled plugins
+      PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+    }
+    else {
+      PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+    }
 
     UIUtil.dispatchAllInvocationEvents()
 
