@@ -145,7 +145,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     init {
       isOpaque = false
-      border = JBUI.Borders.empty(10, 0, 10, 0)
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill()).apply {

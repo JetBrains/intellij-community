@@ -22,7 +22,6 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -106,15 +105,18 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val reviewService = dataProvider.let { GHPRReviewServiceAdapter.create(context.dataContext.reviewService, it) }
     val timeline = GHPRTimelineComponent(loader.listModel,
                                          createItemComponentFactory(project, reviewService, reviewThreadsModelsProvider,
-                                                                    avatarIconsProvider, context.currentUser))
+                                                                    avatarIconsProvider, context.currentUser)).apply {
+      border = JBUI.Borders.empty(16, 0)
+    }
     val loadingIcon = AsyncProcessIcon("Loading").apply {
+      border = JBUI.Borders.empty(8, 0)
       isVisible = false
     }
 
     val timelinePanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
       init {
         isOpaque = false
-        border = JBUI.Borders.empty(UIUtil.LARGE_VGAP, UIUtil.DEFAULT_HGAP * 2)
+        border = JBUI.Borders.empty(24, 20)
 
         val maxWidth = (GithubUIUtil.getFontEM(this) * 42).toInt()
 
@@ -129,7 +131,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
         add(header)
         add(timeline)
-        add(loadingIcon, CC().alignX("center"))
+        add(loadingIcon, CC().hideMode(2).alignX("center"))
 
         with(context.dataContext.commentService) {
           if (canComment()) {
