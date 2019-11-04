@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -31,7 +34,11 @@ internal class GHPRFileEditor(private val name: String,
   override fun isModified(): Boolean = false
   override fun isValid(): Boolean = true
 
-  override fun selectNotify() {}
+  override fun selectNotify() {
+    val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Update")
+    ActionUtil.invokeAction(action, component, ActionPlaces.UNKNOWN, null, null)
+  }
+
   override fun deselectNotify() {}
 
   override fun addPropertyChangeListener(listener: PropertyChangeListener) = propertyChangeSupport.addPropertyChangeListener(listener)
