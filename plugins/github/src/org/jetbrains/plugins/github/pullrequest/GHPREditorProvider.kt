@@ -72,15 +72,9 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val dataProvider = context.pullRequestDataProvider!!
 
     val detailsModel = SingleValueModel(context.pullRequestDetails!!)
-    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl()
+    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider, disposable)
 
     val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
-
-    fun handleReviewsThreads() {
-      dataProvider.reviewThreadsRequest.handleOnEdt(disposable) { threads, _ ->
-        if (threads != null) reviewThreadsModelsProvider.setReviewsThreads(threads)
-      }
-    }
 
     fun handleDetails() {
       dataProvider.detailsRequest.handleOnEdt(disposable) { pr, _ ->
@@ -89,11 +83,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
     dataProvider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
       override fun detailsRequestChanged() = handleDetails()
-      override fun reviewThreadsRequestChanged() = handleReviewsThreads()
     })
     handleDetails()
-    handleReviewsThreads()
-
 
     val mainPanel = Wrapper().also {
       val pullRequest = context.pullRequest!!
