@@ -591,7 +591,7 @@ public final class PluginManagerCore {
   }
 
   @NotNull
-  private static URL classpathElementToUrl(Path cpElement, IdeaPluginDescriptor descriptor) {
+  private static URL classpathElementToUrl(@NotNull Path cpElement, IdeaPluginDescriptor descriptor) {
     try {
       // it is important not to have traversal elements in classpath
       return cpElement.normalize().toUri().toURL();
@@ -707,6 +707,7 @@ public final class PluginManagerCore {
                                                                                 boolean withOptional) {
     IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.get(JAVA_ID);
     boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
+    Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
       PluginId[] dependentPluginIds = rootDescriptor.getDependentPluginIds();
       IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
@@ -716,12 +717,15 @@ public final class PluginManagerCore {
         return implicitDep == null ? Collections.emptyList() : Collections.singletonList(implicitDep);
       }
 
+      uniqueCheck.clear();
+
       List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>(capacity + (implicitDep == null ? 0 : 1));
       if (implicitDep != null) {
         if (rootDescriptor == implicitDep) {
           getLogger().error("Plugin " + rootDescriptor + " depends on self");
         }
         else {
+          uniqueCheck.add(implicitDep);
           plugins.add(implicitDep);
         }
       }
@@ -753,7 +757,7 @@ public final class PluginManagerCore {
             getLogger().error("Plugin " + rootDescriptor + " depends on self");
           }
         }
-        else {
+        else if (uniqueCheck.add(dep)) {
           plugins.add(dep);
         }
       }
@@ -1682,8 +1686,7 @@ public final class PluginManagerCore {
                                             @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph,
                                             @NotNull IdeaPluginDescriptor coreDescriptor,
                                             @NotNull List<IdeaPluginDescriptorImpl> enabledPlugins) {
-    Set<ClassLoader> loaders = new LinkedHashSet<>();
-    Set<IdeaPluginDescriptor> depProcessed = new HashSet<>(enabledPlugins.size());
+    ArrayList<ClassLoader> loaders = new ArrayList<>();
     ClassLoader[] emptyClassLoaderArray = new ClassLoader[0];
     for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
       if (rootDescriptor == coreDescriptor || rootDescriptor.isUseCoreClassLoader()) {
@@ -1697,28 +1700,26 @@ public final class PluginManagerCore {
       }
 
       loaders.clear();
-      loaders.add(coreLoader);
-      depProcessed.clear();
 
-      processAllDependencies(rootDescriptor, graph, depProcessed, descriptor -> {
-        ClassLoader loader = descriptor.getPluginClassLoader();
-        if (loader == null) {
-          getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
-        }
-        else {
-          loaders.add(loader);
-        }
-        return FileVisitResult.CONTINUE;
-      });
+      // no need to process dependencies recursively because dependency will use own classloader
+      // (that in turn will delegate class searching to parent class loader if needed)
+      List<IdeaPluginDescriptorImpl> dependencies = graph.getInList(rootDescriptor);
+      if (!dependencies.isEmpty()) {
+        loaders.ensureCapacity(dependencies.size());
 
-      ClassLoader[] parentLoaders;
-      if (loaders.isEmpty()) {
-        parentLoaders = new ClassLoader[]{coreLoader};
-      }
-      else {
-        parentLoaders = loaders.toArray(emptyClassLoaderArray);
+        // do not add core loader - will be added to some dependency
+        for (IdeaPluginDescriptorImpl descriptor : dependencies) {
+          ClassLoader loader = descriptor.getPluginClassLoader();
+          if (loader == null) {
+            getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+          }
+          else {
+            loaders.add(loader);
+          }
+        }
       }
 
+      ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
       rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.getClassPath(), parentLoaders, rootDescriptor));
     }
   }

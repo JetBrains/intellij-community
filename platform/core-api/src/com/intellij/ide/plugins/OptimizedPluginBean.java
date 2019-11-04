@@ -4,7 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
 
 public class OptimizedPluginBean {
   public static final String APPLICATION_COMPONENTS = "application-components";
@@ -37,10 +36,6 @@ public class OptimizedPluginBean {
 
   @Tag(value = "is-internal", textIfEmpty = "true")
   public boolean isInternal;
-
-  @Property(surroundWithTag = false)
-  @XCollection
-  public PluginDependency[] dependencies;
 
   @Tag("category")
   public String category;

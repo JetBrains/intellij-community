@@ -130,15 +130,15 @@ public class PluginDescriptorTest {
   @Test
   public void testDuplicateDependency() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("duplicateDependency");
-    assertNotNull(descriptor);
-    assertEmpty(descriptor.getOptionalDependentPluginIds() );
-    assertEquals("foo",assertOneElement(descriptor.getDependentPluginIds()).getIdString());
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getOptionalDependentPluginIds()).isEmpty();
+    assertThat(descriptor.getDependentPluginIds()).containsExactly(PluginId.getId("foo"));
   }
 
   @Test
   public void testPluginNameAsId() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("noId");
-    assertNotNull(descriptor);
+    assertThat(descriptor).isNotNull();
     assertEquals(descriptor.getName(), descriptor.getPluginId().getIdString());
   }
 

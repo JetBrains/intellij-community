@@ -225,8 +225,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myVendorLogoPath = pluginBean.vendor.logo;
     }
 
-    readDependencies(pluginBean);
-
     // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
     // but it is not a problem because in any case new XmlSerializer is not used for our core classes (plugin bean, component config and so on).
     Ref<BeanBinding> oldComponentConfigBeanBinding = new Ref<>();
@@ -237,6 +235,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     THashMap<String, List<Element>> epNameToExtensions = myExtensions;
+    List<PluginDependency> dependencies = null;
     for (Content content : element.getContent()) {
       if (!(content instanceof Element)) {
         continue;
@@ -342,71 +341,98 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         case "projectListeners":
           readListeners(child, myProjectContainerDescriptor);
           break;
+
+        case "depends":
+          String pluginId = child.getTextTrim();
+          if (!pluginId.isEmpty()) {
+            if (dependencies == null) {
+              dependencies = new ArrayList<>();
+            }
+
+            PluginDependency dependency = new PluginDependency();
+            dependency.pluginId = PluginId.getId(pluginId);
+            dependency.optional = Boolean.parseBoolean(child.getAttributeValue("optional"));
+            dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
+            dependencies.add(dependency);
+          }
+          break;
       }
 
       child.getContent().clear();
     }
+
+    if (dependencies != null) {
+      readDependencies(dependencies);
+    }
   }
 
-  private void readDependencies(@NotNull OptimizedPluginBean pluginBean) {
-    if (pluginBean.dependencies == null || pluginBean.dependencies.length == 0) {
-      return;
-    }
+  private static final class PluginDependency {
+    public PluginId pluginId;
+    public boolean optional;
+    public String configFile;
+  }
 
-    // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
-    Set<PluginId> dependentPlugins = null;
-    Set<PluginId> nonOptionalDependentPlugins = null;
-    for (PluginDependency dependency : pluginBean.dependencies) {
-      String text = StringUtil.trim(dependency.pluginId);
-      if (StringUtil.isEmpty(text)) {
+  private void readDependencies(@NotNull List<PluginDependency> dependencies) {
+    // https://youtrack.jetbrains.com/issue/IDEA-206274
+    int size = 0;
+    for (int i = 0, n = dependencies.size(); i < n; i++) {
+      PluginDependency dependency = dependencies.get(i);
+      size++;
+      if (!dependency.optional) {
         continue;
       }
 
-      PluginId id = PluginId.getId(text);
-      if (dependentPlugins == null) {
-        dependentPlugins = new LinkedHashSet<>();
+      for (int j = 0; j < i; j++) {
+        PluginDependency prev = dependencies.get(j);
+        if (!prev.optional && prev.pluginId == dependency.pluginId) {
+          dependency.optional = false;
+          dependencies.set(j, null);
+          size--;
+          break;
+        }
       }
-      dependentPlugins.add(id);
+    }
+
+    PluginId[] dependentPlugins = new PluginId[size];
+    int optionalSize = 0;
+    int index = 0;
+    for (PluginDependency dependency : dependencies) {
+      if (dependency == null) {
+        continue;
+      }
+
+      PluginId id = dependency.pluginId;
+      dependentPlugins[index++] = dependency.pluginId;
+
+      // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
+      if (dependency.configFile != null) {
+        if (myOptionalConfigs == null) {
+          myOptionalConfigs = new LinkedHashMap<>();
+        }
+        ContainerUtilRt.putValue(id, dependency.configFile, myOptionalConfigs);
+      }
 
       if (dependency.optional) {
-        if (!StringUtil.isEmptyOrSpaces(dependency.configFile)) {
-          if (myOptionalConfigs == null) {
-            myOptionalConfigs = new LinkedHashMap<>();
-          }
-          ContainerUtilRt.putValue(id, dependency.configFile, myOptionalConfigs);
-        }
+        optionalSize++;
+      }
+    }
+
+    myDependencies = dependentPlugins;
+
+    if (optionalSize > 0) {
+      if (optionalSize == dependentPlugins.length) {
+        myOptionalDependencies = dependentPlugins;
       }
       else {
-        if (nonOptionalDependentPlugins == null) {
-          nonOptionalDependentPlugins = new LinkedHashSet<>();
+        PluginId[] optionalDependencies = new PluginId[optionalSize];
+        index = 0;
+        for (PluginDependency dependency : dependencies) {
+          if (dependency.optional) {
+            optionalDependencies[index++] = dependency.pluginId;
+          }
         }
-        nonOptionalDependentPlugins.add(id);
+        myOptionalDependencies = optionalDependencies;
       }
-    }
-
-    if (dependentPlugins == null) {
-      return;
-    }
-
-    myDependencies = dependentPlugins.toArray(PluginId.EMPTY_ARRAY);
-
-    if (nonOptionalDependentPlugins == null) {
-      myOptionalDependencies = myDependencies;
-      return;
-    }
-
-    if (nonOptionalDependentPlugins.size() == myDependencies.length) {
-      myOptionalDependencies = PluginId.EMPTY_ARRAY;
-    }
-    else {
-      PluginId[] list = new PluginId[myDependencies.length - nonOptionalDependentPlugins.size()];
-      int index = 0;
-      for (PluginId id : dependentPlugins) {
-        if (!nonOptionalDependentPlugins.contains(id)) {
-          list[index++] = id;
-        }
-      }
-      myOptionalDependencies = list;
     }
   }
 
