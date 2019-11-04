@@ -19,26 +19,22 @@ import javax.swing.tree.DefaultTreeModel
 class GHPRChangesModelImpl(private val project: Project) : GHPRChangesModel {
   private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  override var commits: List<GitCommit>? = null
+  private var _commits: List<GitCommit>? = null
+  override var commits: List<GitCommit>?
+    get() = _commits
     set(value) {
-      field = value
-      if (value != null) {
-        changes = null
-      }
-      else {
-        eventDispatcher.multicaster.eventOccurred()
-      }
+      _commits = value
+      _changes = null
+      eventDispatcher.multicaster.eventOccurred()
     }
 
-  override var changes: List<Change>? = null
+  private var _changes: List<Change>? = null
+  override var changes: List<Change>?
+    get() = _changes
     set(value) {
-      field = value
-      if (value != null) {
-        commits = null
-      }
-      else {
-        eventDispatcher.multicaster.eventOccurred()
-      }
+      _changes = value
+      _commits = null
+      eventDispatcher.multicaster.eventOccurred()
     }
 
   override fun buildChangesTree(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
