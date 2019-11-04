@@ -428,6 +428,7 @@ public class VcsFileUtil {
    * </p>
    *
    * @param path a path to unescape
+   * @param encoding to use while converting char octets
    * @return unescaped path ready to be searched in the VFS or file system.
    * @throws IllegalArgumentException if the path is invalid
    */
