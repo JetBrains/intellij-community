@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -217,14 +217,14 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   @Override
   public boolean beforeOkAction() {
     try {
-      PluginManager.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
+      PluginManagerCore.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
     }
     catch (IOException ignored) {
     }
     return true;
   }
 
-  private class IdSetPanel extends JPanel implements LinkListener<String> {
+  private final class IdSetPanel extends JPanel implements LinkListener<String> {
     private final JLabel myTitleLabel = new JLabel();
     private final JPanel myContentPanel = new JPanel(new GridLayout(0, 3, 5, 5));
     private final JButton mySaveButton = new JButton("Save Changes and Go Back");

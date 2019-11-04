@@ -68,7 +68,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class PluginManagerCore {
+public final class PluginManagerCore {
   public static final String META_INF = "META-INF/";
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 

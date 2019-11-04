@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public final class PluginManager extends PluginManagerCore {
+public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
 
   /**
@@ -40,22 +40,31 @@ public final class PluginManager extends PluginManagerCore {
       throw (StartupAbortedException)t;
     }
 
-    if (pluginId == null || CORE_ID == pluginId) {
+    if (pluginId == null || PluginManagerCore.CORE_ID == pluginId) {
       if (componentClassName != null) {
-        pluginId = getPluginByClassName(componentClassName);
+        pluginId = PluginManagerCore.getPluginByClassName(componentClassName);
       }
     }
-    if (pluginId == null || CORE_ID == pluginId) {
+    if (pluginId == null || PluginManagerCore.CORE_ID == pluginId) {
       if (t instanceof ExtensionInstantiationException) {
         pluginId = ((ExtensionInstantiationException)t).getExtensionOwnerId();
       }
     }
 
-    if (pluginId != null && CORE_ID != pluginId) {
+    if (pluginId != null && PluginManagerCore.CORE_ID != pluginId) {
       throw new StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
     }
     else {
       throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
     }
+  }
+
+  /**
+   * @deprecated Use {@link PluginManagerCore#getPlugin(PluginId)}
+   */
+  @Nullable
+  @Deprecated
+  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
+    return PluginManagerCore.getPlugin(id);
   }
 }
