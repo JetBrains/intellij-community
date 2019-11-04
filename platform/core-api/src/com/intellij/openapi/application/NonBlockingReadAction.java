@@ -101,7 +101,10 @@ public interface NonBlockingReadAction<T> {
    * Note: this method can throw various exceptions (see "Throws" section)
    * and can block the current thread for an indefinite time with just waiting,
    * which can lead to thread starvation or unnecessary pooled thread expansion.
-   * Therefore, it's advised to use asynchronous {@link #submit} API where possible.<p></p>
+   * Besides that, after a read action is finished, a write action in another thread can occur at any time and make the
+   * just computed value obsolete.
+   * Therefore, it's advised to use asynchronous {@link #submit} API where possible,
+   * preferably coupled with {@link #finishOnUiThread} to ensure result validity.<p></p>
    *
    * If the current thread already has read access, the computation is executed as is, without any write-action-cancellability.
    * It's the responsibility of the caller to take care about it.<p></p>
