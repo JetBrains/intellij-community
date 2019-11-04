@@ -762,16 +762,9 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     waitForFutures(futures);
   }
 
-  private static void waitForFutures(List<? extends Future<?>> futures)
-    throws InterruptedException, ExecutionException, TimeoutException {
-    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
-    while (!t.timedOut() && !futures.stream().allMatch(Future::isDone)) {
-      UIUtil.dispatchAllInvocationEvents();
-      TimeoutUtil.sleep(10);
-    }
-
+  private static void waitForFutures(List<? extends Future<?>> futures) {
     for (Future<?> future : futures) {
-      future.get(1, TimeUnit.SECONDS);
+      PlatformTestUtil.waitForFuture(future, 10_000);
     }
   }
 
