@@ -197,9 +197,9 @@ object DynamicPlugins {
 
     val application = ApplicationManager.getApplication() as ApplicationImpl
     application.runWriteAction {
-      application.registerComponents(listOf(pluginDescriptor))
+      application.registerComponents(listOf(pluginDescriptor), true)
       for (openProject in ProjectManager.getInstance().openProjects) {
-        (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor))
+        (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor), true)
       }
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }

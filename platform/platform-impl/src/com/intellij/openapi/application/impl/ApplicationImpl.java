@@ -295,7 +295,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public final void load(@Nullable String configPath) {
     List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
-    registerComponents(plugins);
+    registerComponents(plugins, false);
     ApplicationLoader.initConfigurationStore(this, configPath);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();
     preloadServices(plugins, executor).getSyncPreloadedServices().join();

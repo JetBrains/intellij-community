@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -27,8 +28,9 @@ class LegacyBridgeModuleImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
-    super.registerComponents(plugins)
+  override fun registerComponents(plugins: List<IdeaPluginDescriptor>,
+                                  notifyListeners: Boolean) {
+    super.registerComponents(plugins, false)
 
     val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(javaClass.name)
                    ?: error("Could not find pluginId for class ${javaClass.name}")
