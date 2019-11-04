@@ -981,13 +981,13 @@
                     interface="com.intellij.conversion.ConverterProvider"/>
 
     <extensionPoint name="treeCopyHandler"
-                    interface="com.intellij.psi.impl.source.tree.TreeCopyHandler"/>
+                    interface="com.intellij.psi.impl.source.tree.TreeCopyHandler" dynamic="true"/>
     <extensionPoint name="treeGenerator"
-                    interface="com.intellij.psi.impl.source.tree.TreeGenerator"/>
+                    interface="com.intellij.psi.impl.source.tree.TreeGenerator" dynamic="true"/>
 
     <extensionPoint name="psi.treeChangePreprocessor"
                     interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="codeBlockProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.CodeBlockProvider"/>
