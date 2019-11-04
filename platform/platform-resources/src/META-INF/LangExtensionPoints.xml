@@ -60,17 +60,14 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
     </extensionPoint>
 
-    <extensionPoint name="bidiRegionsSeparator"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="bidiRegionsSeparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
     </extensionPoint>
 
     <extensionPoint name="braceMatcher" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BraceMatcher"/>
     </extensionPoint>
-    <extensionPoint name="quoteHandler"
-                    beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP"
-                    dynamic="true">
+    <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
       <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
     <extensionPoint name="extendWordSelectionHandler"
@@ -1044,8 +1041,7 @@
     <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider" dynamic="true"/>
     <extensionPoint name="consoleHistoryModelProvider" interface="com.intellij.execution.console.ConsoleHistoryModelProvider" dynamic="true"/>
 
-    <extensionPoint name="filetype.prebuiltStubsProvider"
-                    beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+    <extensionPoint name="filetype.prebuiltStubsProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.PrebuiltStubsProvider"/>
     </extensionPoint>
 
@@ -1058,7 +1054,7 @@
     <extensionPoint name="implementationViewSessionFactory" interface="com.intellij.codeInsight.hint.ImplementationViewSessionFactory" dynamic="true"/>
     <extensionPoint name="implementationViewDocumentFactory" interface="com.intellij.codeInsight.hint.ImplementationViewDocumentFactory" dynamic="true"/>
 
-    <extensionPoint name="highlightInfoPostFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoPostFilter" area="IDEA_PROJECT"/>
+    <extensionPoint name="highlightInfoPostFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoPostFilter" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.codeInspection.CommandLineInspectionProjectConfigurator" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
