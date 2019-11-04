@@ -121,8 +121,8 @@ public class PluginManagerTest {
   private static void doPluginSortTest(@NotNull String testDataName) throws IOException, JDOMException {
     PluginManagerCore.ourPluginError = null;
     LoadPluginResult loadPluginResult = loadDescriptors(testDataName + ".xml");
-    List<IdeaPluginDescriptorImpl> sorted = PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), null, false).get(0);
-    String actual = StringUtil.join(sorted, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
+    PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), null, false);
+    String actual = StringUtil.join(loadPluginResult.getSortedPlugins(), o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
                     "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
     PluginManagerCore.ourPluginError = null;
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), actual);

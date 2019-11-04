@@ -1583,11 +1583,10 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  static List<List<IdeaPluginDescriptorImpl>> initializePlugins(@NotNull LoadPluginResult loadResult,
-                                                                @NotNull ClassLoader coreLoader,
-                                                                @Nullable BiConsumer<? super Set<String>, ? super Set<String>> disabledAndPossibleToEnableConsumer,
-                                                                boolean checkEssentialPlugins) {
+  static void initializePlugins(@NotNull LoadPluginResult loadResult,
+                                @NotNull ClassLoader coreLoader,
+                                @Nullable BiConsumer<? super Set<String>, ? super Set<String>> disabledAndPossibleToEnableConsumer,
+                                boolean checkEssentialPlugins) {
     List<String> errors = new ArrayList<>(loadResult.errors);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(loadResult.plugins, errors);
 
@@ -1630,14 +1629,8 @@ public final class PluginManagerCore {
     IdeaPluginDescriptorImpl[] sortedAll = getTopologicallySorted(graph);
     IdeaPluginDescriptor coreDescriptor = idMap.get(CORE_ID);
 
-    List<IdeaPluginDescriptorImpl> allPlugins = new ArrayList<>(sortedAll.length);
     List<IdeaPluginDescriptorImpl> enabledPlugins = new ArrayList<>(sortedAll.length);
     for (IdeaPluginDescriptorImpl descriptor : sortedAll) {
-      if (descriptor.getPluginId() == null || !uniqueCheck.add(descriptor)) {
-        continue;
-      }
-
-      allPlugins.add(descriptor);
       if (descriptor.isEnabled()) {
         enabledPlugins.add(descriptor);
       }
@@ -1662,7 +1655,9 @@ public final class PluginManagerCore {
     if (checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap);
     }
-    return Arrays.asList(allPlugins, enabledPlugins);
+
+    loadResult.setSortedPlugins(sortedAll);
+    loadResult.setSortedEnabledPlugins(enabledPlugins);
   }
 
   private static void configureClassLoaders(@NotNull ClassLoader coreLoader,
@@ -1894,12 +1889,12 @@ public final class PluginManagerCore {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors();
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      List<List<IdeaPluginDescriptorImpl>> lists = initializePlugins(result, coreLoader, (d, e) -> {
+      initializePlugins(result, coreLoader, (d, e) -> {
         ourPluginsToDisable = d;
         ourPluginsToEnable = e;
       }, !isUnitTestMode);
-      ourPlugins = lists.get(0).toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
-      ourLoadedPlugins = lists.get(1);
+      ourPlugins = result.getSortedPlugins();
+      ourLoadedPlugins = result.getSortedEnabledPlugins();
 
       int count = 0;
       ourIdToIndex.ensureCapacity(ourLoadedPlugins.size());

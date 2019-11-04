@@ -20,6 +20,32 @@ final class LoadPluginResult {
 
   final List<String> errors = new ArrayList<>();
 
+  private IdeaPluginDescriptorImpl[] sortedPlugins;
+  private List<IdeaPluginDescriptorImpl> sortedEnabledPlugins;
+
+  /**
+   * not null after initialization ({@link PluginManagerCore#initializePlugins})
+   */
+  @NotNull
+  IdeaPluginDescriptorImpl[] getSortedPlugins() {
+    return sortedPlugins;
+  }
+
+  void setSortedPlugins(@NotNull IdeaPluginDescriptorImpl[] value) {
+    assert sortedPlugins == null;
+    this.sortedPlugins = value;
+  }
+
+  @NotNull
+  List<IdeaPluginDescriptorImpl> getSortedEnabledPlugins() {
+    return sortedEnabledPlugins;
+  }
+
+  void setSortedEnabledPlugins(@NotNull List<IdeaPluginDescriptorImpl> value) {
+    assert sortedEnabledPlugins == null;
+    sortedEnabledPlugins = value;
+  }
+
   void finish() {
     existingResults.clear();
     plugins.sort(Comparator.comparing(IdeaPluginDescriptorImpl::getPluginId));
