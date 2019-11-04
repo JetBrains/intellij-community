@@ -13,7 +13,7 @@ import java.util.*;
  */
 public final class GraphGenerator<Node> implements Graph<Node> {
   @NotNull
-  public static <T> Graph<T> generate(InboundSemiGraph<T> graph) {
+  public static <T> Graph<T> generate(@NotNull InboundSemiGraph<T> graph) {
     return new GraphGenerator<>(graph);
   }
 

@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -509,7 +508,6 @@ public final class PluginManagerCore {
    */
   @Nullable
   private static IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor,
-                                                                @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
                                                                 @Nullable IdeaPluginDescriptorImpl javaDep,
                                                                 boolean hasAllModules) {
     // Skip our plugins as expected to be up-to-date whether bundled or not.
@@ -641,24 +639,28 @@ public final class PluginManagerCore {
     }
   }
 
-  @NotNull
-  private static Collection<ClassLoader> getParentLoaders(@NotNull IdeaPluginDescriptor rootDescriptor, @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
-      return Collections.emptyList();
+  @ApiStatus.Internal
+  private static void processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                                @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph,
+                                                @NotNull Set<IdeaPluginDescriptor> depProcessed,
+                                                @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+    for (IdeaPluginDescriptorImpl descriptor : graph.getInList(rootDescriptor)) {
+      switch (consumer.apply(descriptor)) {
+        case TERMINATE:
+          return;
+        case CONTINUE:
+          if (depProcessed.add(descriptor)) {
+            processAllDependencies(descriptor, graph, depProcessed, consumer);
+          }
+          break;
+        case SKIP_SUBTREE:
+          break;
+        case SKIP_SIBLINGS:
+          throw new UnsupportedOperationException("FileVisitResult.SKIP_SIBLINGS is not supported");
+      }
     }
 
-    Set<ClassLoader> loaders = new LinkedHashSet<>();
-    processAllDependencies(rootDescriptor, true, idMap, descriptor -> {
-      ClassLoader loader = descriptor.getPluginClassLoader();
-      if (loader == null) {
-        getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
-      }
-      else {
-        loaders.add(loader);
-      }
-      return FileVisitResult.CONTINUE;
-    });
-    return loaders;
+    return;
   }
 
   public static boolean isRunningFromSources() {
@@ -694,14 +696,14 @@ public final class PluginManagerCore {
   }
 
   @NotNull
-  private static Graph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                     @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                                                     boolean withOptional) {
+  private static CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
+                                                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
+                                                                                boolean withOptional) {
     IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.get(JAVA_ID);
     boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
-    return GraphGenerator.generate(new CachingSemiGraph<>(descriptors, rootDescriptor -> {
+    return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
       PluginId[] dependentPluginIds = rootDescriptor.getDependentPluginIds();
-      IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, idToDescriptorMap, javaDep, hasAllModules);
+      IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
       PluginId[] optionalDependentPluginIds = withOptional ? rootDescriptor.getOptionalDependentPluginIds() : PluginId.EMPTY_ARRAY;
       int capacity = dependentPluginIds.length - (withOptional ? 0 : optionalDependentPluginIds.length);
       if (capacity == 0) {
@@ -750,14 +752,14 @@ public final class PluginManagerCore {
         }
       }
       return plugins;
-    }));
+    });
   }
 
   private static void checkPluginCycles(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                         @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                         @NotNull List<? super String> errors) {
-    Graph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(descriptors, idToDescriptorMap, true);
-    DFSTBuilder<IdeaPluginDescriptorImpl> builder = new DFSTBuilder<>(graph);
+    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(descriptors, idToDescriptorMap, true);
+    DFSTBuilder<IdeaPluginDescriptorImpl> builder = new DFSTBuilder<>(GraphGenerator.generate(graph));
     if (builder.isAcyclic()) {
       return;
     }
@@ -1368,10 +1370,41 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
+  public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                      @NotNull ClassLoader coreLoader,
                                      @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    Collection<ClassLoader> parentLoaders = getParentLoaders(descriptor, idMap);
+    Collection<ClassLoader> parentClassLoaders;
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
+      parentClassLoaders = Collections.emptyList();
+    }
+    else {
+      Set<ClassLoader> loaders = new LinkedHashSet<>();
+      processAllDependencies(rootDescriptor, true, idMap, descriptor -> {
+        ClassLoader loader = descriptor.getPluginClassLoader();
+        if (loader == null) {
+          getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+        }
+        else {
+          loaders.add(loader);
+        }
+        return FileVisitResult.CONTINUE;
+      });
+
+      IdeaPluginDescriptorImpl javaDep = idMap.get(JAVA_ID);
+      boolean hasAllModules = idMap.containsKey(ALL_MODULES_MARKER);
+      IdeaPluginDescriptorImpl implicitDependency = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
+      if (implicitDependency != null && implicitDependency.getPluginClassLoader() != null) {
+        loaders.add(implicitDependency.getPluginClassLoader());
+      }
+      parentClassLoaders = loaders;
+    }
+
+    initClassLoader(rootDescriptor, coreLoader, parentClassLoaders);
+  }
+
+  private static void initClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                      @NotNull ClassLoader coreLoader,
+                                      @NotNull Collection<ClassLoader> parentLoaders) {
     if (parentLoaders.isEmpty()) {
       parentLoaders = Collections.singletonList(coreLoader);
     }
@@ -1566,7 +1599,7 @@ public final class PluginManagerCore {
     checkPluginCycles(loadResult.plugins, idMap, errors);
 
     // topological sort based on required dependencies only
-    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(loadResult.plugins, idMap, false);
+    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(loadResult.plugins, idMap, false));
 
     Set<PluginId> enabledIds = new LinkedHashSet<>();
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
@@ -1597,7 +1630,8 @@ public final class PluginManagerCore {
     prepareLoadingPluginsErrorMessage(disabledIds, disabledRequiredIds, idMap, errors);
 
     // topological sort based on all (required and optional) dependencies
-    IdeaPluginDescriptorImpl[] sortedAll = getTopologicallySorted(Arrays.asList(sortedRequired), idMap, true);
+    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(Arrays.asList(sortedRequired), idMap, true);
+    IdeaPluginDescriptorImpl[] sortedAll = getTopologicallySorted(graph);
     IdeaPluginDescriptor coreDescriptor = idMap.get(CORE_ID);
 
     List<IdeaPluginDescriptorImpl> allPlugins = new ArrayList<>(sortedAll.length);
@@ -1618,15 +1652,8 @@ public final class PluginManagerCore {
 
     fixOptionalConfigs(enabledPlugins, idMap);
     mergeOptionalConfigs(enabledPlugins, idMap);
+    configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins);
 
-    for (IdeaPluginDescriptorImpl pluginDescriptor : enabledPlugins) {
-      if (pluginDescriptor == coreDescriptor || pluginDescriptor.isUseCoreClassLoader()) {
-        pluginDescriptor.setLoader(coreLoader);
-      }
-      else {
-        initClassLoader(pluginDescriptor, coreLoader, idMap);
-      }
-    }
     if (disabledAndPossibleToEnableConsumer != null) {
       Set<String> disabledIdSet = new HashSet<>(disabledIds.size());
       for (PluginId id : disabledIds.keySet()) {
@@ -1641,12 +1668,53 @@ public final class PluginManagerCore {
     return Arrays.asList(allPlugins, enabledPlugins);
   }
 
+  private static void configureClassLoaders(@NotNull ClassLoader coreLoader,
+                                            @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph,
+                                            @NotNull IdeaPluginDescriptor coreDescriptor,
+                                            @NotNull List<IdeaPluginDescriptorImpl> enabledPlugins) {
+    Set<ClassLoader> loaders = new LinkedHashSet<>();
+    Set<IdeaPluginDescriptor> depProcessed = new HashSet<>(enabledPlugins.size());
+    for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
+      if (rootDescriptor == coreDescriptor || rootDescriptor.isUseCoreClassLoader()) {
+        rootDescriptor.setLoader(coreLoader);
+        continue;
+      }
+
+      ClassLoader[] parentLoaders;
+      if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
+        parentLoaders = new ClassLoader[]{coreLoader};
+      }
+      else {
+        loaders.clear();
+        depProcessed.clear();
+
+        processAllDependencies(rootDescriptor, graph, depProcessed, descriptor -> {
+          ClassLoader loader = descriptor.getPluginClassLoader();
+          if (loader == null) {
+            getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+          }
+          else {
+            loaders.add(loader);
+          }
+          return FileVisitResult.CONTINUE;
+        });
+
+        if (loaders.isEmpty()) {
+          parentLoaders = new ClassLoader[]{coreLoader};
+        }
+        else {
+          parentLoaders = loaders.toArray(new ClassLoader[0]);
+        }
+      }
+
+      rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.getClassPath(), parentLoaders, rootDescriptor));
+    }
+  }
+
   @NotNull
-  private static IdeaPluginDescriptorImpl[] getTopologicallySorted(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                   @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                                                   boolean withOptional) {
-    DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(createPluginIdGraph(descriptors, idMap, withOptional));
-    IdeaPluginDescriptorImpl[] sortedRequired = descriptors.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
+  private static IdeaPluginDescriptorImpl[] getTopologicallySorted(@NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph) {
+    DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(GraphGenerator.generate(graph));
+    IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     Arrays.sort(sortedRequired, requiredOnlyGraph.comparator());
     return sortedRequired;
   }
