@@ -113,7 +113,9 @@ private class DownloadJdkDialog(
     title = DIALOG_TITLE
     setResizable(false)
 
-    val defaultItem = items.singleOrNull { it.isDefaultItem } ?: items.minBy { it.product } ?: error("There must be at least one item")
+    val defaultItem = items.filter { it.isDefaultItem }.minBy { it } /*pick the newest default JDK */
+                      ?: items.minBy { it } /* pick just the newest JDK is no default was set (aka the JSON is broken) */
+                      ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
     val vendorComboBox = ComboBox(items.map { it.product }.distinct().sorted().toTypedArray())
     vendorComboBox.selectedItem = defaultItem.product

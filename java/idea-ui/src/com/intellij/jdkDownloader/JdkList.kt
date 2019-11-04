@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jdkDownloader
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -24,6 +27,7 @@ data class JdkProduct(
   private val product: String?,
   private val flavour: String?
 ) : Comparable<JdkProduct> {
+
   private fun String?.compareToIgnoreCase(other: String?): Int {
     if (this == other) return 0
     if (this == null && other != null) return -1
@@ -86,10 +90,10 @@ data class JdkItem(
 ) : Comparable<JdkItem> {
 
   override fun compareTo(other: JdkItem): Int {
-    var cmp = -this.jdkMajorVersion.compareTo(other.jdkMajorVersion)
-    if (cmp != 0) return cmp
-    cmp = -VersionComparatorUtil.compare(this.jdkVersion, other.jdkVersion)
-    if (cmp != 0) return cmp
+    var cmp = this.jdkMajorVersion.compareTo(other.jdkMajorVersion)
+    if (cmp != 0) return -cmp
+    cmp = VersionComparatorUtil.compare(this.jdkVersion, other.jdkVersion)
+    if (cmp != 0) return -cmp
     cmp = VersionComparatorUtil.compare(this.jdkVendorVersion, other.jdkVendorVersion)
     if (cmp != 0) return cmp
     return VersionComparatorUtil.compare(this.vendorVersion, other.vendorVersion)
@@ -125,6 +129,91 @@ enum class JdkPackageType(@NonNls val type: String) {
   }
 }
 
+data class JdkPredicate(
+  private val ideBuildNumber: BuildNumber,
+  private val expectedOS: String
+) {
+  fun testJdkProduct(product: ObjectNode): Boolean {
+    val filterNode = product["filter"]
+    return testPredicate(filterNode) == true
+  }
+
+  fun testJdkPackage(pkg: ObjectNode): Boolean {
+    if (pkg["os"]?.asText() != expectedOS) return false
+    if (pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) == null) return false
+    return testPredicate(pkg["filter"]) == true
+  }
+
+  /**
+   * tests the predicate from the `filter` or `default` elements an JDK product
+   * against current IDE instance
+   *
+   * returns `null` if there was something unknown detected in the filter
+   *
+   * It supports the following predicates with `type` equal to `build_number_range`, `and`, `or`, `not`, e.g.
+   *         { "type": "build_number_range", "since": "192.34", "until": "194.123" }
+   * or
+   *         { "type": "or"|"and", "items": [ {same as before}, ...] }
+   * or
+   *         { "type": "not", "item": { same as before } }
+   */
+  fun testPredicate(filter: JsonNode?): Boolean? {
+    //no filter means predicate is true
+    if (filter == null) return true
+
+    // used in "default" element
+    if (filter.isBoolean) return filter.asBoolean()
+
+    if (filter !is ObjectNode) return null
+
+    val type = filter["type"]?.asText() ?: return null
+    if (type == "or") {
+      return foldSubPredicates(filter, false, Boolean::or)
+    }
+
+    if (type == "and") {
+      return foldSubPredicates(filter, true, Boolean::and)
+    }
+
+    if (type == "not") {
+      val subResult = testPredicate(filter["item"]) ?: return null
+      return !subResult
+    }
+
+    if (type == "build_number_range") {
+      val fromBuild = filter["since"]?.asText()
+      val untilBuild = filter["until"]?.asText()
+
+      if (fromBuild == null && untilBuild == null) return true
+
+      if (fromBuild != null) {
+        val fromBuildSafe = BuildNumber.fromStringOrNull(fromBuild) ?: return null
+        if (fromBuildSafe > ideBuildNumber) return false
+      }
+
+      if (untilBuild != null) {
+        val untilBuildSafe = BuildNumber.fromStringOrNull(untilBuild) ?: return null
+        if (ideBuildNumber > untilBuildSafe) return false
+      }
+
+      return true
+    }
+
+    return null
+  }
+
+  private fun foldSubPredicates(filter: ObjectNode,
+                                emptyResult: Boolean,
+                                op: (acc: Boolean, Boolean) -> Boolean): Boolean? {
+    val items = filter["items"] as? ArrayNode ?: return null
+    if (items.isEmpty) return false
+    return items.fold(emptyResult) { acc, subFilter ->
+      val subResult = testPredicate(subFilter) ?: return null
+      op(acc, subResult)
+    }
+  }
+}
+
 object JdkListDownloader {
   private val feedUrl: String
     get() {
@@ -142,13 +231,17 @@ object JdkListDownloader {
       .unXZ()
   }
 
-  fun parseJdkList(tree: ObjectNode, expectedOS: String): List<JdkItem> {
+  fun parseJdkList(tree: ObjectNode, filters: JdkPredicate): List<JdkItem> {
     val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
 
     val result = mutableListOf<JdkItem>()
     for (item in items.filterIsInstance<ObjectNode>()) {
+      // check this package is OK to show for that instance of the IDE
+      if (!filters.testJdkProduct(item)) continue
+
       val packages = item["packages"] as? ArrayNode ?: continue
-      val pkg = packages.filterIsInstance<ObjectNode>().singleOrNull { it["os"]?.asText() == expectedOS } ?: continue
+      // take the first matching package
+      val pkg = packages.filterIsInstance<ObjectNode>().firstOrNull(filters::testJdkPackage) ?: continue
 
       val product = JdkProduct(
         vendor = item["vendor"]?.asText() ?: continue,
@@ -157,7 +250,7 @@ object JdkListDownloader {
       )
 
       result += JdkItem(product = product,
-                        isDefaultItem = item["default"]?.asBoolean() ?: false,
+                        isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
 
                         jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: continue,
                         jdkVersion = item["jdk_version"]?.asText() ?: continue,
@@ -204,7 +297,7 @@ object JdkListDownloader {
         SystemInfo.isLinux -> "linux"
         else -> error("Unsupported OS")
       }
-      return parseJdkList(json, expectedOS)
+      return parseJdkList(json, JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS))
     }
     catch (t: Throwable) {
       throw RuntimeException("Failed to process downloaded JDKs list from $feedUrl. ${t.message}", t)

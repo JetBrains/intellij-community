@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.jdkDownloader.JdkInstaller
-import com.intellij.jdkDownloader.JdkItem
-import com.intellij.jdkDownloader.JdkPackageType
-import com.intellij.jdkDownloader.JdkProduct
+import com.intellij.jdkDownloader.*
 import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -49,19 +48,25 @@ class JdkDownloaderTest {
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")
 
   @Test
-  fun `unpacking targz`() = testUnpacking(mockTarGZ) { dir ->
+  fun `default model can be downloaded and parsed`() {
+    val data = JdkListDownloader.downloadModel(null)
+    Assert.assertTrue(data.isNotEmpty())
+  }
+
+  @Test
+  fun `unpacking tar gz`() = testUnpacking(mockTarGZ) { dir ->
     assertThat(File(dir, "TheApp/FooBar.app/theApp")).isFile()
     assertThat(File(dir, "TheApp/QPCV/ggg.txt")).isFile()
   }
 
   @Test
-  fun `unpacking targz cut dirs`() = testUnpacking(mockTarGZ.copy(unpackCutDirs = 2)) { dir ->
+  fun `unpacking tar gz cut dirs`() = testUnpacking(mockTarGZ.copy(unpackCutDirs = 2)) { dir ->
     assertThat(File(dir, "theApp")).isFile()
     assertThat(File(dir, "ggg.txt")).isFile()
   }
 
   @Test
-  fun `unpacking targz cut dirs and prefix`() = testUnpacking(
+  fun `unpacking tar gz cut dirs and prefix`() = testUnpacking(
     mockTarGZ.copy(
       unpackCutDirs = 2,
       unpackPrefixFilter = "TheApp/FooBar.app")
