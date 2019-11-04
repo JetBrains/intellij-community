@@ -1618,8 +1618,12 @@ public class PluginManagerConfigurable
       myShutdownCallback = null;
     }
 
-    reset();
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
+  }
+
+  @Override
+  public void cancel() {
+    myPluginModel.removePluginsOnCancel();
   }
 
   @Override

@@ -1896,7 +1896,7 @@ public abstract class DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
-      doCancelAction();
+      doCancelAction(e);
     }
   }
 

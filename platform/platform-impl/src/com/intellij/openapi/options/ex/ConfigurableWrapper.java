@@ -181,6 +181,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     }
   }
 
+  @Override
+  public void cancel() {
+    UnnamedConfigurable configurable = myConfigurable;
+    if (configurable != null) {
+      configurable.cancel();
+    }
+  }
+
   @NotNull
   @Override
   public String getId() {

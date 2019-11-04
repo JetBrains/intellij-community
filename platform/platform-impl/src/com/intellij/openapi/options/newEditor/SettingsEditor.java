@@ -328,12 +328,13 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   }
 
   @Override
-  boolean cancel() {
-    if (myFilter.myContext.isHoldingFilter()) {
+  boolean cancel(AWTEvent source) {
+    if (source instanceof KeyEvent && myFilter.myContext.isHoldingFilter()) {
       mySearch.setText("");
       return false;
     }
-    return super.cancel();
+    myEditor.cancel(source);
+    return super.cancel(source);
   }
 
   @Override
