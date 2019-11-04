@@ -220,7 +220,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   @NotNull
   public static String calcPrefix(@Nullable ErrorTreeElement element) {
     if(element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
-      String prefix = element.getKind().getPresentableText();
+      String prefix = element.getPresentableText();
 
       if (element instanceof NavigatableMessageElement) {
         String rendPrefix = ((NavigatableMessageElement)element).getRendererTextPrefix();
