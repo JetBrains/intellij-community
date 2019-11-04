@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -28,7 +30,6 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
-import org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
@@ -189,7 +190,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     })
 
     mainPanel.setContent(contentPanel)
-    GHPRUpdateTimelineAction().registerShortcutOn(mainPanel)
+    (ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Update") as RefreshAction).registerShortcutOn(mainPanel)
 
     return object : ComponentContainer {
       override fun getComponent() = mainPanel

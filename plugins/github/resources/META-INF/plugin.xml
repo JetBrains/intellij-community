@@ -117,6 +117,8 @@
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
+    <action id="Github.PullRequest.Timeline.Update"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
     <group>
       <action id="Github.PullRequest.Zip.Commits.Toggle"
               class="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser$ToggleZipCommitsAction"/>

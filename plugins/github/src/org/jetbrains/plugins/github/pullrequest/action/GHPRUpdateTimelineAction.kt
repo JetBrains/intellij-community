@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class GHPRUpdateTimelineAction : RefreshAction("Update Timeline", null, AllIcons.Actions.Refresh) {
+class GHPRUpdateTimelineAction : RefreshAction("Refresh Timeline", "Check for new timeline events", AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
     val context = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)
     e.presentation.isEnabled = context?.pullRequestDataProvider?.timelineLoader != null
