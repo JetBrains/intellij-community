@@ -74,13 +74,11 @@
       <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
     <extensionPoint name="extendWordSelectionHandler"
-                    interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler"
-                    dynamic="true"/>
+                    interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
     <extensionPoint name="basicWordSelectionFilter"
-                    interface="com.intellij.openapi.util.Condition"/>
+                    interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint name="typedHandler"
-                    interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"
-                    dynamic="true"/>
+                    interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
     <extensionPoint name="selectionUnquotingFilter"
                     interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
 
