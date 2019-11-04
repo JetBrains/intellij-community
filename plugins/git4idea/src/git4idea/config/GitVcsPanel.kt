@@ -103,11 +103,12 @@ internal class GitVcsPanel(private val project: Project) :
 
         private lateinit var gitVersion: GitVersion
 
-        override fun run(indicator: ProgressIndicator) {
-          val executableManager = GitExecutableManager.getInstance()
-          executableManager.dropVersionCache(pathToGit)
-          gitVersion = executableManager.identifyVersion(pathToGit)
-        }
+      override fun run(indicator: ProgressIndicator) {
+        val executableManager = GitExecutableManager.getInstance()
+        val executable = GitExecutable.Local(pathToGit)
+        executableManager.dropVersionCache(executable)
+        gitVersion = executableManager.identifyVersion(executable)
+      }
 
         override fun onThrowable(error: Throwable) {
           val problemHandler = findGitExecutableProblemHandler(project)

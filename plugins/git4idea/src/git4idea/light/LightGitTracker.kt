@@ -19,6 +19,7 @@ import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.sendRequests
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
 import git4idea.index.LightFileStatus
@@ -39,8 +40,8 @@ class LightGitTracker : Disposable {
 
   private val highlighterManager: LightGitEditorHighlighterManager
 
-  val gitExecutable: String
-    get() = GitExecutableManager.getInstance().pathToGit
+  val gitExecutable: GitExecutable
+    get() = GitExecutableManager.getInstance().getExecutable(null)
 
   @Volatile
   private var hasGit: Boolean = false

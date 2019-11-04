@@ -13,6 +13,7 @@ import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
@@ -74,7 +75,7 @@ fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = empty
 }
 
 @Throws(VcsException::class)
-fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): LightFileStatus {
+fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: GitExecutable): LightFileStatus {
   val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
   h.appendParameters(GitExecutableManager.getInstance().getVersion(executable),
@@ -115,7 +116,7 @@ private fun GitLineHandler.appendParameters(gitVersion: GitVersion,
 }
 
 @Throws(VcsException::class)
-fun getFilePath(root: VirtualFile, filePath: FilePath, executable: String): String? {
+fun getFilePath(root: VirtualFile, filePath: FilePath, executable: GitExecutable): String? {
   val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root),
                                executable, GitCommand.LS_FILES, emptyList())
   handler.addParameters("--full-name")

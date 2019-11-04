@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.config.GitExecutable;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class GitBinaryHandler extends GitHandler {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  public GitBinaryHandler(@NotNull File directory, @NotNull String pathToExecutable, @NotNull GitCommand command) {
+  public GitBinaryHandler(@NotNull File directory, @NotNull GitExecutable pathToExecutable, @NotNull GitCommand command) {
     super(null, directory, pathToExecutable, command, Collections.emptyList());
   }
 

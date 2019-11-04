@@ -21,6 +21,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,7 @@ public abstract class GitHandler {
   private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
   private final Project myProject;
-  @NotNull private final String myPathToExecutable;
+  @NotNull private final GitExecutable myExecutable;
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
@@ -80,8 +81,7 @@ public abstract class GitHandler {
                        @NotNull List<String> configParameters) {
     this(project,
          directory,
-         project != null ? GitExecutableManager.getInstance().getPathToGit(project)
-                         : GitExecutableManager.getInstance().getPathToGit(),
+         GitExecutableManager.getInstance().getExecutable(project),
          command,
          configParameters);
   }
@@ -111,16 +111,16 @@ public abstract class GitHandler {
    */
   protected GitHandler(@Nullable Project project,
                        @NotNull File directory,
-                       @NotNull String pathToExecutable,
+                       @NotNull GitExecutable executable,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     myProject = project;
-    myPathToExecutable = pathToExecutable;
+    myExecutable = executable;
     myCommand = command;
 
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
-      .withExePath(myPathToExecutable)
+      .withExePath(executable.getExePath())
       .withCharset(StandardCharsets.UTF_8);
 
     for (String parameter : getConfigParameters(project, configParameters)) {
@@ -161,8 +161,8 @@ public abstract class GitHandler {
   }
 
   @NotNull
-  String getExecutablePath() {
-    return myPathToExecutable;
+  GitExecutable getExecutable() {
+    return myExecutable;
   }
 
   @NotNull
