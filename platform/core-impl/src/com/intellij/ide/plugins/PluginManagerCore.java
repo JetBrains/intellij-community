@@ -645,30 +645,6 @@ public final class PluginManagerCore {
     }
   }
 
-  @ApiStatus.Internal
-  private static void processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph,
-                                                @NotNull Set<IdeaPluginDescriptor> depProcessed,
-                                                @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
-    for (IdeaPluginDescriptorImpl descriptor : graph.getInList(rootDescriptor)) {
-      switch (consumer.apply(descriptor)) {
-        case TERMINATE:
-          return;
-        case CONTINUE:
-          if (depProcessed.add(descriptor)) {
-            processAllDependencies(descriptor, graph, depProcessed, consumer);
-          }
-          break;
-        case SKIP_SUBTREE:
-          break;
-        case SKIP_SIBLINGS:
-          throw new UnsupportedOperationException("FileVisitResult.SKIP_SIBLINGS is not supported");
-      }
-    }
-
-    return;
-  }
-
   public static boolean isRunningFromSources() {
     return Holder.ourIsRunningFromSources;
   }
@@ -1440,12 +1416,16 @@ public final class PluginManagerCore {
 
     Set<IdeaPluginDescriptor> explicitlyEnabled = null;
     if (selectedIds != null) {
-      Set<String> set = new HashSet<>(StringUtil.split(selectedIds, ","));
+      Set<PluginId> set = new HashSet<>();
+      List<String> strings = StringUtil.split(selectedIds, ",");
+      for (String it : strings) {
+        set.add(PluginId.getId(it));
+      }
       set.addAll(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds());
 
       explicitlyEnabled = new LinkedHashSet<>(set.size());
-      for (String id : set) {
-        IdeaPluginDescriptorImpl descriptor = idMap.get(PluginId.getId(id));
+      for (PluginId id : set) {
+        IdeaPluginDescriptorImpl descriptor = idMap.get(id);
         if (descriptor != null) {
           explicitlyEnabled.add(descriptor);
         }
@@ -1584,22 +1564,20 @@ public final class PluginManagerCore {
     }
   }
 
-  private static void checkEssentialPluginsAreAvailable(@NotNull Collection<? extends IdeaPluginDescriptor> plugins) {
-    if (isUnitTestMode) {
-      return;
-    }
-
-    Set<String> available = ContainerUtil.map2Set(plugins, plugin -> plugin.getPluginId().getIdString());
-    List<String> required = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
-
-    List<String> missing = new SmartList<>();
-    for (String id : required) {
-      if (!available.contains(id)) {
-        missing.add(id);
+  private static void checkEssentialPluginsAreAvailable(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    List<PluginId> required = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
+    List<String> missing = null;
+    for (PluginId id : required) {
+      IdeaPluginDescriptorImpl descriptor = idMap.get(id);
+      if (descriptor == null || !descriptor.isEnabled()) {
+        if (missing == null) {
+          missing = new ArrayList<>();
+        }
+        missing.add(id.getIdString());
       }
     }
 
-    if (!missing.isEmpty()) {
+    if (missing != null) {
       throw new EssentialPluginMissingException(missing);
     }
   }
@@ -1608,7 +1586,8 @@ public final class PluginManagerCore {
   @NotNull
   static List<List<IdeaPluginDescriptorImpl>> initializePlugins(@NotNull LoadPluginResult loadResult,
                                                                 @NotNull ClassLoader coreLoader,
-                                                                @Nullable BiConsumer<? super Set<String>, ? super Set<String>> disabledAndPossibleToEnableConsumer) {
+                                                                @Nullable BiConsumer<? super Set<String>, ? super Set<String>> disabledAndPossibleToEnableConsumer,
+                                                                boolean checkEssentialPlugins) {
     List<String> errors = new ArrayList<>(loadResult.errors);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(loadResult.plugins, errors);
 
@@ -1678,6 +1657,10 @@ public final class PluginManagerCore {
         disabledRequiredIdSet.add(id.getIdString());
       }
       disabledAndPossibleToEnableConsumer.accept(disabledIdSet, disabledRequiredIdSet);
+    }
+
+    if (checkEssentialPlugins) {
+      checkEssentialPluginsAreAvailable(idMap);
     }
     return Arrays.asList(allPlugins, enabledPlugins);
   }
@@ -1910,13 +1893,13 @@ public final class PluginManagerCore {
     try {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors();
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
       List<List<IdeaPluginDescriptorImpl>> lists = initializePlugins(result, coreLoader, (d, e) -> {
         ourPluginsToDisable = d;
         ourPluginsToEnable = e;
-      });
+      }, !isUnitTestMode);
       ourPlugins = lists.get(0).toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
       ourLoadedPlugins = lists.get(1);
-      checkEssentialPluginsAreAvailable(ourLoadedPlugins);
 
       int count = 0;
       ourIdToIndex.ensureCapacity(ourLoadedPlugins.size());
@@ -1947,6 +1930,7 @@ public final class PluginManagerCore {
 
     EssentialPluginMissingException(@NotNull List<String> ids) {
       super("Missing essential plugins: " + StringUtil.join(ids, ", "));
+
       pluginIds = ids;
     }
   }

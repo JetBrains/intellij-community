@@ -62,7 +62,7 @@ public final class StartupAbortedException extends RuntimeException {
       }
     }
 
-    if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
+    if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId)) {
       PluginManagerCore.disablePlugin(pluginId.getIdString());
 
       StringWriter message = new StringWriter();

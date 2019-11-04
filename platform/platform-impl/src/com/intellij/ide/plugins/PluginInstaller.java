@@ -43,7 +43,7 @@ import java.util.zip.ZipFile;
 /**
  * @author stathik
  */
-public class PluginInstaller {
+public final class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
 
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
@@ -201,10 +201,6 @@ public class PluginInstaller {
     PluginStateManager.addStateListener(listener);
   }
 
-  public static void removeStateListener(@NotNull PluginStateListener listener) {
-    PluginStateManager.removeStateListener(listener);
-  }
-
   public static boolean install(@NotNull InstalledPluginsTableModel model,
                                 @NotNull File file,
                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
@@ -231,7 +227,7 @@ public class PluginInstaller {
       }
 
       IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
-      if (installedPlugin != null && ApplicationInfoEx.getInstanceEx().isEssentialPlugin(installedPlugin.getPluginId().getIdString())) {
+      if (installedPlugin != null && ApplicationInfoEx.getInstanceEx().isEssentialPlugin(installedPlugin.getPluginId())) {
         String message = "Plugin '" + pluginDescriptor.getName() + "' is a core part of " + ApplicationNamesInfo.getInstance().getFullProductName()
                          + ". In order to update it to a newer version you should update the IDE.";
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());

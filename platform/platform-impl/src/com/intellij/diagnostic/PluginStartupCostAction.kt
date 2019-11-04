@@ -3,9 +3,8 @@ package com.intellij.diagnostic
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -53,7 +52,7 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
     val tableData = pluginCostMap
       .mapNotNull { (pluginId, costMap) ->
         if (!ApplicationManager.getApplication().isInternal &&
-            (ApplicationInfo.getInstance() as ApplicationInfoImpl).isEssentialPlugin(pluginId)) {
+            (ApplicationInfoEx.getInstanceEx()).isEssentialPlugin(pluginId)) {
           return@mapNotNull null
         }
 

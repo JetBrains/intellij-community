@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +127,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   /**
    * @return {@code true} if the specified plugin is an essential part of the IDE so it cannot be disabled and isn't shown in Settings | Plugins
    */
-  public abstract boolean isEssentialPlugin(String pluginId);
+  public abstract boolean isEssentialPlugin(@NotNull String pluginId);
+
+  public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
   @Nullable
   public abstract String getCustomizeIDEWizardStepsProvider();

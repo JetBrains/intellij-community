@@ -22,9 +22,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
 
   public InstalledPluginsTableModel() {
-    final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      if (appInfo.isEssentialPlugin(plugin.getPluginId().getIdString())) {
+      if (appInfo.isEssentialPlugin(plugin.getPluginId())) {
         myEnabled.put(plugin.getPluginId(), true);
       }
       else {

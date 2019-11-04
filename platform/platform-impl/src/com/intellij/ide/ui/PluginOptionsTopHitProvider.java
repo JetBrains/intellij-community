@@ -22,7 +22,7 @@ final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     List<OptionDescription> options = new ArrayList<>(plugins.length);
     for (IdeaPluginDescriptor descriptor : plugins) {
-      if (applicationInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
+      if (applicationInfo.isEssentialPlugin(descriptor.getPluginId())) {
         continue;
       }
 
