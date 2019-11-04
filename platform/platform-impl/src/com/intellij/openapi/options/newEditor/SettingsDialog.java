@@ -205,7 +205,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doCancelAction(AWTEvent source) {
     if (source instanceof KeyEvent || source instanceof ActionEvent) {
-      if (!myEditor.cancel()) {
+      if (!myEditor.cancel(source)) {
         return;
       }
     }
