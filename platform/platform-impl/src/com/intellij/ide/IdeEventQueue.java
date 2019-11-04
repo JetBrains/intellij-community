@@ -631,7 +631,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void processException(@NotNull Throwable t) {
-    if (myTestMode != null && myTestMode) {
+    if (isTestMode()) {
       ExceptionUtil.rethrow(t);
     }
     if (!myToolkitBugsProcessor.process(t)) {
