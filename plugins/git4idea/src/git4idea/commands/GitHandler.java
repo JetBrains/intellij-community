@@ -342,8 +342,12 @@ public abstract class GitHandler {
    * @param name  the variable name
    * @param value the variable value
    */
-  public void addCustomEnvironmentVariable(String name, String value) {
+  public void addCustomEnvironmentVariable(@NotNull String name, @Nullable String value) {
     myCustomEnv.put(name, value);
+  }
+
+  public void addCustomEnvironmentVariable(@NotNull String name, @NotNull File file) {
+    myCustomEnv.put(name, file.getAbsolutePath());
   }
 
   public boolean containsCustomEnvironmentVariable(@NotNull String key) {
