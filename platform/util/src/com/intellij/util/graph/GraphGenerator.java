@@ -27,11 +27,8 @@ public final class GraphGenerator<Node> implements Graph<Node> {
   }
 
   private void buildOuts() {
-    final Set<Pair<Node, Node>> edges = new THashSet<>();
-
-    Collection<Node> nodes = myGraph.getNodes();
-
-    for (Node node : nodes) {
+    Set<Pair<Node, Node>> edges = new THashSet<>();
+    for (Node node : myGraph.getNodes()) {
       Iterator<Node> inIt = myGraph.getIn(node);
       while (inIt.hasNext()) {
         Node inNode = inIt.next();

@@ -32,7 +32,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -75,6 +77,7 @@ public final class PluginManagerCore {
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
 
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
+  private static final PluginId JAVA_ID = PluginId.getId("com.intellij.modules.java");
   public static final String CORE_PLUGIN_ID = CORE_ID.getIdString();
 
   public static final String PLUGIN_XML = "plugin.xml";
@@ -505,18 +508,20 @@ public final class PluginManagerCore {
    * for such plugins to avoid breaking compatibility with them.
    */
   @Nullable
-  private static PluginId getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor,
-                                                @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap) {
+  private static IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor,
+                                                                @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
+                                                                @Nullable IdeaPluginDescriptorImpl javaDep,
+                                                                boolean hasAllModules) {
     // Skip our plugins as expected to be up-to-date whether bundled or not.
-    if (descriptor.getPluginId() == CORE_ID || VENDOR_JETBRAINS.equals(descriptor.getVendor())) {
+    if (descriptor.getPluginId() == CORE_ID ||
+        VENDOR_JETBRAINS.equals(descriptor.getVendor()) ||
+        !hasAllModules ||
+        javaDep == null) {
       return null;
     }
-    if (!idMap.containsKey(ALL_MODULES_MARKER)) {
-      return null;
-    }
-    PluginId javaId = PluginId.getId("com.intellij.modules.java");
-    if (!idMap.containsKey(javaId)) {
-      return null;
+
+    if (!descriptor.isBundled()) {
+      return javaDep;
     }
 
     // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
@@ -525,8 +530,7 @@ public final class PluginManagerCore {
     // Many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency
     // on some other platform modules). This is definitely a misconfiguration but lets temporary add the Java plugin to their dependencies
     // to avoid breaking compatibility.
-    boolean isCustomPlugin = !descriptor.isBundled();
-    return isLegacyPlugin || isCustomPlugin ? javaId : null;
+    return isLegacyPlugin ? javaDep : null;
   }
 
   private static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
@@ -693,68 +697,59 @@ public final class PluginManagerCore {
   private static Graph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                                      @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                                                      boolean withOptional) {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<IdeaPluginDescriptorImpl>() {
-      @NotNull
-      @Override
-      public Collection<IdeaPluginDescriptorImpl> getNodes() {
-        return descriptors;
+    IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.get(JAVA_ID);
+    boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
+    return GraphGenerator.generate(new CachingSemiGraph<>(descriptors, rootDescriptor -> {
+      PluginId[] dependentPluginIds = rootDescriptor.getDependentPluginIds();
+      IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, idToDescriptorMap, javaDep, hasAllModules);
+      PluginId[] optionalDependentPluginIds = withOptional ? rootDescriptor.getOptionalDependentPluginIds() : PluginId.EMPTY_ARRAY;
+      int capacity = dependentPluginIds.length - (withOptional ? 0 : optionalDependentPluginIds.length);
+      if (capacity == 0) {
+        return implicitDep == null ? Collections.emptyList() : Collections.singletonList(implicitDep);
       }
 
-      @NotNull
-      @Override
-      public Iterator<IdeaPluginDescriptorImpl> getIn(@NotNull IdeaPluginDescriptorImpl rootDescriptor) {
-        PluginId[] dependentPluginIds = rootDescriptor.getDependentPluginIds();
-        PluginId implicitDepId = getImplicitDependency(rootDescriptor, idToDescriptorMap);
-        IdeaPluginDescriptorImpl implicitDep = implicitDepId == null ? null : idToDescriptorMap.get(implicitDepId);
-        PluginId[] optionalDependentPluginIds = withOptional ? rootDescriptor.getOptionalDependentPluginIds() : PluginId.EMPTY_ARRAY;
-        int capacity = dependentPluginIds.length - (withOptional ? 0 : optionalDependentPluginIds.length);
-        if (capacity == 0) {
-          return implicitDep == null ? Collections.emptyIterator() : Collections.singletonList(implicitDep).iterator();
+      List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>(capacity + (implicitDep == null ? 0 : 1));
+      if (implicitDep != null) {
+        if (rootDescriptor == implicitDep) {
+          getLogger().error("Plugin " + rootDescriptor + " depends on self");
         }
-
-        List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>(capacity + (implicitDep == null ? 0 : 1));
-        if (implicitDep != null) {
-          if (rootDescriptor == implicitDep) {
-            getLogger().error("Plugin " + rootDescriptor +  " depends on self");
-          }
-          else {
-            plugins.add(implicitDep);
-          }
+        else {
+          plugins.add(implicitDep);
         }
-
-        boolean excludeOptional = !withOptional && optionalDependentPluginIds.length > 0 && optionalDependentPluginIds.length != dependentPluginIds.length;
-
-        loop:
-        for (PluginId dependentPluginId : dependentPluginIds) {
-          if (excludeOptional) {
-            for (PluginId id : optionalDependentPluginIds) {
-              if (id == dependentPluginId) {
-                continue loop;
-              }
-            }
-          }
-
-          // check for missing optional dependency
-          IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependentPluginId);
-          // if 'dep' refers to a module we need to check the real plugin containing this module only if it's still enabled,
-          // otherwise the graph will be inconsistent
-          if (dep == null) {
-            continue;
-          }
-
-          // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
-          // can be such requirements removed or not
-          if (rootDescriptor == dep) {
-            if (dep.getPluginId() == SPECIAL_IDEA_PLUGIN_ID) {
-              getLogger().error("Plugin " + rootDescriptor + " depends on self");
-            }
-          }
-          else {
-            plugins.add(dep);
-          }
-        }
-        return plugins.isEmpty() ? Collections.emptyIterator() : plugins.iterator();
       }
+
+      boolean excludeOptional = !withOptional && optionalDependentPluginIds.length > 0 && optionalDependentPluginIds.length != dependentPluginIds.length;
+
+      loop:
+      for (PluginId dependentPluginId : dependentPluginIds) {
+        if (excludeOptional) {
+          for (PluginId id : optionalDependentPluginIds) {
+            if (id == dependentPluginId) {
+              continue loop;
+            }
+          }
+        }
+
+        // check for missing optional dependency
+        IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependentPluginId);
+        // if 'dep' refers to a module we need to check the real plugin containing this module only if it's still enabled,
+        // otherwise the graph will be inconsistent
+        if (dep == null) {
+          continue;
+        }
+
+        // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
+        // can be such requirements removed or not
+        if (rootDescriptor == dep) {
+          if (dep.getPluginId() == SPECIAL_IDEA_PLUGIN_ID) {
+            getLogger().error("Plugin " + rootDescriptor + " depends on self");
+          }
+        }
+        else {
+          plugins.add(dep);
+        }
+      }
+      return plugins;
     }));
   }
 
