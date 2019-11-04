@@ -63,7 +63,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -375,14 +374,13 @@ public final class PluginManagerCore {
     if (!plugins.isFile()) {
       FileUtilRt.ensureCanCreateFile(plugins);
     }
-    try (BufferedWriter writer = new BufferedWriter(
-      new OutputStreamWriter(new FileOutputStream(plugins, append), StandardCharsets.UTF_8))) {
+    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(plugins, append), StandardCharsets.UTF_8))) {
       writePluginsList(ids, writer);
     }
   }
 
   public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
-    String[] sortedIds = ArrayUtil.toStringArray(ids);
+    String[] sortedIds = ArrayUtilRt.toStringArray(ids);
     Arrays.sort(sortedIds);
     String separator = LineSeparator.getSystemLineSeparator().getSeparatorString();
     for (String id : sortedIds) {
@@ -977,16 +975,15 @@ public final class PluginManagerCore {
     // Note that this code is meant for IDE development / testing purposes
 
     Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
-    loop:
-    for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
-      for (String configFile : entry.getValue()) {
+    optionalConfigs.forEach((pluginId, configFiles) -> {
+      for (String configFile : configFiles) {
         for (int i = 0, size = visitedFiles.size(); i < size; i++) {
           AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl> visitedFile = visitedFiles.get(i);
           if (visitedFile.getKey().equals(configFile)) {
             List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> cycle = visitedFiles.subList(i, visitedFiles.size());
             getLogger().info("Plugin " + toPresentableName(visitedFiles.get(0).getValue()) + " optional descriptors form a cycle: " +
                              StringUtil.join(cycle, o -> o.getKey(), ", "));
-            continue loop;
+            return;
           }
         }
 
@@ -1016,10 +1013,10 @@ public final class PluginManagerCore {
           getLogger().info("Plugin " + toPresentableName(descriptor) + " misses optional descriptor " + configFile);
         }
         else {
-          ContainerUtilRt.putValue(entry.getKey(), optionalDescriptor, descriptors);
+          ContainerUtilRt.putValue(pluginId, optionalDescriptor, descriptors);
         }
       }
-    }
+    });
     descriptor.setOptionalDescriptors(descriptors);
 
     visitedFiles.remove(visitedFiles.size() - 1);
@@ -1332,28 +1329,63 @@ public final class PluginManagerCore {
 
   private static void mergeOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> enabledPlugins,
                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    Predicate<PluginId> enabledCondition = depId -> {
-      IdeaPluginDescriptorImpl dep = idMap.get(depId);
-      return dep != null && dep.isEnabled();
-    };
-
-    for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
-      loop:
-      for (IdeaPluginDescriptorImpl dep : optionalDescriptorRecursively(descriptor, enabledCondition)) {
-        for (PluginId depId : dep.getDependentPluginIds()) {
-          if (!enabledCondition.test(depId) &&
-              ArrayUtil.indexOf(dep.getOptionalDependentPluginIds(), depId) == -1) {
-            continue loop;
-          }
-        }
-
-        descriptor.mergeOptionalConfig(dep);
-      }
+    for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
+      mergeOptionalDescriptors(rootDescriptor, rootDescriptor, idMap);
     }
 
     for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
       descriptor.setOptionalDescriptors(null);
     }
+  }
+
+  private static void mergeOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl mergedDescriptor,
+                                               @NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = rootDescriptor.getOptionalDescriptors();
+    if (optionalDescriptors == null) {
+      return;
+    }
+
+    optionalDescriptors.forEach((dependencyId, descriptors) -> {
+      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependencyId);
+      if (dependencyDescriptor == null || !dependencyDescriptor.isEnabled()) {
+        return;
+      }
+
+      loop:
+      for (IdeaPluginDescriptorImpl descriptor : descriptors) {
+        // check that plugin doesn't depend on unavailable plugin
+        for (PluginId id : descriptor.getDependentPluginIds()) {
+          IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(id);
+          // ignore if optional
+          if ((dependentDescriptor == null || !dependentDescriptor.isEnabled()) && !isOptional(descriptor, id)) {
+            continue loop;
+          }
+        }
+
+        mergedDescriptor.mergeOptionalConfig(descriptor);
+        mergeOptionalDescriptors(mergedDescriptor, descriptor, idMap);
+      }
+    });
+  }
+
+  private static boolean isOptional(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull PluginId id) {
+    PluginId[] optional = descriptor.getOptionalDependentPluginIds();
+    if (optional.length == 0) {
+      // all are required, so, this one also required
+      return false;
+    }
+    if (optional.length == descriptor.getDependentPluginIds().length) {
+      // all are optional, so, this one also optional
+      return true;
+    }
+
+    for (PluginId otherId : optional) {
+      if (id == otherId) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @ApiStatus.Internal
@@ -1781,7 +1813,7 @@ public final class PluginManagerCore {
     return duplicateMap;
   }
 
-  private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptor descriptor,
+  private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
                                               @NotNull Set<PluginId> loadedIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<? super PluginId> disabledRequiredIds,
@@ -1793,8 +1825,7 @@ public final class PluginManagerCore {
     boolean result = true;
     Set<String> disabledPlugins = null;
     for (PluginId depId : descriptor.getDependentPluginIds()) {
-      if (loadedIds.contains(depId) ||
-          ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), depId) != -1) {
+      if (loadedIds.contains(depId) || isOptional(descriptor, depId)) {
         continue;
       }
 
@@ -1944,48 +1975,6 @@ public final class PluginManagerCore {
 
   public static boolean isPluginInstalled(PluginId id) {
     return getPlugin(id) != null;
-  }
-
-  @NotNull
-  private static List<IdeaPluginDescriptorImpl> optionalDescriptorRecursively(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                                              @Nullable Predicate<? super PluginId> condition) {
-    Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = rootDescriptor.getOptionalDescriptors();
-    if (optionalDescriptors == null || optionalDescriptors.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-
-    int start = 0;
-    addOptionalDescriptors(rootDescriptor, result, condition);
-    int end = result.size();
-    do {
-      for (int i = start; i < end; i++) {
-        addOptionalDescriptors(result.get(i), result, condition);
-      }
-
-      start = end;
-      end = result.size();
-    }
-    while (start != end);
-    return result;
-  }
-
-  private static void addOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                             @NotNull List<IdeaPluginDescriptorImpl> result,
-                                             @Nullable Predicate<? super PluginId> condition) {
-    Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = descriptor.getOptionalDescriptors();
-    if (optionalDescriptors == null) {
-      return;
-    }
-
-    optionalDescriptors.forEach((id, descriptors) -> {
-      if (condition != null && !condition.test(id)) {
-        return;
-      }
-
-      result.addAll(descriptors);
-    });
   }
 
   @NotNull
