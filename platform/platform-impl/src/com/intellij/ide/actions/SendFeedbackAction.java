@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +63,11 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     boolean eap = appInfo.isEAP();
     LicensingFacade la = LicensingFacade.getInstance();
     String url = urlTemplate
-      .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
-      .replace("$TIMEZONE", System.getProperty("user.timezone"))
-      .replace("$VERSION", appInfo.getFullVersion())
-      .replace("$EVAL", la != null && la.isEvaluationLicense() ? "true" : "false")
-      .replace("$DESCR", description);
+      .replace("$BUILD", URLUtil.encodeURIComponent(eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString()))
+      .replace("$TIMEZONE", URLUtil.encodeURIComponent(System.getProperty("user.timezone")))
+      .replace("$VERSION", URLUtil.encodeURIComponent(appInfo.getFullVersion()))
+      .replace("$EVAL", URLUtil.encodeURIComponent(la != null && la.isEvaluationLicense() ? "true" : "false"))
+      .replace("$DESCR", URLUtil.encodeURIComponent(description));
     BrowserUtil.browse(url, project);
   }
 
