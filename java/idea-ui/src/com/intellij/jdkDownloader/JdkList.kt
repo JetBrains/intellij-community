@@ -8,10 +8,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.annotations.NonNls
 import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.io.IOException
 import java.lang.RuntimeException
 
@@ -37,20 +40,20 @@ data class JdkProduct(
     return this.flavour.compareToIgnoreCase(other.flavour)
   }
 
-  val getPackagePresentationText : String get() = buildString {
-    append(vendor)
-    if (product != null) {
-      append(" ")
-      append(product)
-    }
+  val packagePresentationText: String
+    get() = buildString {
+      append(vendor)
+      if (product != null) {
+        append(" ")
+        append(product)
+      }
 
-    if (flavour != null) {
-      append(" (")
-      append(flavour)
-      append(")")
+      if (flavour != null) {
+        append(" (")
+        append(flavour)
+        append(")")
+      }
     }
-  }
-
 }
 
 /** describes an item behind the version as well as download info **/
@@ -65,7 +68,7 @@ data class JdkItem(
   private val vendorVersion: String?,
 
   val arch: String,
-  val packageType: String,
+  val packageType: JdkPackageType,
   val url: String,
   val sha256: String,
 
@@ -92,14 +95,34 @@ data class JdkItem(
     return VersionComparatorUtil.compare(this.vendorVersion, other.vendorVersion)
   }
 
-  val getVersionPresentationText : String get() = buildString {
-    append(jdkVersion)
-    append(" (")
-    append(StringUtil.formatFileSize(archiveSize))
-    append(")")
-  }
+  val versionPresentationText: String
+    get() = buildString {
+      append(jdkVersion)
+      append(" (")
+      append(StringUtil.formatFileSize(archiveSize))
+      append(")")
+    }
 
-  val getFullPresentationText : String get() = product.getPackagePresentationText + " " + getVersionPresentationText
+  val fullPresentationText: String
+    get() = product.packagePresentationText + " " + versionPresentationText
+}
+
+enum class JdkPackageType(@NonNls val type: String) {
+  @Suppress("unused")
+  ZIP("zip") {
+    override fun openDecompressor(archiveFile: File) = Decompressor.Zip(archiveFile)
+  },
+
+  @Suppress("SpellCheckingInspection", "unused")
+  TAR_GZ("targz") {
+    override fun openDecompressor(archiveFile: File) = Decompressor.Tar(archiveFile)
+  };
+
+  abstract fun openDecompressor(archiveFile: File): Decompressor
+
+  companion object {
+    fun findType(jsonText: String): JdkPackageType? = values().firstOrNull { it.type.equals(jsonText, ignoreCase = true) }
+  }
 }
 
 object JdkListDownloader {
@@ -110,68 +133,81 @@ object JdkListDownloader {
       return "https://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
     }
 
+  private fun downloadJdkList(feedUrl: String, progress: ProgressIndicator?): ByteArray {
+    //timeouts are handled inside
+    return HttpRequests
+      .request(feedUrl)
+      .productNameAsUserAgent()
+      .readBytes(progress)
+      .unXZ()
+  }
+
+  fun parseJdkList(tree: ObjectNode, expectedOS: String): List<JdkItem> {
+    val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
+
+    val result = mutableListOf<JdkItem>()
+    for (item in items.filterIsInstance<ObjectNode>()) {
+      val packages = item["packages"] as? ArrayNode ?: continue
+      val pkg = packages.filterIsInstance<ObjectNode>().singleOrNull { it["os"]?.asText() == expectedOS } ?: continue
+
+      val product = JdkProduct(
+        vendor = item["vendor"]?.asText() ?: continue,
+        product = item["product"]?.asText(),
+        flavour = item["flavour"]?.asText()
+      )
+
+      result += JdkItem(product = product,
+                        isDefaultItem = item["default"]?.asBoolean() ?: false,
+
+                        jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: continue,
+                        jdkVersion = item["jdk_version"]?.asText() ?: continue,
+                        jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
+                        vendorVersion = item["vendor_version"]?.asText(),
+
+                        arch = pkg["arch"]?.asText() ?: continue,
+                        packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: continue,
+                        url = pkg["url"]?.asText() ?: continue,
+                        sha256 = pkg["sha256"]?.asText() ?: continue,
+                        archiveSize = pkg["archive_size"]?.asLong() ?: continue,
+                        archiveFileName = pkg["archive_file_name"]?.asText() ?: continue,
+                        unpackCutDirs = pkg["unpack_cut_dirs"]?.asInt() ?: continue,
+                        unpackPrefixFilter = pkg["unpack_prefix_filter"]?.asText() ?: continue,
+
+                        unpackedSize = pkg["unpacked_size"]?.asLong() ?: continue,
+                        installFolderName = pkg["install_folder_name"]?.asText() ?: continue
+      )
+    }
+
+    return result.toList()
+  }
+
   fun downloadModel(progress: ProgressIndicator?, feedUrl: String = JdkListDownloader.feedUrl): List<JdkItem> {
-    //we download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
+    // download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
     val rawData = try {
-      //timeouts are handled inside
-      HttpRequests
-        .request(feedUrl)
-        .productNameAsUserAgent()
-        .readBytes(progress)
-        .unXZ()
+      downloadJdkList(feedUrl, progress)
     }
     catch (t: IOException) {
       throw RuntimeException("Failed to download and process the JDKs list from $feedUrl. ${t.message}", t)
     }
 
-    try {
-      val tree = ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
-      val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
+    val json = try {
+      ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
+    }
+    catch (t: Throwable) {
+      throw RuntimeException("Failed to parse downloaded JDKs list from $feedUrl. ${t.message}", t)
+    }
 
+    try {
       val expectedOS = when {
         SystemInfo.isWindows -> "windows"
         SystemInfo.isMac -> "macOS"
         SystemInfo.isLinux -> "linux"
         else -> error("Unsupported OS")
       }
-
-      val result = mutableListOf<JdkItem>()
-      for (item in items.filterIsInstance<ObjectNode>()) {
-        val packages = item["packages"] as? ArrayNode ?: continue
-        val pkg = packages.filterIsInstance<ObjectNode>().singleOrNull { it["os"]?.asText() == expectedOS } ?: continue
-
-        val product = JdkProduct(
-          vendor = item["vendor"]?.asText() ?: continue,
-          product = item["product"]?.asText(),
-          flavour = item["flavour"]?.asText()
-        )
-
-        result += JdkItem(product = product,
-                          isDefaultItem = item["default"]?.asBoolean() ?: false,
-
-                          jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: continue,
-                          jdkVersion = item["jdk_version"]?.asText() ?: continue,
-                          jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
-                          vendorVersion = item["vendor_version"]?.asText(),
-
-                          arch = pkg["arch"]?.asText() ?: continue,
-                          packageType = pkg["package_type"]?.asText() ?: continue,
-                          url = pkg["url"]?.asText() ?: continue,
-                          sha256 = pkg["sha256"]?.asText() ?: continue,
-                          archiveSize = pkg["archive_size"]?.asLong() ?: continue,
-                          archiveFileName = pkg["archive_file_name"]?.asText() ?: continue,
-                          unpackCutDirs = pkg["unpack_cut_dirs"]?.asInt() ?: continue,
-                          unpackPrefixFilter = pkg["unpack_prefix_filter"]?.asText() ?: continue,
-
-                          unpackedSize = pkg["unpacked_size"]?.asLong() ?: continue,
-                          installFolderName = pkg["install_folder_name"]?.asText() ?: continue
-        )
-      }
-
-      return result
+      return parseJdkList(json, expectedOS)
     }
     catch (t: Throwable) {
-      throw RuntimeException("Failed to parse downloaded JDKs list from $feedUrl. ${t.message}", t)
+      throw RuntimeException("Failed to process downloaded JDKs list from $feedUrl. ${t.message}", t)
     }
   }
 

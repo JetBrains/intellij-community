@@ -117,11 +117,11 @@ private class DownloadJdkDialog(
 
     val vendorComboBox = ComboBox(items.map { it.product }.distinct().sorted().toTypedArray())
     vendorComboBox.selectedItem = defaultItem.product
-    vendorComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.getPackagePresentationText) }
+    vendorComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.packagePresentationText) }
 
     val versionModel = DefaultComboBoxModel<JdkItem>()
     val versionComboBox = ComboBox(versionModel)
-    versionComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.getVersionPresentationText) }
+    versionComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.versionPresentationText) }
 
     fun selectVersions(newProduct: JdkProduct) {
       val newVersions = items.filter { it.product == newProduct }.sorted()

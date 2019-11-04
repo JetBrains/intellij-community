@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.jdkDownloader.JdkItem
 import com.intellij.jdkDownloader.JdkInstaller
-import com.intellij.jdkDownloader.JdkListDownloader
+import com.intellij.jdkDownloader.JdkItem
+import com.intellij.jdkDownloader.JdkPackageType
 import com.intellij.jdkDownloader.JdkProduct
 import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -16,14 +15,8 @@ class JdkDownloaderTest {
   @get:Rule
   val fsRule = TempDirectory()
 
-  @Test
-  fun `model can be downloaded and parsed`() {
-    val data = JdkListDownloader.downloadModel(null)
-    Assert.assertTrue(data.isNotEmpty())
-  }
-
   private fun jdkItemForTest(url: String,
-                             packageType: String,
+                             packageType: JdkPackageType,
                              size: Long,
                              sha256: String,
                              cutDirs: Int = 0) = JdkItem(
@@ -45,12 +38,12 @@ class JdkDownloaderTest {
     url.split("/").last().removeSuffix(".tar.gz").removeSuffix(".zip")
   )
 
-  private val mockTarGZ = jdkItemForTest(packageType = "targz",
+  private val mockTarGZ = jdkItemForTest(packageType = JdkPackageType.TAR_GZ,
                                          url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.tar.gz",
                                          size = 249,
                                          sha256 = "ffc8825d96e3f89cb4a8ca64b9684c37f55d6c5bd54628ebf984f8282f8a59ff"
   )
-  private val mockZip = jdkItemForTest(packageType = "zip",
+  private val mockZip = jdkItemForTest(packageType = JdkPackageType.ZIP,
                                        url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.zip",
                                        size = 604,
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")

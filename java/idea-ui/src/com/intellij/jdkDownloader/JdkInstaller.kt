@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Urls
-import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
 import java.io.File
 import java.io.IOException
@@ -36,7 +35,7 @@ object JdkInstaller {
   }
 
   fun installJdk(item: JdkItem, selectedPath: String, indicator: ProgressIndicator?): File {
-    indicator?.text = "Installing ${item.getFullPresentationText}..."
+    indicator?.text = "Installing ${item.fullPresentationText}..."
 
     val (targetDir, error) = validateInstallDir(selectedPath)
     if (targetDir == null || error != null) throw RuntimeException(error ?: "Invalid Target Directory")
@@ -45,24 +44,24 @@ object JdkInstaller {
     if (!url.scheme.equals("https", ignoreCase = true)) error("URL must use https:// protocol, but was: $url")
 
     indicator?.text2 = "Downloading"
-    val downloadPath = File(PathManager.getTempPath(), "jdk-${item.archiveFileName}")
+    val downloadFile = File(PathManager.getTempPath(), "jdk-${item.archiveFileName}")
     try {
       try {
         HttpRequests.request(item.url)
           .productNameAsUserAgent()
-          .connect { processor -> processor.saveToFile(downloadPath, indicator) }
+          .connect { processor -> processor.saveToFile(downloadFile, indicator) }
 
       }
       catch (t: IOException) {
         throw RuntimeException("Failed to download JDK from $url. ${t.message}", t)
       }
 
-      val sizeDiff = downloadPath.length() - item.archiveSize
+      val sizeDiff = downloadFile.length() - item.archiveSize
       if (sizeDiff != 0L) {
         throw RuntimeException("Downloaded JDK distribution has incorrect size, difference is ${sizeDiff.absoluteValue} bytes")
       }
 
-      val actualHashCode = Files.asByteSource(downloadPath).hash(Hashing.sha256()).toString()
+      val actualHashCode = Files.asByteSource(downloadFile).hash(Hashing.sha256()).toString()
       if (!actualHashCode.equals(item.sha256, ignoreCase = true)) {
         throw RuntimeException("SHA-256 checksums does not match. Actual value is $actualHashCode, expected ${item.sha256}")
       }
@@ -70,11 +69,7 @@ object JdkInstaller {
       indicator?.isIndeterminate = true
       indicator?.text2 = "Unpacking"
 
-      val decompressor = when (item.packageType) {
-        "zip" -> Decompressor.Zip(downloadPath)
-        "targz" -> Decompressor.Tar(downloadPath).withSymlinks()
-        else -> error("Unsupported archiveType: ${item.archiveSize}")
-      }
+      val decompressor = item.packageType.openDecompressor(downloadFile)
       //handle cancellation via postProcessor (instead of inheritance)
       decompressor.cutDirs(item.unpackCutDirs)
       decompressor.postprocessor { indicator?.checkCanceled() }
@@ -102,7 +97,7 @@ object JdkInstaller {
       throw t
     }
     finally {
-      FileUtil.delete(downloadPath)
+      FileUtil.delete(downloadFile)
     }
     return targetDir
   }
