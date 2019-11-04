@@ -5,7 +5,7 @@
 
 package org.toml.lang.lexer
 
-import com.intellij.ext.lexer.LexerTestCaseBase
+import com.intellij.lang.lexer.LexerTestCaseBase
 import org.toml.TomlTestCase
 
 abstract class TomlLexerTestBase : LexerTestCaseBase(), TomlTestCase

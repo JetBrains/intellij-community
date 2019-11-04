@@ -5,9 +5,9 @@
 
 package org.toml.lang.lexer
 
-import com.intellij.ext.lexer.LexerBaseEx
-import com.intellij.ext.lexer.esc
-import com.intellij.ext.lexer.isWhitespaceChar
+import com.intellij.lang.lexer.LexerBaseEx
+import com.intellij.lang.lexer.esc
+import com.intellij.lang.lexer.isWhitespaceChar
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes
 import com.intellij.psi.tree.IElementType
