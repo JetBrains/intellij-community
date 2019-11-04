@@ -16,7 +16,7 @@
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
     <!--suppress PluginXmlValidity -->
-    <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+    <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
 
     <extensionPoint name="indexPatternProvider"
                     interface="com.intellij.psi.search.IndexPatternProvider"/>

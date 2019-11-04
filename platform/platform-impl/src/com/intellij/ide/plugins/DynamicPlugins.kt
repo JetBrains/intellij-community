@@ -17,10 +17,12 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
@@ -161,6 +163,13 @@ object DynamicPlugins {
         for (projectServiceInstance in projectServiceInstances) {
           project.stateStore.unloadComponent(projectServiceInstance)
         }
+
+        for (module in ModuleManager.getInstance(project).modules) {
+          val moduleServiceInstances = (module as PlatformComponentManagerImpl).unloadServices(pluginDescriptor.module)
+          for (moduleServiceInstance in moduleServiceInstances) {
+            module.stateStore.unloadComponent(moduleServiceInstance)
+          }
+        }
       }
     }
 
@@ -200,6 +209,9 @@ object DynamicPlugins {
       application.registerComponents(listOf(pluginDescriptor), true)
       for (openProject in ProjectManager.getInstance().openProjects) {
         (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor), true)
+        for (module in ModuleManager.getInstance(openProject).modules) {
+          (module as PlatformComponentManagerImpl).registerComponents(listOf(pluginDescriptor), true)
+        }
       }
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
