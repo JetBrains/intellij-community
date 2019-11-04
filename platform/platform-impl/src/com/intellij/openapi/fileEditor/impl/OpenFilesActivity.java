@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,7 @@ final class OpenFilesActivity implements StartupActivity.DumbAware {
     if (dir != null) {
       VirtualFile readme = dir.findChild("README.md");
       if (readme != null && !readme.isDirectory()) {
+        readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW);
         ApplicationManager.getApplication().invokeLater(() -> manager.openFile(readme, true));
       }
     }
