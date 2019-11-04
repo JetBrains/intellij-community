@@ -64,7 +64,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     LicensingFacade la = LicensingFacade.getInstance();
     String url = urlTemplate
       .replace("$BUILD", URLUtil.encodeURIComponent(eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString()))
-      .replace("$TIMEZONE", URLUtil.encodeURIComponent(System.getProperty("user.timezone")))
+      .replace("$TIMEZONE", URLUtil.encodeURIComponent(System.getProperty("user.timezone", "")))
       .replace("$VERSION", URLUtil.encodeURIComponent(appInfo.getFullVersion()))
       .replace("$EVAL", URLUtil.encodeURIComponent(la != null && la.isEvaluationLicense() ? "true" : "false"))
       .replace("$DESCR", URLUtil.encodeURIComponent(description));
