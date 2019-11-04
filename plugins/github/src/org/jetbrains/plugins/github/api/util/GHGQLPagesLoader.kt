@@ -24,11 +24,14 @@ abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExec
   fun loadNext(progressIndicator: ProgressIndicator, update: Boolean = false): R? {
     val iterationData = iterationDataRef.get()
 
-    val pagination =
-      when {
-        hasNext -> GHGQLRequestPagination(iterationData.cursor, pageSize)
-        (update && supportsTimestampUpdates) -> GHGQLRequestPagination(iterationData.timestamp, pageSize)
-        else -> return null
+    val pagination: GHGQLRequestPagination =
+      if (update) {
+        if (hasNext || !supportsTimestampUpdates) return null
+        GHGQLRequestPagination(iterationData.timestamp, pageSize)
+      }
+      else {
+        if (!hasNext) return null
+        GHGQLRequestPagination(iterationData.cursor, pageSize)
       }
 
     val executionDate = Date()

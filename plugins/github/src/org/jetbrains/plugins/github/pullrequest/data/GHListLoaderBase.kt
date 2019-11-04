@@ -37,13 +37,12 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
       loading = true
       requestLoadMore(indicator, update).handleOnEdt { list, error ->
         if (indicator.isCanceled) return@handleOnEdt
+        loading = false
         when {
           error != null && !GithubAsyncUtil.isCancellation(error) -> {
-            loading = false
             this.error = error
           }
           list != null -> {
-            loading = false
             handleResult(list)
           }
         }
