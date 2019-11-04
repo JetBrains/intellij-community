@@ -142,7 +142,9 @@ private class DownloadJdkDialog(
     fun selectInstallPath(newVersion: JdkItem) {
       val installFolderName = newVersion.installFolderName
       val path = when {
-        SystemInfo.isLinux || SystemInfo.isMac ->  "~/.jdks/$installFolderName"
+        SystemInfo.isLinux ->  "~/.jdks/$installFolderName"
+        //see https://youtrack.jetbrains.com/issue/IDEA-206163#focus=streamItem-27-3270022.0-0
+        SystemInfo.isMac ->  "~/Library/Java/JavaVirtualMachines/$installFolderName"
         SystemInfo.isWindows -> "${System.getProperty("user.home")}\\.jdks\\${installFolderName}"
         else -> error("Unsupported OS")
       }
