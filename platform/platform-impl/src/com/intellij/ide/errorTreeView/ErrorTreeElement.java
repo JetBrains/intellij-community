@@ -58,4 +58,9 @@ public abstract class ErrorTreeElement {
   public Icon getIcon() {
     return getKind().getIcon();
   }
+  
+  @NotNull
+  public String getPresentableText() {
+    return getKind().getPresentableText();
+  }
 }
