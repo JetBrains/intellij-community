@@ -41,7 +41,7 @@ public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  private static final String UNC_PREFIX = "\\\\wsl$\\";
+  public static final String UNC_PREFIX = "\\\\wsl$\\";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 

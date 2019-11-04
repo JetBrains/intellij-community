@@ -174,7 +174,7 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator"));
+    return new MyOSProcessHandler(commandLine, myWithMediator && myExecutable.isLocal() && Registry.is("git.execute.with.mediator"));
   }
 
   protected static class MyOSProcessHandler extends KillableProcessHandler {

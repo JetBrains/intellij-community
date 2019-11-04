@@ -148,7 +148,7 @@ public class GitLineHandler extends GitTextHandler {
 
   @Override
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator")) {
+    return new MyOSProcessHandler(commandLine, myWithMediator && myExecutable.isLocal() && Registry.is("git.execute.with.mediator")) {
       @NotNull
       @Override
       protected BaseDataReader createOutputDataReader() {

@@ -105,7 +105,7 @@ internal class GitVcsPanel(private val project: Project) :
 
       override fun run(indicator: ProgressIndicator) {
         val executableManager = GitExecutableManager.getInstance()
-        val executable = GitExecutable.Local(pathToGit)
+        val executable = executableManager.getExecutable(pathToGit)
         executableManager.dropVersionCache(executable)
         gitVersion = executableManager.identifyVersion(executable)
       }

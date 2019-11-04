@@ -125,6 +125,22 @@ public class WSLUtil {
   }
 
   /**
+   * @return instance of WSL distribution or null if it's unavailable
+   */
+  @Nullable
+  public static WSLDistribution getDistributionByName(@Nullable String name) {
+    if (name == null) {
+      return null;
+    }
+    for (WSLDistribution distribution : getAvailableDistributions()) {
+      if (name.equals(distribution.getPresentableName())) {
+        return distribution;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Temporary hack method to fix <a href="https://github.com/Microsoft/BashOnWindows/issues/2592">WSL bug</a>
    * Must be invoked just before execution, see RUBY-20358
    */

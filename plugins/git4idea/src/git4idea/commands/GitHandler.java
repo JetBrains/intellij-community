@@ -3,7 +3,6 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -45,7 +44,7 @@ public abstract class GitHandler {
   private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
   private final Project myProject;
-  @NotNull private final GitExecutable myExecutable;
+  @NotNull protected final GitExecutable myExecutable;
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
@@ -161,7 +160,7 @@ public abstract class GitHandler {
   }
 
   @NotNull
-  GitExecutable getExecutable() {
+  public GitExecutable getExecutable() {
     return myExecutable;
   }
 
@@ -231,7 +230,7 @@ public abstract class GitHandler {
   }
 
   public void addAbsoluteFile(@NotNull File file) {
-    myCommandLine.addParameter(file.getAbsolutePath());
+    myCommandLine.addParameter(myExecutable.convertFilePath(file));
   }
 
   /**
@@ -348,7 +347,7 @@ public abstract class GitHandler {
   }
 
   public void addCustomEnvironmentVariable(@NotNull String name, @NotNull File file) {
-    myCustomEnv.put(name, file.getAbsolutePath());
+    myCustomEnv.put(name, myExecutable.convertFilePath(file));
   }
 
   public boolean containsCustomEnvironmentVariable(@NotNull String key) {
@@ -409,9 +408,6 @@ public abstract class GitHandler {
     }
 
     try {
-      if (myWithLowPriority) ExecUtil.setupLowPriorityExecution(myCommandLine);
-      if (myWithNoTty) ExecUtil.setupNoTtyExecution(myCommandLine);
-
       myStartTime = System.currentTimeMillis();
       String logDirectoryPath = myProject != null
                                 ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkDirectory())
@@ -424,6 +420,8 @@ public abstract class GitHandler {
       }
 
       prepareEnvironment();
+      myExecutable.patchCommandLine(this, myCommandLine, myWithLowPriority, myWithNoTty);
+
       // start process
       myProcess = startProcess();
       startHandlingStreams();
@@ -442,7 +440,9 @@ public abstract class GitHandler {
   private void prepareEnvironment() {
     Map<String, String> executionEnvironment = myCommandLine.getEnvironment();
     executionEnvironment.clear();
-    executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
+    if (myExecutable.isLocal()) {
+      executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
+    }
     executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
     executionEnvironment.putAll(myCustomEnv);
   }

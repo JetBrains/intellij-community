@@ -1,13 +1,19 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -60,7 +66,7 @@ public class GitExecutableManager {
     handler.setStdoutSuppressed(false);
     GitCommandResult result = Git.getInstance().runCommand(handler);
     String rawResult = result.getOutputOrThrow();
-    GitVersion version = GitVersion.parse(rawResult);
+    GitVersion version = GitVersion.parse(rawResult, executable);
     LOG.info("Git version for " + executable + " : " + version.getPresentation());
     return version;
   }
@@ -81,7 +87,32 @@ public class GitExecutableManager {
   @NotNull
   public GitExecutable getExecutable(@Nullable Project project) {
     String path = getPathToGit(project);
-    return new GitExecutable.Local(path);
+    return getExecutable(path);
+  }
+
+  @NotNull
+  public GitExecutable getExecutable(@NotNull String pathToGit) {
+    GitExecutable.Wsl executable = getWslExecutable(pathToGit);
+    if (executable != null) return executable;
+
+    return new GitExecutable.Local(pathToGit);
+  }
+
+  @Nullable
+  private static GitExecutable.Wsl getWslExecutable(@NotNull String pathToGit) {
+    if (!SystemInfo.isWin10OrNewer || !Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) return null;
+    if (!pathToGit.startsWith(WSLDistribution.UNC_PREFIX)) return null;
+
+    pathToGit = StringUtil.trimStart(pathToGit, WSLDistribution.UNC_PREFIX);
+    int index = pathToGit.indexOf('\\');
+    if (index == -1) return null;
+
+    String distName = pathToGit.substring(0, index);
+    String wslPath = FileUtil.toSystemIndependentName(pathToGit.substring(index));
+
+    WSLDistribution distribution = WSLUtil.getDistributionByName(distName);
+    if (distribution == null) return null;
+    return new GitExecutable.Wsl(wslPath, distribution);
   }
 
   @NotNull

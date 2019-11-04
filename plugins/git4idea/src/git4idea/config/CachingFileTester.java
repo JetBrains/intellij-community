@@ -69,6 +69,10 @@ abstract class CachingFileTester<T> {
       return Files.getLastModifiedTime(Paths.get(filePath)).toMillis();
     }
 
+    if (executable instanceof GitExecutable.Wsl) {
+      return 0;
+    }
+
     LOG.error("Can't get modification time for " + executable);
     return 0;
   }
