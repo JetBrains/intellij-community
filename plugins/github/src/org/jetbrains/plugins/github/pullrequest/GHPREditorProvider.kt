@@ -4,7 +4,9 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -19,6 +21,7 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.AsyncProcessIcon
@@ -190,7 +193,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     })
 
     mainPanel.setContent(contentPanel)
-    (ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Update") as RefreshAction).registerShortcutOn(mainPanel)
+
+    val actionManager = ActionManager.getInstance()
+    (actionManager.getAction("Github.PullRequest.Timeline.Update") as RefreshAction).registerShortcutOn(mainPanel)
+    val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
+    PopupHandler.installPopupHandler(timelinePanel, actionGroup, ActionPlaces.UNKNOWN, actionManager)
 
     return object : ComponentContainer {
       override fun getComponent() = mainPanel
