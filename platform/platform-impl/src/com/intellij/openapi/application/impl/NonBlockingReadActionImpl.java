@@ -13,19 +13,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,7 +37,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -145,10 +143,32 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
+  public T executeSynchronously() throws ProcessCanceledException {
+    if (myEdtFinish != null || myCoalesceEquality != null) {
+      throw new IllegalStateException(
+        (myEdtFinish != null ? "finishOnUiThread" : "coalesceBy") +
+        " is not supported with synchronous non-blocking read actions");
+    }
+
+    ProgressIndicator outerIndicator = myProgressIndicator != null ? myProgressIndicator
+                                                                   : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    Executor dummyExecutor = __ -> { throw new UnsupportedOperationException(); };
+    return new Submission(new AsyncPromise<>(), dummyExecutor, outerIndicator).executeSynchronously();
+  }
+
+  private static void waitForSemaphore(@Nullable ProgressIndicator indicator, @NotNull Semaphore semaphore) {
+    while (!semaphore.waitFor(10)) {
+      if (indicator != null && indicator.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
+    }
+  }
+
+  @Override
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
     AsyncPromise<T> promise = new AsyncPromise<>();
     trackSubmission(backgroundThreadExecutor, promise);
-    Submission submission = new Submission(promise, backgroundThreadExecutor);
+    Submission submission = new Submission(promise, backgroundThreadExecutor, myProgressIndicator);
     if (myCoalesceEquality == null) {
       submission.transferToBgThread();
     } else {
@@ -180,18 +200,19 @@ public class NonBlockingReadActionImpl<T>
   }
 
   private class Submission {
-    private final AsyncPromise<? super T> promise;
+    private final AsyncPromise<T> promise;
     @NotNull private final Executor backendExecutor;
     private volatile ProgressIndicator currentIndicator;
     private final ModalityState creationModality = ModalityState.defaultModalityState();
     @Nullable private final BooleanSupplier myExpireCondition;
     @Nullable private NonBlockingReadActionImpl<?>.Submission myReplacement;
+    @Nullable private final ProgressIndicator myProgressIndicator;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
     private int myUseCount;
 
-    Submission(AsyncPromise<? super T> promise, @NotNull Executor backgroundThreadExecutor) {
+    Submission(AsyncPromise<T> promise, @NotNull Executor backgroundThreadExecutor, @Nullable ProgressIndicator outerIndicator) {
       this.promise = promise;
       backendExecutor = backgroundThreadExecutor;
       promise.onError(__ -> {
@@ -210,6 +231,7 @@ public class NonBlockingReadActionImpl<T>
         promise.onProcessed(value -> expirationHandle.unregisterHandler());
       }
       myExpireCondition = composeCancellationCondition();
+      myProgressIndicator = outerIndicator;
     }
 
     private void acquire() {
@@ -299,6 +321,32 @@ public class NonBlockingReadActionImpl<T>
       });
     }
 
+    T executeSynchronously() {
+      while (true) {
+        attemptComputation();
+
+        if (promise.isCancelled()) {
+          throw new ProcessCanceledException();
+        }
+        if (promise.isDone()) {
+          return promise.get();
+        }
+
+        Semaphore semaphore = new Semaphore(1);
+        dispatchLaterUnconstrained(() -> {
+          if (checkObsolete()) {
+            semaphore.up();
+          } else {
+            scheduleWithinConstraints(semaphore::up, null);
+          }
+        });
+        waitForSemaphore(myProgressIndicator, semaphore);
+        if (promise.isCancelled()) {
+          throw new ProcessCanceledException();
+        }
+      }
+    }
+
     private boolean attemptComputation() {
       ProgressIndicator indicator = myProgressIndicator != null ? new SensitiveProgressWrapper(myProgressIndicator) {
         @NotNull
@@ -310,10 +358,19 @@ public class NonBlockingReadActionImpl<T>
 
       currentIndicator = indicator;
       try {
-        AtomicBoolean shouldReschedule = new AtomicBoolean();
-        boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> insideReadAction(indicator, shouldReschedule),
-                                                                                        indicator);
-        return success && !shouldReschedule.get();
+        Ref<ContextConstraint> unsatisfiedConstraint = Ref.create();
+        boolean success;
+        Runnable runnable = () -> insideReadAction(indicator, unsatisfiedConstraint);
+        if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+          runnable.run();
+          success = true;
+          if (!unsatisfiedConstraint.isNull()) {
+            throw new IllegalStateException("Constraint " + unsatisfiedConstraint + " cannot be satisfied");
+          }
+        } else {
+          success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(runnable, indicator);
+        }
+        return success && unsatisfiedConstraint.isNull();
       }
       finally {
         currentIndicator = null;
@@ -332,13 +389,14 @@ public class NonBlockingReadActionImpl<T>
       }
     }
 
-    private void insideReadAction(ProgressIndicator indicator, AtomicBoolean shouldReschedule) {
+    private void insideReadAction(ProgressIndicator indicator, Ref<ContextConstraint> outUnsatisfiedConstraint) {
       try {
         if (checkObsolete()) {
           return;
         }
-        if (!constraintsAreSatisfied()) {
-          shouldReschedule.set(true);
+        ContextConstraint constraint = ContainerUtil.find(getConstraints(), t -> !t.isCorrectContext());
+        if (constraint != null) {
+          outUnsatisfiedConstraint.set(constraint);
           return;
         }
 
@@ -359,10 +417,6 @@ public class NonBlockingReadActionImpl<T>
       catch (Throwable e) {
         promise.setError(e);
       }
-    }
-
-    private boolean constraintsAreSatisfied() {
-      return ArraysKt.all(getConstraints(), ContextConstraint::isCorrectContext);
     }
 
     private boolean checkObsolete() {

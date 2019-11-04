@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -94,4 +95,23 @@ public interface NonBlockingReadAction<T> {
    *                                 {@link com.intellij.util.concurrency.BoundedTaskExecutor} on top of that.
    */
   CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor);
+
+  /**
+   * Run this computation on the current thread in a non-blocking read action, when possible.
+   * Note: this method can throw various exceptions (see "Throws" section)
+   * and can block the current thread for an indefinite time with just waiting,
+   * which can lead to thread starvation or unnecessary pooled thread expansion.
+   * Therefore, it's advised to use asynchronous {@link #submit} API where possible.<p></p>
+   *
+   * If the current thread already has read access, the computation is executed as is, without any write-action-cancellability.
+   * It's the responsibility of the caller to take care about it.<p></p>
+   *
+   * {@link #finishOnUiThread} and {@link #coalesceBy} are not supported with synchronous non-blocking read actions.
+   *
+   * @return the result of the computation
+   * @throws ProcessCanceledException if the computation got expired due to {@link #expireWhen} or {@link #expireWith} or {@link #cancelWith}.
+   * @throws IllegalStateException if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
+   * @throws RuntimeException when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
+   */
+  T executeSynchronously() throws ProcessCanceledException;
 }

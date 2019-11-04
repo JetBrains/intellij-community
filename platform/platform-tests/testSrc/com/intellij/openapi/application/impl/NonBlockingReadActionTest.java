@@ -2,20 +2,25 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.NonBlockingReadAction;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -27,7 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
@@ -201,5 +208,117 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     });
     assertTrue(p.isDone());
     LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
+  }
+
+  public void testSyncExecutionHonorsConstraints() {
+    setupUncommittedDocument();
+
+    AtomicBoolean started = new AtomicBoolean();
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      String s = ReadAction.nonBlocking(() -> {
+        started.set(true);
+        return "";
+      }).withDocumentsCommitted(getProject()).executeSynchronously();
+      assertEquals("", s);
+    });
+
+    assertFalse(started.get());
+    UIUtil.dispatchAllInvocationEvents();
+
+    assertFalse(started.get());
+    UIUtil.dispatchAllInvocationEvents();
+
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    waitForFuture(future);
+    assertTrue(started.get());
+  }
+
+  private void setupUncommittedDocument() {
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getTestRootDisposable());
+    PsiFile file = createFile("a.txt", "");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getViewProvider().getDocument().insertString(0, "a"));
+  }
+
+  private static void waitForFuture(Future<?> future) {
+    PlatformTestUtil.waitForFuture(future, 1000);
+  }
+
+  public void testSyncExecutionThrowsPCEWhenExpired() {
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.dispose(disposable);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      assertThrows(ProcessCanceledException.class, () -> {
+        ReadAction.nonBlocking(() -> "").expireWith(disposable).executeSynchronously();
+      });
+    });
+    waitForFuture(future);
+  }
+
+  public void testSyncExecutionIsCancellable() {
+    AtomicInteger attemptCount = new AtomicInteger();
+    int limit = 10;
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      assertEquals("a", ReadAction.nonBlocking(() -> {
+        if (attemptCount.incrementAndGet() < limit) {
+          //noinspection InfiniteLoopStatement
+          while (true) {
+            ProgressManager.checkCanceled();
+          }
+        }
+        return "a";
+      }).executeSynchronously());
+      assertTrue(attemptCount.toString(), attemptCount.get() >= limit);
+    });
+    while (attemptCount.get() < limit) {
+      WriteAction.run(() -> {});
+      UIUtil.dispatchAllInvocationEvents();
+      TimeoutUtil.sleep(1);
+    }
+    waitForFuture(future);
+  }
+
+  public void testSyncExecutionWorksInsideReadAction() {
+    waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ReadAction.run(() -> assertEquals("a", ReadAction.nonBlocking(() -> "a").executeSynchronously()));
+    }));
+  }
+
+  public void testSyncExecutionFailsInsideReadActionWhenConstraintsAreNotSatisfied() {
+    setupUncommittedDocument();
+    waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ReadAction.run(() -> {
+        assertThrows("cannot be satisfied", () -> ReadAction.nonBlocking(() -> "a").withDocumentsCommitted(getProject()).executeSynchronously());
+      });
+    }));
+  }
+
+  public void testSyncExecutionCompletesInsideReadActionWhenWriteActionIsPending() {
+    setupUncommittedDocument();
+    Semaphore mayStartWrite = new Semaphore(1);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ReadAction.run(() -> {
+        mayStartWrite.up();
+        assertEquals("a", ReadAction.nonBlocking(() -> {
+          return "a";
+        }).executeSynchronously());
+      });
+    });
+    assertTrue(mayStartWrite.waitFor(1000));
+    WriteAction.run(() -> {});
+    waitForFuture(future);
+  }
+
+  public void testSyncExecutionThrowsPCEWhenOuterIndicatorIsCanceled() {
+    ProgressIndicatorBase outer = new ProgressIndicatorBase();
+    waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProgressManager.getInstance().runProcess(() -> {
+        assertThrows(ProcessCanceledException.class, () -> {
+          ReadAction.nonBlocking(() -> {
+            outer.cancel();
+            ProgressManager.checkCanceled();
+          }).executeSynchronously();
+        });
+      }, outer);
+    }));
   }
 }
