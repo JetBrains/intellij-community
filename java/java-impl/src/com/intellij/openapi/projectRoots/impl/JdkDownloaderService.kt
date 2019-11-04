@@ -9,16 +9,19 @@ import com.intellij.util.Consumer
 import javax.swing.JComponent
 
 
-abstract class JDKDownloaderService {
-  abstract fun downloadOrSelectJDK(javaSdkType: JavaSdkImpl,
+/**
+ * An extension point to provide a UI to select and download a JDK package
+ */
+abstract class JdkDownloaderService {
+  abstract fun downloadOrSelectJdk(javaSdkType: JavaSdkImpl,
                                    sdkModel: SdkModel,
                                    parentComponent: JComponent,
                                    callback: Consumer<Sdk>)
 
   companion object {
     @JvmStatic
-    fun getInstanceIfEnabled(): JDKDownloaderService? = if (!Registry.`is`("jdk.downloader.ui")) null
-    else ApplicationManager.getApplication().getService(JDKDownloaderService::class.java)
+    fun getInstanceIfEnabled(): JdkDownloaderService? = if (!Registry.`is`("jdk.downloader.ui")) null
+    else ApplicationManager.getApplication().getService(JdkDownloaderService::class.java)
 
     @JvmStatic
     val isEnabled

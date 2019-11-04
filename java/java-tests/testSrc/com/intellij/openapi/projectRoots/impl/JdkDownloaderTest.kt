@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.jdkDownloader.JDKItem
-import com.intellij.jdkDownloader.JDKInstaller
-import com.intellij.jdkDownloader.JDKListDownloader
-import com.intellij.jdkDownloader.JDKProduct
+import com.intellij.jdkDownloader.JdkItem
+import com.intellij.jdkDownloader.JdkInstaller
+import com.intellij.jdkDownloader.JdkListDownloader
+import com.intellij.jdkDownloader.JdkProduct
 import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
@@ -12,13 +12,13 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-class JDKDownloaderTest {
+class JdkDownloaderTest {
   @get:Rule
   val fsRule = TempDirectory()
 
   @Test
   fun `model can be downloaded and parsed`() {
-    val data = JDKListDownloader.downloadModel(null)
+    val data = JdkListDownloader.downloadModel(null)
     Assert.assertTrue(data.isNotEmpty())
   }
 
@@ -26,8 +26,8 @@ class JDKDownloaderTest {
                              packageType: String,
                              size: Long,
                              sha256: String,
-                             cutDirs: Int = 0) = JDKItem(
-    JDKProduct("Vendor", null, null),
+                             cutDirs: Int = 0) = JdkItem(
+    JdkProduct("Vendor", null, null),
     false,
     123,
     "123.123",
@@ -137,9 +137,9 @@ class JDKDownloaderTest {
     assertThat(File(dir, "folder/file")).isFile()
   }
 
-  private inline fun testUnpacking(item: JDKItem, resultDir: (File) -> Unit) {
+  private inline fun testUnpacking(item: JdkItem, resultDir: (File) -> Unit) {
     val dir = fsRule.newFolder()
-    JDKInstaller.installJDK(item, dir.absolutePath, null)
+    JdkInstaller.installJdk(item, dir.absolutePath, null)
     resultDir(dir)
   }
 }

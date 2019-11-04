@@ -16,11 +16,11 @@ import java.io.IOException
 import java.lang.RuntimeException
 
 /** describes vendor + product part of the UI **/
-data class JDKProduct(
+data class JdkProduct(
   private val vendor: String,
   private val product: String?,
   private val flavour: String?
-) : Comparable<JDKProduct> {
+) : Comparable<JdkProduct> {
   private fun String?.compareToIgnoreCase(other: String?): Int {
     if (this == other) return 0
     if (this == null && other != null) return -1
@@ -29,7 +29,7 @@ data class JDKProduct(
     return 0
   }
 
-  override fun compareTo(other: JDKProduct): Int {
+  override fun compareTo(other: JdkProduct): Int {
     var cmp = this.vendor.compareToIgnoreCase(other.vendor)
     if (cmp != 0) return cmp
     cmp = this.product.compareToIgnoreCase(other.product)
@@ -54,8 +54,8 @@ data class JDKProduct(
 }
 
 /** describes an item behind the version as well as download info **/
-data class JDKItem(
-  val product: JDKProduct,
+data class JdkItem(
+  val product: JdkProduct,
 
   val isDefaultItem: Boolean = false,
 
@@ -80,9 +80,9 @@ data class JDKItem(
 
   val archiveFileName: String,
   val installFolderName: String
-) : Comparable<JDKItem> {
+) : Comparable<JdkItem> {
 
-  override fun compareTo(other: JDKItem): Int {
+  override fun compareTo(other: JdkItem): Int {
     var cmp = -this.jdkMajorVersion.compareTo(other.jdkMajorVersion)
     if (cmp != 0) return cmp
     cmp = -VersionComparatorUtil.compare(this.jdkVersion, other.jdkVersion)
@@ -102,7 +102,7 @@ data class JDKItem(
   val getFullPresentationText : String get() = product.getPackagePresentationText + " " + getVersionPresentationText
 }
 
-object JDKListDownloader {
+object JdkListDownloader {
   private val feedUrl: String
     get() {
       val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
@@ -110,7 +110,7 @@ object JDKListDownloader {
       return "https://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
     }
 
-  fun downloadModel(progress: ProgressIndicator?, feedUrl: String = JDKListDownloader.feedUrl): List<JDKItem> {
+  fun downloadModel(progress: ProgressIndicator?, feedUrl: String = JdkListDownloader.feedUrl): List<JdkItem> {
     //we download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
     val rawData = try {
       //timeouts are handled inside
@@ -135,18 +135,18 @@ object JDKListDownloader {
         else -> error("Unsupported OS")
       }
 
-      val result = mutableListOf<JDKItem>()
+      val result = mutableListOf<JdkItem>()
       for (item in items.filterIsInstance<ObjectNode>()) {
         val packages = item["packages"] as? ArrayNode ?: continue
         val pkg = packages.filterIsInstance<ObjectNode>().singleOrNull { it["os"]?.asText() == expectedOS } ?: continue
 
-        val product = JDKProduct(
+        val product = JdkProduct(
           vendor = item["vendor"]?.asText() ?: continue,
           product = item["product"]?.asText(),
           flavour = item["flavour"]?.asText()
         )
 
-        result += JDKItem(product = product,
+        result += JdkItem(product = product,
                           isDefaultItem = item["default"]?.asBoolean() ?: false,
 
                           jdkMajorVersion = item["jdk_version_major"]?.asInt() ?: continue,

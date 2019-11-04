@@ -16,8 +16,8 @@ import java.io.IOException
 import java.lang.RuntimeException
 import kotlin.math.absoluteValue
 
-object JDKInstaller {
-  private val LOG = logger<JDKInstaller>()
+object JdkInstaller {
+  private val LOG = logger<JdkInstaller>()
 
   fun validateInstallDir(selectedPath: String): Pair<File?, String?> {
     if (selectedPath.isBlank()) return null to "Target path is empty"
@@ -35,7 +35,7 @@ object JDKInstaller {
     return targetDir to null
   }
 
-  fun installJDK(item: JDKItem, selectedPath: String, indicator: ProgressIndicator?): File {
+  fun installJdk(item: JdkItem, selectedPath: String, indicator: ProgressIndicator?): File {
     indicator?.text = "Installing ${item.getFullPresentationText}..."
 
     val (targetDir, error) = validateInstallDir(selectedPath)

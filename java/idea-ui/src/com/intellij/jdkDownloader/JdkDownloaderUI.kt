@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.impl.JDKDownloaderService
+import com.intellij.openapi.projectRoots.impl.JdkDownloaderService
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
@@ -31,12 +31,12 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
-private const val DIALOG_TITLE = "Add new JDK"
+private const val DIALOG_TITLE = "Download JDK"
 
-internal class JDKDownloaderServiceUI : JDKDownloaderService() {
-  private val LOG = logger<JDKDownloaderService>()
+internal class JdkDownloaderUI : JdkDownloaderService() {
+  private val LOG = logger<JdkDownloaderService>()
 
-  override fun downloadOrSelectJDK(javaSdkType: JavaSdkImpl,
+  override fun downloadOrSelectJdk(javaSdkType: JavaSdkImpl,
                                    sdkModel: SdkModel,
                                    parentComponent: JComponent,
                                    callback: Consumer<Sdk>) {
@@ -51,7 +51,7 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
     ProgressManager.getInstance().run(object : Task.Modal(project, "Downloading JDK list...", true) {
       override fun run(indicator: ProgressIndicator) {
         val items = try {
-          JDKListDownloader.downloadModel(progress = indicator)
+          JdkListDownloader.downloadModel(progress = indicator)
         }
         catch (t: ProcessCanceledException) {
           return
@@ -65,7 +65,7 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
                                        Messages.getErrorIcon()
             )
 
-            val jdkHome = showJDKSelectorFromDisk(javaSdkType, parentComponent)
+            val jdkHome = showJdkSelectorFromDisk(javaSdkType, parentComponent)
             addSdkIfNotNull(jdkHome)
           }
           return
@@ -74,7 +74,7 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
         indicator.checkCanceled()
         invokeLater {
           if (project?.isDisposedOrDisposeInProgress == true) return@invokeLater
-          val jdkHome = SelectOrDownloadJDKDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJDK()
+          val jdkHome = DownloadJdkDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJdk()
           addSdkIfNotNull(jdkHome)
         }
       }
@@ -82,7 +82,7 @@ internal class JDKDownloaderServiceUI : JDKDownloaderService() {
   }
 }
 
-private fun showJDKSelectorFromDisk(sdkType: SdkType, component: Component?): String? {
+private fun showJdkSelectorFromDisk(sdkType: SdkType, component: Component?): String? {
   var jdkHome: String? = null
   SdkConfigurationUtil.selectSdkHome(sdkType, component) {
     jdkHome = it
@@ -90,13 +90,13 @@ private fun showJDKSelectorFromDisk(sdkType: SdkType, component: Component?): St
   return jdkHome
 }
 
-private class SelectOrDownloadJDKDialog(
+private class DownloadJdkDialog(
   val project: Project?,
   val parentComponent: Component?,
   val sdkType: SdkType,
-  val items: List<JDKItem>
+  val items: List<JdkItem>
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
-  private val LOG = logger<SelectOrDownloadJDKDialog>()
+  private val LOG = logger<DownloadJdkDialog>()
 
   private val panel: JComponent
   private var installDirTextField: TextFieldWithBrowseButton
@@ -105,9 +105,9 @@ private class SelectOrDownloadJDKDialog(
     override fun doAction(e: ActionEvent?) = doSelectFromDiskAction()
   }
 
-  private lateinit var selectedItem: JDKItem
+  private lateinit var selectedItem: JdkItem
   private lateinit var selectedPath: String
-  private lateinit var resultingJDKHome: String
+  private lateinit var resultingJdkHome: String
 
   init {
     title = DIALOG_TITLE
@@ -119,11 +119,11 @@ private class SelectOrDownloadJDKDialog(
     vendorComboBox.selectedItem = defaultItem.product
     vendorComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.getPackagePresentationText) }
 
-    val versionModel = DefaultComboBoxModel<JDKItem>()
+    val versionModel = DefaultComboBoxModel<JdkItem>()
     val versionComboBox = ComboBox(versionModel)
     versionComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.getVersionPresentationText) }
 
-    fun selectVersions(newProduct: JDKProduct) {
+    fun selectVersions(newProduct: JdkProduct) {
       val newVersions = items.filter { it.product == newProduct }.sorted()
       versionModel.removeAllElements()
       for (version in newVersions) {
@@ -137,7 +137,7 @@ private class SelectOrDownloadJDKDialog(
       fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     )
 
-    fun selectInstallPath(newVersion: JDKItem) {
+    fun selectInstallPath(newVersion: JdkItem) {
       val installFolderName = newVersion.installFolderName
       val path = when {
         SystemInfo.isLinux || SystemInfo.isMac ->  "~/.jdks/$installFolderName"
@@ -157,7 +157,7 @@ private class SelectOrDownloadJDKDialog(
     panel = panel {
       row("Vendor:") { vendorComboBox.invoke() }
       row("Version:") { versionComboBox.invoke() }
-      row("Install JDK to:") { installDirTextField.invoke() }
+      row("Location:") { installDirTextField.invoke() }
     }
 
     init()
@@ -168,7 +168,7 @@ private class SelectOrDownloadJDKDialog(
     super.doValidate()?.let { return it }
 
     val path = selectedPath
-    val (_, error) = JDKInstaller.validateInstallDir(path)
+    val (_, error) = JdkInstaller.validateInstallDir(path)
     return error?.let { ValidationInfo(error, installDirTextField) }
   }
 
@@ -176,9 +176,9 @@ private class SelectOrDownloadJDKDialog(
   override fun createCenterPanel() = panel
 
   private fun doSelectFromDiskAction() {
-    val jdkHome = showJDKSelectorFromDisk(sdkType, panel)
+    val jdkHome = showJdkSelectorFromDisk(sdkType, panel)
     if (jdkHome != null) {
-      resultingJDKHome = jdkHome
+      resultingJdkHome = jdkHome
       close(OK_EXIT_CODE)
     }
   }
@@ -190,9 +190,9 @@ private class SelectOrDownloadJDKDialog(
     ProgressManager.getInstance().run(object : Task.Modal(project, "Installing JDK...", true) {
       override fun run(indicator: ProgressIndicator) {
         try {
-          val targetDir = JDKInstaller.installJDK(installItem, installPath, indicator)
+          val targetDir = JdkInstaller.installJdk(installItem, installPath, indicator)
           invokeLater {
-            resultingJDKHome = targetDir.absolutePath
+            resultingJdkHome = targetDir.absolutePath
             superDoOKAction()
           }
         } catch (t: ProcessCanceledException) {
@@ -214,8 +214,8 @@ private class SelectOrDownloadJDKDialog(
   private fun superDoOKAction() = super.doOKAction()
 
   // returns unpacked JDK location (if any) or null if cancelled
-  fun selectOrDownloadAndUnpackJDK(): String? = when {
-    showAndGet() -> resultingJDKHome
+  fun selectOrDownloadAndUnpackJdk(): String? = when {
+    showAndGet() -> resultingJdkHome
     else -> null
   }
 
