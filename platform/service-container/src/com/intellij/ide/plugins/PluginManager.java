@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ExceptionUtil;
@@ -12,9 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 
 public final class PluginManager {
@@ -98,13 +101,30 @@ public final class PluginManager {
 
   /**
    * @deprecated Bad API, sorry. Please use {@link #isDisabled(String)} to check plugin's state,
-   * {@link #enablePlugin(String)}/{@link #disablePlugin(String)} for state management,
-   * {@link #disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
+   * {@link PluginManagerCore#enablePlugin(String)}/{@link PluginManagerCore#disablePlugin(String)} for state management,
+   * {@link PluginManagerCore#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @NotNull
   public static List<String> getDisabledPlugins() {
     return PluginManagerCore.getDisabledPlugins();
+  }
+
+  public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
+    PluginManagerCore.saveDisabledPlugins(ids, append);
+  }
+
+  public static boolean disablePlugin(@NotNull String id) {
+    return PluginManagerCore.disablePlugin(id);
+  }
+
+  public static boolean enablePlugin(@NotNull String id) {
+    return PluginManagerCore.enablePlugin(id);
+  }
+
+  @NotNull
+  public static Logger getLogger() {
+    return PluginManagerCore.getLogger();
   }
 }
