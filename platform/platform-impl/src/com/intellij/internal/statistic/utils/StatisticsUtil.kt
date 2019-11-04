@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.application.ApplicationManager
@@ -244,7 +247,7 @@ private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
  * so isBundled check is not enough
  */
 private fun getBundledJetBrainsPluginDescriptors(): List<IdeaPluginDescriptor> {
-  return PluginManager.getPlugins().filter { it.isBundled && PluginManagerMain.isDevelopedByJetBrains(it) }.toList()
+  return PluginManagerCore.getPlugins().filter { it.isBundled && PluginManagerMain.isDevelopedByJetBrains(it) }.toList()
 }
 
 /**

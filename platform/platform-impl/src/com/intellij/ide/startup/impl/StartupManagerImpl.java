@@ -399,7 +399,9 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       long startTime = StartUpMeasurer.getCurrentTime();
 
       ClassLoader loader = runnable.getClass().getClassLoader();
-      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginId().getIdString() : PluginManagerCore.CORE_PLUGIN_ID;
+      String pluginId = loader instanceof PluginClassLoader
+                        ? ((PluginClassLoader)loader).getPluginId().getIdString()
+                        : PluginManagerCore.CORE_ID.getIdString();
 
       runActivity(runnable);
 

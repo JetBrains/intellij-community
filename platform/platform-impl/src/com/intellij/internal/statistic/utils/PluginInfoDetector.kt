@@ -38,13 +38,15 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
  * so API from it may be reported
  */
 fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor?): PluginInfo {
-  if (plugin == null) return unknownPlugin
+  if (plugin == null) {
+    return unknownPlugin
+  }
 
-  val id = plugin.pluginId.idString
-  if (PluginManagerCore.CORE_PLUGIN_ID == id) {
+  if (PluginManagerCore.CORE_ID == plugin.pluginId) {
     return platformPlugin
   }
 
+  val id = plugin.pluginId.idString
   if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
     return if (plugin.isBundled) {
       PluginInfo(PluginType.JB_BUNDLED, id)

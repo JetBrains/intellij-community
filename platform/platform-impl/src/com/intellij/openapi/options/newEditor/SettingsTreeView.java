@@ -10,6 +10,7 @@ import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
@@ -653,9 +654,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         PluginDescriptor plugin =
           node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getExtensionPoint()
             .getPluginDescriptor() : null;
-        String pluginId = plugin == null ? null : plugin.getPluginId().getIdString();
-        String pluginName = pluginId == null || PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) ? null :
-                            plugin instanceof IdeaPluginDescriptor ? ((IdeaPluginDescriptor)plugin).getName() : pluginId;
+        PluginId pluginId = plugin == null ? null : plugin.getPluginId();
+        String pluginName;
+        if (pluginId == null || PluginManagerCore.CORE_ID == pluginId) {
+          pluginName = null;
+        }
+        else {
+          pluginName = plugin instanceof IdeaPluginDescriptor ? ((IdeaPluginDescriptor)plugin).getName() : pluginId.getIdString();
+        }
         myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
         myTextLabel.append(pluginName == null ? id : id + " (" + pluginName + ")", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
       }

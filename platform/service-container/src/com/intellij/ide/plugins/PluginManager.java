@@ -67,4 +67,18 @@ public final class PluginManager {
   public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     return PluginManagerCore.getPlugin(id);
   }
+
+  @NotNull
+  public static IdeaPluginDescriptor[] getPlugins() {
+    return PluginManagerCore.getPlugins();
+  }
+
+  public static boolean isPluginInstalled(PluginId id) {
+    return PluginManagerCore.isPluginInstalled(id);
+  }
+
+  @Nullable
+  public static PluginId getPluginByClassName(@NotNull String className) {
+    return PluginManagerCore.getPluginByClassName(className);
+  }
 }

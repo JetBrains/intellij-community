@@ -61,7 +61,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
       String pluginVersion = plugin.getVersion();
       BuildNumber currentIdeVersion = ApplicationInfo.getInstance().getBuild();
       if (plugin.isBundled() && !plugin.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
-        String pluginFromString = PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId().getIdString()) ? "" : "plugin '" + plugin.getName() + "' from ";
+        String pluginFromString = PluginManagerCore.CORE_ID == plugin.getPluginId() ? "" : "plugin '" + plugin.getName() + "' from ";
         if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {
           errorMessages.add("Project '" + project.getName() + "' requires " + pluginFromString +
                             "'" + minVersion + "' or newer build of the IDE, but the current build is '" + pluginVersion + "'.");

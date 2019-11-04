@@ -371,7 +371,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   @NotNull
   public String getPluginIdString() {
-    return myPluginId != null ? myPluginId.getIdString() : PluginManagerCore.CORE_PLUGIN_ID;
+    return myPluginId != null ? myPluginId.getIdString() : PluginManagerCore.CORE_ID.getIdString();
   }
 
   @Override

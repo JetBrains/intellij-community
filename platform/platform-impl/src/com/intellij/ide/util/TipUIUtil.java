@@ -80,7 +80,7 @@ public class TipUIUtil {
   public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
     PluginDescriptor descriptor = tip.getPluginDescriptor();
     return descriptor instanceof IdeaPluginDescriptor &&
-           !PluginManagerCore.CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString()) ?
+           PluginManagerCore.CORE_ID != descriptor.getPluginId() ?
            ((IdeaPluginDescriptor)descriptor).getName() : "";
   }
 

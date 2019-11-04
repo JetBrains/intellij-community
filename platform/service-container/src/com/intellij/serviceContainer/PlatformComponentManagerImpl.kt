@@ -381,7 +381,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
   protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
-    val pluginId = if (loader is PluginClassLoader) loader.pluginIdString else PluginManagerCore.CORE_PLUGIN_ID
+    val pluginId = if (loader is PluginClassLoader) loader.pluginIdString else PluginManagerCore.CORE_ID.idString
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
