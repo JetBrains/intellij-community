@@ -31,7 +31,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,13 +43,12 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private HighlighterClient myEditor;
   private final Lexer myLexer;
   private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
-  private final SegmentArrayWithData mySegments;
+  private SegmentArrayWithData mySegments;
   private final SyntaxHighlighter myHighlighter;
   @NotNull
   private EditorColorsScheme myScheme;
   private final int myInitialState;
   protected CharSequence myText;
-  private boolean myCancelable;
 
   public LexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
     myScheme = scheme;
@@ -59,15 +57,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myInitialState = myLexer.getState();
     myHighlighter = highlighter;
     mySegments = createSegments();
-  }
-
-  /**
-   * @param cancelable whether {@link #setText} may be interrupted by a {@link ProcessCanceledException} safely and this lexer
-   *                   won't be used after that exception and thus its internal incomplete data structures won't break anyone
-   */
-  @ApiStatus.Internal
-  public void setCancelable(boolean cancelable) {
-    myCancelable = cancelable;
   }
 
   @NotNull
@@ -424,38 +413,38 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
   }
 
-  protected class TokenProcessor {
-    public void addToken(final int i, final int startOffset, final int endOffset, final int data, @NotNull IElementType tokenType) {
-      mySegments.setElementAt(i, startOffset, endOffset, data);
-    }
+  protected interface TokenProcessor {
+    void addToken(int tokenIndex, int startOffset, int endOffset, int data, @NotNull IElementType tokenType);
 
-    public void finish() {
-    }
+    default void finish() {}
   }
 
   private void doSetText(@NotNull CharSequence text) {
     if (Comparing.equal(myText, text)) return;
-    myText = ImmutableCharSequence.asImmutable(text);
+    text = ImmutableCharSequence.asImmutable(text);
 
-    final TokenProcessor processor = createTokenProcessor(0);
-    final int textLength = text.length();
+    SegmentArrayWithData tempSegments = createSegments();
+    TokenProcessor processor = createTokenProcessor(0, tempSegments, text);
+    int textLength = text.length();
+
     myLexer.start(text, 0, textLength, myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
-    mySegments.removeAll();
-    boolean cancelable = myCancelable;
     int i = 0;
     while (true) {
       final IElementType tokenType = myLexer.getTokenType();
       if (tokenType == null) break;
 
       int state = myLexer.getState();
-      int data = mySegments.packData(tokenType, state, canRestart(state));
+      int data = tempSegments.packData(tokenType, state, canRestart(state));
       processor.addToken(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data, tokenType);
       i++;
-      if (cancelable && i % 1024 == 0) {
+      if (i % 1024 == 0) {
         ProgressManager.checkCanceled();
       }
       myLexer.advance();
     }
+
+    myText = text;
+    mySegments = tempSegments;
     processor.finish();
 
     if (textLength > 0 && (mySegments.mySegmentCount == 0 || mySegments.myEnds[mySegments.mySegmentCount - 1] != textLength)) {
@@ -468,8 +457,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @NotNull
-  protected TokenProcessor createTokenProcessor(final int startIndex) {
-    return new TokenProcessor();
+  protected TokenProcessor createTokenProcessor(int startIndex, SegmentArrayWithData segments, CharSequence myText) {
+    return (tokenIndex, startOffset, endOffset, data, tokenType) -> segments.setElementAt(tokenIndex, startOffset, endOffset, data);
   }
 
   @NotNull
