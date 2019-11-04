@@ -2,7 +2,7 @@
 package com.intellij.ide.cds
 
 import com.google.common.hash.Hashing
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
@@ -61,7 +61,7 @@ class CDSPaths private constructor(val baseDir: File,
       hasher.putString(SystemInfo.JAVA_VERSION, Charsets.UTF_8)
 
       //active plugins
-      PluginManager.getLoadedPlugins().sortedBy { it.pluginId.idString }.forEach {
+      PluginManagerCore.getLoadedPlugins().sortedBy { it.pluginId.idString }.forEach {
         hasher.putString(it.pluginId.idString + ":" + it.version, Charsets.UTF_8)
       }
 

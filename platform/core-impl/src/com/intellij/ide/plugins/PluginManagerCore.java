@@ -77,6 +77,7 @@ public final class PluginManagerCore {
 
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
   private static final PluginId JAVA_ID = PluginId.getId("com.intellij.modules.java");
+
   public static final String CORE_PLUGIN_ID = CORE_ID.getIdString();
 
   public static final String PLUGIN_XML = "plugin.xml";
@@ -88,7 +89,7 @@ public final class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField")
   public static String BUILD_NUMBER;
 
-  private static final TObjectIntHashMap<PluginId> ourId2Index = new TObjectIntHashMap<>();
+  private static final TObjectIntHashMap<PluginId> ourIdToIndex = new TObjectIntHashMap<>();
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
 
   private static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
@@ -115,10 +116,10 @@ public final class PluginManagerCore {
 
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static Set<String> ourPlugins2Disable;
+  public static Set<String> ourPluginsToDisable;
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static Set<String> ourPlugins2Enable;
+  public static Set<String> ourPluginsToEnable;
 
   private static class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
@@ -235,8 +236,8 @@ public final class PluginManagerCore {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static @NotNull
-  List<String> getDisabledPlugins() {
+  @NotNull
+  public static List<String> getDisabledPlugins() {
     Set<String> list = loadDisabledPlugins();
     return new AbstractList<String>() {
       //<editor-fold desc="Just a ist-like immutable wrapper over a set; move along.">
@@ -423,7 +424,7 @@ public final class PluginManagerCore {
   }
 
   public static int getPluginLoadingOrder(@NotNull PluginId id) {
-    return ourId2Index.get(id);
+    return ourIdToIndex.get(id);
   }
 
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
@@ -459,11 +460,16 @@ public final class PluginManagerCore {
     }
     IdeaPluginDescriptor result = null;
     for (IdeaPluginDescriptor o : getPlugins()) {
-      if (!hasLoadedClass(className, o.getPluginClassLoader())) continue;
+      if (!hasLoadedClass(className, o.getPluginClassLoader())) {
+        continue;
+      }
       result = o;
       break;
     }
-    if (result == null) return null;
+
+    if (result == null) {
+      return null;
+    }
 
     // return if the found plugin is not "core" or the package is obviously "core"
     if (result.getPluginId() != CORE_ID ||
@@ -1350,20 +1356,21 @@ public final class PluginManagerCore {
       IdeaPluginDescriptorImpl dep = idMap.get(depId);
       return dep != null && dep.isEnabled();
     };
+
     for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
+      loop:
       for (IdeaPluginDescriptorImpl dep : optionalDescriptorRecursively(descriptor, enabledCondition)) {
-        boolean requiredDepMissing = false;
         for (PluginId depId : dep.getDependentPluginIds()) {
           if (!enabledCondition.test(depId) &&
               ArrayUtil.indexOf(dep.getOptionalDependentPluginIds(), depId) == -1) {
-            requiredDepMissing = true;
-            break;
+            continue loop;
           }
         }
-        if (requiredDepMissing) continue;
+
         descriptor.mergeOptionalConfig(dep);
       }
     }
+
     for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
       descriptor.setOptionalDescriptors(null);
     }
@@ -1560,7 +1567,9 @@ public final class PluginManagerCore {
 
       BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, null, null);
       if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
-        if (!message.isEmpty()) message += ", ";
+        if (!message.isEmpty()) {
+          message += ", ";
+        }
         message += "until build " + untilBuildNumber + " < " + buildNumber;
       }
       return StringUtil.nullize(message);
@@ -1572,7 +1581,10 @@ public final class PluginManagerCore {
   }
 
   private static void checkEssentialPluginsAreAvailable(@NotNull Collection<? extends IdeaPluginDescriptor> plugins) {
-    if (isUnitTestMode) return;
+    if (isUnitTestMode) {
+      return;
+    }
+
     Set<String> available = ContainerUtil.map2Set(plugins, plugin -> plugin.getPluginId().getIdString());
     List<String> required = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
 
@@ -1582,6 +1594,7 @@ public final class PluginManagerCore {
         missing.add(id);
       }
     }
+
     if (!missing.isEmpty()) {
       throw new EssentialPluginMissingException(missing);
     }
@@ -1897,17 +1910,19 @@ public final class PluginManagerCore {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors();
       List<List<IdeaPluginDescriptorImpl>> lists = initializePlugins(result, coreLoader, (d, e) -> {
-        ourPlugins2Disable = d;
-        ourPlugins2Enable = e;
+        ourPluginsToDisable = d;
+        ourPluginsToEnable = e;
       });
       ourPlugins = lists.get(0).toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
       ourLoadedPlugins = lists.get(1);
       checkEssentialPluginsAreAvailable(ourLoadedPlugins);
+
       int count = 0;
-      ourId2Index.ensureCapacity(ourLoadedPlugins.size());
+      ourIdToIndex.ensureCapacity(ourLoadedPlugins.size());
       for (IdeaPluginDescriptor descriptor : ourLoadedPlugins) {
-        ourId2Index.put(descriptor.getPluginId(), count++);
+        ourIdToIndex.put(descriptor.getPluginId(), count++);
       }
+
       loadPluginsActivity.end();
       loadPluginsActivity.setDescription("plugin count: " + result.plugins.size());
     }

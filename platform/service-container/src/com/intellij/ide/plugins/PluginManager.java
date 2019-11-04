@@ -8,10 +8,14 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
@@ -20,9 +24,9 @@ public final class PluginManager {
    * @return file with list of once installed plugins if it exists, null otherwise
    */
   @Nullable
-  public static File getOnceInstalledIfExists() {
-    File onceInstalledFile = new File(PathManager.getConfigPath(), INSTALLED_TXT);
-    return onceInstalledFile.isFile() ? onceInstalledFile : null;
+  public static Path getOnceInstalledIfExists() {
+    Path onceInstalledFile = Paths.get(PathManager.getConfigPath(), INSTALLED_TXT);
+    return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
   @SuppressWarnings("unused")
@@ -80,5 +84,27 @@ public final class PluginManager {
   @Nullable
   public static PluginId getPluginByClassName(@NotNull String className) {
     return PluginManagerCore.getPluginByClassName(className);
+  }
+
+  @NotNull
+  public static List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
+    return PluginManagerCore.getLoadedPlugins();
+  }
+
+  @Nullable
+  public static PluginId getPluginOrPlatformByClassName(@NotNull String className) {
+    return PluginManagerCore.getPluginOrPlatformByClassName(className);
+  }
+
+  /**
+   * @deprecated Bad API, sorry. Please use {@link #isDisabled(String)} to check plugin's state,
+   * {@link #enablePlugin(String)}/{@link #disablePlugin(String)} for state management,
+   * {@link #disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @NotNull
+  public static List<String> getDisabledPlugins() {
+    return PluginManagerCore.getDisabledPlugins();
   }
 }

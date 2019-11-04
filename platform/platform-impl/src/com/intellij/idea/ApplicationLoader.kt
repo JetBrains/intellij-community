@@ -655,11 +655,11 @@ private fun reportPluginError() {
     }
 
     val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
-    if (PluginManagerCore.ourPlugins2Disable != null && PluginManagerCore.DISABLE == description) {
-      disabledPlugins.addAll(PluginManagerCore.ourPlugins2Disable)
+    if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
+      disabledPlugins.addAll(PluginManagerCore.ourPluginsToDisable)
     }
-    else if (PluginManagerCore.ourPlugins2Enable != null && PluginManagerCore.ENABLE == description) {
-      disabledPlugins.removeAll(PluginManagerCore.ourPlugins2Enable)
+    else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
+      disabledPlugins.removeAll(PluginManagerCore.ourPluginsToEnable)
       PluginManagerMain.notifyPluginsUpdated(null)
     }
 
@@ -668,8 +668,8 @@ private fun reportPluginError() {
     }
     catch (ignore: IOException) { }
 
-    PluginManagerCore.ourPlugins2Enable = null
-    PluginManagerCore.ourPlugins2Disable = null
+    PluginManagerCore.ourPluginsToEnable = null
+    PluginManagerCore.ourPluginsToDisable = null
   })
 
   PluginManagerCore.ourPluginError = null

@@ -37,6 +37,7 @@ import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
@@ -236,17 +237,18 @@ object UpdateChecker {
     val onceInstalled = PluginManager.getOnceInstalledIfExists()
     if (onceInstalled != null) {
       try {
-        FileUtil.loadLines(onceInstalled)
+        Files.readAllLines(onceInstalled)
+          .asSequence()
           .map { line -> PluginId.getId(line.trim { it <= ' ' }) }
           .filter { it !in updateable }
           .forEach { updateable[it] = null }
       }
       catch (e: IOException) {
-        LOG.error(onceInstalled.path, e)
+        LOG.error(onceInstalled.toString(), e)
       }
 
       //noinspection SSBasedInspection
-      onceInstalled.deleteOnExit()
+      onceInstalled.toFile().deleteOnExit()
     }
 
     if (!ApplicationManager.getApplication().isInternal && excludedFromUpdateCheckPlugins.isNotEmpty()) {

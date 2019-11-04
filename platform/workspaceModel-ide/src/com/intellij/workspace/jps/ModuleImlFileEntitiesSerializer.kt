@@ -1,18 +1,19 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.jps
 
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.isEmpty
+import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
 import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
-import com.intellij.util.isEmpty
-import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
@@ -218,7 +219,7 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
     return savedEntities
   }
 
-  private fun javaPluginPresent() = PluginManager.getPlugin(PluginId.getId("com.intellij.java")) != null
+  private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
 
   private fun saveJavaSettings(javaSettings: JavaModuleSettingsEntity?,
                                rootManagerElement: Element,
