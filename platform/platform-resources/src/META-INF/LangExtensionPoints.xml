@@ -989,14 +989,13 @@
                     interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="codeBlockProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeBlockProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.CodeBlockProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
+    <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory" dynamic="true"/>
 
-    <extensionPoint name="module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider"/>
+    <extensionPoint name="module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider" dynamic="true"/>
 
     <extensionPoint name="projectStructure.sourceRootEditHandler"
                     interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler" dynamic="true"/>
