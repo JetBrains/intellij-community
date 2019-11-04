@@ -7,38 +7,37 @@ package org.toml.ide
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
 import gnu.trove.THashMap
+import org.toml.ide.colors.TomlColor
 import org.toml.lang.lexer.TomlHighlightingLexer
 import org.toml.lang.psi.TomlElementTypes.*
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 
 class TomlHighlighter : SyntaxHighlighterBase() {
     override fun getHighlightingLexer(): Lexer =
         TomlHighlightingLexer()
 
     override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> =
-        pack(tokenMap[tokenType])
+        pack(tokenMap[tokenType]?.textAttributesKey)
 
-    private val tokenMap: Map<IElementType, TextAttributesKey> =
-        THashMap<IElementType, TextAttributesKey>().apply {
-            put(BARE_KEY, createTextAttributesKey("TOML_KEY", Default.KEYWORD))
-            put(COMMENT, createTextAttributesKey("TOML_COMMENT", Default.LINE_COMMENT))
-            put(BASIC_STRING, createTextAttributesKey("TOML_STRING", Default.STRING))
-            put(LITERAL_STRING, createTextAttributesKey("TOML_STRING", Default.STRING))
-            put(MULTILINE_BASIC_STRING, createTextAttributesKey("TOML_STRING", Default.STRING))
-            put(MULTILINE_LITERAL_STRING, createTextAttributesKey("TOML_STRING", Default.STRING))
-            put(NUMBER, createTextAttributesKey("TOML_NUMBER", Default.NUMBER))
-            put(BOOLEAN, createTextAttributesKey("TOML_BOOLEAN", Default.PREDEFINED_SYMBOL))
-            put(DATE_TIME, createTextAttributesKey("TOML_DATE", Default.PREDEFINED_SYMBOL))
-            put(INVALID_CHARACTER_ESCAPE_TOKEN, createTextAttributesKey("TOML_INVALID_STRING_ESCAPE", Default.INVALID_STRING_ESCAPE))
-            put(INVALID_UNICODE_ESCAPE_TOKEN, createTextAttributesKey("TOML_INVALID_STRING_ESCAPE", Default.INVALID_STRING_ESCAPE))
-            put(VALID_STRING_ESCAPE_TOKEN, createTextAttributesKey("TOML_VALID_STRING_ESCAPE", Default.VALID_STRING_ESCAPE))
+    private val tokenMap: Map<IElementType, TomlColor> =
+        THashMap<IElementType, TomlColor>().apply {
+            put(BARE_KEY, TomlColor.KEY)
+            put(COMMENT, TomlColor.COMMENT)
+            put(BASIC_STRING, TomlColor.STRING)
+            put(LITERAL_STRING, TomlColor.STRING)
+            put(MULTILINE_BASIC_STRING, TomlColor.STRING)
+            put(MULTILINE_LITERAL_STRING, TomlColor.STRING)
+            put(NUMBER, TomlColor.NUMBER)
+            put(BOOLEAN, TomlColor.BOOLEAN)
+            put(DATE_TIME, TomlColor.DATE)
+            put(INVALID_CHARACTER_ESCAPE_TOKEN, TomlColor.INVALID_STRING_ESCAPE)
+            put(INVALID_UNICODE_ESCAPE_TOKEN, TomlColor.INVALID_STRING_ESCAPE)
+            put(VALID_STRING_ESCAPE_TOKEN, TomlColor.VALID_STRING_ESCAPE)
         }
 }
 
