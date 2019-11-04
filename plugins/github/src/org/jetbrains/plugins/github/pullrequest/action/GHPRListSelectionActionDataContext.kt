@@ -1,52 +1,42 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
-import com.intellij.openapi.Disposable
-import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionHolder
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-class GHPRActionDataContext internal constructor(internal val dataContext: GHPullRequestsDataContext,
-                                                 private val selectionHolder: GithubPullRequestsListSelectionHolder,
-                                                 val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory) {
+class GHPRListSelectionActionDataContext internal constructor(private val dataContext: GHPullRequestsDataContext,
+                                                              private val selectionHolder: GithubPullRequestsListSelectionHolder,
+                                                              override val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+  : GHPRActionDataContext {
 
-  val gitRepositoryCoordinates: GitRemoteUrlCoordinates = dataContext.gitRepositoryCoordinates
-  val repositoryCoordinates: GHRepositoryCoordinates = dataContext.repositoryCoordinates
-  val requestExecutor: GithubApiRequestExecutor = dataContext.requestExecutor
-  val currentUser: GHUser = dataContext.securityService.currentUser
+  override val gitRepositoryCoordinates = dataContext.gitRepositoryCoordinates
+  override val repositoryCoordinates = dataContext.repositoryCoordinates
 
-  fun resetAllData() {
+  override val securityService = dataContext.securityService
+  override val busyStateTracker = dataContext.busyStateTracker
+  override val stateService = dataContext.stateService
+  override val reviewService = dataContext.reviewService
+  override val commentService = dataContext.commentService
+
+  override val requestExecutor = dataContext.requestExecutor
+
+  override val currentUser = dataContext.securityService.currentUser
+
+  override fun resetAllData() {
     dataContext.metadataService.resetData()
     dataContext.listLoader.reset()
     dataContext.dataLoader.invalidateAllData()
   }
 
-  val pullRequest: Long?
+  override val pullRequest: Long?
     get() = selectionHolder.selectionNumber
 
-  val pullRequestDetails: GHPullRequestShort?
+  override val pullRequestDetails: GHPullRequestShort?
     get() = pullRequest?.let { dataContext.listLoader.findData(it) }
 
-  val pullRequestDataProvider: GithubPullRequestDataProvider?
+  override val pullRequestDataProvider: GithubPullRequestDataProvider?
     get() = pullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
-
-  companion object {
-    @JvmStatic
-    internal fun withFixedPullRequest(context: GHPRActionDataContext, pullRequest: Long): GHPRActionDataContext {
-      return GHPRActionDataContext(context.dataContext, object : GithubPullRequestsListSelectionHolder {
-        override var selectionNumber: Long?
-          get() = pullRequest
-          set(value) {}
-
-        override fun addSelectionChangeListener(disposable: Disposable, listener: () -> Unit) {
-        }
-      }, context.avatarIconsProviderFactory)
-    }
-  }
 }

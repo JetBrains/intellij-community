@@ -30,7 +30,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
+import org.jetbrains.plugins.github.pullrequest.action.GHPRListSelectionActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -169,7 +169,7 @@ internal class GHPRComponentFactory(private val project: Project) {
   private fun createContent(dataContext: GHPullRequestsDataContext, disposable: Disposable): JComponent {
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
     val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
-    val actionDataContext = GHPRActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
+    val actionDataContext = GHPRListSelectionActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
 
     val list = createListComponent(dataContext, listSelectionHolder, avatarIconsProviderFactory, disposable)
 

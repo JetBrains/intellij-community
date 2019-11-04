@@ -33,6 +33,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
+import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
@@ -90,7 +91,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       val pullRequest = context.pullRequest!!
       DataManager.registerDataProvider(it, DataProvider { dataId ->
         if (GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(dataId))
-          GHPRActionDataContext.withFixedPullRequest(context, pullRequest)
+          GHPRFixedActionDataContext(context, dataProvider)
         else null
       })
     }
@@ -98,7 +99,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val avatarIconsProvider = context.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
-    val reviewService = dataProvider.let { GHPRReviewServiceAdapter.create(context.dataContext.reviewService, it) }
+    val reviewService = dataProvider.let { GHPRReviewServiceAdapter.create(context.reviewService, it) }
     val timeline = GHPRTimelineComponent(loader.listModel,
                                          createItemComponentFactory(project, reviewService, reviewThreadsModelsProvider,
                                                                     avatarIconsProvider, context.currentUser)).apply {
@@ -129,7 +130,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         add(timeline)
         add(loadingIcon, CC().hideMode(2).alignX("center"))
 
-        with(context.dataContext.commentService) {
+        with(context.commentService) {
           if (canComment()) {
             val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
             add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser))
@@ -163,9 +164,9 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val statePanel = GHPRStatePanel.create(project, detailsModel,
                                            dataProvider,
-                                           context.dataContext.securityService,
-                                           context.dataContext.busyStateTracker,
-                                           context.dataContext.stateService,
+                                           context.securityService,
+                                           context.busyStateTracker,
+                                           context.stateService,
                                            disposable)
 
     val contentPanel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
