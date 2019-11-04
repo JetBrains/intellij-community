@@ -74,13 +74,14 @@ public abstract class GitHandler {
    * @param directory a process directory
    * @param command   a command to execute
    */
-  protected GitHandler(@NotNull Project project,
+  protected GitHandler(@Nullable Project project,
                        @NotNull File directory,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     this(project,
          directory,
-         GitExecutableManager.getInstance().getPathToGit(project),
+         project != null ? GitExecutableManager.getInstance().getPathToGit(project)
+                         : GitExecutableManager.getInstance().getPathToGit(),
          command,
          configParameters);
   }

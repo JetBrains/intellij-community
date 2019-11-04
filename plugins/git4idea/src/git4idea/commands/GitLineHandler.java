@@ -43,7 +43,9 @@ public class GitLineHandler extends GitTextHandler {
   @NotNull private GitAuthenticationMode myIgnoreAuthenticationRequest = GitAuthenticationMode.FULL;
   @Nullable private GitAuthenticationGate myAuthenticationGate;
 
-  public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
+  public GitLineHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull GitCommand command) {
     super(project, directory, command);
   }
 

@@ -13,7 +13,6 @@ import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
-import git4idea.config.GitExecutableManager
 import java.io.File
 
 class GitIgnoreChecker(val project: Project) : VcsIgnoreChecker {
@@ -27,8 +26,7 @@ class GitIgnoreChecker(val project: Project) : VcsIgnoreChecker {
   private fun isIgnored(vcsRoot: VirtualFile, checkForIgnore: String, isPattern: Boolean): IgnoredCheckResult {
     // check-ignore was introduced in 1.8.2,
     // executing the command for older Gits will fail with exit code 1, which we'll treat as "not ignored" for simplicity
-    val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(vcsRoot),
-                                 GitExecutableManager.getInstance().pathToGit, GitCommand.CHECK_IGNORE, emptyList())
+    val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(vcsRoot), GitCommand.CHECK_IGNORE)
     handler.addParameters("--verbose")
     handler.endOptions()
     handler.addParameters(checkForIgnore)

@@ -37,7 +37,7 @@ public abstract class GitTextHandler extends GitHandler {
   protected boolean myWithMediator = true;
   private int myTerminationTimeoutMs = TERMINATION_TIMEOUT_MS;
 
-  protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
+  protected GitTextHandler(@Nullable Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command, Collections.emptyList());
   }
 
