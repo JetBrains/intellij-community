@@ -117,17 +117,22 @@ class LegacyBridgeModulesTest {
       }
     }
 
-  // TODO Check the iml file was renamed on disk after fixing module storages
   @Test
   fun `test rename module from model`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
+      val oldNameFile = File(project.basePath, "oldName.iml")
+      val iprFile = File(project.projectFilePath!!)
+
       val module = moduleManager.modifiableModel.let { model ->
-        val module = model.newModule(File(project.basePath, "oldName.iml").path, ModuleType.EMPTY.id)
+        val module = model.newModule(oldNameFile.path, ModuleType.EMPTY.id)
         model.commit()
         module
       }
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+      assertTrue(oldNameFile.exists())
+      assertTrue(iprFile.readText().contains(oldNameFile.name))
 
       assertEquals("oldName", module.name)
 
@@ -147,6 +152,16 @@ class LegacyBridgeModulesTest {
       assertNull(moduleManager.findModuleByName("oldName"))
       assertSame(module, moduleManager.findModuleByName("newName"))
       assertEquals("newName", module.name)
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+
+      val newNameFile = File(project.basePath, "newName.iml")
+
+      assertFalse(iprFile.readText().contains(oldNameFile.name))
+      assertFalse(oldNameFile.exists())
+
+      assertTrue(iprFile.readText().contains(newNameFile.name))
+      assertTrue(newNameFile.exists())
     }
 
   @Test
