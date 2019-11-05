@@ -29,7 +29,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   private Object myInstance;
 
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-    super(componentKey, componentImplementation, parameters, allowNonPublicClasses, DefaultPicoContainer.DEFAULT_LIFECYCLE_STRATEGY);
+    super(componentKey, componentImplementation, parameters, allowNonPublicClasses);
   }
 
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
@@ -115,8 +115,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   }
 
   @NotNull
-  @Override
-  protected Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
+  private Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
                                                                                     PicoIntrospectionException,
                                                                                     AssignabilityRegistrationException, NotConcreteRegistrationException {
     final Set<Constructor<?>> conflicts = new HashSet<>();
@@ -210,5 +209,89 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   @NotNull
   private Constructor<?>[] getConstructors() {
     return AccessController.doPrivileged((PrivilegedAction<Constructor<?>[]>)() -> getComponentImplementation().getDeclaredConstructors());
+  }
+}
+
+abstract class InstantiatingComponentAdapter extends AbstractComponentAdapter {
+  /**
+   * The parameters to use for initialization.
+   */
+  protected transient Parameter[] parameters;
+  protected boolean allowNonPublicClasses;
+
+  /**
+   * The cycle guard for the verification.
+   */
+  protected static abstract class Guard extends ThreadLocalCyclicDependencyGuard {
+    protected PicoContainer guardedContainer;
+
+    protected void setArguments(PicoContainer container) {
+      this.guardedContainer = container;
+    }
+  }
+
+  /**
+   * Constructs a new ComponentAdapter for the given key and implementation.
+   *
+   * @param componentKey            the search key for this implementation
+   * @param componentImplementation the concrete implementation
+   * @param parameters              the parameters to use for the initialization
+   * @param allowNonPublicClasses   flag to allow instantiation of non-public classes
+   */
+  protected InstantiatingComponentAdapter(Object componentKey,
+                                          Class componentImplementation,
+                                          Parameter[] parameters,
+                                          boolean allowNonPublicClasses) {
+    super(componentKey, componentImplementation);
+    checkConcrete();
+    if (parameters != null) {
+      for (int i = 0; i < parameters.length; i++) {
+        if (parameters[i] == null) {
+          throw new NullPointerException("Parameter " + i + " is null");
+        }
+      }
+    }
+    this.parameters = parameters;
+    this.allowNonPublicClasses = allowNonPublicClasses;
+  }
+
+  private void checkConcrete() throws NotConcreteRegistrationException {
+    // Assert that the component class is concrete.
+    boolean isAbstract = (getComponentImplementation().getModifiers() & Modifier.ABSTRACT) == Modifier.ABSTRACT;
+    if (getComponentImplementation().isInterface() || isAbstract) {
+      throw new NotConcreteRegistrationException(getComponentImplementation());
+    }
+  }
+
+  /**
+   * Create default parameters for the given types.
+   *
+   * @param parameters the parameter types
+   * @return the array with the default parameters.
+   */
+  protected Parameter[] createDefaultParameters(Class<?>[] parameters) {
+    Parameter[] componentParameters = new Parameter[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      componentParameters[i] = ComponentParameter.DEFAULT;
+    }
+    return componentParameters;
+  }
+
+  /**
+   * Instantiate an object with given parameters and respect the accessible flag.
+   *
+   * @param constructor the constructor to use
+   * @param parameters  the parameters for the constructor
+   * @return the new object.
+   * @throws InstantiationException
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   */
+  protected Object newInstance(Constructor<?> constructor, Object[] parameters)
+    throws InstantiationException, IllegalAccessException, InvocationTargetException {
+    if (allowNonPublicClasses) {
+      constructor.setAccessible(true);
+    }
+    return constructor.newInstance(parameters);
   }
 }

@@ -12,17 +12,12 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.defaults.AmbiguousComponentResolutionException;
-import org.picocontainer.defaults.DefaultLifecycleStrategy;
-import org.picocontainer.defaults.DuplicateComponentKeyRegistrationException;
-import org.picocontainer.defaults.InstanceComponentAdapter;
+import org.picocontainer.defaults.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultPicoContainer implements MutablePicoContainer {
-  public static final DefaultLifecycleStrategy DEFAULT_LIFECYCLE_STRATEGY = new DefaultLifecycleStrategy();
-
   private final PicoContainer parent;
 
   private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = ContainerUtil.newConcurrentMap();
@@ -174,16 +169,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  public List<?> getComponentInstances() {
-    throw new UnsupportedOperationException("Do not use");
-  }
-
-  @Override
-  public List<Object> getComponentInstancesOfType(@Nullable Class componentType) {
-    throw new UnsupportedOperationException("use ComponentManagerImpl.getComponentInstancesOfType");
-  }
-
-  @Override
   @Nullable
   public Object getComponentInstance(Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
@@ -236,18 +221,13 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  public void dispose() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public ComponentAdapter registerComponentInstance(@NotNull Object component) {
     return registerComponentInstance(component.getClass(), component);
   }
 
   @Override
   public ComponentAdapter registerComponentInstance(@NotNull Object componentKey, @NotNull Object componentInstance) {
-    return registerComponent(new InstanceComponentAdapter(componentKey, componentInstance, DEFAULT_LIFECYCLE_STRATEGY));
+    return registerComponent(new InstanceComponentAdapter(componentKey, componentInstance));
   }
 
   @Override
@@ -322,5 +302,21 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Override
   public String toString() {
     return "DefaultPicoContainer" + (getParent() == null ? " (root)" : " (parent="+getParent()+")");
+  }
+
+  public static final class InstanceComponentAdapter extends AbstractComponentAdapter {
+    private final Object componentInstance;
+
+    public InstanceComponentAdapter(Object componentKey, @NotNull Object componentInstance)
+      throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+      super(componentKey, componentInstance.getClass());
+
+      this.componentInstance = componentInstance;
+    }
+
+    @Override
+    public Object getComponentInstance(PicoContainer container) {
+      return componentInstance;
+    }
   }
 }

@@ -7,8 +7,6 @@
  *****************************************************************************/
 package org.picocontainer;
 
-import org.picocontainer.defaults.CachingComponentAdapter;
-
 /**
  * A component adapter is responsible for providing a specific component instance. An instance of an implementation of
  * this interface is used inside a {@link PicoContainer} for every registered component or instance.  Each
@@ -41,10 +39,6 @@ public interface ComponentAdapter {
   Class<?> getComponentImplementation();
 
   /**
-   * Retrieve the component instance. This method will usually create a new instance each time it is called, but that
-   * is not required. For example, {@link CachingComponentAdapter} will always return the
-   * same instance.
-   *
    * @param container the {@link PicoContainer}, that is used to resolve any possible dependencies of the instance.
    * @return the component instance.
    * @throws PicoInitializationException if the component could not be instantiated.

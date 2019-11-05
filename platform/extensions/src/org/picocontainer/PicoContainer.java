@@ -16,12 +16,8 @@ import java.util.List;
  * @author Paul Hammant
  * @author Aslak Helles&oslash;y
  * @author Jon Tirs&eacute;n
- * @version $Revision: 2285 $
- * @see <a href="package-summary.html#package_description">See package description for basic overview how to use
- * PicoContainer.</a>
- * @since 1.0
  */
-public interface PicoContainer extends Disposable {
+public interface PicoContainer {
 
   /**
    * Retrieve a component instance registered with a specific key. If a component cannot be found in this container,
@@ -42,15 +38,6 @@ public interface PicoContainer extends Disposable {
    * @throws PicoException if the instantiation of the component fails
    */
   Object getComponentInstanceOfType(Class componentType);
-
-  /**
-   * Retrieve all the registered component instances in the container, (not including those in the parent container).
-   * The components are returned in their order of instantiation, which depends on the dependency order between them.
-   *
-   * @return all the components.
-   * @throws PicoException if the instantiation of the component fails
-   */
-  List getComponentInstances();
 
   /**
    * Retrieve the parent container of this container.
@@ -88,7 +75,7 @@ public interface PicoContainer extends Disposable {
    * @see #getComponentAdaptersOfType(Class) a variant of this method which returns the component adapters inside this
    * container that are associated with the specified type.
    */
-  Collection getComponentAdapters();
+  Collection<ComponentAdapter> getComponentAdapters();
 
   /**
    * Retrieve all component adapters inside this container that are associated with the specified type. The component
@@ -98,16 +85,5 @@ public interface PicoContainer extends Disposable {
    * @return a collection containing all the {@link ComponentAdapter}s inside this container that are associated with
    * the specified type. Changes to this collection will not be reflected in the container itself.
    */
-  List getComponentAdaptersOfType(Class componentType);
-
-  /**
-   * Returns a List of components of a certain componentType. The list is ordered by instantiation order, starting
-   * with the components instantiated first at the beginning.
-   *
-   * @param componentType the searched type.
-   * @return a List of components.
-   * @throws PicoException if the instantiation of a component fails
-   * @since 1.1
-   */
-  List getComponentInstancesOfType(Class componentType);
+  List<ComponentAdapter> getComponentAdaptersOfType(Class componentType);
 }
