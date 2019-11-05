@@ -5,6 +5,11 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.lang.Boolean boolean getBoolean(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Boolean boolean getBoolean(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
@@ -154,9 +159,33 @@
       <val name="to" val="32"/>
     </annotation>
   </item>
+  <item name='java.lang.Integer java.lang.Integer decode(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer java.lang.Integer getInteger(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;null -&gt; null&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer java.lang.Integer getInteger(java.lang.String, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer java.lang.Integer getInteger(java.lang.String, java.lang.Integer)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_, !null -&gt; !null; null, _ -&gt; param2&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String, int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -188,6 +217,24 @@
     </annotation>
   </item>
   <item name='java.lang.Long java.lang.Long decode(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Long java.lang.Long getLong(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;null -&gt; null&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Long java.lang.Long getLong(java.lang.String, java.lang.Long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_, !null -&gt; !null; null, _ -&gt; param2&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Long java.lang.Long getLong(java.lang.String, long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Long java.lang.Long valueOf(java.lang.String)'>
@@ -807,15 +854,20 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.System java.lang.String getProperty(java.lang.String, java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NonNls"/>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 1">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NonNls"/>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.lang.System java.util.Properties getProperties()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
