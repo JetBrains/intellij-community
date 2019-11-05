@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.AbstractTreeModel;
@@ -30,6 +30,6 @@ public abstract class BaseTreeModel<T> extends AbstractTreeModel implements Chil
   @SuppressWarnings("SuspiciousMethodCalls")
   public int getIndexOfChild(Object object, Object child) {
     List<? extends T> list = getChildren(object);
-    return list == null ? -1 : getChildren(object).indexOf(child);
+    return list == null ? -1 : list.indexOf(child);
   }
 }
