@@ -99,8 +99,8 @@ public interface NonBlockingReadAction<T> {
   /**
    * Run this computation on the current thread in a non-blocking read action, when possible.
    * Note: this method can throw various exceptions (see "Throws" section)
-   * and can block the current thread for an indefinite time with just waiting,
-   * which can lead to thread starvation or unnecessary pooled thread expansion.
+   * and can block the current thread for an indefinite amount of time with just waiting,
+   * which can lead to thread starvation or unnecessary thread pool expansion.
    * Besides that, after a read action is finished, a write action in another thread can occur at any time and make the
    * just computed value obsolete.
    * Therefore, it's advised to use asynchronous {@link #submit} API where possible,
