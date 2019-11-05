@@ -367,17 +367,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     final DocumentContent content1 = getContent1();
     final DocumentContent content2 = getContent2();
 
-    EditorHighlighter highlighter = ReadAction.compute(() -> {
-      indicator.checkCanceled();
+    EditorHighlighter highlighter = ReadAction.nonBlocking(() -> {
       return buildHighlighter(myProject, myDocument, content1, content2,
                               texts[0], texts[1], builder.getRanges(),
                               builder.getText().length());
-    });
+    })
+      .cancelWith(indicator)
+      .executeSynchronously();
 
-    UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.compute(() -> {
-      indicator.checkCanceled();
+    UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.nonBlocking(() -> {
       return new UnifiedEditorRangeHighlighter(myProject, content1.getDocument(), content2.getDocument(), builder.getRanges());
-    });
+    })
+      .cancelWith(indicator)
+      .executeSynchronously();
 
     LineNumberConvertor convertor1 = builder.getConvertor1();
     LineNumberConvertor convertor2 = builder.getConvertor2();

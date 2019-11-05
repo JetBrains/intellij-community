@@ -122,7 +122,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
       final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
 
-      ComparisonData comparisonData = ReadAction.compute(() -> {
+      ComparisonData comparisonData = ReadAction.nonBlocking(() -> {
         if (!file1.isValid() || !file2.isValid()) {
           return ComparisonData.ERROR;
         }
@@ -149,7 +149,9 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
           LOG.warn(e);
           return ComparisonData.ERROR;
         }
-      });
+      })
+        .cancelWith(indicator)
+        .executeSynchronously();
 
       return applyNotification(comparisonData);
     }

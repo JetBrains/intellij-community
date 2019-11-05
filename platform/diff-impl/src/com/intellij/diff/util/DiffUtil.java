@@ -57,6 +57,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
@@ -890,6 +891,7 @@ public class DiffUtil {
   public static boolean compareStreams(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream1,
                                        @NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream2)
     throws IOException {
+    int i = 0;
     try (InputStream s1 = stream1.compute()) {
       try (InputStream s2 = stream2.compute()) {
         if (s1 == null && s2 == null) return true;
@@ -900,6 +902,8 @@ public class DiffUtil {
           int b2 = s2.read();
           if (b1 != b2) return false;
           if (b1 == -1) return true;
+
+          if (i++ % 10000 == 0) ProgressManager.checkCanceled();
         }
       }
     }
