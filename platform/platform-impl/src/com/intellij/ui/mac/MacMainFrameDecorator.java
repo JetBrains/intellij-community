@@ -363,7 +363,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
   }
 
-  public void enterFullScreenNow() {
+  private void enterFullScreenNow() {
     try {
       enterFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
@@ -372,7 +372,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
   }
 
-  public void leaveFullScreenNow() {
+  private void leaveFullScreenNow() {
     try {
       leaveFullScreenMethod.invoke(Application.getApplication(), myFrame);
     }
