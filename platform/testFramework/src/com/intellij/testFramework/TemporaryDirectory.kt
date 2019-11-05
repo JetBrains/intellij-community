@@ -42,7 +42,7 @@ class TemporaryDirectory : ExternalResource() {
       while (path.exists() && i < 9)
 
       if (path.exists()) {
-        throw IOException("Cannot generate unique random path")
+        throw IOException("Cannot generate unique random path with '$name' prefix under '$path'")
       }
       return path
     }
