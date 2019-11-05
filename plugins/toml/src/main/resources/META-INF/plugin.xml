@@ -27,6 +27,7 @@
         <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
         <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
         <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
+        <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
         <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
         <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
         <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
