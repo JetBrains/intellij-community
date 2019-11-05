@@ -73,6 +73,17 @@ object GHPRCommentsUIUtil {
       //always paint pretty border
       override fun updateBorder(editor: EditorEx) = setupBorder(editor)
 
+      override fun createEditor(): EditorEx {
+        // otherwise border background is painted from multiple places
+        return super.createEditor().apply {
+          //TODO: fix in editor
+          //com.intellij.openapi.editor.impl.EditorImpl.getComponent() == non-opaque JPanel
+          // which uses default panel color
+          component.isOpaque = false
+          //com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder.paintBorder
+          scrollPane.isOpaque = false
+        }
+      }
     }.apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       setOneLineMode(false)
