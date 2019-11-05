@@ -410,13 +410,14 @@ public class PySkeletonGenerator {
     FAILED,
   }
 
+  @SuppressWarnings("unused")
   public static class GenerationResult {
     @SerializedName("module_name")
-    public String myModuleName;
+    private String myModuleName;
     @SerializedName("module_origin")
-    public String myModuleOrigin;
+    private String myModuleOrigin;
     @SerializedName("generation_status")
-    public GenerationStatus myGenerationStatus;
+    private GenerationStatus myGenerationStatus;
 
     @NotNull
     public String getModuleName() {
