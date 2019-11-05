@@ -148,10 +148,8 @@ public class PySkeletonRefresher {
   public List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
-    if (!skeletonsDir.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      skeletonsDir.mkdirs();
-    }
+    //noinspection ResultOfMethodCallIgnored
+    skeletonsDir.mkdirs();
 
     mySkeletonsGenerator.prepare();
 
