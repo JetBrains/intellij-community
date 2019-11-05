@@ -173,6 +173,7 @@ object DynamicPlugins {
 
     jdomSerializer.clearSerializationCaches()
     BeanBinding.clearSerializationCaches()
+    Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
 
     if (disable) {
       // Update list of disabled plugins
