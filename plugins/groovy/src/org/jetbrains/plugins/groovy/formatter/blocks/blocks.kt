@@ -3,8 +3,10 @@ package org.jetbrains.plugins.groovy.formatter.blocks
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator.visibleChildren
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 
@@ -24,4 +26,8 @@ fun flattenQualifiedReference(elem: PsiElement): List<ASTNode>? {
   }
 
   return null
+}
+
+fun shouldHandleAsSimpleClosure(closure: GrClosableBlock, settings: CommonCodeStyleSettings): Boolean {
+  return settings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !closure.textContains('\n')
 }
