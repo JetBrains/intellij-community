@@ -14,14 +14,12 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MyLookupExpression;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -258,14 +256,7 @@ public class GrAliasImportIntention extends Intention {
   public static LinkedHashSet<String> getSuggestedNames(PsiElement psiElement, final PsiElement nameSuggestionContext) {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     result.add(UsageViewUtil.getShortName(psiElement));
-    for (NameSuggestionProvider provider : NameSuggestionProvider.EP_NAME.getExtensionList()) {
-      SuggestedNameInfo info = provider.getSuggestedNames(psiElement, nameSuggestionContext, result);
-      if (info != null) {
-        if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {
-          break;
-        }
-      }
-    }
+    NameSuggestionProvider.suggestNames(psiElement, nameSuggestionContext, result);
     return result;
   }
 
