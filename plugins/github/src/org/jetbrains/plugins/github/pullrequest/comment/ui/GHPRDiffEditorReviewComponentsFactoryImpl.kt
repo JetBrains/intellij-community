@@ -94,7 +94,7 @@ internal constructor(private val project: Project,
       JBInsets.removeFrom(rect, insets)
       // 2.25 scale is a @#$!% so we adjust sizes manually
       val rectangle2d = RoundRectangle2D.Float(rect.x.toFloat() + 0.5f, rect.y.toFloat() + 0.5f,
-                                               rect.width.toFloat() - 1f, rect.height.toFloat() - 0.5f,
+                                               rect.width.toFloat() - 1f, rect.height.toFloat() - 1f,
                                                10f, 10f)
       g2.color = background
       g2.fill(rectangle2d)
