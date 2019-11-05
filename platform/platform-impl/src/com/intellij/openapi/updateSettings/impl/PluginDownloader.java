@@ -30,7 +30,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author anna
@@ -43,7 +47,7 @@ public final class PluginDownloader {
   private final PluginId myPluginId;
   private final String myPluginName;
   private final @Nullable String myProductCode;
-  private final Date myReleaseDate;
+  private final LocalDateTime myReleaseDate;
   private final int myReleaseVersion;
   private final String myDescription;
   private final List<PluginId> myDepends;
@@ -102,7 +106,7 @@ public final class PluginDownloader {
     return myProductCode;
   }
 
-  public Date getReleaseDate() {
+  public LocalDateTime getReleaseDate() {
     return myReleaseDate;
   }
 

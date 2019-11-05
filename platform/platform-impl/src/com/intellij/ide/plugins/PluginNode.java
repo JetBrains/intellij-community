@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -22,7 +22,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private PluginId id;
   private String name;
   private String productCode;
-  private Date releaseDate;
+  private LocalDateTime releaseDate;
   private int releaseVersion;
   private String version;
   private String vendor;
@@ -93,11 +93,11 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   @Nullable
   @Override
-  public Date getReleaseDate() {
+  public LocalDateTime getReleaseDate() {
     return releaseDate;
   }
 
-  public void setReleaseDate(Date date) {
+  public void setReleaseDate(LocalDateTime date) {
     releaseDate = date;
   }
 

@@ -39,8 +39,9 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +54,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
+  private static final DateTimeFormatter RELEASE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private static final String APPLICATION_SERVICE = "com.intellij.applicationService";
   private static final String PROJECT_SERVICE = "com.intellij.projectService";
@@ -66,7 +68,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private PluginId myId;
   private volatile String myDescription;
   private @Nullable String myProductCode;
-  private @Nullable Date myReleaseDate;
+  private @Nullable LocalDateTime myReleaseDate;
   private int myReleaseVersion;
   private String myResourceBundleBaseName;
   private String myChangeNotes;
@@ -177,7 +179,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     ProductDescriptor productDescriptor = pluginBean.productDescriptor;
     myProductCode = productDescriptor == null ? null : StringUtil.nullize(productDescriptor.code);
-    myReleaseDate = parseReleaseDate(pluginBean);
+    myReleaseDate = parseReleaseDate(productDescriptor);
     myReleaseVersion = productDescriptor == null ? 0 : productDescriptor.releaseVersion;
 
     XmlReader.readMetaInfo(this, element);
@@ -412,14 +414,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  private Date parseReleaseDate(@NotNull OptimizedPluginBean bean) {
-    final ProductDescriptor pd = bean.productDescriptor;
-    final String dateStr = pd != null? pd.releaseDate : null;
+  private LocalDateTime parseReleaseDate(ProductDescriptor productDescriptor) {
+    String dateStr = productDescriptor == null ? null : productDescriptor.releaseDate;
     if (dateStr != null) {
       try {
-        return new SimpleDateFormat("yyyyMMdd", Locale.US).parse(dateStr);
+        return LocalDateTime.parse(dateStr, RELEASE_DATE_FORMATTER);
       }
-      catch (ParseException e) {
+      catch (DateTimeParseException e) {
         LOG.info("Error parse release date from plugin descriptor for plugin " + myName + " {" + myId + "}: " + e.getMessage());
       }
     }
@@ -578,7 +579,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Nullable
   @Override
-  public Date getReleaseDate() {
+  public LocalDateTime getReleaseDate() {
     return myReleaseDate;
   }
 
