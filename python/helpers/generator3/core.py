@@ -7,6 +7,10 @@ from copy import deepcopy
 
 from generator3.util_methods import *
 
+# We need such conditional import always disabled at runtime in order to use
+# "typing" without the need to actually bundle the module with PyCharm.
+# It's similar to what Mypy recommends with its "MYPY" flag for compatibility
+# with Python 3.5.1 (https://mypy.readthedocs.io/en/latest/common_issues.html#import-cycles).
 TYPE_CHECKING = False
 if TYPE_CHECKING:
     from typing import List, Dict, Any, NewType, Tuple, Optional, TextIO
