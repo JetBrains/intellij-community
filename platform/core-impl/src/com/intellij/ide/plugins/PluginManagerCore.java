@@ -102,7 +102,7 @@ public final class PluginManagerCore {
   private static volatile Set<String> ourDisabledPlugins;
   private static Reference<Map<String, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
-  private static List<? extends IdeaPluginDescriptor> ourLoadedPlugins;
+  private static List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
@@ -167,8 +167,9 @@ public final class PluginManagerCore {
   }
 
   @NotNull
-  public static synchronized List<? extends IdeaPluginDescriptor> getLoadedPlugins(@Nullable ClassLoader coreClassLoader) {
-    List<? extends IdeaPluginDescriptor> result = ourLoadedPlugins;
+  @ApiStatus.Internal
+  public static synchronized List<IdeaPluginDescriptorImpl> getLoadedPlugins(@Nullable ClassLoader coreClassLoader) {
+    List<IdeaPluginDescriptorImpl> result = ourLoadedPlugins;
     if (result == null) {
       initPlugins(coreClassLoader);
       return ourLoadedPlugins;
@@ -1387,12 +1388,12 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                     @NotNull ClassLoader coreLoader,
-                                     @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    Collection<ClassLoader> parentClassLoaders;
+  public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl rootDescriptor) {
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(ContainerUtil.concat(getLoadedPlugins(null), Collections.singletonList(rootDescriptor)), null);
+
+    Collection<ClassLoader> parentLoaders;
     if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
-      parentClassLoaders = Collections.emptyList();
+      parentLoaders = Collections.emptyList();
     }
     else {
       Set<ClassLoader> loaders = new LinkedHashSet<>();
@@ -1404,7 +1405,8 @@ public final class PluginManagerCore {
         else {
           loaders.add(loader);
         }
-        return FileVisitResult.CONTINUE;
+        // see configureClassLoaders about why we don't need to process recursively
+        return FileVisitResult.SKIP_SUBTREE;
       });
 
       IdeaPluginDescriptorImpl javaDep = idMap.get(JAVA_MODULE_ID);
@@ -1413,19 +1415,11 @@ public final class PluginManagerCore {
       if (implicitDependency != null && implicitDependency.getPluginClassLoader() != null) {
         loaders.add(implicitDependency.getPluginClassLoader());
       }
-      parentClassLoaders = loaders;
+      parentLoaders = loaders;
     }
 
-    initClassLoader(rootDescriptor, coreLoader, parentClassLoaders);
-  }
-
-  private static void initClassLoader(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                      @NotNull ClassLoader coreLoader,
-                                      @NotNull Collection<ClassLoader> parentLoaders) {
-    if (parentLoaders.isEmpty()) {
-      parentLoaders = Collections.singletonList(coreLoader);
-    }
-    descriptor.setLoader(createPluginClassLoader(descriptor.getClassPath(), parentLoaders.toArray(new ClassLoader[0]), descriptor));
+    ClassLoader[] array = parentLoaders.isEmpty() ? new ClassLoader[]{PluginManagerCore.class.getClassLoader()} : parentLoaders.toArray(new ClassLoader[0]);
+    rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.collectClassPath(), array, rootDescriptor));
   }
 
   @NotNull
@@ -1630,13 +1624,7 @@ public final class PluginManagerCore {
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
     Set<PluginId> disabledRequiredIds = new LinkedHashSet<>();
 
-    // one plugin descriptor for several plugin ids (e.g. com.intellij.modules.xml for idea core), so, check by descriptor and not by id
-    Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>(sortedRequired.length);
     for (IdeaPluginDescriptorImpl descriptor : sortedRequired) {
-      if (!uniqueCheck.add(descriptor)) {
-        continue;
-      }
-
       boolean wasEnabled = descriptor.isEnabled();
       if (wasEnabled && computePluginEnabled(descriptor, enabledIds, idMap, disabledRequiredIds, errors)) {
         enabledIds.add(descriptor.getPluginId());
@@ -1647,10 +1635,9 @@ public final class PluginManagerCore {
         if (wasEnabled) {
           disabledIds.put(descriptor.getPluginId(), descriptor.getName());
         }
-        descriptor.setLoader(createPluginClassLoader(descriptor.getClassPath(), new ClassLoader[]{coreLoader}, descriptor));
+        descriptor.setLoader(createPluginClassLoader(descriptor.collectClassPath(), new ClassLoader[]{coreLoader}, descriptor));
       }
     }
-    uniqueCheck.clear();
 
     prepareLoadingPluginsErrorMessage(disabledIds, disabledRequiredIds, idMap, errors);
 
@@ -1728,7 +1715,7 @@ public final class PluginManagerCore {
       }
 
       ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
-      rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.getClassPath(), parentLoaders, rootDescriptor));
+      rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.collectClassPath(), parentLoaders, rootDescriptor));
     }
   }
 

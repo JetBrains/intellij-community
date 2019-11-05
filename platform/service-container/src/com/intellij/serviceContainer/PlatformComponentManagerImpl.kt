@@ -84,9 +84,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
 
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptor>, notifyListeners: Boolean) {
-    @Suppress("UNCHECKED_CAST")
-    plugins as List<IdeaPluginDescriptorImpl>
+  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>) {
     val activityNamePrefix = activityNamePrefix()
 
     val app = getApplication()

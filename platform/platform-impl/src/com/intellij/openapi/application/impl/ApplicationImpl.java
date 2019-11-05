@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ApplicationLoader;
@@ -294,7 +293,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public final void load(@Nullable String configPath) {
-    List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+    @SuppressWarnings("unchecked")
+    List<IdeaPluginDescriptorImpl> plugins = (List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins();
     registerComponents(plugins, false);
     ApplicationLoader.initConfigurationStore(this, configPath);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();

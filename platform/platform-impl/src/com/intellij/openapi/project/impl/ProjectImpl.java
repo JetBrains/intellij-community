@@ -247,7 +247,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     String activityNamePrefix = activityNamePrefix();
     Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    registerComponents(PluginManagerCore.getLoadedPlugins(), false);
+    //noinspection unchecked
+    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
     if (activity != null) {
       activity = activity.endAndStart("projectComponentRegistered");
     }

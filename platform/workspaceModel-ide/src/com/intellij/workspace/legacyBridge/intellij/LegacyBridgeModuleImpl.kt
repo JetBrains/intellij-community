@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.impl.ModuleImpl
@@ -14,7 +14,7 @@ import com.intellij.workspace.api.TypedEntityStorageDiffBuilder
 import com.intellij.workspace.api.TypedEntityStore
 import java.io.File
 
-class LegacyBridgeModuleImpl(
+internal class LegacyBridgeModuleImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,
@@ -28,7 +28,7 @@ class LegacyBridgeModuleImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<IdeaPluginDescriptor>,
+  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
                                   notifyListeners: Boolean) {
     super.registerComponents(plugins, false)
 

@@ -747,8 +747,44 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
+  /**
+   * @deprecated Do not use. If you want to get class loader for own plugin, just use your current class's class loader.
+   */
   @NotNull
-  public List<Path> getClassPath() {
+  @Deprecated
+  public List<File> getClassPath() {
+    File path = myPath.toFile();
+    if (!path.isDirectory()) {
+      return Collections.singletonList(path);
+    }
+
+    List<File> result = new ArrayList<>();
+    File classesDir = new File(path, "classes");
+    if (classesDir.exists()) {
+      result.add(classesDir);
+    }
+
+    File[] files = new File(path, "lib").listFiles();
+    if (files == null || files.length <= 0) {
+      return result;
+    }
+
+    for (File f : files) {
+      if (f.isFile()) {
+        String name = f.getName();
+        if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
+          result.add(f);
+        }
+      }
+      else {
+        result.add(f);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  List<Path> collectClassPath() {
     if (!Files.isDirectory(myPath)) {
       return Collections.singletonList(myPath);
     }

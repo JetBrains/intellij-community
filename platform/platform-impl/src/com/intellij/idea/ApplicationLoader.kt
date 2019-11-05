@@ -81,7 +81,7 @@ private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
 private fun executeInitAppInEdt(args: List<String>,
                                 initAppActivity: Activity,
-                                pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
+                                pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>) {
   StartupUtil.patchSystem(LOG)
   val app = runActivity("create app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
@@ -108,7 +108,7 @@ private fun executeInitAppInEdt(args: List<String>,
 }
 
 @ApiStatus.Internal
-fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
+fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture
     .thenApply {
       runActivity("app component registration", ActivityCategory.MAIN) {
@@ -347,7 +347,7 @@ private fun addActivateAndWindowsCliListeners() {
 @JvmOverloads
 fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = CompletableFuture.completedFuture(null)) {
   val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
-  val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
+  val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
   initUiTask
     .thenRunAsync(Runnable {
       val args = processProgramArguments(rawArgs)
