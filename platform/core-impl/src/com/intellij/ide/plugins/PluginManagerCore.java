@@ -821,12 +821,16 @@ public final class PluginManagerCore {
       return descriptor;
     }
     catch (SerializationException | JDOMException | IOException e) {
-      if (loadingContext.isEssential) ExceptionUtil.rethrow(e);
+      if (loadingContext.isEssential) {
+        ExceptionUtil.rethrow(e);
+      }
       getLogger().warn("Cannot load " + descriptorFile, e);
       prepareLoadingPluginsErrorMessage(Collections.singletonList("File '" + file.getFileName() + "' contains invalid plugin descriptor"));
     }
     catch (Throwable e) {
-      if (loadingContext.isEssential) ExceptionUtil.rethrow(e);
+      if (loadingContext.isEssential) {
+        ExceptionUtil.rethrow(e);
+      }
       getLogger().warn("Cannot load " + descriptorFile, e);
     }
     return null;
@@ -1165,7 +1169,7 @@ public final class PluginManagerCore {
   @TestOnly
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
-    LoadPluginResult result = new LoadPluginResult();
+    LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
     try (LoadingContext loadingContext = new LoadingContext(new LoadDescriptorsContext(false, null), true, true, null, new ClassPathXmlPathResolver(loader))) {
@@ -1178,7 +1182,7 @@ public final class PluginManagerCore {
   @TestOnly
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromDir(@NotNull Path dir)
     throws ExecutionException, InterruptedException {
-    LoadPluginResult result = new LoadPluginResult();
+    LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
     loadDescriptorsFromDir(dir, result, true, new LoadDescriptorsContext(false, null));
     result.finish();
     return result.plugins;
@@ -1322,7 +1326,7 @@ public final class PluginManagerCore {
   @NotNull
   @ApiStatus.Internal
   public static LoadPluginResult loadDescriptors() {
-    LoadPluginResult result = new LoadPluginResult();
+    LoadPluginResult result = new LoadPluginResult(getBrokenPluginVersions());
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
@@ -1458,7 +1462,6 @@ public final class PluginManagerCore {
 
   private static void disableIncompatiblePlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                                 @NotNull Set<PluginId> brokenIds,
                                                  @NotNull List<String> errors) {
     String selectedIds = System.getProperty("idea.load.plugins.id");
     String selectedCategory = System.getProperty("idea.load.plugins.category");
@@ -1510,8 +1513,6 @@ public final class PluginManagerCore {
     BuildNumber buildNumber = getBuildNumber();
     Set<PluginId> disabledPlugins = loadDisabledPlugins();
 
-    Map<PluginId, Set<String>> brokenPluginVersions = null;
-
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       String errorSuffix;
       if (descriptor == coreDescriptor) {
@@ -1553,17 +1554,7 @@ public final class PluginManagerCore {
                                            : "range is " + since + " to " + until) + ")";
       }
       else {
-        if (brokenPluginVersions == null) {
-          brokenPluginVersions = getBrokenPluginVersions();
-        }
-        Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
-        if (set != null && set.contains(descriptor.getVersion())) {
-          errorSuffix = "version was marked as incompatible";
-          brokenIds.add(descriptor.getPluginId());
-        }
-        else {
-          errorSuffix = null;
-        }
+        errorSuffix = null;
       }
 
       if (errorSuffix != null) {
@@ -1652,7 +1643,7 @@ public final class PluginManagerCore {
     List<String> errors = new ArrayList<>(loadResult.errors);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(loadResult.plugins, errors);
 
-    disableIncompatiblePlugins(loadResult.plugins, idMap, new LinkedHashSet<>(), errors);
+    disableIncompatiblePlugins(loadResult.plugins, idMap, errors);
     checkPluginCycles(loadResult.plugins, idMap, errors);
 
     // topological sort based on required dependencies only

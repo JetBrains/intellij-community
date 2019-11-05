@@ -11,7 +11,7 @@ import java.util.*;
 @ApiStatus.Internal
 final class LoadPluginResult {
   final List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>();
-  final List<IdeaPluginDescriptorImpl> brokenPlugins = new ArrayList<>();
+  final List<IdeaPluginDescriptorImpl> pluginsWithoutId = new ArrayList<>();
 
   private final Set<IdeaPluginDescriptorImpl> existingResults = new HashSet<>();
 
@@ -22,6 +22,12 @@ final class LoadPluginResult {
 
   private IdeaPluginDescriptorImpl[] sortedPlugins;
   private List<IdeaPluginDescriptorImpl> sortedEnabledPlugins;
+
+  Map<PluginId, Set<String>> brokenPluginVersions;
+
+  LoadPluginResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions) {
+    this.brokenPluginVersions = brokenPluginVersions;
+  }
 
   /**
    * not null after initialization ({@link PluginManagerCore#initializePlugins})
@@ -58,9 +64,17 @@ final class LoadPluginResult {
   boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, boolean silentlyIgnoreIfDuplicate) {
     PluginId id = descriptor.getPluginId();
     if (id == null) {
-      brokenPlugins.add(descriptor);
+      pluginsWithoutId.add(descriptor);
       errors.add("No id is provided by \"" + descriptor.getPluginPath().getFileName().toString() + "\"");
       return true;
+    }
+
+    if (!descriptor.isBundled()) {
+      Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
+      if (set != null && set.contains(descriptor.getVersion())) {
+        errors.add("Version " + descriptor.getVersion() + " was marked as incompatible for " + descriptor);
+        return true;
+      }
     }
 
     if (!silentlyIgnoreIfDuplicate && duplicateMap != null) {

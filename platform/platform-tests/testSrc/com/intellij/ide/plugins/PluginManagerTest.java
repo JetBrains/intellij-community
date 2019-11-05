@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -144,7 +145,7 @@ public class PluginManagerTest {
   private static LoadPluginResult loadDescriptors(@NotNull String testDataName)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
-    LoadPluginResult result = new LoadPluginResult();
+    LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
     LoadDescriptorsContext context = new LoadDescriptorsContext(false, null);
     Element root = JDOMUtil.load(file, context.getXmlFactory());
     for (Element element : root.getChildren("idea-plugin")) {
