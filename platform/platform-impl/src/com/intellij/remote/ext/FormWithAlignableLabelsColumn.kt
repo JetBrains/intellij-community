@@ -3,6 +3,10 @@ package com.intellij.remote.ext
 
 import com.intellij.ui.components.JBLabel
 
+/**
+ * This interface could be implemented by [CredentialsEditor] to allow the
+ * alignment of fields in the editor within the form.
+ */
 interface FormWithAlignableLabelsColumn {
   val labelsColumn: List<JBLabel>
 
