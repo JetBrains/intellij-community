@@ -284,7 +284,7 @@ public class FileTypeUtil {
       if (type.equals(StdFileTypes.XHTML)) {
         return true;
       }
-      if (type.equals(StdFileTypes.PROPERTIES)) {
+      if (type.getName().equals("Properties")) {
         return true;
       }
       if (CopyrightUpdaters.INSTANCE.forFileType(type) == null) {
