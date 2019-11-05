@@ -66,6 +66,15 @@ public class JBTreeTable extends JComponent {
           super.repaint(tm, x, y, width, height);
         }
       }
+
+      @Override
+      public void treeDidChange() {
+        super.treeDidChange();
+        if (myTable != null) {
+          myTable.revalidate();
+          myTable.repaint();
+        }
+      }
     };
     myTable = new Table();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -105,7 +114,6 @@ public class JBTreeTable extends JComponent {
     split.setSecondComponent(tablePane);
 
     SelectionSupport selection = new SelectionSupport();
-    ResizeSupport resize = new ResizeSupport();
 
     treePane.setColumnHeaderView(myTreeTableHeader);
     treePane.getHorizontalScrollBar().addComponentListener(new ComponentAdapter() {
@@ -128,8 +136,6 @@ public class JBTreeTable extends JComponent {
     });
     tablePane.setVerticalScrollBar(treePane.getVerticalScrollBar());
 
-    split.addComponentListener(resize);
-    myTree.addTreeExpansionListener(resize);
     myTree.getSelectionModel().addTreeSelectionListener(selection);
     myTable.getSelectionModel().addListSelectionListener(selection);
     myTable.setRowMargin(0);
@@ -260,26 +266,10 @@ public class JBTreeTable extends JComponent {
         int row = myTree.getRowForPath(myTree.getSelectionPath());
         if (row >= 0) {
           myTable.setRowSelectionInterval(row, row);
+        } else {
+          myTable.clearSelection();
         }
       }
-    }
-  }
-
-  private class ResizeSupport extends ComponentAdapter implements TreeExpansionListener {
-
-    @Override
-    public void componentResized(ComponentEvent e) {
-      myTable.setPreferredSize(myTree.getPreferredSize());
-    }
-
-    @Override
-    public void treeExpanded(TreeExpansionEvent event) {
-      myTable.setPreferredSize(myTree.getPreferredSize());
-    }
-
-    @Override
-    public void treeCollapsed(TreeExpansionEvent event) {
-      myTable.setPreferredSize(myTree.getPreferredSize());
     }
   }
 
