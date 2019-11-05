@@ -26,10 +26,3 @@ val ComponentManager.stateStore: IComponentStore
       }
     }
   }
-
-//@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-//@Deprecated(message = "do not use", replaceWith = ReplaceWith("getComponentInstancesOfType(baseClass)"))
-//fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> {
-//  @Suppress("DEPRECATION")
-//  return getComponentInstancesOfType(baseClass, false)
-//}
