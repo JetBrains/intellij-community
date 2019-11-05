@@ -2173,4 +2173,24 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testPathWithAmpersand() {
+    runPythonTest(new PyDebuggerTask("/debug/", "test_path_with_&.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        // Source position can be `null` because of troubles while decoding the message from the debugger.
+        // The troubles can be a result of an unescaped symbol, wrongly encoded message, etc.
+        assertNotNull(getCurrentStackFrame().getSourcePosition());
+        resume();
+        waitForTerminate();
+      }
+    });
+  }
 }
