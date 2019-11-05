@@ -20,6 +20,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
   private val id = counter.incrementAndGet()
 
   private var state = State.NOT_STARTED
+  private var startedTimestamp = 0L
 
   private fun createDataWithActivityId(): FeatureUsageData {
     return FeatureUsageData().addData("ide_activity_id", id)
@@ -36,6 +37,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     val data = createDataWithActivityId().addProject(projectOrNullForApplication)
     consumer.accept(data)
 
+    startedTimestamp = System.currentTimeMillis()
     FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("started"), data)
     return this
   }
@@ -59,7 +61,9 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
     state = State.FINISHED
 
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("finished"), createDataWithActivityId())
+    val duration = System.currentTimeMillis() - startedTimestamp
+    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("finished"),
+                                                createDataWithActivityId().addData("duration_ms", duration))
     return this
   }
 
