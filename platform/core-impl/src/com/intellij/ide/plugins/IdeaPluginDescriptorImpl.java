@@ -183,7 +183,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
     }
 
-    THashMap<String, List<Element>> epNameToExtensions = myExtensions;
     List<PluginDependency> dependencies = null;
     for (Content content : element.getContent()) {
       if (!(content instanceof Element)) {
@@ -193,62 +192,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       Element child = (Element)content;
       switch (child.getName()) {
         case "extensions":
-          String ns = child.getAttributeValue("defaultExtensionNs");
-          for (Element extensionElement : child.getChildren()) {
-            String os = extensionElement.getAttributeValue("os");
-            if (os != null) {
-              extensionElement.removeAttribute("os");
-              if (!isComponentSuitableForOs(os)) {
-                continue;
-              }
-            }
-
-            String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
-            ContainerDescriptor containerDescriptor;
-            if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
-              containerDescriptor = myAppContainerDescriptor;
-            }
-            else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
-              containerDescriptor = myProjectContainerDescriptor;
-            }
-            else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
-              containerDescriptor = myModuleContainerDescriptor;
-            }
-            else {
-              if (epNameToExtensions == null) {
-                epNameToExtensions = new THashMap<>();
-                myExtensions = epNameToExtensions;
-              }
-
-              List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
-              if (list == null) {
-                list = new SmartList<>();
-                epNameToExtensions.put(qualifiedExtensionPointName, list);
-              }
-              list.add(extensionElement);
-              continue;
-            }
-
-            containerDescriptor.addService(readServiceDescriptor(extensionElement));
-          }
+          XmlReader.readExtensions(this, stringInterner, child);
           break;
 
         case "extensionPoints":
-          for (Element extensionPoint : child.getChildren()) {
-            String area = extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA);
-            ContainerDescriptor containerDescriptor = getContainerDescriptorByExtensionArea(area);
-            if (containerDescriptor == null) {
-              LOG.error("Unknown area: " + area);
-              continue;
-            }
-
-            List<Element> result = containerDescriptor.extensionsPoints;
-            if (result == null) {
-              result = new ArrayList<>();
-              containerDescriptor.extensionsPoints = result;
-            }
-            result.add(extensionPoint);
-          }
+          XmlReader.readExtensionPoints(this, child);
           break;
 
         case "actions":
@@ -264,9 +212,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           String moduleName = child.getAttributeValue("value");
           if (moduleName != null) {
             if (myModules == null) {
-              myModules = new SmartList<>();
+              myModules = Collections.singletonList(PluginId.getId(moduleName));
             }
-            myModules.add(PluginId.getId(moduleName));
+            else {
+              if (myModules.size() == 1) {
+                List<PluginId> singleton = myModules;
+                myModules = new ArrayList<>(4);
+                myModules.addAll(singleton);
+              }
+              myModules.add(PluginId.getId(moduleName));
+            }
           }
           break;
 
@@ -340,8 +295,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "idea-version":
-          mySinceBuild = StringUtil.nullize(child.getChildTextTrim("since-build"));
-          myUntilBuild = StringUtil.nullize(child.getChildTextTrim("until-build"));
+          mySinceBuild = StringUtil.nullize(child.getAttributeValue("since-build"));
+          myUntilBuild = StringUtil.nullize(child.getAttributeValue("until-build"));
           break;
       }
 
@@ -356,7 +311,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       XmlReader.readDependencies(this, dependencies);
     }
   }
-
 
   @NotNull
   private static ServiceDescriptor readServiceDescriptor(@NotNull Element element) {
@@ -1120,6 +1074,67 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     private static boolean getBoolean(@NotNull String name, @NotNull Element child) {
       String value = child.getAttributeValue(name);
       return value == null || Boolean.parseBoolean(value);
+    }
+
+
+    static void readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Interner<String> stringInterner, Element child) {
+      String ns = child.getAttributeValue("defaultExtensionNs");
+      THashMap<String, List<Element>> epNameToExtensions = descriptor.myExtensions;
+      for (Element extensionElement : child.getChildren()) {
+        String os = extensionElement.getAttributeValue("os");
+        if (os != null) {
+          extensionElement.removeAttribute("os");
+          if (!isComponentSuitableForOs(os)) {
+            continue;
+          }
+        }
+
+        String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
+        ContainerDescriptor containerDescriptor;
+        if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
+          containerDescriptor = descriptor.myAppContainerDescriptor;
+        }
+        else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
+          containerDescriptor = descriptor.myProjectContainerDescriptor;
+        }
+        else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
+          containerDescriptor = descriptor.myModuleContainerDescriptor;
+        }
+        else {
+          if (epNameToExtensions == null) {
+            epNameToExtensions = new THashMap<>();
+            descriptor.myExtensions = epNameToExtensions;
+          }
+
+          List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
+          if (list == null) {
+            list = new SmartList<>();
+            epNameToExtensions.put(qualifiedExtensionPointName, list);
+          }
+          list.add(extensionElement);
+          continue;
+        }
+
+        containerDescriptor.addService(readServiceDescriptor(extensionElement));
+      }
+    }
+
+    static void readExtensionPoints(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element child) {
+      for (Element extensionPoint : child.getChildren()) {
+        String area = extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA);
+        ContainerDescriptor containerDescriptor = descriptor.getContainerDescriptorByExtensionArea(area);
+        if (containerDescriptor == null) {
+          LOG.error("Unknown area: " + area);
+          continue;
+        }
+
+        List<Element> result = containerDescriptor.extensionsPoints;
+        if (result == null) {
+          result = new ArrayList<>();
+          containerDescriptor.extensionsPoints = result;
+        }
+        result.add(extensionPoint);
+      }
     }
   }
 }
