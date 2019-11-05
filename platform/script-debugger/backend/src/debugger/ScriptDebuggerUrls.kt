@@ -17,6 +17,13 @@ object ScriptDebuggerUrls {
     return Urls.newUrl(URLUtil.FILE_PROTOCOL, "", uriPath)
   }
 
+  fun toFilePath(url: Url): String? {
+    if (url.scheme != null && url.scheme != URLUtil.FILE_PROTOCOL) return null
+    var path = url.path
+    if (path.length >= 3 && path[0] == '/' && path[2] == ':') path = path.substring(1)
+    return path
+  }
+
   private fun toUriPath(path: String): String {
     var result = FileUtilRt.toSystemIndependentName(path)
     if (result.length >= 2 && result[1] == ':') result = "/$result"
