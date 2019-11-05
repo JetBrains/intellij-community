@@ -56,7 +56,9 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-    collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    }, myProject);
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 

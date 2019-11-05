@@ -130,6 +130,12 @@ public abstract class FileBasedIndex {
                                                  @NotNull Processor<? super VirtualFile> processor,
                                                  @NotNull GlobalSearchScope filter);
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void ignoreDumbMode(@NotNull Runnable runnable, @NotNull Project project) {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * It is guaranteed to return data which is up-to-date within the given project.
    */
@@ -212,4 +218,10 @@ public abstract class FileBasedIndex {
   // TODO we should rebuild index automatically if this option is changed
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+
+  @ApiStatus.Internal
+  public static boolean indexAccessDuringDumbModeEnabled() {
+    return ApplicationManager.getApplication().isInternal() && !ourDisableIndexAccessDuringDumbMode;
+  }
+  private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
 }
