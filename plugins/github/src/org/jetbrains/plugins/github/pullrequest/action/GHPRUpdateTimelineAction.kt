@@ -13,6 +13,8 @@ class GHPRUpdateTimelineAction : RefreshAction("Refresh Timeline", "Check for ne
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider?.timelineLoader?.loadMore(true)
+    val dataProvider = e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider
+    if (dataProvider?.timelineLoader?.loadMore(true) != null)
+      dataProvider.reloadReviewThreads()
   }
 }
