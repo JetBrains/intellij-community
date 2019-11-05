@@ -849,7 +849,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDeleted = deleted;
   }
 
-  public void setLoader(ClassLoader loader) {
+  public void setLoader(@Nullable ClassLoader loader) {
     myLoader = loader;
   }
 

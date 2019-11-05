@@ -1635,7 +1635,6 @@ public final class PluginManagerCore {
         if (wasEnabled) {
           disabledIds.put(descriptor.getPluginId(), descriptor.getName());
         }
-        descriptor.setLoader(createPluginClassLoader(descriptor.collectClassPath(), new ClassLoader[]{coreLoader}, descriptor));
       }
     }
 
