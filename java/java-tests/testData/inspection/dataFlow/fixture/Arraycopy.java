@@ -36,18 +36,10 @@ class Test {
     return dest;
   }
 
-  // posX > x.len
-  public int[] destGreaterThanDestLength() {
-    int[] src = new int[] { 1, 2, 3 };
-    int[] dest = new int[] { 4, 5, 6 };
-    System.<warning descr="The call to 'arraycopy' always fails as index is out of bounds">arraycopy</warning>(src, 1, dest, 3, 2);
-    return dest;
-  }
-
-  public int[] srcGreaterThanDestLength() {
-    int[] src = new int[] { 1, 2, 3 };
-    int[] dest = new int[] { 4, 5, 6 };
-    System.<warning descr="The call to 'arraycopy' always fails as index is out of bounds">arraycopy</warning>(src, 3, dest, 0, 2);
+  public int[] copyNothing() {
+    int[] src = new int[] {  };
+    int[] dest = new int[] {  };
+    System.arraycopy(src, 0, dest, 0, 0);
     return dest;
   }
 }

@@ -180,8 +180,8 @@ public class HardcodedContracts {
     ContractValue srcLength = src.specialField(SpecialField.ARRAY_LENGTH);
     ContractValue dstLength = dest.specialField(SpecialField.ARRAY_LENGTH);
     return ContractProvider.of(
-      singleConditionContract(srcPos, RelationType.GE, srcLength, fail()),
-      singleConditionContract(destPos, RelationType.GE, dstLength, fail()),
+      singleConditionContract(srcPos, RelationType.GT, srcLength, fail()),
+      singleConditionContract(destPos, RelationType.GT, dstLength, fail()),
       singleConditionContract(srcPos, RelationType.LT, ContractValue.zero(), fail()),
       singleConditionContract(destPos, RelationType.LT, ContractValue.zero(), fail()),
       singleConditionContract(length, RelationType.LT, ContractValue.zero(), fail()),
