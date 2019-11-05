@@ -88,7 +88,6 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     handleDetails()
 
     val mainPanel = Wrapper().also {
-      val pullRequest = context.pullRequest!!
       DataManager.registerDataProvider(it, DataProvider { dataId ->
         if (GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(dataId))
           GHPRFixedActionDataContext(context, dataProvider)
