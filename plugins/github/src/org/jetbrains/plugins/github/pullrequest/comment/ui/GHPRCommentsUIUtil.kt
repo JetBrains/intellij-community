@@ -82,10 +82,16 @@ object GHPRCommentsUIUtil {
     }
 
     val button = JButton(actionName).apply {
+      isEnabled = false
       isOpaque = false
       toolTipText = KeymapUtil.getShortcutsText(submitShortcut.shortcuts)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
+    document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        button.isEnabled = document.textLength > 0
+      }
+    })
 
     object : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) = submit(project, button, textField, request)
