@@ -43,6 +43,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private final Function<PsiElement, PsiType> myRootTypes;
   private final boolean myAllowDependentRoots;
   private final TypeMigrationRules myRules;
+  private final boolean myIsShowWarning;
   private TypeMigrationLabeler myLabeler;
 
   public TypeMigrationProcessor(final Project project,
@@ -50,11 +51,21 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                 final Function<PsiElement, PsiType> rootTypes,
                                 final TypeMigrationRules rules,
                                 final boolean allowDependentRoots) {
+    this(project, roots, rootTypes, rules, allowDependentRoots, true);
+  }
+
+  public TypeMigrationProcessor(final Project project,
+                                final PsiElement[] roots,
+                                final Function<PsiElement, PsiType> rootTypes,
+                                final TypeMigrationRules rules,
+                                final boolean allowDependentRoots,
+                                final boolean showWarning) {
     super(project);
     myRoots = roots;
     myRules = rules;
     myRootTypes = rootTypes;
     myAllowDependentRoots = allowDependentRoots;
+    myIsShowWarning = showWarning;
   }
 
   public static void runHighlightingTypeMigration(final Project project,
@@ -215,7 +226,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject);
 
     try {
-      return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);
+      return myLabeler.getMigratedUsages(!isPreviewUsages(), !isPreviewUsages() && myIsShowWarning, myRoots);
     }
     catch (TypeMigrationLabeler.MigrateException e) {
       setPreviewUsages(true);
@@ -223,7 +234,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       return myLabeler.getMigratedUsages(false, myRoots);
     }
   }
-
+  
   @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     myRoots = elements;
