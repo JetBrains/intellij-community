@@ -18,19 +18,40 @@ public class PluginBean extends OptimizedPluginBean {
   @Tag("name")
   public String name;
 
+  @Tag("version")
+  public String pluginVersion;
+
   @Attribute("url")
   public String url;
+
+  @Tag("category")
+  public String category;
 
   @Attribute("version")
   public String formatVersion;
 
-  @XCollection(propertyElementName = APPLICATION_COMPONENTS)
+  @Tag("change-notes")
+  public String changeNotes;
+
+  @Tag("resource-bundle")
+  public String resourceBundle;
+
+  @Tag("description")
+  public String description;
+
+  @Property(surroundWithTag = false)
+  public PluginVendor vendor;
+
+  @Property(surroundWithTag = false)
+  public ProductDescriptor productDescriptor;
+
+  @XCollection(propertyElementName = "application-components")
   public OldComponentConfig[] applicationComponents;
 
-  @XCollection(propertyElementName = PROJECT_COMPONENTS)
+  @XCollection(propertyElementName = "project-components")
   public OldComponentConfig[] projectComponents;
 
-  @XCollection(propertyElementName = MODULE_COMPONENTS)
+  @XCollection(propertyElementName = "module-components")
   public OldComponentConfig[] moduleComponents;
 
   @Tag("actions")
@@ -58,4 +79,7 @@ public class PluginBean extends OptimizedPluginBean {
 
   @Attribute("implementation-detail")
   public boolean implementationDetail;
+
+  @Property(surroundWithTag = false)
+  public IdeaVersionBean ideaVersion;
 }

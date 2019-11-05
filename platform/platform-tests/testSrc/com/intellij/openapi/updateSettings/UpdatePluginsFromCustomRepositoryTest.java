@@ -15,10 +15,10 @@ import org.jdom.JDOMException;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -43,11 +43,11 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     assertEquals("0.1", downloader.getPluginVersion());
   }
 
-  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, IOException, JDOMException, URISyntaxException {
+  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, IOException, JDOMException {
     String path = PlatformTestUtil.getPlatformTestDataPath() + "updates/customRepositories/" + getTestName(true);
     Path descriptorFile = Paths.get(path, filePath);
     IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParent(), false);
-    descriptor.loadFromFile(descriptorFile, null, true, null);
+    descriptor.loadFromFile(descriptorFile, null, true, Collections.emptySet());
     return descriptor;
   }
 }

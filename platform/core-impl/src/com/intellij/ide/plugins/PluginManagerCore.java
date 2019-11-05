@@ -120,7 +120,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static Set<PluginId> ourPluginsToEnable;
 
-  private static class Holder {
+  private static final class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
     private static final boolean ourIsRunningFromSources =
       Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER));
@@ -543,7 +543,7 @@ public final class PluginManagerCore {
                                                                 @Nullable IdeaPluginDescriptorImpl javaDep,
                                                                 boolean hasAllModules) {
     // Skip our plugins as expected to be up-to-date whether bundled or not.
-    if (descriptor.getPluginId() == CORE_ID ||
+    if (descriptor.getPluginId() == CORE_ID || descriptor == javaDep ||
         VENDOR_JETBRAINS.equals(descriptor.getVendor()) ||
         !hasAllModules ||
         javaDep == null) {
@@ -890,7 +890,7 @@ public final class PluginManagerCore {
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName, @Nullable Set<PluginId> disabledPlugins) {
-    try (LoadingContext context = new LoadingContext(null, false, false, disabledPlugins)) {
+    try (LoadingContext context = new LoadingContext(null, false, false, disabledPlugins == null ? Collections.emptySet() : disabledPlugins)) {
       return loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }
@@ -898,7 +898,7 @@ public final class PluginManagerCore {
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                          boolean bundled,
-                                                         @Nullable Set<PluginId> disabledPlugins,
+                                                         @NotNull Set<PluginId> disabledPlugins,
                                                          @Nullable LoadDescriptorsContext parentContext) {
     try (LoadingContext context = new LoadingContext(parentContext, bundled, false, disabledPlugins)) {
       return loadDescriptorFromFileOrDir(file, PLUGIN_XML, context, Files.isDirectory(file));
@@ -1172,7 +1172,7 @@ public final class PluginManagerCore {
     LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
-    try (LoadingContext loadingContext = new LoadingContext(new LoadDescriptorsContext(false, null), true, true, null, new ClassPathXmlPathResolver(loader))) {
+    try (LoadingContext loadingContext = new LoadingContext(new LoadDescriptorsContext(false, Collections.emptySet()), true, true, Collections.emptySet(), new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, result, loadingContext, platformPluginURL);
     }
     result.finish();
@@ -1183,7 +1183,7 @@ public final class PluginManagerCore {
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromDir(@NotNull Path dir)
     throws ExecutionException, InterruptedException {
     LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
-    loadDescriptorsFromDir(dir, result, true, new LoadDescriptorsContext(false, null));
+    loadDescriptorsFromDir(dir, result, true, new LoadDescriptorsContext(false, Collections.emptySet()));
     result.finish();
     return result.plugins;
   }

@@ -6,13 +6,11 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.OldComponentConfig;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,9 +21,8 @@ import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.ref.GCWatcher;
-import com.intellij.util.xmlb.BeanBinding;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
+import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -150,7 +147,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void loadFromFile(@NotNull Path file,
                            @Nullable SafeJdomFactory factory,
                            boolean ignoreMissingInclude,
-                           @Nullable Set<PluginId> disabledPlugins) throws IOException, JDOMException {
+                           @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
     readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner(), disabledPlugins);
   }
 
@@ -159,7 +156,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
                             boolean ignoreMissingInclude,
                             @Nullable PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                             @Nullable Interner<String> stringInterner,
-                            @Nullable Set<PluginId> disabledPlugins) {
+                            @NotNull Set<PluginId> disabledPlugins) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -168,47 +165,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     XmlReader.readIdAndName(this, element);
 
-    if (myId == null || disabledPlugins == null || !disabledPlugins.contains(myId)) {
+    if (myId == null || !disabledPlugins.contains(myId)) {
       PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, Objects.requireNonNull(pathResolver));
+      if (myId == null || myName == null) {
+        // read again after resolve
+        XmlReader.readIdAndName(this, element);
+      }
     }
     else if (LOG.isDebugEnabled()) {
       LOG.debug("Skipping resolving of " + myId + " from " + basePath);
     }
 
-    OptimizedPluginBean pluginBean = XmlSerializer.deserialize(element, OptimizedPluginBean.class);
-
-    ProductDescriptor productDescriptor = pluginBean.productDescriptor;
-    myProductCode = productDescriptor == null ? null : StringUtil.nullize(productDescriptor.code);
-    myReleaseDate = parseReleaseDate(productDescriptor);
-    myReleaseVersion = productDescriptor == null ? 0 : productDescriptor.releaseVersion;
-
     XmlReader.readMetaInfo(this, element);
-    if (pluginBean.ideaVersion != null) {
-      mySinceBuild = pluginBean.ideaVersion.sinceBuild;
-      myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
-    }
-
-    myResourceBundleBaseName = pluginBean.resourceBundle;
-
-    myDescriptionChildText = pluginBean.description;
-    myChangeNotes = pluginBean.changeNotes;
-    myVersion = pluginBean.pluginVersion;
-    if (myVersion == null) {
-      myVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
-    }
-
-    myCategory = pluginBean.category;
-
-    if (pluginBean.vendor != null) {
-      myVendor = pluginBean.vendor.name;
-      myVendorEmail = pluginBean.vendor.email;
-      myVendorUrl = pluginBean.vendor.url;
-      myVendorLogoPath = pluginBean.vendor.logo;
-    }
-
-    // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
-    // but it is not a problem because in any case new XmlSerializer is not used for our core classes (plugin bean, component config and so on).
-    Ref<BeanBinding> oldComponentConfigBeanBinding = new Ref<>();
 
     // only for CoreApplicationEnvironment
     if (stringInterner == null) {
@@ -302,17 +270,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           }
           break;
 
-        case OptimizedPluginBean.APPLICATION_COMPONENTS:
+        case "application-components":
           // because of x-pointer, maybe several application-components tag in document
-          readComponents(child, oldComponentConfigBeanBinding, myAppContainerDescriptor);
+          readComponents(child, myAppContainerDescriptor);
           break;
 
-        case OptimizedPluginBean.PROJECT_COMPONENTS:
-          readComponents(child, oldComponentConfigBeanBinding, myProjectContainerDescriptor);
+        case "project-components":
+          readComponents(child, myProjectContainerDescriptor);
           break;
 
-        case OptimizedPluginBean.MODULE_COMPONENTS:
-          readComponents(child, oldComponentConfigBeanBinding, myModuleContainerDescriptor);
+        case "module-components":
+          readComponents(child, myModuleContainerDescriptor);
           break;
 
         case "applicationListeners":
@@ -337,9 +305,51 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
             dependencies.add(dependency);
           }
           break;
+
+        case "category":
+          myCategory = StringUtil.nullize(child.getTextTrim());
+          break;
+
+        case "change-notes":
+          myChangeNotes = StringUtil.nullize(child.getTextTrim());
+          break;
+
+        case "version":
+          myVersion = StringUtil.nullize(child.getTextTrim());
+          break;
+
+        case "description":
+          myDescriptionChildText = StringUtil.nullize(child.getTextTrim());
+          break;
+
+        case "resource-bundle":
+          myResourceBundleBaseName = StringUtil.nullize(child.getTextTrim());
+          break;
+
+        case "product-descriptor":
+          myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
+          myReleaseDate = parseReleaseDate(StringUtil.nullize(child.getAttributeValue("release-date")));
+          myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
+          break;
+
+        case "vendor":
+          myVendor = StringUtil.nullize(child.getChildTextTrim("name"));
+          myVendorEmail = StringUtil.nullize(child.getAttributeValue("email"));
+          myVendorUrl = StringUtil.nullize(child.getAttributeValue("url"));
+          myVendorLogoPath = StringUtil.nullize(child.getAttributeValue("logo"));
+          break;
+
+        case "idea-version":
+          mySinceBuild = StringUtil.nullize(child.getChildTextTrim("since-build"));
+          myUntilBuild = StringUtil.nullize(child.getChildTextTrim("until-build"));
+          break;
       }
 
       child.getContent().clear();
+    }
+
+    if (myVersion == null) {
+      myVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     }
 
     if (dependencies != null) {
@@ -377,7 +387,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return descriptor;
   }
 
-  private static void readComponents(@NotNull Element parent, @NotNull Ref<BeanBinding> oldComponentConfigBean, @NotNull ContainerDescriptor containerDescriptor) {
+  private static void readComponents(@NotNull Element parent, @NotNull ContainerDescriptor containerDescriptor) {
     List<Content> content = parent.getContent();
     int contentSize = content.size();
     if (contentSize == 0) {
@@ -395,27 +405,68 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         continue;
       }
 
-      OldComponentConfig componentConfig = new OldComponentConfig();
+      ComponentConfig componentConfig = new ComponentConfig();
+      Map<String, String> options = null;
+      loop:
+      for (Element elementChild : componentElement.getChildren()) {
+        switch (elementChild.getName()) {
+          case "skipForDefaultProject":
+            if (!readBoolValue(elementChild.getTextTrim())) {
+              componentConfig.setLoadForDefaultProject(true);
+            }
+            break;
 
-      BeanBinding beanBinding = oldComponentConfigBean.get();
-      if (beanBinding == null) {
-        beanBinding = XmlSerializer.getBeanBinding(componentConfig);
-        oldComponentConfigBean.set(beanBinding);
-      }
+          case "loadForDefaultProject":
+            componentConfig.setLoadForDefaultProject(readBoolValue(elementChild.getTextTrim()));
+            break;
 
-      beanBinding.deserializeInto(componentConfig, componentElement);
-      Map<String, String> options = componentConfig.options;
-      if (options != null && !isComponentSuitableForOs(options.get("os"))) {
-        continue;
+          case "interface-class":
+            componentConfig.setInterfaceClass(elementChild.getTextTrim());
+            break;
+
+          case "implementation-class":
+            componentConfig.setImplementationClass(elementChild.getTextTrim());
+            break;
+
+          case "headless-implementation-class":
+            componentConfig.setHeadlessImplementationClass(elementChild.getTextTrim());
+            break;
+
+          case "option":
+            String name = elementChild.getAttributeValue("name");
+            String value = elementChild.getAttributeValue("value");
+            if (name != null) {
+              if (name.equals("os")) {
+                if (!isComponentSuitableForOs(value)) {
+                  continue loop;
+                }
+              }
+              else {
+                if (options == null) {
+                  options = Collections.singletonMap(name, value);
+                }
+                else {
+                  if (options.size() == 1) {
+                    options = new HashMap<>(options);
+                  }
+                  options.put(name, value);
+                }
+              }
+            }
+            break;
+        }
       }
 
       result.add(componentConfig);
     }
   }
 
+  private static boolean readBoolValue(@NotNull String value) {
+    return value.isEmpty() || value.equalsIgnoreCase("true");
+  }
+
   @Nullable
-  private LocalDateTime parseReleaseDate(ProductDescriptor productDescriptor) {
-    String dateStr = productDescriptor == null ? null : productDescriptor.releaseDate;
+  private LocalDateTime parseReleaseDate(@Nullable String dateStr) {
     if (dateStr != null) {
       try {
         return LocalDateTime.parse(dateStr, RELEASE_DATE_FORMATTER);
@@ -964,21 +1015,42 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     static void readMetaInfo(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
-      descriptor.myUrl = element.getAttributeValue("url");
-
-      String internalVersionString = element.getAttributeValue("version");
-      if (internalVersionString != null) {
-        try {
-          Integer.parseInt(internalVersionString);
-        }
-        catch (NumberFormatException e) {
-          LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.myId));
-        }
+      if (!element.hasAttributes()) {
+        return;
       }
 
-      descriptor.myUseIdeaClassLoader = Boolean.parseBoolean(element.getAttributeValue("use-idea-classloader"));
-      descriptor.myAllowBundledUpdate = Boolean.parseBoolean(element.getAttributeValue("allow-bundled-update"));
-      descriptor.myImplementationDetail = Boolean.parseBoolean(element.getAttributeValue("implementation-detail"));
+      List<Attribute> attributes = element.getAttributes();
+      for (Attribute attribute : attributes) {
+        switch (attribute.getName()) {
+          case "url":
+            descriptor.myUrl = StringUtil.nullize(attribute.getValue());
+            break;
+
+          case "use-idea-classloader":
+            descriptor.myUseIdeaClassLoader = Boolean.parseBoolean(attribute.getValue());
+            break;
+
+          case "allow-bundled-update":
+            descriptor.myAllowBundledUpdate = Boolean.parseBoolean(attribute.getValue());
+            break;
+
+          case "implementation-detail":
+            descriptor.myImplementationDetail = Boolean.parseBoolean(attribute.getValue());
+            break;
+
+          case "version":
+            String internalVersionString = StringUtil.nullize(attribute.getValue());
+            if (internalVersionString != null) {
+              try {
+                Integer.parseInt(internalVersionString);
+              }
+              catch (NumberFormatException e) {
+                LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.myId));
+              }
+            }
+            break;
+        }
+      }
     }
 
     static void readDependencies(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull List<PluginDependency> dependencies) {

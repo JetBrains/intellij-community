@@ -26,10 +26,10 @@ final class LoadDescriptorsContext implements AutoCloseable {
   private final ThreadLocal<SafeJdomFactory> myThreadLocalXmlFactory;
   private final int myMaxThreads;
 
-  @Nullable
+  @NotNull
   final Set<PluginId> disabledPlugins;
 
-  LoadDescriptorsContext(boolean isParallel, @Nullable Set<PluginId> disabledPlugins) {
+  LoadDescriptorsContext(boolean isParallel, @NotNull Set<PluginId> disabledPlugins) {
     this.disabledPlugins = disabledPlugins;
 
     myMaxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
