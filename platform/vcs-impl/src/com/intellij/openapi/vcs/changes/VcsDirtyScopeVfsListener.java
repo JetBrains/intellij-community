@@ -85,9 +85,6 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
   }
 
   public static void install(@NotNull Project project) {
-    if (!project.isOpen()) {
-      throw new RuntimeException("Already closed: " + project);
-    }
     getInstance(project);
   }
 
