@@ -120,19 +120,20 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
                              .insets("0", "0", "0", "0")
                              .fillX()
                              .flowY()).apply {
-          columnConstraints = AC().fill().size(":$maxWidth:$maxWidth")
+          columnConstraints = AC().fill().size("0:$maxWidth:$maxWidth")
         }
 
         emptyText.clear()
 
-        add(header)
-        add(timeline)
-        add(loadingIcon, CC().hideMode(2).alignX("center"))
+        add(header, CC().width("0:$maxWidth:$maxWidth"))
+        add(timeline, CC().width("0:$maxWidth:$maxWidth"))
+        add(loadingIcon, CC().width("0:$maxWidth:$maxWidth").hideMode(2).alignX("center"))
 
         with(context.commentService) {
           if (canComment()) {
             val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
-            add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser))
+            add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser),
+                CC().width("0:$maxWidth:$maxWidth"))
           }
         }
       }
