@@ -299,8 +299,12 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
     if (element.getKind() == ErrorTreeElementKind.ERROR) {
       // expand automatically only errors
-      promise.onSuccess(p -> myStructureModel.makeVisible(element, myTree, pp->{}));
+      promise.onSuccess(p -> makeVisible(element));
     }
+  }
+
+  protected void makeVisible(@NotNull ErrorTreeElement element) {
+    myStructureModel.makeVisible(element, myTree, pp->{});
   }
 
   @Override
