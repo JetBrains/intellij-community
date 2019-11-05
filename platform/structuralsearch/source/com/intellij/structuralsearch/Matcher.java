@@ -278,7 +278,7 @@ public class Matcher {
       };
 
       ReadAction.run(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
-      if (progress != null) progress.setText2("");
+      progress.setText2("");
     }
     else {
       final LocalSearchScope scope = (LocalSearchScope)searchScope;
