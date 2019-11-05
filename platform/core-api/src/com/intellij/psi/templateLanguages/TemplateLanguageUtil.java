@@ -47,4 +47,10 @@ public class TemplateLanguageUtil {
   public static boolean isInsideTemplateFile(@NotNull PsiElement element) {
     return element.getContainingFile().getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
+
+  public static boolean isTemplateDataFile(@NotNull PsiFile file) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    return viewProvider instanceof TemplateLanguageFileViewProvider &&
+                file == viewProvider.getPsi(((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage());
+  }
 }
