@@ -337,21 +337,21 @@ object GithubApiRequests {
       @JvmStatic
       fun merge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                 commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
           .withOperationName("merge pull request ${number}")
 
       @JvmStatic
       fun squashMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
           .withOperationName("squash and merge pull request ${number}")
 
       @JvmStatic
       fun rebaseMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRebaseRequest(headSha))
           .withOperationName("rebase and merge pull request ${number}")
 
