@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,9 @@ final class OpenFilesActivity implements StartupActivity.DumbAware {
     manager.getMainSplitters().openFiles();
     manager.initDockableContentFactory();
 
-    if (manager.getOpenFiles().length == 0) {
+    if (manager.getOpenFiles().length == 0 && 
+        !ApplicationManager.getApplication().isHeadlessEnvironment() && 
+        Registry.is("ide.open.readme.md.on.startup")) {
       RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart",
                                     () -> findAndOpenReadme(project, manager));
     }
@@ -42,7 +45,7 @@ final class OpenFilesActivity implements StartupActivity.DumbAware {
       VirtualFile readme = dir.findChild("README.md");
       if (readme != null && !readme.isDirectory()) {
         readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW);
-        ApplicationManager.getApplication().invokeLater(() -> manager.openFile(readme, true));
+        ApplicationManager.getApplication().invokeLater(() -> manager.openFile(readme, true), project.getDisposed());
       }
     }
   }
