@@ -19,12 +19,13 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
@@ -232,19 +233,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
     }
     return defaultValue;
-  }
-
-  public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      return action.compute();
-    }
-    Ref<T> res = Ref.create();
-    while (true) {
-      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
-        return res.get();
-      }
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-    }
   }
 
   public static String getConnectionDisplayName(RemoteConnection connection) {
