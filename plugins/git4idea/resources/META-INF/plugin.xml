@@ -106,7 +106,6 @@
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert" text="Abort Revert"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
-      <action id="Git.Cleanup.Branches" class="git4idea.branch.GitCleanupBranchesAction" text="Cleanup Branches" internal="true"/>.
     </group>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
