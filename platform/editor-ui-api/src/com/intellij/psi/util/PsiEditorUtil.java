@@ -17,7 +17,10 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,5 +32,14 @@ public interface PsiEditorUtil {
     public static PsiEditorUtil getInstance() {
       return ServiceManager.getService(PsiEditorUtil.class);
     }
+  }
+
+  @NotNull
+  static PsiFile getPsiFile(Editor editor) {
+    Project project = editor.getProject();
+    assert project != null;
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    assert psiFile != null;
+    return psiFile;
   }
 }

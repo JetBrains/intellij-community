@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.completion.simple;
 
-import com.intellij.codeInsight.lookup.CommaTailType;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.openapi.editor.Document;
@@ -20,7 +19,7 @@ public abstract class ParenthesesTailType extends TailType {
 
   @Override
   public int processTail(final Editor editor, int tailOffset) {
-    CommonCodeStyleSettings styleSettings = CommaTailType.getLocalCodeStyleSettings(editor, tailOffset);
+    CommonCodeStyleSettings styleSettings = CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset);
     if (isSpaceBeforeParentheses(styleSettings, editor, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');
     }

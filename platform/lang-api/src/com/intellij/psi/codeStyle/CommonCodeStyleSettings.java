@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -13,6 +15,8 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -1154,5 +1158,11 @@ public class CommonCodeStyleSettings {
 
   void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
+  }
+
+  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
+    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
+    return CodeStyle.getLanguageSettings(psiFile, language);
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,4 +102,9 @@ public abstract class CodeStyleFacade {
   @Deprecated
   public abstract String getLineSeparator();
 
+  public abstract boolean useSpaceBeforeComma(PsiFile psiFile, Language language);
+
+  public abstract boolean useSpaceAfterComma(PsiFile psiFile, Language language);
+
+  public abstract boolean useSpaceAroundAssignmentOperators(PsiFile psiFile, Language language);
 }

@@ -2,14 +2,22 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiUtilCore;
 
 public class EqTailType extends TailType {
   public static final TailType INSTANCE = new EqTailType();
 
   protected boolean isSpaceAroundAssignmentOperators(Editor editor, int tailOffset) {
-    return CommaTailType.getLocalCodeStyleSettings(editor, tailOffset).SPACE_AROUND_ASSIGNMENT_OPERATORS;
+    CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(editor.getProject());
+    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
+    return codeStyleFacade.useSpaceAroundAssignmentOperators(psiFile, language);
   }
 
   @Override

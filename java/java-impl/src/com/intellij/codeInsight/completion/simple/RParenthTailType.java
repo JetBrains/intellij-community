@@ -54,7 +54,8 @@ public abstract class RParenthTailType extends TailType {
 
   @Override
   public int processTail(final Editor editor, int tailOffset) {
-    return addRParenth(editor, tailOffset, isSpaceWithinParentheses(CommaTailType.getLocalCodeStyleSettings(editor, tailOffset), editor, tailOffset));
+    return addRParenth(editor, tailOffset,
+                       isSpaceWithinParentheses(CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset), editor, tailOffset));
   }
 
   public static int addRParenth(Editor editor, int offset, boolean spaceWithinParens) {
