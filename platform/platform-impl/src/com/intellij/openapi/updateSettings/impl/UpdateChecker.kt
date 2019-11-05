@@ -38,6 +38,7 @@ import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
@@ -478,9 +479,9 @@ object UpdateChecker {
 
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
-    val plugins = File(PathManager.getConfigPath(), DISABLED_UPDATE)
+    val plugins = Paths.get(PathManager.getConfigPath(), DISABLED_UPDATE)
     try {
-      PluginManagerCore.savePluginsList(disabledToUpdatePlugins, false, plugins)
+      PluginManagerCore.savePluginsList(disabledToUpdatePlugins, plugins, false)
     }
     catch (e: IOException) {
       LOG.error(e)

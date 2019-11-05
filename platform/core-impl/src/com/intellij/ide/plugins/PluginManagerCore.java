@@ -213,7 +213,7 @@ public final class PluginManagerCore {
       }
       finally {
         if (updateDisablePluginsList) {
-          savePluginsList(disabledPlugins, false, file.toFile());
+          savePluginsList(disabledPlugins, file, false);
           fireEditDisablePlugins();
         }
       }
@@ -370,11 +370,9 @@ public final class PluginManagerCore {
     }
   }
 
-  public static void savePluginsList(@NotNull Collection<String> ids, boolean append, @NotNull File plugins) throws IOException {
-    if (!plugins.isFile()) {
-      FileUtilRt.ensureCanCreateFile(plugins);
-    }
-    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(plugins, append), StandardCharsets.UTF_8))) {
+  public static void savePluginsList(@NotNull Collection<String> ids, @NotNull Path file, boolean append) throws IOException {
+    Files.createDirectories(file.getParent());
+    try (BufferedWriter writer = (append ? Files.newBufferedWriter(file) : Files.newBufferedWriter(file, StandardOpenOption.APPEND))) {
       writePluginsList(ids, writer);
     }
   }
@@ -415,8 +413,8 @@ public final class PluginManagerCore {
   }
 
   public static void saveDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> ids, boolean append) throws IOException {
-    File plugins = new File(configPath, DISABLED_PLUGINS_FILENAME);
-    savePluginsList(ids, append, plugins);
+    Path plugins = Paths.get(configPath, DISABLED_PLUGINS_FILENAME);
+    savePluginsList(ids, plugins, append);
     ourDisabledPlugins = null;
     fireEditDisablePlugins();
   }
