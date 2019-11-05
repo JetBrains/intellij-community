@@ -452,7 +452,11 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
-    log(String.format("drawImage(Image(%d,%d), %d, %d, ImageObserver)", img.getWidth(null), img.getHeight(null), x, y));
+    if(img == null) {
+      log(String.format("drawImage(Image(null), %d, %d, ImageObserver)", x, y));
+    } else {
+      log(String.format("drawImage(Image(%d,%d), %d, %d, ImageObserver)", img.getWidth(null), img.getHeight(null), x, y));
+    }
     return myPeer.drawImage(img, x, y, observer);
   }
 
