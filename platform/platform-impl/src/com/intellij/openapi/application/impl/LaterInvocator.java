@@ -238,6 +238,17 @@ public class LaterInvocator {
     modalEntitiesStack.push(new ModalityStateEx(ArrayUtil.toObjectArray(ourModalEntities)));
   }
 
+  /**
+   * Marks the given modality state (not {@code any()}} as transparent, i.e. {@code invokeLater} calls with its "parent" modality state
+   * will also be executed within it. NB: this will cause all VFS/PSI/etc events be executed inside your modal dialog, so you'll need
+   * to handle them appropriately, so please consider making the dialog non-modal instead of using this API.
+   */
+  @ApiStatus.Internal
+  public static void markTransparent(@NotNull ModalityState state) {
+    ((ModalityStateEx)state).markTransparent();
+    reincludeSkippedItems();
+    requestFlush();
+  }
 
   public static void leaveModal(Project project, Dialog dialog) {
     LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
@@ -276,6 +287,7 @@ public class LaterInvocator {
         ourModalityStack.get(i).removeModality(modalEntity);
       }
     }
+    ModalityStateEx.unmarkTransparent(modalEntity);
   }
 
   private static void reincludeSkippedItems() {
