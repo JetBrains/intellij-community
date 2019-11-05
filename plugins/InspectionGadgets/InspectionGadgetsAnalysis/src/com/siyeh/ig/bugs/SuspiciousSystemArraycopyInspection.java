@@ -136,7 +136,7 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       LongRangeSet lengthSet = result.getExpressionFact(length, DfaFactType.RANGE);
       if (srcLengthSet == null || destLengthSet == null || srcPosSet == null || destPosSet == null || lengthSet == null) return;
       LongRangeSet srcPossibleLengthToCopy = srcLengthSet.minus(srcPosSet, false);
-      LongRangeSet destPossibleLengthToCopy = srcLengthSet.minus(destPosSet, false);
+      LongRangeSet destPossibleLengthToCopy = destLengthSet.minus(destPosSet, false);
       long lengthMin = lengthSet.min();
       if (lengthMin > destPossibleLengthToCopy.max()) {
         registerError(length, InspectionGadgetsBundle

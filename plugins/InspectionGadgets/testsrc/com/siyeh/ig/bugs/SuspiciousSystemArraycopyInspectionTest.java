@@ -41,7 +41,7 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
     doMemberTest("public int[] hardCase() {\n" +
                  "        int[] src = new int[] { 1, 2, 3 };\n" +
                  "        int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };\n" +
-                 "        System.arraycopy(src, 2, dest, 2, /*Length is always bigger than 'dest.length - destPos' {2}*/2/**/);\n" +
+                 "        System.arraycopy(src, 2, dest, 2, /*Length is always bigger than 'src.length - srcPos' {2}*/2/**/);\n" +
                  "        return dest;\n" +
                  "    }");
   }
@@ -95,6 +95,15 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                  "        int srcPos = outer ? 0 : 3;\n" +
                  "        int destPos = outer ? 1 : 4;\n" +
                  "        System.arraycopy(src, srcPos, src, destPos, length);\n" +
+                 "    }");
+  }
+
+
+  public void testCopyFull() {
+    doMemberTest("    public static void copyFull(byte[] a2, byte[] a1) {\n" +
+                 "        assert (a1.length == 4);\n" +
+                 "        assert (a2.length == 8);\n" +
+                 "        System.arraycopy(a1, 0, a2, 4, a1.length);\n" +
                  "    }");
   }
 
