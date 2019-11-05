@@ -75,9 +75,9 @@ public final class PluginManagerCore {
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
 
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
-  private static final PluginId JAVA_ID = PluginId.getId("com.intellij.modules.java");
+  public static final String CORE_PLUGIN_ID = "com.intellij";
 
-  public static final String CORE_PLUGIN_ID = CORE_ID.getIdString();
+  private static final PluginId JAVA_MODULE_ID = PluginId.getId("com.intellij.modules.java");
 
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
@@ -679,7 +679,7 @@ public final class PluginManagerCore {
   private static CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                                                                 boolean withOptional) {
-    IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.get(JAVA_ID);
+    IdeaPluginDescriptorImpl javaDep = idToDescriptorMap.get(JAVA_MODULE_ID);
     boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
@@ -1409,7 +1409,7 @@ public final class PluginManagerCore {
         return FileVisitResult.CONTINUE;
       });
 
-      IdeaPluginDescriptorImpl javaDep = idMap.get(JAVA_ID);
+      IdeaPluginDescriptorImpl javaDep = idMap.get(JAVA_MODULE_ID);
       boolean hasAllModules = idMap.containsKey(ALL_MODULES_MARKER);
       IdeaPluginDescriptorImpl implicitDependency = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
       if (implicitDependency != null && implicitDependency.getPluginClassLoader() != null) {
