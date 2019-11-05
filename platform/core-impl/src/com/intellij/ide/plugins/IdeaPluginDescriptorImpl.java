@@ -11,7 +11,10 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,7 +64,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private final boolean myBundled;
   private String myName;
   private PluginId myId;
-  private final NullableLazyValue<String> myDescription = NullableLazyValue.createValue(() -> computeDescription());
+  private volatile String myDescription;
   private @Nullable String myProductCode;
   private @Nullable Date myReleaseDate;
   private int myReleaseVersion;
@@ -161,7 +164,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    readIdAndName(element);
+    XmlReader.readIdAndName(this, element);
 
     if (myId == null || disabledPlugins == null || !disabledPlugins.contains(myId)) {
       PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, Objects.requireNonNull(pathResolver));
@@ -177,7 +180,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myReleaseDate = parseReleaseDate(pluginBean);
     myReleaseVersion = productDescriptor == null ? 0 : productDescriptor.releaseVersion;
 
-    readMetaInfo(element);
+    XmlReader.readMetaInfo(this, element);
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
       myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
@@ -311,11 +314,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "applicationListeners":
-          readListeners(child, myAppContainerDescriptor);
+          XmlReader.readListeners(this, child, myAppContainerDescriptor);
           break;
 
         case "projectListeners":
-          readListeners(child, myProjectContainerDescriptor);
+          XmlReader.readListeners(this, child, myProjectContainerDescriptor);
           break;
 
         case "depends":
@@ -338,144 +341,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (dependencies != null) {
-      readDependencies(dependencies);
+      XmlReader.readDependencies(this, dependencies);
     }
   }
 
-  private void readIdAndName(@NotNull Element element) {
-    String idString = element.getChildTextTrim("id");
-    myName = element.getChildTextTrim("name");
-    if (idString == null) {
-      idString = myName;
-    }
-    else if (myName == null) {
-      myName = idString;
-    }
-
-    myId = StringUtil.isEmpty(idString) ? null : PluginId.getId(idString);
-  }
-
-  private void readMetaInfo(@NotNull Element element) {
-    myUrl = element.getAttributeValue("url");
-
-    String internalVersionString = element.getAttributeValue("version");
-    if (internalVersionString != null) {
-      try {
-        Integer.parseInt(internalVersionString);
-      }
-      catch (NumberFormatException e) {
-        LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, myId));
-      }
-    }
-
-    myUseIdeaClassLoader = Boolean.parseBoolean(element.getAttributeValue("use-idea-classloader"));
-    myAllowBundledUpdate = Boolean.parseBoolean(element.getAttributeValue("allow-bundled-update"));
-    myImplementationDetail = Boolean.parseBoolean(element.getAttributeValue("implementation-detail"));
-  }
-
-  private static final class PluginDependency {
-    public PluginId pluginId;
-    public boolean optional;
-    public String configFile;
-  }
-
-  private void readDependencies(@NotNull List<PluginDependency> dependencies) {
-    // https://youtrack.jetbrains.com/issue/IDEA-206274
-    int size = 0;
-    for (int i = 0, n = dependencies.size(); i < n; i++) {
-      PluginDependency dependency = dependencies.get(i);
-      size++;
-      if (!dependency.optional) {
-        continue;
-      }
-
-      for (int j = 0; j < i; j++) {
-        PluginDependency prev = dependencies.get(j);
-        if (!prev.optional && prev.pluginId == dependency.pluginId) {
-          dependency.optional = false;
-          dependencies.set(j, null);
-          size--;
-          break;
-        }
-      }
-    }
-
-    PluginId[] dependentPlugins = new PluginId[size];
-    int optionalSize = 0;
-    int index = 0;
-    for (PluginDependency dependency : dependencies) {
-      if (dependency == null) {
-        continue;
-      }
-
-      PluginId id = dependency.pluginId;
-      dependentPlugins[index++] = dependency.pluginId;
-
-      // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
-      if (dependency.configFile != null) {
-        if (myOptionalConfigs == null) {
-          myOptionalConfigs = new LinkedHashMap<>();
-        }
-        ContainerUtilRt.putValue(id, dependency.configFile, myOptionalConfigs);
-      }
-
-      if (dependency.optional) {
-        optionalSize++;
-      }
-    }
-
-    myDependencies = dependentPlugins;
-
-    if (optionalSize > 0) {
-      if (optionalSize == dependentPlugins.length) {
-        myOptionalDependencies = dependentPlugins;
-      }
-      else {
-        PluginId[] optionalDependencies = new PluginId[optionalSize];
-        index = 0;
-        for (PluginDependency dependency : dependencies) {
-          if (dependency.optional) {
-            optionalDependencies[index++] = dependency.pluginId;
-          }
-        }
-        myOptionalDependencies = optionalDependencies;
-      }
-    }
-  }
-
-  private void readListeners(@NotNull Element list, @NotNull ContainerDescriptor containerDescriptor) {
-    List<Content> content = list.getContent();
-    List<ListenerDescriptor> result = containerDescriptor.listeners;
-    if (result == null) {
-      result = new ArrayList<>(content.size());
-      containerDescriptor.listeners = result;
-    }
-    else {
-      ((ArrayList<ListenerDescriptor>)result).ensureCapacity(result.size() + content.size());
-    }
-
-    for (Content item : content) {
-      if (!(item instanceof Element)) {
-        continue;
-      }
-
-      Element child = (Element)item;
-      String listenerClassName = child.getAttributeValue("class");
-      String topicClassName = child.getAttributeValue("topic");
-      if (listenerClassName == null || topicClassName == null) {
-        LOG.error("Listener descriptor is not correct: " + JDOMUtil.writeElement(child));
-      }
-      else {
-        result.add(new ListenerDescriptor(listenerClassName, topicClassName,
-                                          getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), this));
-      }
-    }
-  }
-
-  private static boolean getBoolean(@NotNull String name, @NotNull Element child) {
-    String value = child.getAttributeValue(name);
-    return value == null || Boolean.parseBoolean(value);
-  }
 
   @NotNull
   private static ServiceDescriptor readServiceDescriptor(@NotNull Element element) {
@@ -666,7 +535,29 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getDescription() {
-    return myDescription.getValue();
+    String result = myDescription;
+    if (result != null) {
+      return result;
+    }
+
+    ResourceBundle bundle = null;
+    if (myResourceBundleBaseName != null) {
+      try {
+        bundle = AbstractBundle.getResourceBundle(myResourceBundleBaseName, getPluginClassLoader());
+      }
+      catch (MissingResourceException e) {
+        LOG.info("Cannot find plugin " + myId + " resource-bundle: " + myResourceBundleBaseName);
+      }
+    }
+
+    if (bundle == null) {
+      result = myDescriptionChildText;
+    }
+    else {
+      result = CommonBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
+    }
+    myDescription = result;
+    return result;
   }
 
   @Override
@@ -894,24 +785,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myUseCoreClassLoader = useCoreClassLoader;
   }
 
-  private String computeDescription() {
-    ResourceBundle bundle = null;
-    if (myResourceBundleBaseName != null) {
-      try {
-        bundle = AbstractBundle.getResourceBundle(myResourceBundleBaseName, getPluginClassLoader());
-      }
-      catch (MissingResourceException e) {
-        LOG.info("Cannot find plugin " + myId + " resource-bundle: " + myResourceBundleBaseName);
-      }
-    }
-
-    if (bundle == null) {
-      return myDescriptionChildText;
-    }
-
-    return CommonBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
-  }
-
   @Override
   public boolean isEnabled() {
     return myEnabled;
@@ -1036,6 +909,144 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
     else {
       throw new IllegalArgumentException("Unknown OS '" + os + "'");
+    }
+  }
+
+  private static final class PluginDependency {
+    public PluginId pluginId;
+    public boolean optional;
+    public String configFile;
+  }
+
+  private static final class XmlReader {
+    static void readListeners(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element list, @NotNull ContainerDescriptor containerDescriptor) {
+      List<Content> content = list.getContent();
+      List<ListenerDescriptor> result = containerDescriptor.listeners;
+      if (result == null) {
+        result = new ArrayList<>(content.size());
+        containerDescriptor.listeners = result;
+      }
+      else {
+        ((ArrayList<ListenerDescriptor>)result).ensureCapacity(result.size() + content.size());
+      }
+
+      for (Content item : content) {
+        if (!(item instanceof Element)) {
+          continue;
+        }
+
+        Element child = (Element)item;
+        String listenerClassName = child.getAttributeValue("class");
+        String topicClassName = child.getAttributeValue("topic");
+        if (listenerClassName == null || topicClassName == null) {
+          LOG.error("Listener descriptor is not correct: " + JDOMUtil.writeElement(child));
+        }
+        else {
+          result.add(new ListenerDescriptor(listenerClassName, topicClassName,
+                                            getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), descriptor));
+        }
+      }
+    }
+
+    static void readIdAndName(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
+      String idString = element.getChildTextTrim("id");
+      String name = element.getChildTextTrim("name");
+      if (idString == null) {
+        idString = name;
+      }
+      else if (name == null) {
+        name = idString;
+      }
+
+      descriptor.myName = name;
+      descriptor.myId = StringUtil.isEmpty(idString) ? null : PluginId.getId(idString);
+    }
+
+    static void readMetaInfo(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
+      descriptor.myUrl = element.getAttributeValue("url");
+
+      String internalVersionString = element.getAttributeValue("version");
+      if (internalVersionString != null) {
+        try {
+          Integer.parseInt(internalVersionString);
+        }
+        catch (NumberFormatException e) {
+          LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.myId));
+        }
+      }
+
+      descriptor.myUseIdeaClassLoader = Boolean.parseBoolean(element.getAttributeValue("use-idea-classloader"));
+      descriptor.myAllowBundledUpdate = Boolean.parseBoolean(element.getAttributeValue("allow-bundled-update"));
+      descriptor.myImplementationDetail = Boolean.parseBoolean(element.getAttributeValue("implementation-detail"));
+    }
+
+    static void readDependencies(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull List<PluginDependency> dependencies) {
+      // https://youtrack.jetbrains.com/issue/IDEA-206274
+      int size = 0;
+      for (int i = 0, n = dependencies.size(); i < n; i++) {
+        PluginDependency dependency = dependencies.get(i);
+        size++;
+        if (!dependency.optional) {
+          continue;
+        }
+
+        for (int j = 0; j < i; j++) {
+          PluginDependency prev = dependencies.get(j);
+          if (!prev.optional && prev.pluginId == dependency.pluginId) {
+            dependency.optional = false;
+            dependencies.set(j, null);
+            size--;
+            break;
+          }
+        }
+      }
+
+      PluginId[] dependentPlugins = new PluginId[size];
+      int optionalSize = 0;
+      int index = 0;
+      for (PluginDependency dependency : dependencies) {
+        if (dependency == null) {
+          continue;
+        }
+
+        PluginId id = dependency.pluginId;
+        dependentPlugins[index++] = dependency.pluginId;
+
+        // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
+        if (dependency.configFile != null) {
+          if (descriptor.myOptionalConfigs == null) {
+            descriptor.myOptionalConfigs = new LinkedHashMap<>();
+          }
+          ContainerUtilRt.putValue(id, dependency.configFile, descriptor.myOptionalConfigs);
+        }
+
+        if (dependency.optional) {
+          optionalSize++;
+        }
+      }
+
+      descriptor.myDependencies = dependentPlugins;
+
+      if (optionalSize > 0) {
+        if (optionalSize == dependentPlugins.length) {
+          descriptor.myOptionalDependencies = dependentPlugins;
+        }
+        else {
+          PluginId[] optionalDependencies = new PluginId[optionalSize];
+          index = 0;
+          for (PluginDependency dependency : dependencies) {
+            if (dependency.optional) {
+              optionalDependencies[index++] = dependency.pluginId;
+            }
+          }
+          descriptor.myOptionalDependencies = optionalDependencies;
+        }
+      }
+    }
+
+    private static boolean getBoolean(@NotNull String name, @NotNull Element child) {
+      String value = child.getAttributeValue(name);
+      return value == null || Boolean.parseBoolean(value);
     }
   }
 }

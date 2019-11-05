@@ -84,7 +84,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
 
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>) {
+  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, notifyListeners: Boolean) {
     val activityNamePrefix = activityNamePrefix()
 
     val app = getApplication()
@@ -296,7 +296,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     checkCanceledIfNotInClassInit()
 
     if (parent != null) {
-      val result = parent.getService(serviceClass, createIfNeeded)
+      val result = parent.doGetService(serviceClass, createIfNeeded)
       if (result != null) {
         LOG.error("$key is registered as application service, but requested as project one")
         return result

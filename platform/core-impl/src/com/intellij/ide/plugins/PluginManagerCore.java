@@ -1064,7 +1064,7 @@ public final class PluginManagerCore {
    * File name preference:
    * a) last order for files with resources in name, like resources_en.jar
    * b) last order for files that have -digit suffix is the name e.g. completion-ranking.jar is before gson-2.8.0.jar or junit-m5.jar
-   * c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before allopen-XXX.jar
+   * c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before all-open-XXX.jar
    * d) shorter name, e.g. android.jar is before android-base-common.jar
    */
   private static void putMoreLikelyPluginJarsFirst(@NotNull Path pluginDir, @NotNull List<Path> filesInLibUnderPluginDir) {
