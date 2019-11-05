@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
