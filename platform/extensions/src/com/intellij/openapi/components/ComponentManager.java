@@ -110,20 +110,28 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
+  /**
+   * @deprecated Use {@link #getServiceIfCreated(Class)} or {@link #getService(Class)}.
+   */
+  @Deprecated
+  default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    if (createIfNeeded) {
+      return getService(serviceClass);
+    }
+    else {
+      return getServiceIfCreated(serviceClass);
+    }
+  }
+
   default <T> T getService(@NotNull Class<T> serviceClass) {
-    return getService(serviceClass, true);
+    // default impl to keep backward compatibility
+    //noinspection unchecked
+    return (T)getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
   @Nullable
   default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
-    return getService(serviceClass, false);
-  }
-
-  @ApiStatus.Internal
-  default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    // default impl to keep backward compatibility
-    //noinspection unchecked
-    return (T)getPicoContainer().getComponentInstance(serviceClass.getName());
+    return getService(serviceClass);
   }
 
   @NotNull

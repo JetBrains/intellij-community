@@ -42,19 +42,29 @@ public class MockApplication extends MockComponentManager implements Application
     return app;
   }
 
+  @Nullable
   @Override
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    T service = super.getService(serviceClass, createIfNeeded);
+  public final <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+    return doGetService(serviceClass, false);
+  }
+
+  @Override
+  public final <T> T getService(@NotNull Class<T> serviceClass) {
+    return doGetService(serviceClass, true);
+  }
+
+  private <T> T doGetService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    T service = super.getService(serviceClass);
     if (service == null && createIfNeeded && Modifier.isFinal(serviceClass.getModifiers()) && serviceClass.isAnnotationPresent(Service.class)) {
       //noinspection SynchronizeOnThis,SynchronizationOnLocalVariableOrMethodParameter
       synchronized (serviceClass) {
-        service = super.getService(serviceClass, true);
+        service = super.getService(serviceClass);
         if (service != null) {
           return service;
         }
 
         getPicoContainer().registerComponentImplementation(serviceClass.getName(), serviceClass);
-        return super.getService(serviceClass, true);
+        return super.getService(serviceClass);
       }
     }
     return service;

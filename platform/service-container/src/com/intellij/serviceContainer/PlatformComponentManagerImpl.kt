@@ -9,7 +9,10 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentConfig
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -41,7 +44,7 @@ import java.util.concurrent.Executor
 
 internal val LOG = logger<PlatformComponentManagerImpl>()
 
-abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
+abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: PlatformComponentManagerImpl?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
     private val constructorParameterResolver = ConstructorParameterResolver()
 
@@ -70,7 +73,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   protected open val componentStore: IComponentStore
-    get() = getService(IComponentStore::class.java)
+    get() = getService(IComponentStore::class.java)!!
 
   init {
     if (setExtensionsRootArea) {
@@ -207,8 +210,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       myPicoContainer.unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything", pluginDescriptor.pluginId)
     }
 
-    val implementationClass = when {
-      config.interfaceClass == config.implementationClass -> interfaceClass.name
+    val implementationClass = when (config.interfaceClass) {
+      config.implementationClass -> interfaceClass.name
       else -> config.implementationClass
     }
 
@@ -277,7 +280,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
-  final override fun <T : Any> getService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+  final override fun <T : Any> getService(serviceClass: Class<T>) = doGetService(serviceClass, true)
+
+  final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>) = doGetService(serviceClass, false)
+
+  private fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val lightServices = lightServices
     if (lightServices != null && isLightService(serviceClass)) {
       return getLightService(serviceClass, createIfNeeded)

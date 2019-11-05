@@ -40,7 +40,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
 
   @NotNull
   public static LanguageSubstitutors getInstance() {
-    return ApplicationManager.getApplication().getService(LanguageSubstitutors.class, true);
+    return ApplicationManager.getApplication().getService(LanguageSubstitutors.class);
   }
 
   private LanguageSubstitutors() {

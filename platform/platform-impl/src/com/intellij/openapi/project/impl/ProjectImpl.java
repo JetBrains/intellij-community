@@ -74,7 +74,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
-    super(ApplicationManager.getApplication());
+    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
@@ -91,7 +91,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // default project constructor
   ProjectImpl() {
-    super(ApplicationManager.getApplication());
+    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
