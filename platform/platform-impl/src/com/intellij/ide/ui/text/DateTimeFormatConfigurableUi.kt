@@ -28,14 +28,14 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
     ui = panel {
       row {
         overrideSystemDateFormatting = checkBox("Override system date and time format",
-                                                {settings.isOverrideSystemDateFormat},
-                                                {settings.isOverrideSystemDateFormat = it }).component
+                                                { settings.isOverrideSystemDateFormat },
+                                                { settings.isOverrideSystemDateFormat = it }).component
         row("Date format:") {
           cell {
-          pattern = textField({ settings.dateFormatPattern },
-                              { settings.dateFormatPattern = it },
-                              16).component
-          browserLink("Date patterns", "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")
+            pattern = textField({ settings.dateFormatPattern },
+                                { settings.dateFormatPattern = it },
+                                16).component
+            browserLink("Date patterns", "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")
           }
         }.enableIf(overrideSystemDateFormatting.selected)
 
