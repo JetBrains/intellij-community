@@ -102,7 +102,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       val closePlugins = result.filter {
         it.componentCount == 0 &&
         it.nonDynamicEPs.isEmpty() &&
-        it.unspecifiedDynamicEPs.isNotEmpty()
+        it.unspecifiedDynamicEPs.any { !it.startsWith("cidr") && !it.startsWith("appcode") }
       }
       if (closePlugins.isNotEmpty()) {
         appendln("Plugins closest to being unloadable (${closePlugins.size.coerceAtMost(40)} out of ${closePlugins.size}):")
