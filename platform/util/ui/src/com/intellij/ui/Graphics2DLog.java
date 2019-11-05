@@ -166,7 +166,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public RenderingHints getRenderingHints() {
-    log(String.format("getRenderingHints()"));
+    log("getRenderingHints()");
     return myPeer.getRenderingHints();
   }
 
@@ -284,7 +284,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setPaintMode() {
-    log(String.format("setPaintMode()"));
+    log("setPaintMode()");
     myPeer.setPaintMode();
   }
 
@@ -502,7 +502,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void dispose() {
-    log(String.format("dispose()"));
+    log("dispose()");
     myPeer.dispose();
   }
 
