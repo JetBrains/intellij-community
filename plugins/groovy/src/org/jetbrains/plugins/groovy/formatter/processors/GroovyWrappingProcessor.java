@@ -81,7 +81,7 @@ public class GroovyWrappingProcessor {
   );
 
   public Wrap getChildWrap(ASTNode childNode) {
-    if (myContext.isInsidePlainGString()) return createNoneWrap();
+    if (myContext.isForbidWrapping()) return createNoneWrap();
 
     final IElementType childType = childNode.getElementType();
 
@@ -135,6 +135,14 @@ public class GroovyWrappingProcessor {
     if (myParentType == PARAMETER_LIST) {
       if (childType == T_LPAREN || childType == T_RPAREN) {
         return createNoneWrap();
+      }
+    }
+
+    if (myParentType == CLOSURE) {
+      final ASTNode leftSibling = getLeftSibling(childNode);
+      if (leftSibling != null && leftSibling.getElementType() == T_LBRACE || childType == T_RBRACE) {
+        boolean simpleClosure = mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !myNode.textContains('\n');
+        return simpleClosure ? createNoneWrap() : getCommonWrap();
       }
     }
 
@@ -267,8 +275,8 @@ public class GroovyWrappingProcessor {
   }
 
   public Wrap getChainedMethodCallWrap() {
-    return myContext.isInsidePlainGString() ? Wrap.createWrap(WrapType.NONE, false)
-                                            : Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, false);
+    return myContext.isForbidWrapping() ? Wrap.createWrap(WrapType.NONE, false)
+                                        : Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, false);
   }
 
   private final TokenSet ANNOTATION_CONTAINERS = TokenSet.create(
