@@ -3,7 +3,10 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.util.containers.HashSetInterner;
+import com.intellij.util.containers.Interner;
 import gnu.trove.THashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +15,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 
 final class LoadingContext implements AutoCloseable {
   final Map<Path, FileSystem> openedFiles = new THashMap<>();
@@ -80,5 +84,25 @@ final class LoadingContext implements AutoCloseable {
   @NotNull
   public LoadingContext copy(boolean isEssential) {
     return new LoadingContext(parentContext, isBundled, isEssential, disabledPlugins, pathResolver);
+  }
+
+  void readDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor,
+                      @NotNull Element element,
+                      @NotNull Path basePath,
+                      @NotNull PathBasedJdomXIncluder.PathResolver<?> resolver) {
+    LoadDescriptorsContext parentContext = this.parentContext;
+    Supplier<String> defaultVersion;
+    Interner<String> stringInterner;
+    if (parentContext == null) {
+      defaultVersion = IdeaPluginDescriptorImpl.DEFAULT_VERSION_SUPPLIER;
+      stringInterner = new HashSetInterner<>();
+    }
+    else {
+      defaultVersion = parentContext.defaultVersionSupplier;
+      // always PluginXmlFactory with not-null interner
+      stringInterner = Objects.requireNonNull(parentContext.getXmlFactory().stringInterner());
+    }
+
+    descriptor.readExternal(element, basePath, PluginManagerCore.isUnitTestMode, resolver, stringInterner, disabledPlugins, defaultVersion);
   }
 }

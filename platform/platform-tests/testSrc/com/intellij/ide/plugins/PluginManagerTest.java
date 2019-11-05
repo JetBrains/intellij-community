@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.ide.plugins.IdeaPluginDescriptorImpl.DEFAULT_VERSION_SUPPLIER;
 import static org.junit.Assert.*;
 
 public class PluginManagerTest {
@@ -152,7 +153,7 @@ public class PluginManagerTest {
       String url = element.getAttributeValue("url");
       IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(Paths.get(url), true);
       d.readExternal(element, Paths.get(url), true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER,
-                     context.getXmlFactory().stringInterner(), PluginManagerCore.disabledPlugins());
+                     context.getXmlFactory().stringInterner(), Collections.emptySet(), DEFAULT_VERSION_SUPPLIER);
       result.add(d, false);
     }
     result.finish();

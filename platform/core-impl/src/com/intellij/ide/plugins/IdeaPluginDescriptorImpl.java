@@ -40,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,6 +59,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private static final String MODULE_SERVICE = "com.intellij.moduleService";
 
   static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
+
+  public static final Supplier<String> DEFAULT_VERSION_SUPPLIER = () -> {
+    return PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+  };
 
   private final Path myPath;
   private final boolean myBundled;
@@ -148,15 +153,21 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
                            @Nullable SafeJdomFactory factory,
                            boolean ignoreMissingInclude,
                            @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
-    readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner(), disabledPlugins);
+    Interner<String> stringInterner = factory == null ? null : factory.stringInterner();
+    // only for CoreApplicationEnvironment
+    if (stringInterner == null) {
+      stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
+    }
+    readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, stringInterner, disabledPlugins, DEFAULT_VERSION_SUPPLIER);
   }
 
   public void readExternal(@NotNull Element element,
-                            @Nullable Path basePath,
-                            boolean ignoreMissingInclude,
-                            @Nullable PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                            @Nullable Interner<String> stringInterner,
-                            @NotNull Set<PluginId> disabledPlugins) {
+                           @Nullable Path basePath,
+                           boolean ignoreMissingInclude,
+                           @Nullable PathBasedJdomXIncluder.PathResolver<?> pathResolver,
+                           @NotNull Interner<String> stringInterner,
+                           @NotNull Set<PluginId> disabledPlugins,
+                           @NotNull Supplier<String> defaultVersion) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -177,11 +188,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     XmlReader.readMetaInfo(this, element);
-
-    // only for CoreApplicationEnvironment
-    if (stringInterner == null) {
-      stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
-    }
 
     List<PluginDependency> dependencies = null;
     for (Content content : element.getContent()) {
@@ -304,7 +310,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (myVersion == null) {
-      myVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+      myVersion = defaultVersion.get();
     }
 
     if (dependencies != null) {

@@ -97,8 +97,9 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       }
       builder.append('.');
     }
-    if (builder.charAt(builder.length() - 1) == '.') builder.setLength(builder.length() - 1);
-
+    if (builder.charAt(builder.length() - 1) == '.') {
+      builder.setLength(builder.length() - 1);
+    }
     return builder.toString();
   }
 

@@ -30,7 +30,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.Interner;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -65,8 +64,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public final class PluginManagerCore {
   public static final String META_INF = "META-INF/";
@@ -813,11 +810,8 @@ public final class PluginManagerCore {
     }
 
     try {
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), loadingContext.isBundled);
-      SafeJdomFactory xmlFactory = loadingContext.getXmlFactory();
-      descriptor.readExternal(JDOMUtil.load(descriptorFile, xmlFactory), descriptorFile.getParent(), isUnitTestMode, loadingContext.pathResolver,
-                              xmlFactory == null ? null : xmlFactory.stringInterner(),
-                              loadingContext.disabledPlugins);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), loadingContext.isBundled);
+      loadingContext.readDescriptor(descriptor, JDOMUtil.load(descriptorFile, loadingContext.getXmlFactory()), descriptorFile.getParent(), loadingContext.pathResolver);
       return descriptor;
     }
     catch (SerializationException | JDOMException | IOException e) {
@@ -853,9 +847,8 @@ public final class PluginManagerCore {
         return null;
       }
 
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), context.isBundled);
-      Interner<String> interner = factory == null ? null : factory.stringInterner();
-      descriptor.readExternal(element, metaInf, isUnitTestMode, pathResolver, interner, context.disabledPlugins);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), context.isBundled);
+      context.readDescriptor(descriptor, element, metaInf, pathResolver);
       context.lastZipWithDescriptor = file;
       return descriptor;
     }
@@ -875,7 +868,7 @@ public final class PluginManagerCore {
   }
 
   /**
-   * @deprecated Use {@link #loadDescriptor(Path, String)}
+   * @deprecated Use {@link PluginManager#loadDescriptor(Path, String)}
    */
   @Nullable
   @Deprecated
@@ -1463,7 +1456,7 @@ public final class PluginManagerCore {
     String selectedIds = System.getProperty("idea.load.plugins.id");
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
-    IdeaPluginDescriptorImpl coreDescriptor = notNull(idMap.get(CORE_ID));
+    IdeaPluginDescriptorImpl coreDescriptor = ObjectUtils.notNull(idMap.get(CORE_ID));
     boolean checkModuleDependencies = !coreDescriptor.getModules().isEmpty() &&
                                       !coreDescriptor.getModules().contains(ALL_MODULES_MARKER);
 

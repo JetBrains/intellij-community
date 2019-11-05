@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 
 final class LoadDescriptorsContext implements AutoCloseable {
   @NotNull
@@ -28,6 +29,17 @@ final class LoadDescriptorsContext implements AutoCloseable {
 
   @NotNull
   final Set<PluginId> disabledPlugins;
+
+  private volatile String defaultVersion;
+
+  final Supplier<String> defaultVersionSupplier = () -> {
+    String result = defaultVersion;
+    if (result == null) {
+      result = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+      defaultVersion = result;
+    }
+    return result;
+  };
 
   LoadDescriptorsContext(boolean isParallel, @NotNull Set<PluginId> disabledPlugins) {
     this.disabledPlugins = disabledPlugins;
@@ -54,7 +66,7 @@ final class LoadDescriptorsContext implements AutoCloseable {
     return myExecutorService;
   }
 
-  @Nullable
+  @NotNull
   public SafeJdomFactory getXmlFactory() {
     return myThreadLocalXmlFactory.get();
   }
