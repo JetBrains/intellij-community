@@ -41,7 +41,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void fill3DRect(int x, int y, int width, int height, boolean raised) {
-    log(String.format("draw3DRect(%d, %d, %d, %d, %b)", x, y, width, height, raised));
+    log(String.format("fill3DRect(%d, %d, %d, %d, %b)", x, y, width, height, raised));
     myPeer.fill3DRect(x, y, width, height, raised);
   }
 
@@ -148,7 +148,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public Object getRenderingHint(RenderingHints.Key hintKey) {
-    log(String.format("getRenderingHints(%s)", hintKey));
+    log(String.format("getRenderingHint(%s)", hintKey));
     return myPeer.getRenderingHint(hintKey);
   }
 
