@@ -199,9 +199,6 @@ public class CompletionData {
     else if (object instanceof String) {
       s = (String)object;
     }
-    //else if (object instanceof Template) { TODO[traff]: uncomment, extract interface
-    //  s = ((Template) object).getKey();
-    //}
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }

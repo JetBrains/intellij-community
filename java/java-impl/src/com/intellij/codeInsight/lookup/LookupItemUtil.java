@@ -66,9 +66,6 @@ public class LookupItemUtil {
     else if (object instanceof String) {
       s = (String)object;
     }
-    else if (object instanceof Template) {
-      s = ((Template)object).getKey();
-    }
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }
