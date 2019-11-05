@@ -13,16 +13,14 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
   init {
     for ((line, threads) in threadMap.modelsByLine) {
       for (thread in threads) {
-        val inlay = inlaysManager.insertAfter(line, componentFactory.createThreadComponent(thread)) ?: break
-        inlayByThread[thread] = inlay
+        if (insertThread(line, thread)) break
       }
     }
 
     threadMap.addChangesListener(object : GHPREditorReviewThreadsModel.ChangesListener {
       override fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModel>) {
         for (thread in threads) {
-          val inlay = inlaysManager.insertAfter(line, componentFactory.createThreadComponent(thread)) ?: break
-          inlayByThread[thread] = inlay
+          insertThread(line, thread)
         }
       }
 
@@ -33,5 +31,13 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
         }
       }
     })
+  }
+
+  private fun insertThread(line: Int, thread: GHPRReviewThreadModel): Boolean {
+    val component = componentFactory.createThreadComponent(thread)
+    val inlay = inlaysManager.insertAfter(line, component) ?: return true
+    component.revalidate()
+    inlayByThread[thread] = inlay
+    return false
   }
 }

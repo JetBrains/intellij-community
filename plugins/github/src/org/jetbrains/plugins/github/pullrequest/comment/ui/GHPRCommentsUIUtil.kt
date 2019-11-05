@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.keymap.KeymapUtil
@@ -100,6 +102,12 @@ object GHPRCommentsUIUtil {
       border = JBUI.Borders.empty(if (UIUtil.isUnderDarcula()) 3 else 1, 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
+
+    document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        textField.revalidate()
+      }
+    })
 
     return JPanel().apply {
       isFocusCycleRoot = true

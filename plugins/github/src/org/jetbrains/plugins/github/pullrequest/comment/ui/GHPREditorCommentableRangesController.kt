@@ -70,7 +70,6 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
                 }
               val newInlay = inlaysManager.insertAfter(i, component) ?: return
               component.revalidate()
-              component.repaint()
               //TODO: replace with focus listeners
               component.registerKeyboardAction({
                                                  newInlay.let {
