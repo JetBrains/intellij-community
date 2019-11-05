@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
@@ -41,7 +42,7 @@ object GHPRCommentsUIUtil {
                                   @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
                                   request: (String) -> CompletableFuture<*>): JComponent {
     val container = BorderLayoutPanel().andTransparent()
-    val button = JButton(actionName).apply {
+    val button = JButton(actionName + StringUtil.ELLIPSIS).apply {
       isOpaque = false
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
