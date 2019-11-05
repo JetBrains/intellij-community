@@ -188,6 +188,10 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return convertToList(myDebugProcess.loadFrame());
   }
 
+  protected PyStackFrame getCurrentStackFrame() {
+    return (PyStackFrame) myDebugProcess.getSession().getCurrentStackFrame();
+  }
+
   protected String computeValueAsync(List<PyDebugValue> debugValues, String name) throws PyDebuggerException, InterruptedException {
     final PyDebugValue debugValue = findDebugValueByName(debugValues, name);
     assert debugValue != null;
