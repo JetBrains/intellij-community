@@ -305,9 +305,9 @@ public class DataFlowRunner {
   }
 
   @NotNull
-  private List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                   @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                   @NotNull ControlFlow flow) {
+  protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                     @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                     @NotNull ControlFlow flow) {
     initializeVariables(psiBlock, memStates, flow);
     return ContainerUtil.map(memStates, s -> new DfaInstructionState(flow.getInstruction(0), s));
   }
