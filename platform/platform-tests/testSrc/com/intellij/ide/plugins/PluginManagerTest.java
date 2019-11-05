@@ -146,7 +146,7 @@ public class PluginManagerTest {
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
     LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
-    LoadDescriptorsContext context = new LoadDescriptorsContext(false, null);
+    LoadDescriptorsContext context = new LoadDescriptorsContext(false, Collections.emptySet());
     Element root = JDOMUtil.load(file, context.getXmlFactory());
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");

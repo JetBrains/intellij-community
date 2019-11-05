@@ -884,23 +884,20 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
-    return loadDescriptor(file, fileName, disabledPlugins());
-  }
-
-  @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName, @Nullable Set<PluginId> disabledPlugins) {
-    try (LoadingContext context = new LoadingContext(null, false, false, disabledPlugins == null ? Collections.emptySet() : disabledPlugins)) {
+    try (LoadingContext context = new LoadingContext(null, false, false, disabledPlugins == null ? Collections.emptySet() : disabledPlugins,
+                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }
 
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                         boolean bundled,
+                                                         boolean isBundled,
                                                          @NotNull Set<PluginId> disabledPlugins,
                                                          @Nullable LoadDescriptorsContext parentContext) {
-    try (LoadingContext context = new LoadingContext(parentContext, bundled, false, disabledPlugins)) {
+    try (LoadingContext context = new LoadingContext(parentContext, isBundled, /* isEssential = */ false, disabledPlugins,
+                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return loadDescriptorFromFileOrDir(file, PLUGIN_XML, context, Files.isDirectory(file));
     }
   }
@@ -1109,13 +1106,13 @@ public final class PluginManagerCore {
 
   private static void loadDescriptorsFromDir(@NotNull Path dir,
                                              @NotNull LoadPluginResult result,
-                                             boolean bundled,
+                                             boolean isBundled,
                                              @NotNull LoadDescriptorsContext context) throws ExecutionException, InterruptedException {
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>();
     ExecutorService executorService = context.getExecutorService();
     try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
       for (Path file : dirStream) {
-        tasks.add(executorService.submit(() -> loadDescriptor(file, bundled, context.disabledPlugins, context)));
+        tasks.add(executorService.submit(() -> loadDescriptor(file, isBundled, context.disabledPlugins, context)));
       }
     }
     catch (IOException ignore) {
@@ -1337,10 +1334,10 @@ public final class PluginManagerCore {
         loadDescriptorsFromClassPath(urlsFromClassPath, result, loadingContext, platformPluginURL);
       }
 
-      loadDescriptorsFromDir(Paths.get(PathManager.getPluginsPath()), result, false, context);
+      loadDescriptorsFromDir(Paths.get(PathManager.getPluginsPath()), result, /* isBundled = */ false, context);
 
       if (!isUnitTestMode) {
-        loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), result, true, context);
+        loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), result, /* isBundled = */ true, context);
       }
 
       loadDescriptorsFromProperty(result, context);
@@ -1348,7 +1345,7 @@ public final class PluginManagerCore {
       if (isUnitTestMode && result.plugins.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         ourUnitTestWithBundledPlugins = true;
-        loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), result, true, context);
+        loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), result, /* isBundled = */ true, context);
       }
     }
     catch (InterruptedException | ExecutionException e) {
@@ -1895,7 +1892,7 @@ public final class PluginManagerCore {
    */
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
-    try (LoadingContext context = new LoadingContext(null, true, true, disabledPlugins())) {
+    try (LoadingContext context = new LoadingContext(null, true, true, disabledPlugins(), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       if (Files.isDirectory(pluginRoot)) {
         descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, context);
       }

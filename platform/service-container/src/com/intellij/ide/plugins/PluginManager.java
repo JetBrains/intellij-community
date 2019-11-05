@@ -33,6 +33,12 @@ public final class PluginManager {
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
+  // not in PluginManagerCore because it is helper method
+  @Nullable
+  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
+    return PluginManagerCore.loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins());
+  }
+
   @SuppressWarnings("unused")
   public static void processException(@NotNull Throwable t) {
     StartupAbortedException.processException(t);

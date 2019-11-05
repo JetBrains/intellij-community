@@ -32,13 +32,6 @@ final class LoadingContext implements AutoCloseable {
   LoadingContext(@Nullable LoadDescriptorsContext parentContext,
                  boolean isBundled,
                  boolean isEssential,
-                 @NotNull Set<PluginId> disabledPlugins) {
-    this(parentContext, isEssential, isBundled, disabledPlugins, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
-  }
-
-  LoadingContext(@Nullable LoadDescriptorsContext parentContext,
-                 boolean isBundled,
-                 boolean isEssential,
                  @NotNull Set<PluginId> disabledPlugins,
                  @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
     this.parentContext = parentContext;

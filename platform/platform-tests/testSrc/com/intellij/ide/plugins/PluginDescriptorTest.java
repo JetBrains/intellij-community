@@ -224,7 +224,7 @@ public class PluginDescriptorTest {
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path dir) {
     assertTrue(dir + " does not exist", Files.exists(dir));
     PluginManagerCore.ourPluginError = null;
-    IdeaPluginDescriptorImpl result = PluginManagerCore.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
+    IdeaPluginDescriptorImpl result = PluginManager.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
     if (result == null) {
       assertNotNull(PluginManagerCore.ourPluginError);
       PluginManagerCore.ourPluginError = null;

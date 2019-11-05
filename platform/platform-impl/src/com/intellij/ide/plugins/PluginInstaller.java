@@ -261,7 +261,7 @@ public final class PluginInstaller {
                                                                      IdeaPluginDescriptorImpl pluginDescriptor) {
     File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
     if (targetFile != null) {
-      IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile.toPath(), PluginManagerCore.PLUGIN_XML);
+      IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile.toPath(), PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
         DynamicPlugins.loadPlugin(targetDescriptor);
         return targetDescriptor;

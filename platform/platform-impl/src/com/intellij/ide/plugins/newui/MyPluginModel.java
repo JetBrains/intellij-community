@@ -194,7 +194,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     int rowCount = getRowCount();
     for (int i = 0; i < rowCount; i++) {
       IdeaPluginDescriptor descriptor = getObjectAt(i);
-      if (myDynamicPluginsToUninstall.contains(descriptor)) continue;
+      if (myDynamicPluginsToUninstall.contains(descriptor)) {
+        continue;
+      }
+
       boolean enabled = isEnabled(descriptor.getPluginId());
       if (enabled != descriptor.isEnabled()) {
         // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
