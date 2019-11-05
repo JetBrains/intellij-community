@@ -49,4 +49,13 @@ public class PluginBean extends OptimizedPluginBean {
   @Property(surroundWithTag = false)
   @XCollection
   public PluginDependency[] dependencies;
+
+  @Attribute("use-idea-classloader")
+  public boolean useIdeaClassLoader;
+
+  @Attribute("allow-bundled-update")
+  public boolean allowBundledUpdate;
+
+  @Attribute("implementation-detail")
+  public boolean implementationDetail;
 }

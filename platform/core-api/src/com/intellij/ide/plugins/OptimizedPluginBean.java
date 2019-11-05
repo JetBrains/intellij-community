@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 
@@ -36,13 +35,4 @@ public class OptimizedPluginBean {
 
   @Tag("change-notes")
   public String changeNotes;
-
-  @Attribute("use-idea-classloader")
-  public boolean useIdeaClassLoader;
-
-  @Attribute("allow-bundled-update")
-  public boolean allowBundledUpdate;
-
-  @Attribute("implementation-detail")
-  public boolean implementationDetail;
 }

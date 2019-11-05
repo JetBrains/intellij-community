@@ -161,7 +161,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    readMetaInfo(element);
+    readIdAndName(element);
 
     if (myId == null || disabledPlugins == null || !disabledPlugins.contains(myId)) {
       PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, Objects.requireNonNull(pathResolver));
@@ -177,9 +177,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myReleaseDate = parseReleaseDate(pluginBean);
     myReleaseVersion = productDescriptor == null ? 0 : productDescriptor.releaseVersion;
 
-    myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
-    myAllowBundledUpdate = pluginBean.allowBundledUpdate;
-    myImplementationDetail = pluginBean.implementationDetail;
+    readMetaInfo(element);
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
       myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
@@ -344,7 +342,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  private void readMetaInfo(@NotNull Element element) {
+  private void readIdAndName(@NotNull Element element) {
     String idString = element.getChildTextTrim("id");
     myName = element.getChildTextTrim("name");
     if (idString == null) {
@@ -355,6 +353,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     myId = StringUtil.isEmpty(idString) ? null : PluginId.getId(idString);
+  }
+
+  private void readMetaInfo(@NotNull Element element) {
     myUrl = element.getAttributeValue("url");
 
     String internalVersionString = element.getAttributeValue("version");
@@ -366,6 +367,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, myId));
       }
     }
+
+    myUseIdeaClassLoader = Boolean.parseBoolean(element.getAttributeValue("use-idea-classloader"));
+    myAllowBundledUpdate = Boolean.parseBoolean(element.getAttributeValue("allow-bundled-update"));
+    myImplementationDetail = Boolean.parseBoolean(element.getAttributeValue("implementation-detail"));
   }
 
   private static final class PluginDependency {
