@@ -30,7 +30,6 @@ public final class DFSTBuilder<Node> {
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
   private final Node[] myAllNodes;
 
-
   /**
    * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
    */
@@ -85,14 +84,14 @@ public final class DFSTBuilder<Node> {
    *   <li>also computing a topological order during the same single pass</li>
    * </ul>
    */
-  private class Tarjan {
+  private final class Tarjan {
     private final int[] lowLink = new int[myInvN.length];
     private final int[] index = new int[myInvN.length];
 
     private final IntStack nodesOnStack = new IntStack();
     private final boolean[] isOnStack = new boolean[index.length];
 
-    private class Frame {
+    private final class Frame {
       Frame(int nodeI) {
         this.nodeI = nodeI;
         Iterator<Node> outNodes = myGraph.getOut(myAllNodes[nodeI]);
@@ -113,7 +112,9 @@ public final class DFSTBuilder<Node> {
       public String toString() {
         StringBuilder o = new StringBuilder();
         o.append(myAllNodes[nodeI]).append(" -> [");
-        for (int id : out) o.append(myAllNodes[id]).append(", ");
+        for (int id : out) {
+          o.append(myAllNodes[id]).append(", ");
+        }
         return o.append(']').toString();
       }
     }
@@ -252,6 +253,7 @@ public final class DFSTBuilder<Node> {
     }
   }
 
+  @Nullable
   public Couple<Node> getCircularDependency() {
     return myBackEdge;
   }
@@ -282,7 +284,9 @@ public final class DFSTBuilder<Node> {
   @NotNull
   public Collection<Collection<Node>> getComponents() {
     final TIntArrayList componentSizes = getSCCs();
-    if (componentSizes.isEmpty()) return Collections.emptyList();
+    if (componentSizes.isEmpty()) {
+      return Collections.emptyList();
+    }
 
     return new MyCollection<Collection<Node>>(componentSizes.size()) {
       @NotNull
@@ -295,7 +299,10 @@ public final class DFSTBuilder<Node> {
           protected Collection<Node> get(int i) {
             final int cSize = componentSizes.get(i);
             final int cOffset = offset;
-            if (cSize == 0) return Collections.emptyList();
+            if (cSize == 0) {
+              return Collections.emptyList();
+            }
+
             offset += cSize;
             return new MyCollection<Node>(cSize) {
               @NotNull
@@ -343,7 +350,9 @@ public final class DFSTBuilder<Node> {
 
     @Override
     public T next() {
-      if (i == size) throw new NoSuchElementException();
+      if (i == size) {
+        throw new NoSuchElementException();
+      }
       return get(i++);
     }
 
