@@ -537,7 +537,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       .into(result);
 
     processMetaClassMembers(
-      typeType -> ContainerUtil.addAll(result, typeType.toInstance().getCompletionVariants(prefix, location, context)),
+      typeType -> ContainerUtil.addAll(result, typeType.getCompletionVariants(prefix, location, context)),
       typeInstanceAttribute -> {
         result.add(LookupElementBuilder.create(typeInstanceAttribute));
         return true;
@@ -682,8 +682,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                        @NotNull TypeEvalContext context) {
     if (!myClass.isNewStyleClass(context)) return;
 
-    final PyClassLikeType typeType = getMetaClassType(context, true);
-    if (typeType == null) return;
+    final PyClassLikeType typeTypeMeta = getMetaClassType(context, true);
+    if (typeTypeMeta == null) return;
+    final PyClassLikeType typeType = typeTypeMeta.toInstance();
 
     if (isDefinition()) {
       typeTypeConsumer.accept(typeType);
