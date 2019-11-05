@@ -71,6 +71,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
           //noinspection unchecked
           registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
           createComponents(null);
+          Disposer.register(DefaultProject.this, this);
         }
 
         @Override

@@ -176,7 +176,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public boolean isDisposed() {
-    return isContainerDisposed();
+    return isDisposedOrDisposeInProgress();
   }
 
   public final boolean isWorkspaceComponent(@NotNull Class<?> componentImplementation) {

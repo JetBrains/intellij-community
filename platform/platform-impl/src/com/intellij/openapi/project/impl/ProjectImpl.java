@@ -106,7 +106,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public boolean isDisposed() {
-    return super.isDisposed() || temporarilyDisposed;
+    return isDisposedOrDisposeInProgress();
   }
 
   @Override
@@ -362,8 +362,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
     }
 
-    // we use super here, because temporarilyDisposed will be true if project closed
-    LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
+    LOG.assertTrue(myContainerState.ordinal() <= ContainerState.DISPOSED.ordinal(), this + " is disposed already");
     disposeComponents();
 
     super.dispose();

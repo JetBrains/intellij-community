@@ -173,7 +173,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
 
       @Override
-      public void projectClosed(@NotNull Project project) {
+      public void projectClosing(@NotNull Project project) {
         if (project == myProject) {
           // Dispose created editors. We do not use use closeEditor method because
           // it fires event and changes history.

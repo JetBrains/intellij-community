@@ -109,7 +109,10 @@ public interface Project extends ComponentManager, AreaInstance {
   boolean isDefault();
 
   @NotNull
-  @ApiStatus.Experimental
+  @Deprecated
+  /**
+   * @deprecated Use {@link #getDisposed()} instead
+   */
   default Condition<?> getDisposedOrDisposeInProgress() {
     return __ -> isDisposedOrDisposeInProgress();
   }
