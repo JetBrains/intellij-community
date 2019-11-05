@@ -275,7 +275,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myShortcutSet != shortcutSet &&
-        !"ProxyShortcutSet".equals(shortcutSet.getClass().getSimpleName()) && // avoid CyclicDependencyException
+        myShortcutSet != CustomShortcutSet.EMPTY &&
         ApplicationManager.getApplication() != null &&
         ActionManager.getInstance() != null &&
         ActionManager.getInstance().getId(this) != null) {
