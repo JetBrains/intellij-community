@@ -20,6 +20,7 @@ import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
@@ -62,6 +63,8 @@ object DynamicPlugins {
     val extensions = pluginDescriptor.extensions
     if (extensions != null) {
       for (epName in extensions.keys) {
+        if (isPluginExtensionPoint(pluginDescriptor, epName)) continue
+
         val ep = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName) ?:
           anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
         if (ep == null || !ep.isDynamic) {
@@ -73,6 +76,19 @@ object DynamicPlugins {
 
     return hasNoComponents(pluginDescriptor) &&
            (ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(pluginDescriptor)
+  }
+
+  private fun isPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): Boolean {
+    return isContainerExtensionPoint(pluginDescriptor.app, pluginDescriptor, epName) ||
+           isContainerExtensionPoint(pluginDescriptor.project, pluginDescriptor, epName) ||
+           isContainerExtensionPoint(pluginDescriptor.module, pluginDescriptor, epName)
+  }
+
+  private fun isContainerExtensionPoint(containerDescriptor: ContainerDescriptor, pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): Boolean {
+    val extensionPoints = containerDescriptor.extensionPoints ?: return false
+    return extensionPoints.any {
+      (Extensions.getRootArea() as ExtensionsAreaImpl).getExtensionPointName(it, pluginDescriptor) == epName
+    }
   }
 
   /**
