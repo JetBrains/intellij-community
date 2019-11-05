@@ -94,7 +94,8 @@
                     interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider"/>
 
     <extensionPoint name="daemon.highlightInfoFilter"
-                    interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
+                    interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"
+                    dynamic="true"/>
 
     <extensionPoint name="daemon.tooltipActionProvider"
                     interface="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider"/>
@@ -236,7 +237,7 @@
     </extensionPoint>
 
     <extensionPoint name="lang.formatter.restriction" interface="com.intellij.lang.LanguageFormattingRestriction" dynamic="true"/>
-    <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ImportOptimizer"/>
     </extensionPoint>
 
@@ -252,7 +253,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.surroundWith.SurroundDescriptor"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.unwrapDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.unwrapDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.unwrap.UnwrapDescriptor"/>
     </extensionPoint>
 
@@ -277,7 +278,8 @@
     </extensionPoint>
 
     <extensionPoint name="multiLangCommenter"
-                    interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider"/>
+                    interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="cacheBuilder"
                     beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP">
@@ -289,11 +291,11 @@
       <with attribute="forClass" implements="com.intellij.model.search.SearchParameters"/>
       <with attribute="implementationClass" implements="com.intellij.model.search.Searcher"/>
     </extensionPoint>
-    <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
 
     <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider"/>
-    <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
+    <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger" dynamic="true"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
     <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer"/>
@@ -350,7 +352,7 @@
     <extensionPoint name="lineIndentProvider" interface="com.intellij.psi.codeStyle.lineIndent.LineIndentProvider" dynamic="true"/>
     <extensionPoint name="codeStyleSettingsModifier" interface="com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier" dynamic="true"/>
 
-    <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP">
+    <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.DeclarationRangeHandler"/>
     </extensionPoint>
 
@@ -564,7 +566,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP">
+    <extensionPoint name="completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
 
@@ -609,7 +611,8 @@
     <extensionPoint name="projectSdkSetupValidator" interface="com.intellij.codeInsight.daemon.ProjectSdkSetupValidator"/>
 
     <extensionPoint name="lang.implementationTextSelectioner"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextSelectioner"/>
     </extensionPoint>
 
@@ -624,7 +627,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.whiteSpaceFormattingStrategy"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.formatter.WhiteSpaceFormattingStrategy"/>
     </extensionPoint>
 
@@ -635,10 +639,11 @@
 
     <extensionPoint name="gotoDeclarationHandler" dynamic="true"
                     interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
-    <extensionPoint name="typeDeclarationProvider"
+    <extensionPoint name="typeDeclarationProvider" dynamic="true"
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
     <extensionPoint name="gotoTargetRendererProvider"
-                    interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"/>
+                    interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
@@ -647,7 +652,7 @@
     <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor"/>
     <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler"/>
     <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory" dynamic="true"/>
-    <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>
+    <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider" dynamic="true"/>
     <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
     <extensionPoint name="rename.inplace.resolveSnapshotProvider"
@@ -713,7 +718,7 @@
 
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
-    <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
+    <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider" dynamic="true"/>
     <extensionPoint name="virtualFileQualifiedNameProvider"
                     interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
 
@@ -753,19 +758,19 @@
     <extensionPoint name="defaultLiveTemplates"
                     beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP"/>
 
-    <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.overrideMethod" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeInsight.overrideMethod" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.delegateMethods" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeInsight.delegateMethods" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.CodeInsightActionHandler"/>
     </extensionPoint>
 

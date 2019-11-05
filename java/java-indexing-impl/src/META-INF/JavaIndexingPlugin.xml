@@ -20,7 +20,7 @@
     <extensionPoint qualifiedName="com.intellij.classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.overridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint qualifiedName="com.intellij.methodReferencesSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.methodReferencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.directClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.classInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
