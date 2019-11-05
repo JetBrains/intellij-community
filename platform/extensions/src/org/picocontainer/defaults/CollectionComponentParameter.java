@@ -11,7 +11,6 @@ package org.picocontainer.defaults;
 
 import org.picocontainer.*;
 
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -26,10 +25,7 @@ import java.util.*;
  * @author J&ouml;rg Schaible
  * @since 1.1
  */
-public class CollectionComponentParameter
-  implements Parameter, Serializable {
-  private static final MapFactory mapFactory = new MapFactory();
-
+public final class CollectionComponentParameter implements Parameter {
   /**
    * Use <code>ARRAY</code> as {@link Parameter}for an Array that must have elements.
    */
@@ -41,8 +37,8 @@ public class CollectionComponentParameter
   public static final CollectionComponentParameter ARRAY_ALLOW_EMPTY = new CollectionComponentParameter(true);
 
   private final boolean emptyCollection;
-  private final Class componentKeyType;
-  private final Class componentValueType;
+  private final Class<?> componentKeyType;
+  private final Class<?> componentValueType;
 
   /**
    * Expect an {@link Array}of an appropriate type as parameter. At least one component of
@@ -107,7 +103,7 @@ public class CollectionComponentParameter
     Object result = null;
     final Class collectionType = getCollectionType(expectedType);
     if (collectionType != null) {
-      final Map adapterMap = getMatchingComponentAdapters(container, adapter, componentKeyType, getValueType(expectedType));
+      Map<Object, ComponentAdapter> adapterMap = getMatchingComponentAdapters(container, adapter, componentKeyType, getValueType(expectedType));
       if (Array.class.isAssignableFrom(collectionType)) {
         result = getArrayInstance(container, expectedType, adapterMap);
       }
@@ -175,16 +171,6 @@ public class CollectionComponentParameter
   }
 
   /**
-   * Evaluate whether the given component adapter will be part of the collective type.
-   *
-   * @param adapter a <code>ComponentAdapter</code> value
-   * @return <code>true</code> if the adapter takes part
-   */
-  protected boolean evaluate(final ComponentAdapter adapter) {
-    return adapter != null; // use parameter, prevent compiler warning
-  }
-
-  /**
    * Collect the matching ComponentAdapter instances.
    *
    * @param container container to use for dependency resolution
@@ -193,13 +179,17 @@ public class CollectionComponentParameter
    * @param valueType the compatible type of the component
    * @return a {@link Map} with the ComponentAdapter instances and their component keys as map key.
    */
-  protected Map getMatchingComponentAdapters(PicoContainer container, ComponentAdapter adapter, Class keyType, Class valueType) {
-    final Map adapterMap = mapFactory.newInstance();
-    final PicoContainer parent = container.getParent();
+  private static Map<Object, ComponentAdapter> getMatchingComponentAdapters(PicoContainer container,
+                                                                            ComponentAdapter adapter,
+                                                                            Class<?> keyType,
+                                                                            Class<?> valueType) {
+    Map<Object, ComponentAdapter> adapterMap = new LinkedHashMap<>();
+    PicoContainer parent = container.getParent();
     if (parent != null) {
       adapterMap.putAll(getMatchingComponentAdapters(parent, adapter, keyType, valueType));
     }
-    final Collection allAdapters = container.getComponentAdapters();
+
+    Collection allAdapters = container.getComponentAdapters();
     for (Object allAdapter : allAdapters) {
       final ComponentAdapter componentAdapter = (ComponentAdapter)allAdapter;
       adapterMap.remove(componentAdapter.getComponentKey());
@@ -211,7 +201,7 @@ public class CollectionComponentParameter
       if (adapter != null && key.equals(adapter.getComponentKey())) {
         continue;
       }
-      if (keyType.isAssignableFrom(key.getClass()) && evaluate(componentAdapter)) {
+      if (keyType.isAssignableFrom(key.getClass())) {
         adapterMap.put(key, componentAdapter);
       }
     }
@@ -240,7 +230,7 @@ public class CollectionComponentParameter
     return valueType;
   }
 
-  private Object[] getArrayInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
+  private static Object[] getArrayInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
     final Object[] result = (Object[])Array.newInstance(expectedType.getComponentType(), adapterList.size());
     int i = 0;
     for (Object o : adapterList.values()) {
@@ -251,16 +241,12 @@ public class CollectionComponentParameter
     return result;
   }
 
-  private static Collection getCollectionInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
-    Class collectionType = expectedType;
+  private static Collection getCollectionInstance(PicoContainer container, Class<?> expectedType, Map<Object, ComponentAdapter> adapterList) {
+    Class<?> collectionType = expectedType;
     if (collectionType.isInterface()) {
       // The order of tests are significant. The least generic types last.
       if (List.class.isAssignableFrom(collectionType)) {
         collectionType = ArrayList.class;
-        //            } else if (BlockingQueue.class.isAssignableFrom(collectionType)) {
-        //                collectionType = ArrayBlockingQueue.class;
-        //            } else if (Queue.class.isAssignableFrom(collectionType)) {
-        //                collectionType = LinkedList.class;
       }
       else if (SortedSet.class.isAssignableFrom(collectionType)) {
         collectionType = TreeSet.class;
@@ -272,11 +258,12 @@ public class CollectionComponentParameter
         collectionType = ArrayList.class;
       }
     }
+
     try {
-      Collection result = (Collection)collectionType.newInstance();
-      for (Object o : adapterList.values()) {
-        final ComponentAdapter componentAdapter = (ComponentAdapter)o;
-        result.add(container.getComponentInstance(componentAdapter.getComponentKey()));
+      @SuppressWarnings("unchecked")
+      Collection<Object> result = (Collection<Object>)collectionType.newInstance();
+      for (ComponentAdapter o : adapterList.values()) {
+        result.add(container.getComponentInstance(o.getComponentKey()));
       }
       return result;
     }
@@ -292,7 +279,7 @@ public class CollectionComponentParameter
     }
   }
 
-  private static Map getMapInstance(final PicoContainer container, final Class expectedType, final Map adapterList) {
+  private static Map getMapInstance(PicoContainer container, Class<?> expectedType, Map<Object, ComponentAdapter> adapterList) {
     Class collectionType = expectedType;
     if (collectionType.isInterface()) {
       // The order of tests are significant. The least generic types last.
@@ -306,23 +293,18 @@ public class CollectionComponentParameter
       }
     }
     try {
-      Map result = (Map)collectionType.newInstance();
-      for (Object o : adapterList.entrySet()) {
-        final Map.Entry entry = (Map.Entry)o;
-        final Object key = entry.getKey();
+      @SuppressWarnings("unchecked")
+      Map<Object, Object> result = (Map<Object, Object>)collectionType.newInstance();
+      for (Object key : adapterList.keySet()) {
         result.put(key, container.getComponentInstance(key));
       }
       return result;
     }
     catch (InstantiationException e) {
-      ///CLOVER:OFF
       throw new PicoInitializationException(e);
-      ///CLOVER:ON
     }
     catch (IllegalAccessException e) {
-      ///CLOVER:OFF
       throw new PicoInitializationException(e);
-      ///CLOVER:ON
     }
   }
 }

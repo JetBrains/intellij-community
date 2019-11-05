@@ -9,20 +9,17 @@
  *****************************************************************************/
 package org.picocontainer;
 
-import org.picocontainer.defaults.DefaultPicoContainer;
-
 /**
  * An interface which is implemented by components that need to dispose of resources during the shutdown of that
  * component. The {@link Disposable#dispose()} must be called once during shutdown, directly after {@link
+ *
  * @version $Revision: 1570 $
- * @see PicoContainer the main PicoContainer interface (and hence its subinterfaces and
- *      implementations like {@link DefaultPicoContainer}) implement this interface.
  * @since 1.0
  */
 public interface Disposable {
-    /**
-     * Dispose this component. The component should deallocate all resources. The contract for this method defines a
-     * single call at the end of this component's life.
-     */
-    void dispose();
+  /**
+   * Dispose this component. The component should deallocate all resources. The contract for this method defines a
+   * single call at the end of this component's life.
+   */
+  void dispose();
 }
