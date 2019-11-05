@@ -13,7 +13,7 @@ public class FormattingContext {
   private final GroovyCodeStyleSettings myGroovySettings;
   private final AlignmentProvider myAlignmentProvider;
 
-  private final boolean forbidWrapping;
+  private final boolean myForbidWrapping;
 
   public FormattingContext(@NotNull CommonCodeStyleSettings settings,
                            @NotNull AlignmentProvider provider,
@@ -21,7 +21,7 @@ public class FormattingContext {
     mySettings = settings;
     myAlignmentProvider = provider;
     myGroovySettings = groovySettings;
-    this.forbidWrapping = forbidWrapping;
+    this.myForbidWrapping = forbidWrapping;
   }
 
   public CommonCodeStyleSettings getSettings() {
@@ -37,10 +37,10 @@ public class FormattingContext {
   }
 
   public FormattingContext createContext(boolean forbidWrapping) {
-    return new FormattingContext(mySettings, myAlignmentProvider, myGroovySettings, this.forbidWrapping || forbidWrapping);
+    return new FormattingContext(mySettings, myAlignmentProvider, myGroovySettings, myForbidWrapping || forbidWrapping);
   }
 
   public boolean isForbidWrapping() {
-    return forbidWrapping;
+    return myForbidWrapping;
   }
 }
