@@ -242,14 +242,4 @@ public class CompletionUtil {
       }
     };
   }
-
-  /**
-   * @return String representation of action shortcut. Useful while advertising something
-   * @see #advertise(CompletionParameters)
-   */
-  @NotNull
-  public static String getActionShortcut(@NonNls @NotNull final String actionId) {
-    return ""; //TODO[traff]: move to another util class
-    //return KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
-  }
 }
