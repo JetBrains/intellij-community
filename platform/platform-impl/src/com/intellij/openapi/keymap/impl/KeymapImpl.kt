@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -752,7 +753,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
       }
       else -> object : NotificationAction("Install $keymapName Keymap") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          PluginsAdvertiser.installAndEnablePlugins(setOf(pluginId)) {
+          PluginsAdvertiser.installAndEnable(setOf(PluginId.getId(pluginId))) {
             notification.expire()
           }
         }

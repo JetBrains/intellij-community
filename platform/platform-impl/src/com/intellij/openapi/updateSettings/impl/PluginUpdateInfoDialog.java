@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -87,7 +88,6 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
                   }
                   else {
                     message = "Updated " + result.getPluginsInstalled() + " plugins";
-
                   }
                   UpdateChecker.NOTIFICATIONS.createNotification(message, NotificationType.INFORMATION).notify(myProject);
                 }
@@ -122,8 +122,8 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
 
     private void updateState(DetectedPluginsPanel panel) {
       if (!myPlatformUpdate) {
-        Set<String> skipped = panel.getSkippedPlugins();
-        boolean nothingSelected = myUploadedPlugins.stream().allMatch(plugin -> skipped.contains(plugin.getPluginId()));
+        Set<PluginId> skipped = panel.getSkippedPlugins();
+        boolean nothingSelected = myUploadedPlugins.stream().allMatch(plugin -> skipped.contains(plugin.getId()));
         getOKAction().setEnabled(!nothingSelected);
       }
     }

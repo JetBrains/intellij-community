@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -146,7 +145,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void loadFromFile(@NotNull Path file,
                            @Nullable SafeJdomFactory factory,
                            boolean ignoreMissingInclude,
-                           @Nullable Set<String> disabledPlugins) throws IOException, JDOMException {
+                           @Nullable Set<PluginId> disabledPlugins) throws IOException, JDOMException {
     readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner(), disabledPlugins);
   }
 
@@ -155,50 +154,29 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
                             boolean ignoreMissingInclude,
                             @Nullable PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                             @Nullable Interner<String> stringInterner,
-                            @Nullable Set<String> disabledPlugins) {
+                            @Nullable Set<PluginId> disabledPlugins) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
       return;
     }
 
-    String pluginId = element.getChildTextTrim("id");
-    if (pluginId == null) {
-      pluginId = element.getChildTextTrim("name");
-    }
+    readMetaInfo(element);
 
-    if (pluginId == null || disabledPlugins == null || !disabledPlugins.contains(pluginId)) {
+    if (myId == null || disabledPlugins == null || !disabledPlugins.contains(myId)) {
       PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, Objects.requireNonNull(pathResolver));
     }
     else if (LOG.isDebugEnabled()) {
-      LOG.debug("Skipping resolving of " + pluginId + " from " + basePath);
+      LOG.debug("Skipping resolving of " + myId + " from " + basePath);
     }
-    readExternal(element, stringInterner);
-  }
 
-  private void readExternal(@NotNull Element element, @Nullable Interner<String> stringInterner) {
     OptimizedPluginBean pluginBean = XmlSerializer.deserialize(element, OptimizedPluginBean.class);
-    myUrl = pluginBean.url;
 
-    String idString = StringUtil.nullize(pluginBean.id, true);
-    String nameString = StringUtil.nullize(pluginBean.name, true);
-    myId = idString != null ? PluginId.getId(idString) : nameString != null ? PluginId.getId(nameString) : null;
-    myName = ObjectUtils.chooseNotNull(nameString, idString);
-
-    ProductDescriptor pd = pluginBean.productDescriptor;
-    myProductCode = pd == null ? null : StringUtil.nullize(pd.code);
+    ProductDescriptor productDescriptor = pluginBean.productDescriptor;
+    myProductCode = productDescriptor == null ? null : StringUtil.nullize(productDescriptor.code);
     myReleaseDate = parseReleaseDate(pluginBean);
-    myReleaseVersion = pd == null ? 0 : pd.releaseVersion;
+    myReleaseVersion = productDescriptor == null ? 0 : productDescriptor.releaseVersion;
 
-    String internalVersionString = pluginBean.formatVersion;
-    if (internalVersionString != null) {
-      try {
-        Integer.parseInt(internalVersionString);
-      }
-      catch (NumberFormatException e) {
-        LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, myId));
-      }
-    }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
     myAllowBundledUpdate = pluginBean.allowBundledUpdate;
     myImplementationDetail = pluginBean.implementationDetail;
@@ -363,6 +341,30 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     if (dependencies != null) {
       readDependencies(dependencies);
+    }
+  }
+
+  private void readMetaInfo(@NotNull Element element) {
+    String idString = element.getChildTextTrim("id");
+    myName = element.getChildTextTrim("name");
+    if (idString == null) {
+      idString = myName;
+    }
+    else if (myName == null) {
+      myName = idString;
+    }
+
+    myId = StringUtil.isEmpty(idString) ? null : PluginId.getId(idString);
+    myUrl = element.getAttributeValue("url");
+
+    String internalVersionString = element.getAttributeValue("version");
+    if (internalVersionString != null) {
+      try {
+        Integer.parseInt(internalVersionString);
+      }
+      catch (NumberFormatException e) {
+        LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, myId));
+      }
     }
   }
 
@@ -536,7 +538,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  private static Date parseReleaseDate(@NotNull OptimizedPluginBean bean) {
+  private Date parseReleaseDate(@NotNull OptimizedPluginBean bean) {
     final ProductDescriptor pd = bean.productDescriptor;
     final String dateStr = pd != null? pd.releaseDate : null;
     if (dateStr != null) {
@@ -544,7 +546,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         return new SimpleDateFormat("yyyyMMdd", Locale.US).parse(dateStr);
       }
       catch (ParseException e) {
-        LOG.info("Error parse release date from plugin descriptor for plugin " + bean.name + " {" + bean.id + "}: " + e.getMessage());
+        LOG.info("Error parse release date from plugin descriptor for plugin " + myName + " {" + myId + "}: " + e.getMessage());
       }
     }
     return null;

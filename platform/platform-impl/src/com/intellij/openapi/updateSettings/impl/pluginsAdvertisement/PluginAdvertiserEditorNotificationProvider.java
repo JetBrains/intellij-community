@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
@@ -96,13 +97,13 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       });
     } else if (hasNonBundledPlugin(plugins)) {
       panel.createActionLabel("Install plugins", () -> {
-        Set<String> pluginIds = new HashSet<>();
+        Set<PluginId> pluginIds = new HashSet<>();
         for (PluginsAdvertiser.Plugin plugin : plugins) {
           pluginIds.add(plugin.myPluginId);
         }
-        FeatureUsageData data = new FeatureUsageData().addData("source", "editor").addData("plugin", pluginIds.iterator().next());
+        FeatureUsageData data = new FeatureUsageData().addData("source", "editor").addData("plugin", pluginIds.iterator().next().getIdString());
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
-        PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> {
+        PluginsAdvertiser.installAndEnable(pluginIds, () -> {
           myEnabledExtensions.add(extension);
           EditorNotifications.getInstance(project).updateAllNotifications();
         });

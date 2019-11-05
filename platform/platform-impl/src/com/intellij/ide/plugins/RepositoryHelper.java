@@ -39,7 +39,7 @@ import static java.util.Collections.singletonMap;
 /**
  * @author stathik
  */
-public class RepositoryHelper {
+public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
   @SuppressWarnings("SpellCheckingInspection") private static final String TAG_EXT = ".etag";
@@ -62,12 +62,12 @@ public class RepositoryHelper {
   @NotNull
   public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) {
     List<IdeaPluginDescriptor> result = new ArrayList<>();
-    Set<String> addedPluginIds = new HashSet<>();
+    Set<PluginId> addedPluginIds = new HashSet<>();
     for (String host : getPluginHosts()) {
       try {
         List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
         for (IdeaPluginDescriptor plugin : plugins) {
-          if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
+          if (addedPluginIds.add(plugin.getPluginId())) {
             result.add(plugin);
           }
         }

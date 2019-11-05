@@ -99,7 +99,7 @@ public final class PluginManagerCore {
   public static final String ENABLE = "enable";
   public static final String EDIT = "edit";
 
-  private static volatile Set<String> ourDisabledPlugins;
+  private static volatile Set<PluginId> ourDisabledPlugins;
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   private static List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
@@ -115,10 +115,10 @@ public final class PluginManagerCore {
 
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static Set<String> ourPluginsToDisable;
+  public static Set<PluginId> ourPluginsToDisable;
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static Set<String> ourPluginsToEnable;
+  public static Set<PluginId> ourPluginsToEnable;
 
   private static class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
@@ -191,7 +191,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> disabledPlugins) {
+  public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<PluginId> disabledPlugins) {
     Path file = Paths.get(configPath, DISABLED_PLUGINS_FILENAME);
     if (!Files.isRegularFile(file)) {
       return;
@@ -205,7 +205,7 @@ public final class PluginManagerCore {
         while ((id = reader.readLine()) != null) {
           id = id.trim();
           if (!requiredPlugins.contains(id) && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(id)) {
-            disabledPlugins.add(id);
+            disabledPlugins.add(PluginId.getId(id));
           }
           else {
             updateDisablePluginsList = true;
@@ -230,15 +230,15 @@ public final class PluginManagerCore {
   }
 
   /**
-   * @deprecated Bad API, sorry. Please use {@link #isDisabled(String)} to check plugin's state,
-   * {@link #enablePlugin(String)}/{@link #disablePlugin(String)} for state management,
+   * @deprecated Bad API, sorry. Please use {@link #isDisabled(PluginId)} to check plugin's state,
+   * {@link #enablePlugin(PluginId)}/{@link #disablePlugin(PluginId)} for state management,
    * {@link #disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @NotNull
   public static List<String> getDisabledPlugins() {
-    Set<String> list = loadDisabledPlugins();
+    Set<PluginId> list = loadDisabledPlugins();
     return new AbstractList<String>() {
       //<editor-fold desc="Just a ist-like immutable wrapper over a set; move along.">
       @Override
@@ -256,17 +256,19 @@ public final class PluginManagerCore {
         if (index < 0 || index >= list.size()) {
           throw new IndexOutOfBoundsException("index=" + index + " size=" + list.size());
         }
-        Iterator<String> iterator = list.iterator();
-        for (int i = 0; i < index; i++) iterator.next();
-        return iterator.next();
+        Iterator<PluginId> iterator = list.iterator();
+        for (int i = 0; i < index; i++) {
+          iterator.next();
+        }
+        return iterator.next().getIdString();
       }
       //</editor-fold>
     };
   }
 
   @NotNull
-  private static Set<String> loadDisabledPlugins() {
-    Set<String> result = ourDisabledPlugins;
+  private static Set<PluginId> loadDisabledPlugins() {
+    Set<PluginId> result = ourDisabledPlugins;
     if (result != null) {
       return result;
     }
@@ -291,12 +293,20 @@ public final class PluginManagerCore {
   }
 
   @NotNull
-  public static Set<String> disabledPlugins() {
+  public static Set<PluginId> disabledPlugins() {
     return Collections.unmodifiableSet(loadDisabledPlugins());
   }
 
-  public static boolean isDisabled(@NotNull String pluginId) {
+  public static boolean isDisabled(@NotNull PluginId pluginId) {
     return loadDisabledPlugins().contains(pluginId);
+  }
+
+  /**
+   * @deprecated Use {@link #isDisabled(PluginId)}
+   */
+  @Deprecated
+  public static boolean isDisabled(@NotNull String pluginId) {
+    return loadDisabledPlugins().contains(PluginId.getId(pluginId));
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
@@ -374,34 +384,50 @@ public final class PluginManagerCore {
     }
   }
 
-  public static void savePluginsList(@NotNull Collection<String> ids, @NotNull Path file, boolean append) throws IOException {
+  public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file, boolean append) throws IOException {
     Files.createDirectories(file.getParent());
     try (BufferedWriter writer = (append ? Files.newBufferedWriter(file) : Files.newBufferedWriter(file, StandardOpenOption.APPEND))) {
       writePluginsList(ids, writer);
     }
   }
 
-  public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
-    String[] sortedIds = ArrayUtilRt.toStringArray(ids);
-    Arrays.sort(sortedIds);
+  public static void writePluginsList(@NotNull Collection<PluginId> ids, @NotNull Writer writer) throws IOException {
+    List<PluginId> sortedIds = new ArrayList<>(ids);
+    sortedIds.sort(null);
     String separator = LineSeparator.getSystemLineSeparator().getSeparatorString();
-    for (String id : sortedIds) {
-      writer.write(id);
+    for (PluginId id : sortedIds) {
+      writer.write(id.getIdString());
       writer.write(separator);
     }
   }
 
+  /**
+   * @deprecated Use {@link #disablePlugin(PluginId)}
+   */
+  @Deprecated
   public static boolean disablePlugin(@NotNull String id) {
-    Set<String> disabledPlugins = loadDisabledPlugins();
+    return disablePlugin(PluginId.getId(id));
+  }
+
+  public static boolean disablePlugin(@NotNull PluginId id) {
+    Set<PluginId> disabledPlugins = loadDisabledPlugins();
     return disabledPlugins.add(id) && trySaveDisabledPlugins(disabledPlugins);
   }
 
-  public static boolean enablePlugin(@NotNull String id) {
-    Set<String> disabledPlugins = loadDisabledPlugins();
+  public static boolean enablePlugin(@NotNull PluginId id) {
+    Set<PluginId> disabledPlugins = loadDisabledPlugins();
     return disabledPlugins.remove(id) && trySaveDisabledPlugins(disabledPlugins);
   }
 
-  private static boolean trySaveDisabledPlugins(Collection<String> disabledPlugins) {
+  /**
+   * @deprecated Use {@link #enablePlugin(PluginId)}
+   */
+  @Deprecated
+  public static boolean enablePlugin(@NotNull String id) {
+    return enablePlugin(PluginId.getId(id));
+  }
+
+  private static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> disabledPlugins) {
     try {
       saveDisabledPlugins(disabledPlugins, false);
       return true;
@@ -412,11 +438,11 @@ public final class PluginManagerCore {
     }
   }
 
-  public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
+  public static void saveDisabledPlugins(@NotNull Collection<PluginId> ids, boolean append) throws IOException {
     saveDisabledPlugins(PathManager.getConfigPath(), ids, append);
   }
 
-  public static void saveDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> ids, boolean append) throws IOException {
+  public static void saveDisabledPlugins(@NotNull String configPath, @NotNull Collection<PluginId> ids, boolean append) throws IOException {
     Path plugins = Paths.get(configPath, DISABLED_PLUGINS_FILENAME);
     savePluginsList(ids, plugins, append);
     ourDisabledPlugins = null;
@@ -859,7 +885,7 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName, @Nullable Set<String> disabledPlugins) {
+  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName, @Nullable Set<PluginId> disabledPlugins) {
     try (LoadingContext context = new LoadingContext(null, false, false, disabledPlugins)) {
       return loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
@@ -868,7 +894,7 @@ public final class PluginManagerCore {
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                          boolean bundled,
-                                                         @Nullable Set<String> disabledPlugins,
+                                                         @Nullable Set<PluginId> disabledPlugins,
                                                          @Nullable LoadDescriptorsContext parentContext) {
     try (LoadingContext context = new LoadingContext(parentContext, bundled, false, disabledPlugins)) {
       return loadDescriptorFromFileOrDir(file, PLUGIN_XML, context, Files.isDirectory(file));
@@ -1274,7 +1300,7 @@ public final class PluginManagerCore {
       return;
     }
 
-    Set<String> disabledPlugins = disabledPlugins();
+    Set<PluginId> disabledPlugins = disabledPlugins();
     for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparator + ","); t.hasMoreTokens(); ) {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl descriptor = loadDescriptor(Paths.get(s), false, disabledPlugins, context);
@@ -1482,7 +1508,7 @@ public final class PluginManagerCore {
     boolean shouldLoadPlugins = shouldLoadPlugins();
 
     BuildNumber buildNumber = getBuildNumber();
-    Set<String> disabledPlugins = loadDisabledPlugins();
+    Set<PluginId> disabledPlugins = loadDisabledPlugins();
 
     Map<PluginId, Set<String>> brokenPluginVersions = null;
 
@@ -1515,7 +1541,7 @@ public final class PluginManagerCore {
         // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
         errorSuffix = "defines no module dependencies (supported only in IntelliJ IDEA)";
       }
-      else if (disabledPlugins.contains(descriptor.getPluginId().getIdString())) {
+      else if (disabledPlugins.contains(descriptor.getPluginId())) {
         // do not log disabled plugins on each start
         errorSuffix = "";
       }
@@ -1621,7 +1647,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   static void initializePlugins(@NotNull LoadPluginResult loadResult,
                                 @NotNull ClassLoader coreLoader,
-                                @Nullable BiConsumer<? super Set<String>, ? super Set<String>> disabledAndPossibleToEnableConsumer,
+                                @Nullable BiConsumer<? super Set<PluginId>, ? super Set<PluginId>> disabledAndPossibleToEnableConsumer,
                                 boolean checkEssentialPlugins) {
     List<String> errors = new ArrayList<>(loadResult.errors);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(loadResult.plugins, errors);
@@ -1669,15 +1695,7 @@ public final class PluginManagerCore {
     configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins);
 
     if (disabledAndPossibleToEnableConsumer != null) {
-      Set<String> disabledIdSet = new HashSet<>(disabledIds.size());
-      for (PluginId id : disabledIds.keySet()) {
-        disabledIdSet.add(id.getIdString());
-      }
-      Set<String> disabledRequiredIdSet = new HashSet<>(disabledRequiredIds.size());
-      for (PluginId id : disabledRequiredIds) {
-        disabledRequiredIdSet.add(id.getIdString());
-      }
-      disabledAndPossibleToEnableConsumer.accept(disabledIdSet, disabledRequiredIdSet);
+      disabledAndPossibleToEnableConsumer.accept(new HashSet<>(disabledIds.keySet()), disabledRequiredIds);
     }
 
     if (checkEssentialPlugins) {
@@ -1819,7 +1837,7 @@ public final class PluginManagerCore {
     }
 
     boolean result = true;
-    Set<String> disabledPlugins = null;
+    Set<PluginId> disabledPlugins = null;
     for (PluginId depId : descriptor.getDependentPluginIds()) {
       if (loadedIds.contains(depId) || isOptional(descriptor, depId)) {
         continue;
@@ -1835,7 +1853,7 @@ public final class PluginManagerCore {
         if (disabledPlugins == null) {
           disabledPlugins = disabledPlugins();
         }
-        if (disabledPlugins.contains(depId.getIdString())) {
+        if (disabledPlugins.contains(depId)) {
           // broken/incompatible plugins can be updated, add them anyway
           disabledRequiredIds.add(dep.getPluginId());
         }

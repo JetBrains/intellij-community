@@ -101,19 +101,17 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
                                   if ("enable".equals(event.getDescription())) {
                                     notification.expire();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
-                                      PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
+                                      PluginManagerCore.enablePlugin(descriptor.getPluginId());
                                     }
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
                                   else {
-                                    Set<String> pluginIds = new HashSet<>();
+                                    Set<PluginId> pluginIds = new HashSet<>();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
-                                      pluginIds.add(descriptor.getPluginId().getIdString());
+                                      pluginIds.add(descriptor.getPluginId());
                                     }
-                                    for (PluginId pluginId : notInstalled) {
-                                      pluginIds.add(pluginId.getIdString());
-                                    }
-                                    PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> notification.expire());
+                                    pluginIds.addAll(notInstalled);
+                                    PluginsAdvertiser.installAndEnable(pluginIds, () -> notification.expire());
                                   }
                                 }
                               }

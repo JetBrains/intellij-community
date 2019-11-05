@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -170,12 +171,12 @@ public class AllVcses implements AllVcsesI, Disposable {
     TFS("TFS", "TFS", "https://plugins.jetbrains.com/plugin/4578-tfs");
 
     @NotNull private final String vcsName;
-    @NotNull private final String pluginId;
+    @NotNull private final PluginId pluginId;
     @NotNull private final String pluginUrl;
 
     ObsoleteVcs(@NotNull String vcsName, @NotNull String pluginId, @NotNull String pluginUrl) {
       this.vcsName = vcsName;
-      this.pluginId = pluginId;
+      this.pluginId = PluginId.getId(pluginId);
       this.pluginUrl = pluginUrl;
     }
 
@@ -204,7 +205,7 @@ public class AllVcses implements AllVcsesI, Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(indicator);
-          IdeaPluginDescriptor descriptor = ContainerUtil.find(plugins, d -> d.getPluginId().getIdString().equalsIgnoreCase(vcs.pluginId));
+          IdeaPluginDescriptor descriptor = ContainerUtil.find(plugins, d -> d.getPluginId() == vcs.pluginId);
           if (descriptor != null) {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.OldComponentConfig;
 import com.intellij.util.SmartList;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -11,6 +12,18 @@ import org.jdom.Element;
 import java.util.List;
 
 public class PluginBean extends OptimizedPluginBean {
+  @Tag("id")
+  public String id;
+
+  @Tag("name")
+  public String name;
+
+  @Attribute("url")
+  public String url;
+
+  @Attribute("version")
+  public String formatVersion;
+
   @XCollection(propertyElementName = APPLICATION_COMPONENTS)
   public OldComponentConfig[] applicationComponents;
 

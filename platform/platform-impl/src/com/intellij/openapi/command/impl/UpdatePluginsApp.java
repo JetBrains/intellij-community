@@ -51,7 +51,7 @@ public class UpdatePluginsApp implements ApplicationStarter {
 
     Set<String> filter = Stream.of(args).skip(1).collect(Collectors.toSet());
     if (!filter.isEmpty()) {
-      availableUpdates = ContainerUtil.filter(availableUpdates, downloader -> filter.contains(downloader.getPluginId()));
+      availableUpdates = ContainerUtil.filter(availableUpdates, downloader -> filter.contains(downloader.getId().getIdString()));
     }
 
     log("Plugins to update:");

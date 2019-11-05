@@ -40,7 +40,7 @@ public final class PluginDownloader {
 
   private static final String FILENAME = "filename=";
 
-  private final String myPluginId;
+  private final PluginId myPluginId;
   private final String myPluginName;
   private final @Nullable String myProductCode;
   private final Date myReleaseDate;
@@ -59,7 +59,7 @@ public final class PluginDownloader {
   private boolean myShownErrors;
 
   private PluginDownloader(IdeaPluginDescriptor descriptor, String url, BuildNumber buildNumber) {
-    myPluginId = descriptor.getPluginId().getIdString();
+    myPluginId = descriptor.getPluginId();
     myPluginName = descriptor.getName();
     myProductCode = descriptor.getProductCode();
     myReleaseDate = descriptor.getReleaseDate();
@@ -74,8 +74,17 @@ public final class PluginDownloader {
     myDescriptor = descriptor;
   }
 
+  /**
+   * @deprecated Use {@link #getId()}
+   */
   @NotNull
+  @Deprecated
   public String getPluginId() {
+    return myPluginId.getIdString();
+  }
+
+  @NotNull
+  public PluginId getId() {
     return myPluginId;
   }
 
@@ -85,7 +94,7 @@ public final class PluginDownloader {
 
   @NotNull
   public String getPluginName() {
-    return myPluginName != null ? myPluginName : myPluginId;
+    return myPluginName != null ? myPluginName : myPluginId.getIdString();
   }
 
   @Nullable
@@ -128,9 +137,9 @@ public final class PluginDownloader {
 
     IdeaPluginDescriptor descriptor = null;
     if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) &&
-        PluginManagerCore.isPluginInstalled(PluginId.getId(myPluginId))) {
+        PluginManagerCore.isPluginInstalled(myPluginId)) {
       //store old plugins file
-      descriptor = PluginManagerCore.getPlugin(PluginId.getId(myPluginId));
+      descriptor = PluginManagerCore.getPlugin(myPluginId);
       LOG.assertTrue(descriptor != null);
       if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
@@ -357,7 +366,7 @@ public final class PluginDownloader {
       return (PluginNode)descriptor;
     }
 
-    PluginNode node = new PluginNode(PluginId.getId(downloader.getPluginId()));
+    PluginNode node = new PluginNode(downloader.myPluginId);
     node.setName(downloader.getPluginName());
     node.setProductCode(downloader.getProductCode());
     node.setReleaseDate(downloader.getReleaseDate());

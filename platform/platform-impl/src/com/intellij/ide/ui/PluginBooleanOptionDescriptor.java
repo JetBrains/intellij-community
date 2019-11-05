@@ -80,7 +80,7 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     Runnable listener = new Runnable() {
       @Override
       public void run() {
-        Stream<String> ids = autoSwitchedPlugins.stream().map(descriptor -> descriptor.getPluginId().getIdString());
+        Stream<PluginId> ids = autoSwitchedPlugins.stream().map(descriptor -> descriptor.getPluginId());
         boolean notificationValid = enabled ? ids.noneMatch(PluginManagerCore::isDisabled) : ids.allMatch(PluginManagerCore::isDisabled);
         if (!notificationValid) {
           switchNotification.expire();
@@ -103,13 +103,13 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   }
 
   private static void switchPlugins(@NotNull Collection<IdeaPluginDescriptor> descriptors, boolean enabled) throws IOException {
-    Collection<String> disabledPlugins = new LinkedHashSet<>(PluginManagerCore.disabledPlugins());
+    Collection<PluginId> disabledPlugins = new LinkedHashSet<>(PluginManagerCore.disabledPlugins());
     for (IdeaPluginDescriptor descriptor : descriptors) {
       if (enabled) {
-        disabledPlugins.remove(descriptor.getPluginId().getIdString());
+        disabledPlugins.remove(descriptor.getPluginId());
       }
       else {
-        disabledPlugins.add(descriptor.getPluginId().getIdString());
+        disabledPlugins.add(descriptor.getPluginId());
       }
     }
     PluginManagerCore.saveDisabledPlugins(disabledPlugins, false);

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ final class LoadingContext implements AutoCloseable {
   final LoadDescriptorsContext parentContext;
   final boolean isBundled;
   final boolean isEssential;
-  final Set<String> disabledPlugins;
+  final Set<PluginId> disabledPlugins;
 
   private List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> visitedFiles;
 
@@ -31,14 +32,14 @@ final class LoadingContext implements AutoCloseable {
   LoadingContext(@Nullable LoadDescriptorsContext parentContext,
                  boolean isBundled,
                  boolean isEssential,
-                 @Nullable Set<String> disabledPlugins) {
+                 @Nullable Set<PluginId> disabledPlugins) {
     this(parentContext, isEssential, isBundled, disabledPlugins, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
   }
 
   LoadingContext(@Nullable LoadDescriptorsContext parentContext,
                  boolean isBundled,
                  boolean isEssential,
-                 @Nullable Set<String> disabledPlugins,
+                 @Nullable Set<PluginId> disabledPlugins,
                  @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
     this.parentContext = parentContext;
     this.isBundled = isBundled;

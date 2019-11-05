@@ -10,20 +10,11 @@ public class OptimizedPluginBean {
   public static final String PROJECT_COMPONENTS = "project-components";
   public static final String MODULE_COMPONENTS = "module-components";
 
-  @Tag("name")
-  public String name;
-
-  @Tag("id")
-  public String id;
-
   @Property(surroundWithTag = false)
   public ProductDescriptor productDescriptor;
 
   @Tag("description")
   public String description;
-
-  @Attribute("version")
-  public String formatVersion;
 
   @Tag("version")
   public String pluginVersion;
@@ -45,9 +36,6 @@ public class OptimizedPluginBean {
 
   @Tag("change-notes")
   public String changeNotes;
-
-  @Attribute("url")
-  public String url;
 
   @Attribute("use-idea-classloader")
   public boolean useIdeaClassLoader;

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,8 +101,8 @@ public final class PluginManager {
   }
 
   /**
-   * @deprecated Bad API, sorry. Please use {@link #isDisabled(String)} to check plugin's state,
-   * {@link PluginManagerCore#enablePlugin(String)}/{@link PluginManagerCore#disablePlugin(String)} for state management,
+   * @deprecated Bad API, sorry. Please use {@link #isDisabled(PluginId)} to check plugin's state,
+   * {@link PluginManagerCore#enablePlugin(PluginId)}/{@link PluginManagerCore#disablePlugin(PluginId)} for state management,
    * {@link PluginManagerCore#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
@@ -112,15 +113,15 @@ public final class PluginManager {
   }
 
   public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
-    PluginManagerCore.saveDisabledPlugins(ids, append);
+    PluginManagerCore.saveDisabledPlugins(ContainerUtil.map(ids, s -> PluginId.getId(s)), append);
   }
 
   public static boolean disablePlugin(@NotNull String id) {
-    return PluginManagerCore.disablePlugin(id);
+    return PluginManagerCore.disablePlugin(PluginId.getId(id));
   }
 
   public static boolean enablePlugin(@NotNull String id) {
-    return PluginManagerCore.enablePlugin(id);
+    return PluginManagerCore.enablePlugin(PluginId.getId(id));
   }
 
   @NotNull

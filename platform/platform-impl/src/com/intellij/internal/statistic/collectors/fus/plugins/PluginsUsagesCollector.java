@@ -28,8 +28,8 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   public Set<MetricEvent> getMetrics() {
     final Set<MetricEvent> result = new THashSet<>();
-    for (String id : PluginManagerCore.disabledPlugins()) {
-      final PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(PluginId.findId(id));
+    for (PluginId id : PluginManagerCore.disabledPlugins()) {
+      final PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(id);
       final FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
       result.add(MetricEventFactoryKt.newMetric("disabled.plugin", data));
     }

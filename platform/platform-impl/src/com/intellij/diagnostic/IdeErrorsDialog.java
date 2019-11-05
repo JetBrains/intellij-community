@@ -672,7 +672,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     if (doDisable) {
       for (IdeaPluginDescriptor plugin: pluginsToDisable) {
-        PluginManagerCore.disablePlugin(plugin.getPluginId().getIdString());
+        PluginManagerCore.disablePlugin(plugin.getPluginId());
       }
       if (doRestart) {
         ApplicationManager.getApplication().restart();

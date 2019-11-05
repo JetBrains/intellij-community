@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
@@ -26,9 +27,9 @@ final class LoadDescriptorsContext implements AutoCloseable {
   private final int myMaxThreads;
 
   @Nullable
-  final Set<String> disabledPlugins;
+  final Set<PluginId> disabledPlugins;
 
-  LoadDescriptorsContext(boolean isParallel, @Nullable Set<String> disabledPlugins) {
+  LoadDescriptorsContext(boolean isParallel, @Nullable Set<PluginId> disabledPlugins) {
     this.disabledPlugins = disabledPlugins;
 
     myMaxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;

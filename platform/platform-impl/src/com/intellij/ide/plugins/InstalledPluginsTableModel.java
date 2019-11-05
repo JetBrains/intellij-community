@@ -78,7 +78,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor, boolean enabled) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
-    if (!enabled && !PluginManagerCore.isDisabled(pluginId.toString())) {
+    if (!enabled && !PluginManagerCore.isDisabled(pluginId)) {
       myEnabled.put(pluginId, null);
     }
     else {
@@ -153,7 +153,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return enabled != null && enabled.booleanValue();
   }
 
-  public boolean isDisabled(final PluginId pluginId) {
+  public boolean isDisabled(@NotNull final PluginId pluginId) {
     final Boolean enabled = myEnabled.get(pluginId);
     return enabled != null && !enabled.booleanValue();
   }

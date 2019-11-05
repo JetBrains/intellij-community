@@ -96,7 +96,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       boolean enabledInTable = isEnabled(descriptor);
 
       if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId().getIdString())) {
+        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId())) {
           continue; // was disabled automatically on startup
         }
         return true;
@@ -105,7 +105,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     for (Map.Entry<PluginId, Boolean> entry : getEnabledMap().entrySet()) {
       Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey().getIdString())) {
+      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey())) {
         return true;
       }
     }
@@ -213,11 +213,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       descriptor.setEnabled(enabled);
     }
 
-    List<String> disableIds = new ArrayList<>();
+    List<PluginId> disableIds = new ArrayList<>();
     for (Map.Entry<PluginId, Boolean> entry : enabledMap.entrySet()) {
       Boolean enabled = entry.getValue();
       if (enabled != null && !enabled) {
-        disableIds.add(entry.getKey().getIdString());
+        disableIds.add(entry.getKey());
       }
     }
 

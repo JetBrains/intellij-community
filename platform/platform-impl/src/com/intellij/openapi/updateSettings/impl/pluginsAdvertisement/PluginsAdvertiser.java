@@ -33,6 +33,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -185,24 +186,35 @@ public final class PluginsAdvertiser {
   static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     for (Plugin plugin : plugins) {
       if (PluginManagerCore.isDisabled(plugin.myPluginId)) {
-        return PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId));
+        return PluginManagerCore.getPlugin(plugin.myPluginId);
       }
     }
     return null;
   }
 
-  static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
-    if (PlatformUtils.isIdeaUltimate()) return null;
-    final List<String> bundled = new ArrayList<>();
+  static List<PluginId> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
+    if (PlatformUtils.isIdeaUltimate()) {
+      return null;
+    }
+
+    List<PluginId> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
-      if (plugin.myBundled && PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
-        bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
+      if (plugin.myBundled && PluginManagerCore.getPlugin(plugin.myPluginId) == null) {
+        bundled.add(plugin.myPluginName != null ? PluginId.getId(plugin.myPluginName) : plugin.myPluginId);
       }
     }
     return bundled.isEmpty() ? null : bundled;
   }
 
-  public static void installAndEnablePlugins(final @NotNull Set<String> pluginIds, final @NotNull Runnable onSuccess) {
+  /**
+   * @deprecated Use {@link #installAndEnable(Set, Runnable)}
+   */
+  @Deprecated
+  public static void installAndEnablePlugins(@NotNull Set<String> pluginIds, @NotNull Runnable onSuccess) {
+    installAndEnable(new LinkedHashSet<>(ContainerUtil.map(pluginIds, it -> PluginId.getId(it))), onSuccess);
+  }
+
+  public static void installAndEnable(@NotNull Set<PluginId> pluginIds, @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(null, "Search for Plugins in Repository", true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
@@ -212,12 +224,12 @@ public final class PluginsAdvertiser {
         try {
           myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId().getIdString())) {
+            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(descriptor));
             }
           }
           for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-            if (pluginIds.contains(loadedPlugin.getPluginId().getIdString())) {
+            if (pluginIds.contains(loadedPlugin.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
           }
@@ -278,12 +290,12 @@ public final class PluginsAdvertiser {
 
   @Tag("plugin")
   public static class Plugin implements Comparable<Plugin> {
-    public String myPluginId;
+    public PluginId myPluginId;
     public String myPluginName;
     public boolean myBundled;
 
     public Plugin(PluginId pluginId, String pluginName, boolean bundled) {
-      myPluginId = pluginId.getIdString();
+      myPluginId = pluginId;
       myBundled = bundled;
       myPluginName = pluginName;
     }

@@ -49,7 +49,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author Konstantin Bulenkov
  */
 public abstract class PluginManagerMain {
-
   public static final Logger LOG = Logger.getInstance(PluginManagerMain.class);
 
   private static final String TEXT_SUFFIX = "</body></html>";
@@ -91,7 +90,7 @@ public abstract class PluginManagerMain {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends PluginId> allPlugins,
+                                        List<PluginId> allPlugins,
                                         Runnable onSuccess,
                                         @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
@@ -257,7 +256,7 @@ public abstract class PluginManagerMain {
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
-                                                                 List<? extends PluginNode> list) {
+                                                                 List<PluginNode> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {
@@ -337,29 +336,25 @@ public abstract class PluginManagerMain {
     void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
     void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
 
-    boolean isDisabled(PluginId pluginId);
+    boolean isDisabled(@NotNull PluginId pluginId);
 
     class HEADLESS implements PluginEnabler {
       @Override
       public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
         for (IdeaPluginDescriptor descriptor : disabled) {
-          PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
+          PluginManagerCore.enablePlugin(descriptor.getPluginId());
         }
       }
 
       @Override
       public void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
         for (IdeaPluginDescriptor descriptor : disabled) {
-          PluginManagerCore.disablePlugin(descriptor.getPluginId().getIdString());
+          PluginManagerCore.disablePlugin(descriptor.getPluginId());
         }
       }
 
       @Override
-      public boolean isDisabled(PluginId pluginId) {
-        return isDisabled(pluginId.getIdString());
-      }
-
-      public boolean isDisabled(@NotNull String pluginId) {
+      public boolean isDisabled(@NotNull PluginId pluginId) {
         return PluginManagerCore.isDisabled(pluginId);
       }
     }
