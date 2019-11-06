@@ -22,7 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 
 import java.util.Objects;
 
-public class BulkMethodInfo {
+public final class BulkMethodInfo {
   private final String myClassName;
   private final String mySimpleName;
   private final String myBulkName;
