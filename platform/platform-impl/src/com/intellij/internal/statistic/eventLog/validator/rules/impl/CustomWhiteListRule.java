@@ -76,7 +76,7 @@ public abstract class CustomWhiteListRule extends PerformanceCareRule implements
   }
 
   protected static boolean isPluginFromPluginRepository(@NotNull String plugin) {
-    final PluginId pluginId = PluginId.findId(plugin);
+    PluginId pluginId = PluginId.findId(plugin);
     return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isSafeToReport();
   }
 

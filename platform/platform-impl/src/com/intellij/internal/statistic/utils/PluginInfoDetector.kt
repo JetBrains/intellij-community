@@ -26,7 +26,9 @@ fun getPluginInfo(className: String): PluginInfo {
 
 /**
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
- * so API from it may be reported
+ * so API from it may be reported.
+ *
+ * Use only if you don't have [PluginDescriptor].
  */
 fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
   if (pluginId == null) {
