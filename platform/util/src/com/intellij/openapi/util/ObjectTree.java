@@ -235,7 +235,7 @@ final class ObjectTree {
 
   @NotNull
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
+    return Logger.getInstance(ObjectTree.class);
   }
 
   void rememberDisposedTrace(@NotNull Disposable object) {

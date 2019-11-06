@@ -48,7 +48,7 @@ import java.awt.event.ActionListener;
 
 public class AntUIUtil {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.impl.configuration.AntUIUtil");
+  private static final Logger LOG = Logger.getInstance(AntUIUtil.class);
 
   private AntUIUtil() {
   }

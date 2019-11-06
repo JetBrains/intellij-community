@@ -29,9 +29,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings("SSBasedInspection")
 public class LaterInvocator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
+  private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
   private static final boolean DEBUG = LOG.isDebugEnabled();
 
   private static final Object LOCK = new Object();
@@ -360,6 +359,7 @@ public class LaterInvocator {
 
   private static void requestFlush() {
     if (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(ourFlushQueueRunnable);
     }
   }
@@ -373,6 +373,7 @@ public class LaterInvocator {
    */
   public static boolean ensureFlushRequested() {
     if (getNextEvent(false) != null) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(ourFlushQueueRunnable);
       return true;
     }

@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
+  private static final Logger LOG = Logger.getInstance(CreatePropertyFix.class);
   private final PsiAnchor myElement;
   private final String myKey;
   private final List<PropertiesFile> myPropertiesFiles;

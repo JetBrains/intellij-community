@@ -32,7 +32,7 @@ import java.util.Collection;
  * @author cdr
  */
 public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
+  private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private TextRange mySelectionRange;
 
   @Override

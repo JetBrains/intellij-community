@@ -34,7 +34,7 @@ import java.util.regex.Matcher;
  * User: dcheryasov
  */
 public class SkeletonVersionChecker {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker");
+  private static final Logger LOG = Logger.getInstance(SkeletonVersionChecker.class);
 
   private final TreeMap<QualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
   private Integer myDefaultVersion; // version of (default)

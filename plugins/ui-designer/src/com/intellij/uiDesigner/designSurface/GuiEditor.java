@@ -87,7 +87,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiEditor");
+  private static final Logger LOG = Logger.getInstance(GuiEditor.class);
 
   private final Project myProject;
   @NotNull private final UIFormEditor myEditor;

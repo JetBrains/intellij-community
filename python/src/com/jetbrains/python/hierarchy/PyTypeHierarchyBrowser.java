@@ -20,7 +20,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.TypeHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(PyTypeHierarchyBrowser.class);
 
   protected PyTypeHierarchyBrowser(@NotNull PyClass pyClass) {
     super(pyClass.getProject(), pyClass);

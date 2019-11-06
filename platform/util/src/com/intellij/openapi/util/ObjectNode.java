@@ -15,7 +15,7 @@ import java.util.List;
 final class ObjectNode {
   private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
+  private static final Logger LOG = Logger.getInstance(ObjectNode.class);
 
   private final ObjectTree myTree;
 

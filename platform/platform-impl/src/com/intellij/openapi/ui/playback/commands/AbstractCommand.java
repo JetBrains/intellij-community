@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.io.File;
 
 public abstract class AbstractCommand implements PlaybackCommand {
-  private static final Logger LOG = Logger.getInstance("#" + AbstractCommand.class.getPackage().getName());
+  private static final Logger LOG = Logger.getInstance(AbstractCommand.class);
 
   public static final String CMD_PREFIX = "%";
 

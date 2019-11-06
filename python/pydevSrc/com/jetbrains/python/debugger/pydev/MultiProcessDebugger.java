@@ -27,7 +27,7 @@ import java.util.*;
  * @author traff
  */
 public class MultiProcessDebugger implements ProcessDebugger {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.MultiProcessDebugger");
+  private static final Logger LOG = Logger.getInstance(MultiProcessDebugger.class);
 
   private final IPyDebugProcess myDebugProcess;
   private final ServerSocket myServerSocket;

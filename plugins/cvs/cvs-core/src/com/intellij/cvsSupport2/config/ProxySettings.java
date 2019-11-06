@@ -23,8 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
 public class ProxySettings implements JDOMExternalizable, Cloneable {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.ConnectionSettingsImpl");
+  private static final Logger LOG = Logger.getInstance(ProxySettings.class);
 
   public static final int HTTP = 0;
   public static final int SOCKS4 = 1;

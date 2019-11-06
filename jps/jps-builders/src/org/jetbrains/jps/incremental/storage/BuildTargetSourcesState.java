@@ -41,7 +41,7 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
  */
 @ApiStatus.Experimental
 public class BuildTargetSourcesState {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ModuleSourcesState");
+  private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
   private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
   private final PathRelativizerService myRelativizer;
   private final BuildTargetIndex myBuildTargetIndex;

@@ -53,7 +53,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.AntBuildMessageView");
+  private static final Logger LOG = Logger.getInstance(AntBuildMessageView.class);
 
   public enum MessageType {
     BUILD,

@@ -26,7 +26,7 @@ import java.io.IOException;
  * @author max
  */
 public class ArrayIndexOutOfBoundsTest extends JavaPsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ArrayIndexOutOfBoundsTest");
+  private static final Logger LOG = Logger.getInstance(ArrayIndexOutOfBoundsTest.class);
   private VirtualFile myProjectRoot;
 
   @Override

@@ -51,7 +51,7 @@ import java.util.Map;
 import java.util.Set;
 
 class PostHighlightingVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
+  private static final Logger LOG = Logger.getInstance(PostHighlightingVisitor.class);
   private final RefCountHolder myRefCountHolder;
   @NotNull private final Project myProject;
   private final PsiFile myFile;

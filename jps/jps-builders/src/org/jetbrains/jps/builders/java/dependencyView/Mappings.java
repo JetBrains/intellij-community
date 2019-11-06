@@ -31,7 +31,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author: db
  */
 public class Mappings {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");
+  private final static Logger LOG = Logger.getInstance(Mappings.class);
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";

@@ -28,7 +28,7 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public final class InplaceEditingLayer extends JComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.InplaceEditingLayer");
+  private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);
 
   private final GuiEditor myEditor;
   /**

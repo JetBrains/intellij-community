@@ -32,7 +32,7 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
     }
   };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.ComboBoxTableCellRenderer");
+  private static final Logger LOG = Logger.getInstance(ComboBoxTableCellRenderer.class);
 
   private final JComboBox myCombo = new ComboBox();
 

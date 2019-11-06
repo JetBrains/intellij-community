@@ -50,7 +50,7 @@ public class RemoteDebugger implements ProcessDebugger {
    */
   private static final long CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS = 5000;
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
+  private static final Logger LOG = Logger.getInstance(RemoteDebugger.class);
 
   private static final String LOCAL_VERSION = "0.1";
   public static final String TEMP_VAR_PREFIX = "__py_debug_temp_var_";

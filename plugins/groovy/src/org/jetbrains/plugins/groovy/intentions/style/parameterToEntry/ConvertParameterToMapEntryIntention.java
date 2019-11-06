@@ -64,7 +64,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.style.ConvertParameterToMapEntryIntention");
+    Logger.getInstance(ConvertParameterToMapEntryIntention.class);
   @NonNls private static final String CLOSURE_CAPTION = "closure";
   @NonNls private static final String CLOSURE_CAPTION_CAP = "Closure";
   @NonNls private static final String METHOD_CAPTION = "method";

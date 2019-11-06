@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * @author Eugene Zhuravlev
  */
 public class ExternalJavacManager extends ProcessAdapter {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.javac.ExternalJavacServer");
+  private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
   public static final GlobalContextKey<ExternalJavacManager> KEY = GlobalContextKey.create("_external_javac_server_");
   public static final int DEFAULT_SERVER_PORT = 7878;

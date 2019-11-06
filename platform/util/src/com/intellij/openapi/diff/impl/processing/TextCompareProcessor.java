@@ -40,7 +40,7 @@ import java.util.List;
  */
 @Deprecated
 public class TextCompareProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Processor");
+  private static final Logger LOG = Logger.getInstance(TextCompareProcessor.class);
   @NotNull private final ComparisonPolicy myComparisonPolicy;
   @NotNull private final DiffPolicy myDiffPolicy;
   @NotNull private final HighlightMode myHighlightMode;

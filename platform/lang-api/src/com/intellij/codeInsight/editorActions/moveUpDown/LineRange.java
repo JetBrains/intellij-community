@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LineRange {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.LineRange");
+  private static final Logger LOG = Logger.getInstance(LineRange.class);
   public final int startLine;
   public final int endLine;
 

@@ -16,7 +16,7 @@ import java.util.Map;
  * see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673
  */
 public class IdeRepaintManager extends RepaintManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.HackyRepaintManager");
+  private static final Logger LOG = Logger.getInstance(IdeRepaintManager.class);
 
   private Map<GraphicsConfiguration, VolatileImage> myImagesMap;
 

@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class MakeStaticHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("make.method.static.title");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticHandler");
+  private static final Logger LOG = Logger.getInstance(MakeStaticHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {

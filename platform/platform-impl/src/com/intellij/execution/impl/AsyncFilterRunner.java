@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 class AsyncFilterRunner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.FilterRunner");
+  private static final Logger LOG = Logger.getInstance(AsyncFilterRunner.class);
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Console Filters");
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;

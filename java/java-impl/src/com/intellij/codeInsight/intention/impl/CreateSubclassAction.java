@@ -62,7 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateSubclassAction extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
+  private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
   private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
 
   @Override

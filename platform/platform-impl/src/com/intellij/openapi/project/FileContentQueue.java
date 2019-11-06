@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author peter
  */
 public class FileContentQueue {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
+  private static final Logger LOG = Logger.getInstance(FileContentQueue.class);
 
   private static final long MAX_SIZE_OF_BYTES_IN_QUEUE = 1024 * 1024;
   private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024 * 1024 * 3;

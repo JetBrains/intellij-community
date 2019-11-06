@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
+  private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
   final ReadMostlyRWLock myLock;
 

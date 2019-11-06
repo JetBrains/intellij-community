@@ -20,7 +20,7 @@ import java.util.*;
 
 @ApiStatus.Internal
 public class ModifiableModelCommitterServiceImpl implements ModifiableModelCommitterService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModifiableModelCommitter");
+  private static final Logger LOG = Logger.getInstance(ModifiableModelCommitter.class);
 
   @Override
   public void multiCommit(@NotNull Collection<? extends ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {

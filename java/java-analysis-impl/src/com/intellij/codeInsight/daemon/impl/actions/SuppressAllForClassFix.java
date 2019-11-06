@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SuppressAllForClassFix extends SuppressFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
+  private static final Logger LOG = Logger.getInstance(SuppressAllForClassFix.class);
 
   public SuppressAllForClassFix() {
     super(SuppressionUtil.ALL);

@@ -33,7 +33,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class JspSpiUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.jsp.tagLibrary.JspTagInfoImpl");
+  private static final Logger LOG = Logger.getInstance(JspSpiUtil.class);
   @NonNls private static final String JAR_EXTENSION = "jar";
 
   @Nullable

@@ -21,7 +21,7 @@ import java.net.URL;
 import java.util.*;
 
 public class LibrariesDownloadAssistant {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.LibrariesDownloadAssistant");
+  private static final Logger LOG = Logger.getInstance(LibrariesDownloadAssistant.class);
 
   private LibrariesDownloadAssistant() {
   }

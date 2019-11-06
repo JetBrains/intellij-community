@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
+  private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
 

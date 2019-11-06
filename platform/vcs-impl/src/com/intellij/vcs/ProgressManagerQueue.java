@@ -26,7 +26,7 @@ import java.util.Queue;
 
 @SomeQueue
 public class ProgressManagerQueue {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.AbstractTaskQueue");
+  private static final Logger LOG = Logger.getInstance(ProgressManagerQueue.class);
 
   private final ProgressManager myProgressManager;
   private final Task.Backgroundable myQueuePollTask;

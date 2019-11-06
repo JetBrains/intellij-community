@@ -21,7 +21,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class CachedValueBase<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
+  private static final Logger LOG = Logger.getInstance(CachedValueImpl.class);
   private final boolean myTrackValue;
   private volatile SoftReference<Data<T>> myData;
 

@@ -36,7 +36,7 @@ import java.util.Map;
  */
 @SomeQueue
 public class RequestsMerger {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.RequestsMerger");
+  private static final Logger LOG = Logger.getInstance(RequestsMerger.class);
 
   private final MyWorker myWorker;
 

@@ -33,7 +33,7 @@ import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.addGroupValues;
 
 public class PyStackFrame extends XStackFrame {
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyStackFrame");
+  private static final Logger LOG = Logger.getInstance(PyStackFrame.class);
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";

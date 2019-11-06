@@ -47,7 +47,7 @@ public class GroovycOutputParser {
     myContext = context;
   }
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler");
+  private static final Logger LOG = Logger.getInstance(GroovycOutputParser.class);
   private int myExitCode;
 
   public void notifyTextAvailable(final String text, final Key outputType) {

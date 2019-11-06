@@ -39,7 +39,7 @@ import static com.intellij.openapi.util.text.StringUtil.isJavaIdentifier;
  * @author Maxim.Medvedev
  */
 public class ConvertMethodToClosureIntention extends Intention {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertMethodToclosureIntention");
+  private static final Logger LOG = Logger.getInstance(ConvertMethodToClosureIntention.class);
 
   @NotNull
   @Override

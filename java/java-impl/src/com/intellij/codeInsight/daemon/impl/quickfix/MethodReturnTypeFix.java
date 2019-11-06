@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
+  private static final Logger LOG = Logger.getInstance(MethodReturnTypeFix.class);
 
   private final SmartTypePointer myReturnTypePointer;
   private final boolean myFixWholeHierarchy;

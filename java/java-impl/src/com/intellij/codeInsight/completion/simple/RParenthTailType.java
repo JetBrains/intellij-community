@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public abstract class RParenthTailType extends TailType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.RParenthSimpleTailType");
+  private static final Logger LOG = Logger.getInstance(RParenthTailType.class);
 
   private static TextRange getRangeToCheckParensBalance(PsiFile file, final Document document, int startOffset){
     PsiElement element = file.findElementAt(startOffset);

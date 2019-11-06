@@ -37,7 +37,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import java.util.*;
 
 public class LibraryImpl extends TraceableDisposable implements LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
+  private static final Logger LOG = Logger.getInstance(LibraryImpl.class);
   @NonNls public static final String LIBRARY_NAME_ATTR = "name";
   @NonNls public static final String LIBRARY_TYPE_ATTR = "type";
   @NonNls public static final String ROOT_PATH_ELEMENT = "root";

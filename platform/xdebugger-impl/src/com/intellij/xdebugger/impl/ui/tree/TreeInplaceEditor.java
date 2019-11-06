@@ -32,7 +32,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class TreeInplaceEditor implements AWTEventListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor");
+  private static final Logger LOG = Logger.getInstance(TreeInplaceEditor.class);
   private JComponent myInplaceEditorComponent;
   private final List<Runnable> myRemoveActions = new ArrayList<>();
   protected final Disposable myDisposable = Disposer.newDisposable();

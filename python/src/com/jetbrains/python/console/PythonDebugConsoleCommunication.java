@@ -23,7 +23,7 @@ import java.util.List;
  * @author traff
  */
 public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.console.pydev.PythonDebugConsoleCommunication");
+  private static final Logger LOG = Logger.getInstance(PythonDebugConsoleCommunication.class);
   private final PyDebugProcess myDebugProcess;
   private boolean myNeedsMore = false;
 

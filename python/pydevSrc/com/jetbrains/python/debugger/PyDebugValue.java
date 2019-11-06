@@ -25,7 +25,7 @@ import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.*;
 
 // todo: null modifier for modify modules, class objects etc.
 public class PyDebugValue extends XNamedValue {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
+  private static final Logger LOG = Logger.getInstance(PyDebugValue.class);
   private static final String DATA_FRAME = "DataFrame";
   private static final String SERIES = "Series";
   private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.of("ndarray", "Array", DATA_FRAME, DATA_FRAME, SERIES, SERIES);

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class I18nizeAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeAction");
+  private static final Logger LOG = Logger.getInstance(I18nizeAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {

@@ -47,7 +47,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
+  private static final Logger LOG = Logger.getInstance(IdeaPluginDescriptorImpl.class);
 
   private static final String APPLICATION_SERVICE = "com.intellij.applicationService";
   private static final String PROJECT_SERVICE = "com.intellij.projectService";

@@ -41,7 +41,7 @@ import java.util.zip.ZipOutputStream;
  * @author nik
  */
 public class JarsBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.JarsBuilder");
+  private static final Logger LOG = Logger.getInstance(JarsBuilder.class);
   private final Set<JarInfo> myJarsToBuild;
   private final CompileContext myContext;
   private Map<JarInfo, File> myBuiltJars;

@@ -51,7 +51,7 @@ import java.util.*;
  * @author nik
  */
 public class AddSupportForFrameworksPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
+  private static final Logger LOG = Logger.getInstance(AddSupportForFrameworksPanel.class);
   @NonNls private static final String EMPTY_CARD = "empty";
   private JPanel myMainPanel;
   private JPanel myFrameworksPanel;

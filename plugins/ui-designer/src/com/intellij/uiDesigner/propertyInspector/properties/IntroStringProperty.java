@@ -29,7 +29,7 @@ import java.util.Locale;
  * @author Vladimir Kondratyev
  */
 public final class IntroStringProperty extends IntrospectedProperty<StringDescriptor> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.IntroStringProperty");
+  private static final Logger LOG = Logger.getInstance(IntroStringProperty.class);
 
   /**
    * value: HashMap<String, StringDescriptor>

@@ -33,7 +33,7 @@ import java.util.*;
 
 @State(name = "ProjectRootManager")
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectRootManagerImpl.class);
 
   private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
   private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";

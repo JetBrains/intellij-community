@@ -41,7 +41,7 @@ import java.util.Set;
  * @author peter
  */
 class CachedValueLeakChecker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.CachedValueChecker");
+  private static final Logger LOG = Logger.getInstance(CachedValueLeakChecker.class);
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
   private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
 

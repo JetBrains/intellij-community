@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
+  private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
   public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
 
   private final boolean mySubExpressionValue;
