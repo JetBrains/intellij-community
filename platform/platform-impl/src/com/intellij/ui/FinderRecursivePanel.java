@@ -8,9 +8,12 @@ import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -28,6 +31,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -65,6 +69,9 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   @Nullable
   private JComponent myChild = null;
 
+  // whether panel should call getListItems() from NonBlockingReadAction
+  private boolean myNonBlockingLoad = false;
+
   protected JBList<T> myList;
   protected final CollectionListModel<T> myListModel = new CollectionListModel<>();
 
@@ -72,6 +79,9 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   private volatile boolean isMergeListItemsRunning;
 
   private final AtomicBoolean myUpdateSelectedPathModeActive = new AtomicBoolean();
+
+  private final Object myLastStartedGuard = new Object();
+  private ProgressIndicator myLastProgressIndicator = null;
 
   private final CopyProvider myCopyProvider = new CopyProvider() {
     @Override
@@ -115,6 +125,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     if (myParent != null) {
       Disposer.register(myParent, this);
     }
+  }
+
+  protected boolean isNonBlockingLoad() {
+    return myNonBlockingLoad;
+  }
+
+  protected void setNonBlockingLoad(boolean nonBlockingLoad) {
+    myNonBlockingLoad = nonBlockingLoad;
   }
 
   public void initPanel() {
@@ -480,38 +498,81 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
 
     myList.setPaintBusy(true);
-    myMergingUpdateQueue.queue(new Update("update") {
-      @Override
-      public void run() {
-        final T oldValue = getSelectedValue();
-        final int oldIndex = myList.getSelectedIndex();
+    myMergingUpdateQueue.queue(Update.create("update", () -> {
+      T oldValue = getSelectedValue();
+      int oldIndex = myList.getSelectedIndex();
 
-        ApplicationManager.getApplication()
-          .executeOnPooledThread(() -> DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
-            try {
-              final List<T> listItems = getListItems();
-
-              SwingUtilities.invokeLater(() -> {
-                mergeListItems(myListModel, myList, listItems);
-
-                if (myList.isEmpty()) {
-                  createRightComponent(true);
-                }
-                else if (myList.getSelectedIndex() < 0) {
-                  myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
-                }
-                else {
-                  Object newValue = myList.getSelectedValue();
-                  updateRightComponent(oldValue == null || !oldValue.equals(newValue) || myList.isEmpty());
-                }
-              });
-            }
-            finally {
-              myList.setPaintBusy(false);
-            }
-          }));
+      if (myNonBlockingLoad) {
+        scheduleUpdateNonBlocking(oldValue, oldIndex);
       }
-    });
+      else {
+        scheduleUpdateBlocking(oldValue, oldIndex);
+      }
+    }));
+  }
+
+  private void scheduleUpdateBlocking(T oldValue, int oldIndex) {
+    ApplicationManager.getApplication()
+      .executeOnPooledThread(() -> DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+        try {
+          List<T> listItems = getListItems();
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            updateList(oldValue, oldIndex, listItems);
+          });
+        }
+        finally {
+          myList.setPaintBusy(false);
+        }
+      }));
+  }
+
+  private void scheduleUpdateNonBlocking(T oldValue, int oldIndex) {
+    ProgressIndicator progressIndicator = new EmptyProgressIndicator(ModalityState.NON_MODAL);
+
+    synchronized (myLastStartedGuard) {
+      if (myLastProgressIndicator != null) {
+        myLastProgressIndicator.cancel();
+      }
+      myLastProgressIndicator = progressIndicator;
+    }
+
+    ReadAction
+      .nonBlocking(this::getListItems)
+      .cancelWith(progressIndicator)
+      .finishOnUiThread(ModalityState.any(), listItems -> {
+        try {
+          updateList(oldValue, oldIndex, listItems);
+        }
+        finally {
+          myList.setPaintBusy(false);
+        }
+      })
+      .expireWith(this)
+      .inSmartMode(myProject)
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .onProcessed(ts -> {
+        synchronized (myLastStartedGuard) {
+          if (myLastProgressIndicator == progressIndicator) {
+            myLastProgressIndicator = null;
+          }
+        }
+      });
+  }
+
+  private void updateList(T oldValue, int oldIndex, List<T> listItems) {
+    mergeListItems(myListModel, myList, listItems);
+
+    if (myList.isEmpty()) {
+      createRightComponent(true);
+    }
+    else if (myList.getSelectedIndex() < 0) {
+      myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
+    }
+    else {
+      Object newValue = myList.getSelectedValue();
+      updateRightComponent(oldValue == null || !oldValue.equals(newValue) || myList.isEmpty());
+    }
   }
 
   protected void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList<? extends T> list, @NotNull List<? extends T> newItems) {
