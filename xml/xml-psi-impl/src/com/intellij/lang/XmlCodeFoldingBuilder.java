@@ -61,7 +61,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       xmlDocument = (XmlDocument)psiElement;
     } else {
       // handle embedded templates
-      xmlDocument = PsiTreeUtil.findChildOfType(psiElement, XmlDocument.class);
+      xmlDocument = PsiTreeUtil.getChildOfType(psiElement, XmlDocument.class);
     }
 
     XmlElement rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
