@@ -61,8 +61,7 @@ public class EditorMouseHoverPopupControl {
   public static boolean arePopupsDisabled(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return editor.getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||
-           editor.getDocument().getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null ||
-           editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null; /* remove this clause in 2020.1 */
+           editor.getDocument().getUserData(MOUSE_TRACKING_DISABLED_COUNT) != null;
   }
 
   public static EditorMouseHoverPopupControl getInstance() {
@@ -77,11 +76,11 @@ public class EditorMouseHoverPopupControl {
     new UiNotifyConnector.Once(popupComponent, new Activatable.Adapter() {
       @Override
       public void showNotify() {
-        EditorMouseHoverPopupControl.disablePopups(editor);
+        disablePopups(editor);
         new UiNotifyConnector.Once(popupComponent, new Adapter() {
           @Override
           public void hideNotify() {
-            EditorMouseHoverPopupControl.enablePopups(editor);
+            enablePopups(editor);
           }
         });
       }

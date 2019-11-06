@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class FormatterTestCase extends LightPlatformTestCase {
   protected boolean doReformatRangeTest;
   protected TextRange myTextRange;
@@ -114,7 +113,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     if (doCheckDocumentUpdate()) {
       editor =(EditorImpl)FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file.getVirtualFile(), 0), false);
       assert editor != null;
-      editor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
       if (myFile != null) {
         FileEditorManager.getInstance(getProject()).closeFile(myFile.getVirtualFile());
       }

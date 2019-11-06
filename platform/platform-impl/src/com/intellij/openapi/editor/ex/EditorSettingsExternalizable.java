@@ -131,8 +131,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   //private boolean myUseTabCharacter = false;
 
   private int myAdditionalLinesCount = 10;
-  private int myAdditionalColumnsCount = 20;
-  private boolean myLineMarkerAreaShown = true;
 
   @NonNls public static final String STRIP_TRAILING_SPACES_NONE = "None";
   @NonNls public static final String STRIP_TRAILING_SPACES_CHANGED = "Changed";
@@ -237,49 +235,22 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.ARE_GUTTER_ICONS_SHOWN = val;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2021.1.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public int getAdditionalLinesCount() {
     return myAdditionalLinesCount;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2021.1.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void setAdditionalLinesCount(int additionalLinesCount) {
     myAdditionalLinesCount = additionalLinesCount;
-  }
-
-  /**
-   * @deprecated Not used, to be removed in version 2020.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  public int getAdditinalColumnsCount() {
-    return myAdditionalColumnsCount;
-  }
-
-  /**
-   * @deprecated Not used, to be removed in version 2020.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void setAdditionalColumnsCount(int value) {
-    myAdditionalColumnsCount = value;
-  }
-
-  /**
-   * @deprecated Not used, to be removed in version 2020.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public boolean isLineMarkerAreaShown() {
-    return myLineMarkerAreaShown;
-  }
-
-  /**
-   * @deprecated Not used, to be removed in version 2020.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
-    myLineMarkerAreaShown = lineMarkerAreaShown;
   }
 
   public boolean isFoldingOutlineShown() {
