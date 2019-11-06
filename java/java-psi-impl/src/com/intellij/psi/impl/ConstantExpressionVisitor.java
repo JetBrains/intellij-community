@@ -141,8 +141,8 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     Object value = null;
     if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
-        String l = lOperandValue.toString();
-        String r = rOperandValue.toString();
+        String l = computeValueToString(lOperandValue);
+        String r = computeValueToString(rOperandValue);
         value = l + r;
       }
       else {
@@ -392,6 +392,19 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
     }
     return value;
+  }
+
+  private static String computeValueToString(Object value) {
+    if (value instanceof PsiPrimitiveType) {
+      return ((PsiPrimitiveType)value).getCanonicalText();
+    } else if (value instanceof PsiClassType) {
+      PsiClassType classType = (PsiClassType)value;
+      PsiClass psiClass = classType.resolve();
+      String prefix = psiClass == null ? "" : (psiClass.isInterface() ? "interface " : "class ");
+      return prefix + classType.getCanonicalText();
+    } else {
+      return value.toString();
+    }
   }
 
   @Nullable
