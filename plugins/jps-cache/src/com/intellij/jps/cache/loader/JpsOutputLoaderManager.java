@@ -72,6 +72,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
         if (commitInfo == null) return;
         startLoadingForCommit(commitInfo.first);
+        hasRunningTask.set(false);
       }
     };
 
@@ -120,7 +121,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
-      LOG.debug("The system contains up to date caches");
+      LOG.info("The system contains up to date caches");
       return null;
     }
     return Pair.create(commitId, commitsBehind);
@@ -130,16 +131,14 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     long startTime = System.currentTimeMillis();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setText("Fetching cache for commit: " + commitId);
-    indicator.setFraction(0.05);
 
     // Loading metadata for commit
     Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(commitId);
     if (commitSourcesState == null) {
       LOG.warn("Couldn't load metadata for commit: " + commitId);
-      //indicator.stop();
-      hasRunningTask.set(false); // TODO :: Move calling to method
       return;
     }
+    indicator.setFraction(0.01);
     Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
 
     List<JpsOutputLoader> loaders = getLoaders(myProject);
@@ -162,8 +161,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       // Computation with loaders results. If at least one of them failed rollback all job
       initialFuture.thenAccept(loaderStatus -> {
         LOG.info("Loading finished with " + loaderStatus + " status");
-        CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
-          indicator.setFraction(0.80);
+        CompletableFuture<Void> rollbackApplyFuture = CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
           if (loaderStatus == LoaderStatus.FAILED) {
             indicator.setText("Fetching cache failed, rolling back");
             return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
@@ -172,7 +170,6 @@ public class JpsOutputLoaderManager implements ProjectComponent {
           return CompletableFuture.runAsync(() -> loader.apply(), ourThreadPool);
         }).toArray(CompletableFuture[]::new))
           .thenRun(() -> {
-            indicator.setFraction(0.97);
             if (loaderStatus == LoaderStatus.COMPLETE) {
               PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
               long endTime = (System.currentTimeMillis() - startTime) / 1000;
@@ -185,6 +182,16 @@ public class JpsOutputLoaderManager implements ProjectComponent {
               LOG.info("Loading finished");
             } else onFail();
           });
+
+        try {
+          rollbackApplyFuture.get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          LOG.warn("Unexpected exception rollback all progress", e);
+          onFail();
+          loaders.forEach(loader -> loader.rollback());
+          indicator.setText("Rolling back downloaded caches");
+        }
       }).handle((result, ex) -> {
         if (ex != null) {
           Throwable cause = ex.getCause();
@@ -205,7 +212,6 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       LOG.warn("Couldn't fetch jps compilation caches", e);
       onFail();
     }
-    hasRunningTask.set(false);
   }
 
   private synchronized boolean canRunNewLoading() {
