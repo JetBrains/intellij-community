@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="org.intellij.groovy">
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.spock.SpockMemberContributor"/>
-    <expressionFilter implementation="org.jetbrains.plugins.groovy.ext.spock.SpockExpressionFilter"/>
+    <elementFilter implementation="org.jetbrains.plugins.groovy.ext.spock.SpockElementFilter"/>
     <inlayHintFilter implementation="org.jetbrains.plugins.groovy.ext.spock.SpockTableInlayHintFilter"/>
   </extensions>
 
