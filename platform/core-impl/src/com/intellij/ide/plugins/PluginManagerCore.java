@@ -1218,9 +1218,18 @@ public final class PluginManagerCore {
     }
 
     try {
+      boolean skipPythonCommunity = isRunningFromSources() && PlatformUtils.PYCHARM_PREFIX.equals(platformPrefix);
       Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
       while (enumeration.hasMoreElements()) {
-        urls.put(enumeration.nextElement(), PLUGIN_XML);
+        URL url = enumeration.nextElement();
+        if (skipPythonCommunity) {
+          String file = url.getFile();
+          if (file.endsWith("/classes/production/intellij.python.community.plugin/META-INF/plugin.xml") ||
+              file.endsWith("/classes/production/intellij.pycharm.community.customization/META-INF/plugin.xml")) {
+            continue;
+          }
+        }
+        urls.put(url, PLUGIN_XML);
       }
     }
     catch (IOException e) {
@@ -1841,9 +1850,15 @@ public final class PluginManagerCore {
 
   private static void fixOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> enabledPlugins,
                                          @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    if (!isRunningFromSources()) return;
+    if (!isRunningFromSources()) {
+      return;
+    }
+
     for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
-      if (!descriptor.isUseCoreClassLoader() || descriptor.getOptionalDescriptors() == null) continue;
+      if (!descriptor.isUseCoreClassLoader() || descriptor.getOptionalDescriptors() == null) {
+        continue;
+      }
+
       descriptor.getOptionalDescriptors().entrySet().removeIf(entry -> {
         IdeaPluginDescriptorImpl dependent = idMap.get(entry.getKey());
         return dependent != null && !dependent.isUseCoreClassLoader();
