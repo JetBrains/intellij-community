@@ -31,6 +31,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
 
     for (content in addedContents) {
       addIntoCorrectPlace(manager, content)
+      IJSwingUtilities.updateComponentTreeUI(content.component)
     }
     addedContents.clear()
 
