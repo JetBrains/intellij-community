@@ -30,7 +30,7 @@ public class ServerConnectionEventDispatcher {
   private final MergingUpdateQueue myEventsQueue;
 
   private static final int DEPLOYMENTS_PRIORITY = Update.LOW_PRIORITY;
-  private static final int CONNECTION_STATUS_PRIORITY = DEPLOYMENTS_PRIORITY - 1;
+  private static final int CONNECTION_STATUS_PRIORITY = Update.HIGH_PRIORITY;
 
   public ServerConnectionEventDispatcher() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
