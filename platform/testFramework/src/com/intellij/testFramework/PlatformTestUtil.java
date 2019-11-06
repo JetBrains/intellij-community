@@ -331,27 +331,25 @@ public class PlatformTestUtil {
   @Nullable
   private static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
-    AtomicBoolean complete = new AtomicBoolean(false);
-    promise.onProcessed(ignore -> complete.set(true));
-    T result = null;
     long start = System.currentTimeMillis();
-    do {
-      UIUtil.dispatchAllInvocationEvents();
+    while (true) {
+      if (promise.getState() == Promise.State.PENDING) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
       try {
-        result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
+        return promise.blockingGet(20, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
       catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
         if (assertSucceeded) {
           throw new AssertionError(e);
+        } else {
+          return null;
         }
       }
       assertMaxWaitTimeSince(start, timeout);
     }
-    while (!complete.get());
-    UIUtil.dispatchAllInvocationEvents();
-    return result;
   }
 
   public static <T> T waitForFuture(@NotNull Future<T> future, long timeoutMillis) {
