@@ -44,10 +44,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -61,7 +58,7 @@ import static com.intellij.openapi.module.impl.ExternalModuleListStorageKt.getFi
 /**
  * @author max
  */
-public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
+public abstract class ModuleManagerImpl extends ModuleManagerEx implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
   public static final String COMPONENT_NAME = "ProjectModuleManager";
 
   public static final String ELEMENT_MODULES = "modules";
@@ -467,11 +464,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return new ModuleModelImpl(myModuleModel);
   }
 
-  private class ModuleSaveItem extends SaveItem {
+  private static class ModuleSaveItem extends SaveItem {
     private final Module myModule;
+    private final ModuleManager myModuleManager;
 
-    ModuleSaveItem(@NotNull Module module) {
+    ModuleSaveItem(@NotNull Module module, @NotNull ModuleManager moduleManager) {
       myModule = module;
+      myModuleManager = moduleManager;
     }
 
     @Override
@@ -482,7 +481,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     protected String getGroupPathString() {
-      String[] groupPath = getModuleGroupPath(myModule);
+      String[] groupPath = myModuleManager.getModuleGroupPath(myModule);
       return groupPath != null ? StringUtil.join(groupPath, MODULE_GROUP_SEPARATOR) : null;
     }
 
@@ -494,15 +493,25 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   public void writeExternal(@NotNull Element element, @NotNull List<? extends Module> collection) {
-    List<SaveItem> sorted = new ArrayList<>(collection.size() + myFailedModulePaths.size() + myUnloadedModules.size());
+    writeExternal(element, collection, this);
+  }
+
+  @ApiStatus.Internal
+  public static void writeExternal(@NotNull Element element,
+                                   @NotNull List<? extends Module> collection,
+                                   ModuleManagerEx moduleManager) {
+    Collection<ModulePath> failedModulePaths = moduleManager.getFailedModulePaths();
+    Collection<UnloadedModuleDescription> unloadedModuleDescriptions = moduleManager.getUnloadedModuleDescriptions();
+
+    List<SaveItem> sorted = new ArrayList<>(collection.size() + failedModulePaths.size() + unloadedModuleDescriptions.size());
     for (Module module : collection) {
-      sorted.add(new ModuleSaveItem(module));
+      sorted.add(new ModuleSaveItem(module, moduleManager));
     }
-    for (ModulePath modulePath : myFailedModulePaths) {
+    for (ModulePath modulePath : failedModulePaths) {
       sorted.add(new ModulePathSaveItem(modulePath));
     }
-    for (UnloadedModuleDescriptionImpl description : myUnloadedModules.values()) {
-      sorted.add(new ModulePathSaveItem(description.getModulePath()));
+    for (UnloadedModuleDescription description : unloadedModuleDescriptions) {
+      sorted.add(new ModulePathSaveItem(((UnloadedModuleDescriptionImpl)description).getModulePath()));
     }
 
     if (!sorted.isEmpty()) {
@@ -1097,6 +1106,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return Collections.unmodifiableCollection(myUnloadedModules.values());
   }
 
+  @Override
+  public Collection<ModulePath> getFailedModulePaths() {
+    return Collections.unmodifiableSet(myFailedModulePaths);
+  }
+
   @Nullable
   @Override
   public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName) {
@@ -1129,7 +1143,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         Module module = findModuleByName(name);
         if (module != null) {
           LoadedModuleDescriptionImpl description = new LoadedModuleDescriptionImpl(module);
-          ModuleSaveItem saveItem = new ModuleSaveItem(module);
+          ModuleSaveItem saveItem = new ModuleSaveItem(module, this);
           ModulePath modulePath = new ModulePath(saveItem.getModuleFilePath(), saveItem.getGroupPathString());
           VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
           List<VirtualFilePointer> contentRoots = ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRootUrls(), url -> pointerManager.create(url, this, null));

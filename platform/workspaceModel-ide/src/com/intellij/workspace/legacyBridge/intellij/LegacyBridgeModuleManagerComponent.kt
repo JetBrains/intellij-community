@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 @Suppress("ComponentNotRegistered")
-class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManager(), ProjectComponent, Disposable {
+class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), ProjectComponent, Disposable {
 
   private val LOG = Logger.getInstance(javaClass)
 
@@ -356,6 +356,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     val entities = entityStore.current.entities(ModuleEntity::class).filter { names.contains(it.name) }.toList()
     return entities.map { getUnloadedModuleDescription(it) }.toMutableList()
   }
+
+  override fun getFailedModulePaths(): Collection<ModulePath> = emptyList()
 
   override fun hasModuleGroups(): Boolean = hasModuleGroups(entityStore)
 
