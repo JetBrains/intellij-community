@@ -2,12 +2,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.lang.jvm.types.JvmArrayType
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
+import org.jetbrains.plugins.groovy.lang.GroovyElementFilter
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NULL
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -78,4 +81,12 @@ fun GrExpression?.skipParenthesesDown(): GrExpression? {
     current = current.operand
   }
   return current
+}
+
+private val EP_NAME = ExtensionPointName.create<GroovyElementFilter>("org.intellij.groovy.elementFilter")
+
+fun GroovyPsiElement.isFake(): Boolean {
+  return EP_NAME.extensionList.any {
+    it.isFake(this)
+  }
 }
