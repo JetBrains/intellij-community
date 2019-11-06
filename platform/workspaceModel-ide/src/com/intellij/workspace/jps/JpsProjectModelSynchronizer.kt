@@ -19,17 +19,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
+import com.intellij.util.PathUtil
 import com.intellij.workspace.api.EntityChange
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.EntityStoreChanged
 import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsProjectStoragePlace
-import com.intellij.workspace.ide.storagePlace
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.WorkspaceModelChangeListener
-import com.intellij.workspace.ide.WorkspaceModelTopics
-import com.intellij.util.PathUtil
+import com.intellij.workspace.ide.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -55,12 +50,23 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
+  internal fun needToReloadProjectEntities(): Boolean {
+    if (StoreReloadManager.getInstance().isReloadBlocked()) return false
+    if (serializationData.get() == null) return false
+
+    synchronized(incomingChanges) {
+      return incomingChanges.isNotEmpty()
+    }
+  }
+
   internal fun reloadProjectEntities() {
     if (StoreReloadManager.getInstance().isReloadBlocked()) return
     val data = serializationData.get() ?: return
     val changes = getAndResetIncomingChanges() ?: return
 
     val (changedEntities, builder) = data.reloadFromChangedFiles(changes, fileContentReader)
+    if (changedEntities.isEmpty() && builder.isEmpty()) return
+
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
@@ -169,6 +175,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   override fun dispose() {
   }
+
+  companion object {
+    fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)
+  }
 }
 
 private class StorageJpsConfigurationReader(private val project: Project,
@@ -235,11 +245,10 @@ private class FakeDirectoryBasedStateSplitter : StateSplitterEx() {
 
 internal class LegacyBridgeStoreReloadManager : StoreReloadManagerImpl() {
   override fun mayHaveAdditionalConfigurations(project: Project): Boolean {
-    return project.getComponent(JpsProjectModelSynchronizer::class.java) != null
+    return JpsProjectModelSynchronizer.getInstance(project)?.needToReloadProjectEntities() ?: false
   }
 
   override fun reloadAdditionalConfigurations(project: Project) {
-    val synchronizer = project.getComponent(JpsProjectModelSynchronizer::class.java)
-    synchronizer?.reloadProjectEntities()
+    JpsProjectModelSynchronizer.getInstance(project)?.reloadProjectEntities()
   }
 }
