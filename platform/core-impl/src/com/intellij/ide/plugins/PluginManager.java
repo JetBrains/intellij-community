@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
@@ -169,7 +170,7 @@ public final class PluginManager {
     descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, context.pathResolver, context);
   }
 
-  public static boolean isDevelopedByJetBrains(@NotNull IdeaPluginDescriptor plugin) {
+  public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 

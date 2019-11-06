@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("HardCodedStringLiteral")
 public final class ExtensionsAreaImpl implements ExtensionsArea {
   private static final Logger LOG = Logger.getInstance(ExtensionsAreaImpl.class);
   public static final String ATTRIBUTE_AREA = "area";
@@ -145,7 +145,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void registerExtensionPoint(@NotNull BaseExtensionPointName extensionPoint,
+  public void registerExtensionPoint(@NotNull BaseExtensionPointName<?> extensionPoint,
                                      @NotNull String extensionPointBeanClass,
                                      @NotNull ExtensionPoint.Kind kind,
                                      @NotNull Disposable parentDisposable) {
@@ -155,7 +155,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
-    PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
+    IdeaPluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
       point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myComponentManager, pluginDescriptor, false);
@@ -236,7 +236,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @ApiStatus.Internal
   public boolean registerExtensions(@NotNull String pointName,
                                     @NotNull List<? extends Element> extensions,
-                                    @NotNull PluginDescriptor pluginDescriptor,
+                                    @NotNull IdeaPluginDescriptor pluginDescriptor,
                                     @NotNull ComponentManager componentManager,
                                     boolean notifyListeners)  {
     ExtensionPointImpl<?> point = myExtensionPoints.get(pointName);

@@ -49,11 +49,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     private val constructorParameterResolver = ConstructorParameterResolver()
 
     @JvmStatic
-    protected val fakeCorePluginDescriptor = object : PluginDescriptor {
-      override fun getPluginClassLoader() = null
-
-      override fun getPluginId() = PluginManagerCore.CORE_ID
-    }
+    protected val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
   }
 
   @Suppress("LeakingThis")

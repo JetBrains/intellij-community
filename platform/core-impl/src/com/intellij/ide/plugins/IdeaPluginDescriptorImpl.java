@@ -762,7 +762,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myLoader != null ? myLoader : getClass().getClassLoader();
   }
 
-  @Override
   public String getVendorLogoPath() {
     return myVendorLogoPath;
   }

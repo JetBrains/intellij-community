@@ -2,9 +2,9 @@
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.SchemeState
@@ -14,7 +14,7 @@ import java.awt.event.MouseEvent
 
 open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
                              private val defaultKeymapManager: DefaultKeymap,
-                             val plugin: IdeaPluginDescriptor) : KeymapImpl(dataHolder) {
+                             val plugin: PluginDescriptor) : KeymapImpl(dataHolder) {
   final override var canModify: Boolean
     get() = false
     set(value) {

@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -832,7 +833,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
    * {@link #clearCache} is not called, use {@link ExtensionsAreaImpl#extensionsRegistered(ExtensionPointImpl[])} if needed.
    */
   final synchronized void registerExtensions(@NotNull List<? extends Element> extensionElements,
-                                             @NotNull PluginDescriptor pluginDescriptor,
+                                             @NotNull IdeaPluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager,
                                              boolean notifyListeners) {
     List<ExtensionComponentAdapter> adapters = myAdapters;

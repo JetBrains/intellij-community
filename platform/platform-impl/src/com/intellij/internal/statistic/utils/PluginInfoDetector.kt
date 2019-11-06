@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 
 /**
@@ -39,7 +39,7 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
  * so API from it may be reported
  */
-fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor): PluginInfo {
+fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
   if (PluginManagerCore.CORE_ID == plugin.pluginId) {
     return platformPlugin
   }

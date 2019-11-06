@@ -304,12 +304,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  @Nullable
-  public String getVendorLogoPath() {
-    return null;
-  }
-
-  @Override
   public String getUntilBuild() {
     return untilBuild;
   }
@@ -319,17 +313,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public boolean isBundled() {
-    return false;
-  }
-
-  @Override
   public boolean allowBundledUpdate() {
-    return false;
-  }
-
-  @Override
-  public boolean isImplementationDetail() {
     return false;
   }
 

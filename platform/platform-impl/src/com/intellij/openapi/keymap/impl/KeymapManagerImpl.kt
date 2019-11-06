@@ -107,7 +107,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         val keymap = DefaultKeymap.instance.loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read() = pluginDescriptor.pluginClassLoader
             .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }
-        }, pluginDescriptor.pluginId)
+        }, pluginDescriptor)
         schemeManager.addScheme(keymap)
         schemeManager.setCurrent(keymap, true, true)
       }
@@ -121,7 +121,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         for (fileName in ep.keymapFileNames) {
           val keymap = DefaultKeymap.instance.loadKeymap(ep.getKeyFromFileName(fileName), object : SchemeDataHolder<KeymapImpl> {
             override fun read() = ep.load(fileName) { JDOMUtil.load(it) }
-          }, pluginDescriptor.pluginId)
+          }, pluginDescriptor)
           schemeManager.addScheme(keymap)
           schemeManager.setCurrent(keymap, true, true)
         }

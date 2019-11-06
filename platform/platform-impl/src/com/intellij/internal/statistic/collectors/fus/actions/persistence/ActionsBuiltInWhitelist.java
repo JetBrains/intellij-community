@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,7 +47,7 @@ final class ActionsBuiltInWhitelist {
 
   public void addActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
     if (keymap instanceof DefaultKeymapImpl) {
-      IdeaPluginDescriptor plugin = ((DefaultKeymapImpl)keymap).getPlugin();
+      PluginDescriptor plugin = ((DefaultKeymapImpl)keymap).getPlugin();
       if (PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin).isDevelopedByJetBrains()) {
         ourXmlActionIds.addAll(actionIds);
       }

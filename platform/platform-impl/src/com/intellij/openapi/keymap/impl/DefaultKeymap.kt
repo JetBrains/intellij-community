@@ -2,12 +2,12 @@
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import gnu.trove.THashMap
 import java.util.*
+import java.util.function.BiConsumer
 
 private val LOG = logger<DefaultKeymap>()
 
@@ -78,30 +79,29 @@ open class DefaultKeymap {
         loadKeymap(bean.keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read() = bean.pluginDescriptor.pluginClassLoader
             .getResourceAsStream(bean.effectiveFile).use { JDOMUtil.load(it) }
-        }, bean.pluginDescriptor.pluginId)
+        }, bean.pluginDescriptor as IdeaPluginDescriptor)
       }
     }
 
     @Suppress("DEPRECATION")
-    for (provider in BundledKeymapProvider.EP_NAME.extensionList) {
+    BundledKeymapProvider.EP_NAME.processWithPluginDescriptor(BiConsumer { provider, plugin ->
       for (fileName in provider.keymapFileNames) {
         val keymapName = provider.getKeyFromFileName(fileName)
-        val pluginId = PluginManager.getPluginOrPlatformByClassName(provider.javaClass.name)
         LOG.runAndLogException {
           loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
             override fun read() = provider.load(fileName) { JDOMUtil.load(it) }
-          }, pluginId)
+          }, plugin as IdeaPluginDescriptor)
         }
       }
-    }
+    })
   }
 
   internal fun loadKeymap(keymapName: String,
                           dataHolder: SchemeDataHolder<KeymapImpl>,
-                          pluginId: PluginId?): DefaultKeymapImpl {
+                          plugin: PluginDescriptor): DefaultKeymapImpl {
     val keymap = when {
-      keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP) -> MacOSDefaultKeymap(dataHolder, this, pluginId)
-      else -> DefaultKeymapImpl(dataHolder, this, pluginId)
+      keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP) -> MacOSDefaultKeymap(dataHolder, this, plugin)
+      else -> DefaultKeymapImpl(dataHolder, this, plugin)
     }
     keymap.name = keymapName
     addKeymap(keymap)
