@@ -58,7 +58,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     }
 
     override fun logDisposed(manager: VcsLogManager) {
-      disposeLogUi()
+      disposeLogUi(manager)
     }
   }
 
@@ -88,8 +88,9 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   }
 
   @CalledInAwt
-  private fun disposeLogUi() {
+  private fun disposeLogUi(logManager: VcsLogManager) {
     branchViewSplitter.secondComponent.removeAll()
+    uiController.removeDataPackListener(logManager.dataManager)
     if (::logUi.isInitialized) {
       tree.component.removeTreeSelectionListener(treeSelectionListener)
       val ui = logUi

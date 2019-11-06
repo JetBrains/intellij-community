@@ -26,7 +26,8 @@ internal class BranchesDashboardController(private val project: Project,
   }
 
   override fun dispose() {
-    VcsProjectLog.getInstance(project).dataManager?.removeDataPackChangeListener(changeListener)
+    localBranches.clear()
+    remoteBranches.clear()
   }
 
   fun checkForBranchesUpdate(): Boolean {
@@ -107,5 +108,9 @@ internal class BranchesDashboardController(private val project: Project,
 
   fun registerDataPackListener(vcsLogData: VcsLogData) {
     vcsLogData.addDataPackChangeListener(changeListener)
+  }
+
+  fun removeDataPackListener(vcsLogData: VcsLogData) {
+    vcsLogData.removeDataPackChangeListener(changeListener)
   }
 }
