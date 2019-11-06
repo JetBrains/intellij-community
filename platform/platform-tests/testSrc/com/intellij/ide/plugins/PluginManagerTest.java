@@ -147,14 +147,14 @@ public class PluginManagerTest {
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
     PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
-    LoadingDescriptorListContext context = new LoadingDescriptorListContext(false, Collections.emptySet());
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(false, Collections.emptySet());
     Element root = JDOMUtil.load(file, context.getXmlFactory());
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
-      IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(Paths.get(url), true);
-      d.readExternal(element, Paths.get(url), true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER,
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), true);
+      descriptor.readExternal(element, Paths.get(url), true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER,
                      context.getXmlFactory().stringInterner(), Collections.emptySet(), DEFAULT_VERSION_SUPPLIER);
-      result.add(d, false);
+      result.add(descriptor, false);
     }
     result.finish();
     return result;

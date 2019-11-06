@@ -1,28 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Supplier;
 
 final class DescriptorLoadingContext implements AutoCloseable {
   final Map<Path, FileSystem> openedFiles = new THashMap<>();
-  final LoadingDescriptorListContext parentContext;
+  final DescriptorListLoadingContext parentContext;
   final boolean isBundled;
   final boolean isEssential;
-  final Set<PluginId> disabledPlugins;
 
   private List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> visitedFiles;
 
@@ -33,15 +28,13 @@ final class DescriptorLoadingContext implements AutoCloseable {
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
    */
-  DescriptorLoadingContext(@Nullable LoadingDescriptorListContext parentContext,
+  DescriptorLoadingContext(@NotNull DescriptorListLoadingContext parentContext,
                            boolean isBundled,
                            boolean isEssential,
-                           @NotNull Set<PluginId> disabledPlugins,
                            @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
     this.parentContext = parentContext;
     this.isBundled = isBundled;
     this.isEssential = isEssential;
-    this.disabledPlugins = disabledPlugins;
     this.pathResolver = pathResolver;
   }
 
@@ -65,9 +58,9 @@ final class DescriptorLoadingContext implements AutoCloseable {
     return result;
   }
 
-  @Nullable
+  @NotNull
   SafeJdomFactory getXmlFactory() {
-    return parentContext == null ? null : parentContext.getXmlFactory();
+    return parentContext.getXmlFactory();
   }
 
   @Override
@@ -83,26 +76,15 @@ final class DescriptorLoadingContext implements AutoCloseable {
 
   @NotNull
   public DescriptorLoadingContext copy(boolean isEssential) {
-    return new DescriptorLoadingContext(parentContext, isBundled, isEssential, disabledPlugins, pathResolver);
+    return new DescriptorLoadingContext(parentContext, isBundled, isEssential, pathResolver);
   }
 
   void readDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor,
                       @NotNull Element element,
                       @NotNull Path basePath,
                       @NotNull PathBasedJdomXIncluder.PathResolver<?> resolver) {
-    LoadingDescriptorListContext parentContext = this.parentContext;
-    Supplier<String> defaultVersion;
-    Interner<String> stringInterner;
-    if (parentContext == null) {
-      defaultVersion = IdeaPluginDescriptorImpl.DEFAULT_VERSION_SUPPLIER;
-      stringInterner = new HashSetInterner<>();
-    }
-    else {
-      defaultVersion = parentContext.defaultVersionSupplier;
-      // always PluginXmlFactory with not-null interner
-      stringInterner = Objects.requireNonNull(parentContext.getXmlFactory().stringInterner());
-    }
-
-    descriptor.readExternal(element, basePath, PluginManagerCore.isUnitTestMode, resolver, stringInterner, disabledPlugins, defaultVersion);
+    // always PluginXmlFactory with not-null interner
+    Interner<String> stringInterner = Objects.requireNonNull(parentContext.getXmlFactory().stringInterner());
+    descriptor.readExternal(element, basePath, PluginManagerCore.isUnitTestMode, resolver, stringInterner, parentContext.disabledPlugins, parentContext.defaultVersionSupplier);
   }
 }
