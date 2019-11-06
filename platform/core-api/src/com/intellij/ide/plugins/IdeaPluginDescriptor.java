@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -30,7 +30,7 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getProductCode();
 
   @Nullable
-  LocalDateTime getReleaseDate();
+  Date getReleaseDate();
 
   int getReleaseVersion();
 

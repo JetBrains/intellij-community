@@ -12,8 +12,11 @@ import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -23,12 +26,12 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   @NotNull
   private final ExecutorService executorService;
 
-  private final ConcurrentLinkedQueue<Interner<String>> interners;
+  private final ConcurrentLinkedQueue<SafeJdomFactory[]> toDispose;
 
   // synchronization will ruin parallel loading, so, string pool is local per thread
-  private final Supplier<SafeJdomFactory> xmlFactorySupplier;
+  private final Supplier<PluginXmlFactory> xmlFactorySupplier;
   @Nullable
-  private final ThreadLocal<SafeJdomFactory> threadLocalXmlFactory;
+  private final ThreadLocal<PluginXmlFactory[]> threadLocalXmlFactory;
   private final int maxThreads;
 
   @NotNull
@@ -42,20 +45,22 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     maxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
       executorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads, false);
-      interners = new ConcurrentLinkedQueue<>();
+      toDispose = new ConcurrentLinkedQueue<>();
 
       threadLocalXmlFactory = ThreadLocal.withInitial(() -> {
         PluginXmlFactory factory = new PluginXmlFactory();
-        interners.add(factory.stringInterner);
-        return factory;
+        PluginXmlFactory[] ref = {factory};
+        toDispose.add(ref);
+        return ref;
       });
-      xmlFactorySupplier = () -> threadLocalXmlFactory.get();
+      xmlFactorySupplier = () -> threadLocalXmlFactory.get()[0];
     }
     else {
       executorService = ConcurrencyUtil.newSameThreadExecutorService();
-      interners = null;
+      toDispose = null;
       threadLocalXmlFactory = null;
-      xmlFactorySupplier = () -> new PluginXmlFactory();
+      PluginXmlFactory factory = new PluginXmlFactory();
+      xmlFactorySupplier = () -> factory;
     }
   }
 
@@ -81,8 +86,8 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
 
     executorService.execute(() -> {
-      for (Interner<String> interner : interners) {
-        interner.clear();
+      for (SafeJdomFactory[] ref : toDispose) {
+        ref[0] = null;
       }
     });
     executorService.shutdown();
@@ -90,9 +95,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   @NotNull
   public Interner<String> getStringInterner() {
-    // always PluginXmlFactory with not-null interner
-    //noinspection ConstantConditions
-    return getXmlFactory().stringInterner();
+    return xmlFactorySupplier.get().stringInterner;
   }
 
   @NotNull
@@ -103,6 +106,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       defaultVersion = result;
     }
     return result;
+  }
+
+  @NotNull
+  public DateFormat getDateParser() {
+    return xmlFactorySupplier.get().releaseDateFormat;
   }
 }
 
@@ -131,11 +139,7 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
     }
   };
 
-  @NotNull
-  @Override
-  public Interner<String> stringInterner() {
-    return stringInterner;
-  }
+  final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
 
   @NotNull
   @Override

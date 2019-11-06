@@ -139,14 +139,21 @@ public class PluginDescriptorTest {
   public void testPluginNameAsId() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("noId");
     assertThat(descriptor).isNotNull();
-    assertEquals(descriptor.getName(), descriptor.getPluginId().getIdString());
+    assertThat(descriptor.getPluginId().getIdString()).isEqualTo(descriptor.getName());
+  }
+
+  @Test
+  public void testReleaseDate() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("releaseDate");
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getReleaseDate().getTime()).isEqualTo(1565474400000L);
   }
 
   @Test
   public void testPluginIdAsName() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("noName");
-    assertNotNull(descriptor);
-    assertEquals(descriptor.getPluginId().getIdString(), descriptor.getName());
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getName()).isEqualTo(descriptor.getPluginId().getIdString());
   }
 
   @Test
