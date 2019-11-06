@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @ApiStatus.Internal
-final class LoadPluginResult {
+final class PluginLoadingResult {
   final List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>();
   final List<IdeaPluginDescriptorImpl> pluginsWithoutId = new ArrayList<>();
 
@@ -25,7 +25,7 @@ final class LoadPluginResult {
 
   Map<PluginId, Set<String>> brokenPluginVersions;
 
-  LoadPluginResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions) {
+  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions) {
     this.brokenPluginVersions = brokenPluginVersions;
   }
 

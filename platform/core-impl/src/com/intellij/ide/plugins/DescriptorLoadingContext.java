@@ -17,9 +17,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
-final class LoadingContext implements AutoCloseable {
+final class DescriptorLoadingContext implements AutoCloseable {
   final Map<Path, FileSystem> openedFiles = new THashMap<>();
-  final LoadDescriptorsContext parentContext;
+  final LoadingDescriptorListContext parentContext;
   final boolean isBundled;
   final boolean isEssential;
   final Set<PluginId> disabledPlugins;
@@ -33,11 +33,11 @@ final class LoadingContext implements AutoCloseable {
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
    */
-  LoadingContext(@Nullable LoadDescriptorsContext parentContext,
-                 boolean isBundled,
-                 boolean isEssential,
-                 @NotNull Set<PluginId> disabledPlugins,
-                 @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
+  DescriptorLoadingContext(@Nullable LoadingDescriptorListContext parentContext,
+                           boolean isBundled,
+                           boolean isEssential,
+                           @NotNull Set<PluginId> disabledPlugins,
+                           @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
     this.parentContext = parentContext;
     this.isBundled = isBundled;
     this.isEssential = isEssential;
@@ -82,15 +82,15 @@ final class LoadingContext implements AutoCloseable {
   }
 
   @NotNull
-  public LoadingContext copy(boolean isEssential) {
-    return new LoadingContext(parentContext, isBundled, isEssential, disabledPlugins, pathResolver);
+  public DescriptorLoadingContext copy(boolean isEssential) {
+    return new DescriptorLoadingContext(parentContext, isBundled, isEssential, disabledPlugins, pathResolver);
   }
 
   void readDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor,
                       @NotNull Element element,
                       @NotNull Path basePath,
                       @NotNull PathBasedJdomXIncluder.PathResolver<?> resolver) {
-    LoadDescriptorsContext parentContext = this.parentContext;
+    LoadingDescriptorListContext parentContext = this.parentContext;
     Supplier<String> defaultVersion;
     Interner<String> stringInterner;
     if (parentContext == null) {

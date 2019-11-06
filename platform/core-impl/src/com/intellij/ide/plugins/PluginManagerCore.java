@@ -803,7 +803,7 @@ public final class PluginManagerCore {
   private static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull Path file,
                                                                 @NotNull String pathName,
                                                                 @Nullable Path pluginPath,
-                                                                @NotNull LoadingContext loadingContext) {
+                                                                @NotNull DescriptorLoadingContext loadingContext) {
     Path descriptorFile = file.resolve(META_INF + pathName);
     if (!Files.exists(descriptorFile)) {
       return null;
@@ -834,7 +834,7 @@ public final class PluginManagerCore {
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull Path file,
                                                                 @NotNull String fileName,
                                                                 @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                                                                @NotNull LoadingContext context,
+                                                                @NotNull DescriptorLoadingContext context,
                                                                 @Nullable Path pluginPath) {
     SafeJdomFactory factory = context.getXmlFactory();
     try {
@@ -878,8 +878,8 @@ public final class PluginManagerCore {
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName, @Nullable Set<PluginId> disabledPlugins) {
-    try (LoadingContext context = new LoadingContext(null, false, false, disabledPlugins == null ? Collections.emptySet() : disabledPlugins,
-                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(null, false, false, disabledPlugins == null ? Collections.emptySet() : disabledPlugins,
+                                                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }
@@ -888,15 +888,15 @@ public final class PluginManagerCore {
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                          boolean isBundled,
                                                          @NotNull Set<PluginId> disabledPlugins,
-                                                         @Nullable LoadDescriptorsContext parentContext) {
-    try (LoadingContext context = new LoadingContext(parentContext, isBundled, /* isEssential = */ false, disabledPlugins,
-                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+                                                         @Nullable LoadingDescriptorListContext parentContext) {
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ false, disabledPlugins,
+                                                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return loadDescriptorFromFileOrDir(file, PLUGIN_XML, context, Files.isDirectory(file));
     }
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file, @NotNull String pathName, @NotNull LoadingContext context, boolean isDirectory) {
+  private static IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file, @NotNull String pathName, @NotNull DescriptorLoadingContext context, boolean isDirectory) {
     if (isDirectory) {
       return loadDescriptorFromDirAndNormalize(file, pathName, context);
     }
@@ -912,7 +912,7 @@ public final class PluginManagerCore {
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromDirAndNormalize(@NotNull Path file,
                                                                             @NotNull String pathName,
-                                                                            @NotNull LoadingContext context) {
+                                                                            @NotNull DescriptorLoadingContext context) {
     IdeaPluginDescriptorImpl descriptor = loadDescriptorFromDir(file, pathName, null, context);
     if (descriptor != null) {
       return normalizeDescriptor(file, pathName, context, descriptor, true) ? descriptor : null;
@@ -975,7 +975,7 @@ public final class PluginManagerCore {
 
   private static boolean normalizeDescriptor(@NotNull Path file,
                                              @NotNull String pathName,
-                                             @NotNull LoadingContext context,
+                                             @NotNull DescriptorLoadingContext context,
                                              @NotNull IdeaPluginDescriptorImpl descriptor,
                                              boolean isDirectory) {
     if (PLUGIN_XML.equals(pathName) && (descriptor.getPluginId() == null || descriptor.getName() == null)) {
@@ -1025,7 +1025,7 @@ public final class PluginManagerCore {
           // Note that this code is meant for IDE development / testing purposes
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + configFile);
           if (resource != null) {
-            try (LoadingContext childContext = context.copy(/* isEssential = */ false)) {
+            try (DescriptorLoadingContext childContext = context.copy(/* isEssential = */ false)) {
               optionalDescriptor = loadDescriptorFromResource(resource, configFile, childContext);
             }
           }
@@ -1098,9 +1098,9 @@ public final class PluginManagerCore {
   }
 
   private static void loadDescriptorsFromDir(@NotNull Path dir,
-                                             @NotNull LoadPluginResult result,
+                                             @NotNull PluginLoadingResult result,
                                              boolean isBundled,
-                                             @NotNull LoadDescriptorsContext context) throws ExecutionException, InterruptedException {
+                                             @NotNull LoadingDescriptorListContext context) throws ExecutionException, InterruptedException {
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>();
     ExecutorService executorService = context.getExecutorService();
     try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
@@ -1159,10 +1159,10 @@ public final class PluginManagerCore {
   @TestOnly
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
-    LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
+    PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
-    try (LoadingContext loadingContext = new LoadingContext(new LoadDescriptorsContext(false, Collections.emptySet()), true, true, Collections.emptySet(), new ClassPathXmlPathResolver(loader))) {
+    try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(new LoadingDescriptorListContext(false, Collections.emptySet()), true, true, Collections.emptySet(), new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, result, loadingContext, platformPluginURL);
     }
     result.finish();
@@ -1172,15 +1172,15 @@ public final class PluginManagerCore {
   @TestOnly
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromDir(@NotNull Path dir)
     throws ExecutionException, InterruptedException {
-    LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
-    loadDescriptorsFromDir(dir, result, true, new LoadDescriptorsContext(false, Collections.emptySet()));
+    PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
+    loadDescriptorsFromDir(dir, result, true, new LoadingDescriptorListContext(false, Collections.emptySet()));
     result.finish();
     return result.plugins;
   }
 
   private static void loadDescriptorsFromClassPath(@NotNull Map<URL, String> urls,
-                                                   @NotNull LoadPluginResult result,
-                                                   @NotNull LoadingContext loadingContext,
+                                                   @NotNull PluginLoadingResult result,
+                                                   @NotNull DescriptorLoadingContext loadingContext,
                                                    @Nullable URL platformPluginURL) throws ExecutionException, InterruptedException {
     if (urls.isEmpty()) {
       return;
@@ -1232,7 +1232,7 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource, @NotNull String pathName, @NotNull LoadingContext loadingContext) {
+  private static IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource, @NotNull String pathName, @NotNull DescriptorLoadingContext loadingContext) {
     try {
       Path file;
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
@@ -1287,8 +1287,8 @@ public final class PluginManagerCore {
     }
   }
 
-  private static void loadDescriptorsFromProperty(@NotNull LoadPluginResult result,
-                                                  @NotNull LoadDescriptorsContext context) {
+  private static void loadDescriptorsFromProperty(@NotNull PluginLoadingResult result,
+                                                  @NotNull LoadingDescriptorListContext context) {
     String pathProperty = System.getProperty(PROPERTY_PLUGIN_PATH);
     if (pathProperty == null) {
       return;
@@ -1315,15 +1315,15 @@ public final class PluginManagerCore {
 
   @NotNull
   @ApiStatus.Internal
-  public static LoadPluginResult loadDescriptors() {
-    LoadPluginResult result = new LoadPluginResult(getBrokenPluginVersions());
+  public static PluginLoadingResult loadDescriptors() {
+    PluginLoadingResult result = new PluginLoadingResult(getBrokenPluginVersions());
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
     boolean parallel = SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true);
-    try (LoadDescriptorsContext context = new LoadDescriptorsContext(parallel, disabledPlugins())) {
-      try (LoadingContext loadingContext = new LoadingContext(context, /* isBundled = */ true, /* isEssential, doesn't matter = */ true,
-                                                              context.disabledPlugins, new ClassPathXmlPathResolver(classLoader))) {
+    try (LoadingDescriptorListContext context = new LoadingDescriptorListContext(parallel, disabledPlugins())) {
+      try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, /* isBundled = */ true, /* isEssential, doesn't matter = */ true,
+                                                                                  context.disabledPlugins, new ClassPathXmlPathResolver(classLoader))) {
         loadDescriptorsFromClassPath(urlsFromClassPath, result, loadingContext, platformPluginURL);
       }
 
@@ -1626,7 +1626,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static void initializePlugins(@NotNull LoadPluginResult loadResult,
+  static void initializePlugins(@NotNull PluginLoadingResult loadResult,
                                 @NotNull ClassLoader coreLoader,
                                 @Nullable BiConsumer<? super Set<PluginId>, ? super Set<PluginId>> disabledAndPossibleToEnableConsumer,
                                 boolean checkEssentialPlugins) {
@@ -1885,7 +1885,7 @@ public final class PluginManagerCore {
    */
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
-    try (LoadingContext context = new LoadingContext(null, true, true, disabledPlugins(), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(null, true, true, disabledPlugins(), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       if (Files.isDirectory(pluginRoot)) {
         descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, context);
       }
@@ -1910,7 +1910,7 @@ public final class PluginManagerCore {
       coreLoader = callerClass.getClassLoader();
     }
 
-    LoadPluginResult result;
+    PluginLoadingResult result;
     try {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors();

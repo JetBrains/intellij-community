@@ -23,9 +23,9 @@ final class PluginXmlPathResolver extends BasePathResolver {
   private static final Logger LOG = Logger.getInstance(PluginXmlPathResolver.class);
 
   private final List<Path> pluginJarFiles;
-  private final LoadingContext context;
+  private final DescriptorLoadingContext context;
 
-  PluginXmlPathResolver(@NotNull List<Path> pluginJarFiles, @NotNull LoadingContext context) {
+  PluginXmlPathResolver(@NotNull List<Path> pluginJarFiles, @NotNull DescriptorLoadingContext context) {
     this.pluginJarFiles = pluginJarFiles;
     this.context = context;
   }

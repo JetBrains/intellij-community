@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
-final class LoadDescriptorsContext implements AutoCloseable {
+final class LoadingDescriptorListContext implements AutoCloseable {
   @NotNull
   private final ExecutorService myExecutorService;
 
@@ -41,7 +41,7 @@ final class LoadDescriptorsContext implements AutoCloseable {
     return result;
   };
 
-  LoadDescriptorsContext(boolean isParallel, @NotNull Set<PluginId> disabledPlugins) {
+  LoadingDescriptorListContext(boolean isParallel, @NotNull Set<PluginId> disabledPlugins) {
     this.disabledPlugins = disabledPlugins;
 
     myMaxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;

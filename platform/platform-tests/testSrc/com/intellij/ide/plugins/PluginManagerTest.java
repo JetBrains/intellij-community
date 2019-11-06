@@ -122,7 +122,7 @@ public class PluginManagerTest {
 
   private static void doPluginSortTest(@NotNull String testDataName) throws IOException, JDOMException {
     PluginManagerCore.ourPluginError = null;
-    LoadPluginResult loadPluginResult = loadDescriptors(testDataName + ".xml");
+    PluginLoadingResult loadPluginResult = loadDescriptors(testDataName + ".xml");
     PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), null, false);
     String actual = StringUtil.join(loadPluginResult.getSortedPlugins(), o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
                     "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
@@ -143,11 +143,11 @@ public class PluginManagerTest {
   }
 
   @NotNull
-  private static LoadPluginResult loadDescriptors(@NotNull String testDataName)
+  private static PluginLoadingResult loadDescriptors(@NotNull String testDataName)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
-    LoadPluginResult result = new LoadPluginResult(Collections.emptyMap());
-    LoadDescriptorsContext context = new LoadDescriptorsContext(false, Collections.emptySet());
+    PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
+    LoadingDescriptorListContext context = new LoadingDescriptorListContext(false, Collections.emptySet());
     Element root = JDOMUtil.load(file, context.getXmlFactory());
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
