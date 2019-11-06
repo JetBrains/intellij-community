@@ -17,7 +17,6 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
 import com.intellij.workspace.api.*
@@ -474,18 +473,18 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     setUnloadedModules(newUnloadedModules)
   }
 
-  private fun getUnloadedModuleDescription(moduleEntity: ModuleEntity): UnloadedModuleDescription = object : UnloadedModuleDescription {
-    override fun getGroupPath(): List<String> = moduleEntity.groupPath?.path?.toList() ?: emptyList()
+  private fun getUnloadedModuleDescription(moduleEntity: ModuleEntity): UnloadedModuleDescriptionImpl {
+    val provider = LegacyBridgeFilePointerProvider.getInstance(project)
 
-    override fun getName(): String = moduleEntity.name
+    val modulePath = getModulePath(moduleEntity, project)
+    val dependencyModuleNames = moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>().map { it.module.name }
+    val contentRoots = moduleEntity.contentRoots.map { it.url }.map { provider.getAndCacheFilePointer(it) }.toList()
 
-    override fun getDependencyModuleNames(): List<String> =
-      moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>().map { it.module.name }
-
-    override fun getContentRoots(): List<VirtualFilePointer> {
-      val provider = LegacyBridgeFilePointerProvider.getInstance(project)
-      return moduleEntity.contentRoots.map { it.url }.map { provider.getAndCacheFilePointer(it) }.toList()
-    }
+    return UnloadedModuleDescriptionImpl(
+      modulePath = modulePath,
+      dependencyModuleNames = dependencyModuleNames,
+      contentRoots = contentRoots
+    )
   }
 
   companion object {
@@ -516,11 +515,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                                       diff: TypedEntityStorageDiffBuilder?,
                                       isNew: Boolean): LegacyBridgeModule {
 
-      val jpsFileEntitySource = moduleEntity.entitySource as? JpsFileEntitySource
-
-      // TODO Is this fallback fake path ok?
-      val modulePath = jpsFileEntitySource?.file?.filePath
-                       ?: "/module-id-${moduleEntity.persistentId()}.iml".replace(Regex("[^a-zA-Z0-9\\-/.]"), "_")
+      val modulePath = getModuleFilePath(moduleEntity, project)
 
       val module = LegacyBridgeModuleImpl(
         name = moduleEntity.name,
@@ -544,5 +539,19 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
       return module
     }
+
+    internal fun getModuleFilePath(moduleEntity: ModuleEntity, project: Project): String {
+      val jpsFileEntitySource = moduleEntity.entitySource as? JpsFileEntitySource
+
+      // TODO Is this fallback fake path ok?
+
+      return jpsFileEntitySource?.file?.filePath
+             ?: "temp:///project-${project.locationHash}/${moduleEntity.name}.iml"
+    }
+
+    internal fun getModulePath(moduleEntity: ModuleEntity, project: Project): ModulePath = ModulePath(
+      path = getModuleFilePath(moduleEntity, project),
+      group = moduleEntity.groupPath?.path?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
+    )
   }
 }
