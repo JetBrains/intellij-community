@@ -119,7 +119,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   /**
    * @deprecated use {{@link #addMessageFilter(Filter)}} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @Deprecated
   public void addMessageFilter(Project project, Filter filter) {
     myTerminalWidget.addMessageFilter(filter);
