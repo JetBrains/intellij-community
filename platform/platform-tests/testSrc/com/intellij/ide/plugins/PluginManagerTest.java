@@ -148,14 +148,15 @@ public class PluginManagerTest {
     PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
 
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(/* doesn't matter */ false, Collections.emptySet());
-    DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, true, /* doesn't matter */ false,
+    boolean isBundled = true;
+    DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
 
     Element root = JDOMUtil.load(file, context.parentContext.getXmlFactory());
 
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), true);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
       context.readDescriptor(descriptor, element, Paths.get(url), context.pathResolver);
       result.add(descriptor, false);
     }

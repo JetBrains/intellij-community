@@ -252,9 +252,10 @@ public final class PluginDownloader {
       if (installedPlugin == null) {
         return false;
       }
-      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManagerCore.loadDescriptor(((IdeaPluginDescriptorImpl)installedPlugin).getPluginPath(), PluginManagerCore.PLUGIN_XML, null);
-      if (installedPluginDescriptor == null) return false;
-      if (!DynamicPlugins.unloadPlugin(installedPluginDescriptor)) return false;
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)installedPlugin).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+      if (installedPluginDescriptor == null || !DynamicPlugins.unloadPlugin(installedPluginDescriptor)) {
+        return false;
+      }
     }
 
     PluginInstaller.installAndLoadDynamicPlugin(myFile, ownerComponent, descriptorImpl);

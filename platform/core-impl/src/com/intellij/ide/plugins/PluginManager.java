@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -63,7 +64,18 @@ public final class PluginManager {
   // not in PluginManagerCore because it is helper method
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
-    return PluginManagerCore.loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins());
+    return loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins());
+  }
+
+  @Nullable
+  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
+                                                        @NotNull String fileName,
+                                                        @Nullable Set<PluginId> disabledPlugins) {
+    Set<PluginId> disabled = disabledPlugins == null ? Collections.emptySet() : disabledPlugins;
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(new DescriptorListLoadingContext(false, disabled), false, false,
+                                                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+      return PluginManagerCore.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
+    }
   }
 
   /**

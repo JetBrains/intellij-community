@@ -124,8 +124,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return fromString(version, null, productCode);
   }
 
-  public static BuildNumber fromString(String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
-    if (StringUtil.isEmptyOrSpaces(version)) return null;
+  public static BuildNumber fromString(@Nullable String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
+    if (StringUtil.isEmptyOrSpaces(version)) {
+      return null;
+    }
 
     String code = version;
     int productSeparator = code.indexOf('-');

@@ -22,9 +22,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
@@ -143,10 +143,34 @@ public class PluginDescriptorTest {
   }
 
   @Test
-  public void testReleaseDate() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("releaseDate");
+  public void releaseDate() throws IOException {
+    Path pluginFile = inMemoryFs.getFs().getPath("plugin/META-INF/plugin.xml");
+    PathKt.write(pluginFile, "<idea-plugin>\n" +
+                             "  <id>bar</id>\n" +
+                             "  <product-descriptor code=\"IJ\" release-date=\"20190811\" release-version=\"42\"/>\n" +
+                             "</idea-plugin>");
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor(pluginFile.getParent().getParent());
     assertThat(descriptor).isNotNull();
-    assertThat(descriptor.getReleaseDate().getTime()).isEqualTo(1565474400000L);
+    assertThat(new SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.getReleaseDate())).isEqualTo("20190811");
+  }
+
+  @Test
+  public void componentConfig() throws IOException {
+    Path pluginFile = inMemoryFs.getFs().getPath("/plugin/META-INF/plugin.xml");
+    PathKt.write(pluginFile, "<idea-plugin>\n" +
+                             "  <id>bar</id>\n" +
+                             "  <project-components>\n" +
+                             "    <component>\n" +
+                             "      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>\n" +
+                             "      <option name=\"workspace\" value=\"true\"/>\n" +
+                             "    </component>\n" +
+                             "\n" +
+                             "    \n" +
+                             "  </project-components>\n" +
+                             "</idea-plugin>");
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor(pluginFile.getParent().getParent());
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getProjectContainerDescriptor().components.get(0).options).isEqualTo(Collections.singletonMap("workspace", "true"));
   }
 
   @Test
@@ -158,7 +182,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void testUrlTolerance() throws Exception {
-    class SingleUrlEnumeration implements Enumeration<URL> {
+    final class SingleUrlEnumeration implements Enumeration<URL> {
       private final URL myUrl;
       private boolean hasMoreElements = true;
 
@@ -229,11 +253,11 @@ public class PluginDescriptorTest {
   }
 
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path dir) {
-    assertTrue(dir + " does not exist", Files.exists(dir));
+    assertThat(dir).exists();
     PluginManagerCore.ourPluginError = null;
-    IdeaPluginDescriptorImpl result = PluginManager.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
+    IdeaPluginDescriptorImpl result = PluginManager.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML, Collections.emptySet());
     if (result == null) {
-      assertNotNull(PluginManagerCore.ourPluginError);
+      assertThat(PluginManagerCore.ourPluginError).isNotNull();
       PluginManagerCore.ourPluginError = null;
     }
     return result;

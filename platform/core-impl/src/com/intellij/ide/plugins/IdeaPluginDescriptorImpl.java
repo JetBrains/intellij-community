@@ -394,6 +394,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
       }
 
+      if (options != null) {
+        componentConfig.options = options;
+      }
+
       result.add(componentConfig);
     }
   }

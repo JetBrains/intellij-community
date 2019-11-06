@@ -882,16 +882,7 @@ public final class PluginManagerCore {
   @Nullable
   @Deprecated
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String fileName) {
-    return loadDescriptor(file.toPath(), fileName, disabledPlugins());
-  }
-
-  @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName, @Nullable Set<PluginId> disabledPlugins) {
-    Set<PluginId> disabled = disabledPlugins == null ? Collections.emptySet() : disabledPlugins;
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(new DescriptorListLoadingContext(false, disabled), false, false,
-                                                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
-      return loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
-    }
+    return PluginManager.loadDescriptor(file.toPath(), fileName, disabledPlugins());
   }
 
   @Nullable
@@ -905,7 +896,7 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file, @NotNull String pathName, @NotNull DescriptorLoadingContext context, boolean isDirectory) {
+  static IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file, @NotNull String pathName, @NotNull DescriptorLoadingContext context, boolean isDirectory) {
     if (isDirectory) {
       return loadDescriptorFromDirAndNormalize(file, pathName, context);
     }
@@ -1519,15 +1510,15 @@ public final class PluginManagerCore {
         errorSuffix = "is not enabled";
       }
       else if (explicitlyEnabled != null) {
-        if (!explicitlyEnabled.contains(descriptor)) {
+        if (explicitlyEnabled.contains(descriptor)) {
+          errorSuffix = null;
+        }
+        else {
           errorSuffix = "";
           getLogger().info("Plugin " + toPresentableName(descriptor) + " " +
                            (selectedIds != null
                             ? "is not in 'idea.load.plugins.id' system property"
                             : "category doesn't match 'idea.load.plugins.category' system property"));
-        }
-        else {
-          errorSuffix = null;
         }
       }
       else if (!shouldLoadPlugins) {
@@ -1594,12 +1585,12 @@ public final class PluginManagerCore {
                                @Nullable String untilBuild) {
     try {
       String message = "";
-      BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, null, null);
+      BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
       if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
         message += "since build " + sinceBuildNumber + " > " + buildNumber;
       }
 
-      BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, null, null);
+      BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, null, null);
       if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
         if (!message.isEmpty()) {
           message += ", ";

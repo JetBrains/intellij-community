@@ -201,7 +201,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       boolean enabled = isEnabled(descriptor.getPluginId());
       if (enabled != descriptor.isEnabled()) {
         // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
-        IdeaPluginDescriptorImpl fullDescriptor = PluginManagerCore.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, null);
+        IdeaPluginDescriptorImpl fullDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
         if (fullDescriptor == null) {
           LOG.error("Could not load full descriptor for plugin " + descriptor.getPath());
           fullDescriptor = (IdeaPluginDescriptorImpl)descriptor;
@@ -337,8 +337,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     boolean allowUninstallWithoutRestart = true;
     if (updateDescriptor != null) {
-      IdeaPluginDescriptorImpl installedPluginDescriptor =
-        PluginManagerCore.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, null);
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
       if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
       }
@@ -886,8 +885,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     try {
       descriptorImpl.setDeleted(true);
       // Load descriptor to make sure we get back all the data cleared after the descriptor has been loaded
-      IdeaPluginDescriptorImpl fullDescriptor = PluginManagerCore
-        .loadDescriptor(descriptorImpl.getPluginPath(), PluginManagerCore.PLUGIN_XML, null);
+      IdeaPluginDescriptorImpl fullDescriptor = PluginManager.loadDescriptor(descriptorImpl.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
       LOG.assertTrue(fullDescriptor != null);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(fullDescriptor);
       InstalledPluginsState.getInstance().onPluginUninstall(descriptorImpl, needRestartForUninstall);
