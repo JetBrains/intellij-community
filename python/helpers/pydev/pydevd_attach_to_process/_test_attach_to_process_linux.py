@@ -42,9 +42,9 @@ if __name__ == '__main__':
     p = subprocess.Popen([sys.executable, '-u', '_always_live_program.py'])
     print('Size of file: %s' % (os.stat(so_location).st_size))
 
-    #(gdb) set architecture
+    # (gdb) set architecture
     # Requires an argument. Valid arguments are i386, i386:x86-64, i386:x64-32, i8086, i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl, i386:x86-64:nacl, i386:x64-32:nacl, auto.
-    
+
     cmd = [
         'gdb',
         '--pid',
@@ -55,17 +55,13 @@ if __name__ == '__main__':
     arch = 'i386:x86-64'
     if arch:
         cmd.extend(["--eval-command='set architecture %s'" % arch])
-        
+
     cmd.extend([
         "--eval-command='call dlopen(\"/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/attach_linux.so\", 2)'",
         "--eval-command='call (int)DoAttach(1, \"print(\\\"check11111check\\\")\", 0)'",
-        #"--eval-command='call (int)SetSysTraceFunc(1, 0)'", -- never call this way, always use "--command='...gdb_threads_settrace.py'",
-        #So that threads are all stopped!
-        "--command='/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/gdb_threads_settrace.py'",
+        # "--eval-command='call (int)SetSysTraceFunc(1, 0)'", -- never call this way, always use "--command='...gdb_threads_settrace.py'",
+        # So that threads are all stopped!
     ])
-    
-    cmd.extend(['--command=/home/fabioz/Desktop/dev/PyDev.Debugger/pydevd_attach_to_process/linux/gdb_threads_settrace.py'])
-        
 
     print(' '.join(cmd))
     time.sleep(.5)
