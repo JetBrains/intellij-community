@@ -1751,12 +1751,10 @@ public final class PluginManagerCore {
       if (duplicateMap != null) {
         duplicateMap.forEach((id, values) -> {
           if (isModuleDependency(id)) {
-            errors.add(toPresentableName(id.getIdString()) + " module is declared by plugins " +
-                       StringUtil.join(values, PluginManagerCore::toPresentableName, ", "));
+            errors.add(toPresentableName(id.getIdString()) + " module is declared by plugins:\n  " + StringUtil.join(values, "\n  "));
           }
           else {
-            errors.add(toPresentableName(id.getIdString()) + " id is declared by plugins " +
-                       StringUtil.join(values, o -> toPresentableName(o.getPath().getName()), ", "));
+            errors.add(toPresentableName(id.getIdString()) + " id is declared by plugins:\n  " + StringUtil.join(values, "\n  "));
           }
         });
       }
