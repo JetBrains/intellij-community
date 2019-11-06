@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -277,7 +278,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     if (myShortcutSet != shortcutSet &&
         myShortcutSet != CustomShortcutSet.EMPTY &&
         ApplicationManager.getApplication() != null &&
-        ActionManager.getInstance() != null &&
+        ServiceManager.getServiceIfCreated(ActionManager.class) != null &&
         ActionManager.getInstance().getId(this) != null) {
       LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
                "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
