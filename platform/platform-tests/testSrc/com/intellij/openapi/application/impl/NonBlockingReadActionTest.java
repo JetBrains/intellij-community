@@ -22,17 +22,19 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,35 +44,6 @@ import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
  * @author peter
  */
 public class NonBlockingReadActionTest extends LightPlatformTestCase {
-
-  private @Nullable ExecutorService myBackgroundExecutor;
-
-  @NotNull
-  protected ExecutorService getBackgroundExecutor() {
-    if (myBackgroundExecutor == null) {
-      myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 1);
-      Disposer.register(getTestRootDisposable(), () -> {
-        try {
-          myBackgroundExecutor.shutdown();
-        }
-        finally {
-          myBackgroundExecutor = null;
-        }
-      });
-    }
-    return myBackgroundExecutor;
-  }
-
-  protected void waitForBackgroundExecutor() {
-    if (myBackgroundExecutor != null) {
-      try {
-        myBackgroundExecutor.submit(() -> null).get();
-      }
-      catch (ExecutionException | InterruptedException e) {
-        throw new AssertionError(e);
-      }
-    }
-  }
 
   public void testCoalesceEqual() {
     Object same = new Object();
@@ -216,34 +189,33 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotLeakFirstCancelledCoalescedAction() {
-    Object leak = new Object() {
-    };
+    Object leak = new Object() {};
     Disposable disposable = Disposer.newDisposable();
     Disposer.dispose(disposable);
     CancellablePromise<String> p = ReadAction
       .nonBlocking(() -> "a")
       .expireWith(disposable)
       .coalesceBy(leak)
-      .submit(getBackgroundExecutor());
+      .submit(AppExecutorUtil.getAppExecutorService());
     assertTrue(p.isCancelled());
 
-    waitForBackgroundExecutor();
     LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
   }
 
-  public void testDoNotLeakSecondCancelledCoalescedAction() {
-    Object leak = new Object() {
-    };
-    CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(getBackgroundExecutor());
+  public void testDoNotLeakSecondCancelledCoalescedAction() throws Exception {
+    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+
+    Object leak = new Object(){};
+    CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
     WriteAction.run(() -> {
-      ReadAction.nonBlocking(() -> "b").coalesceBy(leak).submit(getBackgroundExecutor()).cancel();
+      ReadAction.nonBlocking(() -> "b").coalesceBy(leak).submit(executor).cancel();
     });
     assertTrue(p.isDone());
 
-    waitForBackgroundExecutor();
+    ((BoundedTaskExecutor) executor).waitAllTasksExecuted(1, TimeUnit.SECONDS);
+
     LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
   }
-
   public void testSyncExecutionHonorsConstraints() {
     setupUncommittedDocument();
 
