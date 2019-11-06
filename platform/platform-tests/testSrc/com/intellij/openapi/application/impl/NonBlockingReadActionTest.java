@@ -254,6 +254,9 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     Disposer.dispose(disposable);
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       assertThrows(ProcessCanceledException.class, () -> {
+        ReadAction.nonBlocking(() -> "").expireWhen(() -> true).executeSynchronously();
+      });
+      assertThrows(ProcessCanceledException.class, () -> {
         ReadAction.nonBlocking(() -> "").expireWith(disposable).executeSynchronously();
       });
     });
