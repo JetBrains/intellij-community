@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
@@ -48,10 +49,13 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
     }
 
     @Override
-    public void visitXmlText(XmlText text) {
-      final String string = text.getText();
-      handleWord(string, TEXT, myCompilingVisitor.getContext());
-      super.visitXmlText(text);
+    public void visitXmlToken(XmlToken token) {
+      super.visitXmlToken(token);
+      final IElementType tokenType = token.getTokenType();
+      if (tokenType == XmlTokenType.XML_COMMENT_CHARACTERS ||
+          tokenType == XmlTokenType.XML_DATA_CHARACTERS) {
+        handleWord(token.getText(), TEXT, myCompilingVisitor.getContext());
+      }
     }
   }
 
@@ -63,12 +67,23 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
 
   @Override
   public void visitXmlToken(XmlToken token) {
-    if (token.getTokenType() == XmlTokenType.XML_NAME) super.visitXmlToken(token);
+    final IElementType tokenType = token.getTokenType();
+    if (tokenType != XmlTokenType.XML_NAME &&
+        tokenType != XmlTokenType.XML_COMMENT_CHARACTERS &&
+        tokenType != XmlTokenType.XML_DATA_CHARACTERS) {
+      return;
+    }
+    super.visitXmlToken(token);
+    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS) {
+      myCompilingVisitor.setFilterSimple(token, TagValueFilter.getInstance());
+    }
   }
 
   @Override
   public void visitXmlText(XmlText text) {
     super.visitXmlText(text);
-    myCompilingVisitor.setFilterSimple(text, TagValueFilter.getInstance());
+    if (myCompilingVisitor.getContext().getPattern().isRealTypedVar(text)) {
+      myCompilingVisitor.setFilterSimple(text, TagValueFilter.getInstance());
+    }
   }
 }

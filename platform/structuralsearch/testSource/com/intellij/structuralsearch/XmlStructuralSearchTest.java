@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -159,8 +159,22 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
                     "  <first_name>Max</first_name> <!-- asdf -->\n" +
                     "  <last_name>Headroom</last_name>\n" +
                     "</user>";
-      String pattern = "<first_name>$A$</first_name><last_name>$B$</last_name>";
+    String pattern = "<first_name>$A$</first_name><last_name>$B$</last_name>";
     assertEquals("find tag ignoring comments", 1, findMatchesCount(source, pattern, StdFileTypes.XML));
+  }
+
+  public void testComments() {
+    String in = "<blockquote>one two <!-- and I cannot emphasize this enough --> three</blockquote>";
+    assertEquals("find comment", 1, findMatchesCount(in, "<!-- '_x -->", StdFileTypes.HTML));
+    assertEquals("find comment 2", 1, findMatchesCount(in, "<!-- and I cannot emphasize this enough -->", StdFileTypes.HTML));
+    assertEquals("find partial text", 1, findMatchesCount(in, "two", StdFileTypes.HTML));
+    assertEquals("find text ignoring comments & whitespace", 1, findMatchesCount(in, "  one   two   three   ", StdFileTypes.HTML));
+    assertEquals("find text with comments, ignoring whitespace", 1,
+                 findMatchesCount(in, "  one   two  <!-- and   I   cannot emphasize  this  enough --> three   ", StdFileTypes.HTML));
+    assertEquals("find text & var with comments, ignoring whitespace", 1,
+                 findMatchesCount(in, "  one   two  <!-- and   I   cannot emphasize  this  enough --> '_x+   ", StdFileTypes.HTML));
+    assertEquals("should find nothing, comment doesn't match", 0,
+                 findMatchesCount(in, "  one   two  <!--   I can   emphasize  this  enough --> three   ", StdFileTypes.HTML));
   }
 
   @NotNull
