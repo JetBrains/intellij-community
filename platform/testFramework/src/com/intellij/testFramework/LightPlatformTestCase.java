@@ -51,7 +51,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -418,6 +420,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> checkEditorsReleased(),
       super::tearDown,
+      () -> WriteAction.runAndWait(() -> {
+        if (LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
+          ProjectJdkTableImpl jdkTable = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();
+          for (Sdk jdk : jdkTable.getAllJdks()) {
+            jdkTable.removeTestJdk(jdk);
+          }
+        }
+      }),
       () -> myOldSdks.checkForJdkTableLeaks(),
       () -> {
         if (myThreadTracker != null) {

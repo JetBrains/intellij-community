@@ -2,10 +2,13 @@ package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
@@ -13,7 +16,9 @@ import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryModifiableModelImpl
@@ -22,8 +27,6 @@ import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEn
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
-import com.intellij.util.isEmpty
-import com.intellij.workspace.ide.WorkspaceModel
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -316,7 +319,17 @@ class LegacyBridgeModifiableRootModel(
         error("setSdk: expected sdkName is null, but got: $sdkName")
       }
     } else {
-      setInvalidSdk(jdk.name, null)
+      val jdkTable = ProjectJdkTable.getInstance()
+      if (jdkTable.findJdk (jdk.name, jdk.sdkType.name) == null) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          // TODO Fix all tests and remove this
+          (jdkTable as ProjectJdkTableImpl).addTestJdk(jdk, project)
+        } else {
+          error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
+        }
+      }
+
+      setInvalidSdk(jdk.name, jdk.sdkType.name)
     }
   }
 
