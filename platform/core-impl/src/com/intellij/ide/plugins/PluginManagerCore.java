@@ -1159,7 +1159,7 @@ public final class PluginManagerCore {
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
     PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
-    LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
+    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
     try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(new DescriptorListLoadingContext(false, Collections.emptySet()), true, true, new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, result, loadingContext, platformPluginURL);
@@ -1324,7 +1324,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static PluginLoadingResult loadDescriptors() {
     PluginLoadingResult result = new PluginLoadingResult(getBrokenPluginVersions());
-    LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
+    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
     boolean parallel = System.getProperty("parallel.pluginDescriptors.loading") != "false";
