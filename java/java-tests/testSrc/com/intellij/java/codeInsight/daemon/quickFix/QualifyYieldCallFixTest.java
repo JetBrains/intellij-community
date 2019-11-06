@@ -3,14 +3,14 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.compiler.JavacQuirksInspection;
+import com.siyeh.ig.jdk.ForwardCompatibilityInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class QualifyYieldCallFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new JavacQuirksInspection()};
+    return new LocalInspectionTool[]{new ForwardCompatibilityInspection()};
   }
 
   @Override

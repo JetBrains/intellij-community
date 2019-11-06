@@ -1,1 +1,0 @@
-class <warning descr="Usage of 'var' as class name is not supported in releases after Java 9">var</warning> {}

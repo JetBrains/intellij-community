@@ -17,6 +17,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.security.SerializableClassInSecureContextMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantStringOperationMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.jdk.ForwardCompatibilityInspectionMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -1339,10 +1340,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="Annotation" bundle="com.siyeh.InspectionGadgetsBundle" key="annotation.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.AnnotationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="AssertAsIdentifier" shortName="AssertAsName" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="use.assert.as.identifier.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.java.language.level.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.jdk.AssertAsNameInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ForwardCompatibility" bundle="messages.InspectionsBundle" key="inspection.forward.compatibility.name"
+                     groupKey="group.names.java.language.level.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.jdk.ForwardCompatibilityInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="AssertStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="assert.statement.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.AssertStatementInspection"/>
@@ -1352,10 +1352,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="AutoUnboxing" bundle="com.siyeh.InspectionGadgetsBundle" key="auto.unboxing.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.AutoUnboxingInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="EnumAsIdentifier" shortName="EnumAsName" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="use.enum.as.identifier.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.java.language.level.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.jdk.EnumAsNameInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumClass" bundle="com.siyeh.InspectionGadgetsBundle" key="enumerated.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.EnumClassInspection"/>
