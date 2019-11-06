@@ -92,7 +92,7 @@ public class JBTreeTable extends JComponent {
           @Override
           public void paint(Graphics g) {
             final Rectangle bounds = g.getClipBounds();
-            g.setColor(myTable.getBackground());
+            g.setColor(myTable.getShowVerticalLines() ? myTable.getGridColor() : myTable.getBackground());
             g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
             JTableHeader header = myTreeTableHeader;
