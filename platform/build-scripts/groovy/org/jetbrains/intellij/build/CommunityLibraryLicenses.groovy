@@ -28,7 +28,7 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Crash", libraryName: "precompiled-analytics-crash",
                        license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "Android Analytics Protos", libraryName: "analytics-proto",
+    new LibraryLicense(name: "Android Analytics Protos", libraryName: "studio-analytics-proto",
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Shared", libraryName: "precompiled-analytics-shared",
                        license: "Apache 2.0", url: "http://source.android.com/"),
