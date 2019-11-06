@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -439,24 +436,30 @@ public class PySkeletonGenerator {
     }
   }
 
-  protected void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) {
+  protected static void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) throws ExecutionException {
     final OutputStream input = handler.getProcessInput();
     if (input != null) {
-      sendLineToStream(input, line);
+      try {
+        sendLineToStream(input, line);
+      }
+      catch (IOException e) {
+        throw new ExecutionException(e);
+      }
     }
     else {
       LOG.warn("Process " + handler.getCommandLine() + " can't accept any input");
     }
   }
 
-  protected void sendLineToStream(@NotNull OutputStream input, @NotNull String line) {
-    try {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      PrintStream writer = new PrintStream(input, true, StandardCharsets.UTF_8.name());
-      writer.println(line);
-    }
-    catch (UnsupportedEncodingException ignored) {
-    }
-  }
+  protected static void sendLineToStream(@NotNull OutputStream input, @NotNull String line) throws IOException {
+    // Using platform-specific notion of a line separator (PrintStream, PrintWriter, BufferedWriter#newLine()) is
+    // unreliable in case of remote interpreters where target and host OS might differ.
 
+    // Closing the underlying input stream should be handled by its owner.
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(input, StandardCharsets.UTF_8));
+    writer.write(line);
+    writer.write('\n');
+    writer.flush();
+  }
 }
