@@ -97,7 +97,7 @@ public final class PluginManagerCore {
   private static volatile Set<PluginId> ourDisabledPlugins;
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
-  private static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
+  static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
@@ -188,6 +188,7 @@ public final class PluginManagerCore {
     //noinspection SuspiciousToArrayCall
     IdeaPluginDescriptorImpl[] copy = Arrays.asList(descriptors).toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     ourPlugins = copy;
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
     ourLoadedPlugins = Collections.unmodifiableList(ContainerUtil.findAll(copy, IdeaPluginDescriptor::isEnabled));
   }
 
@@ -268,7 +269,7 @@ public final class PluginManagerCore {
   }
 
   @NotNull
-  private static Set<PluginId> getDisabledIds() {
+  static Set<PluginId> getDisabledIds() {
     Set<PluginId> result = ourDisabledPlugins;
     if (result != null) {
       return result;
@@ -379,7 +380,7 @@ public final class PluginManagerCore {
 
   public static void savePluginsList(@NotNull Collection<PluginId> ids, @NotNull Path file, boolean append) throws IOException {
     Files.createDirectories(file.getParent());
-    try (BufferedWriter writer = (append ? Files.newBufferedWriter(file) : Files.newBufferedWriter(file, StandardOpenOption.APPEND))) {
+    try (BufferedWriter writer = (append ? Files.newBufferedWriter(file, StandardOpenOption.APPEND, StandardOpenOption.CREATE) : Files.newBufferedWriter(file))) {
       writePluginsList(ids, writer);
     }
   }
@@ -420,7 +421,7 @@ public final class PluginManagerCore {
     return enablePlugin(PluginId.getId(id));
   }
 
-  private static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> disabledPlugins) {
+  static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> disabledPlugins) {
     try {
       saveDisabledPlugins(disabledPlugins, false);
       return true;
@@ -634,6 +635,7 @@ public final class PluginManagerCore {
 
   public static synchronized void invalidatePlugins() {
     ourPlugins = null;
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
     ourLoadedPlugins = null;
     ourDisabledPlugins = null;
   }
@@ -1924,11 +1926,12 @@ public final class PluginManagerCore {
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
       ourPluginsToEnable = result.getDisabledRequiredIds();
 
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
       ourLoadedPlugins = result.getSortedEnabledPlugins();
 
       int count = 0;
-      ourIdToIndex.ensureCapacity(ourLoadedPlugins.size());
-      for (IdeaPluginDescriptor descriptor : ourLoadedPlugins) {
+      ourIdToIndex.ensureCapacity(result.getSortedEnabledPlugins().size());
+      for (IdeaPluginDescriptor descriptor : result.getSortedEnabledPlugins()) {
         ourIdToIndex.put(descriptor.getPluginId(), count++);
       }
 
@@ -1967,21 +1970,6 @@ public final class PluginManagerCore {
         if (id == plugin.getPluginId()) {
           return plugin;
         }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
-    List<IdeaPluginDescriptorImpl> result = ourLoadedPlugins;
-    if (result == null) {
-      return null;
-    }
-
-    for (IdeaPluginDescriptor plugin : result) {
-      if (id == plugin.getPluginId()) {
-        return plugin;
       }
     }
     return null;

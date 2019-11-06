@@ -11,14 +11,14 @@ import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -26,8 +26,6 @@ import java.util.stream.Stream;
  * @author Konstantin Bulenkov
  */
 final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
-  private static final Logger LOG = Logger.getInstance(PluginBooleanOptionDescriptor.class);
-
   private static final NotificationGroup PLUGINS_LIST_CHANGED_GROUP =
     new NotificationGroup("Plugins updates", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup PLUGINS_AUTO_SWITCH_GROUP =
@@ -35,34 +33,28 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   private static final Notifier ourRestartNeededNotifier = new Notifier();
 
-  private final PluginId myId;
+  private final IdeaPluginDescriptor plugin;
 
   PluginBooleanOptionDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
     super(descriptor.getName(), PluginManagerConfigurable.ID);
 
-    myId = descriptor.getPluginId();
+    plugin = descriptor;
   }
 
   @Override
   public boolean isOptionEnabled() {
-    IdeaPluginDescriptor descriptor = PluginManagerCore.findEnabledPlugin(myId);
-    return descriptor != null && descriptor.isEnabled();
+    return plugin.isEnabled();
   }
 
   @Override
   public void setOptionState(boolean enabled) {
-    try {
-      Collection<IdeaPluginDescriptor> autoSwitchedIds = enabled ? getPluginsIdsToEnable(myId) : getPluginsIdsToDisable(myId);
-      switchPlugins(autoSwitchedIds, enabled);
-      if (autoSwitchedIds.size() > 1) {
-        showAutoSwitchNotification(autoSwitchedIds, enabled);
-      }
+    Collection<IdeaPluginDescriptor> autoSwitchedIds = enabled ? getPluginsIdsToEnable(plugin) : getPluginsIdsToDisable(plugin);
+    PluginManager.getInstance().enablePlugins(autoSwitchedIds, enabled);
+    if (autoSwitchedIds.size() > 1) {
+      showAutoSwitchNotification(autoSwitchedIds, enabled);
+    }
 
-      ourRestartNeededNotifier.showNotification();
-    }
-    catch (IOException e) {
-      LOG.error("Cannot save plugins state");
-    }
+    ourRestartNeededNotifier.showNotification();
   }
 
   private void showAutoSwitchNotification(@NotNull Collection<IdeaPluginDescriptor> autoSwitchedPlugins, boolean enabled) {
@@ -101,34 +93,16 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     Notifications.Bus.notify(switchNotification);
   }
 
-  private static void switchPlugins(@NotNull Collection<IdeaPluginDescriptor> descriptors, boolean enabled) throws IOException {
-    Collection<PluginId> disabledPlugins = new LinkedHashSet<>(PluginManagerCore.disabledPlugins());
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (enabled) {
-        disabledPlugins.remove(descriptor.getPluginId());
-      }
-      else {
-        disabledPlugins.add(descriptor.getPluginId());
-      }
-    }
-    PluginManagerCore.saveDisabledPlugins(disabledPlugins, false);
-
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      descriptor.setEnabled(enabled);
-    }
-  }
-
   @NotNull
-  private static Collection<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull PluginId id) {
-    IdeaPluginDescriptor rootDescriptor = PluginManagerCore.getPlugin(id);
-    if (rootDescriptor == null) {
-      return Collections.emptyList();
-    }
-
+  private static Collection<IdeaPluginDescriptor> getPluginsIdsToEnable(@NotNull IdeaPluginDescriptor rootDescriptor) {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
     PluginManagerCore.processAllDependencies(rootDescriptor, false, descriptor -> {
+      if (descriptor.getPluginId() == PluginManagerCore.CORE_ID) {
+        return FileVisitResult.SKIP_SUBTREE;
+      }
+
       if (!descriptor.isEnabled()) {
         // if descriptor was already added, no need to process it's dependencies again
         return result.add(descriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
@@ -142,16 +116,15 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   }
 
   @NotNull
-  private static Collection<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull PluginId id) {
-    IdeaPluginDescriptor rootDescriptor = PluginManagerCore.getPlugin(id);
-    if (rootDescriptor == null) {
-      return Collections.emptyList();
-    }
-
+  private static Collection<IdeaPluginDescriptor> getPluginsIdsToDisable(@NotNull IdeaPluginDescriptor rootDescriptor) {
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
     PluginManagerCore.processAllDependencies(rootDescriptor, false, descriptor -> {
+      if (descriptor.getPluginId() == PluginManagerCore.CORE_ID) {
+        return FileVisitResult.SKIP_SUBTREE;
+      }
+
       if (descriptor.isEnabled()) {
         // if descriptor was already added, no need to process it's dependencies again
         return result.add(descriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
@@ -177,18 +150,14 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-      try {
-        switchPlugins(myDescriptors, !myEnabled);
-        notification.expire();
-        ourRestartNeededNotifier.showNotification();
-      }
-      catch (IOException exception) {
-        LOG.error("Cannot save plugins state");
-      }
+      boolean enabled = !myEnabled;
+      PluginManager.getInstance().enablePlugins(myDescriptors, enabled);
+      notification.expire();
+      ourRestartNeededNotifier.showNotification();
     }
   }
 
-  private static class Notifier {
+  private static final class Notifier {
     private final AtomicReference<Notification> prevNotification = new AtomicReference<>();
 
     public void showNotification() {

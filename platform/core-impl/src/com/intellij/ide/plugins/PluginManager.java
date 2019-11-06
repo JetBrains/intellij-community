@@ -190,4 +190,35 @@ public final class PluginManager {
     }
     return false;
   }
+
+  public void enablePlugins(@NotNull Collection<IdeaPluginDescriptor> plugins, boolean enabled) {
+    Set<PluginId> disabled = PluginManagerCore.getDisabledIds();
+    int sizeBefore = disabled.size();
+    for (IdeaPluginDescriptor plugin : plugins) {
+      disabled.add(plugin.getPluginId());
+      plugin.setEnabled(enabled);
+    }
+
+    if (sizeBefore == disabled.size()) {
+      // nothing changed
+      return;
+    }
+
+    PluginManagerCore.trySaveDisabledPlugins(disabled);
+  }
+
+  @Nullable
+  public IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
+    List<IdeaPluginDescriptorImpl> result = PluginManagerCore.ourLoadedPlugins;
+    if (result == null) {
+      return null;
+    }
+
+    for (IdeaPluginDescriptor plugin : result) {
+      if (id == plugin.getPluginId()) {
+        return plugin;
+      }
+    }
+    return null;
+  }
 }

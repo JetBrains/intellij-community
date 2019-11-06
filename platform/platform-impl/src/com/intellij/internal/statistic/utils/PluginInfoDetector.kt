@@ -21,7 +21,7 @@ fun getPluginInfo(className: String): PluginInfo {
   }
 
   val pluginId = PluginManager.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
-  return getPluginInfoByDescriptor(PluginManagerCore.findEnabledPlugin(pluginId) ?: return unknownPlugin)
+  return getPluginInfoByDescriptor(PluginManager.getInstance().findEnabledPlugin(pluginId) ?: return unknownPlugin)
 }
 
 /**
