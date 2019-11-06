@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -9,7 +10,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowWhitelistEP;
@@ -29,7 +31,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolWindowCollector {
+public final class ToolWindowCollector {
   private static final ToolWindowInfo UNKNOWN = new ToolWindowInfo("unknown", getUnknownPlugin());
 
   public static ToolWindowCollector getInstance() {
@@ -70,24 +72,25 @@ public class ToolWindowCollector {
   }
 
   public ToolWindowCollector() {
-    for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensions()) {
-      final PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(extension.getPluginId());
-      if (info.isDevelopedByJetBrains()) {
+    for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensionList()) {
+      PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
+      PluginInfo info = pluginDescriptor instanceof IdeaPluginDescriptor ? PluginInfoDetectorKt.getPluginInfoByDescriptor((IdeaPluginDescriptor)pluginDescriptor) : null;
+      if (info != null && info.isDevelopedByJetBrains()) {
         ourToolwindowWhitelist.put(extension.id, new ToolWindowInfo(extension.id, info));
       }
     }
   }
 
-  public void recordActivation(String toolWindowId) {
+  public static void recordActivation(String toolWindowId) {
     record(toolWindowId, ACTIVATED);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
-  public void recordClick(String toolWindowId) {
+  public static void recordClick(String toolWindowId) {
     record(toolWindowId, CLICKED);
   }
 
-  private void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source) {
+  private static void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source) {
     if (StringUtil.isNotEmpty(toolWindowId)) {
       final ToolWindowInfo info = getToolWindowInfo(toolWindowId);
       final FeatureUsageData data = new FeatureUsageData().
@@ -117,7 +120,9 @@ public class ToolWindowCollector {
   public static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, @NotNull ToolWindowEP[] toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
-        return new ToolWindowInfo(ep.id, PluginInfoDetectorKt.getPluginInfoById(ep.getPluginId()));
+        PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();
+        PluginInfo info = pluginDescriptor instanceof IdeaPluginDescriptor ? PluginInfoDetectorKt.getPluginInfoByDescriptor((IdeaPluginDescriptor)pluginDescriptor) : getUnknownPlugin();
+        return new ToolWindowInfo(ep.id, info);
       }
     }
     return null;
