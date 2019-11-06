@@ -1,14 +1,14 @@
 class Yield {
   class X {
     void test() {
-      <warning descr="Unqualified call of 'yield' method might not be supported in releases after Java 13">yield</warning>("x");
-      <warning descr="Unqualified call of 'yield' method might not be supported in releases after Java 13">yield</warning>(1);
+      <warning descr="Unqualified call to 'yield' method might not be supported in releases after Java 13">yield</warning>("x");
+      <warning descr="Unqualified call to 'yield' method might not be supported in releases after Java 13">yield</warning>(1);
     }
   }
 
   void test() {
-    <warning descr="Unqualified call of 'yield' method might not be supported in releases after Java 13">yield</warning>("x");
-    <warning descr="Unqualified call of 'yield' method might not be supported in releases after Java 13">yield</warning>(1);
+    <warning descr="Unqualified call to 'yield' method might not be supported in releases after Java 13">yield</warning>("x");
+    <warning descr="Unqualified call to 'yield' method might not be supported in releases after Java 13">yield</warning>(1);
   }
   
   void varYield() {

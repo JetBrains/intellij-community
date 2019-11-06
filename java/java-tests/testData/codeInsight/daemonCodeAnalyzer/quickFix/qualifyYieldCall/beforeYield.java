@@ -1,4 +1,4 @@
-// "Fix all 'Javac quirks' problems in file" "true"
+// "Fix all 'Forward compatibility' problems in file" "true"
 class Yield {
   class X {
     void test() {
