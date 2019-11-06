@@ -36,15 +36,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private volatile String defaultVersion;
 
-  final Supplier<String> defaultVersionSupplier = () -> {
-    String result = defaultVersion;
-    if (result == null) {
-      result = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
-      defaultVersion = result;
-    }
-    return result;
-  };
-
   DescriptorListLoadingContext(boolean isParallel, @NotNull Set<PluginId> disabledPlugins) {
     this.disabledPlugins = disabledPlugins;
 
@@ -95,6 +86,23 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       }
     });
     executorService.shutdown();
+  }
+
+  @NotNull
+  public Interner<String> getStringInterner() {
+    // always PluginXmlFactory with not-null interner
+    //noinspection ConstantConditions
+    return getXmlFactory().stringInterner();
+  }
+
+  @NotNull
+  public String getDefaultVersion() {
+    String result = defaultVersion;
+    if (result == null) {
+      result = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+      defaultVersion = result;
+    }
+    return result;
   }
 }
 

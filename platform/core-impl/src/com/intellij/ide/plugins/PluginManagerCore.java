@@ -820,7 +820,7 @@ public final class PluginManagerCore {
 
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), loadingContext.isBundled);
-      loadingContext.readDescriptor(descriptor, JDOMUtil.load(descriptorFile, loadingContext.getXmlFactory()), descriptorFile.getParent(), loadingContext.pathResolver);
+      loadingContext.readDescriptor(descriptor, JDOMUtil.load(descriptorFile, loadingContext.parentContext.getXmlFactory()), descriptorFile.getParent(), loadingContext.pathResolver);
       return descriptor;
     }
     catch (SerializationException | JDOMException | IOException e) {
@@ -845,7 +845,7 @@ public final class PluginManagerCore {
                                                                 @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                                                                 @NotNull DescriptorLoadingContext context,
                                                                 @Nullable Path pluginPath) {
-    SafeJdomFactory factory = context.getXmlFactory();
+    SafeJdomFactory factory = context.parentContext.getXmlFactory();
     try {
       Path metaInf = context.open(file).getPath("/META-INF");
       Element element;

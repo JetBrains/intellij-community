@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.ref.GCWatcher;
@@ -40,7 +39,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,10 +57,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private static final String MODULE_SERVICE = "com.intellij.moduleService";
 
   static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
-
-  public static final Supplier<String> DEFAULT_VERSION_SUPPLIER = () -> {
-    return PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
-  };
 
   private final Path myPath;
   private final boolean myBundled;
@@ -141,33 +135,19 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   /**
-   * @deprecated Use {@link #loadFromFile(Path, SafeJdomFactory, boolean, Set)}
+   * @deprecated Use {@link PluginManager#loadDescriptorFromFile(IdeaPluginDescriptorImpl, Path, SafeJdomFactory, boolean, Set)}
    */
   @Deprecated
   public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude)
     throws IOException, JDOMException {
-    loadFromFile(file.toPath(), factory, ignoreMissingInclude, PluginManagerCore.disabledPlugins());
-  }
-
-  public void loadFromFile(@NotNull Path file,
-                           @Nullable SafeJdomFactory factory,
-                           boolean ignoreMissingInclude,
-                           @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
-    Interner<String> stringInterner = factory == null ? null : factory.stringInterner();
-    // only for CoreApplicationEnvironment
-    if (stringInterner == null) {
-      stringInterner = new HashSetInterner<>(SERVICE_QUALIFIED_ELEMENT_NAMES);
-    }
-    readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, stringInterner, disabledPlugins, DEFAULT_VERSION_SUPPLIER);
+    PluginManager.loadDescriptorFromFile(this, file.toPath(), factory, ignoreMissingInclude, PluginManagerCore.disabledPlugins());
   }
 
   public void readExternal(@NotNull Element element,
                            @Nullable Path basePath,
                            boolean ignoreMissingInclude,
-                           @Nullable PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                           @NotNull Interner<String> stringInterner,
-                           @NotNull Set<PluginId> disabledPlugins,
-                           @NotNull Supplier<String> defaultVersion) {
+                           @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
+                           @NotNull DescriptorLoadingContext loadingContext) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -176,8 +156,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     XmlReader.readIdAndName(this, element);
 
-    if (myId == null || !disabledPlugins.contains(myId)) {
-      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, Objects.requireNonNull(pathResolver));
+    if (myId == null || !loadingContext.parentContext.disabledPlugins.contains(myId)) {
+      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, pathResolver);
       if (myId == null || myName == null) {
         // read again after resolve
         XmlReader.readIdAndName(this, element);
@@ -198,7 +178,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       Element child = (Element)content;
       switch (child.getName()) {
         case "extensions":
-          XmlReader.readExtensions(this, stringInterner, child);
+          XmlReader.readExtensions(this, loadingContext.parentContext.getStringInterner(), child);
           break;
 
         case "extensionPoints":
@@ -310,7 +290,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (myVersion == null) {
-      myVersion = defaultVersion.get();
+      myVersion = loadingContext.parentContext.getDefaultVersion();
     }
 
     if (dependencies != null) {

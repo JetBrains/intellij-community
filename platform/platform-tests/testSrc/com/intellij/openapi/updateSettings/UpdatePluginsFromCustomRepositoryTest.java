@@ -4,14 +4,15 @@ package com.intellij.openapi.updateSettings;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.InstalledPluginsState;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -43,11 +44,12 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     assertEquals("0.1", downloader.getPluginVersion());
   }
 
-  private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, IOException, JDOMException {
+  @NotNull
+  private IdeaPluginDescriptor loadDescriptor(String filePath) throws IOException, JDOMException {
     String path = PlatformTestUtil.getPlatformTestDataPath() + "updates/customRepositories/" + getTestName(true);
     Path descriptorFile = Paths.get(path, filePath);
     IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParent(), false);
-    descriptor.loadFromFile(descriptorFile, null, true, Collections.emptySet());
+    PluginManager.loadDescriptorFromFile(descriptor, descriptorFile, null, true, Collections.emptySet());
     return descriptor;
   }
 }

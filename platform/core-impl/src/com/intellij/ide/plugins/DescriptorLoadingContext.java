@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.util.SafeJdomFactory;
-import com.intellij.util.containers.Interner;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +9,10 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 final class DescriptorLoadingContext implements AutoCloseable {
   final Map<Path, FileSystem> openedFiles = new THashMap<>();
@@ -58,11 +59,6 @@ final class DescriptorLoadingContext implements AutoCloseable {
     return result;
   }
 
-  @NotNull
-  SafeJdomFactory getXmlFactory() {
-    return parentContext.getXmlFactory();
-  }
-
   @Override
   public void close() {
     for (FileSystem file : openedFiles.values()) {
@@ -83,8 +79,6 @@ final class DescriptorLoadingContext implements AutoCloseable {
                       @NotNull Element element,
                       @NotNull Path basePath,
                       @NotNull PathBasedJdomXIncluder.PathResolver<?> resolver) {
-    // always PluginXmlFactory with not-null interner
-    Interner<String> stringInterner = Objects.requireNonNull(parentContext.getXmlFactory().stringInterner());
-    descriptor.readExternal(element, basePath, PluginManagerCore.isUnitTestMode, resolver, stringInterner, parentContext.disabledPlugins, parentContext.defaultVersionSupplier);
+    descriptor.readExternal(element, basePath, PluginManagerCore.isUnitTestMode, resolver, this);
   }
 }
