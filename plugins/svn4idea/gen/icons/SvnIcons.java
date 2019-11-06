@@ -5,8 +5,6 @@ import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -14,10 +12,6 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 public final class SvnIcons {
   private static Icon load(String path) {
     return IconManager.getInstance().getIcon(path, SvnIcons.class);
-  }
-
-  private static Icon load(String path, Class<?> clazz) {
-    return IconManager.getInstance().getIcon(path, clazz);
   }
 
   /** 16x16 */ public static final Icon Common = load("/icons/Common.svg");
@@ -34,10 +28,4 @@ public final class SvnIcons {
   /** 16x16 */ public static final Icon Notintegrated = load("/icons/Notintegrated.svg");
   /** 16x16 */ public static final Icon PreviewDetailsLeft = load("/icons/previewDetailsLeft.svg");
   /** 16x16 */ public static final Icon UndoIntegrateToBranch = load("/icons/UndoIntegrateToBranch.svg");
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Unknown */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon IntegrationStatusUnknown = load("/nodes/unknown.svg", com.intellij.icons.AllIcons.class);
 }
