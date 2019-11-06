@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.openapi.extensions.PluginId
@@ -20,7 +21,7 @@ fun getPluginInfo(className: String): PluginInfo {
     return platformPlugin
   }
 
-  val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
+  val pluginId = PluginManager.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
   return getPluginInfoById(pluginId)
 }
 

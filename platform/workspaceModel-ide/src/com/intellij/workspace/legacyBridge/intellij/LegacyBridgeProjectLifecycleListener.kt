@@ -1,5 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -36,7 +38,7 @@ internal class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCus
     // TODO new -> XXX
     LOG.info("Using new project model to open project")
 
-    val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(javaClass.name)
+    val pluginId = PluginManager.getPluginOrPlatformByClassName(javaClass.name)
                    ?: error("Could not find pluginId for class ${javaClass.name}")
     val pluginDescriptor = PluginManagerCore.getPlugin(pluginId)
                            ?: error("Could not find plugin by id: $pluginId")

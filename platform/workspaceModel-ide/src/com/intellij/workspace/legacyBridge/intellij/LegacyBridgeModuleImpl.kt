@@ -2,6 +2,7 @@
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.impl.ModuleImpl
@@ -32,7 +33,7 @@ internal class LegacyBridgeModuleImpl(
                                   notifyListeners: Boolean) {
     super.registerComponents(plugins, false)
 
-    val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(javaClass.name)
+    val pluginId = PluginManager.getPluginOrPlatformByClassName(javaClass.name)
                    ?: error("Could not find pluginId for class ${javaClass.name}")
     val pluginDescriptor = PluginManagerCore.getPlugin(pluginId)
                            ?: error("Could not find plugin by id: $pluginId")

@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -19,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -45,7 +45,8 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   @Override
   public boolean isOptionEnabled() {
-    return optionalDescriptor(myId).map(IdeaPluginDescriptor::isEnabled).orElse(false);
+    IdeaPluginDescriptor descriptor = PluginManagerCore.findEnabledPlugin(myId);
+    return descriptor != null && descriptor.isEnabled();
   }
 
   @Override
@@ -65,19 +66,24 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   }
 
   private void showAutoSwitchNotification(@NotNull Collection<IdeaPluginDescriptor> autoSwitchedPlugins, boolean enabled) {
-    String pluginString = idToName(myId);
-    String dependenciesString = autoSwitchedPlugins.stream()
-      .map(descriptor -> '"' + descriptor.getName() + '"')
-      .collect(Collectors.joining(", "));
+    StringBuilder builder = new StringBuilder();
+    for (IdeaPluginDescriptor autoSwitchedPlugin : autoSwitchedPlugins) {
+      if (builder.length() > 0) {
+        builder.append(", ");
+      }
+      builder.append('"').append(autoSwitchedPlugin.getName()).append('"');
+    }
+    String dependenciesString = builder.toString();
 
     String titleKey = enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title";
     String contentKey = enabled ? "plugins.auto.enabled.notification.content" : "plugins.auto.disabled.notification.content";
+    String pluginString = '"' + getOption() + '"';
     Notification switchNotification = PLUGINS_AUTO_SWITCH_GROUP
       .createNotification(IdeBundle.message(contentKey, pluginString, dependenciesString), NotificationType.INFORMATION)
       .setTitle(IdeBundle.message(titleKey))
       .addAction(new UndoPluginsSwitchAction(autoSwitchedPlugins, enabled));
 
-    Runnable listener = new Runnable() {
+    PluginManager.getInstance().addDisablePluginListener(new Runnable() {
       @Override
       public void run() {
         Stream<PluginId> ids = autoSwitchedPlugins.stream().map(descriptor -> descriptor.getPluginId());
@@ -88,18 +94,11 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
         Balloon balloon = switchNotification.getBalloon();
         if (balloon == null || balloon.isDisposed()) {
-          ApplicationManager.getApplication().invokeLater(() -> PluginManagerCore.removeDisablePluginListener(this));
+          ApplicationManager.getApplication().invokeLater(() -> PluginManager.getInstance().removeDisablePluginListener(this));
         }
       }
-    };
-
-    PluginManagerCore.addDisablePluginListener(listener);
+    });
     Notifications.Bus.notify(switchNotification);
-  }
-
-  @NotNull
-  private static String idToName(PluginId id) {
-    return '"' + optionalDescriptor(id).map(IdeaPluginDescriptor::getName).orElse(id.getIdString()) + '"';
   }
 
   private static void switchPlugins(@NotNull Collection<IdeaPluginDescriptor> descriptors, boolean enabled) throws IOException {
@@ -117,10 +116,6 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       descriptor.setEnabled(enabled);
     }
-  }
-
-  private static Optional<IdeaPluginDescriptor> optionalDescriptor(PluginId id) {
-    return Optional.ofNullable(PluginManagerCore.getPlugin(id));
   }
 
   @NotNull

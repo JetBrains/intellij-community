@@ -2,6 +2,7 @@
 package com.intellij.workspace.ide
 
 import com.google.common.hash.Hashing
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -103,7 +104,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
   }
 
   private object PluginAwareEntityTypesResolver: EntityTypesResolver {
-    override fun getPluginId(clazz: Class<*>): String? = PluginManagerCore.getPluginOrPlatformByClassName(clazz.name)?.idString
+    override fun getPluginId(clazz: Class<*>): String? = PluginManager.getPluginOrPlatformByClassName(clazz.name)?.idString
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
       val id = pluginId?.let { PluginId.getId(it) }

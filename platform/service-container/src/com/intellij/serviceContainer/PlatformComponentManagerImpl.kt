@@ -245,7 +245,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     handlingInitComponentError = true
     try {
-      PluginManager.handleComponentError(t, componentClassName, pluginId)
+      handleComponentError(t, componentClassName, pluginId)
     }
     finally {
       handlingInitComponentError = false
@@ -681,5 +681,36 @@ internal fun checkCanceledIfNotInClassInit() {
     if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
       throw e
     }
+  }
+}
+
+fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId?) {
+  if (t is StartupAbortedException) {
+    throw t
+  }
+
+  val app = ApplicationManager.getApplication()
+  if (app != null && app.isUnitTestMode) {
+    throw t
+  }
+
+  var effectivePluginId = pluginId
+  if (effectivePluginId == null || PluginManagerCore.CORE_ID == effectivePluginId) {
+    if (componentClassName != null) {
+      effectivePluginId = PluginManagerCore.getPluginByClassName(componentClassName)
+    }
+  }
+
+  if (effectivePluginId == null || PluginManagerCore.CORE_ID == effectivePluginId) {
+    if (t is ExtensionInstantiationException) {
+      effectivePluginId = t.extensionOwnerId
+    }
+  }
+
+  if (effectivePluginId != null && PluginManagerCore.CORE_ID != effectivePluginId) {
+    throw StartupAbortedException("Fatal error initializing plugin ${effectivePluginId.idString}", PluginException(t, effectivePluginId))
+  }
+  else {
+    throw StartupAbortedException("Fatal error initializing '$componentClassName'", t)
   }
 }

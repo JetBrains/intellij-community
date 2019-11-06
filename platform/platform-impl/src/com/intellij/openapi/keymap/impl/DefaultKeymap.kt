@@ -2,7 +2,7 @@
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -86,7 +86,7 @@ open class DefaultKeymap {
     for (provider in BundledKeymapProvider.EP_NAME.extensionList) {
       for (fileName in provider.keymapFileNames) {
         val keymapName = provider.getKeyFromFileName(fileName)
-        val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(provider.javaClass.name)
+        val pluginId = PluginManager.getPluginOrPlatformByClassName(provider.javaClass.name)
         LOG.runAndLogException {
           loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
             override fun read() = provider.load(fileName) { JDOMUtil.load(it) }

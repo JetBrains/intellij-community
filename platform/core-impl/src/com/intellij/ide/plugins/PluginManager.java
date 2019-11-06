@@ -1,28 +1,51 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+@Service
 public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
+
+  private final List<Runnable> disabledPluginListeners = new CopyOnWriteArrayList<>();
+
+  @NotNull
+  public static PluginManager getInstance() {
+    return ApplicationManager.getApplication().getService(PluginManager.class);
+  }
+
+  private PluginManager() {
+    PluginManagerCore.setDisabledPluginListener(() -> {
+      for (Runnable listener : disabledPluginListeners) {
+        listener.run();
+      }
+    });
+  }
+
+  public void addDisablePluginListener(@NotNull Runnable listener) {
+    disabledPluginListeners.add(listener);
+  }
+
+  public void removeDisablePluginListener(@NotNull Runnable listener) {
+    disabledPluginListeners.remove(listener);
+  }
 
   /**
    * @return file with list of once installed plugins if it exists, null otherwise
@@ -39,37 +62,19 @@ public final class PluginManager {
     return PluginManagerCore.loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins());
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated  In a plugin code simply throw error or log using {@link Logger#error(Throwable)}.
+   */
+  @Deprecated
   public static void processException(@NotNull Throwable t) {
-    StartupAbortedException.processException(t);
-  }
-
-  public static void handleComponentError(@NotNull Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
-    Application app = ApplicationManager.getApplication();
-    if (app != null && app.isUnitTestMode()) {
-      ExceptionUtil.rethrow(t);
+    try {
+      Class<?> aClass = PluginManager.class.getClassLoader().loadClass("com.intellij.ide.plugins.StartupAbortedException");
+      Method method = aClass.getMethod("processException", Throwable.class);
+      method.setAccessible(true);
+      method.invoke(null, t);
     }
-
-    if (t instanceof StartupAbortedException) {
-      throw (StartupAbortedException)t;
-    }
-
-    if (pluginId == null || PluginManagerCore.CORE_ID == pluginId) {
-      if (componentClassName != null) {
-        pluginId = PluginManagerCore.getPluginByClassName(componentClassName);
-      }
-    }
-    if (pluginId == null || PluginManagerCore.CORE_ID == pluginId) {
-      if (t instanceof ExtensionInstantiationException) {
-        pluginId = ((ExtensionInstantiationException)t).getExtensionOwnerId();
-      }
-    }
-
-    if (pluginId != null && PluginManagerCore.CORE_ID != pluginId) {
-      throw new StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
-    }
-    else {
-      throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
+    catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
     }
   }
 
