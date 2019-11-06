@@ -48,7 +48,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       };
     }
 
-    int lastDelim = text.indexOf(secondDelim + 1);
+    int lastDelim = text.indexOf(':',secondDelim + 1);
     if (lastDelim == -1) {
       lastDelim = text.length();
     }
