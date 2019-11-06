@@ -176,7 +176,8 @@ public class GitRebaser {
       LOG.info("handleRebaseFailure merge conflict");
       return new GitConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
         @Override protected boolean proceedIfNothingToMerge() {
-          return continueRebase(root, "--continue");
+          notifyUnresolvedRemain();
+          return false;
         }
 
         @Override protected boolean proceedAfterAllMerged() {
