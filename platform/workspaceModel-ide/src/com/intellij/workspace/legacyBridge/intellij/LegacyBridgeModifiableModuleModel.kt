@@ -104,6 +104,10 @@ class LegacyBridgeModifiableModuleModel(
   override fun disposeModule(module: Module) {
     module as LegacyBridgeModule
 
+    if (findModuleByName(module.name) == null) {
+      error("Module '${module.name}' is not found. Probably it's already disposed.")
+    }
+
     if (myModulesToAdd.inverse().remove(module) != null) {
       Disposer.dispose(module)
     }
