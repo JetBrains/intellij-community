@@ -5,8 +5,6 @@ import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -14,10 +12,6 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 public final class GithubIcons {
   private static Icon load(String path) {
     return IconManager.getInstance().getIcon(path, GithubIcons.class);
-  }
-
-  private static Icon load(String path, Class<?> clazz) {
-    return IconManager.getInstance().getIcon(path, clazz);
   }
 
   /** 16x16 */ public static final Icon Branch = load("/org/jetbrains/plugins/github/branch.svg");
@@ -31,10 +25,4 @@ public final class GithubIcons {
   /** 16x16 */ public static final Icon ReviewAccepted = load("/org/jetbrains/plugins/github/reviewAccepted.svg");
   /** 16x16 */ public static final Icon ReviewRejected = load("/org/jetbrains/plugins/github/reviewRejected.svg");
   /** 16x16 */ public static final Icon Timeline = load("/org/jetbrains/plugins/github/timeline.svg");
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon Github_icon = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
 }
