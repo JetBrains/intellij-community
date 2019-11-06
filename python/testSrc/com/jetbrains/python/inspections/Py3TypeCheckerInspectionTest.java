@@ -406,7 +406,4 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                          "foo4(b)\n")
     );
   }
-
-  // PY-11977
-  public void testPassClassWithMetaclassInMethodTypeCheck() { doTest(); }
 }

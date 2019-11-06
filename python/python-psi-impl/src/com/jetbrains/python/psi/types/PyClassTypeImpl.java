@@ -682,12 +682,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                        @NotNull TypeEvalContext context) {
     if (!myClass.isNewStyleClass(context)) return;
 
-    final PyClassLikeType typeTypeMeta = getMetaClassType(context, true);
-    if (typeTypeMeta == null) return;
-    final PyClassLikeType typeType = typeTypeMeta.toInstance();
+    final PyClassLikeType typeType = getMetaClassType(context, true);
+    if (typeType == null) return;
 
     if (isDefinition()) {
-      typeTypeConsumer.accept(typeType);
+      typeTypeConsumer.accept(typeType.toInstance());
     }
     else if (typeType instanceof PyClassType) {
       for (PyTargetExpression attribute : ((PyClassType)typeType).getPyClass().getInstanceAttributes()) {

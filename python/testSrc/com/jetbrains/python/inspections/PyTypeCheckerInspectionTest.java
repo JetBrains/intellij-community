@@ -521,6 +521,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-11977
+  public void testMetaclassInstanceMembersProvidedAndNoTypeCheckWarningWhenPassIntoMethodUseThisMembers() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
   // PY-28720
   public void testOverriddenBuiltinMethodAgainstTypingProtocol() {
     runWithLanguageLevel(
