@@ -101,7 +101,7 @@ object GHPRCommentsUIUtil {
     }
     document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        button.isEnabled = document.textLength > 0
+        button.isEnabled = document.immutableCharSequence.isNotBlank()
       }
     })
 
