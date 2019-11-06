@@ -591,10 +591,6 @@ idea.fatal.error.notification=disabled
       checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
     }
 
-    if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
-      buildContext.messages.warning("layout.buildAllCompatiblePlugins option is enabled. Value of layout.pluginModulesToPublish property " +
-                                    "will be ignored ($layout.pluginModulesToPublish)")
-    }
     if (!buildContext.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
       buildContext.messages.warning("Distribution is not going to build. Hence all compatible plugins won't be built despite " +
                                     "layout.buildAllCompatiblePlugins option is enabled. layout.pluginModulesToPublish will be used ($layout.pluginModulesToPublish)")
