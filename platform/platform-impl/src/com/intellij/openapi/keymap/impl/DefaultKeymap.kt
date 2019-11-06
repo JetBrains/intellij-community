@@ -2,7 +2,6 @@
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -79,7 +78,7 @@ open class DefaultKeymap {
         loadKeymap(bean.keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read() = bean.pluginDescriptor.pluginClassLoader
             .getResourceAsStream(bean.effectiveFile).use { JDOMUtil.load(it) }
-        }, bean.pluginDescriptor as IdeaPluginDescriptor)
+        }, bean.pluginDescriptor)
       }
     }
 
@@ -90,7 +89,7 @@ open class DefaultKeymap {
         LOG.runAndLogException {
           loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
             override fun read() = provider.load(fileName) { JDOMUtil.load(it) }
-          }, plugin as IdeaPluginDescriptor)
+          }, plugin)
         }
       }
     })

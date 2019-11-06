@@ -4,7 +4,6 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -79,9 +78,9 @@ public class TipUIUtil {
   @NotNull
   public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
     PluginDescriptor descriptor = tip.getPluginDescriptor();
-    return descriptor instanceof IdeaPluginDescriptor &&
+    return descriptor != null &&
            PluginManagerCore.CORE_ID != descriptor.getPluginId() ?
-           ((IdeaPluginDescriptor)descriptor).getName() : "";
+           descriptor.getName() : "";
   }
 
   @Nullable

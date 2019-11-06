@@ -612,7 +612,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         reportActionError(plugin.getPluginId(), "'text' attribute is mandatory (action ID=" +
                                                     id +
                                                     ";" +
-                                                    (" plugin path: " + ((IdeaPluginDescriptor)plugin).getPath()) +
+                                                    (" plugin path: " + plugin.getPath()) +
                                                     ")");
       }
       Presentation presentation = new Presentation();

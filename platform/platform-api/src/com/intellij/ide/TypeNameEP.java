@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.AbstractBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -40,7 +39,7 @@ public class TypeNameEP extends AbstractExtensionPointBean {
       if (resourceKey != null) {
         String bundleName = resourceBundle;
         if (bundleName == null && myPluginDescriptor != null) {
-          bundleName = ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName();
+          bundleName = myPluginDescriptor.getResourceBundleBaseName();
         }
         if (bundleName != null) {
           ResourceBundle bundle = AbstractBundle.getResourceBundle(bundleName, getLoaderForClass());

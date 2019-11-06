@@ -128,11 +128,6 @@ final class UndefinedPluginDescriptor implements IdeaPluginDescriptor {
   }
 
   @Override
-  public boolean allowBundledUpdate() {
-    return false;
-  }
-
-  @Override
   public boolean isEnabled() {
     return false;
   }

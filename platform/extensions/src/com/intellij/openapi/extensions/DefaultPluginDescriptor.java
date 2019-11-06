@@ -142,11 +142,6 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
   }
 
   @Override
-  public boolean allowBundledUpdate() {
-    return false;
-  }
-
-  @Override
   public boolean isEnabled() {
     return false;
   }

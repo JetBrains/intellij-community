@@ -313,11 +313,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public boolean allowBundledUpdate() {
-    return false;
-  }
-
-  @Override
   public boolean isEnabled() {
     return myEnabled;
   }

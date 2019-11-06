@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -71,10 +70,10 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put("Statistics Event Log", new ToolWindowInfo("Statistics_Event_Log"));
   }
 
-  public ToolWindowCollector() {
+  private ToolWindowCollector() {
     for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensionList()) {
       PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
-      PluginInfo info = pluginDescriptor instanceof IdeaPluginDescriptor ? PluginInfoDetectorKt.getPluginInfoByDescriptor((IdeaPluginDescriptor)pluginDescriptor) : null;
+      PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
       if (info != null && info.isDevelopedByJetBrains()) {
         ourToolwindowWhitelist.put(extension.id, new ToolWindowInfo(extension.id, info));
       }
@@ -121,7 +120,7 @@ public final class ToolWindowCollector {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
         PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();
-        PluginInfo info = pluginDescriptor instanceof IdeaPluginDescriptor ? PluginInfoDetectorKt.getPluginInfoByDescriptor((IdeaPluginDescriptor)pluginDescriptor) : getUnknownPlugin();
+        PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : getUnknownPlugin();
         return new ToolWindowInfo(ep.id, info);
       }
     }

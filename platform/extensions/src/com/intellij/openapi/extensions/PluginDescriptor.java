@@ -72,7 +72,9 @@ public interface PluginDescriptor {
 
   String getUntilBuild();
 
-  boolean allowBundledUpdate();
+  default boolean allowBundledUpdate() {
+    return false;
+  }
 
   /**
    * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.

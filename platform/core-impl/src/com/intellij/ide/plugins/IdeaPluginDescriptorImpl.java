@@ -762,10 +762,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myLoader != null ? myLoader : getClass().getClassLoader();
   }
 
-  public String getVendorLogoPath() {
-    return myVendorLogoPath;
-  }
-
   public boolean getUseIdeaClassLoader() {
     return myUseIdeaClassLoader;
   }
