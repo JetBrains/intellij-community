@@ -3,18 +3,18 @@ package com.jetbrains.changeReminder.stats
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.changeReminder.predict.PredictionData
 
 internal class ChangeReminderChangesCommittedEvent(
   private val curModifiedFiles: Collection<FilePath>,
   private val committedFiles: Collection<FilePath>,
-  private val displayedPrediction: Collection<VirtualFile>
+  private val displayedPredictionData: PredictionData
 ) : ChangeReminderUserEvent {
   override val eventType = ChangeReminderEventType.CHANGES_COMMITTED
 
   override fun addToLogData(logData: FeatureUsageData) {
     logData.addChangeReminderLogData(ChangeReminderEventDataKey.CUR_MODIFIED_FILES, curModifiedFiles.anonymizeFilePathCollection())
     logData.addChangeReminderLogData(ChangeReminderEventDataKey.COMMITTED_FILES, committedFiles.anonymizeFilePathCollection())
-    logData.addChangeReminderLogData(ChangeReminderEventDataKey.DISPLAYED_PREDICTION, displayedPrediction.anonymizeVirtualFileCollection())
+    logData.addPredictionData(displayedPredictionData)
   }
 }

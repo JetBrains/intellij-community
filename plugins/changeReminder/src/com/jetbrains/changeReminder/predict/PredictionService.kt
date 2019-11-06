@@ -19,7 +19,7 @@ import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 import com.jetbrains.changeReminder.stats.ChangeReminderChangeListChangedEvent
 import com.jetbrains.changeReminder.stats.logEvent
 
-class PredictionService(val project: Project) : Disposable {
+internal class PredictionService(val project: Project) : Disposable {
   private val changesViewManager = ChangesViewManager.getInstance(project)
   private val changeListManager = ChangeListManager.getInstance(project)
 
@@ -32,8 +32,8 @@ class PredictionService(val project: Project) : Disposable {
 
   private var predictionData: PredictionData = PredictionData.EmptyPrediction(PredictionData.EmptyPredictionReason.SERVICE_INIT)
 
-  val predictionToDisplay: Collection<VirtualFile>
-    get() = predictionData.predictionToDisplay
+  val predictionDataToDisplay
+    get() = predictionData
 
   val isReadyToDisplay: Boolean
     get() = predictionData is PredictionData.Prediction

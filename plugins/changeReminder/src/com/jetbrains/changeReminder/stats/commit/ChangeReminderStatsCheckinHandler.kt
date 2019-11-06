@@ -16,7 +16,7 @@ class ChangeReminderStatsCheckinHandler : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext) = object : CheckinHandler() {
     override fun beforeCheckin(): ReturnResult {
       val project = panel.project
-      val prediction = project.service<PredictionService>().predictionToDisplay
+      val prediction = project.service<PredictionService>().predictionDataToDisplay
       val committedFiles = panel.selectedChanges.map { ChangesUtil.getFilePath(it) }
 
       val curFiles = ChangeListManager.getInstance(project).defaultChangeList.changes.map { ChangesUtil.getFilePath(it) }
