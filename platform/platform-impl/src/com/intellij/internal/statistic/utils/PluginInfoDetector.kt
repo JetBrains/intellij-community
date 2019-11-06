@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.utils
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.openapi.extensions.PluginId
 
 /**
@@ -22,7 +21,7 @@ fun getPluginInfo(className: String): PluginInfo {
   }
 
   val pluginId = PluginManager.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
-  return getPluginInfoById(pluginId)
+  return getPluginInfoByDescriptor(PluginManagerCore.findEnabledPlugin(pluginId) ?: return unknownPlugin)
 }
 
 /**
@@ -30,31 +29,24 @@ fun getPluginInfo(className: String): PluginInfo {
  * so API from it may be reported
  */
 fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
-  if (pluginId == null) return unknownPlugin
-  return getPluginInfoByDescriptor(PluginManagerCore.getPlugin(pluginId))
+  if (pluginId == null) {
+    return unknownPlugin
+  }
+  return getPluginInfoByDescriptor(PluginManagerCore.getPlugin(pluginId) ?: return unknownPlugin)
 }
 
 /**
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
  * so API from it may be reported
  */
-fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor?): PluginInfo {
-  if (plugin == null) {
-    return unknownPlugin
-  }
-
+fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor): PluginInfo {
   if (PluginManagerCore.CORE_ID == plugin.pluginId) {
     return platformPlugin
   }
 
   val id = plugin.pluginId.idString
-  if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
-    return if (plugin.isBundled) {
-      PluginInfo(PluginType.JB_BUNDLED, id)
-    }
-    else {
-      PluginInfo(PluginType.JB_NOT_BUNDLED, id)
-    }
+  if (PluginManager.isDevelopedByJetBrains(plugin)) {
+    return if (plugin.isBundled) PluginInfo(PluginType.JB_BUNDLED, id) else PluginInfo(PluginType.JB_NOT_BUNDLED, id)
   }
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
@@ -71,7 +63,7 @@ fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor?): PluginInfo {
 enum class PluginType {
   PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN;
 
-  fun isPlatformOrJBBundled(): Boolean {
+  private fun isPlatformOrJBBundled(): Boolean {
     return this == PLATFORM || this == JB_BUNDLED
   }
 

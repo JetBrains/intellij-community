@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
@@ -37,7 +37,7 @@ fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
 
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
   val plugin = PluginManagerCore.getPlugin(pluginId)
-  return plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
+  return plugin == null || PluginManager.isDevelopedByJetBrains(plugin.vendor)
 }
 
 /**
@@ -247,7 +247,7 @@ private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
  * so isBundled check is not enough
  */
 private fun getBundledJetBrainsPluginDescriptors(): List<IdeaPluginDescriptor> {
-  return PluginManagerCore.getPlugins().filter { it.isBundled && PluginManagerMain.isDevelopedByJetBrains(it) }.toList()
+  return PluginManagerCore.getPlugins().filter { it.isBundled && PluginManager.isDevelopedByJetBrains(it) }.toList()
 }
 
 /**
@@ -283,7 +283,7 @@ fun getPluginType(clazz: Class<*>): PluginType {
   val pluginId = PluginManagerCore.getPluginByClassName(clazz.name) ?: return PluginType.PLATFORM
   val plugin = PluginManagerCore.getPlugin(pluginId) ?: return PluginType.UNKNOWN
 
-  if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+  if (PluginManager.isDevelopedByJetBrains(plugin)) {
     return if (plugin.isBundled) PluginType.JB_BUNDLED else PluginType.JB_NOT_BUNDLED
   }
 

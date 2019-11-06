@@ -1206,7 +1206,7 @@ public class PluginManagerConfigurable
   }
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);
+    return plugin.isBundled() || PluginManager.isDevelopedByJetBrains(plugin);
   }
 
   @Nullable

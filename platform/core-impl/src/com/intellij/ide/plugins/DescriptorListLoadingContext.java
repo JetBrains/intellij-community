@@ -14,10 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
@@ -130,7 +127,9 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
 
   private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
 
-  final Interner<String> stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST, IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES)) {
+  final Interner<String> stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST,
+                                                                                           IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES,
+                                                                                           Collections.singletonList(PluginManagerCore.VENDOR_JETBRAINS))) {
     @NotNull
     @Override
     public String intern(@NotNull String name) {

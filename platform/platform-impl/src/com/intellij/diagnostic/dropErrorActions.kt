@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
@@ -50,7 +50,7 @@ internal class DropPluginErrorAction : DumbAwareAction("Drop an error in a rando
   override fun actionPerformed(e: AnActionEvent) {
     var plugins = PluginManagerCore.getPlugins()
     if (e.modifiers and InputEvent.SHIFT_MASK != 0) {
-      plugins = plugins.filterNot { PluginManagerMain.isDevelopedByJetBrains(it) }.toTypedArray()
+      plugins = plugins.filterNot { PluginManager.isDevelopedByJetBrains(it) }.toTypedArray()
     }
     if (plugins.isNotEmpty()) {
       val victim = plugins[random.nextInt(plugins.size)]

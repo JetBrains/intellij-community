@@ -55,20 +55,6 @@ public abstract class PluginManagerMain {
   private static final String HTML_PREFIX = "<a href=\"";
   private static final String HTML_SUFFIX = "</a>";
 
-  public static boolean isDevelopedByJetBrains(@NotNull IdeaPluginDescriptor plugin) {
-    return isDevelopedByJetBrains(plugin.getVendor());
-  }
-
-  public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
-    if (vendorString == null) return false;
-    for (String vendor : StringUtil.split(vendorString, ",")) {
-      if (PluginManagerCore.VENDOR_JETBRAINS.equals(vendor.trim())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private static String getTextPrefix() {
     int fontSize = JBUIScale.scale(12);
     int m1 = JBUIScale.scale(2);
@@ -384,7 +370,7 @@ public abstract class PluginManagerMain {
     }
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (!isDevelopedByJetBrains(descriptor)) {
+      if (!PluginManager.isDevelopedByJetBrains(descriptor)) {
         String title = IdeBundle.message("third.party.plugins.privacy.note.title");
         String message = IdeBundle.message("third.party.plugins.privacy.note.message");
         String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");

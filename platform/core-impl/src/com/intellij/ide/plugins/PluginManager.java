@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -166,5 +167,26 @@ public final class PluginManager {
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, descriptor.isBundled(), /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
     descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, context.pathResolver, context);
+  }
+
+  public static boolean isDevelopedByJetBrains(@NotNull IdeaPluginDescriptor plugin) {
+    return isDevelopedByJetBrains(plugin.getVendor());
+  }
+
+  public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
+    if (vendorString == null) {
+      return false;
+    }
+
+    if (vendorString.equals(PluginManagerCore.VENDOR_JETBRAINS)) {
+      return true;
+    }
+
+    for (String vendor : StringUtil.split(vendorString, ",")) {
+      if (PluginManagerCore.VENDOR_JETBRAINS.equals(vendor.trim())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
