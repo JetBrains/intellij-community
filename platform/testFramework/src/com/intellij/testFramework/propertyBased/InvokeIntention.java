@@ -263,6 +263,7 @@ public class InvokeIntention extends ActionOnFile {
             .add(0, "Unstable result: intentions changed after parenthesizing, but restored in a different way when parentheses removed");
         }
       }
+      LOG.debug("Error occurred, file text before adding parentheses:\n" + file.getText());
       throw new AssertionError(String.join("\n", messages));
     }
     return intentions;
