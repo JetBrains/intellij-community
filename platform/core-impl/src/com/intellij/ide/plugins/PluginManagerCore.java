@@ -481,11 +481,14 @@ public final class PluginManagerCore {
         className.startsWith("groovy.")) {
       return null;
     }
+
     IdeaPluginDescriptor result = null;
-    for (IdeaPluginDescriptor o : getPlugins()) {
-      if (!hasLoadedClass(className, o.getPluginClassLoader())) {
+    for (IdeaPluginDescriptorImpl o : getLoadedPlugins(null)) {
+      ClassLoader classLoader = o.getPluginClassLoader();
+      if (classLoader == null || !hasLoadedClass(className, classLoader)) {
         continue;
       }
+
       result = o;
       break;
     }
@@ -502,21 +505,30 @@ public final class PluginManagerCore {
         className.startsWith("git4idea.") || className.startsWith("org.angularjs.")) {
       return result.getPluginId();
     }
+
     // otherwise we need to check plugins with use-idea-classloader="true"
     String root = PathManager.getResourceRoot(result.getPluginClassLoader(), "/" + className.replace('.', '/') + ".class");
-    if (root == null) return null;
-    for (IdeaPluginDescriptor o : getPlugins()) {
-      if (!o.getUseIdeaClassLoader()) continue;
-      File path = o.getPath();
-      String pluginPath = path == null ? null : FileUtilRt.toSystemIndependentName(path.getPath());
-      if (pluginPath == null || !root.startsWith(pluginPath)) continue;
+    if (root == null) {
+      return null;
+    }
+
+    for (IdeaPluginDescriptorImpl o : getLoadedPlugins(null)) {
+      if (!o.getUseIdeaClassLoader()) {
+        continue;
+      }
+
+      Path path = o.getPluginPath();
+      if (!root.startsWith(FileUtilRt.toSystemIndependentName(path.toString()))) {
+        continue;
+      }
+
       result = o;
       break;
     }
     return result.getPluginId();
   }
 
-  private static boolean hasLoadedClass(@NotNull String className, ClassLoader loader) {
+  private static boolean hasLoadedClass(@NotNull String className, @NotNull ClassLoader loader) {
     if (loader instanceof UrlClassLoader) {
       return ((UrlClassLoader)loader).hasLoadedClass(className);
     }

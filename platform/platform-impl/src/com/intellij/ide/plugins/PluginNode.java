@@ -310,11 +310,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public boolean getUseIdeaClassLoader() {
-    return false;
-  }
-
-  @Override
   public String getUntilBuild() {
     return untilBuild;
   }

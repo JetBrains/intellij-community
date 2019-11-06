@@ -784,7 +784,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myVendorLogoPath;
   }
 
-  @Override
   public boolean getUseIdeaClassLoader() {
     return myUseIdeaClassLoader;
   }

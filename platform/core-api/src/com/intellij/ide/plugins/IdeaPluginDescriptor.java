@@ -59,8 +59,6 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getVendorLogoPath();
 
-  boolean getUseIdeaClassLoader();
-
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
