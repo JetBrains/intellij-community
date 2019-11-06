@@ -95,15 +95,6 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiClassType createType(@NotNull PsiClass resolve,
-                                 @NotNull PsiSubstitutor substitutor,
-                                 @Nullable LanguageLevel languageLevel,
-                                 @NotNull PsiAnnotation[] annotations) {
-    return new PsiImmediateClassType(resolve, substitutor, languageLevel, annotations);
-  }
-
-  @NotNull
-  @Override
   public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
     return createClassInner("class", name);
   }
