@@ -56,14 +56,13 @@ public class JBFont extends Font {
 
   @Override
   public JBFont deriveFont(int style, float size) {
-    JBFont font = create(super.deriveFont(style, size), false);
-    return this instanceof JBFontUIResource ? new JBFontUIResource(font) : font;
+    Font font = super.deriveFont(style, size);
+    return this instanceof JBFontUIResource ? new JBFontUIResource(font) : new JBFont(font);
   }
 
   @Override
   public JBFont deriveFont(float size) {
-    JBFont font = create(super.deriveFont(size), false);
-    return this instanceof JBFontUIResource ? new JBFontUIResource(font) : font;
+    return deriveFont(getStyle(), size);
   }
 
   public JBFont biggerOn(float size) {
