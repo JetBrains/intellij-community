@@ -111,18 +111,18 @@ public class PluginManagerTest {
 
   @Test
   public void testSimplePluginSort() throws Exception {
-    doPluginSortTest("simplePluginSort");
+    doPluginSortTest("simplePluginSort", false);
   }
 
   @Test
   public void testUltimatePlugins() throws Exception {
-    doPluginSortTest("ultimatePlugins");
+    doPluginSortTest("ultimatePlugins", true);
   }
 
-  private static void doPluginSortTest(@NotNull String testDataName) throws IOException, JDOMException {
+  private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
     PluginManagerCore.ourPluginError = null;
-    PluginLoadingResult loadPluginResult = loadDescriptors(testDataName + ".xml");
-    PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), null, false);
+    PluginLoadingResult loadPluginResult = loadDescriptors(testDataName + ".xml", isBundled);
+    PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
     String actual = StringUtil.join(loadPluginResult.getSortedPlugins(), o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
                     "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
     PluginManagerCore.ourPluginError = null;
@@ -142,13 +142,12 @@ public class PluginManagerTest {
   }
 
   @NotNull
-  private static PluginLoadingResult loadDescriptors(@NotNull String testDataName)
+  private static PluginLoadingResult loadDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
     PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
 
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(/* doesn't matter */ false, Collections.emptySet());
-    boolean isBundled = true;
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
 
@@ -160,7 +159,7 @@ public class PluginManagerTest {
       context.readDescriptor(descriptor, element, Paths.get(url), context.pathResolver);
       result.add(descriptor, false);
     }
-    result.finish();
+    result.finishLoading();
     return result;
   }
 

@@ -22,6 +22,8 @@ final class PluginLoadingResult {
 
   private IdeaPluginDescriptorImpl[] sortedPlugins;
   private List<IdeaPluginDescriptorImpl> sortedEnabledPlugins;
+  private Set<PluginId> effectiveDisabledIds;
+  private Set<PluginId> disabledRequiredIds;
 
   Map<PluginId, Set<String>> brokenPluginVersions;
 
@@ -37,28 +39,40 @@ final class PluginLoadingResult {
     return sortedPlugins;
   }
 
-  void setSortedPlugins(@NotNull IdeaPluginDescriptorImpl[] value) {
-    assert sortedPlugins == null;
-    this.sortedPlugins = value;
-  }
-
   @NotNull
   List<IdeaPluginDescriptorImpl> getSortedEnabledPlugins() {
     return sortedEnabledPlugins;
   }
 
-  void setSortedEnabledPlugins(@NotNull List<IdeaPluginDescriptorImpl> value) {
-    assert sortedEnabledPlugins == null;
-    sortedEnabledPlugins = value;
+  @NotNull
+  Set<PluginId> getEffectiveDisabledIds() {
+    return effectiveDisabledIds;
   }
 
-  void finish() {
+  @NotNull
+  Set<PluginId> getDisabledRequiredIds() {
+    return disabledRequiredIds;
+  }
+
+  void finishLoading() {
     existingResults.clear();
     plugins.sort(Comparator.comparing(IdeaPluginDescriptorImpl::getPluginId));
 
     if (duplicateMap != null) {
       duplicateMap = null;
     }
+  }
+
+  void finishInitializing(@NotNull IdeaPluginDescriptorImpl[] sortedPlugins,
+                          @NotNull List<IdeaPluginDescriptorImpl> sortedEnabledPlugins,
+                          @NotNull Map<PluginId, String> disabledIds,
+                          @NotNull Set<PluginId> disabledRequiredIds) {
+    assert this.sortedPlugins == null && this.sortedEnabledPlugins == null && effectiveDisabledIds == null;
+
+    this.sortedPlugins = sortedPlugins;
+    this.sortedEnabledPlugins = sortedEnabledPlugins;
+    effectiveDisabledIds = disabledIds.isEmpty() ? Collections.emptySet() : new HashSet<>(disabledIds.keySet());
+    this.disabledRequiredIds = disabledRequiredIds;
   }
 
   boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, boolean silentlyIgnoreIfDuplicate) {

@@ -59,7 +59,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1165,7 +1164,7 @@ public final class PluginManagerCore {
     try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(new DescriptorListLoadingContext(false, Collections.emptySet()), true, true, new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, result, loadingContext, platformPluginURL);
     }
-    result.finish();
+    result.finishLoading();
     return result.plugins;
   }
 
@@ -1174,7 +1173,7 @@ public final class PluginManagerCore {
     throws ExecutionException, InterruptedException {
     PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
     loadDescriptorsFromDir(dir, result, true, new DescriptorListLoadingContext(false, Collections.emptySet()));
-    result.finish();
+    result.finishLoading();
     return result.plugins;
   }
 
@@ -1319,7 +1318,7 @@ public final class PluginManagerCore {
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
-    boolean parallel = SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true);
+    boolean parallel = System.getProperty("parallel.pluginDescriptors.loading") != "false";
     try (DescriptorListLoadingContext context = new DescriptorListLoadingContext(parallel, disabledPlugins())) {
       try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, /* isBundled = */ true, /* isEssential, doesn't matter = */ true, new ClassPathXmlPathResolver(classLoader))) {
         loadDescriptorsFromClassPath(urlsFromClassPath, result, loadingContext, platformPluginURL);
@@ -1343,7 +1342,7 @@ public final class PluginManagerCore {
       ExceptionUtil.rethrow(e);
     }
 
-    result.finish();
+    result.finishLoading();
     return result;
   }
 
@@ -1534,9 +1533,9 @@ public final class PluginManagerCore {
         // do not log disabled plugins on each start
         errorSuffix = "";
       }
-      else if (isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null) {
-        String since = StringUtil.notNullize(descriptor.getSinceBuild(), "0.0");
-        String until = StringUtil.notNullize(descriptor.getUntilBuild(), "*.*");
+      else if (!descriptor.isBundled() && isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null) {
+        String since = ObjectUtils.chooseNotNull(descriptor.getSinceBuild(), "0.0");
+        String until = ObjectUtils.chooseNotNull(descriptor.getUntilBuild(), "*.*");
         errorSuffix = "is incompatible (target build " +
                       (since.equals(until) ? "is " + since
                                            : "range is " + since + " to " + until) + ")";
@@ -1624,10 +1623,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static void initializePlugins(@NotNull PluginLoadingResult loadResult,
-                                @NotNull ClassLoader coreLoader,
-                                @Nullable BiConsumer<? super Set<PluginId>, ? super Set<PluginId>> disabledAndPossibleToEnableConsumer,
-                                boolean checkEssentialPlugins) {
+  static void initializePlugins(@NotNull PluginLoadingResult loadResult, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
     List<String> errors = new ArrayList<>(loadResult.errors);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(loadResult.plugins, errors);
 
@@ -1673,16 +1669,11 @@ public final class PluginManagerCore {
     mergeOptionalConfigs(enabledPlugins, idMap);
     configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins);
 
-    if (disabledAndPossibleToEnableConsumer != null) {
-      disabledAndPossibleToEnableConsumer.accept(new HashSet<>(disabledIds.keySet()), disabledRequiredIds);
-    }
-
     if (checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap);
     }
 
-    loadResult.setSortedPlugins(sortedAll);
-    loadResult.setSortedEnabledPlugins(enabledPlugins);
+    loadResult.finishInitializing(sortedAll, enabledPlugins, disabledIds, disabledRequiredIds);
   }
 
   private static void configureClassLoaders(@NotNull ClassLoader coreLoader,
@@ -1913,11 +1904,13 @@ public final class PluginManagerCore {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors();
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      initializePlugins(result, coreLoader, (d, e) -> {
-        ourPluginsToDisable = d;
-        ourPluginsToEnable = e;
-      }, !isUnitTestMode);
+      initializePlugins(result, coreLoader, !isUnitTestMode);
       ourPlugins = result.getSortedPlugins();
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      ourPluginsToDisable = result.getEffectiveDisabledIds();
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      ourPluginsToEnable = result.getDisabledRequiredIds();
+
       ourLoadedPlugins = result.getSortedEnabledPlugins();
 
       int count = 0;
