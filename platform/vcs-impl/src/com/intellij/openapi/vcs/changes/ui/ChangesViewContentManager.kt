@@ -11,6 +11,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerAdapter
 import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
@@ -107,6 +108,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
       val content = event.content
       val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
       provider.initTabContent(content)
+      IJSwingUtilities.updateComponentTreeUI(content.component)
       content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
     }
   }
