@@ -54,4 +54,5 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
     doTest(true, false);
   }
   public void testNoArraySuperType() { doTest(true, true);}
+  public void testUnqualifiedYield() { doTest(true, false); }
 }

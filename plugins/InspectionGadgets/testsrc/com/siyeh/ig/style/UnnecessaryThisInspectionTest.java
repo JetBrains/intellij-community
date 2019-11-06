@@ -150,6 +150,18 @@ public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
            "    Runnable methodReference = this.methodReference::run;" +
            "}");
   }
+  
+  public void testYield() {
+    doTest("class Main {\n" +
+           "  void test() {\n" +
+           "    this.yield();\n" +
+           "    /*'this' is unnecessary in this context*/this/**/.yield1();\n" +
+           "  }\n" +
+           "  \n" +
+           "  void yield() {}\n" +
+           "  void yield1() {}\n" +
+           "}");
+  }
 
   @Override
   protected LocalInspectionTool getInspection() {
