@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Executes tasks synchronously immediately after they submitted
  */
-class SameThreadExecutorService extends AbstractExecutorService {
+final class SameThreadExecutorService extends AbstractExecutorService {
   private volatile boolean isTerminated;
 
   @Override
