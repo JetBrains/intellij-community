@@ -878,6 +878,17 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
+  @TestOnly
+  @Nullable
+  public final PluginDescriptor getPluginDescriptor(@NotNull T extension) {
+    for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
+      if (processAdapter(adapter) == extension) {
+        return adapter.getPluginDescriptor();
+      }
+    }
+    return null;
+  } 
+
   @Nullable
   public final <V extends T> V findExtension(@NotNull Class<V> aClass, boolean isRequired, @NotNull ThreeState strictMatch) {
     if (strictMatch != ThreeState.NO) {
