@@ -12,8 +12,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -80,8 +78,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   private final AtomicBoolean myUpdateSelectedPathModeActive = new AtomicBoolean();
 
-  private final Object myLastStartedGuard = new Object();
-  private ProgressIndicator myLastProgressIndicator = null;
+  private final Object myUpdateCoalesceKey = new Object();
 
   private final CopyProvider myCopyProvider = new CopyProvider() {
     @Override
@@ -511,14 +508,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }));
   }
 
-  private void scheduleUpdateBlocking(T oldValue, int oldIndex) {
+  private void scheduleUpdateBlocking(T oldSelectedValue, int oldSelectedIndex) {
     ApplicationManager.getApplication()
       .executeOnPooledThread(() -> DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
         try {
           List<T> listItems = getListItems();
 
           ApplicationManager.getApplication().invokeLater(() -> {
-            updateList(oldValue, oldIndex, listItems);
+            updateList(oldSelectedValue, oldSelectedIndex, listItems);
           });
         }
         finally {
@@ -527,37 +524,21 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       }));
   }
 
-  private void scheduleUpdateNonBlocking(T oldValue, int oldIndex) {
-    ProgressIndicator progressIndicator = new EmptyProgressIndicator(ModalityState.NON_MODAL);
-
-    synchronized (myLastStartedGuard) {
-      if (myLastProgressIndicator != null) {
-        myLastProgressIndicator.cancel();
-      }
-      myLastProgressIndicator = progressIndicator;
-    }
-
+  private void scheduleUpdateNonBlocking(T oldSelectedValue, int oldSelectedIndex) {
     ReadAction
       .nonBlocking(this::getListItems)
-      .cancelWith(progressIndicator)
       .finishOnUiThread(ModalityState.any(), listItems -> {
         try {
-          updateList(oldValue, oldIndex, listItems);
+          updateList(oldSelectedValue, oldSelectedIndex, listItems);
         }
         finally {
           myList.setPaintBusy(false);
         }
       })
+      .coalesceBy(myUpdateCoalesceKey)
       .expireWith(this)
       .inSmartMode(myProject)
-      .submit(AppExecutorUtil.getAppExecutorService())
-      .onProcessed(ts -> {
-        synchronized (myLastStartedGuard) {
-          if (myLastProgressIndicator == progressIndicator) {
-            myLastProgressIndicator = null;
-          }
-        }
-      });
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void updateList(T oldValue, int oldIndex, List<T> listItems) {
