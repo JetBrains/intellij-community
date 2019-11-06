@@ -13,6 +13,7 @@ import org.junit.runners.Suite;
   TypeMigrationByAtomicRuleTest.class,
   TypeMigrationByThreadLocalRuleTest.class,
   TypeMigrationByLongAdderTest.class,
+  TypeMigrationAutoboxingTest.class,
   MigrateTypeSignatureTest.class,
   ChangeTypeSignatureTest.class,
   WildcardTypeMigrationTest.class,

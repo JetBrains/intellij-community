@@ -42,6 +42,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myRoots;
   private final Function<PsiElement, PsiType> myRootTypes;
   private final boolean myAllowDependentRoots;
+  private final boolean myAutoBox;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
@@ -50,11 +51,21 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                 final Function<PsiElement, PsiType> rootTypes,
                                 final TypeMigrationRules rules,
                                 final boolean allowDependentRoots) {
+    this(project, roots, rootTypes, rules, allowDependentRoots, false);
+  }
+
+  public TypeMigrationProcessor(final Project project,
+                                final PsiElement[] roots,
+                                final Function<PsiElement, PsiType> rootTypes,
+                                final TypeMigrationRules rules,
+                                final boolean allowDependentRoots,
+                                final boolean autoBox) {
     super(project);
     myRoots = roots;
     myRules = rules;
     myRootTypes = rootTypes;
     myAllowDependentRoots = allowDependentRoots;
+    myAutoBox = autoBox;
   }
 
   public static void runHighlightingTypeMigration(final Project project,
@@ -212,7 +223,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   public UsageInfo[] findUsages() {
-    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject);
+    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject, myAutoBox);
 
     try {
       return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);

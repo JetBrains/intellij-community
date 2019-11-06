@@ -1,0 +1,11 @@
+Types:
+PsiMethod:bar : long
+PsiMethod:foo : java.lang.Long
+PsiMethodCallExpression:bar() : long
+
+Conversions:
+0 -> $
+bar() -> $
+
+New expression type changes:
+Fails:

@@ -59,6 +59,7 @@ public class TypeMigrationLabeler {
 
   private final TypeMigrationRules myRules;
   private final Function<PsiElement, PsiType> myMigrationRootTypeFunction;
+  private final boolean myAutoBox;
   @Nullable private final Set<PsiElement> myAllowedRoots;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
@@ -84,6 +85,14 @@ public class TypeMigrationLabeler {
                               Function<PsiElement, PsiType> migrationRootTypeFunction,
                               @Nullable("any root accepted if null") PsiElement[] allowedRoots,
                               Project project) {
+    this(rules, migrationRootTypeFunction, allowedRoots, project, false);
+  }
+
+  public TypeMigrationLabeler(TypeMigrationRules rules,
+                              Function<PsiElement, PsiType> migrationRootTypeFunction,
+                              @Nullable("any root accepted if null") PsiElement[] allowedRoots,
+                              Project project,
+                              boolean autoBox) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
     myAllowedRoots = allowedRoots == null ? null : ContainerUtil.set(allowedRoots);
@@ -93,6 +102,7 @@ public class TypeMigrationLabeler {
     myNewExpressionTypeChange = new LinkedHashMap<>();
     myClassTypeArgumentsChange = new LinkedHashMap<>();
     myProject = project;
+    myAutoBox = autoBox;
   }
 
   public boolean hasFailedConversions() {
@@ -598,6 +608,8 @@ public class TypeMigrationLabeler {
     }
     else if (typeContainsTypeParameters(originalType, getTypeParameters(type))) return false;
 
+    type = autoBoxIfNeeded(type, originalType, resolved);
+
     if (type instanceof PsiCapturedWildcardType) {
       return false;
     }
@@ -698,6 +710,20 @@ public class TypeMigrationLabeler {
     else {
       return !addRoot(new TypeMigrationUsageInfo(resolved), type, place, alreadyProcessed);
     }
+  }
+  
+  private PsiType autoBoxIfNeeded(PsiType migrationType, PsiType originalType, PsiElement context){
+    if (!myAutoBox) {
+      return migrationType;
+    }
+    if (migrationType instanceof PsiPrimitiveType && originalType instanceof PsiClassType) {
+      migrationType = ((PsiPrimitiveType)migrationType).getBoxedType(context);
+    }
+    else if (migrationType instanceof PsiClassType && originalType instanceof PsiPrimitiveType) {
+      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(migrationType);
+      migrationType = unboxedType == null ? migrationType : unboxedType;
+    }
+    return migrationType;
   }
 
   @NotNull
