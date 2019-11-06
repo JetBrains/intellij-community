@@ -106,7 +106,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   @Override
   public void fireActionPerformed(ActionEvent event) {
     Application app = ApplicationManager.getApplication();
-    if (!app.isDisposedOrDisposeInProgress() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+    if (!app.isDisposed() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       MainMenuCollector.getInstance().record(myAction.getAction());
     }
     TransactionGuard.submitTransaction(app, () -> super.fireActionPerformed(event));

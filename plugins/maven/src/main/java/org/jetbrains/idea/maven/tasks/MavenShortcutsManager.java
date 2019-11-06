@@ -190,7 +190,7 @@ public final class MavenShortcutsManager implements Disposable {
             mySheduledProjects.clear();
           }
 
-          if (!myProject.isDisposedOrDisposeInProgress()) {
+          if (!myProject.isDisposed()) {
             MavenKeymapExtension.clearActions(myProject, projectToDelete);
             MavenKeymapExtension.updateActions(myProject, projectToUpdate);
           }

@@ -202,7 +202,7 @@ inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (
 
 inline fun processOpenedProjects(processor: (Project) -> Unit) {
   for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
-    if (project.isDisposedOrDisposeInProgress || !project.isInitialized) {
+    if (project.isDisposed || !project.isInitialized) {
       continue
     }
 

@@ -106,7 +106,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public boolean isDisposed() {
-    return isDisposedOrDisposeInProgress();
+    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
   }
 
   @Override

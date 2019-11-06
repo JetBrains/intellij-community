@@ -73,7 +73,7 @@ internal class JdkDownloaderUI : JdkDownloaderService() {
 
         indicator.checkCanceled()
         invokeLater {
-          if (project?.isDisposedOrDisposeInProgress == true) return@invokeLater
+          if (project?.isDisposed == true) return@invokeLater
           val jdkHome = DownloadJdkDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJdk()
           addSdkIfNotNull(jdkHome)
         }

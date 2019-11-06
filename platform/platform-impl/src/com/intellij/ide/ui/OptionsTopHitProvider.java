@@ -57,7 +57,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                                                 @Nullable PluginDescriptor pluginDescriptor) {
     ComponentManager manager =
       project == null || provider instanceof ApplicationLevelProvider ? ApplicationManager.getApplication() : project;
-    if (manager == null || manager.isDisposedOrDisposeInProgress()) {
+    if (manager == null || manager.isDisposed()) {
       return Collections.emptyList();
     }
 
@@ -241,7 +241,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     public void runActivity(@NotNull Project project) {
       // for given project
       NonUrgentExecutor.getInstance().execute(() -> {
-        if (project.isDisposedOrDisposeInProgress()) {
+        if (project.isDisposed()) {
           return;
         }
 
@@ -275,7 +275,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                               @Nullable Project project,
                               @Nullable PluginDescriptor pluginDescriptor) {
       if (indicator != null && indicator.isCanceled()) return;  // if application is closed
-      if (project != null && project.isDisposedOrDisposeInProgress()) return; // if project is closed
+      if (project != null && project.isDisposed()) return; // if project is closed
       getCachedOptions(provider, project, pluginDescriptor);
     }
   }

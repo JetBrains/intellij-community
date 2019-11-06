@@ -83,17 +83,18 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   MessageBus getMessageBus();
 
   /**
-   * @return true when this component is disposed, e.g. the project is closed or the application is exited
+   * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)
+   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectImpl#dispose()} was called but not completed yet)
    * <br>
-   * Result is valid only inside read action because application/project/module can be disposed at any moment.
+   * The result is only valid inside read action because the application/project/module can be disposed at any moment.
    * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)
    */
   boolean isDisposed();
 
-  @Deprecated
   /**
    * @deprecated Use {@link #isDisposed()} instead
    */
+  @Deprecated
   default boolean isDisposedOrDisposeInProgress() {
     return isDisposed();
   }

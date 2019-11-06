@@ -225,7 +225,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        if (isDisposedOrDisposeInProgress()) {
+        if (isDisposed()) {
           return null;
         }
 
@@ -235,7 +235,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
         // For everyone else, "executeOnPooledThread" should be equivalent to "AppExecutorUtil" AKA "PooledThreadExecutor" pool
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
-          if (isDisposedOrDisposeInProgress()) {
+          if (isDisposed()) {
             return null;
           }
 

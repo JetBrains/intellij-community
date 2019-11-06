@@ -162,7 +162,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater = new ToolbarUpdater(KeymapManagerEx.getInstanceEx(), this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
-        if (!ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
+        if (!ApplicationManager.getApplication().isDisposed()) {
           ActionToolbarImpl.this.updateActionsImpl(transparentOnly, forced);
         }
       }

@@ -39,7 +39,7 @@ public abstract class ClipboardAnalyzeListener implements ApplicationActivationL
 
   @Override
   public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
-    if (!ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
+    if (!ApplicationManager.getApplication().isDisposed()) {
       myCachedClipboardValue = ClipboardUtil.getTextInClipboard();
     }
   }

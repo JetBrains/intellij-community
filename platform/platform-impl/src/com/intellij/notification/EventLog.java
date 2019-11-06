@@ -636,7 +636,7 @@ public final class EventLog {
       }
       else {
         for (Project p : openProjects) {
-          if (!p.isDisposedOrDisposeInProgress()) {
+          if (!p.isDisposed()) {
             getProjectComponent(p).printNotification(notification);
           }
         }

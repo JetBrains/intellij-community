@@ -108,12 +108,12 @@ public interface Project extends ComponentManager, AreaInstance {
 
   boolean isDefault();
 
-  @NotNull
-  @Deprecated
   /**
    * @deprecated Use {@link #getDisposed()} instead
    */
+  @NotNull
+  @Deprecated
   default Condition<?> getDisposedOrDisposeInProgress() {
-    return __ -> isDisposedOrDisposeInProgress();
+    return getDisposed();
   }
 }

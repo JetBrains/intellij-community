@@ -37,10 +37,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -457,7 +454,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     startupManager.runPostStartupActivitiesFromExtensions();
 
     GuiUtils.invokeLaterIfNeeded(() -> {
-      if (project.isDisposedOrDisposeInProgress()) {
+      if (project.isDisposed()) {
         return;
       }
 
@@ -468,17 +465,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         StorageUtilKt.checkUnknownMacros(project, true);
       }
       StartUpMeasurer.stopPluginCostMeasurement();
-    }, ModalityState.NON_MODAL, project.getDisposedOrDisposeInProgress());
+    }, ModalityState.NON_MODAL, project.getDisposed());
     ApplicationManager.getApplication().invokeLater(() -> {
       LoadingState phase = DumbService.isDumb(project)
       ? LoadingState.PROJECT_OPENED
       : LoadingState.INDEXING_FINISHED;
       StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
 
-      if (!project.isDisposedOrDisposeInProgress()) {
+      if (!project.isDisposed()) {
         startupManager.scheduleBackgroundPostStartupActivities();
       }
-    }, ModalityState.NON_MODAL, project.getDisposedOrDisposeInProgress());
+    }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
   private static void assertInTransaction() {

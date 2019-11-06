@@ -79,7 +79,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
   @Override
   public void updateNotifications(@NotNull VirtualFile file) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposedOrDisposeInProgress() || !file.isValid()) {
+      if (myProject.isDisposed() || !file.isValid()) {
         return;
       }
 

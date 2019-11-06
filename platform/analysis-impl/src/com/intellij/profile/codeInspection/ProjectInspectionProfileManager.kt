@@ -145,7 +145,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
       val profileManager = getInstance(project)
       profileManager.initialLoadSchemesFuture
         .handle { _, error ->
-          if (error == null && !project.isDisposedOrDisposeInProgress) {
+          if (error == null && !project.isDisposed) {
             profileManager.currentProfile.initInspectionTools(project)
             project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesInitialized()
           }

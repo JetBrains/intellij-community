@@ -121,7 +121,7 @@ object CDSManager {
             get() {
               if (!canStillWork()) return CDSTaskResult.InterruptedForRetry
               if (indicator.isCanceled) return CDSTaskResult.TerminatedByUser
-              if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress) return CDSTaskResult.InterruptedForRetry
+              if (ApplicationManager.getApplication().isDisposed) return CDSTaskResult.InterruptedForRetry
               return null
             }
 

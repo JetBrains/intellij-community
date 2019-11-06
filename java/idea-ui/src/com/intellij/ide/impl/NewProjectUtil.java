@@ -173,8 +173,8 @@ public final class NewProjectUtil {
               if (toolWindow != null) {
                 toolWindow.activate(null);
               }
-            }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
-          }, ModalityState.NON_MODAL, newProject.getDisposedOrDisposeInProgress());
+            }, ModalityState.NON_MODAL, newProject.getDisposed());
+          }, ModalityState.NON_MODAL, newProject.getDisposed());
         });
       }
 

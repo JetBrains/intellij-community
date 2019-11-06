@@ -412,12 +412,12 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   }
 
   public final void scheduleBackgroundPostStartupActivities() {
-    if (myProject.isDisposedOrDisposeInProgress()) {
+    if (myProject.isDisposed()) {
       return;
     }
 
     myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      if (myProject.isDisposedOrDisposeInProgress()) {
+      if (myProject.isDisposed()) {
         return;
       }
 
@@ -433,7 +433,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
         for (StartupActivity activity : activities) {
           ProgressManager.checkCanceled();
 
-          if (myProject.isDisposedOrDisposeInProgress()) {
+          if (myProject.isDisposed()) {
             return;
           }
 
@@ -472,7 +472,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     if (application == null) return;
 
     GuiUtils.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposedOrDisposeInProgress()) return;
+      if (myProject.isDisposed()) return;
 
       //noinspection SynchronizeOnThis
       synchronized (this) {

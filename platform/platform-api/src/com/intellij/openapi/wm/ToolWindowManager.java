@@ -138,7 +138,7 @@ public abstract class ToolWindowManager {
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     Project project = frame == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
 
-    if (project != null && !project.isDisposedOrDisposeInProgress()) {
+    if (project != null && !project.isDisposed()) {
       ToolWindowManager managerInstance = getInstance(project);
       if (managerInstance != null) {
         return managerInstance.getToolWindow(getActiveId());
@@ -154,7 +154,7 @@ public abstract class ToolWindowManager {
 
     if (lastFocusedFrame !=null) {
       Project project = lastFocusedFrame.getProject();
-      if (project != null && !project.isDisposedOrDisposeInProgress()) {
+      if (project != null && !project.isDisposed()) {
         ToolWindowManager instance = getInstance(project);
         return instance == null ? "" : instance.getActiveToolWindowId();
       }

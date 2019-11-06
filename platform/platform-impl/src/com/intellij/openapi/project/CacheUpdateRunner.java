@@ -211,7 +211,7 @@ public class CacheUpdateRunner {
     @Override
     public void run() {
       while (true) {
-        if (myProject.isDisposedOrDisposeInProgress() || myInnerIndicator.isCanceled()) {
+        if (myProject.isDisposed() || myInnerIndicator.isCanceled()) {
           return;
         }
 
@@ -226,7 +226,7 @@ public class CacheUpdateRunner {
 
           final Runnable action = () -> {
             myInnerIndicator.checkCanceled();
-            if (!myProject.isDisposedOrDisposeInProgress()) {
+            if (!myProject.isDisposed()) {
               final VirtualFile file = fileContent.getVirtualFile();
               try {
                 myProgressUpdater.processingStarted(file);
@@ -247,7 +247,7 @@ public class CacheUpdateRunner {
             ProgressManager.getInstance().runProcess(() -> {
               // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
               ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-              if (app.isDisposedOrDisposeInProgress() || !app.tryRunReadAction(action)) {
+              if (app.isDisposed() || !app.tryRunReadAction(action)) {
                 throw new ProcessCanceledException();
               }
             }, ProgressWrapper.wrap(myInnerIndicator));
