@@ -305,7 +305,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       VirtualFile root = repository.getRoot();
       String rootPath = root.getPath();
 
-      List<File> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
+      List<FilePath> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
       if (!unmergedFiles.isEmpty()) {
         throw new VcsException("Committing is not possible because you have unmerged files.");
       }

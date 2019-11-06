@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -23,7 +23,6 @@ import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -395,14 +394,16 @@ public class GitChangeUtils {
   }
 
   @NotNull
-  public static List<File> getUnmergedFiles(@NotNull GitRepository repository) throws VcsException {
+  public static List<FilePath> getUnmergedFiles(@NotNull GitRepository repository) throws VcsException {
     GitCommandResult result = Git.getInstance().getUnmergedFiles(repository);
     if (!result.success()) {
       throw new VcsException(result.getErrorOutputAsJoinedString());
     }
 
+    VirtualFile root = repository.getRoot();
+
     String output = StringUtil.join(result.getOutput(), "\n");
-    HashSet<String> unmergedPaths = new HashSet<>();
+    Set<FilePath> unmergedPaths = new HashSet<>();
     for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
@@ -410,11 +411,12 @@ public class GitChangeUtils {
       }
       s.boundedToken('\t');
       String relative = s.line();
-      unmergedPaths.add(GitUtil.unescapePath(relative));
+      String path = GitUtil.unescapePath(relative);
+      FilePath filePath = VcsUtil.getFilePath(root, path, false);
+      unmergedPaths.add(filePath);
     }
 
-    VirtualFile root = repository.getRoot();
-    return ContainerUtil.map(unmergedPaths, path -> new File(root.getPath(), path));
+    return new ArrayList<>(unmergedPaths);
   }
 
   @NotNull
