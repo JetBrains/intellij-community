@@ -4,13 +4,13 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.colorSchemes" />
-    <orderEntry type="module" module-name="intellij.vcs.hg" />
-    <orderEntry type="module" module-name="intellij.vcs.svn" />
-    <orderEntry type="module" module-name="intellij.vcs.git" />
-    <orderEntry type="module" module-name="intellij.relaxng" />
-    <orderEntry type="module" module-name="intellij.vcs.github" />
+    <orderEntry type="module" module-name="intellij.vcs.hg" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.svn" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.github" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.reStructuredText" />
     <orderEntry type="module" module-name="intellij.python.reStructuredText" />
     <orderEntry type="module" module-name="intellij.terminal" />
