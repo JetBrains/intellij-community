@@ -939,12 +939,12 @@ public class ExpressionUtils {
     }
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
+      if (member.hasModifierProperty(PsiModifier.STATIC)) {
+        return factory.createReferenceExpression(memberClass);
+      }
       PsiClass containingClass = ClassUtils.getContainingClass(ref);
       if (containingClass == null) {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
-      }
-      if (containingClass != null && member.hasModifierProperty(PsiModifier.STATIC)) {
-        return factory.createReferenceExpression(containingClass);
       }
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
         containingClass = ClassUtils.getContainingClass(containingClass);
