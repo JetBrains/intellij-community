@@ -14,7 +14,8 @@ internal data class ChangeReminderAnonymousPath(val value: String)
 
 internal enum class ChangeReminderEventType {
   CHANGELIST_CHANGED,
-  CHANGES_COMMITTED;
+  CHANGES_COMMITTED,
+  NODE_EXPANDED;
 
   override fun toString() = name.toLowerCase(Locale.ENGLISH)
 }
