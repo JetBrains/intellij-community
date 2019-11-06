@@ -458,6 +458,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         remove(myFirstComponent);
       }
       myFirstComponent = component;
+      updateComponentTreeUI(myFirstComponent);
+
       if (myFirstComponent != null) {
         add(myFirstComponent);
         myFirstComponent.invalidate();
@@ -482,6 +484,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         remove(myLastComponent);
       }
       myLastComponent = component;
+      updateComponentTreeUI(myLastComponent);
+
       if (myLastComponent != null) {
         add(myLastComponent);
         myLastComponent.invalidate();
@@ -494,6 +498,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return myInnerComponent;
   }
 
+  private static void updateComponentTreeUI(@Nullable JComponent component) {
+    UIUtil.uiTraverser(component).postOrderDfsTraversal().
+      filter(c -> c instanceof JComponent).
+      forEach(c -> ((JComponent)c).updateUI());
+  }
 
   /**
    * Sets component which is located as the "inner" splitted area. The method doesn't validate and
@@ -506,6 +515,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         remove(myInnerComponent);
       }
       myInnerComponent = component;
+      updateComponentTreeUI(myInnerComponent);
+
       if (myInnerComponent != null) {
         add(myInnerComponent);
         myInnerComponent.invalidate();
