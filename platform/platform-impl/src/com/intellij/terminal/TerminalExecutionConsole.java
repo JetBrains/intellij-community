@@ -277,7 +277,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    */
   @Deprecated
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
     return AnAction.EMPTY_ARRAY;
   }
