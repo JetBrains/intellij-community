@@ -190,6 +190,9 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
       String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
       setChildTagValue(tag, "source", option);
       setChildTagValue(tag, "target", option);
+      if (level.isPreview()) {
+        setChildTagValue(tag, "compilerArgs","--enable-preview");
+      }
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
       if (document != null) {
         FileDocumentManager.getInstance().saveDocument(document);
