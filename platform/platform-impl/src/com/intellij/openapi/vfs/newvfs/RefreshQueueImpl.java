@@ -91,9 +91,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
         .cancelWith(myRefreshIndicator)
         .finishOnUiThread(modality, Runnable::run)
         .submit(myEventProcessingQueue)
-      .onProcessed(__ -> {
-        finishRefreshActivity();
-      });
+        .onProcessed(__ -> finishRefreshActivity());
     }
     catch (RejectedExecutionException e) {
       LOG.debug(e);
