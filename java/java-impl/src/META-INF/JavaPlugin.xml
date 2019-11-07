@@ -140,7 +140,7 @@
                     area="IDEA_MODULE">
       <with attribute="instance" implements="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator"/>
+    <extensionPoint qualifiedName="com.intellij.variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jreProvider"
                     interface="com.intellij.execution.ui.JreProvider"/>
     <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>

@@ -19,17 +19,20 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author Max Medvedev
-*/
+ * Infer variable types in macros
+ * @author Max Medvedev
+ */
 public abstract class VariableTypeCalculator {
   public static final ExtensionPointName<VariableTypeCalculator> EP_NAME =
     ExtensionPointName.create("com.intellij.variableTypeCalculator");
 
   @Nullable
+  @Contract(pure = true)
   public abstract PsiType inferVarTypeAt(@NotNull PsiVariable var, @NotNull PsiElement place);
 
   /**
