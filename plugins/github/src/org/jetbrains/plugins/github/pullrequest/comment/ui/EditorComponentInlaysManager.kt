@@ -20,6 +20,7 @@ import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.min
 
 class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
@@ -175,8 +176,8 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
   }
 
   private class ComponentWrapperPlaceholder(val wrapper: ComponentWrapper) : EditorCustomElementRenderer {
-    override fun calcWidthInPixels(inlay: Inlay<*>): Int = wrapper.width
-    override fun calcHeightInPixels(inlay: Inlay<*>): Int = wrapper.height
+    override fun calcWidthInPixels(inlay: Inlay<*>): Int = max(wrapper.width, 0)
+    override fun calcHeightInPixels(inlay: Inlay<*>): Int = max(wrapper.height, 0)
 
     override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     }
