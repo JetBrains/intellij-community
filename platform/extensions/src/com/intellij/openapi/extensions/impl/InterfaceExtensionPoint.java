@@ -11,16 +11,16 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
-  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz) {
-    super(name, clazz.getName(), new UndefinedPluginDescriptor(), false);
+  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull PluginDescriptor pluginDescriptor) {
+    super(name, clazz.getName(), pluginDescriptor, false);
 
     myExtensionClass = clazz;
   }
 
   public InterfaceExtensionPoint(@NotNull String name,
-                          @NotNull String className,
-                          @NotNull PluginDescriptor pluginDescriptor,
-                          boolean dynamic) {
+                                 @NotNull String className,
+                                 @NotNull PluginDescriptor pluginDescriptor,
+                                 boolean dynamic) {
     super(name, className, pluginDescriptor, dynamic);
   }
 

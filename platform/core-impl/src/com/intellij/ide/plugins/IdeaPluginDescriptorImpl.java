@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.BeanExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -43,7 +44,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
+public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, PluginDescriptor {
   public enum OS {
     mac, linux, windows, unix, freebsd
   }

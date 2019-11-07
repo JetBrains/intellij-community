@@ -290,7 +290,7 @@ public class ExtensionPointImplTest {
 
   @NotNull
   private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass);
+    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPluginDescriptor("test"));
   }
 
   private static MyShootingComponentAdapter stringAdapter() {

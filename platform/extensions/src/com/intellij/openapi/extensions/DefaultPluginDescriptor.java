@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 
-public final class DefaultPluginDescriptor implements PluginDescriptor {
+public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   @NotNull
   private final PluginId myPluginId;
   private final ClassLoader myPluginClassLoader;
@@ -148,6 +149,5 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
 
   @Override
   public void setEnabled(boolean enabled) {
-
   }
 }

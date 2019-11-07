@@ -155,8 +155,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     Disposer.register(parentDisposable, () -> unregisterExtensionPoint(extensionPointName));
   }
 
+  @TestOnly
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
-    IdeaPluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
+    IdeaPluginDescriptor pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId("FakeIdForTests"));
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
       point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, pluginDescriptor, false);
@@ -198,18 +199,13 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return point;
   }
 
-  @Nullable
-  private static PluginId id(@NotNull PluginDescriptor descriptor) {
-    return descriptor instanceof UndefinedPluginDescriptor ? null : descriptor.getPluginId();
-  }
-
   private void checkThatPointNotDuplicated(@NotNull String pointName, @NotNull PluginDescriptor pluginDescriptor) {
     if (!hasExtensionPoint(pointName)) {
       return;
     }
 
-    PluginId id1 = id(getExtensionPoint(pointName).getDescriptor());
-    PluginId id2 = id(pluginDescriptor);
+    PluginId id1 = getExtensionPoint(pointName).getDescriptor().getPluginId();
+    PluginId id2 = pluginDescriptor.getPluginId();
     String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
       LOG.error(message, myEPTraces.get(pointName));
@@ -269,9 +265,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       return false;
     }
 
-    if (point.myComponentManager != componentManager) {
-      LOG.error("The same point on different levels (pointName=" + pointName +  ")");
-    }
     point.registerExtensions(extensions, pluginDescriptor, componentManager, notifyListeners);
     return true;
   }

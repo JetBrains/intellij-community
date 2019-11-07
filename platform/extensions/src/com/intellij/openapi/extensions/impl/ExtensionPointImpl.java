@@ -49,8 +49,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @Nullable
   private volatile T[] myExtensionsCacheAsArray;
 
-  @NotNull
-  ComponentManager myComponentManager;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private ComponentManager myComponentManager;
 
   @NotNull
   private final PluginDescriptor myDescriptor;
@@ -842,6 +842,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
                                              @NotNull IdeaPluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager,
                                              boolean notifyListeners) {
+    if (myComponentManager != componentManager) {
+      LOG.error("The same point on different levels (pointName=" + getName() +  ")");
+    }
+
     List<ExtensionComponentAdapter> adapters = myAdapters;
     if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       adapters = new ArrayList<>(extensionElements.size());

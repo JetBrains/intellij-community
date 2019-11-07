@@ -768,7 +768,9 @@ public final class PluginManagerCore {
         // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
         // can be such requirements removed or not
         if (rootDescriptor == dep) {
-          getLogger().error("Plugin " + rootDescriptor + " depends on self");
+          if (rootDescriptor.getPluginId() != CORE_ID) {
+            getLogger().error("Plugin " + rootDescriptor + " depends on self");
+          }
         }
         else if (uniqueCheck.add(dep)) {
           plugins.add(dep);
