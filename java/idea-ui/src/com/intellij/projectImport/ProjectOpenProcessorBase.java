@@ -229,7 +229,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       }
 
       if (!forceOpenInNewFrame) {
-        NewProjectUtil.closePreviousProject(projectToClose);
+        ProjectUtil.closePreviousProject(projectToClose);
       }
       ProjectUtil.updateLastProjectLocation(pathToOpen);
       ProjectManagerEx.getInstanceEx().openProject(projectToOpen);

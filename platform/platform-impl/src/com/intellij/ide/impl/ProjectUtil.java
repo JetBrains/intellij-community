@@ -88,6 +88,17 @@ public class ProjectUtil {
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
+  public static void closePreviousProject(Project projectToClose) {
+    Project[] openProjects = getOpenProjects();
+    if (openProjects.length > 0) {
+      int exitCode = confirmOpenNewProject(true);
+      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        Project project = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
+        closeAndDispose(project);
+      }
+    }
+  }
+
   public static boolean closeAndDispose(@NotNull Project project) {
     return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
   }

@@ -5,7 +5,6 @@
  */
 package com.intellij.ide.impl;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
@@ -213,14 +212,11 @@ public final class NewProjectUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link ProjectUtil#closePreviousProject(Project)} instead
+   */
+  @Deprecated
   public static void closePreviousProject(Project projectToClose) {
-    Project[] openProjects = ProjectUtil.getOpenProjects();
-    if (openProjects.length > 0) {
-      int exitCode = ProjectUtil.confirmOpenNewProject(true);
-      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        Project project = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
-        ProjectManagerEx.getInstanceEx().closeAndDispose(project);
-      }
-    }
+    ProjectUtil.closePreviousProject(projectToClose);
   }
 }
