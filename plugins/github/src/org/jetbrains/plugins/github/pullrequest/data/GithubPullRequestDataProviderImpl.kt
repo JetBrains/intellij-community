@@ -150,7 +150,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
       override fun compute(indicator: ProgressIndicator) = supplier(indicator)
     }
 
-  private fun <T> backgroundProcessValue(backingValue: LazyCancellableBackgroundProcessValue<T>) =
+  private fun <T> backgroundProcessValue(backingValue: LazyCancellableBackgroundProcessValue<T>): ReadOnlyProperty<Any?, CompletableFuture<T>> =
     object : ReadOnlyProperty<Any?, CompletableFuture<T>> {
       override fun getValue(thisRef: Any?, property: KProperty<*>) =
         GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { backingValue.value } }
