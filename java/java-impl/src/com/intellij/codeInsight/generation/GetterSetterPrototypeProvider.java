@@ -30,6 +30,7 @@ public abstract class GetterSetterPrototypeProvider {
     return false;
   }
 
+  @Contract(pure = true)
   public abstract boolean isReadOnly(PsiField field);
 
   public static PsiMethod[] generateGetterSetters(PsiField field, boolean generateGetter) {
