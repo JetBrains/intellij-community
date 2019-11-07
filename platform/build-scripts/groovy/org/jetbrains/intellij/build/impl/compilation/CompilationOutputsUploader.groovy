@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
@@ -15,12 +15,11 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 
 import java.lang.reflect.Type
-import java.security.MessageDigest
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>()
   private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json"
   private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
   private static final List<String> TEST_TYPES = ["java-test", "resources-test"]
@@ -163,17 +162,8 @@ class CompilationOutputsUploader {
   }
 
   private static String calculateStringHash(String content) {
-    MessageDigest md = messageDigest
-    md.reset()
-    return StringUtil.toHexString(md.digest(content.getBytes()))
-  }
-
-  private static MessageDigest getMessageDigest() throws IOException {
-    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get()
-    if (messageDigest != null) return messageDigest
-    messageDigest = MessageDigest.getInstance("MD5")
-    MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest)
-    return messageDigest
+    def hasher = Hashing.murmur3_128().newHasher()
+    return hasher.putString(content, StandardCharsets.UTF_8).hash().toString()
   }
 
   private void zipBinaryData(File zipFile, File dir) {
