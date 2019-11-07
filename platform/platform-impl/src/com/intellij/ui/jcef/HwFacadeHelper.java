@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.jdkEx.JdkEx;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.FieldAccessor;
 import org.cef.CefApp;
 import org.cef.CefClient;
@@ -118,6 +119,7 @@ public class HwFacadeHelper {
   }
 
   private void activateIfNeeded() {
+    if (SystemInfo.isLinux) return;
     if (!isCefAppActive()) return;
 
     Rectangle targetBounds = new Rectangle(myTarget.getLocationOnScreen(), myTarget.getSize());
