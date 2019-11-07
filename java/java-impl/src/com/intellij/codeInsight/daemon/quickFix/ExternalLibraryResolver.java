@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +30,13 @@ public abstract class ExternalLibraryResolver {
   public static final ExtensionPointName<ExternalLibraryResolver> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.externalLibraryResolver");
 
   @Nullable
+  @Contract(pure = true)
   public abstract ExternalClassResolveResult resolveClass(@NotNull String shortClassName,
                                                           @NotNull ThreeState isAnnotation,
                                                           @NotNull Module contextModule);
 
   @Nullable
+  @Contract(pure = true)
   public ExternalLibraryDescriptor resolvePackage(@NotNull String packageName) {
     return null;
   }
