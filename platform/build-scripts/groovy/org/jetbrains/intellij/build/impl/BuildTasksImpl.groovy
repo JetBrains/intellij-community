@@ -281,25 +281,15 @@ idea.fatal.error.notification=disabled
                    productLayout.mainModules + buildContext.productProperties.mavenArtifacts.additionalModules,
                    buildContext.productProperties.modulesToCompileTests)
 
-    def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
-    for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
-      def publishingSpec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
-      if (publishingSpec == null) {
-        buildContext.messages.error("buildContext.productProperties.productLayout.pluginModulesToPublish doesn't have info for $plugin.mainModule")
-      }
-
-      pluginsToPublish.put(plugin, publishingSpec)
-    }
+    def pluginsToPublish = new LinkedHashSet<>(
+      DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish))
 
     if (buildContext.shouldBuildDistributions()) {
       def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.applicationInfo.productCode}-builtinModules.json"
       buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
-            def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
-            pluginsToPublish.put(plugin, spec ?: plugin.defaultPublishingSpec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
-          }
+          pluginsToPublish.addAll(new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish())
         }
         else {
           buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
@@ -309,8 +299,7 @@ idea.fatal.error.notification=disabled
     return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
   }
 
-  private DistributionJARsBuilder compilePlatformAndPluginModules(File patchedApplicationInfo,
-                                                                  LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish) {
+  private DistributionJARsBuilder compilePlatformAndPluginModules(File patchedApplicationInfo, LinkedHashSet<PluginLayout> pluginsToPublish) {
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
     compileModules(distributionJARsBuilder.modulesForPluginsToPublish)
 
@@ -442,12 +431,8 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
     checkPluginModules(mainPluginModules, "mainPluginModules", [] as Set<String>)
     copyDependenciesFile()
-    def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
-    def plugins = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
-    for (plugin in plugins) {
-      def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
-      pluginsToPublish[plugin] = spec ?: plugin.defaultPublishingSpec ?: new PluginPublishingSpec()
-    }
+    def pluginsToPublish = new LinkedHashSet<PluginLayout>(
+      DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
     def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
     distributionJARsBuilder.buildSearchableOptions()
     distributionJARsBuilder.buildNonBundledPlugins()

@@ -3,10 +3,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
-/**
- * @see org.jetbrains.intellij.build.PluginPublishingSpec
- * @see org.jetbrains.intellij.build.ProductModulesLayout#setPluginPublishingSpec
- */
 @CompileStatic
 enum CompatibleBuildRange {
   /**
