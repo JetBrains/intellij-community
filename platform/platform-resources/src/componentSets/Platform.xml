@@ -136,9 +136,12 @@
       <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
     </component>
 
+    <!-- Android Studio: disabled by Change Ibd093514
+    Not used in Studio.
     <component>
       <implementation-class>com.intellij.diagnostic.IdeaFreezeReporter</implementation-class>
     </component>
+    -->
 
     <component>
       <interface-class>com.intellij.configurationStore.StoreReloadManager</interface-class>
