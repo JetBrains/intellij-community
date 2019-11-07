@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
@@ -13,13 +14,16 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
 import git4idea.GitContentRevision
+import git4idea.GitRevisionNumber
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
-class GHPRChangesProviderImpl(private val repository: GitRepository, commits: List<GitCommit>, diffFile: String)
+class GHPRChangesProviderImpl(private val repository: GitRepository,
+                              baseRef: String, headRef: String,
+                              commits: List<GitCommit>, diffFile: String)
   : GHPRChangesProvider {
 
-  override val lastCommitSha = commits.last().id.asString()
+  override val lastCommitSha = headRef
 
   override val changes: List<Change>
   private val patchesByChanges: Map<Change, TextFilePatch>
@@ -42,7 +46,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository, commits: Li
         continue
       }
 
-      val change = changeWithRenames.getVcsChange()
+      val change = changeWithRenames.createVcsChange(repository.project, baseRef, headRef)
       if (change == null) {
         LOG.info("Empty VCS change for patch $patch")
         continue
@@ -167,9 +171,11 @@ class GHPRChangesProviderImpl(private val repository: GitRepository, commits: Li
 
     val pathsByCommit = mutableMapOf<String, FilePath>()
 
-    fun getVcsChange(): Change? {
+    fun createVcsChange(project: Project, baseRef: String, headRef: String): Change? {
       if (firstRevision == null && lastRevision == null) return null
-      return Change(firstRevision, lastRevision)
+      val firstVcsRevision = firstRevision?.let { GitContentRevision.createRevision(it.file, GitRevisionNumber(baseRef), project) }
+      val lastVcsRevision = lastRevision?.let { GitContentRevision.createRevision(it.file, GitRevisionNumber(headRef), project) }
+      return Change(firstVcsRevision, lastVcsRevision)
     }
   }
 }

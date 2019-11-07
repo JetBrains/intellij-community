@@ -42,7 +42,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
 
         override fun run(indicator: ProgressIndicator) {
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
-          GithubAsyncUtil.awaitFuture(indicator, dataProvider.branchFetchRequest)
+          GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
 
           indicator.text = "Creating branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
@@ -65,7 +65,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
 
         override fun run(indicator: ProgressIndicator) {
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
-          GithubAsyncUtil.awaitFuture(indicator, dataProvider.branchFetchRequest)
+          GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
 
           indicator.text = "Checking out branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))

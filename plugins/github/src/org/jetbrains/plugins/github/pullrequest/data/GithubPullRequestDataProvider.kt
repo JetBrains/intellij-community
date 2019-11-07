@@ -14,7 +14,7 @@ interface GithubPullRequestDataProvider : GHPRTimelineLoaderHolder {
   val number: Long
 
   val detailsRequest: CompletableFuture<GHPullRequest>
-  val branchFetchRequest: CompletableFuture<Unit>
+  val headBranchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GithubCommit>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>
   val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
@@ -28,7 +28,7 @@ interface GithubPullRequestDataProvider : GHPRTimelineLoaderHolder {
   fun reloadDetails()
 
   @CalledInAwt
-  fun reloadCommits()
+  fun reloadChanges()
 
   @CalledInAwt
   fun reloadReviewThreads()

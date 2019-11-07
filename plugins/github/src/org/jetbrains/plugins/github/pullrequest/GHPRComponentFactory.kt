@@ -196,7 +196,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
                                                                                    "Can't load changes",
                                                                                    "Pull request does not contain any changes")).apply {
-      resetHandler = ActionListener { dataProviderModel.value?.reloadCommits() }
+      resetHandler = ActionListener { dataProviderModel.value?.reloadChanges() }
     }
 
     return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
