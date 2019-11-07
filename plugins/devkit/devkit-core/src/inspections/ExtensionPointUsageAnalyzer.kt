@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,11 +24,15 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.usages.*
 import com.intellij.usages.rules.PsiElementUsage
+import com.intellij.util.Processor
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoints
@@ -35,14 +40,7 @@ import org.jetbrains.uast.*
 import java.awt.Font
 import javax.swing.Icon
 
-/**
- * @author yole
- */
-
-private sealed class EPUsage {
-  data class Unknown(val reason: String, val targetElement: PsiElement?): EPUsage()
-  object Safe : EPUsage()
-}
+data class Leak(val reason: String, val targetElement: PsiElement?)
 
 private data class QualifiedCall(val callExpression: UCallExpression, val fullExpression: UExpression)
 
@@ -64,83 +62,168 @@ private fun findQualifiedCall(reference: PsiReference): QualifiedCall? {
   return null
 }
 
-private fun analyzeEPUsage(reference: PsiReference): EPUsage {
+private fun analyzeEPUsage(reference: PsiReference): List<Leak> {
   val containingFile = reference.element.containingFile
   val containingFileName = FileUtil.getNameWithoutExtension(containingFile.name)
   if (containingFileName.endsWith("CoreEnvironment") || containingFileName.endsWith("CoreApplicationEnvironment")) {
     // dynamic extension registration in EP is safe
-    return EPUsage.Safe
+    return emptyList()
   }
   if (ProjectRootManager.getInstance(containingFile.project).fileIndex.isInTestSourceContent(containingFile.virtualFile)) {
-    return EPUsage.Safe
+    return emptyList()
   }
   if (PsiTreeUtil.getNonStrictParentOfType(reference.element, PsiComment::class.java) != null) {
-    return EPUsage.Safe
+    return emptyList()
   }
 
-  val qualifiedCall = findQualifiedCall(reference) ?: return EPUsage.Unknown("No call found", reference.element)
+  val qualifiedCall = findQualifiedCall(reference) ?: return listOf(Leak("No call found", reference.element))
   val methodName = qualifiedCall.callExpression.methodName
   if (methodName == "getExtensions" || methodName == "getExtensionList") {
     return analyzeGetExtensionsCall(qualifiedCall.callExpression, qualifiedCall.fullExpression)
   }
 
-  return EPUsage.Unknown("Unknown call found", reference.element)
+  return listOf(Leak("Unknown call found", reference.element))
 }
 
-private data class SafeCall(val methodQName: String, val paramName: String)
-
-private val safeCalls = listOf(
-  SafeCall("com.intellij.util.containers.ContainerUtil.exists", "iterable")
-)
-
-private fun analyzeGetExtensionsCall(call: UCallExpression, fullExpression: UExpression): EPUsage {
+private fun analyzeGetExtensionsCall(call: UCallExpression, fullExpression: UExpression): List<Leak> {
   val loop = call.getParentOfType<UForEachExpression>()
   if (loop != null) {
-    if (fullExpression != loop.iteratedValue) return EPUsage.Unknown("Call is not loop's iterated value", fullExpression.sourcePsi)
-    val parameter = loop.variable.sourcePsi ?: return EPUsage.Unknown("Can't resolve loop variable", loop.sourcePsi)
+    if (fullExpression != loop.iteratedValue) return listOf(Leak("Call is not loop's iterated value", fullExpression.sourcePsi))
+    val parameter = loop.variable.sourcePsi ?: return listOf(Leak("Can't resolve loop variable", loop.sourcePsi))
+    val leaks = mutableListOf<Leak>()
     for (psiReference in ReferencesSearch.search(parameter).findAll()) {
-      val usage = analyzeExtensionInstanceUsage(psiReference)
-      if (usage != EPUsage.Safe) return usage
+      val ref = psiReference.element.toUElement()
+      if (ref != null) {
+        leaks.addAll(analyzeObjectLeak(ref, "Extension instance"))
+      }
     }
-    return EPUsage.Safe
+    return leaks
   }
 
-  val enclosingCall = fullExpression.getParentOfType<UCallExpression>()
-  if (enclosingCall != null) {
-    val callee = enclosingCall.resolve() ?: return EPUsage.Unknown("Unresolved method call", enclosingCall.sourcePsi)
-    val qName = "${callee.containingClass?.qualifiedName}.${callee.name}"
-    val param = enclosingCall.getParameterForArgument(fullExpression) ?: return EPUsage.Unknown("Can't find parameter", enclosingCall.sourcePsi)
-    if (safeCalls.any { it.methodQName == qName && it.paramName == param.name }) {
-      return EPUsage.Safe
-    }
-    return EPUsage.Unknown("Extension list passed to unknown method", enclosingCall.sourcePsi)
-  }
-
-  return EPUsage.Unknown("Unknown usage of extension list", call.sourcePsi)
+  return analyzeObjectLeak(fullExpression, "Extension list")
 }
 
-private fun analyzeExtensionInstanceUsage(ref: PsiReference): EPUsage {
-  val qualifiedCall = findQualifiedCall(ref) ?: run {
-    findQualifiedCall(ref)
-    return EPUsage.Unknown("Unknown usage of extension instance", ref.element.parent)
+private fun findEnclosingCall(expr: UElement?): UCallExpression? {
+  val call = expr?.getParentOfType<UCallExpression>()
+  if (call != null && call.valueArguments.contains(expr)) return call
+  val qualifiedExpression = expr?.getParentOfType<UQualifiedReferenceExpression>()
+  if (qualifiedExpression != null && qualifiedExpression.receiver == expr) {
+    return qualifiedExpression.selector as? UCallExpression
   }
-  val returnType = qualifiedCall.callExpression.returnType ?: return EPUsage.Unknown("Unknown call return type", qualifiedCall.callExpression.sourcePsi)
-  if (returnType is PsiPrimitiveType) {
-    if (returnType == PsiPrimitiveType.VOID) return EPUsage.Unknown("Method with void return type", qualifiedCall.callExpression.sourcePsi)  // it may be registering something somewhere
-    return EPUsage.Safe
-  }
-  val returnTypeClass = (returnType as? PsiClassType)?.resolve() ?: return EPUsage.Unknown("Unresolved return type class", qualifiedCall.callExpression.sourcePsi)
-  val project = ref.element.project
-  val psiElementClass = JavaPsiFacade.getInstance(project).findClass("com.intellij.psi.PsiElement",
-                                                                     GlobalSearchScope.projectScope(project))
-  if (psiElementClass != null) {
-    if (returnTypeClass.isEquivalentTo(psiElementClass) || returnTypeClass.isInheritor(psiElementClass, true)) return EPUsage.Safe
-  }
+  return null
+}
 
-  when (returnTypeClass.qualifiedName) {
-    CommonClassNames.JAVA_LANG_STRING, "javax.swing.Icon" -> return EPUsage.Safe
+private fun analyzeLeakThroughCall(call: UCallExpression, text: String): List<Leak> {
+  val callee = call.resolve() ?: return listOf(Leak("Unresolved method call", call.sourcePsi))
+  if (JavaMethodContractUtil.isPure(callee)) {
+    val type = call.returnType
+    if (type == null) {
+      return listOf(Leak("${text} passed to method with unknown return type", call.sourcePsi))
+    }
+    if (isSafeType(type, mutableSetOf())) return emptyList()
+    return analyzeObjectLeak(call, "${text}: return value of '${callee.name}' (type: ${type.presentableText})")
   }
-  return EPUsage.Unknown("Unknown return type " + returnTypeClass.qualifiedName, qualifiedCall.callExpression.sourcePsi)
+  return listOf(Leak("${text} passed to impure method, side-effect is possible " +
+                     "(annotate as '@Contract(pure = true)' if this should not be so)", call.sourcePsi))
+}
+
+private val SAFE_CLASSES = setOf(CommonClassNames.JAVA_LANG_STRING, "javax.swing.Icon")
+
+private fun isSafeType(type: PsiType?, set: MutableSet<PsiClass>): Boolean {
+  return when (type) {
+    null -> false
+    is PsiPrimitiveType -> true
+    is PsiArrayType -> isSafeType(type.deepComponentType, set)
+    is PsiClassType -> {
+      val psiClass = type.resolve() ?: return false
+      if (!set.add(psiClass)) return true
+      when {
+        SAFE_CLASSES.contains(psiClass.qualifiedName) -> true
+        InheritanceUtil.isInheritor(psiClass, "com.intellij.psi.PsiElement") -> true
+        psiClass.hasModifierProperty(PsiModifier.FINAL) -> {
+          psiClass.allFields.any { f -> isSafeType(f.type, set) }
+        }
+        else -> false
+      }
+    }
+    else -> false
+  }
+}
+
+private fun analyzeObjectLeak(e: UElement, text: String): List<Leak> {
+  if (e is UExpression) {
+    val type = e.getExpressionType()
+    if (isSafeType(type, mutableSetOf())) return emptyList()
+    val parent = e.uastParent
+    if (parent is UParenthesizedExpression ||
+        parent is UIfExpression ||
+        parent is UBinaryExpressionWithType) return analyzeObjectLeak(parent, text)
+    if (parent is UBinaryExpression && parent.operator !is UastBinaryOperator.AssignOperator) {
+      return emptyList()
+    }
+    if (parent is USwitchClauseExpression) {
+      val switchExpr = parent.getParentOfType<USwitchExpression>()
+      if (switchExpr != null) {
+        return analyzeObjectLeak(switchExpr, text)
+      }
+    }
+    val call = findEnclosingCall(e)
+    if (call != null) {
+      return analyzeLeakThroughCall(call, text)
+    }
+    if (parent is ULocalVariable) {
+      val sourcePsi = parent.sourcePsi
+      if (sourcePsi != null) {
+        val leaks = mutableListOf<Leak>()
+        for (psiReference in ReferencesSearch.search(sourcePsi).findAll()) {
+          val ref = psiReference.element.toUElement()
+          if (ref != null) {
+            leaks.addAll(analyzeObjectLeak(ref, text))
+          }
+        }
+        return leaks
+      }
+    }
+    if (parent is UReturnExpression) {
+      val jumpTarget = parent.jumpTarget
+      if (jumpTarget is UMethod) {
+        val psiMethod = jumpTarget.javaPsi
+        val methodsToFind = mutableSetOf<PsiMethod>()
+        methodsToFind.add(psiMethod)
+        ContainerUtil.addAll(methodsToFind, *psiMethod.findDeepestSuperMethods())
+        val searchScope = GlobalSearchScope.projectScope(psiMethod.project)
+        var count = 0
+        val result = mutableListOf<Leak>()
+        for (methodToFind in methodsToFind) {
+          MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(Processor { ref: PsiReference ->
+            if (++count > 10) {
+              return@Processor false
+            }
+            var uElement = ref.element.toUElement()
+            if (uElement is UReferenceExpression) {
+              if (uElement.uastParent is UCallExpression) {
+                uElement = uElement.uastParent
+                if (uElement != null && uElement.uastParent is UQualifiedReferenceExpression) {
+                  uElement = uElement.uastParent
+                }
+              }
+            }
+            if (uElement != null) {
+              result.addAll(analyzeObjectLeak(uElement, "${text}: returned from method ${psiMethod.name}"))
+            }
+            return@Processor true
+          })
+        }
+        if (count > 10) {
+          result.add(Leak("${text}: returned from method ${psiMethod.name} with many call sites", parent.sourcePsi))
+        } else if (result.isNotEmpty()) {
+          result.add(0, Leak("${text}: returned from method ${psiMethod.name} and leaks after that", parent.sourcePsi))
+        }
+        return result
+      }
+    }
+  }
+  return listOf(Leak("${text}: Unknown usage", e.sourcePsi?.parent))
 }
 
 class AnalyzeEPUsageAction : AnAction() {
@@ -177,7 +260,7 @@ class AnalyzeEPUsageAction : AnAction() {
       return
     }
 
-    val unsafeUsages = mutableListOf<Pair<PsiReference, EPUsage.Unknown>>()
+    val unsafeUsages = mutableListOf<Pair<PsiReference, Leak>>()
     val safeUsages = mutableListOf<PsiReference>()
     ProgressManager.getInstance().runProcessWithProgressSynchronously({
         processEPFieldUsages(sourcePsi, unsafeUsages, safeUsages)
@@ -207,12 +290,16 @@ class AnalyzeEPUsageAction : AnAction() {
   }
 
   private fun processEPFieldUsages(sourcePsi: PsiElement,
-                                   unsafeUsages: MutableList<Pair<PsiReference, EPUsage.Unknown>>,
+                                   unsafeUsages: MutableList<Pair<PsiReference, Leak>>,
                                    safeUsages: MutableList<PsiReference>) {
     ReferencesSearch.search(sourcePsi).forEach { ref ->
-      when (val usage = runReadAction { analyzeEPUsage(ref) }) {
-        is EPUsage.Unknown -> unsafeUsages.add(ref to usage)
-        is EPUsage.Safe -> safeUsages.add(ref)
+      val leaks = runReadAction { analyzeEPUsage(ref) }
+      if (leaks.isEmpty()) {
+        safeUsages.add(ref)
+      } else {
+        for (leak in leaks) {
+          unsafeUsages.add(ref to leak)
+        }
       }
     }
   }
@@ -267,7 +354,7 @@ class AnalyzeEPUsageAction : AnAction() {
               return@runReadAction
             }
 
-            val unsafeUsages = mutableListOf<Pair<PsiReference, EPUsage.Unknown>>()
+            val unsafeUsages = mutableListOf<Pair<PsiReference, Leak>>()
             val safeUsages = mutableListOf<PsiReference>()
             processEPFieldUsages(epField, unsafeUsages, safeUsages)
             if (safeUsages.isNotEmpty() && unsafeUsages.isEmpty()) {
