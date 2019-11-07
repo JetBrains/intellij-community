@@ -163,7 +163,7 @@ public class HelpTooltip {
         r.setLocation(location);
 
         if (r.contains(mouseLocation)) {
-          location.y = - popupSize.height - JBUI.scale(1);
+          location.y = mouseLocation.y - r.height - JBUI.scale(5);
         }
 
         return location;
