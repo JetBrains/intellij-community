@@ -24,7 +24,6 @@ import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.*;
 
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public class ExtensionPointImplTest {
   private Disposable disposable = Disposer.newDisposable();
 
@@ -268,6 +267,7 @@ public class ExtensionPointImplTest {
       }
     }, true, null);
 
+    //noinspection deprecation
     extensionPoint.registerExtension("first");
     assertThat(extensionPoint.getExtensionList().size()).isEqualTo(1);
     extensionPoint.unregisterExtensions((adapterName, adapter) -> false, false);
@@ -290,7 +290,7 @@ public class ExtensionPointImplTest {
 
   @NotNull
   private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new MyComponentManager());
+    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass);
   }
 
   private static MyShootingComponentAdapter stringAdapter() {

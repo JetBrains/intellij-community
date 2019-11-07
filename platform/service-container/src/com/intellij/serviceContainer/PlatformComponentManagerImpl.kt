@@ -90,6 +90,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val isHeadlessMode = app?.isHeadlessEnvironment == true
     val isUnitTestMode = app?.isUnitTestMode == true
 
+    val clonePoint = parent != null
+
     var activity = if (activityNamePrefix == null) null else StartUpMeasurer.startMainActivity("${activityNamePrefix}service and ep registration")
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
@@ -111,7 +113,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         }
       }
 
-      val listeners = getContainerDescriptor(plugin).listeners
+      val listeners = containerDescriptor.listeners
       if (listeners.isNotEmpty()) {
         if (map == null) {
           map = ContainerUtil.newConcurrentMap()
@@ -127,7 +129,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       }
 
       containerDescriptor.extensionPoints?.let {
-        extensionArea.registerExtensionPoints(plugin, it, this)
+        extensionArea.registerExtensionPoints(it, clonePoint)
       }
     }
 

@@ -6,15 +6,24 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
-  BeanExtensionPoint(@NotNull String name,
+@ApiStatus.Internal
+public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
+  public BeanExtensionPoint(@NotNull String name,
                      @NotNull String className,
-                     @NotNull ComponentManager componentManager,
                      @NotNull PluginDescriptor pluginDescriptor,
                      boolean dynamic) {
-    super(name, className, componentManager, pluginDescriptor, dynamic);
+    super(name, className, pluginDescriptor, dynamic);
+  }
+
+  @NotNull
+  @Override
+  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+    result.setComponentManager(manager);
+    return result;
   }
 
   @Override

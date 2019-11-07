@@ -9,7 +9,10 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.BeanExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
@@ -180,7 +183,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "extensionPoints":
-          XmlReader.readExtensionPoints(this, child);
+          XmlReader.readExtensionPoints(loadingContext.effectivePlugin == null ? this : loadingContext.effectivePlugin, child);
           break;
 
         case "actions":
@@ -438,8 +441,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   void registerExtensionPoints(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager) {
     ContainerDescriptor containerDescriptor;
+    boolean clonePoint = true;
     if (componentManager.getPicoContainer().getParent() == null) {
       containerDescriptor = myAppContainerDescriptor;
+      clonePoint = false;
     }
     else if (componentManager.getPicoContainer().getParent().getParent() == null) {
       containerDescriptor = myProjectContainerDescriptor;
@@ -448,9 +453,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       containerDescriptor = myModuleContainerDescriptor;
     }
 
-    List<Element> extensionsPoints = containerDescriptor.extensionsPoints;
-    if (extensionsPoints != null) {
-      area.registerExtensionPoints(this, extensionsPoints, componentManager);
+    List<ExtensionPointImpl<?>> extensionPoints = containerDescriptor.extensionPoints;
+    if (extensionPoints != null) {
+      area.registerExtensionPoints(extensionPoints, clonePoint);
     }
   }
 
@@ -1088,22 +1093,64 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    static void readExtensionPoints(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element child) {
-      for (Element extensionPoint : child.getChildren()) {
-        String area = extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA);
+    static void readExtensionPoints(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element parentElement) {
+      for (Content child : parentElement.getContent()) {
+        if (!(child instanceof Element)) {
+          continue;
+        }
+
+        Element element = (Element)child;
+
+        String area = element.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA);
         ContainerDescriptor containerDescriptor = descriptor.getContainerDescriptorByExtensionArea(area);
         if (containerDescriptor == null) {
           LOG.error("Unknown area: " + area);
           continue;
         }
 
-        List<Element> result = containerDescriptor.extensionsPoints;
+        String pointName = getExtensionPointName(element, descriptor.getPluginId());
+
+        String beanClassName = element.getAttributeValue("beanClass");
+        String interfaceClassName = element.getAttributeValue("interface");
+        if (beanClassName == null && interfaceClassName == null) {
+          throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + descriptor.getPluginId() + "' plugin");
+        }
+
+        if (beanClassName != null && interfaceClassName != null) {
+          throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + descriptor.getPluginId() + "' plugin");
+        }
+
+        List<ExtensionPointImpl<?>> result = containerDescriptor.extensionPoints;
         if (result == null) {
           result = new ArrayList<>();
-          containerDescriptor.extensionsPoints = result;
+          containerDescriptor.extensionPoints = result;
         }
-        result.add(extensionPoint);
+
+        boolean dynamic = Boolean.parseBoolean(element.getAttributeValue("dynamic"));
+        ExtensionPointImpl<Object> point;
+        if (interfaceClassName == null) {
+          point = new BeanExtensionPoint<>(pointName, beanClassName, descriptor, dynamic);
+        }
+        else {
+          point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, descriptor, dynamic);
+        }
+
+        result.add(point);
       }
+    }
+
+    @NotNull
+    private static String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginId effectivePluginId) {
+      String pointName = extensionPointElement.getAttributeValue("qualifiedName");
+      if (pointName == null) {
+        String name = extensionPointElement.getAttributeValue("name");
+        if (name == null) {
+          throw new RuntimeException("'name' attribute not specified for extension point in '" + effectivePluginId + "' plugin");
+        }
+
+        pointName = effectivePluginId.getIdString() + '.' + name;
+      }
+      return pointName;
     }
   }
 }

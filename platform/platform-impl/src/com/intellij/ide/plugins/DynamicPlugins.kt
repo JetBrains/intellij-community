@@ -82,15 +82,15 @@ object DynamicPlugins {
   }
 
   private fun isPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): Boolean {
-    return isContainerExtensionPoint(pluginDescriptor.app, pluginDescriptor, epName) ||
-           isContainerExtensionPoint(pluginDescriptor.project, pluginDescriptor, epName) ||
-           isContainerExtensionPoint(pluginDescriptor.module, pluginDescriptor, epName)
+    return isContainerExtensionPoint(pluginDescriptor.app, epName) ||
+           isContainerExtensionPoint(pluginDescriptor.project, epName) ||
+           isContainerExtensionPoint(pluginDescriptor.module, epName)
   }
 
-  private fun isContainerExtensionPoint(containerDescriptor: ContainerDescriptor, pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): Boolean {
+  private fun isContainerExtensionPoint(containerDescriptor: ContainerDescriptor, epName: String): Boolean {
     val extensionPoints = containerDescriptor.extensionPoints ?: return false
     return extensionPoints.any {
-      (Extensions.getRootArea() as ExtensionsAreaImpl).getExtensionPointName(it, pluginDescriptor) == epName
+      it.name == epName
     }
   }
 
@@ -155,15 +155,15 @@ object DynamicPlugins {
         }
       }
 
-      pluginDescriptor.app.extensionsPoints?.let {
-        for (extensionPointElement in it) {
-          val rootArea = Extensions.getRootArea() as ExtensionsAreaImpl
-          rootArea.unregisterExtensionPoint(rootArea.getExtensionPointName(extensionPointElement, pluginDescriptor))
+      pluginDescriptor.app.extensionPoints?.let {
+        for (point in it) {
+          val rootArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+          rootArea.unregisterExtensionPoint(point.name)
         }
       }
-      pluginDescriptor.project.extensionsPoints?.let {
-        for (extensionPointElement in it) {
-          val extensionPointName = (Extensions.getRootArea() as ExtensionsAreaImpl).getExtensionPointName(extensionPointElement, pluginDescriptor)
+      pluginDescriptor.project.extensionPoints?.let {
+        for (point in it) {
+          val extensionPointName = point.name
           for (openProject in openProjects) {
             openProject.extensionArea.unregisterExtensionPoint(extensionPointName)
           }

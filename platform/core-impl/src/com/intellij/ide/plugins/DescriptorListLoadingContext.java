@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.ConcurrencyUtil;
@@ -35,6 +36,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   final Set<PluginId> disabledPlugins;
 
   private volatile String defaultVersion;
+  private volatile Logger logger;
 
   DescriptorListLoadingContext(boolean isParallel, @NotNull Set<PluginId> disabledPlugins) {
     this.disabledPlugins = disabledPlugins;
@@ -59,6 +61,16 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       PluginXmlFactory factory = new PluginXmlFactory();
       xmlFactorySupplier = () -> factory;
     }
+  }
+
+  @NotNull
+  Logger getLogger() {
+    Logger result = logger;
+    if (result == null) {
+      result = Logger.getInstance(PluginManager.class);
+      logger = result;
+    }
+    return result;
   }
 
   @NotNull

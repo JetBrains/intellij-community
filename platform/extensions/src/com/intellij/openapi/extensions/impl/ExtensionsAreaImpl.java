@@ -80,11 +80,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
     ExtensionPointImpl<Object> point;
     if (interfaceClassName == null) {
-      point = new BeanExtensionPoint<>(pointName, beanClassName, componentManager, pluginDescriptor, dynamic);
+      point = new BeanExtensionPoint<>(pointName, beanClassName, pluginDescriptor, dynamic);
     }
     else {
-      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, componentManager, pluginDescriptor, dynamic);
+      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, pluginDescriptor, dynamic);
     }
+    point.setComponentManager(componentManager);
     registerExtensionPoint(point);
   }
 
@@ -158,11 +159,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     IdeaPluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
-      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myComponentManager, pluginDescriptor, false);
+      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, pluginDescriptor, false);
     }
     else {
-      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myComponentManager, pluginDescriptor, false);
+      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, pluginDescriptor, false);
     }
+    point.setComponentManager(myComponentManager);
     registerExtensionPoint(point);
   }
 
@@ -172,11 +174,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
                                                  @NotNull PluginDescriptor pluginDescriptor) {
     ExtensionPointImpl<T> point;
     if (extensionClass.isInterface() || (extensionClass.getModifiers() & Modifier.ABSTRACT) != 0) {
-      point = new InterfaceExtensionPoint<>(name, extensionClass.getName(), myComponentManager, pluginDescriptor, false);
+      point = new InterfaceExtensionPoint<>(name, extensionClass.getName(), pluginDescriptor, false);
     }
     else {
-      point = new BeanExtensionPoint<>(name, extensionClass.getName(), myComponentManager, pluginDescriptor, false);
+      point = new BeanExtensionPoint<>(name, extensionClass.getName(), pluginDescriptor, false);
     }
+    point.setComponentManager(myComponentManager);
     registerExtensionPoint(point);
     return point;
   }
@@ -189,7 +192,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @TestOnly
   public <T> ExtensionPointImpl<T> registerFakeBeanPoint(@NotNull String name, @NotNull PluginDescriptor pluginDescriptor) {
     // any object name can be used, because EP must not create any instance
-    ExtensionPointImpl<T> point = new BeanExtensionPoint<>(name, Object.class.getName(), myComponentManager, pluginDescriptor, false);
+    ExtensionPointImpl<T> point = new BeanExtensionPoint<>(name, Object.class.getName(), pluginDescriptor, false);
+    point.setComponentManager(myComponentManager);
     registerExtensionPoint(point);
     return point;
   }
@@ -219,6 +223,27 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     myExtensionPoints.put(name, point);
     if (DEBUG_REGISTRATION) {
       myEPTraces.put(name, new Throwable("Original registration for " + name));
+    }
+  }
+
+  @ApiStatus.Internal
+  public void registerExtensionPoints(@NotNull List<ExtensionPointImpl<?>> points, boolean clonePoint) {
+    ComponentManager componentManager = myComponentManager;
+    Map<String, ExtensionPointImpl<?>> map = myExtensionPoints;
+    for (ExtensionPointImpl<?> point : points) {
+      if (clonePoint) {
+        point = point.cloneFor(componentManager);
+      }
+      else {
+        point.setComponentManager(componentManager);
+      }
+
+      ExtensionPointImpl<?> old = map.put(point.getName(), point);
+      if (old != null) {
+        map.put(point.getName(), old);
+        throw myComponentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getDescriptor() +
+                                             ", second in " + point.getDescriptor(), point.getDescriptor().getPluginId());
+      }
     }
   }
 

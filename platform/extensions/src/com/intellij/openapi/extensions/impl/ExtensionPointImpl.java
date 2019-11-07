@@ -50,7 +50,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private volatile T[] myExtensionsCacheAsArray;
 
   @NotNull
-  final ComponentManager myComponentManager;
+  ComponentManager myComponentManager;
+
   @NotNull
   private final PluginDescriptor myDescriptor;
 
@@ -71,14 +72,16 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
-                     @NotNull ComponentManager componentManager,
                      @NotNull PluginDescriptor pluginDescriptor,
                      boolean dynamic) {
     myName = name;
     myClassName = className;
-    myComponentManager = componentManager;
     myDescriptor = pluginDescriptor;
     myDynamic = dynamic;
+  }
+
+  public final void setComponentManager(@NotNull ComponentManager value) {
+    myComponentManager = value;
   }
 
   @NotNull
@@ -411,6 +414,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null, StartUpMeasurer.MEASURE_THRESHOLD);
     return result;
   }
+
+  @NotNull
+  public abstract ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager);
 
   @NotNull
   public static ActivityCategory getActivityCategory(@NotNull PicoContainer picoContainer) {

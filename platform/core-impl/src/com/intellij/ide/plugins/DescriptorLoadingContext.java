@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -25,6 +26,9 @@ final class DescriptorLoadingContext implements AutoCloseable {
   Path lastZipWithDescriptor;
 
   final PathBasedJdomXIncluder.PathResolver<?> pathResolver;
+
+  @Nullable
+  IdeaPluginDescriptorImpl effectivePlugin;
 
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
@@ -72,7 +76,9 @@ final class DescriptorLoadingContext implements AutoCloseable {
 
   @NotNull
   public DescriptorLoadingContext copy(boolean isEssential) {
-    return new DescriptorLoadingContext(parentContext, isBundled, isEssential, pathResolver);
+    DescriptorLoadingContext result = new DescriptorLoadingContext(parentContext, isBundled, isEssential, pathResolver);
+    result.effectivePlugin = effectivePlugin;
+    return result;
   }
 
   void readDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor,
