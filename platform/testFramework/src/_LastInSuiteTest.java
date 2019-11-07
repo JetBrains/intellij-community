@@ -7,11 +7,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -26,6 +28,7 @@ import org.junit.runners.MethodSorters;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -53,8 +56,8 @@ public class _LastInSuiteTest extends TestCase {
 
   @SuppressWarnings("CallToSystemGC")
   public void testDynamicExtensions() {
-    // remove the assumption as soon as the white-list prepared
-    Assume.assumeTrue(SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false));
+    Assume.assumeTrue(!EXTENSION_POINTS_WHITE_LIST.isEmpty() ||
+                      SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false));
 
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
     unloadExtensionPoints(extensions.keySet());
@@ -62,26 +65,40 @@ public class _LastInSuiteTest extends TestCase {
     System.gc();
     System.gc();
 
-    Map<ExtensionPoint<?>, List<Object>> liveExtensions = new HashMap<>();
-    Set<ExtensionPoint<?>> unloadedExtensionPoints = new HashSet<>();
+    AtomicBoolean failed = new AtomicBoolean(false);
     extensions.forEach((ep, references) -> {
-      List<Object> live = ContainerUtil.mapNotNull(references, WeakReference::get);
-      if (!live.isEmpty()) {
-        liveExtensions.put(ep, live);
+      System.out.printf("##teamcity[testStarted name='%s']%n", escape(unloadingTestName(ep)));
+      System.out.flush();
+
+      List<Object> alive = ContainerUtil.mapNotNull(references, WeakReference::get);
+      if (!alive.isEmpty()) {
+        String aliveExtensions = StringUtil.join(alive, o -> o.getClass().getName(), "\n");
+        System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED,
+                          escape(unloadingTestName(ep)), 
+                          escape("Not unloaded extensions:\n" + aliveExtensions + "\n\n" + "See testDynamicExtensions output to find a heapDump"));
+        System.out.flush();
+        failed.set(true);
       }
       else {
-        unloadedExtensionPoints.add(ep);
+        System.out.printf("##teamcity[testFinished name='%s']%n", escape(unloadingTestName(ep)));
+        System.out.flush();
       }
     });
 
-    System.out.println("Successfully unloaded extension points:\n" + StringUtil.join(unloadedExtensionPoints, "\n"));
-
-    if (!liveExtensions.isEmpty()) {
+    if (failed.get()) {
       String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
-      fail("Some of dynamic extensions have not been unloaded: " + StringUtil.join(liveExtensions.entrySet(), entry ->
-        entry.getKey() + ": [" + StringUtil.join(entry.getValue(), o -> o.getClass().getName(), ", ") + "]", "\n") +
-           "\nHeap dump: " + heapDump);
+      fail("Some of dynamic extensions have not been unloaded. See individual tests for details. Heap dump: " + heapDump);
     }
+  }
+
+  @NotNull
+  private static String unloadingTestName(ExtensionPoint<?> ep) {
+    return "Dynamic EP unloading " + ep.getName();
+  }
+
+  @NotNull
+  private static String escape(String s) {
+    return MapSerializerUtil.escapeStr(s, MapSerializerUtil.STD_ESCAPER);
   }
 
   private static void unloadExtensionPoints(@NotNull Set<ExtensionPoint<?>> extensionPoints) {
@@ -96,7 +113,11 @@ public class _LastInSuiteTest extends TestCase {
   private static Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> collectDynamicNonPlatformExtensions() {
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = new HashMap<>();
     boolean useWhiteList = !SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
-    for (ExtensionPoint<?> ep : Extensions.getRootArea().getExtensionPoints()) {
+    ExtensionsArea area = Extensions.getRootArea();
+    if (area == null) {
+      return extensions;
+    }
+    for (ExtensionPoint<?> ep : area.getExtensionPoints()) {
       if (!ep.isDynamic()) continue;
       if (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.getName())) continue;
 
