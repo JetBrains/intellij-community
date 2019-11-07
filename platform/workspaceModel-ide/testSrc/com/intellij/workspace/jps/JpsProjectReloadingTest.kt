@@ -14,7 +14,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
   @Test
   fun `test modify iml`() {
     checkProjectAfterReload("common/modifyIml", "common/modifyIml") { (storage, projectDirUrl) ->
-      val modules = storage.entities(ModuleEntity::class).sortedBy { it.name }.toList()
+      val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
       assertEquals(3, modules.size)
       val utilModule = modules[1]
       assertEquals("util", utilModule.name)
@@ -45,7 +45,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
 
   fun `test add module`() {
     checkProjectAfterReload("directoryBased/addModule", "fileBased/addModule") { (storage, projectDirUrl) ->
-      val modules = storage.entities(ModuleEntity::class).sortedBy { it.name }.toList()
+      val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
       assertEquals(4, modules.size)
       val newModule = modules[1]
       assertEquals("newModule", newModule.name)
@@ -56,7 +56,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
 
   fun `test remove module`() {
     checkProjectAfterReload("directoryBased/removeModule", "fileBased/removeModule") { (storage, _) ->
-      assertEquals(setOf("main", "xxx"), storage.entities(ModuleEntity::class).mapTo(HashSet()) {it.name})
+      assertEquals(setOf("main", "xxx"), storage.entities(ModuleEntity::class.java).mapTo(HashSet()) {it.name})
     }
   }
 

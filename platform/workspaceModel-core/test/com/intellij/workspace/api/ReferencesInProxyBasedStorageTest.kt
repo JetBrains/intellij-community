@@ -59,8 +59,8 @@ private fun TypedEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity,
     this.parent2 = parent2
   }
 
-private fun TypedEntityStorage.singleParent() = entities(ParentEntity::class).single()
-private fun TypedEntityStorage.singleChild() = entities(ChildEntity::class).single()
+private fun TypedEntityStorage.singleParent() = entities(ParentEntity::class.java).single()
+private fun TypedEntityStorage.singleChild() = entities(ChildEntity::class.java).single()
 
 class ReferencesInProxyBasedStorageTest {
   @Test
@@ -103,13 +103,13 @@ class ReferencesInProxyBasedStorageTest {
     assertEquals(emptyList<ChildEntity>(), parent2.children.toList())
     assertEquals("parent1", child.parent.parentProperty)
     assertEquals("parent2", child.dataClass!!.parent.resolve(builder).parentProperty)
-    assertEquals(setOf(parent1, parent2), builder.entities(ParentEntity::class).toSet())
+    assertEquals(setOf(parent1, parent2), builder.entities(ParentEntity::class.java).toSet())
 
     builder.modifyEntity(ModifiableChildEntity::class.java, child) {
       dataClass = null
     }
     builder.checkConsistency()
-    assertEquals(setOf(parent1, parent2), builder.entities(ParentEntity::class).toSet())
+    assertEquals(setOf(parent1, parent2), builder.entities(ParentEntity::class.java).toSet())
   }
 
   @Test
@@ -121,7 +121,7 @@ class ReferencesInProxyBasedStorageTest {
     builder.checkConsistency()
     builder.removeEntity(child)
     builder.checkConsistency()
-    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class).toList())
+    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
     assertEquals(emptyList<ChildEntity>(), parent.children.toList())
     assertEquals(parent, builder.singleParent())
   }
@@ -132,8 +132,8 @@ class ReferencesInProxyBasedStorageTest {
     val child = builder.addChildEntity()
     builder.removeEntity(child.parent)
     builder.checkConsistency()
-    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class).toList())
-    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class).toList())
+    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
+    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class.java).toList())
   }
 
   @Test
@@ -143,8 +143,8 @@ class ReferencesInProxyBasedStorageTest {
     builder.addChildEntity(parentEntity = child1.parent)
     builder.removeEntity(child1.parent)
     builder.checkConsistency()
-    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class).toList())
-    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class).toList())
+    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
+    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class.java).toList())
   }
 
   @Test
@@ -155,8 +155,8 @@ class ReferencesInProxyBasedStorageTest {
     builder.addChildChildEntity(parent, child)
     builder.removeEntity(parent)
     builder.checkConsistency()
-    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class).toList())
-    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class).toList())
+    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
+    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class.java).toList())
   }
 
   @Test
@@ -167,8 +167,8 @@ class ReferencesInProxyBasedStorageTest {
     builder.addChildEntity(parent1, "child", DataClass("data", builder.createReference(parent2)))
     builder.removeEntity(parent2)
     builder.checkConsistency()
-    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class).toList())
-    assertEquals(listOf(parent1), builder.entities(ParentEntity::class).toList())
+    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
+    assertEquals(listOf(parent1), builder.entities(ParentEntity::class.java).toList())
     assertEquals(emptyList<ChildEntity>(), parent1.children.toList())
   }
 
@@ -180,8 +180,8 @@ class ReferencesInProxyBasedStorageTest {
     builder.checkConsistency()
     builder.removeEntity(parent)
     builder.checkConsistency()
-    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class).toList())
-    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class).toList())
+    assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
+    assertEquals(emptyList<ParentEntity>(), builder.entities(ParentEntity::class.java).toList())
   }
 
   @Test
@@ -249,7 +249,7 @@ class ReferencesInProxyBasedStorageTest {
     }
     builder.checkConsistency()
     assertEquals("child", newChild.childProperty)
-    assertEquals(setOf(oldParent, newParent), builder.entities(ParentEntity::class).toSet())
+    assertEquals(setOf(oldParent, newParent), builder.entities(ParentEntity::class.java).toSet())
     assertEquals(newChild, builder.singleChild())
     assertEquals(newParent, newChild.parent)
     assertEquals(newChild, newParent.children.single())
@@ -271,7 +271,7 @@ class ReferencesInProxyBasedStorageTest {
     builder.checkConsistency()
     assertEquals("child", newChild.childProperty)
     assertEquals("data2", newChild.dataClass!!.stringProperty)
-    assertEquals(setOf(oldParent, newParent, parent1), builder.entities(ParentEntity::class).toSet())
+    assertEquals(setOf(oldParent, newParent, parent1), builder.entities(ParentEntity::class.java).toSet())
     assertEquals(newChild, builder.singleChild())
     assertEquals(newParent, newChild.dataClass!!.parent.resolve(builder))
     assertEquals(oldParent, child.dataClass!!.parent.resolve(builder))
@@ -310,7 +310,7 @@ class ReferencesInProxyBasedStorageTest {
     assertEquals(null, storage.singleChild().dataClass)
     assertEquals("data", builder.singleChild().dataClass!!.stringProperty)
     assertEquals(parent2, builder.singleChild().dataClass!!.parent.resolve(builder))
-    assertEquals(setOf(parent2, newParent), builder.entities(ParentEntity::class).toSet())
+    assertEquals(setOf(parent2, newParent), builder.entities(ParentEntity::class.java).toSet())
   }
 
   @Test

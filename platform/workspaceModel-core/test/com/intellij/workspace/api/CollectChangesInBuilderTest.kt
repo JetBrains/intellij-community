@@ -27,7 +27,7 @@ class CollectChangesInBuilderTest {
       intProperty = 2
     }
     builder.removeEntity(initialStorage.singleSampleEntity())
-    builder.removeEntity(initialStorage.entities(SelfModifiableSampleEntity::class).single())
+    builder.removeEntity(initialStorage.entities(SelfModifiableSampleEntity::class.java).single())
     @Suppress("UNCHECKED_CAST") val changes = builder.collectChanges(initialStorage).getValue(SampleEntity::class.java) as List<EntityChange<SampleEntity>>
     assertEquals(2, changes.size)
     val (change1, change2) = changes
@@ -51,7 +51,7 @@ class CollectChangesInBuilderTest {
     builder.modifyEntity(ModifiableSampleEntity::class.java, initialStorage.singleSampleEntity()) {
       stringProperty = "changed"
     }
-    builder.modifyEntity(SelfModifiableSampleEntity::class.java, initialStorage.entities(SelfModifiableSampleEntity::class).single()) {
+    builder.modifyEntity(SelfModifiableSampleEntity::class.java, initialStorage.entities(SelfModifiableSampleEntity::class.java).single()) {
       intProperty = 2
     }
     @Suppress("UNCHECKED_CAST")

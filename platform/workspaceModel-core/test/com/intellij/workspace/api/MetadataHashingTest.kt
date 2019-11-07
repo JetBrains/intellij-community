@@ -135,7 +135,7 @@ class MetadataHashingTest {
 
   interface IdFieldChangeType1: TypedEntity {
     val xyz: MyId
-    data class MyId(val z: Int): PersistentEntityId<E>(E::class) {
+    data class MyId(val z: Int): PersistentEntityId<E>() {
       override val parentId: PersistentEntityId<*>?
         get() = null
       override val presentableName: String
@@ -148,7 +148,7 @@ class MetadataHashingTest {
 
   interface IdFieldChangeType2: TypedEntity {
     val xyz: MyId
-    data class MyId(val z: String): PersistentEntityId<E>(E::class) {
+    data class MyId(val z: String): PersistentEntityId<E>() {
       override val parentId: PersistentEntityId<*>?
         get() = null
       override val presentableName: String

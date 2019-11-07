@@ -15,7 +15,7 @@ class JpsProjectSaveAfterChangesTest {
   @Test
   fun `modify module`() {
     checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml") { builder, projectDirUrl ->
-      val utilModule = builder.entities(ModuleEntity::class).first { it.name == "util" }
+      val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
       builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
         url = VirtualFileUrlManager.fromUrl("$projectDirUrl/util/src2")
@@ -55,7 +55,7 @@ class JpsProjectSaveAfterChangesTest {
   @Test
   fun `add module`() {
     checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule") { builder, projectDirUrl ->
-      val projectPlace = (builder.entities(ModuleEntity::class).first().entitySource as JpsFileEntitySource).projectPlace
+      val projectPlace = (builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource).projectPlace
       val source = JpsFileEntitySource(VirtualFileUrlManager.fromUrl("$projectDirUrl/newModule.iml"), projectPlace)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
       val module = builder.addModuleEntity("newModule", dependencies, source)
@@ -69,7 +69,7 @@ class JpsProjectSaveAfterChangesTest {
   @Test
   fun `remove module`() {
     checkSaveProjectAfterChange("directoryBased/removeModule", "fileBased/removeModule") { builder, _ ->
-      val utilModule = builder.entities(ModuleEntity::class).first { it.name == "util" }
+      val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       //todo now we need to remove module libraries by hand, maybe we should somehow modify the model instead
       val moduleLibraries = utilModule.getModuleLibraries(builder).toList()
       builder.removeEntity(utilModule)
@@ -82,7 +82,7 @@ class JpsProjectSaveAfterChangesTest {
   @Test
   fun `modify library`() {
     checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, projectDirUrl ->
-      val junitLibrary = builder.entities(LibraryEntity::class).first { it.name == "junit" }
+      val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       val root = LibraryRoot(VirtualFileUrlManager.fromUrl("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/"),
                              LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
       builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
@@ -94,7 +94,7 @@ class JpsProjectSaveAfterChangesTest {
   @Test
   fun `remove library in directory-based project`() {
     checkSaveProjectAfterChange(sampleDirBasedProjectFile, null, listOf(".idea/libraries/junit.xml")) { builder, _ ->
-      val junitLibrary = builder.entities(LibraryEntity::class).first { it.name == "junit" }
+      val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.removeEntity(junitLibrary)
     }
   }
@@ -102,7 +102,7 @@ class JpsProjectSaveAfterChangesTest {
   @Test
   fun `remove library in file-based project`() {
     checkSaveProjectAfterChange(sampleFileBasedProjectFile, "fileBased/removeLibrary", emptyList()) { builder, _ ->
-      val junitLibrary = builder.entities(LibraryEntity::class).first { it.name == "junit" }
+      val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.removeEntity(junitLibrary)
     }
   }

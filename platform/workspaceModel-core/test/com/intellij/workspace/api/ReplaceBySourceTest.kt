@@ -12,7 +12,7 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("hello1", SampleEntitySource("1"))
     builder.replaceBySource({it == SampleEntitySource("1")}, replacement)
     builder.checkConsistency()
-    assertEquals(setOf("hello1", "hello2"), builder.entities(SampleEntity::class).mapTo(HashSet()) {it.stringProperty})
+    assertEquals(setOf("hello1", "hello2"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) {it.stringProperty})
   }
 
   @Test
@@ -36,7 +36,7 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("updated", source1)
     builder.replaceBySource({it == source1}, replacement)
     builder.checkConsistency()
-    assertEquals(setOf("hello2", "updated"), builder.entities(SampleEntity::class).mapTo(HashSet()) {it.stringProperty})
+    assertEquals(setOf("hello2", "updated"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) {it.stringProperty})
   }
 
   @Test
@@ -51,7 +51,7 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("new", sourceA2)
     builder.replaceBySource({ it is SampleEntitySource && it.name.startsWith("a") }, replacement)
     builder.checkConsistency()
-    assertEquals(setOf("b", "new"), builder.entities(SampleEntity::class).mapTo(HashSet()) { it.stringProperty })
+    assertEquals(setOf("b", "new"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
   }
 
   @Test

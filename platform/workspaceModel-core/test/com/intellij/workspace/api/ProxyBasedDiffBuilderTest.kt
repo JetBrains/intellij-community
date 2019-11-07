@@ -17,7 +17,7 @@ class ProxyBasedDiffBuilderTest {
     val target = TypedEntityStorageBuilder.create()
     target.addSampleEntity("second")
     val storage = target.applyDiff(source)
-    assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class).mapTo(HashSet()) { it.stringProperty })
+    assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
   }
 
   @Test
@@ -68,7 +68,7 @@ class ProxyBasedDiffBuilderTest {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
-    assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class).toList())
+    assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class.java).toList())
   }
 
   @Test
@@ -82,7 +82,7 @@ class ProxyBasedDiffBuilderTest {
     source.removeEntity(entity)
     source.checkConsistency()
     val storage = target.applyDiff(source)
-    assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class).toList())
+    assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class.java).toList())
   }
 
 }

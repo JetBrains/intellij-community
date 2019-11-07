@@ -49,7 +49,7 @@ interface ModuleGroupPathEntity : TypedEntity {
   val module: ModuleEntity
 }
 
-data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>(ModuleEntity::class) {
+data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
   override val parentId: PersistentEntityId<*>?
     get() = null
   override val presentableName: String
@@ -131,11 +131,11 @@ interface ContentRootEntity : TypedEntity {
 }
 
 fun ModuleEntity.getModuleLibraries(storage: TypedEntityStorage): Sequence<LibraryEntity> {
-  return storage.entities(LibraryEntity::class).filter { (it.persistentId().tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
+  return storage.entities(LibraryEntity::class.java).filter { (it.persistentId().tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
 }
 
 val TypedEntityStorage.projectLibraries
-  get() = entities(LibraryEntity::class).filter { it.persistentId().tableId == LibraryTableId.ProjectLibraryTableId }
+  get() = entities(LibraryEntity::class.java).filter { it.persistentId().tableId == LibraryTableId.ProjectLibraryTableId }
 
 sealed class LibraryTableId {
   data class ModuleLibraryTableId(val moduleId: ModuleId) : LibraryTableId() {
@@ -164,8 +164,7 @@ interface LibraryEntity : TypedEntityWithPersistentId, ReferableTypedEntity {
   }
 }
 
-data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity>(
-  LibraryEntity::class) {
+data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity>() {
   override val parentId: PersistentEntityId<*>?
     get() = null
   override val presentableName: String
@@ -198,8 +197,7 @@ interface SdkEntity : TypedEntity {
   val homeUrl: VirtualFileUrl
 }
 
-data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity>(
-  ArtifactEntity::class) {
+data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity>() {
   override val parentId: PersistentEntityId<*>?
     get() = null
   override val presentableName: String

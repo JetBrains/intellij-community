@@ -259,7 +259,7 @@ class JpsEntitiesSerializationData(fileSerializers: List<JpsFileEntitiesSerializ
         entitiesToSave.any { serializer.mainEntityClass in it.value }) {
         val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
         serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
-          storage.entities(it.kotlin).toList()
+          storage.entities(it.kotlin.java).toList()
         }
         serializersToRun.add(Pair(serializer, entitiesMap))
       }
@@ -271,7 +271,7 @@ class JpsEntitiesSerializationData(fileSerializers: List<JpsFileEntitiesSerializ
   }
 
   private fun <E : TypedEntity> getFilteredEntitiesForSerializer(serializer: JpsFileEntityTypeSerializer<E>, storage: TypedEntityStorage): List<E> {
-    return storage.entities(serializer.mainEntityClass.kotlin).filter(serializer.entityFilter).toList()
+    return storage.entities(serializer.mainEntityClass.kotlin.java).filter(serializer.entityFilter).toList()
   }
 
   private fun <E : TypedEntity> saveEntitiesBySerializer(serializer: JpsFileEntitiesSerializer<E>,
@@ -296,7 +296,7 @@ class JpsEntitiesSerializationData(fileSerializers: List<JpsFileEntitiesSerializ
   }
 
   private fun <E : TypedEntity> saveEntitiesList(it: JpsFileSerializerFactory<E>, storage: TypedEntityStorage, writer: JpsFileContentWriter) {
-    it.saveEntitiesList(storage.entities(it.entityClass.kotlin), writer)
+    it.saveEntitiesList(storage.entities(it.entityClass.kotlin.java), writer)
   }
 }
 

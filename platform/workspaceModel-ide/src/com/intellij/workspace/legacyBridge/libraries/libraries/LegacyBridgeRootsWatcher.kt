@@ -38,9 +38,9 @@ class LegacyBridgeRootsWatcher(
 
         val s = event.storageAfter
 
-        s.entities(SourceRootEntity::class).forEach { roots.add(it.url) }
-        s.entities(ContentRootEntity::class).forEach { roots.add(it.url) }
-        s.entities(LibraryEntity::class).forEach {
+        s.entities(SourceRootEntity::class.java).forEach { roots.add(it.url) }
+        s.entities(ContentRootEntity::class.java).forEach { roots.add(it.url) }
+        s.entities(LibraryEntity::class.java).forEach {
           roots.addAll(it.excludedRoots)
           for (root in it.roots) {
             when (root.inclusionOptions) {
@@ -50,7 +50,7 @@ class LegacyBridgeRootsWatcher(
             }.let { } // exhaustive when
           }
         }
-        s.entities(SdkEntity::class).forEach { roots.add(it.homeUrl) }
+        s.entities(SdkEntity::class.java).forEach { roots.add(it.homeUrl) }
 
         syncNewRootsToContainer(
           newRoots = roots,

@@ -67,7 +67,7 @@ class LegacyBridgeModuleRootComponent(
     val moduleLibraryTableId = LibraryTableId.ModuleLibraryTableId(legacyBridgeModule.moduleEntityId)
 
     legacyBridgeModule.entityStore.current
-      .entities(LibraryEntity::class)
+      .entities(LibraryEntity::class.java)
       .filter { it.tableId == moduleLibraryTableId }
       .forEach { libraryEntity ->
         val library = createModuleLibrary(libraryEntity.persistentId())

@@ -37,7 +37,7 @@ internal fun TypedEntityStorageBuilder.addSampleEntity(stringProperty: String,
   }
 }
 
-internal fun TypedEntityStorage.singleSampleEntity() = entities(SampleEntity::class).single()
+internal fun TypedEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 
 internal data class SampleEntitySource(val name: String) : EntitySource
 
@@ -61,7 +61,7 @@ class SimplePropertiesInProxyBasedStorageTest {
     val entity = builder.addSampleEntity("hello")
     builder.removeEntity(entity)
     builder.checkConsistency()
-    assertTrue(builder.entities(SampleEntity::class).toList().isEmpty())
+    assertTrue(builder.entities(SampleEntity::class.java).toList().isEmpty())
   }
 
   @Test
@@ -98,7 +98,7 @@ class SimplePropertiesInProxyBasedStorageTest {
     assertEquals(239, modified.intProperty)
     builder.removeEntity(modified)
     builder.checkConsistency()
-    assertEquals(emptyList<SelfModifiableSampleEntity>(), builder.entities(SelfModifiableSampleEntity::class).toList())
+    assertEquals(emptyList<SelfModifiableSampleEntity>(), builder.entities(SelfModifiableSampleEntity::class.java).toList())
   }
 
   @Test

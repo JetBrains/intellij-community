@@ -182,7 +182,7 @@ class LegacyBridgeModulesTest {
       assertNotNull(moduleManager.findModuleByName("name"))
 
       projectModel.updateProjectModel {
-        val moduleEntity = it.entities(ModuleEntity::class).single()
+        val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.removeEntity(moduleEntity)
         it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, project.storagePlace!!))
       }

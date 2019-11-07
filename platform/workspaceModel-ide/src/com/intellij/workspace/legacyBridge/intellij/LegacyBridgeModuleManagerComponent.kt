@@ -73,7 +73,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
           val unloadedNames = unloadedModules.unloadedModuleNames.toSet()
 
-          val entities = entityStore.current.entities(ModuleEntity::class)
+          val entities = entityStore.current.entities(ModuleEntity::class.java)
             .filter { !unloadedNames.contains(it.name) }
             .toList()
           loadModules(entities)
@@ -352,7 +352,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   override fun getUnloadedModuleDescriptions(): MutableCollection<UnloadedModuleDescription> {
     val names = unloadedModules.unloadedModuleNames.toSet()
-    val entities = entityStore.current.entities(ModuleEntity::class).filter { names.contains(it.name) }.toList()
+    val entities = entityStore.current.entities(ModuleEntity::class.java).filter { names.contains(it.name) }.toList()
     return entities.map { getUnloadedModuleDescription(it) }.toMutableList()
   }
 
@@ -399,7 +399,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? {
     // TODO Optimize?
 
-    val moduleEntity = entityStore.current.entities(ModuleEntity::class).filter { it.name == moduleName }.firstOrNull()
+    val moduleEntity = entityStore.current.entities(ModuleEntity::class.java).filter { it.name == moduleName }.firstOrNull()
                        ?: return null
     return getUnloadedModuleDescription(moduleEntity)
   }
@@ -440,7 +440,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       }
     }
 
-    val moduleEntities = entityStore.current.entities(ModuleEntity::class).toList()
+    val moduleEntities = entityStore.current.entities(ModuleEntity::class.java).toList()
     val moduleEntitiesToLoad = moduleEntities.filter { findModuleByName(it.name) == null && !names.contains(it.name) }
 
     if (moduleEntitiesToLoad.isEmpty() && modulesToUnload.isEmpty()) return
@@ -507,7 +507,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     }
 
     internal fun hasModuleGroups(entityStore: TypedEntityStore) =
-      entityStore.current.entities(ModuleGroupPathEntity::class).firstOrNull() != null
+      entityStore.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
 
     internal fun createModuleInstance(project: Project,
                                       moduleEntity: ModuleEntity,

@@ -12,7 +12,7 @@ internal interface NamedSampleEntity : TypedEntityWithPersistentId {
   override fun persistentId(): SampleEntityId = SampleEntityId(name)
 }
 
-internal data class SampleEntityId(val name: String) : PersistentEntityId<NamedSampleEntity>(NamedSampleEntity::class) {
+internal data class SampleEntityId(val name: String) : PersistentEntityId<NamedSampleEntity>() {
   override val parentId: PersistentEntityId<*>?
     get() = null
   override val presentableName: String

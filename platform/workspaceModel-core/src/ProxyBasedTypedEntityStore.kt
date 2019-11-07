@@ -93,8 +93,8 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
     }
   }
 
-  override fun <E : TypedEntity> entities(entityClass: KClass<E>): Sequence<E> {
-    return entitiesByType[entityClass.java]?.asSequence()?.map { createEntityInstance(it) as E } ?: emptySequence()
+  override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
+    return entitiesByType[entityClass]?.asSequence()?.map { createEntityInstance(it) as E } ?: emptySequence()
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
@@ -117,7 +117,7 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
                                                             entityClass: KClass<R>,
                                                             property: KProperty1<R, EntityReference<E>>): Sequence<R> {
     //todo: do we need this?
-    return entities(entityClass).filter { property.get(it).resolve(this) == e }
+    return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
   }
 
   internal fun <R : TypedEntity> referrers(id: Long, entityClass: Class<R>, propertyName: String): Sequence<R> {

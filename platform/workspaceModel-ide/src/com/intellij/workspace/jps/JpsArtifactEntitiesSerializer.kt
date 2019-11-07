@@ -69,7 +69,7 @@ internal open class JpsArtifactEntitiesSerializer(private val fileUrl: String, p
       orderOfItems += state.name
     }
     if (preserveOrder) {
-      val entity = builder.entities(ArtifactsOrderEntity::class).firstOrNull()
+      val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
       if (entity != null) {
         builder.modifyEntity(ArtifactsOrderEntity::class.java, entity) {
           orderOfArtifacts = orderOfItems

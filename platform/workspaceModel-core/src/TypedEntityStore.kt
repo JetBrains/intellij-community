@@ -52,8 +52,7 @@ interface ModifiableTypedEntity<Unmodifiable : TypedEntity> : TypedEntity
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-interface EntitySource {
-}
+interface EntitySource
 
 /**
  * Base interface for entities which may need to find all entities referring to them.
@@ -91,7 +90,7 @@ abstract class EntityReference<out E : TypedEntity> {
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-abstract class PersistentEntityId<out E : TypedEntityWithPersistentId>(entityClass: KClass<out E>) {
+abstract class PersistentEntityId<out E : TypedEntityWithPersistentId> {
   abstract val parentId: PersistentEntityId<*>?
   /** Text which can be shown in an error message if id cannot be resolved */
   abstract val presentableName: String
@@ -106,7 +105,7 @@ interface TypedEntityWithPersistentId : TypedEntity {
 }
 
 interface TypedEntityStorage {
-  fun <E : TypedEntity> entities(entityClass: KClass<E>): Sequence<E>
+  fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : TypedEntity, R : TypedEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>>

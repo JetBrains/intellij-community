@@ -23,7 +23,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   private fun checkSampleProjectConfiguration(storage: TypedEntityStorage, projectDir: File) {
     val projectUrl = projectDir.toVirtualFileUrl()
-    val modules = storage.entities(ModuleEntity::class).sortedBy { it.name }.toList()
+    val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
 
     val mainModule = modules[0]
@@ -98,7 +98,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val junitProjectLibrary = projectLibraries[1]
     assertEquals("junit", junitProjectLibrary.name)
 
-    val artifacts = storage.entities(ArtifactEntity::class).sortedBy { it.name }.toList()
+    val artifacts = storage.entities(ArtifactEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(2, artifacts.size)
 
     assertEquals("dir", artifacts[0].name)
@@ -134,7 +134,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   fun `test custom packaging elements`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/customPackagingElements/javaeeSampleProject.ipr")
     val storage = loadProject(projectDir)
-    val artifacts = storage.entities(ArtifactEntity::class).sortedBy { it.name }.toList()
+    val artifacts = storage.entities(ArtifactEntity::class.java).toList()
     assertEquals(6, artifacts.size)
     assertEquals("javaeeSampleProject:war exploded", artifacts[5].name)
     val artifactChildren = artifacts[5].rootElement.children
@@ -147,7 +147,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   fun `test custom source root`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/customSourceRoot/customSourceRoot.ipr")
     val storage = loadProject(projectDir)
-    val module = assertOneElement(storage.entities(ModuleEntity::class).toList())
+    val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
     val url = sourceRoot.url.url
     assertEquals("erlang-include", sourceRoot.rootType)
