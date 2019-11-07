@@ -5,10 +5,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.InMemoryFsRule;
-import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -53,14 +50,14 @@ public class PluginDescriptorTest {
   public void testOptionalDescriptors() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("family");
     assertNotNull(descriptor);
-    assertEquals(1, descriptor.getOptionalDescriptors().size());
+    assertEquals(1, descriptor.optionalConfigs.size());
   }
 
   @Test
   public void testMultipleOptionalDescriptors() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("multipleOptionalDescriptors");
     assertNotNull(descriptor);
-    Set<PluginId> ids = descriptor.getOptionalDescriptors().keySet();
+    Set<PluginId> ids = descriptor.optionalConfigs.keySet();
     assertEquals(2, ids.size());
     PluginId[] idsArray = ids.toArray(PluginId.EMPTY_ARRAY);
     assertEquals("dep2", idsArray[0].getIdString());
@@ -80,12 +77,27 @@ public class PluginDescriptorTest {
   @Test
   public void testCyclicOptionalDeps() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("cyclicOptionalDeps");
-    assertNotNull(descriptor);
-    List<IdeaPluginDescriptorImpl> allDescriptors = JBTreeTraverser.<IdeaPluginDescriptorImpl>from(
-      o -> JBIterable.from(o.getOptionalDescriptors().values()).flatten(Functions.id()))
-      .withRoot(descriptor)
-      .toList();
-    assertEquals(3, allDescriptors.size());
+    assertThat(descriptor).isNotNull();
+    ArrayList<IdeaPluginDescriptorImpl> allOptionalDescriptors = new ArrayList<>();
+    collectDescriptors(descriptor, allOptionalDescriptors);
+    assertThat(allOptionalDescriptors).hasSize(2);
+  }
+
+  private static void collectDescriptors(@NotNull IdeaPluginDescriptorImpl rootDescriptor, @NotNull List<IdeaPluginDescriptorImpl> result) {
+    Map<PluginId, List<Map.Entry<String, IdeaPluginDescriptorImpl>>> optionalConfigs = rootDescriptor.optionalConfigs;
+    if (optionalConfigs == null) {
+      return;
+    }
+
+    optionalConfigs.forEach((id, entries) -> {
+      for (Map.Entry<String, IdeaPluginDescriptorImpl> entry : entries) {
+        IdeaPluginDescriptorImpl descriptor = entry.getValue();
+        if (descriptor != null) {
+          result.add(descriptor);
+          collectDescriptors(descriptor, result);
+        }
+      }
+    });
   }
 
   @Test

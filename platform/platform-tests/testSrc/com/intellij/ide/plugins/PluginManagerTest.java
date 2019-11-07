@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.junit.Assert.*;
 
@@ -171,26 +171,31 @@ public class PluginManagerTest {
       s.equals("com.intellij") || s.startsWith("com.intellij.modules.") ? s : "-" + s.replace(".", "-")+ "-";
     for (IdeaPluginDescriptorImpl d : descriptors) {
       sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPath().getName()).append("/META-INF/plugin.xml\">");
-      sb.append("\n    <id>").append(escape.fun(d.getPluginId().getIdString())).append("</id>");
+      sb.append("\n    <id>").append(escape.apply(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
       for (PluginId module : d.getModules()) {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
       PluginId[] optIds = d.getOptionalDependentPluginIds();
-      Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = d.getOptionalDescriptors();
+      Map<PluginId, List<Map.Entry<String, IdeaPluginDescriptorImpl>>> optionalConfigs = d.optionalConfigs;
       for (PluginId depId : d.getDependentPluginIds()) {
         if (ArrayUtil.indexOf(optIds, depId) == -1) {
-          sb.append("\n    <depends>").append(escape.fun(depId.getIdString())).append("</depends>");
+          sb.append("\n    <depends>").append(escape.apply(depId.getIdString())).append("</depends>");
         }
         else {
-          List<IdeaPluginDescriptorImpl> opt = optMap != null ? optMap.get(depId) : null;
-          if (opt == null || opt.isEmpty()) {
-            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.fun(depId.getIdString())).append("</depends>");
+          List<Map.Entry<String, IdeaPluginDescriptorImpl>> optionalConfigPerId = optionalConfigs == null ? null : optionalConfigs.get(depId);
+          if (optionalConfigPerId == null || optionalConfigPerId.isEmpty()) {
+            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(depId.getIdString())).append("</depends>");
           }
           else {
-            for (IdeaPluginDescriptorImpl dd : opt) {
+            for (Map.Entry<String, IdeaPluginDescriptorImpl> entry : optionalConfigPerId) {
+              IdeaPluginDescriptorImpl descriptor = entry.getValue();
+              if (descriptor == null) {
+                continue;
+              }
+
               sb.append("\n    <depends optional=\"true\" config-file=\"")
-                .append(dd.getPath().getName()).append("\">").append(escape.fun(depId.getIdString())).append("</depends>");
+                .append(descriptor.getPath().getName()).append("\">").append(escape.apply(depId.getIdString())).append("</depends>");
             }
           }
         }

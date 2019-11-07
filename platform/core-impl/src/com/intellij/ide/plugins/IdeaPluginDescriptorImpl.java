@@ -69,13 +69,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myVendor;
   private String myVendorEmail;
   private String myVendorUrl;
-  private String myVendorLogoPath;
   private String myCategory;
   private String myUrl;
   private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
-  private Map<PluginId, List<String>> myOptionalConfigs;
-  private Map<PluginId, List<IdeaPluginDescriptorImpl>> myOptionalDescriptors;
+
+  // used only during initializing
+  transient Map<PluginId, List<Map.Entry<String, IdeaPluginDescriptorImpl>>> optionalConfigs;
+
   private @Nullable List<Element> myActionElements;
   // extension point name -> list of extension elements
   private @Nullable THashMap<String, List<Element>> myExtensions;
@@ -274,7 +275,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           myVendor = StringUtil.nullize(child.getChildTextTrim("name"));
           myVendorEmail = StringUtil.nullize(child.getAttributeValue("email"));
           myVendorUrl = StringUtil.nullize(child.getAttributeValue("url"));
-          myVendorLogoPath = StringUtil.nullize(child.getAttributeValue("logo"));
           break;
 
         case "idea-version":
@@ -794,20 +794,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUntilBuild;
   }
 
-  @Nullable
-  Map<PluginId, List<String>> getOptionalConfigs() {
-    return myOptionalConfigs;
-  }
-
-  @Nullable
-  Map<PluginId, List<IdeaPluginDescriptorImpl>> getOptionalDescriptors() {
-    return myOptionalDescriptors;
-  }
-
-  void setOptionalDescriptors(@Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
-    myOptionalDescriptors = optionalDescriptors;
-  }
-
   void mergeOptionalConfig(@NotNull IdeaPluginDescriptorImpl descriptor) {
     if (myExtensions == null) {
       myExtensions = descriptor.myExtensions;
@@ -1024,10 +1010,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
         // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
         if (dependency.configFile != null) {
-          if (descriptor.myOptionalConfigs == null) {
-            descriptor.myOptionalConfigs = new LinkedHashMap<>();
+          if (descriptor.optionalConfigs == null) {
+            descriptor.optionalConfigs = new LinkedHashMap<>();
           }
-          ContainerUtilRt.putValue(id, dependency.configFile, descriptor.myOptionalConfigs);
+          ContainerUtilRt.putValue(id, new AbstractMap.SimpleEntry<>(dependency.configFile, null), descriptor.optionalConfigs);
         }
 
         if (dependency.optional) {
