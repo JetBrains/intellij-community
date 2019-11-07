@@ -11,30 +11,20 @@ object GHPatchHunkUtil {
     var end1 = hunk.startLineBefore
     var end2 = hunk.startLineAfter
 
-    var newLine1 = false
-    var newLine2 = false
-
     for (line in hunk.lines) {
       when (line.type) {
         PatchLine.Type.REMOVE -> {
           end1++
-          newLine1 = !line.isSuppressNewLine
         }
         PatchLine.Type.ADD -> {
           end2++
-          newLine2 = !line.isSuppressNewLine
         }
         PatchLine.Type.CONTEXT -> {
           end1++
           end2++
-          newLine1 = !line.isSuppressNewLine
-          newLine2 = !line.isSuppressNewLine
         }
       }
     }
-
-    if (newLine1) end1++
-    if (newLine2) end2++
 
     return Range(hunk.startLineBefore, end1, hunk.startLineAfter, end2)
   }

@@ -13,6 +13,8 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import kotlin.math.max
+import kotlin.math.min
 
 class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>,
@@ -46,12 +48,18 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
     }
 
     val transferredRanges: List<LineRange> = ranges.map {
-      val onesideStart = viewer.transferLineToOnesideStrict(Side.LEFT, it.start1)
-      if (onesideStart < 0) return@map null
+      val onesideStartLeft = viewer.transferLineToOnesideStrict(Side.LEFT, it.start1)
+      if (onesideStartLeft < 0) return@map null
 
-      val onesideEnd = viewer.transferLineToOnesideStrict(Side.RIGHT, it.end2 - 1) + 1
-      if (onesideEnd < 0) return@map null
-      LineRange(onesideStart, onesideEnd)
+      val onesideStartRight = viewer.transferLineToOnesideStrict(Side.RIGHT, it.start2)
+      if (onesideStartRight < 0) return@map null
+
+      val onesideEndLeft = viewer.transferLineToOnesideStrict(Side.LEFT, it.end1 - 1) + 1
+      if (onesideEndLeft < 0) return@map null
+
+      val onesideEndRight = viewer.transferLineToOnesideStrict(Side.RIGHT, it.end2 - 1) + 1
+      if (onesideEndRight < 0) return@map null
+      LineRange(min(onesideStartLeft, onesideStartRight), max(onesideEndLeft, onesideEndRight))
     }.filterNotNull()
     commentableRanges.value = transferredRanges
   }
