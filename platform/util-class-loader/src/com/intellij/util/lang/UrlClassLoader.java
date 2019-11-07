@@ -412,7 +412,6 @@ public class UrlClassLoader extends ClassLoader {
   @SuppressWarnings("unused")
   @NotNull
   protected Object getClassLoadingLock(String className) {
-    //noinspection RedundantStringConstructorCall
     return myClassLoadingLocks != null ? myClassLoadingLocks.getOrCreateLock(className) : this;
   }
 
