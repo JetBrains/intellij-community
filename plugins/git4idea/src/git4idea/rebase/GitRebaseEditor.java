@@ -1,12 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
@@ -27,7 +25,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel;
-import git4idea.GitUtil;
 import git4idea.history.GitCommitRequirements;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
@@ -50,9 +47,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @NotNull private static final String DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion";
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myRoot;
-
   @NotNull private final MyTableModel myTableModel;
   @NotNull private final JBTable myCommitsTable;
   @NotNull private final CopyProvider myCopyProvider;
@@ -62,8 +56,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntryWithDetails> entries) {
     super(project, true);
-    myProject = project;
-    myRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
     setOKButtonText(GitBundle.getString("rebase.editor.button"));
 
@@ -94,6 +86,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value != null) {
+          setBorder(null);
           append(value.toString());
           SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
         }
@@ -110,6 +103,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
       myFullCommitDetailsListPanel.commitsSelected(selectedCommits);
     });
+    myCommitsTable.setTableHeader(null);
+
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
     actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.getKnownActionsArray()).withClickCount(1));
     actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.getKnownActionsArray()));
@@ -126,8 +121,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     installSpeedSearch();
     myCopyProvider = new MyCopyProvider();
 
-    adjustColumnWidth(MyTableModel.ACTION_COLUMN);
-    adjustColumnWidth(MyTableModel.HASH_COLUMN);
+    adjustActionColumnWidth();
     init();
   }
 
@@ -151,9 +145,9 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     return myCommitsTable;
   }
 
-  private void adjustColumnWidth(int columnIndex) {
-    int contentWidth = myCommitsTable.getExpandedColumnWidth(columnIndex) + UIUtil.DEFAULT_HGAP;
-    TableColumn column = myCommitsTable.getColumnModel().getColumn(columnIndex);
+  private void adjustActionColumnWidth() {
+    int contentWidth = myCommitsTable.getExpandedColumnWidth(MyTableModel.ACTION_COLUMN) + UIUtil.DEFAULT_HGAP;
+    TableColumn column = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
     column.setMaxWidth(contentWidth);
     column.setPreferredWidth(contentWidth);
   }
@@ -187,7 +181,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     JPanel tablePanel = ToolbarDecorator.createDecorator(myCommitsTable)
       .disableAddAction()
       .disableRemoveAction()
-      .addExtraAction(new MyDiffAction())
       .setMoveUpAction(new MoveUpDownActionListener(MoveDirection.UP))
       .setMoveDownAction(new MoveUpDownActionListener(MoveDirection.DOWN))
       .createPanel();
@@ -234,8 +227,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   private class MyTableModel extends AbstractTableModel implements EditableModel {
     private static final int ACTION_COLUMN = 0;
-    private static final int HASH_COLUMN = 1;
-    private static final int SUBJECT_COLUMN = 2;
+    private static final int SUBJECT_COLUMN = 1;
 
     @NotNull private final List<GitRebaseEntryWithDetails> myEntries;
     private int[] myLastEditableSelectedRows = new int[]{};
@@ -254,8 +246,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       switch (column) {
         case ACTION_COLUMN:
           return GitBundle.getString("rebase.editor.action.column");
-        case HASH_COLUMN:
-          return GitBundle.getString("rebase.editor.commit.column");
         case SUBJECT_COLUMN:
           return GitBundle.getString("rebase.editor.comment.column");
         default:
@@ -279,8 +269,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       switch (columnIndex) {
         case ACTION_COLUMN:
           return e.getAction();
-        case HASH_COLUMN:
-          return e.getCommit();
         case SUBJECT_COLUMN:
           return e.getSubject();
         default:
@@ -333,7 +321,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
         return null;
       }
       GitRebaseEntry e = myEntries.get(row);
-      return e.getCommit() + " " + e.getSubject();
+      return e.getSubject();
     }
 
     private void setSelection(@NotNull ContiguousIntIntervalTracker intervalBuilder) {
@@ -431,26 +419,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       int[] copy = selection.clone();
       Arrays.sort(copy);
       return this == UP ? copy : ArrayUtil.reverseArray(copy);
-    }
-  }
-
-  private class MyDiffAction extends ToolbarDecorator.ElementActionButton implements DumbAware {
-    MyDiffAction() {
-      super("View", "View commit contents", AllIcons.Actions.ListChanges);
-      registerCustomShortcutSet(CommonShortcuts.getDiff(), myCommitsTable);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      int row = myCommitsTable.getSelectedRow();
-      assert row >= 0 && row < myTableModel.getRowCount();
-      GitRebaseEntry entry = myTableModel.myEntries.get(row);
-      GitUtil.showSubmittedFiles(myProject, entry.getCommit(), myRoot, false, false);
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return super.isEnabled() && myCommitsTable.getSelectedRowCount() == 1;
     }
   }
 
