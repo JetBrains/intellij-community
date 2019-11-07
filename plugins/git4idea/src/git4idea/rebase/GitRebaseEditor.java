@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,9 @@ import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -21,7 +25,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel;
 import git4idea.GitUtil;
+import git4idea.history.GitCommitRequirements;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +41,14 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
+import static git4idea.history.GitLogUtil.readFullDetailsForHashes;
+
 /**
  * Interactive rebase editor. It allows reordering of the entries and changing commit status.
  */
 public class GitRebaseEditor extends DialogWrapper implements DataProvider {
+
+  @NotNull private static final String DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion";
 
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRoot;
@@ -45,6 +56,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   @NotNull private final MyTableModel myTableModel;
   @NotNull private final JBTable myCommitsTable;
   @NotNull private final CopyProvider myCopyProvider;
+  @NotNull private final FullCommitDetailsListPanel myFullCommitDetailsListPanel;
 
   private boolean myModified;
 
@@ -59,6 +71,22 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     myTableModel.addTableModelListener(e -> validateFields());
     myTableModel.addTableModelListener(e -> myModified = true);
 
+    myFullCommitDetailsListPanel = new FullCommitDetailsListPanel(project, getDisposable(), ModalityState.stateForComponent(getWindow())) {
+      @NotNull
+      @Override
+      protected List<Change> loadChanges(@NotNull List<? extends VcsCommitMetadata> commits) throws VcsException {
+        List<Change> changes = new ArrayList<>();
+        readFullDetailsForHashes(
+          project,
+          gitRoot,
+          ContainerUtil.map(commits, commit -> commit.getId().asString()),
+          GitCommitRequirements.DEFAULT,
+          gitCommit -> changes.addAll(gitCommit.getChanges())
+        );
+        return CommittedChangesTreeBrowser.zipChanges(changes);
+      }
+    };
+
     myCommitsTable = new JBTable(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     myCommitsTable.setIntercellSpacing(JBUI.emptySize());
@@ -70,6 +98,17 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
           SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
         }
       }
+    });
+    myCommitsTable.getSelectionModel().addListSelectionListener(e -> {
+      if (e.getValueIsAdjusting()) {
+        return;
+      }
+      List<VcsCommitMetadata> selectedCommits = new ArrayList<>();
+      int[] selectedEntries = myCommitsTable.getSelectedRows();
+      for (int selectedEntry : selectedEntries) {
+        selectedCommits.add(myTableModel.myEntries.get(selectedEntry).getCommitDetails());
+      }
+      myFullCommitDetailsListPanel.commitsSelected(selectedCommits);
     });
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
     actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.getKnownActionsArray()).withClickCount(1));
@@ -144,13 +183,17 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @Override
   protected JComponent createCenterPanel() {
-    return ToolbarDecorator.createDecorator(myCommitsTable)
+    JBSplitter detailsSplitter = new OnePixelSplitter(DETAILS_PROPORTION, 0.5f);
+    JPanel tablePanel = ToolbarDecorator.createDecorator(myCommitsTable)
       .disableAddAction()
       .disableRemoveAction()
       .addExtraAction(new MyDiffAction())
       .setMoveUpAction(new MoveUpDownActionListener(MoveDirection.UP))
       .setMoveDownAction(new MoveUpDownActionListener(MoveDirection.DOWN))
       .createPanel();
+    detailsSplitter.setFirstComponent(tablePanel);
+    detailsSplitter.setSecondComponent(myFullCommitDetailsListPanel);
+    return detailsSplitter;
   }
 
   @NotNull
