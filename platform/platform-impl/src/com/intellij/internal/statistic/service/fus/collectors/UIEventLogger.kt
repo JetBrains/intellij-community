@@ -13,7 +13,10 @@ enum class UIEventId {
   DaemonEditorPopupInvoked,
   HectorPopupDisplayed,
   ProgressPaused,
-  ProgressResumed
+  ProgressResumed,
+  BreadcrumbShowTooltip,
+  BreadcrumbNavigate,
+  BreadcrumbNavigateWithSelection
 }
 
 fun logUIEvent(eventId: UIEventId) {
