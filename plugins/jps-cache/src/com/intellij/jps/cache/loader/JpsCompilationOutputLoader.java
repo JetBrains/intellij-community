@@ -1,7 +1,8 @@
 package com.intellij.jps.cache.loader;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.intellij.jps.cache.client.JpsServerClient;
-import com.intellij.jps.cache.hashing.ModuleHashingService;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.BuildTargetState;
 import com.intellij.jps.cache.model.JpsLoaderContext;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -205,7 +207,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
           result.add(affectedModule);
           return;
         }
-        String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
+        String hash = calculateStringHash(affectedModule.getHash() + targetState.getHash());
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(RESOURCES_PRODUCTION)) {
@@ -214,7 +216,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
           result.add(affectedModule);
           return;
         }
-        String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
+        String hash = calculateStringHash(targetState.getHash() + affectedModule.getHash());
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(JAVA_TEST)) {
@@ -223,7 +225,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
           result.add(affectedModule);
           return;
         }
-        String hash = ModuleHashingService.calculateStringHash(affectedModule.getHash() + targetState.getHash());
+        String hash = calculateStringHash(affectedModule.getHash() + targetState.getHash());
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(RESOURCES_TEST)) {
@@ -232,7 +234,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
           result.add(affectedModule);
           return;
         }
-        String hash = ModuleHashingService.calculateStringHash(targetState.getHash() + affectedModule.getHash());
+        String hash = calculateStringHash(targetState.getHash() + affectedModule.getHash());
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else {
@@ -244,6 +246,11 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
 
   private File getProjectRelativeFile(String projectRelativePath) {
     return new File(projectRelativePath.replace("$PROJECT_DIR$", myProjectPath));
+  }
+
+  private static String calculateStringHash(String content) {
+    Hasher hasher = Hashing.murmur3_128().newHasher();
+    return hasher.putString(content, StandardCharsets.UTF_8).hash().toString();
   }
 
   @TestOnly
