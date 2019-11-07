@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
+import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.*;
@@ -180,9 +181,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       if (result != null) {
         int modelHeight = bar.getModel().getMaximum() - bar.getModel().getMinimum();
 
-        Color color = mySettingsProvider.getTerminalColorPalette()
-          .getColor(mySettingsProvider.getFoundPatternColor().getBackground());
-        g.setColor(color);
+        TerminalColor backgroundColor = mySettingsProvider.getFoundPatternColor().getBackground();
+        if (backgroundColor != null) {
+          g.setColor(mySettingsProvider.getTerminalColorPalette().getColor(backgroundColor));
+        }
         int anchorHeight = Math.max(2, height / modelHeight);
         for (SubstringFinder.FindResult.FindItem r : result.getItems()) {
           int where = height * r.getStart().y / modelHeight;
