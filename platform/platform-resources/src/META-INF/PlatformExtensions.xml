@@ -565,6 +565,7 @@
     <statistics.counterUsagesCollector groupId="project.import" version="2"/>
     <statistics.counterUsagesCollector groupId="ui.event" version="2"/>
     <statistics.counterUsagesCollector groupId="plugins.advertiser" version="1"/>
+    <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
 
     <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
 

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 
 class PluginInfoWhiteListRule : CustomWhiteListRule() {
   override fun acceptRuleId(ruleId: String?) =
-    ruleId == "project_type" || ruleId == "framework" || ruleId == "gutter_icon"
+    ruleId == "project_type" || ruleId == "framework" || ruleId == "gutter_icon" || ruleId == "editor_notification_panel_key"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     return acceptWhenReportedByPluginFromPluginRepository(context)

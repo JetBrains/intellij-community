@@ -2,6 +2,10 @@
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -108,18 +112,30 @@ public class EditorNotificationsImpl extends EditorNotifications {
     for (FileEditor editor : editors) {
       for (Provider<?> provider : providers) {
         JComponent component = provider.createNotificationPanel(file, editor, myProject);
-        updates.add(() -> updateNotification(editor, provider.getKey(), component));
+        if (component instanceof EditorNotificationPanel) {
+          ((EditorNotificationPanel) component).setProviderKey(provider.getKey());
+          ((EditorNotificationPanel) component).setProject(myProject);
+        }
+        updates.add(() -> updateNotification(editor, provider.getKey(), component, PluginInfoDetectorKt.getPluginInfo(provider.getClass())));
       }
     }
     return updates;
   }
 
-  private void updateNotification(@NotNull FileEditor editor, @NotNull Key<? extends JComponent> key, @Nullable JComponent component) {
+  private void updateNotification(@NotNull FileEditor editor,
+                                  @NotNull Key<? extends JComponent> key,
+                                  @Nullable JComponent component,
+                                  PluginInfo pluginInfo) {
     JComponent old = editor.getUserData(key);
     if (old != null) {
       FileEditorManager.getInstance(myProject).removeTopComponent(editor, old);
     }
     if (component != null) {
+      FeatureUsageData data = new FeatureUsageData()
+        .addData("key", key.toString())
+        .addPluginInfo(pluginInfo);
+      FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "shown", data);
+
       FileEditorManager.getInstance(myProject).addTopComponent(editor, component);
       @SuppressWarnings("unchecked") Key<JComponent> _key = (Key<JComponent>)key;
       editor.putUserData(_key, component);
@@ -127,6 +143,15 @@ public class EditorNotificationsImpl extends EditorNotifications {
     else {
       editor.putUserData(key, null);
     }
+  }
+
+  @Override
+  public void logNotificationActionInvocation(Key<?> providerKey, Class<?> runnableClass) {
+    FeatureUsageData data = new FeatureUsageData()
+      .addData("key", providerKey.toString())
+      .addData("class_name", runnableClass.getName())
+      .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(runnableClass));
+    FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "actionInvoked", data);
   }
 
   @Override
