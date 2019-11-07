@@ -184,14 +184,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   private static boolean isSelfReferenced(@NotNull PsiExpression initializer, PsiElement parent) {
-    class SelfReferenceVisitor extends JavaRecursiveElementVisitor {
+    class SelfReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
       private boolean referenced;
-
-      @Override
-      public void visitElement(PsiElement element) {
-        if (referenced) return;
-        super.visitElement(element);
-      }
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -199,8 +193,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         if (expression.getParent() instanceof PsiMethodCallExpression) {
           return;
         }
-        if (expression.resolve() == parent) {
+        if (expression.isQualified()) {
+          return;
+        }
+        if (expression.isReferenceTo(parent)) {
           referenced = true;
+          stopWalking();
         }
       }
     }
