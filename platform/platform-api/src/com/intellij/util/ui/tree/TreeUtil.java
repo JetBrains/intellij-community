@@ -746,15 +746,6 @@ public final class TreeUtil {
     return lastRow - firstRow + 1;
   }
 
-  /**
-   * @deprecated use {@link #getVisibleRowCount(JTree)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static int getVisibleRowCountForFixedRowHeight(@NotNull final JTree tree) {
-    return getVisibleRowCount(tree);
-  }
-
   @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
     TreeUI ui = tree.getUI();
