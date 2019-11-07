@@ -278,7 +278,7 @@ public class ExternalSystemUtil {
         .clearNotifications(null, NotificationSource.PROJECT_SYNC, spec.getExternalSystemId());
 
       for (String path : toRefresh) {
-        refreshProject(path, new ImportSpecBuilder(spec).callback(callback).build());  // blame polluted by commit 236e744
+        refreshProject(path, new ImportSpecBuilder(spec).callback(callback).build());
       }
     }
   }
@@ -306,7 +306,7 @@ public class ExternalSystemUtil {
         final boolean synchronous = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC;
         ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, synchronous);
       }
-    }, isPreviewMode, progressExecutionMode, true);  // blame polluted by commit 236e744
+    }, isPreviewMode, progressExecutionMode, true);
   }
 
   /**
@@ -326,18 +326,18 @@ public class ExternalSystemUtil {
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
-    refreshProject(project, externalSystemId, externalProjectPath, callback, isPreviewMode, progressExecutionMode, true);  // blame polluted by commit 236e744
+    refreshProject(project, externalSystemId, externalProjectPath, callback, isPreviewMode, progressExecutionMode, true);
   }
 
   /**
    * <p>
    * Refresh target gradle project.
    *
-   * @param project             target intellij project to use  // blame polluted by commit 236e744
-   * @param externalProjectPath path of the target external project  // blame polluted by commit 236e744
-   * @param callback            callback to be notified on refresh result  // blame polluted by commit 236e744
-   * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh  // blame polluted by commit 236e744
-   * @param reportRefreshError  prevent to show annoying error notification, e.g. if auto-import mode used  // blame polluted by commit 236e744
+   * @param project             target intellij project to use
+   * @param externalProjectPath path of the target external project
+   * @param callback            callback to be notified on refresh result
+   * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
+   * @param reportRefreshError  prevent to show annoying error notification, e.g. if auto-import mode used
    */
   public static void refreshProject(@NotNull final Project project,
                                     @NotNull final ProjectSystemId externalSystemId,
@@ -345,14 +345,14 @@ public class ExternalSystemUtil {
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode,
-                                    final boolean reportRefreshError) {  // blame polluted by commit 236e744
+                                    final boolean reportRefreshError) {
     ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
     if (isPreviewMode) builder.usePreviewMode();
     if (!reportRefreshError) builder.dontReportRefreshErrors();
-    refreshProject(externalProjectPath, builder.build());  // blame polluted by commit 236e744
+    refreshProject(externalProjectPath, builder.build());
   }
 
-  public static void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {  // blame polluted by commit 236e744
+  public static void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
     Project project = importSpec.getProject();
     ProjectSystemId externalSystemId = importSpec.getExternalSystemId();
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
