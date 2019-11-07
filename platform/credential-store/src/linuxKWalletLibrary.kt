@@ -35,6 +35,9 @@ internal class KWalletCredentialStore private constructor(private val connection
         catch (e: DBusException) {
           LOG.warn("Filed to connect to KWallet", e)
         }
+        catch (e: RuntimeException) {
+          LOG.warn("Filed to connect to KWallet", e)
+        }
         connection.close()
       }
       catch (e: DBusException) {
