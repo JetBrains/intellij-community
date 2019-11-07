@@ -47,6 +47,13 @@ class LightEditorManager implements Disposable {
       .forEach(editor -> EditorFactory.getInstance().releaseEditor(editor));
   }
 
+  void closeEditor(@NotNull Editor editor) {
+    myEditors.remove(editor);
+    if (!editor.isDisposed()) {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
+  }
+
   @NotNull
   private static EditorHighlighter getHighlighter(@NotNull VirtualFile file, @NotNull Editor editor) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(file, editor.getColorsScheme(), null);
