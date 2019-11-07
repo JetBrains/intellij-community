@@ -9,6 +9,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
+import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableModelAdapter;
@@ -16,14 +17,19 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -45,7 +51,7 @@ import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
  * Cell renderers could be set separately or by calling {@link #setDefaultRenderer(Class, TableCellRenderer)}.
  */
 @ApiStatus.Experimental
-public class JBTreeTable extends JComponent {
+public class JBTreeTable extends JComponent implements TreePathBackgroundSupplier {
 
   private final Tree myTree;
   private final Table myTable;
@@ -74,6 +80,12 @@ public class JBTreeTable extends JComponent {
           myTable.revalidate();
           myTable.repaint();
         }
+      }
+
+      @Nullable
+      @Override
+      public Color getPathBackground(@NotNull TreePath path, int row) {
+        return JBTreeTable.this.getPathBackground(path, row);
       }
     };
     myTable = new Table();
@@ -217,6 +229,12 @@ public class JBTreeTable extends JComponent {
 
   public TreeTableModel getModel() {
     return myModel;
+  }
+
+  @Nullable
+  @Override
+  public Color getPathBackground(@NotNull TreePath path, int row) {
+    return null;
   }
 
   @Override
