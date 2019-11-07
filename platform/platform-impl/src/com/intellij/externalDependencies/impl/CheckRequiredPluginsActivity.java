@@ -4,6 +4,7 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.*;
@@ -26,7 +27,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
+public final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Required Plugins", NotificationDisplayType.BALLOON, true);
 
   @Override
@@ -100,9 +101,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
                                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                   if ("enable".equals(event.getDescription())) {
                                     notification.expire();
-                                    for (IdeaPluginDescriptor descriptor : disabled) {
-                                      PluginManagerCore.enablePlugin(descriptor.getPluginId());
-                                    }
+                                    PluginManager.getInstance().enablePlugins(disabled, true);
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
                                   else {

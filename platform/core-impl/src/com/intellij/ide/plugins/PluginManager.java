@@ -81,7 +81,7 @@ public final class PluginManager {
   }
 
   /**
-   * @deprecated  In a plugin code simply throw error or log using {@link Logger#error(Throwable)}.
+   * @deprecated In a plugin code simply throw error or log using {@link Logger#error(Throwable)}.
    */
   @Deprecated
   public static void processException(@NotNull Throwable t) {
@@ -130,8 +130,7 @@ public final class PluginManager {
   }
 
   /**
-   * @deprecated Bad API, sorry. Please use {@link #isDisabled(PluginId)} to check plugin's state,
-   * {@link PluginManagerCore#enablePlugin(PluginId)}/{@link PluginManagerCore#disablePlugin(PluginId)} for state management,
+   * @deprecated Bad API, sorry. Please use {@link PluginManagerCore#isDisabled(PluginId)} to check plugin's state,
    * {@link PluginManagerCore#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
@@ -141,6 +140,10 @@ public final class PluginManager {
     return PluginManagerCore.getDisabledPlugins();
   }
 
+  /**
+   * @deprecated Use {@link PluginManagerCore#saveDisabledPlugins(Collection, boolean)}
+   */
+  @Deprecated
   public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
     PluginManagerCore.saveDisabledPlugins(ContainerUtil.map(ids, s -> PluginId.getId(s)), append);
   }
@@ -149,8 +152,19 @@ public final class PluginManager {
     return PluginManagerCore.disablePlugin(PluginId.getId(id));
   }
 
+  /**
+   * @deprecated Use {@link #enablePlugins(Collection, boolean)}
+   */
+  @Deprecated
   public static boolean enablePlugin(@NotNull String id) {
     return PluginManagerCore.enablePlugin(PluginId.getId(id));
+  }
+
+  /**
+   * Consider using {@link #enablePlugins(Collection, boolean)}.
+   */
+  public boolean enablePlugin(@NotNull PluginId id) {
+    return PluginManagerCore.enablePlugin(id);
   }
 
   @NotNull
@@ -191,11 +205,16 @@ public final class PluginManager {
     return false;
   }
 
-  public void enablePlugins(@NotNull Collection<IdeaPluginDescriptor> plugins, boolean enabled) {
+  public void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
     Set<PluginId> disabled = PluginManagerCore.getDisabledIds();
     int sizeBefore = disabled.size();
-    for (IdeaPluginDescriptor plugin : plugins) {
-      disabled.add(plugin.getPluginId());
+    for (PluginDescriptor plugin : plugins) {
+      if (enabled) {
+        disabled.remove(plugin.getPluginId());
+      }
+      else {
+        disabled.add(plugin.getPluginId());
+      }
       plugin.setEnabled(enabled);
     }
 

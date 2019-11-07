@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerMain;
-import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -61,13 +59,13 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Set<PluginId> pluginsToEnable = new HashSet<>();
-    final List<PluginNode> nodes = new ArrayList<>();
+    Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
+    List<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myUploadedPlugins) {
-      PluginId pluginId = downloader.getId();
-      if (!mySkippedPlugins.contains(pluginId)) {
-        pluginsToEnable.add(pluginId);
-        if (!pluginHelper.isDisabled(pluginId)) {
+      PluginDescriptor plugin = downloader.getDescriptor();
+      if (!mySkippedPlugins.contains(plugin.getPluginId())) {
+        pluginsToEnable.add(plugin);
+        if (plugin.isEnabled()) {
           nodes.add(PluginDownloader.createPluginNode(null, downloader));
         }
       }
@@ -84,9 +82,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
         PluginManagerMain.notifyPluginsUpdated(myProject);
       }
     };
-    for (PluginId pluginId : pluginsToEnable) {
-      PluginManagerCore.enablePlugin(pluginId);
-    }
+    PluginManager.getInstance().enablePlugins(pluginsToEnable, true);
     if (!nodes.isEmpty()) {
       try {
         PluginManagerMain.downloadPlugins(nodes, myAllPlugins, true, notifyRunnable, pluginHelper, null);

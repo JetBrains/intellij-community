@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.notification.Notification;
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
-public class AllVcses implements AllVcsesI, Disposable {
+public final class AllVcses implements AllVcsesI, Disposable {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.AllVcses");
   private final Map<String, AbstractVcs> myVcses;
 
@@ -193,7 +193,7 @@ public class AllVcses implements AllVcsesI, Disposable {
       notification.expire();
       installPlugin(vcs);
     }));
-    notification.addAction(NotificationAction.createSimple("Read more", () -> {
+    notification.addAction(NotificationAction.createSimple("Read More", () -> {
       BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
     }));
     VcsNotifier.getInstance(myProject).notify(notification);
@@ -210,7 +210,7 @@ public class AllVcses implements AllVcsesI, Disposable {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              PluginManagerCore.enablePlugin(vcs.pluginId);
+              PluginManager.getInstance().enablePlugins(Collections.singletonList(descriptor), true);
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }

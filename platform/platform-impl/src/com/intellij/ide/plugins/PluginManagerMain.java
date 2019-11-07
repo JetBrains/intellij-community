@@ -241,8 +241,7 @@ public abstract class PluginManagerMain {
     return descriptionSet.isEmpty();
   }
 
-  public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
-                                                                 List<PluginNode> list) {
+  public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler, List<PluginNode> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {
@@ -327,9 +326,7 @@ public abstract class PluginManagerMain {
     class HEADLESS implements PluginEnabler {
       @Override
       public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        for (IdeaPluginDescriptor descriptor : disabled) {
-          PluginManagerCore.enablePlugin(descriptor.getPluginId());
-        }
+        PluginManager.getInstance().enablePlugins(disabled, true);
       }
 
       @Override
