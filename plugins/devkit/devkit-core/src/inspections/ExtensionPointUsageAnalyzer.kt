@@ -147,9 +147,10 @@ private fun findObjectLeaks(e: UElement, text: String): List<Leak> {
     val type = e.getExpressionType()
     if (isSafeType(type, mutableSetOf())) return emptyList()
     val parent = e.uastParent
-    if (parent is UParenthesizedExpression ||
-        parent is UIfExpression ||
-        parent is UBinaryExpressionWithType) return findObjectLeaks(parent, text)
+    if (parent is UParenthesizedExpression || parent is UIfExpression || parent is UBinaryExpressionWithType ||
+        (e is UCallExpression && parent is UQualifiedReferenceExpression)) {
+      return findObjectLeaks(parent, text)
+    }
     if (parent is UBinaryExpression && parent.operator != UastBinaryOperator.ASSIGN) {
       return emptyList()
     }
@@ -197,9 +198,6 @@ private fun findObjectLeaks(e: UElement, text: String): List<Leak> {
             if (uElement is UReferenceExpression) {
               if (uElement.uastParent is UCallExpression) {
                 uElement = uElement.uastParent
-                if (uElement != null && uElement.uastParent is UQualifiedReferenceExpression) {
-                  uElement = uElement.uastParent
-                }
               }
             }
             if (uElement != null) {
