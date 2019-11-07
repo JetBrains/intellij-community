@@ -6,13 +6,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import git4idea.DialogManager;
+import git4idea.GitVcs;
 import git4idea.commands.GitImplBase;
+import git4idea.history.GitLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
@@ -64,6 +70,10 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
         }
       }
     }
+    catch (VcsException e) {
+      LOG.error("Failed to load commit details for commits from git rebase file: " + path, e);
+      return ERROR_EXIT_CODE;
+    }
     catch (Exception e) {
       LOG.error("Failed to edit git rebase file: " + path, e);
       return ERROR_EXIT_CODE;
@@ -74,11 +84,11 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     return GitImplBase.loadFileAndShowInSimpleEditor(myProject, myRoot, path, "Git Commit Message", "Continue Rebasing");
   }
 
-  protected boolean handleInteractiveEditor(@NotNull String path) throws IOException {
+  protected boolean handleInteractiveEditor(@NotNull String path) throws IOException, VcsException {
     GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
     try {
       List<GitRebaseEntry> entries = rebaseFile.load();
-      List<GitRebaseEntry> newEntries = showInteractiveRebaseEditor(entries);
+      List<? extends GitRebaseEntry> newEntries = showInteractiveRebaseEditor(entries);
       if (newEntries != null) {
         rebaseFile.save(newEntries);
         return true;
@@ -94,16 +104,33 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   }
 
   @Nullable
-  private List<GitRebaseEntry> showInteractiveRebaseEditor(@NotNull List<GitRebaseEntry> entries) {
-    Ref<List<GitRebaseEntry>> newText = Ref.create();
+  private List<? extends GitRebaseEntry> showInteractiveRebaseEditor(@NotNull List<GitRebaseEntry> entries) throws VcsException {
+    Ref<List<? extends GitRebaseEntry>> newText = Ref.create();
+    List<GitRebaseEntryWithDetails> entriesWithDetails = loadDetailsForEntries(entries);
+
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entries);
+      GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entriesWithDetails);
       DialogManager.show(editor);
       if (editor.isOK()) {
         newText.set(editor.getEntries());
       }
     });
     return newText.get();
+  }
+
+  @NotNull
+  private List<GitRebaseEntryWithDetails> loadDetailsForEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
+    List<? extends VcsCommitMetadata> details = GitLogUtil.collectMetadata(
+      myProject,
+      GitVcs.getInstance(myProject),
+      myRoot,
+      ContainerUtil.map(entries, entry -> entry.getCommit())
+    );
+    List<GitRebaseEntryWithDetails> entriesWithDetails = new ArrayList<>();
+    for (int i = 0; i < entries.size(); i++) {
+      entriesWithDetails.add(new GitRebaseEntryWithDetails(entries.get(i), details.get(i)));
+    }
+    return entriesWithDetails;
   }
 
   private boolean confirmNoopRebase() {

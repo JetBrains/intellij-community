@@ -15,7 +15,9 @@
  */
 package git4idea.rebase
 
-internal class GitRebaseEntry(var action: Action, val commit: String, val subject: String) {
+import com.intellij.vcs.log.VcsCommitMetadata
+
+internal open class GitRebaseEntry(var action: Action, val commit: String, val subject: String) {
 
   constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
 
@@ -46,3 +48,6 @@ internal class GitRebaseEntry(var action: Action, val commit: String, val subjec
     }
   }
 }
+
+internal class GitRebaseEntryWithDetails(val entry: GitRebaseEntry, val commitDetails: VcsCommitMetadata) :
+  GitRebaseEntry(entry.action, entry.commit, entry.subject)

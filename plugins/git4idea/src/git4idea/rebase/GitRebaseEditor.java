@@ -48,7 +48,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   private boolean myModified;
 
-  protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntry> entries) {
+  protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntryWithDetails> entries) {
     super(project, true);
     myProject = project;
     myRoot = gitRoot;
@@ -120,7 +120,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   }
 
   private void validateFields() {
-    final List<GitRebaseEntry> entries = myTableModel.myEntries;
+    final List<GitRebaseEntryWithDetails> entries = myTableModel.myEntries;
     if (entries.size() == 0) {
       setErrorText(GitBundle.getString("rebase.editor.invalid.entryset"), myCommitsTable);
       setOKActionEnabled(false);
@@ -169,7 +169,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   }
 
   @NotNull
-  public List<GitRebaseEntry> getEntries() {
+  public List<? extends GitRebaseEntry> getEntries() {
     return myTableModel.myEntries;
   }
 
@@ -187,10 +187,10 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     private static final int HASH_COLUMN = 1;
     private static final int SUBJECT_COLUMN = 2;
 
-    @NotNull private final List<GitRebaseEntry> myEntries;
+    @NotNull private final List<GitRebaseEntryWithDetails> myEntries;
     private int[] myLastEditableSelectedRows = new int[]{};
 
-    MyTableModel(@NotNull List<GitRebaseEntry> entries) {
+    MyTableModel(@NotNull List<GitRebaseEntryWithDetails> entries) {
       myEntries = entries;
     }
 
@@ -262,7 +262,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
-      GitRebaseEntry movingElement = myEntries.remove(oldIndex);
+      GitRebaseEntryWithDetails movingElement = myEntries.remove(oldIndex);
       myEntries.add(newIndex, movingElement);
       fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
     }

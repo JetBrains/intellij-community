@@ -69,7 +69,7 @@ class GitInteractiveRebaseFile {
     }
   }
 
-  public void save(@NotNull List<GitRebaseEntry> entries) throws IOException {
+  public void save(@NotNull List<? extends GitRebaseEntry> entries) throws IOException {
     String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
     try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding))) {
       boolean knowsDropAction = GitVersionSpecialty.KNOWS_REBASE_DROP_ACTION.existsIn(myProject);
