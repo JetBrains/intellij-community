@@ -430,7 +430,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
       if (wizard == null) return null;
       if (wizard.getStepCount() == 0) {
-        ProjectBuilder builder = wizard.getProjectBuilder();
+        ProjectBuilder builder = getProjectBuilder(wizard);
         Disposer.dispose(wizard.getDisposable());
         return builder;
       }
@@ -444,6 +444,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return wizard.getBuilder(myProject);
   }
 
+  private ProjectBuilder getProjectBuilder(@NotNull AbstractProjectWizard wizard) {
+    ProjectBuilder builder = wizard.getProjectBuilder();
+    if (!builder.validate(myProject, myProject)) return null;
+    return builder;
+  }
 
   private boolean doRemoveModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
     if (selectedEditors.isEmpty()) return true;
