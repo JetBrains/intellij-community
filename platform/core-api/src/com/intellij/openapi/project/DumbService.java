@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,6 +207,7 @@ public abstract class DumbService {
    * @see #isDumbAware(Object)
    */
   @NotNull
+  @Contract(pure = true)
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
     if (isDumb()) {
       final ArrayList<T> result = new ArrayList<>(collection.size());
@@ -281,6 +283,7 @@ public abstract class DumbService {
 
   public abstract Project getProject();
 
+  @Contract(value = "null -> false", pure = true)
   public static boolean isDumbAware(Object o) {
     if (o instanceof PossiblyDumbAware) {
       return ((PossiblyDumbAware)o).isDumbAware();

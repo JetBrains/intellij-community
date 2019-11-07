@@ -6,6 +6,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
   }
 
   @NotNull
+  @Contract(pure = true)
   public abstract FrameworkSupportInModuleProvider createProvider();
 
   public <V extends FrameworkVersion> List<V> getVersions() {
