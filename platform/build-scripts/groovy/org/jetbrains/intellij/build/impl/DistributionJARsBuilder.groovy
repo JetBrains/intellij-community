@@ -43,10 +43,11 @@ class DistributionJARsBuilder {
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
   private final File patchedApplicationInfo
-  private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
+  private final LinkedHashSet<PluginLayout> pluginsToPublish
 
-  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo,
-                          LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish = [:]) {
+  DistributionJARsBuilder(BuildContext buildContext,
+                          File patchedApplicationInfo,
+                          LinkedHashSet<PluginLayout> pluginsToPublish = []) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = pluginsToPublish
@@ -200,7 +201,7 @@ class DistributionJARsBuilder {
   }
 
   private Set<String> getEnabledPluginModules() {
-    buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.keySet().
+    buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.
       collect { it.mainModule } as Set<String>
   }
 
@@ -328,7 +329,7 @@ class DistributionJARsBuilder {
 
   List<String> getModulesForPluginsToPublish() {
     def enabledModulesSet = enabledPluginModules
-    platformModules + (pluginsToPublish.collect { it.key.getActualModules(enabledModulesSet).values() }.flatten() as List<String>)
+    platformModules + (pluginsToPublish.collect { it.getActualModules(enabledModulesSet).values() }.flatten() as List<String>)
   }
 
   void reorderJARs(String loadingOrderFilePath) {
@@ -669,9 +670,7 @@ class DistributionJARsBuilder {
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
       def pluginXmlFiles = new LinkedHashMap<PluginLayout, String>()
 
-      pluginsToPublish.each { pluginAndPublishing ->
-        def plugin = pluginAndPublishing.key
-
+      pluginsToPublish.each { plugin ->
         def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
         def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
         if (!new File(pluginXmlPath).exists()) {
@@ -684,10 +683,7 @@ class DistributionJARsBuilder {
       def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
                                                                          : buildContext.buildNumber
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
-        pluginsToPublish.each { pluginAndPublishing ->
-          def plugin = pluginAndPublishing.key
-          def publishingSpec = pluginAndPublishing.value
-
+        pluginsToPublish.each { plugin ->
           def pluginXmlPath = pluginXmlFiles[plugin]
           def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
           def patchedPluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
@@ -695,17 +691,14 @@ class DistributionJARsBuilder {
 
           ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
 
-          CompatibleBuildRange compatibleBuildRange = publishingSpec.compatibleBuildRange
-          if (compatibleBuildRange == null) {
-            def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-                                                   publishingSpec.includeInCustomPluginRepository &&
-                                                   buildContext.proprietaryBuildTools.artifactsServer != null
+          def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+                                                 buildContext.proprietaryBuildTools.artifactsServer != null
+          CompatibleBuildRange compatibleBuildRange =
             //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
-                                   //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
-                                   buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
-                                                                      : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
-          }
+            includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
+            //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
+            buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+                                               : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
 
           setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, buildContext.buildNumber, compatibleBuildRange)
           layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
@@ -714,23 +707,19 @@ class DistributionJARsBuilder {
 
       def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
       def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
-      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish.keySet()), pluginsToPublishDir)
+      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
 
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
       def whiteList = new File("$buildContext.paths.communityHome/../build/plugins-autoupload-whitelist.txt").readLines()
         .stream().map { it.trim() }.filter { !it.isEmpty() && !it.startsWith("//") }.collect(Collectors.toSet())
 
-      pluginsToPublish.each { pluginAndPublishing ->
-        def plugin = pluginAndPublishing.key
-        def publishingSpec = pluginAndPublishing.value
-
-        def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
+      pluginsToPublish.each { plugin ->
+        def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins
 
         def directory = getActualPluginDirectoryName(plugin, buildContext)
         String suffix = includeInCustomRepository ? "" : "-$pluginVersion"
-        def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading &&
-                              whiteList.contains(plugin.mainModule)
+        def targetDirectory = whiteList.contains(plugin.mainModule)
           ? "$nonBundledPluginsArtifacts/auto-uploading"
           : nonBundledPluginsArtifacts
         def destFile = "$targetDirectory/$directory${suffix}.zip"
