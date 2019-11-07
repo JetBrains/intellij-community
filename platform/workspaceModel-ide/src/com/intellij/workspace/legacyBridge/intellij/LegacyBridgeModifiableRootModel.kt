@@ -232,7 +232,13 @@ class LegacyBridgeModifiableRootModel(
       listOfNotNull(jdkItem, ModuleDependencyItem.ModuleSourceDependency)
     }
 
-    contentEntries.forEach { removeContentEntry(it) }
+    for (contentRoot in moduleEntity.contentRoots) {
+      diff.removeEntity(contentRoot)
+    }
+
+    for (sourceRoot in moduleEntity.sourceRoots) {
+      diff.removeEntity(sourceRoot)
+    }
   }
 
   override fun commit() {

@@ -7,13 +7,12 @@ import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
+import com.intellij.util.CachedValueImpl
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.ExcludeFolderViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.SourceFolderViaTypedEntity
-import com.intellij.util.CachedValueImpl
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -92,14 +91,10 @@ class LegacyBridgeModifiableContentEntryImpl(
   }
 
   override fun clearSourceFolders() {
-    if (currentContentEntry.value.sourceFolders.isEmpty()) return
-
-    currentContentEntry.value.sourceRootEntities.forEach {
-      diff.removeEntity(it)
-    }
-
-    if (LegacyBridgeModifiableBase.assertChangesApplied && currentContentEntry.value.sourceFolders.isNotEmpty()) {
-      error("Source folders are still present after clearSourceFolders()")
+    for (sourceRoot in modifiableRootModel.currentModel.moduleEntity?.sourceRoots ?: emptySequence()) {
+      if (contentEntryUrl.isEqualOrParentOf(sourceRoot.url)) {
+        diff.removeEntity(sourceRoot)
+      }
     }
   }
 
@@ -152,10 +147,6 @@ class LegacyBridgeModifiableContentEntryImpl(
   override fun clearExcludeFolders() {
     updateContentEntry {
       excludedUrls = emptyList()
-    }
-
-    if (LegacyBridgeModifiableBase.assertChangesApplied && currentContentEntry.value.excludeFolderUrls.isNotEmpty()) {
-      error("excludeFolderUrls is not empty after clearExcludeFolders()")
     }
   }
 

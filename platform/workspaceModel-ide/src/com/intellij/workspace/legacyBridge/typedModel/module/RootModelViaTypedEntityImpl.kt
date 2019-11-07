@@ -36,6 +36,8 @@ class RootModelViaTypedEntityImpl(internal val moduleEntityId: PersistentEntityI
     loadExtensions(storage = storage, module = module, writable = false, parentDisposable = this)
   }
 
+  val moduleEntity: ModuleEntity? = storage.resolve(moduleEntityId)
+
   private val orderEntriesArray by lazy {
     val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyArray<OrderEntry>()
     moduleEntity.dependencies.mapIndexed { index, e ->
