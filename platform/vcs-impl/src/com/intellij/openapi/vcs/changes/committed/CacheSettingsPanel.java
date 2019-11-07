@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.options.Configurable;
@@ -37,7 +37,7 @@ public class CacheSettingsPanel implements Configurable {
 
   @Override
   public void apply() {
-    final CommittedChangesCache.State state = new CommittedChangesCache.State();
+    final CommittedChangesCacheState state = new CommittedChangesCacheState();
     state.setInitialCount(((SpinnerNumberModel)myCountSpinner.getModel()).getNumber().intValue());
     state.setInitialDays(((SpinnerNumberModel)myDaysSpinner.getModel()).getNumber().intValue());
     state.setRefreshInterval(((SpinnerNumberModel)myRefreshSpinner.getModel()).getNumber().intValue());
@@ -47,7 +47,7 @@ public class CacheSettingsPanel implements Configurable {
 
   @Override
   public boolean isModified() {
-    CommittedChangesCache.State state = myCache.getState();
+    CommittedChangesCacheState state = myCache.getState();
 
     if (state.getInitialCount() != ((SpinnerNumberModel)myCountSpinner.getModel()).getNumber().intValue()) return true;
     if (state.getInitialDays() != ((SpinnerNumberModel)myDaysSpinner.getModel()).getNumber().intValue()) return true;
@@ -59,7 +59,7 @@ public class CacheSettingsPanel implements Configurable {
 
   @Override
   public void reset() {
-    final CommittedChangesCache.State state = myCache.getState();
+    final CommittedChangesCacheState state = myCache.getState();
 
     myCountSpinner.setModel(new SpinnerNumberModel(state.getInitialCount(), 1, 100000, 10));
     myDaysSpinner.setModel(new SpinnerNumberModel(state.getInitialDays(), 1, 720, 10));

@@ -7,7 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class CommittedChangesCache implements PersistentStateComponent<CommittedChangesCache.State> {
+public class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
   private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
   private final Project myProject;
@@ -62,7 +62,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private final MessageBusConnection myConnection;
   private boolean myRefreshingIncomingChanges = false;
   private int myPendingUpdateCount = 0;
-  private State myState = new State();
   private ScheduledFuture myFuture;
   private List<CommittedChangeList> myCachedIncomingChangeLists;
   private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
@@ -74,45 +73,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private final CachesHolder myCachesHolder;
   private final RepositoryLocationCache myLocationCache;
 
-  public static class State {
-    private int myInitialCount = 500;
-    private int myInitialDays = 90;
-    private int myRefreshInterval = 30;
-    private boolean myRefreshEnabled = false;
-
-    public int getInitialCount() {
-      return myInitialCount;
-    }
-
-    public void setInitialCount(final int initialCount) {
-      myInitialCount = initialCount;
-    }
-
-    public int getInitialDays() {
-      return myInitialDays;
-    }
-
-    public void setInitialDays(final int initialDays) {
-      myInitialDays = initialDays;
-    }
-
-    public int getRefreshInterval() {
-      return myRefreshInterval;
-    }
-
-    public void setRefreshInterval(final int refreshInterval) {
-      myRefreshInterval = refreshInterval;
-    }
-
-    public boolean isRefreshEnabled() {
-      return myRefreshEnabled;
-    }
-
-    public void setRefreshEnabled(final boolean refreshEnabled) {
-      myRefreshEnabled = refreshEnabled;
-    }
-  }
-
   public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>("committed changes updates",
                                                                                     CommittedChangesListener.class);
 
@@ -121,6 +81,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public CommittedChangesCache(final Project project, final MessageBus bus) {
+    super(new CommittedChangesCacheState());
     myProject = project;
     myBus = bus;
     myConnection = myBus.connect();
@@ -166,13 +127,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   @Override
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(@NotNull State state) {
-    myState = state;
+  public void loadState(@NotNull CommittedChangesCacheState state) {
+    super.loadState(state);
     updateRefreshTimer();
   }
 
@@ -460,19 +416,19 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final ChangeBrowserSettings settings = provider.createDefaultSettings();
     int maxCount = 0;
     if (isMaxCountSupportedForProject()) {
-      maxCount = myState.getInitialCount();
+      maxCount = getState().getInitialCount();
     }
     else {
       settings.USE_DATE_AFTER_FILTER = true;
       Calendar calendar = Calendar.getInstance();
-      calendar.add(Calendar.DAY_OF_YEAR, -myState.getInitialDays());
+      calendar.add(Calendar.DAY_OF_YEAR, -getState().getInitialDays());
       settings.setDateAfter(calendar.getTime());
     }
     //noinspection unchecked
     final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, maxCount);
     // when initially initializing cache, assume all changelists are locally available
     writeChangesInReadAction(cacheFile, changes); // this sorts changes in chronological order
-    if (maxCount > 0 && changes.size() < myState.getInitialCount()) {
+    if (maxCount > 0 && changes.size() < getState().getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
     if (changes.size() > 0) {
@@ -515,7 +471,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         defaultSettings.USE_CHANGE_AFTER_FILTER = true;
       }
       else {
-        maxCount = myState.getInitialCount();
+        maxCount = getState().getInitialCount();
       }
     }
     else {
@@ -970,13 +926,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private void updateRefreshTimer() {
     cancelRefreshTimer();
-    if (myState.isRefreshEnabled()) {
+    if (getState().isRefreshEnabled()) {
       myRefresnRunnable = new MyRefreshRunnable(this);
       // if "schedule with fixed rate" is used, then after waking up from stand-by mode, events are generated for inactive period
       // it does not make sense
       myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(myRefresnRunnable,
-                                                                    myState.getRefreshInterval() * 60L,
-                                                                    myState.getRefreshInterval() * 60L,
+                                                                    getState().getRefreshInterval() * 60L,
+                                                                    getState().getRefreshInterval() * 60L,
                                                                     TimeUnit.SECONDS);
     }
   }
