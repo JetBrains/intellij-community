@@ -138,3 +138,14 @@ iTest 1.0.0 1.0.1
 fireworks 1.40 1.30 1.22 1.21 1.20 1.19 1.18 1.17 1.16 1.15 1.14 1.13 1.12 1.11
 org.mule.tooling.intellij.dataweave 0.13 0.12 0.11 0.10 0.9 0.8 0.7 0.6
 "who did it" 2018.2_20181029 2018.2_20181029
+com.webstorm.symbols 2.3
+YiiStorm 0.9.16.3
+DeltaShareXP 1.0.1
+net.jangaroo.idea.0.9 0.36
+net.jangaroo.idea.4 4.2018.19
+Magicento 2.4.0
+GenerateTestCases 1.0.9
+Identifier_Highlighter 4.20
+com.jedide.apex 2.1.3.191 2.1.6.192
+com.taobao.tmf.plugin.id 1.4.16
+Signals 0.1.1
