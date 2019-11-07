@@ -17,6 +17,7 @@ class ShowTypeDefinitionActionTest : JavaCodeInsightFixtureTestCase() {
     val psiClass = definitions[0] as? PsiClass
     assertNotNull(psiClass)
     assertEquals("String", psiClass!!.name)
+    assertEquals("String.java", psiClass.containingFile!!.name)
   }
 
   fun testNoDefinitionForInt() {
