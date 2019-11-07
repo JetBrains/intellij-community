@@ -495,7 +495,6 @@ public final class PluginManagerCore {
     }
 
     // return if the found plugin is not "core" or the package is obviously "core"
-    //noinspection SpellCheckingInspection
     if (result.getPluginId() != CORE_ID ||
         className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
         className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
@@ -812,10 +811,10 @@ public final class PluginManagerCore {
 
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull Path file,
-                                                                @NotNull String pathName,
+                                                                @NotNull String descriptorRelativePath,
                                                                 @Nullable Path pluginPath,
                                                                 @NotNull DescriptorLoadingContext loadingContext) {
-    Path descriptorFile = file.resolve(META_INF + pathName);
+    Path descriptorFile = file.resolve(descriptorRelativePath);
     if (!Files.exists(descriptorFile)) {
       return null;
     }
@@ -915,7 +914,8 @@ public final class PluginManagerCore {
   private static IdeaPluginDescriptorImpl loadDescriptorFromDirAndNormalize(@NotNull Path file,
                                                                             @NotNull String pathName,
                                                                             @NotNull DescriptorLoadingContext context) {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptorFromDir(file, pathName, null, context);
+    String descriptorRelativePath = META_INF + pathName;
+    IdeaPluginDescriptorImpl descriptor = loadDescriptorFromDir(file, descriptorRelativePath, null, context);
     if (descriptor != null) {
       return normalizeDescriptor(file, pathName, context, descriptor, true) ? descriptor : null;
     }
@@ -937,7 +937,7 @@ public final class PluginManagerCore {
     List<Path> pluginJarFiles = null;
     for (Path childFile : files) {
       if (Files.isDirectory(childFile)) {
-        IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(childFile, pathName, file, context);
+        IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(childFile, descriptorRelativePath, file, context);
         if (otherDescriptor != null) {
           if (descriptor != null) {
             getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
@@ -1894,7 +1894,7 @@ public final class PluginManagerCore {
     IdeaPluginDescriptorImpl descriptor;
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(new DescriptorListLoadingContext(false, disabledPlugins()), true, true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       if (Files.isDirectory(pluginRoot)) {
-        descriptor = loadDescriptorFromDir(pluginRoot, fileName, null, context);
+        descriptor = loadDescriptorFromDir(pluginRoot, META_INF + fileName, null, context);
       }
       else {
         descriptor = loadDescriptorFromJar(pluginRoot, fileName, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, context, null);
