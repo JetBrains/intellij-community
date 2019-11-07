@@ -90,7 +90,7 @@
     <extensionPoint qualifiedName="com.intellij.getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
     <extensionPoint qualifiedName="com.intellij.generation.toStringClassFilter" interface="org.jetbrains.generate.tostring.GenerateToStringClassFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
-    <extensionPoint qualifiedName="com.intellij.safeDelete.importSearcher" interface="com.intellij.refactoring.safeDelete.ImportSearcher"/>
+    <extensionPoint qualifiedName="com.intellij.safeDelete.importSearcher" interface="com.intellij.refactoring.safeDelete.ImportSearcher" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.predefinedMigrationMapProvider" interface="com.intellij.refactoring.migration.PredefinedMigrationProvider"/>
     <extensionPoint qualifiedName="com.intellij.generateAccessorProvider" interface="com.intellij.util.NotNullFunction"/>
     <extensionPoint qualifiedName="com.intellij.overrideImplementsAnnotationsHandler" interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler"/>
