@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelImpl
+import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
@@ -31,7 +32,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   }
 
   override fun serviceContainerInitialized(project: Project) {
-    val enabled = Registry.`is`(ENABLED_REGISTRY_KEY)
+    val enabled = Registry.`is`(ENABLED_REGISTRY_KEY) || WorkspaceModelInitialTestContent.peek() != null
     if (!enabled) {
       LOG.info("Using legacy project model to open project")
       return

@@ -10,11 +10,13 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides rootsChanged events if roots validity was changed.
  * It's implemented by a listener to VirtualFilePointerContainer containing all project roots
  */
+@ApiStatus.Internal
 class LegacyBridgeRootsWatcher(
   val project: Project
 ): Disposable {
@@ -128,7 +130,7 @@ class LegacyBridgeRootsWatcher(
     }
   }
 
-  override fun dispose() {
+  fun clear() {
     currentRoots.values.forEach { Disposer.dispose(it) }
     currentJarDirectories.values.forEach { Disposer.dispose(it) }
     currentRecursiveJarDirectories.values.forEach { Disposer.dispose(it) }
@@ -136,5 +138,14 @@ class LegacyBridgeRootsWatcher(
     currentRoots.clear()
     currentJarDirectories.clear()
     currentRecursiveJarDirectories.clear()
+  }
+
+  override fun dispose() {
+    clear()
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): LegacyBridgeRootsWatcher = project.getComponent(LegacyBridgeRootsWatcher::class.java)
   }
 }

@@ -55,12 +55,11 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -96,6 +95,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl;
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -112,6 +113,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -524,9 +526,25 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         if (LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
           for (Module module : ModuleManager.getInstance(project).getModules()) {
             ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(module)).disposeAndClearCaches();
+
+            for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+              if (orderEntry instanceof LibraryOrderEntry) {
+                LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+                if (libraryOrderEntry.isModuleLevel()) {
+                  LegacyBridgeLibraryImpl libraryImpl = (LegacyBridgeLibraryImpl)Objects.requireNonNull(libraryOrderEntry.getLibrary());
+                  libraryImpl.getFilePointerProvider().disposeAndClearCaches();
+                }
+              }
+            }
           }
 
           ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(project)).disposeAndClearCaches();
+
+          for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
+            ((LegacyBridgeLibraryImpl)library).getFilePointerProvider().disposeAndClearCaches();
+          }
+
+          LegacyBridgeRootsWatcher.getInstance(project).clear();
         }
       })).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).

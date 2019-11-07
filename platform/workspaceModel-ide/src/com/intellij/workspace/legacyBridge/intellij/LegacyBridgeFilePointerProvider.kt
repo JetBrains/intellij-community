@@ -26,5 +26,9 @@ interface LegacyBridgeFilePointerProvider {
     @JvmStatic
     fun getInstance(module: Module): LegacyBridgeFilePointerProvider =
       ModuleServiceManager.getService(module, LegacyBridgeFilePointerProvider::class.java)!!
+
   }
 }
+
+fun LegacyBridgeFileContainer.getAndCacheVirtualFilePointerContainer(provider: LegacyBridgeFilePointerProvider) =
+  provider.getAndCacheFileContainer(this)

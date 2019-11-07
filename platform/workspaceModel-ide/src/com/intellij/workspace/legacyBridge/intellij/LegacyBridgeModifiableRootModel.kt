@@ -25,6 +25,7 @@ import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibra
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEntryImpl
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
+import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
 import org.jdom.Element
@@ -204,6 +205,11 @@ class LegacyBridgeModifiableRootModel(
     }
 
     updateDependencies { dependencies -> dependencies.filter { it != item } }
+
+    if (orderEntry is LibraryOrderEntryViaTypedEntity && orderEntry.isModuleLevel) {
+      val libraryId = (orderEntry.library as LegacyBridgeLibrary).libraryId
+      diff.resolve(libraryId)?.let { diff.removeEntity(it) }
+    }
 
     if (assertChangesApplied && orderEntriesImpl.any { it.item == item })
       error("removeOrderEntry: removed order entry $item still exists after removing")

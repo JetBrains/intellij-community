@@ -9,10 +9,11 @@ import java.util.concurrent.atomic.AtomicReference
 object WorkspaceModelInitialTestContent {
   private val initialContent: AtomicReference<TypedEntityStorage?> = AtomicReference(null)
 
+  internal fun peek(): TypedEntityStorage? = initialContent.get()
   internal fun pop(): TypedEntityStorage? = initialContent.getAndSet(null)
 
   @TestOnly
-  fun withInitialContent(storage: TypedEntityStorage, block: () -> Unit) {
+  fun <R> withInitialContent(storage: TypedEntityStorage, block: () -> R): R {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       error("For test purposes only")
     }
@@ -22,7 +23,7 @@ object WorkspaceModelInitialTestContent {
     }
 
     try {
-      block()
+      return block()
     } finally {
       if (initialContent.getAndSet(null) != null) {
         error("Initial content was not used")

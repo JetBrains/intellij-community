@@ -12,19 +12,15 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.rd.attach
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.*
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.junit.Assert.*
@@ -54,14 +50,13 @@ class LegacyBridgeModulesTest {
 
   @Before
   fun prepareProject() {
-    val registryValue = Registry.get(LegacyBridgeProjectLifecycleListener.ENABLED_REGISTRY_KEY)
-    val oldEnabledValue = registryValue.asBoolean()
-    registryValue.setValue(true)
-    disposableRule.disposable.attach { registryValue.setValue(oldEnabledValue) }
-
     val tempDir = temporaryDirectoryRule.newPath("project").toFile()
-    project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
+
+    project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
+      ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
+    }
     runInEdt { ProjectManagerEx.getInstanceEx().openProject(project) }
+
     disposableRule.disposable.attach { runInEdt { ProjectUtil.closeAndDispose(project) } }
   }
 
@@ -189,6 +184,34 @@ class LegacyBridgeModulesTest {
 
       assertEquals(1, moduleManager.modules.size)
       assertNotNull(moduleManager.findModuleByName("name"))
+    }
+
+  @Test
+  fun `test LibraryEntity is removed after removing module library order entry`() =
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleManager = ModuleManager.getInstance(project)
+
+      val module = moduleManager.modifiableModel.let {
+        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+        it.commit()
+        m
+      }
+
+      ModuleRootModificationUtil.addModuleLibrary(module, "xxx-lib", listOf(File(project.basePath, "x.jar").path), emptyList())
+
+      val projectModel = WorkspaceModel.getInstance(project)
+
+      assertEquals(
+        "xxx-lib",
+        projectModel.entityStore.current.entities(LibraryEntity::class.java).toList().single().name)
+
+      ModuleRootModificationUtil.updateModel(module) { model ->
+        val orderEntry = model.orderEntries.filterIsInstance<LibraryOrderEntry>().single()
+        model.removeOrderEntry(orderEntry)
+        model.removeOrderEntry(orderEntry)
+      }
+
+      assertEmpty(projectModel.entityStore.current.entities(LibraryEntity::class.java).toList())
     }
 
   @Test

@@ -16,11 +16,11 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.ArrayUtil
 import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.api.ModuleDependencyItem
 import com.intellij.workspace.api.ModuleEntity
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
-import com.intellij.util.ArrayUtil
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 abstract class OrderEntryViaTypedEntity(

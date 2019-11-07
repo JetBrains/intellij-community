@@ -13,13 +13,10 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.*
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFileContainer
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeJarDirectory
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleLibraryTable
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import com.intellij.util.ArrayUtil
+import com.intellij.workspace.api.*
+import com.intellij.workspace.legacyBridge.intellij.*
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import org.jdom.Element
 import java.io.StringReader
 
@@ -37,9 +34,9 @@ class LibraryViaTypedEntity(val libraryEntity: LibraryEntity,
       .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }
       .map { LegacyBridgeJarDirectory(it.url, it.inclusionOptions == LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY)
     }
-    filePointerProvider.getAndCacheFileContainer(LegacyBridgeFileContainer(urls, jarDirs))
+    LegacyBridgeFileContainer(urls, jarDirs)
   }
-  private val excludedRoots = if (libraryEntity.excludedRoots.isNotEmpty()) filePointerProvider.getAndCacheFileContainer(LegacyBridgeFileContainer(libraryEntity.excludedRoots, emptyList())) else null
+  private val excludedRoots = if (libraryEntity.excludedRoots.isNotEmpty()) LegacyBridgeFileContainer(libraryEntity.excludedRoots, emptyList()) else null
   private val libraryKind = libraryEntity.getCustomProperties()?.libraryType?.let { LibraryKind.findById(it) } as? PersistentLibraryKind<*>
   private val properties = loadProperties()
 
@@ -59,9 +56,13 @@ class LibraryViaTypedEntity(val libraryEntity: LibraryEntity,
 
   override fun getName(): String? = if (libraryEntity.name.startsWith(LibraryEntity.UNNAMED_LIBRARY_NAME_PREFIX)) null else libraryEntity.name
 
-  override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = roots[LibraryRootTypeId(rootType.name())]?.files ?: VirtualFile.EMPTY_ARRAY
+  override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = roots[LibraryRootTypeId(rootType.name())]
+                                                                         ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+                                                                         ?.files ?: VirtualFile.EMPTY_ARRAY
 
-  override fun getUrls(rootType: OrderRootType): Array<String> = roots[LibraryRootTypeId(rootType.name())]?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
+  override fun getUrls(rootType: OrderRootType): Array<String> = roots[LibraryRootTypeId(rootType.name())]
+                                                                   ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+                                                                   ?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   override fun getKind(): PersistentLibraryKind<*>? = libraryKind
 
@@ -69,19 +70,24 @@ class LibraryViaTypedEntity(val libraryEntity: LibraryEntity,
 
   override fun getTable() = if (libraryTable is LegacyBridgeModuleLibraryTable) null else libraryTable
 
-  override fun getExcludedRootUrls(): Array<String> = excludedRoots?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
+  override fun getExcludedRootUrls(): Array<String> = excludedRoots?.getAndCacheVirtualFilePointerContainer(filePointerProvider)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
 
-  override fun getExcludedRoots(): Array<VirtualFile> = excludedRoots?.files ?: VirtualFile.EMPTY_ARRAY
+  override fun getExcludedRoots(): Array<VirtualFile> = excludedRoots?.getAndCacheVirtualFilePointerContainer(filePointerProvider)?.files ?: VirtualFile.EMPTY_ARRAY
 
   override fun getRootProvider() = this
 
-  override fun isValid(url: String, rootType: OrderRootType) = roots[LibraryRootTypeId(rootType.name())]?.findByUrl(url)?.isValid ?: false
+  override fun isValid(url: String, rootType: OrderRootType) = roots[LibraryRootTypeId(rootType.name())]
+                                                                 ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+                                                                 ?.findByUrl(url)?.isValid ?: false
 
-  override fun getInvalidRootUrls(type: OrderRootType): List<String>  = roots[LibraryRootTypeId(type.name())]?.list?.filterNot { it.isValid }?.map { it.url } ?: emptyList()
+  override fun getInvalidRootUrls(type: OrderRootType): List<String>  = roots[LibraryRootTypeId(type.name())]
+                                                                          ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
+                                                                          ?.list?.filterNot { it.isValid }?.map { it.url } ?: emptyList()
 
   override fun isJarDirectory(url: String) = isJarDirectory(url, OrderRootType.CLASSES)
 
   override fun isJarDirectory(url: String, rootType: OrderRootType) = roots[LibraryRootTypeId(rootType.name())]
+                                                                        ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
                                                                         ?.jarDirectories?.any { it.first == url } ?: false
 
   override fun dispose() {
