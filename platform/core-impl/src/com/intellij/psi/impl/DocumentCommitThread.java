@@ -45,7 +45,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class DocumentCommitThread implements Runnable, Disposable, DocumentCommitProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
+  private static final Logger LOG = Logger.getInstance(DocumentCommitThread.class);
   private static final String SYNC_COMMIT_REASON = "Sync commit";
 
   private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Committing Pool", PooledThreadExecutor.INSTANCE, 1, this);

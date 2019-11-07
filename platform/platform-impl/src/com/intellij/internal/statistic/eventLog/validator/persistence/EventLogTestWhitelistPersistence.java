@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersistence {
   private static final Logger LOG =
-    Logger.getInstance("#com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence");
+    Logger.getInstance(EventLogTestWhitelistPersistence.class);
 
   private static final String TEST_RULE = "{util#fus_test_mode}";
   private static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";

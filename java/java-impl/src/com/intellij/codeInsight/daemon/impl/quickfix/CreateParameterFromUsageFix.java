@@ -41,7 +41,7 @@ import java.util.List;
  * @author Mike
  */
 public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateParameterFromUsageFix");
+  private static final Logger LOG = Logger.getInstance(CreateParameterFromUsageFix.class);
 
   public CreateParameterFromUsageFix(PsiReferenceExpression referenceElement) {
     super(referenceElement);

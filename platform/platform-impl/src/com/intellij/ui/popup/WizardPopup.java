@@ -30,7 +30,7 @@ import java.awt.event.*;
 import java.util.Collections;
 
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.WizardPopup");
+  private static final Logger LOG = Logger.getInstance(WizardPopup.class);
 
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 

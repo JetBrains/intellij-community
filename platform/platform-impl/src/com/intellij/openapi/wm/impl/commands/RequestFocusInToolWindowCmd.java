@@ -23,7 +23,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.commands.RequestFocusInToolWindowCmd");
+  private static final Logger LOG = Logger.getInstance(RequestFocusInToolWindowCmd.class);
   private final ToolWindowImpl myToolWindow;
   private final FocusWatcher myFocusWatcher;
 

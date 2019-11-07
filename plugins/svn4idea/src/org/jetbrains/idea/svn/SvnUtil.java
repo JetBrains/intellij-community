@@ -82,7 +82,7 @@ public class SvnUtil {
           ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
           : Paths.get("/etc/subversion"));
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
+  private static final Logger LOG = Logger.getInstance(SvnUtil.class);
 
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
   public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);

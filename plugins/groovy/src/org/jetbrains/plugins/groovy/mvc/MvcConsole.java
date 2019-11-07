@@ -51,7 +51,7 @@ import java.util.Queue;
 
 public final class MvcConsole implements Disposable {
   private static final Key<Boolean> UPDATING_BY_CONSOLE_PROCESS = Key.create("UPDATING_BY_CONSOLE_PROCESS");
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.mvc.MvcConsole");
+  private static final Logger LOG = Logger.getInstance(MvcConsole.class);
   @NonNls private static final String CONSOLE_ID = "Groovy MVC Console";
 
   @NonNls public static final String TOOL_WINDOW_ID = "Console";

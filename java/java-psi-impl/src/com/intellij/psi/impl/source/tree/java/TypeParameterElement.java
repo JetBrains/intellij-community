@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class TypeParameterElement extends CompositeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.TypeParameterElement");
+  private static final Logger LOG = Logger.getInstance(TypeParameterElement.class);
 
   public TypeParameterElement() {
     super(JavaElementType.TYPE_PARAMETER);

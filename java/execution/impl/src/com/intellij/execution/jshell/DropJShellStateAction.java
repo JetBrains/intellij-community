@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 class DropJShellStateAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.ExecuteJShellAction");
+  private static final Logger LOG = Logger.getInstance(ExecuteJShellAction.class);
   private static final AnAction ourInstance = new DropJShellStateAction();
 
   private DropJShellStateAction() {

@@ -55,7 +55,7 @@ import java.util.List;
  * @author yole
  */
 public class CreateListenerAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.CreateListenerAction");
+  private static final Logger LOG = Logger.getInstance(CreateListenerAction.class);
 
   @Override
   protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {

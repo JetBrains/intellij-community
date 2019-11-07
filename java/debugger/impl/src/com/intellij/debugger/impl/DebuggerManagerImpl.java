@@ -41,7 +41,7 @@ import java.util.*;
 
 @State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
   public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
 
   private final Project myProject;

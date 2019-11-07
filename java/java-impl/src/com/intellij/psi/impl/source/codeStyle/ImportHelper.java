@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toSet;
 
 public class ImportHelper{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
+  private static final Logger LOG = Logger.getInstance(ImportHelper.class);
 
   private final JavaCodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";

@@ -61,7 +61,7 @@ import java.util.*;
  * @author ven
  */
 public class SrcFileAnnotator implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.coverage.SrcFileAnnotator");
+  private static final Logger LOG = Logger.getInstance(SrcFileAnnotator.class);
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");
   private static final Key<DocumentListener> COVERAGE_DOCUMENT_LISTENER = Key.create("COVERAGE_DOCUMENT_LISTENER");
   public static final Key<Map<FileEditor, EditorNotificationPanel>> NOTIFICATION_PANELS = Key.create("NOTIFICATION_PANELS");

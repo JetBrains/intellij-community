@@ -50,7 +50,7 @@ import java.util.concurrent.TimeoutException;
  * @author ilyas, peter
  */
 public class AntTasksProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.gant.AntTasksProvider");
+  private static final Logger LOG = Logger.getInstance(AntTasksProvider.class);
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
   private static final Object ourLock = new Object();
   public static final ParameterizedCachedValueProvider<Map<List<URL>,AntClassLoader>,Project> PROVIDER =

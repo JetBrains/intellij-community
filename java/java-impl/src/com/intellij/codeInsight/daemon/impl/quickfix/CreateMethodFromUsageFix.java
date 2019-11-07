@@ -32,7 +32,7 @@ import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseF
  * @author Mike
  */
 public class CreateMethodFromUsageFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix");
+  private static final Logger LOG = Logger.getInstance(CreateMethodFromUsageFix.class);
 
   public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
     String name = call.getMethodExpression().getReferenceName();

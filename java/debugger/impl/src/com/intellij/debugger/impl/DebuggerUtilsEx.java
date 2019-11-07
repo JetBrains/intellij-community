@@ -69,7 +69,7 @@ import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsEx");
+  private static final Logger LOG = Logger.getInstance(DebuggerUtilsEx.class);
 
   /**
    * @param context

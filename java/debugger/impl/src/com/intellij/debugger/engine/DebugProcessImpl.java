@@ -88,7 +88,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
+  private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
 
   @NonNls private static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
   @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";

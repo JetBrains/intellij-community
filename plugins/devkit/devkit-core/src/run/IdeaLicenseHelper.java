@@ -24,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class IdeaLicenseHelper {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.IdeaLicenseHelper");
+  private static final Logger LOG = Logger.getInstance(IdeaLicenseHelper.class);
 
   public static void copyIDEALicense(final String sandboxHome) {
     File sandboxSystemPath = new File(sandboxHome, "system");

@@ -41,7 +41,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class MessageViewHelper {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.MessageViewHelper");
+  private static final Logger LOG = Logger.getInstance(MessageViewHelper.class);
 
   private final Project myProject;
 

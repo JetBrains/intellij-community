@@ -30,7 +30,7 @@ import java.util.List;
  * Removes <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> (if any).
  */
 public class RemoveBomAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#" + RemoveBomAction.class);
+  private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
 
   public RemoveBomAction() {
     super("Remove BOM");

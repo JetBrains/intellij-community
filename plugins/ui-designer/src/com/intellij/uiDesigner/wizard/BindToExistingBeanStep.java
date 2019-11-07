@@ -25,7 +25,7 @@ import java.util.Collections;
  * @author Vladimir Kondratyev
  */
 final class BindToExistingBeanStep extends StepAdapter{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.BindToExistingBeanStep");
+  private static final Logger LOG = Logger.getInstance(BindToExistingBeanStep.class);
 
   private JScrollPane myScrollPane;
   private JTable myTable;

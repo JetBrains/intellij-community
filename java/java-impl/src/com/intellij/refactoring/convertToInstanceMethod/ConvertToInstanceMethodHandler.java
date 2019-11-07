@@ -37,7 +37,7 @@ import java.util.List;
  * @author dsl
  */
 public class ConvertToInstanceMethodHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler");
+  private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodHandler.class);
   static final String REFACTORING_NAME = RefactoringBundle.message("convert.to.instance.method.title");
 
   @Override

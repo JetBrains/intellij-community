@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBreakStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiBreakStatementImpl.class);
 
   public PsiBreakStatementImpl() {
     super(JavaElementType.BREAK_STATEMENT);

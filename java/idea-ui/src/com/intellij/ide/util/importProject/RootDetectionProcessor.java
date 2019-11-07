@@ -29,7 +29,7 @@ import java.util.*;
  * @author nik
  */
 public class RootDetectionProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.RootDetectionProcessor");
+  private static final Logger LOG = Logger.getInstance(RootDetectionProcessor.class);
   private final File myBaseDir;
   private final ProjectStructureDetector[] myDetectors;
   private final List<DetectedProjectRoot>[] myDetectedRoots;

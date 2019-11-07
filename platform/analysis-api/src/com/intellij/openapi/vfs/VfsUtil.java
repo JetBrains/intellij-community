@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
+  private static final Logger LOG = Logger.getInstance(VfsUtil.class);
 
   /**
    * Specifies an average delay between a file system event and a moment the IDE gets pinged about it by fsnotifier.

@@ -12,7 +12,7 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 
 public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideAuthenticator");
+  private final static Logger LOG = Logger.getInstance(IdeaWideAuthenticator.class);
   private final HttpConfigurable myHttpConfigurable;
 
   public IdeaWideAuthenticator(@NotNull HttpConfigurable configurable) {

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class TypeParameterListElement extends CompositeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.TypeParameterListElement");
+  private static final Logger LOG = Logger.getInstance(TypeParameterListElement.class);
   private static final TokenSet TYPE_PARAMETER_SET = TokenSet.create(JavaElementType.TYPE_PARAMETER);
 
   public TypeParameterListElement() {

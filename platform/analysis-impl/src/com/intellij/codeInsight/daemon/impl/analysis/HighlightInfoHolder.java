@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class HighlightInfoHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder");
+  private static final Logger LOG = Logger.getInstance(HighlightInfoHolder.class);
 
   private final PsiFile myContextFile;
   private final HighlightInfoFilter[] myFilters;

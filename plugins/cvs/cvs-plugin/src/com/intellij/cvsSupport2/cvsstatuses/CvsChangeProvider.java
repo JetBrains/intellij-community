@@ -56,7 +56,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
  * @author max
  */
 public class CvsChangeProvider implements ChangeProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider");
+  private static final Logger LOG = Logger.getInstance(CvsChangeProvider.class);
 
   private final CvsVcs2 myVcs;
   private final CvsEntriesManager myEntriesManager;

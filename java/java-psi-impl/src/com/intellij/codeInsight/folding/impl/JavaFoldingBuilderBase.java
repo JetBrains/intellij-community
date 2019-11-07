@@ -48,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
+  private static final Logger LOG = Logger.getInstance(JavaFoldingBuilderBase.class);
 
   private static String getCodeBlockPlaceholder(PsiElement codeBlock) {
     return codeBlock instanceof PsiCodeBlock && ((PsiCodeBlock)codeBlock).isEmpty() ? "{}" : "{...}";

@@ -57,7 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler");
+  private static final Logger LOG = Logger.getInstance(BaseExpressionToFieldHandler.class);
 
   public enum InitializationPlace {
     IN_CURRENT_METHOD,

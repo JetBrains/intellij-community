@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class PsiElementBase extends ElementBase implements NavigatablePsiElement, Cloneable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiElementBase");
+  private static final Logger LOG = Logger.getInstance(PsiElementBase.class);
 
   @Override
   public PsiElement getFirstChild() {

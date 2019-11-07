@@ -44,7 +44,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.
 
 public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection");
+  protected static final Logger LOG = Logger.getInstance(RequiredAttributesInspectionBase.class);
   public String myAdditionalRequiredHtmlAttributes = "";
 
   private static String appendName(String toAppend, String text) {

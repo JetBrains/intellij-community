@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class XmlTagValueImpl implements XmlTagValue{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagValueImpl");
+  private static final Logger LOG = Logger.getInstance(XmlTagValueImpl.class);
 
   private final XmlTag myTag;
   private final XmlTagChild[] myElements;

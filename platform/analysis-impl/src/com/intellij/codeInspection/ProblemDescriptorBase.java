@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implements ProblemDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.ProblemDescriptorImpl");
+  private static final Logger LOG = Logger.getInstance(ProblemDescriptorBase.class);
 
   @NotNull private final SmartPsiElementPointer myStartSmartPointer;
   @Nullable private final SmartPsiElementPointer myEndSmartPointer;

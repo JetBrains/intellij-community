@@ -35,7 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy");
+  private static final Logger LOG = Logger.getInstance(DefaultXmlPsiPolicy.class);
 
   @Override
   public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {

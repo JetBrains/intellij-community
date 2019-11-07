@@ -328,7 +328,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     return Comparing.equal(repository.getDefaultSearch(), getDefaultSearch());
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
+  private static final Logger LOG = Logger.getInstance(YouTrackRepository.class);
 
   @Override
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {

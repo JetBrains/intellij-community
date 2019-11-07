@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 })
 public final class AntWorkspaceConfiguration implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration");
+  private static final Logger LOG = Logger.getInstance(AntWorkspaceConfiguration.class);
 
   private final Project myProject;
   @NonNls private static final String BUILD_FILE = "buildFile";

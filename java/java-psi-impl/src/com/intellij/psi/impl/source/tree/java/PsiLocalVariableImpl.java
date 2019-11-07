@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Set;
 
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl");
+  private static final Logger LOG = Logger.getInstance(PsiLocalVariableImpl.class);
 
   private volatile String myCachedName;
 

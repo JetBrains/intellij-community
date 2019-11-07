@@ -28,7 +28,7 @@ import java.awt.*;
 import java.util.List;
 
 public class FileChooser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.FileChooser");
+  private static final Logger LOG = Logger.getInstance(FileChooser.class);
 
   /**
    * Normally, callback isn't invoked if a chooser was cancelled.

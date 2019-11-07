@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Eugene Zhuravlev
  */
 public class JShellHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.JShellHandler");
+  private static final Logger LOG = Logger.getInstance(JShellHandler.class);
   private static final int DEBUG_PORT = -1;
   public static final Key<JShellHandler> MARKER_KEY = Key.create("JShell console key");
   private static final Charset ourCharset = StandardCharsets.UTF_8;

@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class PsiTreeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
+  private static final Logger LOG = Logger.getInstance(PsiTreeUtil.class);
 
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
   @SuppressWarnings("unchecked")

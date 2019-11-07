@@ -53,7 +53,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaDocInfoGenerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocInfoGenerator");
+  private static final Logger LOG = Logger.getInstance(JavaDocInfoGenerator.class);
 
   private interface InheritDocProvider<T> {
     Pair<T, InheritDocProvider<T>> getInheritDoc();

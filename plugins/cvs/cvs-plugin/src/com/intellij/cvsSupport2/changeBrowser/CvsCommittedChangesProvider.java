@@ -40,7 +40,7 @@ import java.util.*;
  * @author yole
  */
 public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider");
+  private static final Logger LOG = Logger.getInstance(CvsCommittedChangesProvider.class);
 
   private final Project myProject;
 

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(EditorHighlighterFactoryImpl.class);
 
   @NotNull
   @Override

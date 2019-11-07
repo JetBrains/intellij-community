@@ -43,7 +43,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointPro
 import javax.swing.*;
 
 public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.FieldBreakpoint");
+  private static final Logger LOG = Logger.getInstance(FieldBreakpoint.class);
   private boolean myIsStatic;
 
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");

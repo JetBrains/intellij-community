@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl, XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlElementDeclImpl");
+  private static final Logger LOG = Logger.getInstance(XmlElementDeclImpl.class);
 
   public XmlElementDeclImpl() {
     super(XML_ELEMENT_DECL);

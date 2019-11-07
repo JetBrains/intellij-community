@@ -59,7 +59,7 @@ public class BuildMain {
   private static final Logger LOG;
   static {
     LogSetup.initLoggers();
-    LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
+    LOG = Logger.getInstance(BuildMain.class);
   }
 
   private static final int HOST_ARG = 0;

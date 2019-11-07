@@ -24,7 +24,7 @@ import java.util.List;
  * @author yole
  */
 public class MockProject extends MockComponentManager implements Project {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.mock.MockProject");
+  private static final Logger LOG = Logger.getInstance(MockProject.class);
   private VirtualFile myBaseDir;
 
   public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {

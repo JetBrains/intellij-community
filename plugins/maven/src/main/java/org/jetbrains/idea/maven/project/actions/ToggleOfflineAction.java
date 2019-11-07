@@ -25,7 +25,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 
 public class ToggleOfflineAction extends MavenToggleAction {
-  private static final Logger LOG = Logger.getInstance("#" + ToggleOfflineAction.class.getPackage().getName());
+  private static final Logger LOG = Logger.getInstance(ToggleOfflineAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {

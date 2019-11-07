@@ -41,7 +41,7 @@ import java.util.*;
  * @author mike
  */
 public class AddExceptionToThrowsFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToThrowsFix");
+  private static final Logger LOG = Logger.getInstance(AddExceptionToThrowsFix.class);
   private final PsiElement myWrongElement;
 
   public AddExceptionToThrowsFix(@NotNull PsiElement wrongElement) {

@@ -39,7 +39,7 @@ import static java.util.Objects.requireNonNull;
  * @author dmitry lomov
  */
 public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
+  private static final Logger LOG = Logger.getInstance(JavaFileManagerImpl.class);
 
   private final PsiManagerEx myManager;
   private volatile Set<String> myNontrivialPackagePrefixes;

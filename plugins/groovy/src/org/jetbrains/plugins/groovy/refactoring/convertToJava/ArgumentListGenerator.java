@@ -24,7 +24,7 @@ import java.util.Arrays;
  * @author Maxim.Medvedev
  */
 class ArgumentListGenerator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ArgumentListGenerator");
+  private static final Logger LOG = Logger.getInstance(ArgumentListGenerator.class);
 
   private final StringBuilder myBuilder;
   private final ExpressionGenerator myExpressionGenerator;

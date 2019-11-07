@@ -68,7 +68,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class InlineLocalHandler extends JavaInlineActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineLocalHandler");
+  private static final Logger LOG = Logger.getInstance(InlineLocalHandler.class);
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
 

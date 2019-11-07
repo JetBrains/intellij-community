@@ -31,7 +31,7 @@ import java.util.ResourceBundle;
  * @author Denis Zhdanov
  */
 public abstract class AbstractBundle {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.AbstractBundle");
+  private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
   private Reference<ResourceBundle> myBundle;
   @NonNls private final String myPathToBundle;
 

@@ -45,7 +45,7 @@ import java.lang.ref.WeakReference;
  * @author spleaner
  */
 public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer");
+  private static final Logger LOG = Logger.getInstance(GlassPaneDialogWrapperPeer.class);
 
   private final DialogWrapper myWrapper;
   private WindowManagerEx myWindowManager;

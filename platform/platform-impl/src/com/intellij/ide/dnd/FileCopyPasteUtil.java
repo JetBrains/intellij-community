@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class FileCopyPasteUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.dnd.FileCopyPasteUtil");
+  private static final Logger LOG = Logger.getInstance(FileCopyPasteUtil.class);
 
   private FileCopyPasteUtil() { }
 

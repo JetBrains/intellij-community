@@ -37,7 +37,7 @@ import java.awt.*;
  * @author spleaner
  */
 public class NotificationsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.ui.NotificationsUtil");
+  private static final Logger LOG = Logger.getInstance(NotificationsUtil.class);
   private static final int TITLE_LIMIT = 1000;
   private static final int CONTENT_LIMIT = 10000;
 

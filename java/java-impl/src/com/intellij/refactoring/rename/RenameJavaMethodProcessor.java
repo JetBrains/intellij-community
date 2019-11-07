@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMethodProcessor");
+  private static final Logger LOG = Logger.getInstance(RenameJavaMethodProcessor.class);
 
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {

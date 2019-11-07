@@ -50,7 +50,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  */
 public class FSOperations {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.FSOperations");
+  private static final Logger LOG = Logger.getInstance(FSOperations.class);
   public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGETS_COMPLETELY_MARKED_DIRTY = GlobalContextKey.create("_targets_completely_marked_dirty_");
 

@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = {'/', '\\'};
-  private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
+  private static final Logger LOG = Logger.getInstance(VcsUtil.class);
 
   public static final String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
   private static final int ourMaxLoadedFileSize = computeLoadedFileSize();

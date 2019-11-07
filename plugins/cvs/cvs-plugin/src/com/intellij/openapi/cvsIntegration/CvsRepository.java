@@ -30,7 +30,7 @@ public class CvsRepository {
   private final DateOrRevision myBranch;
   private final String myStringRepresentation;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.cvsIntegration.CvsRepository");
+  private static final Logger LOG = Logger.getInstance(CvsRepository.class);
 
   public CvsRepository(@NotNull String stringRepresentation,
                        @NotNull String method,

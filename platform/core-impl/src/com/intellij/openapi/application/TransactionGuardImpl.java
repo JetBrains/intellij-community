@@ -33,7 +33,7 @@ import static com.intellij.util.ReflectionUtil.getField;
  * @author peter
  */
 public class TransactionGuardImpl extends TransactionGuard {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.TransactionGuardImpl");
+  private static final Logger LOG = Logger.getInstance(TransactionGuardImpl.class);
   private final Queue<Transaction> myQueue = new LinkedBlockingQueue<>();
   private final Map<ModalityState, TransactionIdImpl> myModality2Transaction = ContainerUtil.createConcurrentWeakMap();
 

@@ -36,8 +36,7 @@ import java.util.*;
  *  @author dsl
  */
 public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination");
+  private static final Logger LOG = Logger.getInstance(MultipleRootsMoveDestination.class);
 
   public MultipleRootsMoveDestination(PackageWrapper aPackage) {
     super(aPackage);

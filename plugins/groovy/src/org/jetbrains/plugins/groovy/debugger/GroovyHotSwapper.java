@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  * @author peter
  */
 public class GroovyHotSwapper extends JavaProgramPatcher {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper");
+  private static final Logger LOG = Logger.getInstance(GroovyHotSwapper.class);
   private static final String GROOVY_HOTSWAP_AGENT_PATH = "groovy.hotswap.agent.path";
   private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-[^/\\\\]+\\.jar");
   

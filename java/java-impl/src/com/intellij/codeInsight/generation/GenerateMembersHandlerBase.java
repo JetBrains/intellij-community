@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Objects;
 
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
+  private static final Logger LOG = Logger.getInstance(GenerateMembersHandlerBase.class);
 
   private final String myChooserTitle;
   protected boolean myToCopyJavaDoc;

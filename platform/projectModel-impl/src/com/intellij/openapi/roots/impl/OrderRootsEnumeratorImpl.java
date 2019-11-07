@@ -19,7 +19,7 @@ import java.util.*;
  * @author nik
  */
 class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderRootsEnumeratorImpl");
+  private static final Logger LOG = Logger.getInstance(OrderRootsEnumeratorImpl.class);
   private final OrderEnumeratorBase myOrderEnumerator;
   private final OrderRootType myRootType;
   private final NotNullFunction<? super OrderEntry, ? extends OrderRootType> myRootTypeProvider;

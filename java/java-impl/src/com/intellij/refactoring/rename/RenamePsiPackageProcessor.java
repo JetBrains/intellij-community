@@ -29,7 +29,7 @@ import java.util.Map;
  * @author yole
  */
 public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenamePsiPackageProcessor");
+  private static final Logger LOG = Logger.getInstance(RenamePsiPackageProcessor.class);
 
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {

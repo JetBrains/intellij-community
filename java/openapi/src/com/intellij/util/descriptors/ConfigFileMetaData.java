@@ -26,7 +26,7 @@ import java.util.Arrays;
  * @author nik
  */
 public class ConfigFileMetaData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.ConfigFileMetaData");
+  private static final Logger LOG = Logger.getInstance(ConfigFileMetaData.class);
   private final String myTitle;
   private final String myId;
   private final String myFileName;

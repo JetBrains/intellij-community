@@ -63,7 +63,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionContributor");
+  private static final Logger LOG = Logger.getInstance(JavaCompletionContributor.class);
 
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());

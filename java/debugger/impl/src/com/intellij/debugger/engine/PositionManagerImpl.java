@@ -43,7 +43,7 @@ import java.util.function.Consumer;
  * @author lex
  */
 public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
+  private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
 
   private final DebugProcessImpl myDebugProcess;
 

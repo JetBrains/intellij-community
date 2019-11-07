@@ -37,7 +37,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor");
+  private static final Logger LOG = Logger.getInstance(JavaCopyPasteReferenceProcessor.class);
 
   @Override
   protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to) {

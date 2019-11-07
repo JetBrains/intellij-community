@@ -51,8 +51,7 @@ import java.util.*;
  * @author Jeka,dsl
  */
 public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesProcessor.class);
 
   private final PsiElement[] myElementsToMove;
   private boolean mySearchInComments;

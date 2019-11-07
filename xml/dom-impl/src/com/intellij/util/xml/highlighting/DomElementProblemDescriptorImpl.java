@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementProblemDescriptorImpl");
+  private static final Logger LOG = Logger.getInstance(DomElementProblemDescriptorImpl.class);
   private final DomElement myDomElement;
   private final HighlightSeverity mySeverity;
   private final String myMessage;

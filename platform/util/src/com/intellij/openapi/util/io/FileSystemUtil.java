@@ -34,7 +34,7 @@ public class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
+  private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
   private interface Mediator {
     @Nullable FileAttributes getAttributes(@NotNull String path) throws IOException;

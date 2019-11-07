@@ -33,7 +33,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.*;
 
 public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Disposable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
+  protected static final Logger LOG = Logger.getInstance(ModuleRootManagerImpl.class);
 
   private final Module myModule;
   private final ProjectRootManagerImpl myProjectRootManager;

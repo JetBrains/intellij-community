@@ -34,7 +34,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
 public class FileManagerTest extends JavaPsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerTest");
+  private static final Logger LOG = Logger.getInstance(FileManagerTest.class);
 
   private VirtualFile myPrjDir1;
   private VirtualFile myPrjDir2;

@@ -58,7 +58,7 @@ import java.util.Collection;
 public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   private final GrMethod myMethod;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyMethodInliner");
+  private static final Logger LOG = Logger.getInstance(GroovyMethodInliner.class);
 
   public GroovyMethodInliner(GrMethod method) {
     myMethod = method;

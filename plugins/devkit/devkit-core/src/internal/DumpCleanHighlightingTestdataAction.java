@@ -38,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#" + DumpCleanHighlightingTestdataAction.class);
+  private static final Logger LOG = Logger.getInstance(DumpCleanHighlightingTestdataAction.class);
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

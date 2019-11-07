@@ -35,7 +35,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
 public class ActionsTreeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil");
+  private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   public static final String MAIN_MENU_TITLE = KeyMapBundle.message("main.menu.action.title");
   public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");

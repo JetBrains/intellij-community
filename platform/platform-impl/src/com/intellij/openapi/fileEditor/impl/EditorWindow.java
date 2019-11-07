@@ -52,7 +52,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
  * Author: msk
  */
 public class EditorWindow {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorWindow");
+  private static final Logger LOG = Logger.getInstance(EditorWindow.class);
 
   public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
 

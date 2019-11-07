@@ -16,7 +16,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
 class InstanceofEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.InstanceofEvaluator");
+  private static final Logger LOG = Logger.getInstance(InstanceofEvaluator.class);
   private final Evaluator myOperandEvaluator;
   private final TypeEvaluator myTypeEvaluator;
 

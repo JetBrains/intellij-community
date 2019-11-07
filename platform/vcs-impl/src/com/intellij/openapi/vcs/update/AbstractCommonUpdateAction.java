@@ -52,7 +52,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
   private final boolean myAlwaysVisible;
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.AbstractCommonUpdateAction");
+  private final static Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
 
   private final ActionInfo myActionInfo;
   private final ScopeInfo myScopeInfo;

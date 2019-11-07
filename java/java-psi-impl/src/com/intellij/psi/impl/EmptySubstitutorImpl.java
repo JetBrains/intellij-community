@@ -27,7 +27,7 @@ import java.util.Map;
  *  @author dsl
  */
 public final class EmptySubstitutorImpl extends EmptySubstitutor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.EmptySubstitutorImpl");
+  private static final Logger LOG = Logger.getInstance(EmptySubstitutorImpl.class);
   @Override
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter){
     return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter);

@@ -34,7 +34,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAcces
  * @date: 26.03.2007
  */
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl");
+  private static final Logger LOG = Logger.getInstance(GrCodeReferenceElementImpl.class);
 
   public GrCodeReferenceElementImpl(@NotNull ASTNode node) {
     super(node);

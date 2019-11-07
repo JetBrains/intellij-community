@@ -35,8 +35,7 @@ import java.io.File;
 import java.util.*;
 
 public class MoveClassesOrPackagesUtil {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesUtil.class);
 
   private MoveClassesOrPackagesUtil() {
   }

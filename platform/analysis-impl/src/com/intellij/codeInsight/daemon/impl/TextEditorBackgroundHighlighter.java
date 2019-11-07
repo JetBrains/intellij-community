@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter");
+  private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
   private static final int[] EXCEPT_OVERRIDDEN = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,

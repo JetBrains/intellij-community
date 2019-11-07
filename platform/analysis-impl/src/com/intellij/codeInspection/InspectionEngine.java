@@ -39,7 +39,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionEngine {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEngine");
+  private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
   private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
   @NotNull

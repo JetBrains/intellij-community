@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
+  private static final Logger LOG = Logger.getInstance(DomElementAnnotationHolderImpl.class);
   private final SmartList<Annotation> myAnnotations = new SmartList<>();
   private final boolean myOnTheFly;
   private final DomFileElement myFileElement;

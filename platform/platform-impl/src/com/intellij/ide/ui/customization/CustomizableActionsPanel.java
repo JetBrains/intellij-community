@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.*;
 
 public class CustomizableActionsPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
+  private static final Logger LOG = Logger.getInstance(CustomizableActionsPanel.class);
 
   private JPanel myPanel;
   private JTree myActionsTree;

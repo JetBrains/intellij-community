@@ -17,7 +17,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class JavaStatisticsManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.JavaStatisticsManager");
+  private static final Logger LOG = Logger.getInstance(JavaStatisticsManager.class);
   @NonNls public static final String CLASS_PREFIX = "class#";
 
   @NotNull

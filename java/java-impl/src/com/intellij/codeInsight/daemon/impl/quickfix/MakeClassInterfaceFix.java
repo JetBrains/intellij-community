@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MakeClassInterfaceFix");
+  private static final Logger LOG = Logger.getInstance(MakeClassInterfaceFix.class);
 
   private final boolean myMakeInterface;
   private final String myName;

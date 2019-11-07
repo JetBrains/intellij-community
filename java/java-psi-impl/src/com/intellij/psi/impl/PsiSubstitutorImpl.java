@@ -39,7 +39,7 @@ import java.util.Set;
  * @author ik, dsl
  */
 public class PsiSubstitutorImpl implements PsiSubstitutor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSubstitutorImpl");
+  private static final Logger LOG = Logger.getInstance(PsiSubstitutorImpl.class);
 
   private static final TObjectHashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new TObjectHashingStrategy<PsiTypeParameter>() {
     @Override

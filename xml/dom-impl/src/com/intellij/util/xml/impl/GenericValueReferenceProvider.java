@@ -33,7 +33,7 @@ import java.util.List;
  * @author peter
  */
 public class GenericValueReferenceProvider extends PsiReferenceProvider {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericValueReferenceProvider");
+  private final static Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
 
   @Override
   @NotNull

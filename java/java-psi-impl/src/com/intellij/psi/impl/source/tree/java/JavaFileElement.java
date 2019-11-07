@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaFileElement extends FileElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.JavaFileElement");
+  private static final Logger LOG = Logger.getInstance(JavaFileElement.class);
 
   public JavaFileElement(CharSequence text) {
     super(JavaParserDefinition.JAVA_FILE, text);

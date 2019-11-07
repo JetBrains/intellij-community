@@ -71,7 +71,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public static final String ATTRIBUTE_GROUP = "group";
   public static final String IML_EXTENSION = ".iml";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
+  private static final Logger LOG = Logger.getInstance(ModuleManagerImpl.class);
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   public static final String MODULE_GROUP_SEPARATOR = "/";
 

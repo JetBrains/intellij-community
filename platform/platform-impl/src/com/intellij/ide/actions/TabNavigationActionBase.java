@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class TabNavigationActionBase extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.TabNavigationActionBase");
+  private static final Logger LOG = Logger.getInstance(TabNavigationActionBase.class);
 
   enum NavigationType {NUM1, NUM2, NUM3, NUM4, NUM5, NUM6, NUM7, NUM8, NUM9, PREV, NEXT, LAST}
 

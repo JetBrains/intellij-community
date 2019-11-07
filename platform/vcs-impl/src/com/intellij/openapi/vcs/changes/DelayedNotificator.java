@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 public class DelayedNotificator implements ChangeListListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
+  private static final Logger LOG = Logger.getInstance(DelayedNotificator.class);
 
   @NotNull private final ChangeListManagerImpl myManager;
   @NotNull private final EventDispatcher<? extends ChangeListListener> myDispatcher;

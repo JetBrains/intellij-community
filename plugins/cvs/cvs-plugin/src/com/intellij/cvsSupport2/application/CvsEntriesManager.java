@@ -38,7 +38,7 @@ import java.util.Map;
  */
 
 public class CvsEntriesManager implements VirtualFileListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
+  private static final Logger LOG = Logger.getInstance(CvsEntriesManager.class);
 
   private final Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new THashMap<>();
 

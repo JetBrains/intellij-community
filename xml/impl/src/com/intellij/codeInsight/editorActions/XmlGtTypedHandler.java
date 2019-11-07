@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
+  private static final Logger LOG = Logger.getInstance(TypedHandler.class);
 
   @NotNull
   @Override

@@ -32,7 +32,7 @@ import java.util.function.Predicate;
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
+  private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {

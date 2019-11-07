@@ -38,7 +38,7 @@ import java.util.*;
  * @author MYakovlev
  */
 public class PathEditor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
+  private static final Logger LOG = Logger.getInstance(PathEditor.class);
 
   public static final Color INVALID_COLOR = new JBColor(new Color(210, 0, 0), JBColor.RED);
 

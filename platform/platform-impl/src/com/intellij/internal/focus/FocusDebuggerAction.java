@@ -23,7 +23,7 @@ import java.awt.event.FocusEvent;
  * @author spleaner
  */
 public class FocusDebuggerAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.internal.focus.FocusDebuggerAction");
+  private static final Logger LOG = Logger.getInstance(FocusDebuggerAction.class);
   private FocusDrawer myFocusDrawer;
 
   public FocusDebuggerAction() {

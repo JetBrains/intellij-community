@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScrollingModelImpl implements ScrollingModelEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
+  private static final Logger LOG = Logger.getInstance(ScrollingModelImpl.class);
 
   private final EditorImpl myEditor;
   private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createLockFreeCopyOnWriteList();

@@ -33,7 +33,7 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
 
   public static final ExtensionPointName<DomExtenderEP> EP_NAME = ExtensionPointName.create("com.intellij.dom.extender");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.reflect.DomExtenderEP");
+  private static final Logger LOG = Logger.getInstance(DomExtenderEP.class);
 
   @Attribute("domClass")
   public String domClassName;

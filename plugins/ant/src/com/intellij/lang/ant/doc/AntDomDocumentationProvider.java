@@ -33,7 +33,7 @@ import java.util.List;
 
 public class AntDomDocumentationProvider implements DocumentationProvider {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.doc.AntDomDocumentationProvider");
+  private static final Logger LOG = Logger.getInstance(AntDomDocumentationProvider.class);
 
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {

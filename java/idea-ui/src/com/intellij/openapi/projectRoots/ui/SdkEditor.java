@@ -42,7 +42,7 @@ import java.util.List;
  * @author MYakovlev
  */
 public class SdkEditor implements Configurable, Place.Navigator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
+  private static final Logger LOG = Logger.getInstance(SdkEditor.class);
   private static final String SDK_TAB = "sdkTab";
 
   private Sdk mySdk;

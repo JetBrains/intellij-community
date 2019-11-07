@@ -26,7 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionStatementImpl extends CompositePsiElement implements PsiExpressionStatement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiExpressionStatementImpl.class);
 
   public PsiExpressionStatementImpl() {
     super(JavaElementType.EXPRESSION_STATEMENT);

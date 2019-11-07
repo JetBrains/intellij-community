@@ -68,7 +68,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Eugene Zhuravlev
  */
 public class IncProjectBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
+  private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));

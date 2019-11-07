@@ -56,7 +56,7 @@ import java.util.List;
  * @author maxim
  */
 public class ExternalDocumentValidator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");
+  private static final Logger LOG = Logger.getInstance(ExternalDocumentValidator.class);
   private static final Key<SoftReference<ExternalDocumentValidator>> validatorInstanceKey = Key.create("validatorInstance");
 
   public static final @NonNls String INSPECTION_SHORT_NAME = "CheckXmlFileWithXercesValidator";

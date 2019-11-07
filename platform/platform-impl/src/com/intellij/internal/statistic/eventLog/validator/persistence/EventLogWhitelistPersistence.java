@@ -18,7 +18,7 @@ import java.nio.file.StandardCopyOption;
 public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersistence {
   public static final String WHITE_LIST_DATA_FILE = "white-list.json";
   private static final Logger LOG =
-    Logger.getInstance("#com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence");
+    Logger.getInstance(EventLogWhitelistPersistence.class);
   @NotNull
   private final String myRecorderId;
   @NotNull

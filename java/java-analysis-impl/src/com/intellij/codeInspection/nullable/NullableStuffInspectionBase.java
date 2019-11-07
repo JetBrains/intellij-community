@@ -55,7 +55,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.nullable.NullableStuffInspectionBase");
+  private static final Logger LOG = Logger.getInstance(NullableStuffInspectionBase.class);
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {

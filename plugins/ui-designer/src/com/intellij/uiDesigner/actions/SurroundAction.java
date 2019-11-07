@@ -26,7 +26,7 @@ import java.util.List;
  * @author yole
  */
 public class SurroundAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.SurroundAction");
+  private static final Logger LOG = Logger.getInstance(SurroundAction.class);
 
   private final String myComponentClass;
 

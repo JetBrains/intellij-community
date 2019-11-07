@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public abstract class FileSetToBeUpdated {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated");
+  private static final Logger LOG = Logger.getInstance(FileSetToBeUpdated.class);
 
   public static FileSetToBeUpdated allFiles() {
     return new AllFilesInProject();

@@ -79,7 +79,7 @@ import java.util.*;
       return map;
  */
 public class LocalVariablesUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.LocalVariablesUtil");
+  private static final Logger LOG = Logger.getInstance(LocalVariablesUtil.class);
 
   private static final boolean ourInitializationOk;
   private static Class<?> ourSlotInfoClass;

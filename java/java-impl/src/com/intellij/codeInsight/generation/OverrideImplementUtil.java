@@ -55,7 +55,7 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 
 public class OverrideImplementUtil extends OverrideImplementExploreUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+  private static final Logger LOG = Logger.getInstance(OverrideImplementUtil.class);
   public static final String IMPLEMENT_COMMAND_MARKER = "implement";
 
   private OverrideImplementUtil() { }

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectJdkImpl.class);
   private String myName;
   private String myVersionString;
   private boolean myVersionDefined;

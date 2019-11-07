@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerUtilsImpl.class);
 
   @Override
   public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)

@@ -52,7 +52,7 @@ import java.util.Collection;
  */
 public class IgnoreFileAction extends AnAction implements DumbAware {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.IgnoreFileAction");
+  private static final Logger LOG = Logger.getInstance(IgnoreFileAction.class);
 
   private final CvsActionVisibility myVisibility = new CvsActionVisibility();
 

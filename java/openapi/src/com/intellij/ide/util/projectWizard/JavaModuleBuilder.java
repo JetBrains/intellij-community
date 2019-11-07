@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.JavaModuleBuilder");
+  private static final Logger LOG = Logger.getInstance(JavaModuleBuilder.class);
   private String myCompilerOutputPath;
   // Pair<Source Path, Package Prefix>
   private List<Pair<String,String>> mySourcePaths;

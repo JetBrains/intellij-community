@@ -29,7 +29,7 @@ import java.awt.event.WindowEvent;
  * @author Vladimir Kondratyev
  */
 public final class FloatingDecorator extends JDialog {
-  private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.FloatingDecorator");
+  private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);
 
   static final int DIVIDER_WIDTH = 3;
 

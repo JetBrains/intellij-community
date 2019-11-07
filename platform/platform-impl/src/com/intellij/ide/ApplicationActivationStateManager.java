@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ApplicationActivationStateManager {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ApplicationActivationStateManager");
+  private static final Logger LOG = Logger.getInstance(ApplicationActivationStateManager.class);
 
   private static final AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
 

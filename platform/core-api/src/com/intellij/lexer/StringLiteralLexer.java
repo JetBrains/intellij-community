@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class StringLiteralLexer extends LexerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.StringLiteralLexer");
+  private static final Logger LOG = Logger.getInstance(StringLiteralLexer.class);
 
   private static final short AFTER_FIRST_QUOTE = 1;
   private static final short AFTER_LAST_QUOTE = 2;

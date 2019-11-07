@@ -41,7 +41,7 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
  * @author yole
  */
 public class SvnChangeProvider implements ChangeProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
+  private static final Logger LOG = Logger.getInstance(SvnChangeProvider.class);
   public static final String PROPERTY_LAYER = "Property";
 
   @NotNull private final SvnVcs myVcs;

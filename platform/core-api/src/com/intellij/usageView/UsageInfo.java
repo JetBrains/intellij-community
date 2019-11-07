@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageInfo");
+  private static final Logger LOG = Logger.getInstance(UsageInfo.class);
   private final SmartPsiElementPointer<?> mySmartPointer;
   private final SmartPsiFileRange myPsiFileRange;
 

@@ -68,7 +68,7 @@ import java.util.Map;
  */
 public abstract class DesignerEditorPanel extends JPanel
   implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
+  private static final Logger LOG = Logger.getInstance(DesignerEditorPanel.class);
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
   protected static final Integer LAYER_DECORATION = JLayeredPane.POPUP_LAYER;

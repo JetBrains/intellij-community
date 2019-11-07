@@ -32,7 +32,7 @@ import java.util.ResourceBundle;
  */
 @Tag("configurable")
 public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ConfigurableEP");
+  private static final Logger LOG = Logger.getInstance(ConfigurableEP.class);
 
   /**
    * This attribute specifies the setting name visible to users.

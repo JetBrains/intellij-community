@@ -33,8 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
-  protected static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromUsageBaseFix");
+  protected static final Logger LOG = Logger.getInstance(CreateClassFromUsageBaseFix.class);
   protected CreateClassKind myKind;
   private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRefElement;
 

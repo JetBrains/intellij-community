@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ClassRenderer extends NodeRendererImpl{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ClassRenderer");
+  private static final Logger LOG = Logger.getInstance(ClassRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";
 

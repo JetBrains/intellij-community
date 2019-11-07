@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene.Kudelevsky
  */
 public class DefaultDuplocatorState implements ExternalizableDuplocatorState {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.DefaultDuplocatorState");
+  private static final Logger LOG = Logger.getInstance(DefaultDuplocatorState.class);
 
   public boolean DISTINGUISH_VARIABLES = false;
   public boolean DISTINGUISH_FUNCTIONS = true;

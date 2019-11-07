@@ -55,7 +55,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class StringEditorDialog extends DialogWrapper{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog");
+  private static final Logger LOG = Logger.getInstance(StringEditorDialog.class);
 
   @NonNls private static final String CARD_STRING = "string";
   @NonNls private static final String CARD_BUNDLE = "bundle";

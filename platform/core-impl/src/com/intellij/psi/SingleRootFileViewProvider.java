@@ -43,7 +43,7 @@ import java.util.Set;
 
 public class SingleRootFileViewProvider extends AbstractFileViewProvider implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.SingleRootFileViewProvider");
+  private static final Logger LOG = Logger.getInstance(SingleRootFileViewProvider.class);
   @SuppressWarnings("unused")
   private volatile PsiFile myPsiFile;
   private static final AtomicFieldUpdater<SingleRootFileViewProvider, PsiFile> myPsiFileUpdater = AtomicFieldUpdater.forFieldOfType(SingleRootFileViewProvider.class, PsiFile.class);

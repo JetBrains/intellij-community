@@ -19,7 +19,7 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
  * @author Eugene Zhuravlev
  */
 public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder");
+  private static final Logger LOG = Logger.getInstance(BaseInstrumentingBuilder.class);
 
   // every instance of builder must have its own marker!
   private final Key<Boolean> IS_INSTRUMENTED_KEY = Key.create("_instrumentation_marker_" + getPresentableName());

@@ -32,7 +32,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class XmlTagRenameDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameDialog");
+  private static final Logger LOG = Logger.getInstance(XmlTagRenameDialog.class);
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
 
   private final PsiElement myElement;

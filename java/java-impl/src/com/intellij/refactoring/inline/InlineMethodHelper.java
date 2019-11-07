@@ -28,7 +28,7 @@ import java.util.Objects;
  * It helps to declare parameters as locals, passing arguments from the call site and then tries to inline the parameters when possible.
  */
 class InlineMethodHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodHelper");
+  private static final Logger LOG = Logger.getInstance(InlineMethodHelper.class);
 
   private final @NotNull Project myProject;
   private final @NotNull PsiManager myManager;

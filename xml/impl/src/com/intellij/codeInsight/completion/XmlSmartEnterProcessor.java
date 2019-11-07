@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class XmlSmartEnterProcessor extends SmartEnterProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlSmartEnterProcessor");
+  private static final Logger LOG = Logger.getInstance(XmlSmartEnterProcessor.class);
 
   @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {

@@ -22,7 +22,7 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 final class ComponentTreeStructure extends AbstractTreeStructure{
-  private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.componentTree.ComponentPtr");
+  private static final Logger LOG = Logger.getInstance(ComponentPtr.class);
   private static final Object[] ourEmptyObjectArray=new Object[]{};
 
   private final Object myRootElement;

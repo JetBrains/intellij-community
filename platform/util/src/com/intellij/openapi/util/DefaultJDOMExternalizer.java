@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 @Deprecated
 @SuppressWarnings("HardCodedStringLiteral")
 public class DefaultJDOMExternalizer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");
+  private static final Logger LOG = Logger.getInstance(DefaultJDOMExternalizer.class);
 
   private DefaultJDOMExternalizer() {
   }

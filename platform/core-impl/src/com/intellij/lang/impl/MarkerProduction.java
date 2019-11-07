@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 final class MarkerProduction extends TIntArrayList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.MarkerProduction");
+  private static final Logger LOG = Logger.getInstance(MarkerProduction.class);
   private static final int LINEAR_SEARCH_LIMIT = 20;
   private final MarkerPool myPool;
   private final MarkerOptionalData myOptionalData;

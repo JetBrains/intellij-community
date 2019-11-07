@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Queryable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiDirectoryImpl");
+  private static final Logger LOG = Logger.getInstance(PsiDirectoryImpl.class);
 
   private final PsiManagerImpl myManager;
   private final VirtualFile myFile;

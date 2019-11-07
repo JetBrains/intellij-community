@@ -38,7 +38,7 @@ import java.util.Objects;
  * @author peter
  */
 public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.guess.impl.ExpressionTypeMemoryState");
+  private static final Logger LOG = Logger.getInstance(ExpressionTypeMemoryState.class);
   public static final TObjectHashingStrategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new TObjectHashingStrategy<PsiExpression>() {
     @Override
     public int computeHashCode(PsiExpression object) {

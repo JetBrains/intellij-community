@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ExtendsListFix");
+  private static final Logger LOG = Logger.getInstance(ExtendsListFix.class);
 
   @Nullable
   protected final SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;

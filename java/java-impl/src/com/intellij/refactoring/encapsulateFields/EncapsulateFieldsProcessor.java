@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor");
+  private static final Logger LOG = Logger.getInstance(EncapsulateFieldsProcessor.class);
 
   private PsiClass myClass;
   @NotNull

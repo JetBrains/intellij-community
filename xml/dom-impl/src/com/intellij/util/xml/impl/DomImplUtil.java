@@ -28,7 +28,7 @@ import java.util.Set;
  * @author peter
  */
 public final class DomImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomImplUtil");
+  private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 
   private DomImplUtil() {
   }

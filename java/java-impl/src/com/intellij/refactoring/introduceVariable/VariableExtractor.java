@@ -39,7 +39,7 @@ import java.util.*;
  * No user interaction is performed here.
  */
 class VariableExtractor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.VariableExtractor");
+  private static final Logger LOG = Logger.getInstance(VariableExtractor.class);
 
   private final Project myProject;
   private final Editor myEditor;

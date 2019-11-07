@@ -23,7 +23,7 @@ import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class HtmlFileElement extends FileElement implements XmlElementType  {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.HtmlFileElement");
+  private static final Logger LOG = Logger.getInstance(HtmlFileElement.class);
 
   public HtmlFileElement(CharSequence text) {
     super(HTML_FILE, text);

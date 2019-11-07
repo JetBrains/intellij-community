@@ -36,7 +36,7 @@ import java.util.List;
  * @author peter
  */
 public class RehighlightAllEditors implements MadTestingAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.RehighlightAllEditors");
+  private static final Logger LOG = Logger.getInstance(RehighlightAllEditors.class);
   private final Project myProject;
 
   public RehighlightAllEditors(Project project) {

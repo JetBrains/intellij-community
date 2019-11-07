@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class SurroundWithUtil {
-  
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil");
+
+  private static final Logger LOG = Logger.getInstance(SurroundWithUtil.class);
 
   private SurroundWithUtil() {
   }

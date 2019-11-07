@@ -44,7 +44,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
+  private static final Logger LOG = Logger.getInstance(ExtractInterfaceHandler.class);
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
 

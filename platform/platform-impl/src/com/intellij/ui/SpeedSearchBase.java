@@ -39,7 +39,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
+  private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
   private static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.GRAY), JBUI.insets(1));
   private static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());

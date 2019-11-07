@@ -18,7 +18,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public interface PopupComponent {
-  Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupComponent");
+  Logger LOG = Logger.getInstance(PopupComponent.class);
 
   void hide(boolean dispose);
 

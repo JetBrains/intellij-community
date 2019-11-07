@@ -25,7 +25,7 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
 public class BekChecker {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.vcs.log.graph.impl.facade.bek.BekChecker");
+  private final static Logger LOG = Logger.getInstance(BekChecker.class);
 
   public static void checkLinearGraph(@NotNull LinearGraph linearGraph) {
     Pair<Integer, Integer> reversedEdge = findReversedEdge(linearGraph);

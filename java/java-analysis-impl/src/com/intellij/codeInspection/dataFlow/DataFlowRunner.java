@@ -40,7 +40,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class DataFlowRunner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
+  private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
   private static final int MERGING_BACK_BRANCHES_THRESHOLD = 50;
 
   private Instruction[] myInstructions;

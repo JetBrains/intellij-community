@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class SceneBuilderUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderUtil");
+  private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
   private static final URLClassLoader ourLoader = createClassLoader();
 
   private static boolean isJava8() {

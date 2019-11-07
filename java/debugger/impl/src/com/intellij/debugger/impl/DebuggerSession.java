@@ -60,7 +60,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DebuggerSession implements AbstractDebuggerSession {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerSession");
+  private static final Logger LOG = Logger.getInstance(DebuggerSession.class);
   // flags
   private final MyDebuggerStateManager myContextManager;
 

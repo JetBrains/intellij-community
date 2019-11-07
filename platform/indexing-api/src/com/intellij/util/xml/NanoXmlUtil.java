@@ -25,7 +25,7 @@ import java.util.Properties;
  * @author mike
  */
 public class NanoXmlUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.NanoXmlUtil");
+  private static final Logger LOG = Logger.getInstance(NanoXmlUtil.class);
 
   private NanoXmlUtil() {
   }

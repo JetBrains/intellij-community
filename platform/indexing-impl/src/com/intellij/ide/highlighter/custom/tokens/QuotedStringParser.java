@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IElementType;
  * @author dsl
  */
 public class QuotedStringParser extends PrefixedTokenParser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.QuotedStringParser");
+  private static final Logger LOG = Logger.getInstance(QuotedStringParser.class);
   private final char myQuote;
   private final boolean myAllowEscapes;
 

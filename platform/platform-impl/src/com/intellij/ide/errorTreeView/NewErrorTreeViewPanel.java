@@ -53,7 +53,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
+  protected static final Logger LOG = Logger.getInstance(NewErrorTreeViewPanel.class);
   private volatile String myProgressText = "";
   private volatile float myFraction;
   private final boolean myCreateExitAction;

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dyoma
  */
 public class Enumerator<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.Enumerator");
+  private static final Logger LOG = Logger.getInstance(Enumerator.class);
   private final TObjectIntHashMap<T> myNumbers;
   private int myNextNumber = 1;
 

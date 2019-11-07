@@ -54,7 +54,7 @@ import java.util.*;
  * @author Mike
  */
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix");
+  private static final Logger LOG = Logger.getInstance(CreateFromUsageBaseFix.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

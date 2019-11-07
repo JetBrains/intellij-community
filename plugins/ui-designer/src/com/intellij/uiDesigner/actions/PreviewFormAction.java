@@ -69,7 +69,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class PreviewFormAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.PreviewFormAction");
+  private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
    * The problem is that this class is in a default package so it's not

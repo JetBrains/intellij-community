@@ -131,7 +131,7 @@ public class XmlUtil {
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = ThreadLocal.withInitial(() -> Boolean.FALSE);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
+  private static final Logger LOG = Logger.getInstance(XmlUtil.class);
   @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
   @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
   @NonNls private static final String FILE = "file:";

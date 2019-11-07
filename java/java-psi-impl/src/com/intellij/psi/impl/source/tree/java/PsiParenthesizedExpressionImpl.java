@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement implements PsiParenthesizedExpression, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiParenthesizedExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiParenthesizedExpressionImpl.class);
 
   public PsiParenthesizedExpressionImpl() {
     super(PARENTH_EXPRESSION);

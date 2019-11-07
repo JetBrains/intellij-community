@@ -47,7 +47,7 @@ import static com.intellij.util.ui.UIUtil.useSafely;
  * @author Vladimir Kondratyev
  */
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
+  private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
   public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
 
   private final JFrame myFrame;

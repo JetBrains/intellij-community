@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class LoadedRevisionsCache implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.LoadedRevisionsCache");
+  private static final Logger LOG = Logger.getInstance(LoadedRevisionsCache.class);
 
   private final Project myProject;
   private final Map<String, Bunch> myMap;

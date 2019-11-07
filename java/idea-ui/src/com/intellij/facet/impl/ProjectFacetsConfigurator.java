@@ -43,7 +43,7 @@ import java.util.*;
  * @author nik
  */
 public class ProjectFacetsConfigurator implements FacetsProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
+  private static final Logger LOG = Logger.getInstance(ProjectFacetsConfigurator.class);
   private final Map<Module, ModifiableFacetModel> myModifiableModels = new HashMap<>();
   private final Map<Facet, FacetEditorImpl> myEditors = new LinkedHashMap<>();
   private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<>();

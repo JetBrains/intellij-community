@@ -32,7 +32,7 @@ import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIte
  * Visitor class to manage pattern matching
  */
 public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor");
+  private static final Logger LOG = Logger.getInstance(GlobalMatchingVisitor.class);
   public static final Key<List<? extends PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
 
   // the pattern element for visitor check

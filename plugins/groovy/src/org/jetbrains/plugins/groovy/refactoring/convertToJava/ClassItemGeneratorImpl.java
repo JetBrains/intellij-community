@@ -43,7 +43,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  * @author Maxim.Medvedev
  */
 public class ClassItemGeneratorImpl implements ClassItemGenerator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClassItemGeneratorImpl");
+  private static final Logger LOG = Logger.getInstance(ClassItemGeneratorImpl.class);
 
   private final ClassNameProvider classNameProvider;
   private final ExpressionContext context;

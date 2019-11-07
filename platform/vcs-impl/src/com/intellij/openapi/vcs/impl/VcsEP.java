@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class VcsEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsEP");
+  private static final Logger LOG = Logger.getInstance(VcsEP.class);
 
   public static final ExtensionPointName<VcsEP> EP_NAME = ExtensionPointName.create("com.intellij.vcs");
 

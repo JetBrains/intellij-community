@@ -39,7 +39,7 @@ import java.util.*;
 import static com.intellij.psi.CommonClassNames.*;
 
 public class ControlFlowAnalyzer extends JavaElementVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
+  private static final Logger LOG = Logger.getInstance(ControlFlowAnalyzer.class);
   private static final CallMatcher LIST_INITIALIZER = CallMatcher.anyOf(
     CallMatcher.staticCall(JAVA_UTIL_ARRAYS, "asList"),
     CallMatcher.staticCall(JAVA_UTIL_LIST, "of"));

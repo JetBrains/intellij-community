@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FileTypeUsageCounterCollector {
-  private static final Logger LOG = Logger.getInstance("#" + FileTypeUsageCounterCollector.class.getPackage().getName());
+  private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");

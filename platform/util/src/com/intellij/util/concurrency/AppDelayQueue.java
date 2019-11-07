@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * The {@link #shutdown()} must be called before disposal.
  */
 class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.AppDelayQueue");
+  private static final Logger LOG = Logger.getInstance(AppDelayQueue.class);
   private final Thread scheduledToPooledTransferrer;
   private final AtomicBoolean shutdown = new AtomicBoolean();
 

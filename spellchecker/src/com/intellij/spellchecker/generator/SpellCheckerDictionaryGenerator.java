@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class SpellCheckerDictionaryGenerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.generator.SpellCheckerDictionaryGenerator");
+  private static final Logger LOG = Logger.getInstance(SpellCheckerDictionaryGenerator.class);
   private final Set<String> globalSeenNames = new HashSet<>();
   protected final Project myProject;
   private final String myDefaultDictName;

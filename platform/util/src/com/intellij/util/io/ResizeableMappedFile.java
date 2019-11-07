@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 
 public class ResizeableMappedFile implements Forceable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ResizeableMappedFile");
+  private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
 
   private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private long myLogicalSize;

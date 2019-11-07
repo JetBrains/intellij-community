@@ -44,7 +44,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
+  private static final Logger LOG = Logger.getInstance(CommittedChangesPanel.class);
 
   private final CommittedChangesTreeBrowser myBrowser;
   private final Project myProject;

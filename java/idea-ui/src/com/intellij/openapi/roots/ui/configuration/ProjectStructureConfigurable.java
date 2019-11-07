@@ -56,7 +56,7 @@ import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfig
 
 public class ProjectStructureConfigurable implements SearchableConfigurable, Place.Navigator,
                                                                               Configurable.NoMargin, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable");
+  private static final Logger LOG = Logger.getInstance(ProjectStructureConfigurable.class);
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 

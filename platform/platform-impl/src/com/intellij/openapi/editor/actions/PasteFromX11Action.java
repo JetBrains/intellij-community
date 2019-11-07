@@ -25,7 +25,7 @@ import java.awt.event.MouseEvent;
  * @author msk
  */
 public class PasteFromX11Action extends EditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.PasteFromX11Action");
+  private static final Logger LOG = Logger.getInstance(PasteFromX11Action.class);
 
   public PasteFromX11Action() {
     super(new Handler());

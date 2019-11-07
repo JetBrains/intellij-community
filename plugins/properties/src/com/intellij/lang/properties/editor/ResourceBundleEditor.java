@@ -84,8 +84,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
-  private static final         Logger LOG                  =
-    Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
+  private static final Logger LOG =
+    Logger.getInstance(ResourceBundleEditor.class);
   @NonNls private static final String VALUES               = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
   public static final Key<ResourceBundleEditor> RESOURCE_BUNDLE_EDITOR_KEY = Key.create("resourceBundleEditor");

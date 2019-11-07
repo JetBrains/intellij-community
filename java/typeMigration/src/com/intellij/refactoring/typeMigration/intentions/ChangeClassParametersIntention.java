@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ChangeClassParametersIntention extends PsiElementBaseIntentionAction {
 
-  private static final Logger LOG = Logger.getInstance("#" + ChangeClassParametersIntention.class);
+  private static final Logger LOG = Logger.getInstance(ChangeClassParametersIntention.class);
 
   @NotNull
   @Override

@@ -30,7 +30,7 @@ import java.util.Map;
   storages = @Storage(value = "codeStyles", stateSplitter = ProjectCodeStyleSettingsManager.StateSplitter.class)
 )
 public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
-  private static final Logger LOG = Logger.getInstance("#" + ProjectCodeStyleSettingsManager.class);
+  private static final Logger LOG = Logger.getInstance(ProjectCodeStyleSettingsManager.class);
 
   private static final String MAIN_PROJECT_CODE_STYLE_NAME = "Project";
   private static final String PROJECT_CODE_STYLE_CONFIG_FILE_NAME = "codeStyleConfig";

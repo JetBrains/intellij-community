@@ -46,7 +46,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
                                       LocalQuickFixProvider,
                                       EmptyResolveMessageProvider, BindablePsiReference {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
+  private static final Logger LOG = Logger.getInstance(FileReference.class);
 
   public static final FileReference[] EMPTY = new FileReference[0];
 

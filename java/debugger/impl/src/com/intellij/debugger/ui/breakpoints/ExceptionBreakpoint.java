@@ -40,7 +40,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpoin
 import javax.swing.*;
 
 public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointProperties> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint");
+  private static final Logger LOG = Logger.getInstance(ExceptionBreakpoint.class);
 
   protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   public static final @NonNls Key<ExceptionBreakpoint> CATEGORY = BreakpointCategory.lookup("exception_breakpoints");

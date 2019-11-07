@@ -31,7 +31,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
+  private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
 
   /**
    * This constant defines default delay for showing progress dialog (in millis).

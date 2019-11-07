@@ -45,7 +45,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     super(referenceExpression);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix");
+  private static final Logger LOG = Logger.getInstance(CreateLocalFromUsageFix.class);
 
   @Override
   public String getText(String varName) {

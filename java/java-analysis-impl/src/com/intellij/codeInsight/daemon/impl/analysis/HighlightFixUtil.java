@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class HighlightFixUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil");
+  private static final Logger LOG = Logger.getInstance(HighlightFixUtil.class);
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 

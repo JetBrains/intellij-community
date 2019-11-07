@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class RepositoryUtils {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryUtils");
+  private static final Logger LOG = Logger.getInstance(RepositoryUtils.class);
 
   public static boolean libraryHasSources(@Nullable Library library) {
     return library != null && library.getUrls(OrderRootType.SOURCES).length > 0;

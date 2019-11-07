@@ -23,7 +23,7 @@ import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
  * @author db
  */
 public abstract class Constraint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.Constraint");
+  private static final Logger LOG = Logger.getInstance(Constraint.class);
 
   PsiType myLeft;
   PsiType myRight;

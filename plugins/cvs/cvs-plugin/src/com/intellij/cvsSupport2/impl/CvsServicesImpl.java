@@ -52,7 +52,7 @@ import java.util.List;
  */
 public class CvsServicesImpl extends CvsServices {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.impl.CvsServicesImpl");
+  private static final Logger LOG = Logger.getInstance(CvsServicesImpl.class);
 
   @Override
   public CvsModule[] chooseModules(Project project,

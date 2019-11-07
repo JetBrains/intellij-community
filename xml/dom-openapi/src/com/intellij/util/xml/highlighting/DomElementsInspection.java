@@ -41,7 +41,7 @@ import java.util.Set;
  * @see com.intellij.util.xml.highlighting.BasicDomElementsInspection
  */
 public abstract class DomElementsInspection<T extends DomElement> extends XmlSuppressableInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementsInspection");
+  private static final Logger LOG = Logger.getInstance(DomElementsInspection.class);
 
   private final Set<Class<? extends T>> myDomClasses;
 

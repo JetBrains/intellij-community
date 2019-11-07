@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.util.TooManyListenersException;
 
 public class ExportToFileUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.ExportToFileUtil");
+  private static final Logger LOG = Logger.getInstance(ExportToFileUtil.class);
 
   public static void exportTextToFile(Project project, String fileName, String textToExport) {
     String prepend = "";

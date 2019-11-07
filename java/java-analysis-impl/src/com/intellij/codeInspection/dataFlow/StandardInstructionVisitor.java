@@ -28,7 +28,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author peter
  */
 public class StandardInstructionVisitor extends InstructionVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
+  private static final Logger LOG = Logger.getInstance(StandardInstructionVisitor.class);
   private final boolean myStopAnalysisOnNpe;
 
   private final Set<InstanceofInstruction> myReachable = new THashSet<>();

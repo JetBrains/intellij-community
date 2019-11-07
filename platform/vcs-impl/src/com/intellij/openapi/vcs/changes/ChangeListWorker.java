@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * just logic here: do modifications to group of change lists
  */
 public class ChangeListWorker {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListWorker");
+  private final static Logger LOG = Logger.getInstance(ChangeListWorker.class);
   @NotNull private final Project myProject;
   @NotNull private final DelayedNotificator myDelayedNotificator;
   private final boolean myMainWorker;

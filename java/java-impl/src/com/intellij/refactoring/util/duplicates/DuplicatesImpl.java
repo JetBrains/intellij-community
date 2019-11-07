@@ -54,7 +54,7 @@ import java.util.List;
  * @author dsl
  */
 public class DuplicatesImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesImpl");
+  private static final Logger LOG = Logger.getInstance(DuplicatesImpl.class);
 
   private DuplicatesImpl() {}
 

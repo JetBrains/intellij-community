@@ -46,7 +46,7 @@ import java.util.List;
 
 public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   public static final Key<HtmlUnknownElementInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection");
+  private static final Logger LOG = Logger.getInstance(HtmlUnknownTagInspectionBase.class);
 
   public HtmlUnknownTagInspectionBase(@NotNull String defaultValues) {
     super(defaultValues);

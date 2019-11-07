@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorManagerListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.EditorBasedWidget");
+  private static final Logger LOG = Logger.getInstance(EditorBasedWidget.class);
   public static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
 
   @NotNull

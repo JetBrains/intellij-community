@@ -20,7 +20,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlat
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 
 public final class LifecycleUsageTriggerCollector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector");
+  private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
   private static final String LIFECYCLE = "lifecycle";
 
   private static final EventsRateThrottle ourErrorsRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes

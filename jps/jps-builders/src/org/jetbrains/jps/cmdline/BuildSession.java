@@ -42,7 +42,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 * @author Eugene Zhuravlev
 */
 final class BuildSession implements Runnable, CanceledStatus {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
+  private static final Logger LOG = Logger.getInstance(BuildSession.class);
   public static final String FS_STATE_FILE = "fs_state.dat";
   private static final Boolean REPORT_BUILD_STATISTICS = Boolean.valueOf(System.getProperty(GlobalOptions.REPORT_BUILD_STATISTICS, "false"));
 

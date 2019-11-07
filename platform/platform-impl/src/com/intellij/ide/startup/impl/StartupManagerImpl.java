@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StartupManagerImpl extends StartupManagerEx implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
+  private static final Logger LOG = Logger.getInstance(StartupManagerImpl.class);
   private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
   private final Object myLock = new Object();

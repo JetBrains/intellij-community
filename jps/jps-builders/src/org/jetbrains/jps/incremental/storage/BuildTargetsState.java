@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author nik
  */
 public class BuildTargetsState {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
+  private static final Logger LOG = Logger.getInstance(BuildTargetsState.class);
   private final BuildDataPaths myDataPaths;
   private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
   private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);

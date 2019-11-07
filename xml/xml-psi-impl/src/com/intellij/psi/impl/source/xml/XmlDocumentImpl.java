@@ -74,7 +74,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return file.getUserData(AUTO_GENERATED) != null;
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
+  private static final Logger LOG = Logger.getInstance(XmlDocumentImpl.class);
   private static final AtomicFieldUpdater<XmlDocumentImpl, XmlProlog>
     MY_PROLOG_UPDATER = AtomicFieldUpdater.forFieldOfType(XmlDocumentImpl.class, XmlProlog.class);
   private static final AtomicFieldUpdater<XmlDocumentImpl, XmlTag>

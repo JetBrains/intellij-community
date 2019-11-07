@@ -60,7 +60,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class JarRepositoryManager {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler");
+  private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
 
   private static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";

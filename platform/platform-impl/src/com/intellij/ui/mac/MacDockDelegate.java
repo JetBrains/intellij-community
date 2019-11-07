@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
  * @author Denis Fokin
  */
 public class MacDockDelegate implements SystemDock.Delegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacDockDelegate");
+  private static final Logger LOG = Logger.getInstance(MacDockDelegate.class);
 
   private static boolean initialized = false;
   private static final SystemDock.Delegate instance = new MacDockDelegate();

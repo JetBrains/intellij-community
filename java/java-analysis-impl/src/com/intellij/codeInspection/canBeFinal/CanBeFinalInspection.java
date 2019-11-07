@@ -35,7 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.canBeFinal.CanBeFinalInspection");
+  private static final Logger LOG = Logger.getInstance(CanBeFinalInspection.class);
 
   public boolean REPORT_CLASSES;
   public boolean REPORT_METHODS;

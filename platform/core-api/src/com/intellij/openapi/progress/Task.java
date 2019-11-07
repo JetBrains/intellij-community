@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.Task");
+  private static final Logger LOG = Logger.getInstance(Task.class);
 
   protected final Project myProject;
   protected String myTitle;

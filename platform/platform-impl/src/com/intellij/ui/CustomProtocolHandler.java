@@ -18,7 +18,7 @@ import java.util.Map;
 public class CustomProtocolHandler {
   public static final String LINE_NUMBER_ARG_NAME = "--line";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.CustomProtocolHandler");
+  private static final Logger LOG = Logger.getInstance(CustomProtocolHandler.class);
 
   public boolean openLink(@NotNull URI uri) {
     LOG.info("CustomProtocolHandler.openLink");

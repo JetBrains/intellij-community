@@ -41,7 +41,7 @@ import java.util.stream.IntStream;
  * @author peter
  */
 final class FileTrees {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.FileTrees");
+  private static final Logger LOG = Logger.getInstance(FileTrees.class);
   private static final int firstNonFilePsiIndex = 1;
   private final PsiFileImpl myFile;
   private final Reference<StubTree> myStub;

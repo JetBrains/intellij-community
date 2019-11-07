@@ -1949,7 +1949,7 @@ public final class PluginManagerCore {
 
   @NotNull
   public static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+    return Logger.getInstance(PluginManager.class);
   }
 
   public static final class EssentialPluginMissingException extends RuntimeException {

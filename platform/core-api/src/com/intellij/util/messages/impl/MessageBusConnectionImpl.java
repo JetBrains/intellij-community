@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Queue;
 
 final class MessageBusConnectionImpl implements MessageBusConnection {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
+  private static final Logger LOG = Logger.getInstance(MessageBusConnectionImpl.class);
 
   private final MessageBusImpl myBus;
   @SuppressWarnings("SSBasedInspection")

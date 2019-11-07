@@ -40,7 +40,7 @@ public class XmlBlock extends AbstractXmlBlock {
   private final Indent myIndent;
   private final TextRange myTextRange;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.XmlBlock");
+  private static final Logger LOG = Logger.getInstance(XmlBlock.class);
 
   public XmlBlock(final ASTNode node,
                     final Wrap wrap,

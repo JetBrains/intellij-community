@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormattingModel {
   private static final Logger LOG =
-      Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside");
+    Logger.getInstance(PsiBasedFormatterModelWithShiftIndentInside.class);
 
   private final Project myProject;
 

@@ -47,7 +47,7 @@ import java.util.concurrent.locks.LockSupport;
  * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
 class ReadMostlyRWLock {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ReadMostlyRWLock");
+  private static final Logger LOG = Logger.getInstance(ReadMostlyRWLock.class);
   private final Thread writeThread;
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private volatile boolean writeAcquired;   // this writer obtained the write lock

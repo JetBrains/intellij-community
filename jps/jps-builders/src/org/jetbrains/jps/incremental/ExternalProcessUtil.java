@@ -32,7 +32,7 @@ import java.util.jar.Manifest;
  * @author Eugene Zhuravlev
  */
 public class ExternalProcessUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.ExternalProcessUtil");
+  private static final Logger LOG = Logger.getInstance(ExternalProcessUtil.class);
 
   private static class CommandLineWrapperClassHolder {
     static final Class ourWrapperClass;

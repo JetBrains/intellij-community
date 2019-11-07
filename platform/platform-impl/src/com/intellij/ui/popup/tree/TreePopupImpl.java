@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.tree.TreePopupImpl");
+  private static final Logger LOG = Logger.getInstance(TreePopupImpl.class);
   private MyTree myWizardTree;
 
   private MouseMotionListener myMouseMotionListener;

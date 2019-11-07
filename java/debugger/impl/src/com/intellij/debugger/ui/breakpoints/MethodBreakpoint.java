@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.MethodBreakpoint");
+  private static final Logger LOG = Logger.getInstance(MethodBreakpoint.class);
   @Nullable private JVMName mySignature;
   private boolean myIsStatic;
 

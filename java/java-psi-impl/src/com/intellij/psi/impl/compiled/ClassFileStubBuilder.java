@@ -21,7 +21,7 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
  * @author max
  */
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
+  private static final Logger LOG = Logger.getInstance(ClassFileStubBuilder.class);
 
   public static final int STUB_VERSION = 23;
 

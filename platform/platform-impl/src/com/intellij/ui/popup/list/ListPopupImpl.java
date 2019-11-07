@@ -42,7 +42,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.list.ListPopupImpl");
+  private static final Logger LOG = Logger.getInstance(ListPopupImpl.class);
 
   private MyList myList;
 

@@ -18,7 +18,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public final class UIFormEditorProvider implements FileEditorProvider, DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.editor.UIFormEditorProvider");
+  private static final Logger LOG = Logger.getInstance(UIFormEditorProvider.class);
 
   @Override
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){

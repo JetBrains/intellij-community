@@ -45,7 +45,7 @@ import java.util.concurrent.TimeoutException;
  * @author Sergey.Malenkov
  */
 final class PsiBreadcrumbs extends Breadcrumbs {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.PsiBreadcrumbs");
+  private final static Logger LOG = Logger.getInstance(PsiBreadcrumbs.class);
   private final Map<Crumb, Promise<String>> scheduledTooltipTasks = new HashMap<>();
   boolean above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove();
 

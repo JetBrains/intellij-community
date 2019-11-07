@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAnnotationProvider {
   private final VcsHistoryCache myCache;
   private final AbstractVcs myVcs;
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy");
+  private final static Logger LOG = Logger.getInstance(VcsAnnotationCachedProxy.class);
   private final AnnotationProvider myAnnotationProvider;
 
   public VcsAnnotationCachedProxy(@NotNull AbstractVcs vcs, @NotNull AnnotationProvider provider) {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx");
+  private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
     return (DaemonCodeAnalyzerEx)project.getComponent(DaemonCodeAnalyzer.class);
   }

@@ -134,7 +134,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
       if (t != null) {
-        Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper").error("Worker exited due to exception", t);
+        Logger.getInstance(SchedulingWrapper.class).error("Worker exited due to exception", t);
       }
     }
 

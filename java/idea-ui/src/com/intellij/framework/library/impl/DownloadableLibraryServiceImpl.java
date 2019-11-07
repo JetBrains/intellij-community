@@ -39,7 +39,7 @@ import java.net.URL;
  * @author nik
  */
 public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.library.impl.DownloadableLibraryServiceImpl");
+  private static final Logger LOG = Logger.getInstance(DownloadableLibraryServiceImpl.class);
 
   @NotNull
   @Override

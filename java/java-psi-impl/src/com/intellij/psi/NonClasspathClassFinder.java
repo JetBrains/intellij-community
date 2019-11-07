@@ -33,7 +33,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.NonClasspathClassFinder");
+  private static final Logger LOG = Logger.getInstance(NonClasspathClassFinder.class);
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();
   protected final Project myProject;
   private volatile PackageDirectoryCache myCache;

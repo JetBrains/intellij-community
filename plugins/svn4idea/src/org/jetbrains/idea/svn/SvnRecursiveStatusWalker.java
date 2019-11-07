@@ -36,7 +36,7 @@ import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
 public class SvnRecursiveStatusWalker {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
+  private static final Logger LOG = Logger.getInstance(SvnRecursiveStatusWalker.class);
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Project myProject;

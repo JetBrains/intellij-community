@@ -30,7 +30,7 @@ import java.util.concurrent.RejectedExecutionException;
  * @author max
  */
 public class RefreshQueueImpl extends RefreshQueue implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshQueueImpl");
+  private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
 
   private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final Executor myEventProcessingQueue =

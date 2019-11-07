@@ -44,7 +44,7 @@ import java.util.*;
  * @author mike
  */
 public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateDelegateHandler");
+  private static final Logger LOG = Logger.getInstance(GenerateDelegateHandler.class);
   private boolean myToCopyJavaDoc;
 
   @Override

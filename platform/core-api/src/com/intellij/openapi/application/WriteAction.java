@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see ReadAction
  */
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
+  private static final Logger LOG = Logger.getInstance(WriteAction.class);
 
   /**
    * @deprecated use {@link #run(ThrowableRunnable)}

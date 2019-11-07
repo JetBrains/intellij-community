@@ -37,7 +37,7 @@ import java.util.Set;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
 public class DebugUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DebugUtil");
+  private static final Logger LOG = Logger.getInstance(DebugUtil.class);
 
   public static /*final*/ boolean CHECK = false;
   public static final boolean DO_EXPENSIVE_CHECKS;

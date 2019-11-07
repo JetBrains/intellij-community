@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public class DomUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
+  private static final Logger LOG = Logger.getInstance(DomUtil.class);
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");

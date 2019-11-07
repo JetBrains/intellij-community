@@ -52,7 +52,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   @NonNls static final String ATTRIBUTE_TAG_NAME = "attribute";
   @NonNls static final String COMPLEX_TYPE_TAG_NAME = "complexType";
   @NonNls static final String SEQUENCE_TAG_NAME = "sequence";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.schema.XmlNSDescriptorImpl");
+  private static final Logger LOG = Logger.getInstance(XmlNSDescriptorImpl.class);
   @NonNls private static final Set<String> STD_TYPES = new HashSet<>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<>();
   @NonNls private static final String INCLUDE_TAG_NAME = "include";

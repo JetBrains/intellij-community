@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
 * @author Eugene Zhuravlev
 */
 public final class ReflectedProject {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.ReflectedProject");
+  private static final Logger LOG = Logger.getInstance(ReflectedProject.class);
 
 
   private static final List<SoftReference<Pair<ReflectedProject, ClassLoader>>> ourProjects =

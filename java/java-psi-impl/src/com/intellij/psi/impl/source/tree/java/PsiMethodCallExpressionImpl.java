@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiMethodCallExpressionImpl.class);
 
   public PsiMethodCallExpressionImpl() {
     super(JavaElementType.METHOD_CALL_EXPRESSION);

@@ -53,7 +53,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InvokeIntention extends ActionOnFile {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
+  private static final Logger LOG = Logger.getInstance(InvokeIntention.class);
   private final IntentionPolicy myPolicy;
 
   public InvokeIntention(@NotNull PsiFile file, @NotNull IntentionPolicy policy) {

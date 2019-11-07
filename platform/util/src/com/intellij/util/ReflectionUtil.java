@@ -16,7 +16,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 public final class ReflectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
+  private static final Logger LOG = Logger.getInstance(ReflectionUtil.class);
 
   private ReflectionUtil() { }
 

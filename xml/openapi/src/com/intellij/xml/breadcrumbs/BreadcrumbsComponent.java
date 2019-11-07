@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.BreadcrumbsComponent");
+  private static final Logger LOG = Logger.getInstance(BreadcrumbsComponent.class);
   private static final Painter DEFAULT_PAINTER = new DefaultPainter(new ButtonSettings());
 
   private static final int EXTRA_WIDTH = 10;

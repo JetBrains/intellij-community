@@ -38,7 +38,7 @@ import static com.intellij.openapi.util.Pair.pair;
  * @author yole
  */
 public final class CommandLineProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CommandLineProcessor");
+  private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
   private static final String WAIT_KEY = "--wait";
 
   private CommandLineProcessor() { }

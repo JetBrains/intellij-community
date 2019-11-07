@@ -42,7 +42,7 @@ import java.util.*;
  * @author cdr
  */
 public class GenericsHighlightUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil");
+  private static final Logger LOG = Logger.getInstance(GenericsHighlightUtil.class);
 
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 

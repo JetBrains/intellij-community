@@ -79,7 +79,7 @@ import java.util.concurrent.ConcurrentHashMap;
 // todo: pydevd supports module reloading - look for a way to use the feature
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.PyDebugProcess");
+  private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
   private static final int CONNECTION_TIMEOUT = 60000;
 
   public static final NotificationGroup NOTIFICATION_GROUP =

@@ -37,7 +37,7 @@ import static com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENT
  * @author Mike
  */
 public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, HintedReferenceHost {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
+  private static final Logger LOG = Logger.getInstance(XmlAttributeImpl.class);
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private final int myHC = ourHC++;

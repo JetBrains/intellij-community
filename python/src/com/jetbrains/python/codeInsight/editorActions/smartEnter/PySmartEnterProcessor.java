@@ -33,7 +33,7 @@ import java.util.List;
  * Author: Alexey.Ivanov
  */
 public class PySmartEnterProcessor extends SmartEnterProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor");
+  private static final Logger LOG = Logger.getInstance(PySmartEnterProcessor.class);
   private static final List<PyFixer> ourFixers = ImmutableList.<PyFixer>builder()
     .add(new PyStringLiteralFixer())
     .add(new GoogleDocStringSectionFixer())

@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class XmlReader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.XmlReader");
+  private static final Logger LOG = Logger.getInstance(XmlReader.class);
 
   private XmlReader() {
   }

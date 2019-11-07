@@ -56,7 +56,7 @@ import java.util.Map;
  * @author peter
  */
 public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference");
+  private static final Logger LOG = Logger.getInstance(JavaClassReference.class);
   protected final int myIndex;
   private TextRange myRange;
   private final String myText;

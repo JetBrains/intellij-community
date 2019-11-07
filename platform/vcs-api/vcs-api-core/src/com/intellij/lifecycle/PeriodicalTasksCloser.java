@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated
 public class PeriodicalTasksCloser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
+  private static final Logger LOG = Logger.getInstance(PeriodicalTasksCloser.class);
   private final Object myLock = new Object();
 
   public static PeriodicalTasksCloser getInstance() {

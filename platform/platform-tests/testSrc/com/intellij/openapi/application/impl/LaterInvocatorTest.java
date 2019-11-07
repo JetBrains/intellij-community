@@ -32,7 +32,7 @@ import static org.junit.Assert.assertNotEquals;
 @SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
 public class LaterInvocatorTest extends HeavyPlatformTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvokatorTest");
+  private static final Logger LOG = Logger.getInstance(LaterInvocatorTest.class);
   
   private final ArrayList<String> myOrder = new ArrayList<>();
 

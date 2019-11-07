@@ -24,7 +24,7 @@ import java.lang.ref.Reference;
 import java.util.List;
 
 public final class SmartPointerManagerImpl extends SmartPointerManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
+  private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
   private final Project myProject;
   private final Key<SmartPointerTracker> POINTERS_KEY;
   private final PsiDocumentManagerBase myPsiDocManager;

@@ -16,7 +16,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   public static final ElementManipulators INSTANCE = new ElementManipulators();
 
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ElementManipulators");
+  private static final Logger LOG = Logger.getInstance(ElementManipulators.class);
 
   private ElementManipulators() {
     super(EP_NAME);

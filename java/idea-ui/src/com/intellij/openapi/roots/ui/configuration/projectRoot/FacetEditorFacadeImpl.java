@@ -34,7 +34,7 @@ import java.util.*;
  * @author nik
  */
 public class FacetEditorFacadeImpl implements FacetEditorFacade {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.FacetEditorFacadeImpl");
+  private static final Logger LOG = Logger.getInstance(FacetEditorFacadeImpl.class);
   private final ModuleStructureConfigurable myStructureConfigurable;
   private final Runnable myTreeUpdater;
   private final Map<Facet, MasterDetailsComponent.MyNode> myNodes = new HashMap<>();

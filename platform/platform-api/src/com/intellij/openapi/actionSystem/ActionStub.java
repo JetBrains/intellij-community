@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings("ComponentNotRegistered")
 public final class ActionStub extends AnAction implements ActionStubBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ActionStub");
+  private static final Logger LOG = Logger.getInstance(ActionStub.class);
 
   private final String myClassName;
   private final String myProjectType;

@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaFormattingModelBuilder implements FormattingModelBuilderEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaFormattingModelBuilder");
+  private static final Logger LOG = Logger.getInstance(JavaFormattingModelBuilder.class);
 
   @Override
   @NotNull

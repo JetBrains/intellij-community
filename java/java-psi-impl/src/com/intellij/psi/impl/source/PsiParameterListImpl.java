@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStub> implements PsiParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
+  private static final Logger LOG = Logger.getInstance(PsiParameterListImpl.class);
 
   public PsiParameterListImpl(@NotNull PsiParameterListStub stub) {
     super(stub, JavaStubElementTypes.PARAMETER_LIST);

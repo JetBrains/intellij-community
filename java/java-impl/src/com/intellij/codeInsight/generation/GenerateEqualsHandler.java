@@ -36,7 +36,7 @@ import java.util.List;
  * @author dsl
  */
 public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHandler");
+  private static final Logger LOG = Logger.getInstance(GenerateEqualsHandler.class);
   private PsiField[] myEqualsFields;
   private PsiField[] myHashCodeFields;
   private PsiField[] myNonNullFields;

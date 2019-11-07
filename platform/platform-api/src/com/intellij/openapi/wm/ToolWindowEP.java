@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class ToolWindowEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ToolWindowEP");
+  private static final Logger LOG = Logger.getInstance(ToolWindowEP.class);
 
   public static final ExtensionPointName<ToolWindowEP> EP_NAME = ExtensionPointName.create("com.intellij.toolWindow");
 

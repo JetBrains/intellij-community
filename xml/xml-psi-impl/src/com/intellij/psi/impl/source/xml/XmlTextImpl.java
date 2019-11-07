@@ -51,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageInjectionHost {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
+  private static final Logger LOG = Logger.getInstance(XmlTextImpl.class);
   private volatile String myDisplayText;
   private volatile int[] myGapDisplayStarts;
   private volatile int[] myGapPhysicalStarts;

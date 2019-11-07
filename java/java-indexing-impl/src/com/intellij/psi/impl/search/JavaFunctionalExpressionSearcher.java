@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher");
+  private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionSearcher.class);
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override

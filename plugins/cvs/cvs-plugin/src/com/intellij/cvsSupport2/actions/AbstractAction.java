@@ -31,7 +31,7 @@ import java.awt.event.InputEvent;
 
 
 public abstract class AbstractAction extends AnAction implements DumbAware {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.AbstractAction");
+  protected static final Logger LOG = Logger.getInstance(AbstractAction.class);
   private final boolean myStartLvcsAction;
   private boolean myAutoSave = true;
   private LocalHistoryAction myLocalHistoryAction = LocalHistoryAction.NULL;

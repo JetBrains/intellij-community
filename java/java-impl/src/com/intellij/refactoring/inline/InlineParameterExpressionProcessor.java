@@ -50,7 +50,7 @@ import java.util.*;
  * @author yole
  */
 public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineParameterExpressionProcessor");
+  private static final Logger LOG = Logger.getInstance(InlineParameterExpressionProcessor.class);
   public static final Key<Boolean> CREATE_LOCAL_FOR_TESTS = Key.create("CREATE_INLINE_PARAMETER_LOCAL_FOR_TESTS");
 
   private final PsiCallExpression myMethodCall;

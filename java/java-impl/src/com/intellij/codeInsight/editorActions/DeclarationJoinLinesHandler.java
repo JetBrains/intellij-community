@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler");
+  private static final Logger LOG = Logger.getInstance(DeclarationJoinLinesHandler.class);
 
   @Override
   public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile file, final int start, final int end) {

@@ -31,7 +31,7 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class ScrollingUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ScrollingUtil");
+  private static final Logger LOG = Logger.getInstance(ScrollingUtil.class);
   @NonNls
   protected static final String SCROLLUP_ACTION_ID = "scrollUp";
   @NonNls

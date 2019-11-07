@@ -37,7 +37,7 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public class GroovyResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshot");
+  private static final Logger LOG = Logger.getInstance(GroovyResolveSnapshot.class);
 
   private final Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap =
     new HashMap<>();

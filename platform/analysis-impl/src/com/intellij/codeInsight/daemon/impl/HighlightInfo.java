@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.List;
 
 public class HighlightInfo implements Segment {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
+  private static final Logger LOG = Logger.getInstance(HighlightInfo.class);
 
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";

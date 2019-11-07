@@ -34,7 +34,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class MigrationUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationUtil");
+  private static final Logger LOG = Logger.getInstance(MigrationUtil.class);
 
   private MigrationUtil() {
   }

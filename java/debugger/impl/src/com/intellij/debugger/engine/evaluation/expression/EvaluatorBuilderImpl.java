@@ -74,7 +74,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
   }
 
   private static class Builder extends JavaElementVisitor {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl");
+    private static final Logger LOG = Logger.getInstance(EvaluatorBuilderImpl.class);
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;

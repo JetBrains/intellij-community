@@ -47,7 +47,7 @@ import java.util.Map;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class RootsAndBranches implements CommittedChangeListDecorator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.RootsAndBranches");
+  private static final Logger LOG = Logger.getInstance(RootsAndBranches.class);
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Project myProject;

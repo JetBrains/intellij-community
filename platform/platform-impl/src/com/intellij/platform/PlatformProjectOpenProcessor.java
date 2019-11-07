@@ -53,7 +53,7 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 
 public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
+  private static final Logger LOG = Logger.getInstance(PlatformProjectOpenProcessor.class);
 
   public enum Option {
     FORCE_NEW_FRAME, TEMP_PROJECT

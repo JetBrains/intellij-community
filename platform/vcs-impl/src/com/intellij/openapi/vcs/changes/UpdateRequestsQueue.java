@@ -28,7 +28,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  */
 @SomeQueue
 public class UpdateRequestsQueue {
-  private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
+  private final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
 
   private final Project myProject;
   private final ChangeListManagerImpl.Scheduler myScheduler;

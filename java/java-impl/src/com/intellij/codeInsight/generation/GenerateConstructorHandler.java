@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateConstructorHandler");
+  private static final Logger LOG = Logger.getInstance(GenerateConstructorHandler.class);
 
   private boolean myCopyJavadoc;
 

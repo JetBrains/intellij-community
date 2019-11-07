@@ -51,7 +51,7 @@ import java.util.stream.Stream;
  * @author Eugene Zhuravlev
  */
 public final class JavaSdkImpl extends JavaSdk {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
+  private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
 
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 

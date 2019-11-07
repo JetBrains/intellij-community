@@ -21,7 +21,7 @@ import java.io.PrintWriter;
  * @author traff
  */
 public class RunnerMediator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.RunnerMediator");
+  private static final Logger LOG = Logger.getInstance(RunnerMediator.class);
 
   private static final char IAC = (char)5;
   private static final char BRK = (char)3;

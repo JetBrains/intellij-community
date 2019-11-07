@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author max
  */
 public class PagedFileStorage implements Forceable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
+  private static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   public static final int MB = 1024 * 1024;
   public static final int BUFFER_SIZE;

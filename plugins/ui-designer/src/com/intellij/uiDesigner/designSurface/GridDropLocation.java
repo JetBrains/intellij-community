@@ -17,7 +17,7 @@ import java.awt.*;
  * @author yole
  */
 public class GridDropLocation implements ComponentDropLocation {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridDropLocation");
+  private static final Logger LOG = Logger.getInstance(GridDropLocation.class);
 
   protected final RadContainer myContainer;
   protected int myRow;

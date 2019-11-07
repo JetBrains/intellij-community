@@ -40,7 +40,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
+  private static final Logger LOG = Logger.getInstance(SmartPsiElementPointerImpl.class);
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;

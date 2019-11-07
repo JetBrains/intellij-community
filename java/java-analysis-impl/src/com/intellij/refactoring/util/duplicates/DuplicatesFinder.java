@@ -42,7 +42,7 @@ import java.util.*;
  * @author dsl
  */
 public class DuplicatesFinder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesFinder");
+  private static final Logger LOG = Logger.getInstance(DuplicatesFinder.class);
   public static final Key<Parameter> PARAMETER = Key.create("PARAMETER");
   @NotNull private final PsiElement[] myPattern;
   private final InputVariables myParameters;

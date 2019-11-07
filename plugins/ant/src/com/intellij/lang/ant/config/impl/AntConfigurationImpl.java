@@ -82,7 +82,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
   };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntConfigurationImpl");
+  private static final Logger LOG = Logger.getInstance(AntConfigurationImpl.class);
   @NonNls private static final String BUILD_FILE = "buildFile";
   @NonNls private static final String CONTEXT_MAPPING = "contextMapping";
   @NonNls private static final String CONTEXT = "context";

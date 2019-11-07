@@ -51,7 +51,7 @@ import java.util.*;
  * @author Maxim.Mossienko
  */
 public class HtmlUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.HtmlUtil");
+  private static final Logger LOG = Logger.getInstance(HtmlUtil.class);
 
   @NonNls private static final String JSFC = "jsfc";
   @NonNls private static final String CHARSET = "charset";

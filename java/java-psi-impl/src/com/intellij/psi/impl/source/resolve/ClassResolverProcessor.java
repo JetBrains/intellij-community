@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, ElementClassHint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ClassResolverProcessor");
+  private static final Logger LOG = Logger.getInstance(ClassResolverProcessor.class);
   private static final String[] DEFAULT_PACKAGES = {CommonClassNames.DEFAULT_PACKAGE};
 
   private final String myClassName;

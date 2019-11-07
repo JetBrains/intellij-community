@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSourceRoot>> {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.SourcePathsStep");
+  private static final Logger LOG = Logger.getInstance(SourcePathsStep.class);
 
   private String myCurrentMode;
   @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";

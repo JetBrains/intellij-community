@@ -43,7 +43,7 @@ import java.io.IOException;
  * author: lesya
  */
 public class ExtConnectionCvsSettings extends CvsConnectionSettings {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ext.ExtConnectionCvsSettings");
+  private static final Logger LOG = Logger.getInstance(ExtConnectionCvsSettings.class);
   @NonNls private static final String UNHANDLED_RESPONSE_PREFIX = "Unhandled response: ";
   private final SshSettings mySshSettings;
 

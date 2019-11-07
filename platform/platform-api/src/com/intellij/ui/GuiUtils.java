@@ -36,7 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 
 public final class GuiUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GuiUtils");
+  private static final Logger LOG = Logger.getInstance(GuiUtils.class);
 
   private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
 

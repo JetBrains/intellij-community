@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements PsiPolyadicExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPolyadicExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiPolyadicExpressionImpl.class);
 
   public PsiPolyadicExpressionImpl() {
     super(JavaElementType.POLYADIC_EXPRESSION);

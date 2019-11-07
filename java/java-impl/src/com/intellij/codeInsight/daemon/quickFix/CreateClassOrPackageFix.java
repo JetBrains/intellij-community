@@ -44,7 +44,7 @@ import java.util.*;
  * @author peter
  */
 public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix");
+  private static final Logger LOG = Logger.getInstance(CreateClassOrPackageFix.class);
   private final List<? extends PsiDirectory> myWritableDirectoryList;
   private final String myPresentation;
 

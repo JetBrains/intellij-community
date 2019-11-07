@@ -35,7 +35,7 @@ import java.util.*;
  * @author max
  */
 public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter");
+  private static final Logger LOG = Logger.getInstance(LayeredLexerEditorHighlighter.class);
   private final Map<IElementType, LayerDescriptor> myTokensToLayer = new HashMap<>();
 
   public LayeredLexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {

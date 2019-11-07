@@ -30,7 +30,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class ThreadsDebuggerTree extends DebuggerTree {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.ThreadsDebuggerTree");
+  private static final Logger LOG = Logger.getInstance(ThreadsDebuggerTree.class);
 
   public ThreadsDebuggerTree(Project project) {
     super(project);

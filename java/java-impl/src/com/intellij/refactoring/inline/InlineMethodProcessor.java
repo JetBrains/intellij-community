@@ -58,7 +58,7 @@ import java.util.stream.Stream;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
+  private static final Logger LOG = Logger.getInstance(InlineMethodProcessor.class);
 
   private PsiMethod myMethod;
   private PsiJavaCodeReferenceElement myReference;

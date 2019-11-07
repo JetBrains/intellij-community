@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 public class JavaNullMethodArgumentUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.JavaNullMethodArgumentUtil");
+  private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentUtil.class);
 
   public static boolean hasNullArgument(@NotNull PsiMethod method, final int argumentIdx) {
     final boolean[] result = {false};

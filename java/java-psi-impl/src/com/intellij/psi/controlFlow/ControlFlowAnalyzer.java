@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class ControlFlowAnalyzer extends JavaElementVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowAnalyzer");
+  private static final Logger LOG = Logger.getInstance(ControlFlowAnalyzer.class);
 
   private final PsiElement myCodeFragment;
   private final ControlFlowPolicy myPolicy;

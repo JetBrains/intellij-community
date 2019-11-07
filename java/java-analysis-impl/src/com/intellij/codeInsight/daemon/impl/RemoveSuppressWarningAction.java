@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 public class RemoveSuppressWarningAction implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction");
+  private static final Logger LOG = Logger.getInstance(RemoveSuppressWarningAction.class);
 
   @NotNull
   private final String myID;

@@ -37,7 +37,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
+  private static final Logger LOG = Logger.getInstance(RootModelImpl.class);
 
   private final Set<ContentEntry> myContent = new TreeSet<>(ContentComparator.INSTANCE);
 

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CommandProcessor implements Runnable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.CommandProcessor");
+  private static final Logger LOG = Logger.getInstance(CommandProcessor.class);
   private final Object myLock = new Object();
 
   private final List<CommandGroup> myCommandGroupList = new ArrayList<>();

@@ -48,7 +48,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class PackageChooserDialog extends PackageChooser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.PackageChooserDialog");
+  private static final Logger LOG = Logger.getInstance(PackageChooserDialog.class);
 
   private Tree myTree;
   private DefaultTreeModel myModel;

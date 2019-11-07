@@ -56,7 +56,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
+  private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
 
   public static boolean isHeadlessEnv() {
     Application app = ApplicationManager.getApplication();

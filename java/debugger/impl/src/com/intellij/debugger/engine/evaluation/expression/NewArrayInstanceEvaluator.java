@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 class NewArrayInstanceEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.NewArrayInstanceEvaluator");
+  private static final Logger LOG = Logger.getInstance(NewArrayInstanceEvaluator.class);
   private final Evaluator myArrayTypeEvaluator;
   private final Evaluator myDimensionEvaluator;
   private final Evaluator myInitializerEvaluator;

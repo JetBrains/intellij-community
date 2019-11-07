@@ -34,7 +34,7 @@ import java.util.function.Predicate;
  * @author max
  */
 public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl");
+  private static final Logger LOG = Logger.getInstance(JavaCodeStyleManagerImpl.class);
 
   @NonNls private static final String IMPL_SUFFIX = "Impl";
   @NonNls private static final String GET_PREFIX = "get";

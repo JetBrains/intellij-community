@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix");
+  private static final Logger LOG = Logger.getInstance(AccessStaticViaInstanceFix.class);
   private final boolean myOnTheFly;
   private final String myText;
 

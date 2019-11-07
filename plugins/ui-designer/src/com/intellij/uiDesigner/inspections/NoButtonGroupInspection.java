@@ -40,7 +40,7 @@ import java.util.Collections;
  * @author yole
  */
 public class NoButtonGroupInspection extends BaseFormInspection {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.inspections.NoButtonGroupInspection");
+  private static final Logger LOG = Logger.getInstance(NoButtonGroupInspection.class);
 
   public NoButtonGroupInspection() {
     super("NoButtonGroup");

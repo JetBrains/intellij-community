@@ -55,7 +55,7 @@ import java.util.Set;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 class IntroduceConstantDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceConstantDialog");
+  private static final Logger LOG = Logger.getInstance(IntroduceConstantDialog.class);
   @NonNls private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
   @NonNls protected static final String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
 

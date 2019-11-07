@@ -26,7 +26,7 @@ import static com.intellij.util.Functions.identity;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
-  private final static Logger LOG = Logger.getInstance("#git4idea.changes.GitOutgoingChangesProvider");
+  private final static Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
   private final Project myProject;
 
   public GitOutgoingChangesProvider(Project project) {

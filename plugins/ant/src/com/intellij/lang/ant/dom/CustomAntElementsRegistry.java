@@ -58,7 +58,7 @@ import java.util.*;
 public class CustomAntElementsRegistry {
 
   public static final ThreadLocal<Boolean> ourIsBuildingClasspathForCustomTagLoading = ThreadLocal.withInitial(() -> Boolean.FALSE);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.CustomAntElementsRegistry");
+  private static final Logger LOG = Logger.getInstance(CustomAntElementsRegistry.class);
   private static final Key<CustomAntElementsRegistry> REGISTRY_KEY = Key.create("_custom_element_registry_");
 
   private final Map<XmlName, ClassProvider> myCustomElements = new THashMap<>();

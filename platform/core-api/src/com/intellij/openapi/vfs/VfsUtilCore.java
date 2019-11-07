@@ -32,7 +32,7 @@ import java.util.Set;
  * Various utility methods for working with {@link VirtualFile}.
  */
 public class VfsUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
+  private static final Logger LOG = Logger.getInstance(VfsUtilCore.class);
 
   private static final String MAILTO = "mailto";
 

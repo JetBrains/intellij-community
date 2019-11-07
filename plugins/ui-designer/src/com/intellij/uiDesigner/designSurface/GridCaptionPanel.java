@@ -41,7 +41,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
+  private static final Logger LOG = Logger.getInstance(GridCaptionPanel.class);
 
   private final GuiEditor myEditor;
   private final boolean myIsRow;

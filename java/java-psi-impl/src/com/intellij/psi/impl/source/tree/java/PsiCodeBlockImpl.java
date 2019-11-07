@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl");
+  private static final Logger LOG = Logger.getInstance(PsiCodeBlockImpl.class);
 
   public PsiCodeBlockImpl(CharSequence text) {
     super(JavaElementType.CODE_BLOCK, text);

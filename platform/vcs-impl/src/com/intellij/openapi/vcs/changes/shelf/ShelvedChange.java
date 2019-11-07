@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class ShelvedChange {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChange");
+  private static final Logger LOG = Logger.getInstance(ShelvedChange.class);
 
   private final String myPatchPath;
   private final String myBeforePath;

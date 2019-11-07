@@ -407,7 +407,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
 
   companion object {
-    @JvmStatic protected val LOG: Logger = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker")
+    @JvmStatic protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
 
     @JvmStatic protected val Block.start: Int get() = range.start2
     @JvmStatic protected val Block.end: Int get() = range.end2

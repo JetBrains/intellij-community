@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
+  private static final Logger LOG = Logger.getInstance(PsiUtilBase.class);
   public static final Comparator<Language> LANGUAGE_COMPARATOR = Comparator.comparing(Language::getID);
 
   public static boolean isUnderPsiRoot(@NotNull PsiFile root, @NotNull PsiElement element) {

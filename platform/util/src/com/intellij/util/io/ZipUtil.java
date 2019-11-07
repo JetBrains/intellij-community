@@ -18,7 +18,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ZipUtil");
+  private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
   private ZipUtil() { }
 

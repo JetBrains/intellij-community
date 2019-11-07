@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Deprecated
 public class DummyFileIdGenerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.ex.dummy.DummyFileIdGenerator");
+  private static final Logger LOG = Logger.getInstance(DummyFileIdGenerator.class);
   private static final AtomicInteger ourId = new AtomicInteger(Integer.MAX_VALUE / 2);
 
   private DummyFileIdGenerator() {

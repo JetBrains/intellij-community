@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  *  @author dsl
  */
 public class PsiReferenceParameterListImpl extends CompositePsiElement implements PsiReferenceParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceParameterListImpl");
+  private static final Logger LOG = Logger.getInstance(PsiReferenceParameterListImpl.class);
   private static final TokenSet TYPE_SET = TokenSet.create(JavaElementType.TYPE);
 
   public PsiReferenceParameterListImpl() {

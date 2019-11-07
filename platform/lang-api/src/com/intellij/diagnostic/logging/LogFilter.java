@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class LogFilter implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.logging.LogFilter");
+  private static final Logger LOG = Logger.getInstance(LogFilter.class);
 
   public String myName;
   public String myIconPath;

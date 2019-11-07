@@ -76,7 +76,7 @@ import static com.intellij.openapi.util.Pair.pair;
  * @author Eugene Zhuravlev
  */
 public class JavaBuilder extends ModuleLevelBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
+  private static final Logger LOG = Logger.getInstance(JavaBuilder.class);
   private static final String JAVA_EXTENSION = "java";
 
   private static final String USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path";

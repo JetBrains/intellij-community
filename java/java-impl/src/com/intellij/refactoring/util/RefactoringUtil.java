@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class RefactoringUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
+  private static final Logger LOG = Logger.getInstance(RefactoringUtil.class);
   public static final int EXPR_COPY_SAFE = 0;
   public static final int EXPR_COPY_UNSAFE = 1;
   public static final int EXPR_COPY_PROHIBITED = 2;

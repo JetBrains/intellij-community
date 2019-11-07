@@ -24,7 +24,7 @@ import java.util.*;
 import static com.intellij.psi.CommonClassNames.*;
 
 public class TypeConversionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.TypeConversionUtil");
+  private static final Logger LOG = Logger.getInstance(TypeConversionUtil.class);
 
   private static final boolean[][] IS_ASSIGNABLE_BIT_SET = {
     {true, true, false, true, true, true, true}, // byte

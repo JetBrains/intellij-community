@@ -25,7 +25,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements PsiInstanceOfExpression, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInstanceOfExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiInstanceOfExpressionImpl.class);
 
   public PsiInstanceOfExpressionImpl() {
     super(INSTANCE_OF_EXPRESSION);

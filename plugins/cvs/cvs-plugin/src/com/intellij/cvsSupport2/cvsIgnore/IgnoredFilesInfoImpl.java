@@ -17,7 +17,7 @@ import java.util.StringTokenizer;
  */
 public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl");
+  private static final Logger LOG = Logger.getInstance(IgnoredFilesInfoImpl.class);
 
   private static final SimpleStringPattern[] PREDEFINED_PATTERNS = new SimpleStringPattern[]{
       new SimpleStringPattern("RCS"),

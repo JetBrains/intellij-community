@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveUnusedVariableFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix");
+  private static final Logger LOG = Logger.getInstance(RemoveUnusedVariableFix.class);
   private final PsiVariable myVariable;
 
   public RemoveUnusedVariableFix(PsiVariable variable) {

@@ -39,12 +39,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.local.GroovyPostHighlightingPass;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 public class GroovyOptimizeImportsFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.local.GroovyPostHighlightingPass");
+  private static final Logger LOG = Logger.getInstance(GroovyPostHighlightingPass.class);
   private final boolean onTheFly;
 
   public GroovyOptimizeImportsFix(boolean onTheFly) {

@@ -78,7 +78,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   protected final IAdminReader myAdminReader;
   protected final IAdminWriter myAdminWriter;
 
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation");
+  protected static final Logger LOG = Logger.getInstance(CvsCommandOperation.class);
   private String myLastProcessedCvsRoot;
   private final UpdatedFilesManager myUpdatedFilesManager = new UpdatedFilesManager();
 

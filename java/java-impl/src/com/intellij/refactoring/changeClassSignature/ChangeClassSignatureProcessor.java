@@ -43,7 +43,7 @@ import java.util.*;
  * @author dsl
  */
 public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor");
+  private static final Logger LOG = Logger.getInstance(ChangeClassSignatureProcessor.class);
   private PsiClass myClass;
   private final TypeParameterInfo[] myNewSignature;
 

@@ -54,7 +54,7 @@ import java.util.function.Supplier;
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 @Deprecated
 public class AbstractTreeUi {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
+  private static final Logger LOG = Logger.getInstance(AbstractTreeBuilder.class);
   protected JTree myTree;// protected for TestNG
 
   private DefaultTreeModel myTreeModel;

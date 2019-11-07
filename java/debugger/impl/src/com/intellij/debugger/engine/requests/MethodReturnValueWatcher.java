@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 public class MethodReturnValueWatcher implements OverheadProducer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.requests.MethodReturnValueWatcher");
+  private static final Logger LOG = Logger.getInstance(MethodReturnValueWatcher.class);
   private @Nullable Method myLastExecutedMethod;
   private @Nullable Value myLastMethodReturnValue;
 

@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.HtmlHighlightingLexer");
+  private static final Logger LOG = Logger.getInstance(HtmlHighlightingLexer.class);
 
   private static final int EMBEDDED_LEXER_ON = 0x1 << BASE_STATE_SHIFT;
   private static final int EMBEDDED_LEXER_STATE_SHIFT = BASE_STATE_SHIFT + 1;

@@ -42,7 +42,7 @@ import static com.intellij.util.containers.ContainerUtil.newTroveSet;
  * @author max
  */
 public class JarHandler extends ZipHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandler");
+  private static final Logger LOG = Logger.getInstance(JarHandler.class);
 
   private static final String JARS_FOLDER = "jars";
   private static final int FS_TIME_RESOLUTION = 2000;

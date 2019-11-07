@@ -30,7 +30,7 @@ import java.util.Map;
  * @author peter
  */
 public final class NotificationGroup {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.NotificationGroup");
+  private static final Logger LOG = Logger.getInstance(NotificationGroup.class);
   private static final Map<String, NotificationGroup> ourRegisteredGroups = ContainerUtil.newConcurrentMap();
 
   @NotNull private final String myDisplayId;

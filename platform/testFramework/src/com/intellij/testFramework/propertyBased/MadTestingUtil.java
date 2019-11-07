@@ -66,7 +66,7 @@ import java.util.stream.Stream;
  * @author peter
  */
 public class MadTestingUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
+  private static final Logger LOG = Logger.getInstance(MadTestingUtil.class);
   private static final boolean USE_ROULETTE_WHEEL = true;
 
   public static void restrictChangesToDocument(Document document, Runnable r) {

@@ -69,7 +69,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 import static com.intellij.refactoring.util.duplicates.DuplicatesFinder.MatchType;
 
 public class ExtractMethodProcessor implements MatchProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
+  private static final Logger LOG = Logger.getInstance(ExtractMethodProcessor.class);
   @TestOnly
   public static final Key<Boolean> SIGNATURE_CHANGE_ALLOWED = Key.create("SignatureChangeAllowed");
 

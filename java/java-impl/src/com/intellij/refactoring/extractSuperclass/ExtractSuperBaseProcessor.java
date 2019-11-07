@@ -43,7 +43,7 @@ import java.util.Collection;
  * @author dsl
  */
 public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessorBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor");
+  private static final Logger LOG = Logger.getInstance(ExtractSuperClassProcessor.class);
   protected PsiDirectory myTargetDirectory;
   protected final String myNewClassName;
   protected final MemberInfo[] myMemberInfos;

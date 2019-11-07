@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode");
+  private static final Logger LOG = Logger.getInstance(CachingChildrenTreeNode.class);
   private List<CachingChildrenTreeNode> myChildren;
   private List<CachingChildrenTreeNode> myOldChildren;
   @NotNull

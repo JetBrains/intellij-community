@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class VfsEventGenerationHelper {
-  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+  static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private int myMarkedStart = -1;

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement implements PsiClassObjectAccessExpression, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiClassObjectAccessExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiClassObjectAccessExpressionImpl.class);
 
   public PsiClassObjectAccessExpressionImpl() {
     super(CLASS_OBJECT_ACCESS_EXPRESSION);

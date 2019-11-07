@@ -73,7 +73,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkU
  */
 public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
   private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor");
+    Logger.getInstance(GrChangeSignatureUsageProcessor.class);
 
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {

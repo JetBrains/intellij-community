@@ -33,7 +33,7 @@ import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChar
 import static com.intellij.openapi.ui.Messages.*;
 
 public class MessagesServiceImpl implements MessagesService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.MessagesServiceImpl");
+  private static final Logger LOG = Logger.getInstance(MessagesServiceImpl.class);
 
   @Override
   public int showMessageDialog(@Nullable Project project,

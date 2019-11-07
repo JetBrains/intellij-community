@@ -46,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ExtractSuperclassHandler implements ElementsHandler, ExtractSuperclassDialog.Callback, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
+  private static final Logger LOG = Logger.getInstance(ExtractSuperclassHandler.class);
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.superclass.title");
 

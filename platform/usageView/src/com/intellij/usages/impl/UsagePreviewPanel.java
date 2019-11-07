@@ -69,7 +69,7 @@ import java.util.regex.Pattern;
  * @author cdr
  */
 public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
+  private static final Logger LOG = Logger.getInstance(UsagePreviewPanel.class);
   private Editor myEditor;
   private final boolean myIsEditor;
   private int myLineHeight;

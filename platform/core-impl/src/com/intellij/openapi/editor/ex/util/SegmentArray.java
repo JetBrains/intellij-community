@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe.
  */
 public class SegmentArray {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
+  private static final Logger LOG = Logger.getInstance(SegmentArray.class);
   protected int[] myStarts;
   protected int[] myEnds;
 

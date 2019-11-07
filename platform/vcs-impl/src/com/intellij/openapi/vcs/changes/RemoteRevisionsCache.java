@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RemoteRevisionsCache implements VcsListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsCache");
+  private static final Logger LOG = Logger.getInstance(RemoteRevisionsCache.class);
 
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
   public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;

@@ -24,7 +24,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class AdjustPackageNameFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix");
+  private static final Logger LOG = Logger.getInstance(AdjustPackageNameFix.class);
   private final String myName;
 
   public AdjustPackageNameFix(String targetPackage) {

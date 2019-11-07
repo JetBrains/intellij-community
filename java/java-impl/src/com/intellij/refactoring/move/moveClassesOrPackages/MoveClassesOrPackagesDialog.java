@@ -46,7 +46,7 @@ import java.util.Set;
 
 public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesDialog.class);
 
   private final PsiElement[] myElementsToMove;
   private final MoveCallback myMoveCallback;

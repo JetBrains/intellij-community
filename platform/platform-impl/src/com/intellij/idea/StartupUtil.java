@@ -497,7 +497,7 @@ public final class StartupUtil {
   @NotNull
   private static Logger setupLogger() {
     Logger.setFactory(new LoggerFactory());
-    Logger log = Logger.getInstance("#com.intellij.idea.Main");
+    Logger log = Logger.getInstance(Main.class);
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");

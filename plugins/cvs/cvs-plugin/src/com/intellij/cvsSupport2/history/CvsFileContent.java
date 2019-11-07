@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 public abstract class CvsFileContent implements VcsFileContent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.history.CvsFileContent");
+  private static final Logger LOG = Logger.getInstance(CvsFileContent.class);
   protected final ComparableVcsRevisionOnOperation myComparableCvsRevisionOnOperation;
 
   protected CvsFileContent(final ComparableVcsRevisionOnOperation comparableCvsRevisionOnOperation) {

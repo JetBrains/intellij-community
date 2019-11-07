@@ -22,8 +22,7 @@ import java.util.Collection;
  *  @author dsl
  */
 public class SingleSourceRootMoveDestination implements MoveDestination {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination");
+  private static final Logger LOG = Logger.getInstance(SingleSourceRootMoveDestination.class);
   @NotNull
   private final PackageWrapper myPackage;
   @NotNull

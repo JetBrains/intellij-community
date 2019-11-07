@@ -27,7 +27,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDoWhileStatementImpl extends PsiLoopStatementImpl implements PsiDoWhileStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiDoWhileStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiDoWhileStatementImpl.class);
 
   public PsiDoWhileStatementImpl() {
     super(DO_WHILE_STATEMENT);

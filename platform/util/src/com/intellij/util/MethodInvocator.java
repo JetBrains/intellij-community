@@ -21,7 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class MethodInvocator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.MethodInvocator");
+  private static final Logger LOG = Logger.getInstance(MethodInvocator.class);
 
   private Method myMethod;
 

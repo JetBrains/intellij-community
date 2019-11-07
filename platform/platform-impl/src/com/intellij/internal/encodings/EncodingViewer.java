@@ -19,7 +19,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class EncodingViewer extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.internal.encodings.EncodingViewer");
+  private static final Logger LOG = Logger.getInstance(EncodingViewer.class);
 
   private JPanel myPanel;
   private JTextArea myText;

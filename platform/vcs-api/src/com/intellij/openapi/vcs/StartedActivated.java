@@ -32,7 +32,7 @@ import java.util.List;
  * - and "actual" methods should not be called under lock
  */
 public abstract class StartedActivated {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.StartedActivated");
+  private static final Logger LOG = Logger.getInstance(StartedActivated.class);
 
   private final MySection myStart;
   private final MySection myActivate;

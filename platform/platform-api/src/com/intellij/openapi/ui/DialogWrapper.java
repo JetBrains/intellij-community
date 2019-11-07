@@ -75,7 +75,7 @@ import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/dialog_wrapper.html">DialogWrapper on SDK DevGuide</a>
  */
 public abstract class DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
+  private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
 
   public enum IdeModalityType {
     IDE,

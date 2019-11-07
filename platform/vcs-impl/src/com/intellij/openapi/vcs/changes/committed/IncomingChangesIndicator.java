@@ -32,7 +32,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * @author yole
  */
 public class IncomingChangesIndicator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator");
+  private static final Logger LOG = Logger.getInstance(IncomingChangesIndicator.class);
 
   private final Project myProject;
   private final CommittedChangesCache myCache;

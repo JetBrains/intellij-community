@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor");
+  private static final Logger LOG = Logger.getInstance(TurnRefsToSuperProcessor.class);
 
   private PsiClass mySuper;
   public TurnRefsToSuperProcessor(Project project,

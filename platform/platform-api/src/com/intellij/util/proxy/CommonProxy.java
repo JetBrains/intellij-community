@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class CommonProxy extends ProxySelector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.proxy.CommonProxy");
+  private static final Logger LOG = Logger.getInstance(CommonProxy.class);
 
   private final static CommonProxy ourInstance = new CommonProxy();
   private final CommonAuthenticator myAuthenticator = new CommonAuthenticator();

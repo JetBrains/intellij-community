@@ -38,7 +38,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class ClasspathBootstrap {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.ClasspathBootstrap");
+  private static final Logger LOG = Logger.getInstance(ClasspathBootstrap.class);
 
   private ClasspathBootstrap() {
   }

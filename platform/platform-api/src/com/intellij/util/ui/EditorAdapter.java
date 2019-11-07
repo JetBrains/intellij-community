@@ -52,7 +52,7 @@ class Line {
 }
 
 public class EditorAdapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.EditorAdapter");
+  private static final Logger LOG = Logger.getInstance(EditorAdapter.class);
 
   private final Editor myEditor;
 

@@ -40,7 +40,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, EditorCallback {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditor");
+  private static final Logger LOG = Logger.getInstance(SceneBuilderEditor.class);
 
   private final static String SCENE_CARD = "scene_builder";
   private final static String ERROR_CARD = "error";

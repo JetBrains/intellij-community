@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class GroupWrapper extends CachingChildrenTreeNode<Group> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.GroupWrapper");
+  private static final Logger LOG = Logger.getInstance(GroupWrapper.class);
   public GroupWrapper(Project project, @NotNull Group value, @NotNull TreeModel treeModel) {
     super(project, value, treeModel);
     clearChildren();

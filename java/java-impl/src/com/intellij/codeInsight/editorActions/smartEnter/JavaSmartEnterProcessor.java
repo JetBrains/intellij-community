@@ -50,7 +50,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author spleaner
  */
 public class JavaSmartEnterProcessor extends SmartEnterProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor");
+  private static final Logger LOG = Logger.getInstance(JavaSmartEnterProcessor.class);
 
   private static final Fixer[] ourFixers;
   private static final EnterProcessor[] ourEnterProcessors = {

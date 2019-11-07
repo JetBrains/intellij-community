@@ -18,7 +18,7 @@ import java.awt.event.MouseEvent;
  * @author ven
  */
 public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodDialog");
+  private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodDialog.class);
 
   public ConvertToInstanceMethodDialog(final PsiMethod method, final Object[] variables) {
     super(method, variables, ConvertToInstanceMethodHandler.REFACTORING_NAME);

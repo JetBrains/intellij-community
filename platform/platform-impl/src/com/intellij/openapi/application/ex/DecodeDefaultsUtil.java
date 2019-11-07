@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class DecodeDefaultsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.DecodeDefaultsUtil");
+  private static final Logger LOG = Logger.getInstance(DecodeDefaultsUtil.class);
   private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<>());
 
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {

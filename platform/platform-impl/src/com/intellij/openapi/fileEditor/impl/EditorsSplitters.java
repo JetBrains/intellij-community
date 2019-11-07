@@ -67,7 +67,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
+  private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
   private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
 

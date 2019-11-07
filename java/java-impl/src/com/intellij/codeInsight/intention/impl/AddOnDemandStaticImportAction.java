@@ -44,7 +44,7 @@ import java.util.Objects;
  * @author ven
  */
 public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
+  private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
 
   @Override
   @NotNull

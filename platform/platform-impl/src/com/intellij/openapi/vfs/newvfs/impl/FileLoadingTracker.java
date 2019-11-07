@@ -32,7 +32,7 @@ import java.util.Set;
  * @author peter
  */
 class FileLoadingTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.FileLoadingTracker");
+  private static final Logger LOG = Logger.getInstance(FileLoadingTracker.class);
   private static final Set<String> ourPaths = new THashSet<>(getPathsToTrack(), FilePathHashingStrategy.create());
   private static final TIntHashSet ourLeafNameIds = new TIntHashSet(ourPaths.stream().mapToInt(path -> FileNameCache.storeName(StringUtil.getShortName(path, '/'))).toArray());
 

@@ -64,7 +64,7 @@ import java.util.concurrent.Future;
  * @author yole
  */
 public class PythonSdkUpdater implements StartupActivity.Background {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
+  private static final Logger LOG = Logger.getInstance(PythonSdkUpdater.class);
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();

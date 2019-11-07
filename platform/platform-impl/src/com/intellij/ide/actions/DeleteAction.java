@@ -18,7 +18,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.event.KeyEvent;
 
 public class DeleteAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.DeleteAction");
+  private static final Logger LOG = Logger.getInstance(DeleteAction.class);
 
   public DeleteAction() { }
 
