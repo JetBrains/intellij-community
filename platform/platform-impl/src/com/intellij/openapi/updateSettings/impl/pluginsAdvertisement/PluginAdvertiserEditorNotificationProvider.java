@@ -19,6 +19,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -90,7 +91,9 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {
         myEnabledExtensions.add(extension);
         EditorNotifications.getInstance(project).updateAllNotifications();
-        FeatureUsageData data = new FeatureUsageData().addData("source", "editor").addData("plugin", disabledPlugin.getPluginId().getIdString());
+        FeatureUsageData data = new FeatureUsageData()
+          .addData("source", "editor")
+          .addData("plugins", Collections.singletonList(disabledPlugin.getPluginId().getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
         PluginsAdvertiser.enablePlugins(project, Collections.singletonList(disabledPlugin));
       });
@@ -100,7 +103,9 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         for (PluginsAdvertiser.Plugin plugin : plugins) {
           pluginIds.add(plugin.myPluginId);
         }
-        FeatureUsageData data = new FeatureUsageData().addData("source", "editor").addData("plugin", pluginIds.iterator().next());
+        FeatureUsageData data = new FeatureUsageData()
+          .addData("source", "editor")
+          .addData("plugins", new ArrayList<>(pluginIds));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
         PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> {
           myEnabledExtensions.add(extension);

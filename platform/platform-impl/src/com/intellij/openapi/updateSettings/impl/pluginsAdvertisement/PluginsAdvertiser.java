@@ -76,7 +76,7 @@ public final class PluginsAdvertiser {
           final JsonElement pluginId = jsonObject.get("pluginId");
           final JsonElement pluginName = jsonObject.get("pluginName");
           final JsonElement bundled = jsonObject.get("bundled");
-          result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())),
+          result.add(new Plugin(StringUtil.unquoteString(pluginId.toString()),
                                 pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
                                 Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
@@ -123,7 +123,7 @@ public final class PluginsAdvertiser {
         }
         JsonElement pluginNameElement = jsonObject.get("pluginName");
         String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
-        pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginName, isBundled));
+        pluginIds.add(new Plugin(pluginId, pluginName, isBundled));
       }
       saveExtensions(result);
       return result;
@@ -165,7 +165,7 @@ public final class PluginsAdvertiser {
     return new File(PathManager.getPluginsPath(), CASHED_EXTENSIONS);
   }
 
-  private static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
+  static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
     File plugins = getExtensionsFile();
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
@@ -192,8 +192,11 @@ public final class PluginsAdvertiser {
   }
 
   static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
-    if (PlatformUtils.isIdeaUltimate()) return null;
-    final List<String> bundled = new ArrayList<>();
+    if (PlatformUtils.isIdeaUltimate()) {
+      return null;
+    }
+
+    List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
       if (plugin.myBundled && PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
         bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
@@ -282,8 +285,16 @@ public final class PluginsAdvertiser {
     public String myPluginName;
     public boolean myBundled;
 
+    /**
+     * @deprecated Please use {@link #Plugin(String, String, boolean)}
+     */
+    @Deprecated
     public Plugin(PluginId pluginId, String pluginName, boolean bundled) {
-      myPluginId = pluginId.getIdString();
+      this(pluginId.getIdString(), pluginName, bundled);
+    }
+
+    public Plugin(String pluginId, String pluginName, boolean bundled) {
+      myPluginId = pluginId;
       myBundled = bundled;
       myPluginName = pluginName;
     }

@@ -21,6 +21,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -126,7 +127,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
             "Enable Plugins...", () -> {
               FeatureUsageData data = new FeatureUsageData()
                 .addData("source", "notification")
-                .addData("plugin", disabledPlugins.values().iterator().next().getPluginId().getIdString());
+                .addData("plugins", ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId().getIdString()));
               FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
               PluginsAdvertiser.enablePlugins(project, disabledPlugins.values());
             }));
