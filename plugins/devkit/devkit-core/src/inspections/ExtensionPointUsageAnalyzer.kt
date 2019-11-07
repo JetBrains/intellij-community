@@ -180,6 +180,12 @@ private fun findObjectLeaks(e: UElement, text: String): List<Leak> {
     if (parent is ULocalVariable) {
       return findVariableUsageLeaks(parent, text)
     }
+    if (parent is UQualifiedReferenceExpression) {
+      val target = parent.resolveToUElement()
+      if (target is UField) {
+        return findObjectLeaks(parent, text)
+      }
+    }
     if (parent is UReturnExpression) {
       val jumpTarget = parent.jumpTarget
       if (jumpTarget is UMethod) {
