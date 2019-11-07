@@ -127,14 +127,16 @@ private fun isSafeType(type: PsiType?, set: MutableSet<PsiClass>): Boolean {
     is PsiPrimitiveType -> true
     is PsiArrayType -> isSafeType(type.deepComponentType, set)
     is PsiClassType -> {
-      val psiClass = type.resolve() ?: return false
+      val resolveResult = type.resolveGenerics()
+      val psiClass = resolveResult.element ?: return false
+      val substitutor = resolveResult.substitutor
       if (!set.add(psiClass)) return true
       when {
         SAFE_CLASSES.contains(psiClass.qualifiedName) -> true
         psiClass.isEnum -> true
         InheritanceUtil.isInheritor(psiClass, "com.intellij.psi.PsiElement") -> true
         psiClass.hasModifierProperty(PsiModifier.FINAL) -> {
-          psiClass.allFields.any { f -> isSafeType(f.type, set) }
+          psiClass.allFields.any { f -> isSafeType(substitutor.substitute(f.type), set) }
         }
         else -> false
       }
