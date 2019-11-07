@@ -24,13 +24,13 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
+    productLayout.buildAllCompatiblePlugins = false
     productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(false),
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
-
 
     def commonCustomizer = productLayout.platformLayoutCustomizer
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->

@@ -143,7 +143,7 @@ class ProductModulesLayout {
    * <br>
    * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
    */
-  boolean buildAllCompatiblePlugins = false
+  boolean buildAllCompatiblePlugins = true
 
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
