@@ -154,7 +154,7 @@ public class NewMappings implements Disposable {
 
     MyVcsActivator activator = null;
     synchronized (myUpdateLock) {
-      boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
+      boolean mappingsChanged = !myMappings.equals(newMappings);
       if (!mappingsChanged) return; // mappings are up-to-date
 
       myMappings = newMappings;
@@ -180,7 +180,7 @@ public class NewMappings implements Disposable {
     Mappings newMappedRoots = collectMappedRoots(mappings);
 
     synchronized (myUpdateLock) {
-      boolean mappedRootsChanged = !Comparing.equal(myMappedRoots, newMappedRoots);
+      boolean mappedRootsChanged = !myMappedRoots.equals(newMappedRoots.mappedRoots);
       if (!mappedRootsChanged || myMappings != mappings) {
         Disposer.dispose(newMappedRoots.filePointerDisposable);
         return;
@@ -566,6 +566,21 @@ public class NewMappings implements Disposable {
       this.vcs = vcs;
       this.mapping = mapping;
       this.root = root;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MappedRoot other = (MappedRoot)o;
+      return Objects.equals(vcs, other.vcs) &&
+             mapping.equals(other.mapping) &&
+             root.equals(other.root);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(vcs, mapping, root);
     }
   }
 
