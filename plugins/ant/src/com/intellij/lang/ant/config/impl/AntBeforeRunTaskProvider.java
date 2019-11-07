@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -39,13 +40,13 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   @Override
   public Icon getIcon() {
-    return AntIcons.Target;
+    return AllIcons.Nodes.Target;
   }
 
   @Override
   public Icon getTaskIcon(AntBeforeRunTask task) {
     AntBuildTarget antTarget = findTargetToExecute(task);
-    return antTarget instanceof MetaTarget ? AntIcons.MetaTarget : AntIcons.Target;
+    return antTarget instanceof MetaTarget ? AntIcons.MetaTarget : AllIcons.Nodes.Target;
   }
 
   @Override
