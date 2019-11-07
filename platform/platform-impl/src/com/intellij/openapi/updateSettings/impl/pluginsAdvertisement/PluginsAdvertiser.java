@@ -77,7 +77,7 @@ public final class PluginsAdvertiser {
           final JsonElement pluginId = jsonObject.get("pluginId");
           final JsonElement pluginName = jsonObject.get("pluginName");
           final JsonElement bundled = jsonObject.get("bundled");
-          result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())),
+          result.add(new Plugin(StringUtil.unquoteString(pluginId.toString()),
                                 pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
                                 Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
@@ -124,7 +124,7 @@ public final class PluginsAdvertiser {
         }
         JsonElement pluginNameElement = jsonObject.get("pluginName");
         String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
-        pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginName, isBundled));
+        pluginIds.add(new Plugin(pluginId, pluginName, isBundled));
       }
       saveExtensions(result);
       return result;
@@ -166,7 +166,7 @@ public final class PluginsAdvertiser {
     return new File(PathManager.getPluginsPath(), CASHED_EXTENSIONS);
   }
 
-  private static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
+  static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
     File plugins = getExtensionsFile();
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
@@ -185,22 +185,23 @@ public final class PluginsAdvertiser {
   @Nullable
   static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     for (Plugin plugin : plugins) {
-      if (PluginManagerCore.isDisabled(plugin.myPluginId)) {
-        return PluginManagerCore.getPlugin(plugin.myPluginId);
+      PluginId pluginId = PluginId.getId(plugin.myPluginId);
+      if (PluginManagerCore.isDisabled(pluginId)) {
+        return PluginManagerCore.getPlugin(pluginId);
       }
     }
     return null;
   }
 
-  static List<PluginId> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
+  static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) {
       return null;
     }
 
-    List<PluginId> bundled = new ArrayList<>();
+    List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
-      if (plugin.myBundled && PluginManagerCore.getPlugin(plugin.myPluginId) == null) {
-        bundled.add(plugin.myPluginName != null ? PluginId.getId(plugin.myPluginName) : plugin.myPluginId);
+      if (plugin.myBundled && PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
+        bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
       }
     }
     return bundled.isEmpty() ? null : bundled;
@@ -290,11 +291,19 @@ public final class PluginsAdvertiser {
 
   @Tag("plugin")
   public static class Plugin implements Comparable<Plugin> {
-    public PluginId myPluginId;
+    public String myPluginId;
     public String myPluginName;
     public boolean myBundled;
 
+    /**
+     * @deprecated Please use {@link #Plugin(String, String, boolean)}
+     */
+    @Deprecated
     public Plugin(PluginId pluginId, String pluginName, boolean bundled) {
+      this(pluginId.getIdString(), pluginName, bundled);
+    }
+
+    public Plugin(String pluginId, String pluginName, boolean bundled) {
       myPluginId = pluginId;
       myBundled = bundled;
       myPluginName = pluginName;

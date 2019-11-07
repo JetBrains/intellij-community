@@ -21,6 +21,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -83,8 +84,9 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       final List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
       if (pluginId != null) {
         for (PluginsAdvertiser.Plugin plugin : pluginId) {
-          ids.put(plugin.myPluginId, plugin);
-          features.putValue(plugin.myPluginId, feature);
+          PluginId id = PluginId.getId(plugin.myPluginId);
+          ids.put(id, plugin);
+          features.putValue(id, feature);
         }
       }
     }
@@ -100,7 +102,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       }
     }
 
-    List<PluginId> bundledPlugin = PluginsAdvertiser.hasBundledPluginToInstall(ids.values());
+    List<String> bundledPlugin = PluginsAdvertiser.hasBundledPluginToInstall(ids.values());
     Set<PluginDownloader> plugins = new THashSet<>();
     for (IdeaPluginDescriptor loadedPlugin : allPlugins) {
       PluginId pluginId = loadedPlugin.getPluginId();
@@ -126,7 +128,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
             "Enable Plugins...", () -> {
               FeatureUsageData data = new FeatureUsageData()
                 .addData("source", "notification")
-                .addData("plugin", disabledPlugins.values().iterator().next().getPluginId().getIdString());
+                .addData("plugins", ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId().getIdString()));
               FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
               PluginsAdvertiser.enablePlugins(project, disabledPlugins.values());
             }));
@@ -188,7 +190,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       ids.add(plugin.getId());
     }
     for (PluginsAdvertiser.Plugin plugin : disabledPlugins.keySet()) {
-      ids.add(plugin.myPluginId);
+      ids.add(PluginId.getId(plugin.myPluginId));
     }
     for (PluginId id : ids) {
       for (UnknownFeature feature : features.get(id)) {
