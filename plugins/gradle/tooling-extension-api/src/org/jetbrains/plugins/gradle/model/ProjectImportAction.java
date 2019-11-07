@@ -106,6 +106,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Override
   public AllModels execute(BuildController controller) {
     configureAdditionalTypes(controller);
+    controller.getModel(IdeaProject.class);  // Android Studio: work around b/144579138
     boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
       long startTime = System.currentTimeMillis();
