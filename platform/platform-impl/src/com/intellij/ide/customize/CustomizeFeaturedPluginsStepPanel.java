@@ -184,6 +184,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       installButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+          CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.FeaturedPluginInstalled, descriptor.getPluginId().getIdString());
           wrapperLayout.show(buttonWrapper, "progress");
           ourService.execute(new Runnable() {
             @Override

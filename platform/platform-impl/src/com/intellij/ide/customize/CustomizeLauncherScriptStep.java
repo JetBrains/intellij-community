@@ -53,6 +53,8 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
   @Override
   public boolean beforeOkAction() {
     if (myCreateScriptCheckBox.isSelected()) {
+      CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.LauncherScriptCreated);
+
       try {
         CreateLauncherScriptAction.createLauncherScript(myScriptPathTextField.getText());
       }

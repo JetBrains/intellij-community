@@ -566,6 +566,7 @@
     <statistics.counterUsagesCollector groupId="ui.event" version="3"/>
     <statistics.counterUsagesCollector groupId="plugins.advertiser" version="1"/>
     <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
+    <statistics.counterUsagesCollector groupId="customize.wizard" version="1"/>
 
     <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
 
@@ -573,6 +574,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
+    <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>

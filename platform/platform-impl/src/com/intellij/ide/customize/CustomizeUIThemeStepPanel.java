@@ -81,6 +81,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
       radioButton.setOpaque(false);
       final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, () -> {
+        CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.UIThemeChanged);
+
         applyLaf(theme, this);
         theme.apply();
       });
@@ -198,7 +200,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         lafManager.setCurrentLookAndFeel(info);
         if (lafManager instanceof LafManagerImpl) {
           ((LafManagerImpl)lafManager).updateWizardLAF(wasUnderDarcula);//Actually updateUI would be called inside EditorColorsManager
-        } else {
+        }
+        else {
           lafManager.updateUI();
         }
       }

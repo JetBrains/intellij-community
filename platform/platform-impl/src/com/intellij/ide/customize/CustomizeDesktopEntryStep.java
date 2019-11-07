@@ -61,6 +61,8 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   @Override
   public boolean beforeOkAction() {
     if (myCreateEntryCheckBox.isSelected()) {
+      CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.DesktopEntryCreated);
+
       try {
         CreateDesktopEntryAction.createDesktopEntry(myGlobalEntryCheckBox.isSelected());
       }
