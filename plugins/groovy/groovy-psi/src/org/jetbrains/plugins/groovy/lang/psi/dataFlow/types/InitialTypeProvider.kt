@@ -28,7 +28,7 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {
     if (start is GrFunctionalExpression && getInvocationKind(start) != InvocationKind.UNKNOWN && parentInstruction != null) {
-      val type = RecursionManager.doPreventingRecursion(start, true) {
+      val type = RecursionManager.doPreventingRecursion(start, false) {
         val resolvedDescriptor = TypeInferenceHelper.extractResolvedDescriptor(parentFlowOwner, descriptor) ?: descriptor
         TypeInferenceHelper.getInferredType(resolvedDescriptor, parentInstruction, parentFlowOwner)
       }

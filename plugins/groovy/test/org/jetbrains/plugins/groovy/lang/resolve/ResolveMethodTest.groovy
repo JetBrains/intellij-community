@@ -2648,4 +2648,15 @@ f<caret>oo(null)
 ''', GrMethod
     assert method.getParameters()[0].type.canonicalText == "java.lang.Object..."
   }
+
+  @Test
+  void 'resolve calls inside closure'() {
+    resolveTest '''
+def f() {
+  def x = 'q'
+  1.with {
+    print(x.is<caret>Empty())
+  }
+}''', PsiMethod
+  }
 }
