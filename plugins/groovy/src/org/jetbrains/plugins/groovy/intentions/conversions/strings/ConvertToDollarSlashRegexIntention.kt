@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions.strings
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
@@ -14,9 +15,11 @@ class ConvertToDollarSlashRegexIntention : Intention() {
 
   override fun processIntention(element: PsiElement, project: Project, editor: Editor) {
     if (element !is GrLiteral) return
-    val rawText = GrStringUtil.removeQuotes(element.getText())
-    val newRegexp = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("$/$rawText/$")
-    element.replace(newRegexp) //don't use replaceWithExpression() since it can revert conversion if regexp brakes syntax
+    val value = element.value as? String ?: return
+    val factory = GroovyPsiElementFactory.getInstance(project)
+    val newEmptyLiteral = factory.createExpressionFromText("$//$") as? GrLiteral ?: return
+    val newLiteral = ElementManipulators.handleContentChange(newEmptyLiteral, value) ?: return
+    element.replace(newLiteral)
   }
 
   override fun getElementPredicate(): PsiElementPredicate = IntentionPredicate
