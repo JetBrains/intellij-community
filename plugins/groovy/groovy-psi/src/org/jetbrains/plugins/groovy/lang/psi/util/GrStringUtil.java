@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -209,15 +209,37 @@ public class GrStringUtil {
     escapeSymbolsForDollarSlashyStrings(buffer, str);
     return buffer.toString();
   }
-  
+
   public static void escapeSymbolsForDollarSlashyStrings(StringBuilder buffer, String str) {
     final int length = str.length();
-    for (int idx = 0; idx < length; idx++) {
-      char ch = str.charAt(idx);
+    int idx = 0;
+    while (idx < length) {
+      final char ch = str.charAt(idx);
       if (ch == '/') {
-        if (idx + 1 < length && str.charAt(idx + 1) == '$') {
-          appendUnicode(buffer, '/');
-          appendUnicode(buffer, '$');
+        if (idx + 1 < length) {
+          char nextCh = str.charAt(idx + 1);
+          if (nextCh == '$') {
+            // /$ -> $/$
+            buffer.append("$/$");
+            idx += 2;
+            continue;
+          }
+        }
+      }
+      else if (ch == '$') {
+        if (idx + 1 < length) {
+          final char nextCh = str.charAt(idx + 1);
+          if (nextCh == '$' || nextCh == '/') {
+            // $$ -> $$$
+            // $/ -> $$/
+            buffer.append("$$").append(nextCh);
+            idx += 2;
+            continue;
+          }
+        }
+        else {
+          buffer.append("$$");
+          idx++;
           continue;
         }
       }
@@ -227,6 +249,7 @@ public class GrStringUtil {
       else {
         buffer.append(ch);
       }
+      idx++;
     }
   }
 
