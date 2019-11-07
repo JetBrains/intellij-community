@@ -401,7 +401,8 @@
 
     <!--  Inlay hints  -->
     <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
-    <postStartupActivity implementation="com.intellij.codeInsight.hints.presentation.PresentationMouseHandler"/>
+    <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.presentation.InlayEditorMouseListener"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.codeInsight.hints.presentation.InlayEditorMouseMotionListener"/>
     <postStartupActivity implementation="com.intellij.codeInsight.hints.ParameterHintsSettingsMigration"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.InlayHintsPassFactory"/>
 
