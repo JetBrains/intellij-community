@@ -27,6 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
 import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.openapi.vfs.VfsUtilCore.isInvalidLink;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
@@ -124,6 +125,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
     if (visibility == ThreeState.YES) return true;
+    checkCanceled(); // ProcessCanceledException if current task is interrupted
     boolean visible = filter.accept(node.file);
     if (!visible && node.file.isDirectory()) {
       List<FileNode> children = node.getChildren();
@@ -191,6 +193,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     final List<FileNode> getChildren() {
       List<FileNode> oldList = children;
       if (valid) return oldList;
+      checkCanceled(); // ProcessCanceledException if current task is interrupted
       List<FileNode> newList = getChildren(oldList);
       oldList.forEach(node -> node.parent = null);
       newList.forEach(node -> node.parent = this);
