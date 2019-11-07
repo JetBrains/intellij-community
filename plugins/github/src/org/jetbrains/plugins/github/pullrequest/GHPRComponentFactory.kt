@@ -242,6 +242,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       installSelectionSaver(it, listSelectionHolder)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Timeline.Show", shortcuts, it)
+      ListSpeedSearch(it) { item -> item.title }
     }
 
     val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
