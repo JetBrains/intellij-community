@@ -87,9 +87,9 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       Pair<String, Integer> commitInfo = getNearestCommit(false);
       if (commitInfo == null) return;
 
-      String notificationContent = commitInfo.second == 0
+      String notificationContent = commitInfo.second == 1
                                    ? "Compile server contains caches for the current commit. Do you want to update your data?"
-                                   : "Compile server contains caches for the " + commitInfo.second + "th commit behind of yours. Do you want to update your data?";
+                                   : "Compile server contains caches for the " + (commitInfo.second - 1) + "th commit behind of yours. Do you want to update your data?";
 
       ApplicationManager.getApplication().invokeLater(() -> {
         Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compile Output Loader", notificationContent,
