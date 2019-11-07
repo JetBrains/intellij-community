@@ -278,12 +278,16 @@ public interface CaretModel {
    * <p>
    * Carets are iterated in position order (top-to-bottom) if {@code reverseOrder} is {@code false}, and in reverse order
    * if it's {@code true}.
+   * <p>
+   * It's possible to call this method not from EDT (for read-only operations). Caret merging is not performed in this case, and no
+   * notifications to {@link CaretActionListener}-s are sent.
    */
   void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder);
 
   /**
    * Adds a listener which will be notified before and after all-caret operations are performed by {@link #runForEachCaret(CaretAction)} and
-   * {@link #runForEachCaret(CaretAction, boolean)}.
+   * {@link #runForEachCaret(CaretAction, boolean)}. Listeners will be notified only if those methods are invoked from EDT (non-EDT
+   * invocations are not allowed to change caret state anyway).
    */
   void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable);
 
