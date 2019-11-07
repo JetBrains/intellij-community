@@ -6,7 +6,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
@@ -34,6 +36,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
   private final boolean myHasErrorStream;
+  private final ModalityState myModality;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
   private final Set<File> myFilesToDelete;
@@ -46,6 +49,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(isPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
+    myModality = ModalityState.defaultModalityState();
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} (or any other constructor) */
@@ -71,6 +75,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(isPtyProcess(process));
     myFilesToDelete = null;
     myHasErrorStream = true;
+    myModality = ModalityState.defaultModalityState();
   }
 
   @NotNull
@@ -178,7 +183,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @Override
   protected void onOSProcessTerminated(int exitCode) {
-    super.onOSProcessTerminated(exitCode);
+    ProgressManager.getInstance().runProcess(() ->super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
     deleteTempFiles(myFilesToDelete);
   }
 
