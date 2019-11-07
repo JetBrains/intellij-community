@@ -15,7 +15,7 @@ import java.util.ResourceBundle;
  * @author yole
  */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class CommonBundle extends BundleBase {
+public final class CommonBundle extends BundleBase {
   private static final String BUNDLE = "messages.CommonBundle";
   private static Reference<ResourceBundle> ourBundle;
 
@@ -38,11 +38,15 @@ public class CommonBundle extends BundleBase {
   }
 
   public static String messageOrDefault(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
-    if (bundle == null) return defaultValue;
-    if (!bundle.containsKey(key)) {
+    if (bundle == null) {
+      return defaultValue;
+    }
+    else if (!bundle.containsKey(key)) {
       return postprocessValue(bundle, useDefaultValue(bundle, key, defaultValue), params);
     }
-    return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
+    else {
+      return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
+    }
   }
 
   @Nls

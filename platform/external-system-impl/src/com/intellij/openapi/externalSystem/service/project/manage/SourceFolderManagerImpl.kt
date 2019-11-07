@@ -87,14 +87,16 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     sourceFoldersByModule[moduleName]?.sourceFolders
   }
 
-  private fun unsafeRemoveSourceFolder(url: String) {
-    val sourceFolder = sourceFolders.remove(url) ?: return
-    val module = sourceFolder.module
-    val moduleModel = sourceFoldersByModule[module.name] ?: return
-    val sourceFolders = moduleModel.sourceFolders
-    sourceFolders.remove(url)
-    if (sourceFolders.isEmpty()) {
-      sourceFoldersByModule.remove(module.name)
+  private fun removeSourceFolder(url: String) {
+    synchronized(mutex) {
+      val sourceFolder = sourceFolders.remove(url) ?: return
+      val module = sourceFolder.module
+      val moduleModel = sourceFoldersByModule[module.name] ?: return
+      val sourceFolders = moduleModel.sourceFolders
+      sourceFolders.remove(url)
+      if (sourceFolders.isEmpty()) {
+        sourceFoldersByModule.remove(module.name)
+      }
     }
   }
 
@@ -116,23 +118,22 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       override fun after(events: List<VFileEvent>) {
         val sourceFoldersToChange = HashMap<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
         val virtualFileManager = VirtualFileManager.getInstance()
-        synchronized(mutex) {
-          for (event in events) {
-            if (event !is VFileCreateEvent) {
-              continue
-            }
 
-            for (sourceFolder in sourceFolders.getAllDescendantValues(VfsUtilCore.pathToUrl(event.path))) {
-              val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
-              if (sourceFolderFile != null && sourceFolderFile.isValid) {
-                sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(event.file!!, sourceFolder))
-                unsafeRemoveSourceFolder(sourceFolder.url)
-              }
+        for (event in events) {
+          if (event !is VFileCreateEvent) {
+            continue
+          }
+          val allDescendantValues = synchronized(mutex) { sourceFolders.getAllDescendantValues(VfsUtilCore.pathToUrl(event.path)) }
+          for (sourceFolder in allDescendantValues) {
+            val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
+            if (sourceFolderFile != null && sourceFolderFile.isValid) {
+              sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(event.file!!, sourceFolder))
+              removeSourceFolder(sourceFolder.url)
             }
           }
-
-          updateSourceFolders(sourceFoldersToChange)
         }
+
+        updateSourceFolders(sourceFoldersToChange)
       }
     })
 
@@ -151,13 +152,13 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   fun rescanAndUpdateSourceFolders() {
     val sourceFoldersToChange = HashMap<Module, ArrayList<Pair<VirtualFile, SourceFolderModel>>>()
     val virtualFileManager = VirtualFileManager.getInstance()
-    synchronized(mutex) {
-      for (sourceFolder in sourceFolders.values) {
-        val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
-        if (sourceFolderFile != null && sourceFolderFile.isValid) {
-          sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(sourceFolderFile, sourceFolder))
-          unsafeRemoveSourceFolder(sourceFolder.url)
-        }
+
+    val values = synchronized(mutex) { sourceFolders.values }
+    for (sourceFolder in values) {
+      val sourceFolderFile = virtualFileManager.refreshAndFindFileByUrl(sourceFolder.url)
+      if (sourceFolderFile != null && sourceFolderFile.isValid) {
+        sourceFoldersToChange.computeIfAbsent(sourceFolder.module) { ArrayList() }.add(Pair(sourceFolderFile, sourceFolder))
+        removeSourceFolder(sourceFolder.url)
       }
 
       updateSourceFolders(sourceFoldersToChange)

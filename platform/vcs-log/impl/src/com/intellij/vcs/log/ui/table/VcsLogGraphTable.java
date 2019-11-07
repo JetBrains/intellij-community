@@ -306,7 +306,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
     }
 
-    updateCommitColumnWidth();
+    int size = getWidth();
+    for (VcsLogColumn logColumn : VcsLogColumn.values()) {
+      if (logColumn == VcsLogColumn.COMMIT) continue;
+      TableColumn column = getTableColumn(logColumn);
+      if (column != null) size -= column.getPreferredWidth();
+    }
+
+    getCommitColumn().setPreferredWidth(size);
   }
 
   private int getColumnWidthFromData(@NotNull TableColumn column) {
@@ -374,21 +381,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull
   public TableColumn getCommitColumn() {
     return Objects.requireNonNull(getTableColumn(VcsLogColumn.COMMIT));
-  }
-
-  static Font getTableFont() {
-    return UIManager.getFont("Table.font");
-  }
-
-  private void updateCommitColumnWidth() {
-    int size = getWidth();
-    for (VcsLogColumn logColumn : VcsLogColumn.values()) {
-      if (logColumn == VcsLogColumn.COMMIT) continue;
-      TableColumn column = getTableColumn(logColumn);
-      if (column != null) size -= column.getPreferredWidth();
-    }
-
-    getCommitColumn().setPreferredWidth(size);
   }
 
   private void setRootColumnSize() {
@@ -602,14 +594,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     });
   }
 
-  public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
-    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
-  }
-
-  public static JBColor getPathBackgroundColor(@NotNull FilePath filePath, @NotNull VcsLogColorManager colorManager) {
-    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getPathColor(filePath));
-  }
-
   @Override
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
@@ -635,8 +619,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myController.handleGraphAnswer(answer, true, null, null);
   }
 
-  public void showTooltip(int row) {
-    myController.showTooltip(row);
+  public void showTooltip(int row, @NotNull VcsLogColumn column) {
+    myController.showTooltip(row, column);
   }
 
   public void setCompactReferencesView(boolean compact) {
@@ -705,6 +689,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
   }
 
+  @NotNull
+  public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
+    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
+  }
+
+  @NotNull
+  public static JBColor getPathBackgroundColor(@NotNull FilePath filePath, @NotNull VcsLogColorManager colorManager) {
+    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getPathColor(filePath));
+  }
+
+  static Font getTableFont() {
+    return UIManager.getFont("Table.font");
+  }
+
   private static class MyDefaultTableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -750,7 +748,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     public boolean shouldSelectCell(EventObject anEvent) {
       if (!(anEvent instanceof MouseEvent)) return true;
 
-      return myController.findPrintElement((MouseEvent)anEvent) == null;
+      return myController.shouldSelectCell((MouseEvent)anEvent);
     }
 
     @Override

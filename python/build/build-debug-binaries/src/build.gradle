@@ -17,30 +17,36 @@ envs {
   zipRepository = new URL("https://repo.labs.intellij.net/pycharm/python-archives-windows/")
   shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
 
-  python "python27_64", "2.7.15", "64"
+  python "python27_64", "2.7.16", "64"
   virtualenv "py27_64", "python27_64", ["cython"]
 
-  python "python35_64", "3.5.4", "64"
+  python "python35_64", "3.5.7", "64"
   virtualenv "py35_64", "python35_64", ["cython"]
 
-  python "python36_64", "3.6.6", "64"
+  python "python36_64", "3.6.8", "64"
   virtualenv "py36_64", "python36_64", ["cython"]
 
-  python "python37_64", "3.7.0", "64"
+  python "python37_64", "3.7.4", "64"
   virtualenv "py37_64", "python37_64", ["cython"]
 
+  python "python38_64", "3.8.0", "64"
+  virtualenv "py38_64", "python38_64", ["cython"]
+
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    python "python27_32", "2.7.15", "32"
+    python "python27_32", "2.7.16", "32"
     virtualenv "py27_32", "python27_32", ["cython"]
 
-    python "python35_32", "3.5.4", "32"
+    python "python35_32", "3.5.7", "32"
     virtualenv "py35_32", "python35_32", ["cython"]
 
-    python "python36_32", "3.6.6", "32"
+    python "python36_32", "3.6.8", "32"
     virtualenv "py36_32", "python36_32", ["cython"]
 
-    python "python37_32", "3.7.0", "32"
+    python "python37_32", "3.7.4", "32"
     virtualenv "py37_32", "python37_32", ["cython"]
+
+    python "python38_32", "3.8.0", "32"
+    virtualenv "py38_32", "python38_32", ["cython"]
   }
 }
 
@@ -63,7 +69,7 @@ task buildBinariesOnMac(dependsOn: 'build_envs') << {
     environment PYTHONPATH: pydevDir,
                 MINICONDA64_ENVS: envs.envsDirectory
 
-    commandLine "${envs.envsDirectory}/py36_64/bin/python", "build_tools/build_binaries_osx.py"
+    commandLine "${envs.envsDirectory}/py37_64/bin/python", "build_tools/build_binaries_osx.py"
   }
 }
 

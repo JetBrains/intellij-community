@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MacUIUtil
@@ -23,7 +23,7 @@ import javax.swing.event.ListDataListener
 
 class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRReviewCommentModel>,
                                     private val avatarIconsProvider: GHAvatarIconsProvider)
-  : JPanel(VerticalFlowLayout(0, JBUI.scale(10))) {
+  : JPanel(VerticalLayout(8)) {
 
   private val foldModel = SingleValueModel(true)
   private val foldThreshold = 2
@@ -31,7 +31,10 @@ class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRRev
     isOpaque = false
     border = JBUI.Borders.emptyLeft(30)
 
-    addToLeft(UnfoldButton(foldModel))
+    addToLeft(UnfoldButton(foldModel).apply {
+      foreground = UIUtil.getLabelForeground()
+      font = UIUtil.getButtonFont()
+    })
   }
 
   init {
@@ -105,7 +108,7 @@ class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRRev
       }
 
       override fun getPreferredSize(): Dimension {
-        return Dimension(JBUI.scale(30), UIUtil.getLabelFont().size)
+        return Dimension(JBUI.scale(30), font.size)
       }
 
       override fun paintComponent(g: Graphics) {
@@ -119,11 +122,11 @@ class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRRev
                             if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
         val arc = DarculaUIUtil.BUTTON_ARC.float
-        g2.color = UIUtil.getPanelBackground()
+        g2.color = background
         g2.fill(RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), arc, arc))
 
-        g2.color = UIUtil.getLabelForeground()
-        g2.font = UIUtil.getLabelFont()
+        g2.color = foreground
+        g2.font = font
         val line = StringUtil.ELLIPSIS
         val lineBounds = g2.fontMetrics.getStringBounds(line, g2)
         val x = (rect.width - lineBounds.width) / 2

@@ -1,13 +1,13 @@
-class A {
+class P {
   def r(Serializable i) {
    print "serializable"
   }
 }
 
-class B extends A {
+class C extends P {
   def r(Object o) {
    print "object"
   }
 }
 
-new B() .<ref>r("")
+new C() .<caret>r("")

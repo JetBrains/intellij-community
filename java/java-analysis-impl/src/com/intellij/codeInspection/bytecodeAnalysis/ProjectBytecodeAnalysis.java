@@ -33,7 +33,6 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.function.Function;
 
@@ -107,8 +106,7 @@ public class ProjectBytecodeAnalysis {
     }
 
     try {
-      MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      EKey primaryKey = getKey(listOwner, md);
+      EKey primaryKey = getKey(listOwner);
       if (primaryKey == null) {
         return PsiAnnotation.EMPTY_ARRAY;
       }
@@ -220,7 +218,7 @@ public class ProjectBytecodeAnalysis {
   }
 
   @Nullable
-  public EKey getKey(@NotNull PsiModifierListOwner owner, MessageDigest md) {
+  public EKey getKey(@NotNull PsiModifierListOwner owner) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
     EKey key = null;
     if (owner instanceof PsiMethod) {
@@ -239,7 +237,7 @@ public class ProjectBytecodeAnalysis {
         }
       }
     }
-    return key == null ? null : myEquationProvider.adaptKey(key, md);
+    return key == null ? null : myEquationProvider.adaptKey(key);
   }
 
   /**
@@ -538,7 +536,7 @@ public class ProjectBytecodeAnalysis {
       project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, myEquationCache::clear);
     }
 
-    abstract EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest);
+    abstract EKey adaptKey(@NotNull EKey key);
 
     abstract List<Equations> getEquations(MemberDescriptor method);
   }
@@ -553,7 +551,7 @@ public class ProjectBytecodeAnalysis {
     }
 
     @Override
-    public EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest) {
+    public EKey adaptKey(@NotNull EKey key) {
       assert key.member instanceof Member;
       return key;
     }
@@ -617,13 +615,13 @@ public class ProjectBytecodeAnalysis {
     }
 
     @Override
-    public EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest) {
-      return key.hashed(messageDigest);
+    public EKey adaptKey(@NotNull EKey key) {
+      return key.hashed();
     }
 
     @Override
     public List<Equations> getEquations(MemberDescriptor method) {
-      HMember key = method.hashed(null);
+      HMember key = method.hashed();
       return myEquationCache.computeIfAbsent(key, m -> ClassDataIndexer.getEquations(ProjectScope.getLibrariesScope(myProject), m));
     }
   }

@@ -93,7 +93,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
   }
 
   @Override
-  public Class getColumnClass() {
+  public Class<?> getColumnClass() {
     return columnIdx == COLUMN_DOWNLOADS ? Integer.class : String.class;
   }
 

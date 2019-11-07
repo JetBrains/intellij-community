@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +70,6 @@ public abstract class CodeStyleFacade {
    */
   @Nullable
   public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
-    //noinspection deprecation
     return getLineIndent(editor.getDocument(), offset);
   }
 
@@ -99,13 +97,6 @@ public abstract class CodeStyleFacade {
   public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
 
   /**
-   * @deprecated Use {@code getRightMargin(Language)} method of {@code CodeStyle.getSettings(PsiFile)} or
-   *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
-   */
-  @Deprecated
-  public abstract int getRightMargin(Language language);
-
-  /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).TAB_SIZE}. See {@code CodeStyle for more information}
    */
   @Deprecated
@@ -124,5 +115,4 @@ public abstract class CodeStyleFacade {
   @Deprecated
   public abstract String getLineSeparator();
 
-  public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);
 }

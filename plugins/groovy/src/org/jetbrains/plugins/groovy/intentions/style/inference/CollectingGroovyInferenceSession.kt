@@ -31,6 +31,7 @@ class CollectingGroovyInferenceSession(
 
   companion object {
     private const val MAX_DEPTH = 127
+    private const val OBSERVING_DISTANCE = 10
 
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
                               nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
@@ -70,7 +71,11 @@ class CollectingGroovyInferenceSession(
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
     if (depth >= MAX_DEPTH) {
-      throw AssertionError("Inference process has gone too deep on ${result.element?.text}")
+      var place = context
+      repeat(OBSERVING_DISTANCE) {
+        place = place.parent ?: place
+      }
+      throw AssertionError("Inference process has gone too deep on ${context.text} in ${place.text}")
     }
     val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, ignoreClosureArguments, depth + 1)
     nestedSession.propagateVariables(this)

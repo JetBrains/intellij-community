@@ -516,6 +516,39 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals("compile", ((XmlTag)resolved).findFirstSubTag("goal").getValue().getText());
   }
 
+
+  public void testMavenDependencyReferenceProvider() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<build>" +
+                     "        <plugins>" +
+                     "            <plugin>" +
+                     "                <artifactId>maven-invoker-plugin</artifactId>" +
+                     "                <version>3.2.1</version>" +
+                     "                <executions>" +
+                     "                    <execution>" +
+                     "                        <id>pre-integration-tests</id>" +
+                     "                        <goals>" +
+                     "                            <goal>install</goal>" +
+                     "                        </goals>" +
+                     "                        <configuration>" +
+                     "                            <extraArtifacts>" +
+                     "                                <extraArtifact>junit:<caret>junit:4.8</extraArtifact>" +
+                     "                            </extraArtifacts>" +
+                     "                        </configuration>" +
+                     "                    </execution>" +
+                     "                </executions>" +
+                     "            </plugin>" +
+                     "        </plugins>" +
+                     "    </build>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+  }
+
+
   public void testGoalsCompletionAndResolutionForUnknownPlugin() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

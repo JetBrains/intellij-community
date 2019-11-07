@@ -58,13 +58,13 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     getApplication().getMessageBus().connect(this).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        invoker.runOrInvokeLater(() -> process(events));
+        invoker.invoke(() -> process(events));
       }
     });
   }
 
   public void invalidate() {
-    invoker.runOrInvokeLater(() -> {
+    invoker.invoke(() -> {
       if (roots != null) {
         for (Root root : roots) {
           root.tree.invalidate();

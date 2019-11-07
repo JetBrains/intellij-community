@@ -1205,11 +1205,13 @@ public class RefactoringUtil {
     }
   }
 
-  private static PsiDocTag createParamTag(PsiParameter parameter) {
+  @NotNull
+  private static PsiDocTag createParamTag(@NotNull PsiParameter parameter) {
     return JavaPsiFacade.getElementFactory(parameter.getProject()).createParamTag(parameter.getName(), "");
   }
 
-  public static PsiDirectory createPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot)
+  @NotNull
+  public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, final VirtualFile sourceRoot)
     throws IncorrectOperationException {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {

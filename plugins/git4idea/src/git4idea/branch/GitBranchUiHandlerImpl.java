@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.CommonBundle.getCancelButtonText;
+import static com.intellij.CommonBundle.message;
 import static com.intellij.openapi.ui.Messages.YES;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
@@ -140,22 +142,28 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull
   @Override
-  public DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull String branchName,
+  public DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
                                                                 @NotNull Collection<String> trackingBranches,
                                                                 @NotNull Collection<GitRepository> repositories) {
-    String title = "Delete Remote Branch";
-    String message = "Delete remote branch " + branchName + "?";
+    boolean deleteMultipleBranches = branchNames.size() > 1;
+    String title = "Delete Remote " + StringUtil.pluralize("Branch", branchNames.size());
+    String message = deleteMultipleBranches
+                     ? "Delete remote branches " + StringUtil.join(branchNames, ", ") + "?"
+                     : "Delete remote branch " + branchNames.iterator().next() + "?";
+    String deleteButtonText = deleteMultipleBranches ? "Delete All" : message("button.delete");
 
     if (trackingBranches.isEmpty()) {
-      return YES == DialogManager.showOkCancelDialog(myProject, message, title, "Delete", "Cancel", getQuestionIcon()) ? DELETE : CANCEL;
+      return YES ==
+             DialogManager
+               .showOkCancelDialog(myProject, message, title, deleteButtonText, getCancelButtonText(), getQuestionIcon()) ? DELETE : CANCEL;
     }
 
     String checkboxMessage = trackingBranches.size() == 1
                              ? "Delete tracking local branch " + trackingBranches.iterator().next() + " as well"
-                             : "Delete tracking local branches " + StringUtil.join(trackingBranches, ", ");
+                             : "<html>Delete tracking local branches: <br/>" + StringUtil.join(trackingBranches, ", <br/>");
 
       Ref<Boolean> deleteChoice = Ref.create(false);
-      boolean delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText("Delete").noText("Cancel").doNotAsk(
+      boolean delete = MessageDialogBuilder.yesNo(title, message).project(myProject).yesText(deleteButtonText).noText(getCancelButtonText()).doNotAsk(
         new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(boolean isSelected, int exitCode) {

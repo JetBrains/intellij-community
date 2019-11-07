@@ -36,22 +36,23 @@ public final class SystemProperties {
     return System.getProperty("line.separator");
   }
 
-  /** @deprecated use {@link SystemInfo#OS_NAME} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link SystemInfo#OS_NAME} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static String getOsName() {
     return SystemInfo.OS_NAME;
   }
 
-  /** @deprecated use {@link SystemInfo#JAVA_VERSION} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link SystemInfo#JAVA_VERSION} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static String getJavaVersion() {
     return SystemInfo.JAVA_VERSION;
   }
 
-  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static String getJavaVmVendor() {
     return SystemInfo.JAVA_VENDOR;
   }
@@ -97,13 +98,6 @@ public final class SystemProperties {
     }
 
     return defaultValue;
-  }
-
-  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
-  public static String getJavaVendor() {
-    return SystemInfo.JAVA_VENDOR;
   }
 
   public static boolean is(String key) {

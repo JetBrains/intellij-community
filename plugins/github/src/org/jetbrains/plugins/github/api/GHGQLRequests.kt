@@ -63,8 +63,8 @@ object GHGQLRequests {
       : GHConnection<GHPullRequestReviewThread>(pageInfo, nodes)
 
     object Timeline {
-      fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long
-                , pagination: GHGQLRequestPagination? = null)
+      fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long,
+                pagination: GHGQLRequestPagination? = null)
         : GQLQuery<GHGQLPagedRequestResponse<GHPRTimelineItem>> {
 
         return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.pullRequestTimeline,
@@ -72,7 +72,8 @@ object GHGQLRequests {
                                               "repoName" to repoName,
                                               "number" to number,
                                               "pageSize" to pagination?.pageSize,
-                                              "cursor" to pagination?.afterCursor),
+                                              "cursor" to pagination?.afterCursor,
+                                              "since" to pagination?.since),
                                         TimelineConnection::class.java,
                                         "repository", "pullRequest", "timelineItems")
       }

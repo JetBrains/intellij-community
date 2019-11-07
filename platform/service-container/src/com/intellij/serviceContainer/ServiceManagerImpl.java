@@ -15,10 +15,10 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.defaults.InstanceComponentAdapter;
 
 import java.util.Collection;
 import java.util.function.BiConsumer;
@@ -97,7 +97,7 @@ public final class ServiceManagerImpl implements Disposable {
       else if (!(o instanceof ExtensionComponentAdapter)) {
         PluginId pluginId = o instanceof BaseComponentAdapter ? ((BaseComponentAdapter)o).getPluginId() : null;
         // allow InstanceComponentAdapter without pluginId to test
-        if (pluginId != null || o instanceof InstanceComponentAdapter) {
+        if (pluginId != null || o instanceof DefaultPicoContainer.InstanceComponentAdapter) {
           try {
             aClass = o.getComponentImplementation();
           }

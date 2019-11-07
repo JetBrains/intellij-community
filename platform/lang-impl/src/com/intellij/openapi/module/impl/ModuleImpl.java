@@ -31,6 +31,7 @@ import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +52,9 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   private final ModuleScopeProvider myModuleScopeProvider;
 
-  ModuleImpl(@NotNull String name, @NotNull Project project, @NotNull String filePath) {
-    super(project);
+  @ApiStatus.Internal
+  public ModuleImpl(@NotNull String name, @NotNull Project project, @NotNull String filePath) {
+    super((PlatformComponentManagerImpl)project);
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
@@ -78,7 +80,8 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public void init(@Nullable Runnable beforeComponentCreation) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    registerComponents(PluginManagerCore.getLoadedPlugins());
+    //noinspection unchecked
+    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
     if (beforeComponentCreation != null) {
       beforeComponentCreation.run();
     }
@@ -95,7 +98,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public boolean isDisposed() {
     // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
     //noinspection TestOnlyProblems
-    return super.isDisposed() || ((ProjectImpl)myProject).isLight() && myProject.isDisposed();
+    return isDisposedOrDisposeInProgress() || ((ProjectImpl)myProject).isLight() && myProject.isDisposed();
   }
 
   @Override
@@ -313,7 +316,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     if (myName == null) return "Module (not initialized)";
     return "Module: '" + getName() + "'";

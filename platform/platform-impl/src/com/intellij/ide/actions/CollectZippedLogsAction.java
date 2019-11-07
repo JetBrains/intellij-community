@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.settingsSummary.ProblemType;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.Compressor;
@@ -110,9 +109,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       settings.append(new CompositeGeneralTroubleInfoCollector().collectInfo(project));
       for (TroubleInfoCollector troubleInfoCollector : TroubleInfoCollector.EP_SETTINGS.getExtensions()) {
         settings.append(troubleInfoCollector.collectInfo(project)).append('\n');
-      }
-      for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
-        settings.append(problemType.collectInfo(project)).append('\n');
       }
     }
     return settings;

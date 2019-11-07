@@ -14,15 +14,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public class XmlNamespaceAnnotator implements Annotator {
-
-  private static final XmlNSColorProvider[] PROVIDERS = XmlNSColorProvider.EXTENSION_POINT_NAME.getPoint(null).getExtensions();
-
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       String namespace = tag.getNamespace();
-      for (XmlNSColorProvider provider : PROVIDERS) {
+      for (XmlNSColorProvider provider : XmlNSColorProvider.EP_NAME.getExtensionList()) {
         TextAttributesKey key = provider.getKeyForNamespace(namespace, tag);
         if (key != null) {
           TextRange range = XmlTagUtil.getStartTagRange(tag);

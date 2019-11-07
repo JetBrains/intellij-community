@@ -269,21 +269,19 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
    */
   private void checkStaticMethodsOfInterfaces(@NotNull List<CandidateInfo> conflicts) {
     if (!(myArgumentsList instanceof PsiExpressionList)) return;
-    PsiClass qualifierClass = null;
     for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
       CandidateInfo conflict = iterator.next();
       if (!(conflict instanceof MethodCandidateInfo)) continue;
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        if (conflict.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) continue;
+        PsiElement currentFileResolveScope = conflict.getCurrentFileResolveScope();
+        if (currentFileResolveScope instanceof PsiImportStaticStatement) continue;
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
-          if (qualifierClass == null) {
-            qualifierClass = getQualifiedClass(method);
-            if (qualifierClass == null) return;
-          }
+          PsiClass qualifierClass = getQualifiedClass(currentFileResolveScope);
 
-          if (!containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
+          if (qualifierClass != null &&
+              !containingClass.getManager().areElementsEquivalent(containingClass, qualifierClass)) {
             iterator.remove();
           }
         }
@@ -291,7 +289,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private PsiClass getQualifiedClass(PsiMethod method) {
+  private PsiClass getQualifiedClass(PsiElement resolveScope) {
     final PsiElement parent = myArgumentsList.getParent();
     if (parent instanceof PsiMethodCallExpression) {
       final PsiExpression expression = ((PsiMethodCallExpression)parent).getMethodExpression().getQualifierExpression();
@@ -301,15 +299,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           return (PsiClass)resolve;
         }
       }
-      else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
-        PsiClass qualifierClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
-        if (qualifierClass != null) {
-          PsiClass containingClass = method.getContainingClass();
-          if (!PsiTreeUtil.isAncestor(containingClass, qualifierClass, true) ||
-              qualifierClass.isInheritor(containingClass, true)) {
-            return qualifierClass;
-          }
-        }
+      else if (expression == null && resolveScope instanceof PsiClass) {
+        return (PsiClass)resolveScope;
       }
 
       if (expression != null) {

@@ -107,7 +107,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
                    NotificationType.ERROR)
     }
     else {
-      PluginManagerCore.disablePlugin(pluginId.idString)
+      PluginManagerCore.disablePlugin(pluginId)
       Notification("Settings Error", "Unable to save plugin settings",
                    "<p>The plugin <i>$pluginId</i> failed to save settings and has been disabled. $messagePostfix",
                    NotificationType.ERROR)

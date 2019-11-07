@@ -196,7 +196,7 @@ public final class Registry  {
     return myUserProperties.isEmpty();
   }
 
-  boolean isRestartNeeded() {
+  public boolean isRestartNeeded() {
     return isRestartNeeded(myUserProperties);
   }
 

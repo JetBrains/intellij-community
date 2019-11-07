@@ -1,8 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -275,13 +276,14 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myShortcutSet != shortcutSet &&
-        !"ProxyShortcutSet".equals(shortcutSet.getClass().getSimpleName()) && // avoid CyclicDependencyException
-        ApplicationManager.getApplication() != null &&
-        ActionManager.getInstance() != null &&
-        ActionManager.getInstance().getId(this) != null) {
-      LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
-               "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-               "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+        myShortcutSet != CustomShortcutSet.EMPTY &&
+        LoadingState.PROJECT_OPENED.isOccurred()) {
+      ActionManager actionManager = ServiceManager.getServiceIfCreated(ActionManager.class);
+      if (actionManager != null && actionManager.getId(this) != null) {
+        LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
+                 "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
+                 "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+      }
     }
     myShortcutSet = shortcutSet;
   }

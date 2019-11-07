@@ -72,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -442,8 +443,15 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static PsiClass getContextClass(@Nullable PsiElement context) {
+  public static PsiClass getContextClass(@Nullable PsiElement element) {
+    PsiElement context = element;
     while (context != null) {
+      if (context instanceof GrAnonymousClassDefinition
+          && PsiTreeUtil.isAncestor(((GrAnonymousClassDefinition)context).getArgumentListGroovy(), element, false)) {
+        context = context.getContext();
+        continue;
+      }
+
       if (context instanceof PsiClass && !isInDummyFile(context)) {
         return (PsiClass)context;
       }
@@ -506,9 +514,10 @@ public class PsiUtil {
       if (expression instanceof GrReferenceExpression) {
         final GroovyMethodCallReference reference = call.getImplicitCallReference();
         if (reference != null) {
-          PsiType receiver = reference.getReceiver();
-          if (receiver instanceof GrClosureType) {
-            return isRawClosureCall(call, result, (GrClosureType)receiver);
+          Argument receiver = reference.getReceiverArgument();
+          PsiType receiverType = receiver == null ? null : receiver.getType();
+          if (receiverType instanceof GrClosureType) {
+            return isRawClosureCall(call, result, (GrClosureType)receiverType);
           }
         }
       }

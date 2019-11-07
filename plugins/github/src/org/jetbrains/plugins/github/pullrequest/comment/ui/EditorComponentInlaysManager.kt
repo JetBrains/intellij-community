@@ -2,12 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
@@ -22,9 +19,10 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
+import kotlin.math.ceil
 import kotlin.math.min
 
-class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable {
+class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
   private val editorTextWidth: Int
   private val verticalScrollbarFlipped: Boolean
 
@@ -35,7 +33,8 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
   init {
     val metrics = editor.getFontMetrics(Font.PLAIN)
     val spaceWidth = FontLayoutService.getInstance().charWidth2D(metrics, ' '.toInt())
-    editorTextWidth = (spaceWidth * (editor.settings.getRightMargin(editor.project))).toInt()
+    // -4 to create some space
+    editorTextWidth = ceil(spaceWidth * (editor.settings.getRightMargin(editor.project)) - 4).toInt()
 
     val scrollbarFlip = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
     verticalScrollbarFlipped = scrollbarFlip == JBScrollPane.Flip.HORIZONTAL || scrollbarFlip == JBScrollPane.Flip.BOTH
@@ -93,10 +92,6 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
     val inlay = editor.inlayModel.addBlockElement(offset, true, false, 1,
                                                   ComponentWrapperPlaceholder(wrapper))!!
 
-    component.background = editor.backgroundColor
-    ApplicationManager.getApplication().messageBus.connect(inlay)
-      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { component.background = editor.backgroundColor })
-
     wrapper.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) = inlay.updateSize()
     })
@@ -117,13 +112,13 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
       wrapper.isVisible = false
     }
     else {
-      wrapper.location = Point(if (verticalScrollbarFlipped) editor.scrollPane.verticalScrollBar.width else 0, bounds.location.y)
+      wrapper.location = Point(if (verticalScrollbarFlipped) editor.scrollPane.verticalScrollBar.width + 4 else 0, bounds.location.y)
       wrapper.isVisible = true
     }
   }
 
   private fun calcWrappersWidth(): Int {
-    val visibleEditorTextWidth = editor.scrollPane.viewport.width - editor.scrollPane.verticalScrollBar.width
+    val visibleEditorTextWidth = editor.scrollPane.viewport.width - editor.scrollPane.verticalScrollBar.width - if (verticalScrollbarFlipped) 4 else 0
     return min(visibleEditorTextWidth, editorTextWidth)
   }
 

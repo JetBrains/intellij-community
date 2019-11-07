@@ -45,7 +45,12 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromBranch(branchName: String): VcsLogBranchFilter {
-    return VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList())
+    return fromBranches(listOf(branchName))
+  }
+
+  @JvmStatic
+  fun fromBranches(branchNames: List<String>): VcsLogBranchFilter {
+    return VcsLogBranchFilterImpl(branchNames, emptyList(), emptyList(), emptyList())
   }
 
   @JvmStatic
@@ -215,11 +220,11 @@ fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
 
 fun VcsLogFilterCollection.getPresentation(): String {
   if (get(HASH_FILTER) != null) {
-    return get(HASH_FILTER)!!.presentation
+    return get(HASH_FILTER)!!.displayText
   }
   return filters.joinToString(" ") { filter ->
     val prefix = if (filters.size != 1) filter.getPrefix() else ""
-    prefix + filter.presentation
+    prefix + filter.displayText
   }
 }
 

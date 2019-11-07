@@ -433,8 +433,10 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon ShowChangesOnly = load("/actions/preview.svg");
 
+    /** @deprecated to be removed in IDEA 2021.1 (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")
     @Deprecated
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon ShowViewer = load("/actions/showViewer.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp */
@@ -2461,6 +2463,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon TestGroup = load("/nodes/testGroup.svg");
     /** 16x16 */ public static final Icon TestIgnored = load("/nodes/testIgnored.svg");
     /** 16x16 */ public static final Icon TestSourceFolder = load("/nodes/testSourceFolder.svg");
+    /** 16x16 */ public static final Icon Toolbox = load("/nodes/toolbox.svg");
     /** 16x16 */ public static final Icon Type = load("/nodes/type.svg");
     /** 16x16 */ public static final Icon Undeploy = load("/nodes/undeploy.svg");
     /** 16x16 */ public static final Icon Unknown = load("/nodes/unknown.svg");

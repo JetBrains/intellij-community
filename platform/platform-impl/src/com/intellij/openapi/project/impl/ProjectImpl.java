@@ -74,7 +74,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
-    super(ApplicationManager.getApplication());
+    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
@@ -91,7 +91,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // default project constructor
   ProjectImpl() {
-    super(ApplicationManager.getApplication());
+    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -106,7 +106,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public boolean isDisposed() {
-    return super.isDisposed() || temporarilyDisposed;
+    return isDisposedOrDisposeInProgress();
   }
 
   @Override
@@ -247,15 +247,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     String activityNamePrefix = activityNamePrefix();
     Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    registerComponents(PluginManagerCore.getLoadedPlugins());
+    //noinspection unchecked
+    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
     if (activity != null) {
       activity = activity.endAndStart("projectComponentRegistered");
     }
 
     ProjectServiceContainerCustomizer.getEp().processWithPluginDescriptor((customizer, pluginDescriptor) -> {
-      String id = pluginDescriptor.getPluginId().getIdString();
-      if (!(id.equals("com.intellij.treeProjectModel") ||
-            (ApplicationManager.getApplication().isUnitTestMode() && id.equals(PluginManagerCore.CORE_PLUGIN_ID)))) {
+      if (pluginDescriptor.getPluginId() != PluginManagerCore.CORE_ID) {
         LOG.error("Plugin " + pluginDescriptor + " is not approved to add ProjectServiceContainerCustomizer");
       }
 
@@ -363,8 +362,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
     }
 
-    // we use super here, because temporarilyDisposed will be true if project closed
-    LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
+    LOG.assertTrue(myContainerState.ordinal() <= ContainerState.DISPOSED.ordinal(), this + " is disposed already");
     disposeComponents();
 
     super.dispose();

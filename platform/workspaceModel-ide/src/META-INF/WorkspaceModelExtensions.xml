@@ -1,0 +1,17 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="false"
+                 description="Enable new entities-based project model (workspace model)"/>
+
+    <cachesInvalidator implementation="com.intellij.workspace.ide.WorkspaceModelCachesInvalidator"/>
+
+    <projectServiceContainerCustomizer
+        implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener"/>
+
+    <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                        serviceImplementation="com.intellij.workspace.jps.LegacyBridgeStoreReloadManager"
+                        overrides="true"/>
+  </extensions>
+
+</idea-plugin>

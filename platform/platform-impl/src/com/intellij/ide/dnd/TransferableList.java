@@ -94,6 +94,9 @@ abstract public class TransferableList<T> implements Transferable {
   }
 
   protected String getText(List<? extends T> list) {
+    if (list.size() == 1) {
+      return toString(list.get(0));
+    }
     StringBuilder sb = new StringBuilder();
     for (T object : list) {
       sb.append(toString(object)).append('\n');

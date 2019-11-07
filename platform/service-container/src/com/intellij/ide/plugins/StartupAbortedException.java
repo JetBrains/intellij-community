@@ -62,8 +62,8 @@ public final class StartupAbortedException extends RuntimeException {
       }
     }
 
-    if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
-      PluginManagerCore.disablePlugin(pluginId.getIdString());
+    if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId)) {
+      PluginManagerCore.disablePlugin(pluginId);
 
       StringWriter message = new StringWriter();
       message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");

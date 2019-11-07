@@ -2,8 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.diagnostic.IdeErrorsDialog
-import com.intellij.externalDependencies.DependencyOnPlugin
-import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -21,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
@@ -34,31 +31,35 @@ import com.intellij.util.Urls
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
+
+private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
+
+private const val DISABLED_UPDATE = "disabled_update.txt"
+
+private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
  */
 object UpdateChecker {
-  private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
+  @JvmField
+  val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
-  @JvmField val NOTIFICATIONS: NotificationGroup = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
-
-  private const val DISABLED_UPDATE = "disabled_update.txt"
-
-  private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
-
-  private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
+  private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
   private val ourAdditionalRequestOptions = THashMap<String, String>()
-  private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
+  private val ourUpdatedPlugins = hashMapOf<PluginId, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
   /**
@@ -194,7 +195,7 @@ object UpdateChecker {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
-    val toUpdate = THashMap<PluginId, PluginDownloader>()
+    val toUpdate = mutableMapOf<PluginId, PluginDownloader>()
 
     val state = InstalledPluginsState.getInstance()
     outer@ for (host in RepositoryHelper.getPluginHosts()) {
@@ -213,7 +214,7 @@ object UpdateChecker {
           }
         }
         if (incompatiblePlugins != null && buildNumber != null) {
-          updateable.values.filterTo(incompatiblePlugins) {
+          updateable.values.asSequence().filterNotNull().filterTo(incompatiblePlugins) {
             it.isEnabled && !PluginManagerCore.isCompatible(it, buildNumber)
           }
         }
@@ -224,46 +225,41 @@ object UpdateChecker {
       }
     }
 
-    return if (toUpdate.isEmpty) null else toUpdate.values
+    return if (toUpdate.isEmpty()) null else toUpdate.values
   }
 
   /**
    * Returns a list of plugins that are currently installed or were installed in the previous installation from which
    * we're importing the settings.
    */
-  private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
-    val updateable = THashMap<PluginId, IdeaPluginDescriptor>()
+  private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor?> {
+    val updateable = mutableMapOf<PluginId, IdeaPluginDescriptor?>()
 
     updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateBy { it.pluginId }
 
     val onceInstalled = PluginManager.getOnceInstalledIfExists()
     if (onceInstalled != null) {
       try {
-        FileUtil.loadLines(onceInstalled)
+        Files.readAllLines(onceInstalled)
+          .asSequence()
           .map { line -> PluginId.getId(line.trim { it <= ' ' }) }
           .filter { it !in updateable }
           .forEach { updateable[it] = null }
       }
       catch (e: IOException) {
-        LOG.error(onceInstalled.path, e)
+        LOG.error(onceInstalled.toString(), e)
       }
 
       //noinspection SSBasedInspection
-      onceInstalled.deleteOnExit()
+      onceInstalled.toFile().deleteOnExit()
     }
 
-    if (excludedFromUpdateCheckPlugins.isNotEmpty()) {
-      val required = ProjectManager.getInstance().openProjects
-        .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
-        .map { PluginId.getId(it.pluginId) }
-        .toSet()
+    if (!ApplicationManager.getApplication().isInternal && excludedFromUpdateCheckPlugins.isNotEmpty()) {
       excludedFromUpdateCheckPlugins.forEach {
         val excluded = PluginId.getId(it)
-        if (excluded !in required) {
-          val plugin = updateable[excluded]
-          if (plugin != null && plugin.isBundled) {
-            updateable.remove(excluded)
-          }
+        val plugin = updateable[excluded]
+        if (plugin != null && plugin.isBundled) {
+          updateable.remove(excluded)
         }
       }
     }
@@ -305,11 +301,11 @@ object UpdateChecker {
                                indicator: ProgressIndicator?) {
     @Suppress("NAME_SHADOWING")
     var downloader = downloader
-    val pluginId = downloader.pluginId
+    val pluginId = downloader.id
     if (PluginManagerCore.isDisabled(pluginId)) return
 
     val pluginVersion = downloader.pluginVersion
-    val installedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId))
+    val installedPlugin = PluginManagerCore.getPlugin(pluginId)
     if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
@@ -329,7 +325,7 @@ object UpdateChecker {
       }
 
       if (PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
-        toUpdate[PluginId.getId(pluginId)] = downloader
+        toUpdate[pluginId] = downloader
       }
     }
 
@@ -460,34 +456,42 @@ object UpdateChecker {
   fun getInstallationUID(c: PropertiesComponent): String = PermanentInstallationID.get()
 
   @JvmStatic
+  @Deprecated(message = "Use disabledToUpdate")
   val disabledToUpdatePlugins: Set<String>
+    get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
+
+  @JvmStatic
+  val disabledToUpdate: Set<PluginId>
     get() {
-      if (ourDisabledToUpdatePlugins == null) {
-        ourDisabledToUpdatePlugins = TreeSet()
+      var result = ourDisabledToUpdatePlugins
+      if (result == null) {
+        result = TreeSet()
         if (!ApplicationManager.getApplication().isUnitTestMode) {
           try {
             val file = File(PathManager.getConfigPath(), DISABLED_UPDATE)
             if (file.isFile) {
-              FileUtil.loadFile(file)
-                .split("[\\s]".toRegex())
-                .map { it.trim() }
-                .filterTo(ourDisabledToUpdatePlugins!!) { it.isNotEmpty() }
+              for (line in FileUtil.loadFile(file).split("[\\s]".toRegex())) {
+                line.nullize(true)?.let {
+                  result.add(PluginId.getId(it))
+                }
+              }
             }
           }
           catch (e: IOException) {
             LOG.error(e)
           }
         }
-      }
 
-      return ourDisabledToUpdatePlugins!!
+        ourDisabledToUpdatePlugins = result
+      }
+      return result
     }
 
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
-    val plugins = File(PathManager.getConfigPath(), DISABLED_UPDATE)
+    val plugins = Paths.get(PathManager.getConfigPath(), DISABLED_UPDATE)
     try {
-      PluginManagerCore.savePluginsList(disabledToUpdatePlugins, false, plugins)
+      PluginManagerCore.savePluginsList(disabledToUpdate, plugins, false)
     }
     catch (e: IOException) {
       LOG.error(e)

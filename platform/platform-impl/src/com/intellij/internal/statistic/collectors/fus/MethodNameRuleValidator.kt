@@ -7,11 +7,10 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.getPluginInfo
 
-class MethodNameRuleValidator : CustomWhiteListRule() {
+internal class MethodNameRuleValidator : CustomWhiteListRule() {
   override fun acceptRuleId(ruleId: String?): Boolean = "method_name" == ruleId
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-
     if (isThirdPartyValue(data)) {
       return ValidationResultType.ACCEPTED
     }

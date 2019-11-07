@@ -15,7 +15,7 @@ import org.jetbrains.annotations.SystemIndependent;
 /**
  * @author max
  */
-public class DummyProject extends UserDataHolderBase implements Project {
+public final class DummyProject extends UserDataHolderBase implements Project {
   private static class DummyProjectHolder {
     private static final DummyProject ourInstance = new DummyProject();
   }
@@ -73,7 +73,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   public void save() { }
 
   @Override
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+  public <T> T getService(@NotNull Class<T> serviceClass) {
     return null;
   }
 

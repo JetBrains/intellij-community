@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -59,14 +60,16 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
 
   @NotNull
   private static MetricEvent create(@NotNull ScopeToolState state, boolean enabled) {
-    final InspectionToolWrapper tool = state.getTool();
+    InspectionToolWrapper<?, ?> tool = state.getTool();
     final FeatureUsageData data = new FeatureUsageData().addData("enabled", enabled);
     final String language = tool.getLanguage();
     if (StringUtil.isNotEmpty(language)) {
       data.addLanguage(Language.findLanguageByID(language));
     }
-    final InspectionEP extension = tool.getExtension();
-    final PluginInfo info = extension != null ? PluginInfoDetectorKt.getPluginInfoById(extension.getPluginDescriptor().getPluginId()) : null;
+
+    InspectionEP extension = tool.getExtension();
+    PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
+    PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
     if (info != null) {
       data.addPluginInfo(info);
     }

@@ -106,14 +106,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                                           @Nullable EditorColorsScheme newScheme,
                                           boolean processChangeSynchronously) {
         if (processChangeSynchronously) {
-          LafManager.getInstance().updateUI();
-          schemeChangedOrSwitched(newScheme);
+          handleCurrentSchemeSwitched(newScheme);
         }
         else {
           ApplicationManager.getApplication().invokeLater(() -> { // don't do heavy operations right away
-            onCurrentSchemeSwitched(oldScheme, newScheme, true);
+            handleCurrentSchemeSwitched(newScheme);
           });
         }
+      }
+
+      private void handleCurrentSchemeSwitched(@Nullable EditorColorsScheme newScheme) {
+        LafManager.getInstance().updateUI();
+        schemeChangedOrSwitched(newScheme);
       }
 
       @NotNull

@@ -49,7 +49,15 @@ public class JobLauncherImpl extends JobLauncher {
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
     ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, processor, 0, things.size(), failedSubTasks, null);
     try {
-      ForkJoinPool.commonPool().execute(applier);
+      ProgressIndicator existing = pm.getProgressIndicator();
+      if (existing == progress) {
+        // there must be nested invokeConcurrentlies.
+        // In this case, try to avoid placing tasks to the FJP queue because extra applier.get() or pool.invoke() can cause pool over-compensation with too many workers
+        applier.compute();
+      }
+      else {
+        ForkJoinPool.commonPool().execute(applier);
+      }
       // call checkCanceled a bit more often than .invoke()
       while (!applier.isDone()) {
         ProgressManager.checkCanceled();
@@ -87,7 +95,6 @@ public class JobLauncherImpl extends JobLauncher {
     catch (Throwable e) {
       throw new RuntimeException(e);
     }
-    //assert applier.isDone();
     return applier.completeTaskWhichFailToAcquireReadAction();
   }
 

@@ -1,0 +1,124 @@
+import org.gradle.internal.os.OperatingSystem
+
+final def IJ_DIR = new File("../../../").canonicalFile
+final def REPOSITORY = "https://repo.labs.intellij.net/clion"
+
+task setupCidr
+
+[
+  clang: [
+    version: "9.0.0.c68508",
+    platforms: [
+      win: ["x64"],
+      linux: ["x64"],
+      mac: ["x64"]
+    ],
+    path: "CIDR/clion/bin/clang"
+  ],
+  lldbkit: [
+    version: "edfc62",
+    platforms: [
+      win: ["x64", "x86"],
+      linux: ["x64"],
+      mac: ["x64"]
+    ],
+    path: "CIDR/cidr-debugger/bin/lldb"
+  ],
+  bridge: [
+    version: "51b0c22",
+    platforms: [
+      mac: ["x64"]
+    ],
+    path: "CIDR-appcode/appcode/bin",
+    no_platform_subdir: true
+  ],
+  jbdevice: [
+    version: "c7f4ca1",
+    platforms: [
+      "mac": ["x64"],
+    ],
+    path: "CIDR-appcode/appcode/bin",
+    no_platform_subdir: true
+  ],
+  objchelper: [
+    version: "e1d1af7",
+    platforms: [
+      "mac": ["x64"],
+      "linux": ["x64"]
+    ],
+    path: "CIDR-appcode/appcode/bin",
+    no_platform_subdir: true
+  ]
+].each { name, settings ->
+  def (platform, packageExtension) = currentPlatformNameAndPackageExtension()
+  def archs = settings.platforms[platform]
+
+  archs.each { arch ->
+    def packageName = "${name}-${settings.version}-${platform}-${arch}.${packageExtension}"
+    def downloadUrl = "${REPOSITORY}/${name}/${settings.version}/${packageName}"
+    def unpackDir = "${IJ_DIR}/${settings.path}" +
+                    "${settings.no_platform_subdir ? '' : "/${platform}"}" +
+                    "${archs.size > 1 ? "/${arch}" : ''}"
+
+    def downloadTool = task("downloadCidr${name.capitalize()}${arch.capitalize()}") {
+      def packageArchive = "${buildDir}/cidr/${packageName}"
+      outputs.file(packageArchive)
+
+      doLast {
+        download {
+          src downloadUrl
+          dest packageArchive
+          tempAndMove true
+        }
+      }
+    }
+
+    setupCidr.dependsOn(
+      tasks.create(
+        name: "setupCidr${name.capitalize()}${arch.capitalize()}",
+        dependsOn: [downloadTool], type: Copy
+      ) {
+        def packageArchive = downloadTool.outputs.files.singleFile
+
+        inputs.files(packageArchive)
+        outputs.dir(unpackDir)
+
+        outputs.upToDateWhen {
+          !fileTree(unpackDir).isEmpty()
+        }
+
+        from {
+          if (packageExtension == "zip")
+            zipTree(packageArchive)
+          else if(packageExtension == "tar.gz")
+            tarTree(resources.gzip(packageArchive))
+        }
+        into unpackDir
+      }
+    )
+  }
+}
+
+task cleanSetupCidr() {
+  doLast {
+    setupCidr.dependsOn.each { setupToolTask ->
+      def downloadToolTask = setupToolTask.dependsOn.first()
+      delete setupToolTask.outputs.files.singleFile
+      delete downloadToolTask.outputs.files.singleFile
+    }
+  }
+}
+
+static def currentPlatformNameAndPackageExtension() {
+  def os = OperatingSystem.current()
+
+  if (os.isWindows()) {
+    ["win", "zip"]
+  }
+  else if (os.isMacOsX()) {
+    ["mac", "tar.gz"]
+  }
+  else {
+    ["linux", "tar.gz"]
+  }
+}

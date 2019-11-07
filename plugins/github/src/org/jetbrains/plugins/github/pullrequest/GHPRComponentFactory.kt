@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.diff.editor.VCSContentVirtualFile
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -25,25 +26,20 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
+import org.jetbrains.plugins.github.pullrequest.action.GHPRListSelectionActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProviderImpl
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModel
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDescriptionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -173,8 +169,64 @@ internal class GHPRComponentFactory(private val project: Project) {
   private fun createContent(dataContext: GHPullRequestsDataContext, disposable: Disposable): JComponent {
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
     val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
-    val actionDataContext = GHPRActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
+    val actionDataContext = GHPRListSelectionActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
 
+    val list = createListComponent(dataContext, listSelectionHolder, avatarIconsProviderFactory, disposable)
+
+    val dataProviderModel = createDataProviderModel(dataContext, listSelectionHolder, disposable)
+
+    val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, disposable)
+    val detailsModel = createValueModel(detailsLoadingModel)
+
+    val detailsPanel = createDetailsPanel(dataContext, detailsModel, avatarIconsProviderFactory, disposable)
+    val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
+                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
+                                                                                   "Can't load details")).apply {
+      resetHandler = ActionListener { dataProviderModel.value?.reloadDetails() }
+    }
+
+    val changesModel = GHPRChangesModelImpl(project)
+    val diffHelper = GHPRChangesDiffHelperImpl(project, dataContext.reviewService,
+                                               avatarIconsProviderFactory, dataContext.securityService.currentUser)
+    val changesLoadingModel = createChangesLoadingModel(changesModel, diffHelper,
+                                                        dataProviderModel, projectUiSettings, disposable)
+    val changesBrowser = GHPRChangesBrowser(changesModel, diffHelper, project)
+
+    val changesLoadingPanel = GHLoadingPanel(changesLoadingModel, changesBrowser, disposable,
+                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
+                                                                                   "Can't load changes",
+                                                                                   "Pull request does not contain any changes")).apply {
+      resetHandler = ActionListener { dataProviderModel.value?.reloadCommits() }
+    }
+
+    return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
+      background = UIUtil.getListBackground()
+      isOpaque = true
+      isFocusCycleRoot = true
+      firstComponent = list
+      secondComponent = OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f).apply {
+        firstComponent = detailsLoadingPanel
+        secondComponent = changesLoadingPanel
+      }.also {
+        (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerShortcutOn(it)
+      }
+    }.also {
+      changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
+      DataManager.registerDataProvider(it) { dataId ->
+        if (Disposer.isDisposed(disposable)) null
+        else when {
+          GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
+          else -> null
+        }
+
+      }
+    }
+  }
+
+  private fun createListComponent(dataContext: GHPullRequestsDataContext,
+                                  listSelectionHolder: GithubPullRequestsListSelectionHolder,
+                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                  disposable: Disposable): JComponent {
     val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
       emptyText.clear()
     }.also {
@@ -197,37 +249,10 @@ internal class GHPRComponentFactory(private val project: Project) {
     val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
-    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search)
 
-    val dataProviderModel = createDataProviderModel(dataContext, listSelectionHolder, disposable)
-
-    val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, disposable)
-    val detailsModel = createValueModel(detailsLoadingModel)
-
-    val detailsPanel = createDetailsPanel(dataContext, detailsModel, avatarIconsProviderFactory, disposable)
-    val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
-                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
-                                                                                   "Can't load details")).apply {
-      resetHandler = ActionListener { dataProviderModel.value?.reloadDetails() }
-    }
-
-    val changesLoadingModel = createChangesLoadingModel(dataProviderModel, disposable)
-    val changesModel = createChangesModel(projectUiSettings, changesLoadingModel, disposable)
-    val changesBrowser = GHPRChangesBrowser(changesModel, project)
-
-    val diffCommentComponentFactory = GHPREditorReviewCommentsComponentFactoryImpl(project, avatarIconsProviderFactory,
-                                                                                   dataContext.securityService.currentUser)
-    dataProviderModel.addValueChangedListener {
-      changesBrowser.diffReviewThreadsProvider = dataProviderModel.value?.let {
-        GHPRDiffReviewThreadsProviderImpl(it, diffCommentComponentFactory)
-      }
-    }
-
-    val changesLoadingPanel = GHLoadingPanel(changesLoadingModel, changesBrowser, disposable,
-                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
-                                                                                   "Can't load changes",
-                                                                                   "Pull request does not contain any changes")).apply {
-      resetHandler = ActionListener { dataProviderModel.value?.reloadCommits() }
+    val listReloadAction = actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction
+    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).also {
+      listReloadAction.registerShortcutOn(it)
     }
 
     Disposer.register(disposable, Disposable {
@@ -236,26 +261,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       Disposer.dispose(loaderPanel)
     })
 
-    return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
-      background = UIUtil.getListBackground()
-      isOpaque = true
-      isFocusCycleRoot = true
-      firstComponent = loaderPanel
-      secondComponent = OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f).apply {
-        firstComponent = detailsLoadingPanel
-        secondComponent = changesLoadingPanel
-      }
-    }.also {
-      changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
-      DataManager.registerDataProvider(it) { dataId ->
-        if (Disposer.isDisposed(disposable)) null
-        else when {
-          GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
-          else -> null
-        }
-
-      }
-    }
+    return loaderPanel
   }
 
   private fun createDetailsPanel(dataContext: GHPullRequestsDataContext,
@@ -284,6 +290,9 @@ internal class GHPRComponentFactory(private val project: Project) {
     val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
       viewport.isOpaque = false
       isOpaque = false
+    }.also {
+      val actionGroup = actionManager.getAction("Github.PullRequest.Details.Popup") as ActionGroup
+      PopupHandler.installPopupHandler(it, actionGroup, ActionPlaces.UNKNOWN, actionManager)
     }
 
     scrollPane.isVisible = detailsModel.value != null
@@ -341,54 +350,25 @@ internal class GHPRComponentFactory(private val project: Project) {
     })
   }
 
-  private fun createChangesModel(projectUiSettings: GithubPullRequestsProjectUISettings,
-                                 loadingModel: GHLoadingModel<List<GitCommit>>,
-                                 parentDisposable: Disposable): GHPRChangesModel {
-    val model = GHPRChangesModelImpl(projectUiSettings.zipChanges)
-    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        model.commits = loadingModel.result.orEmpty()
-      }
+  private fun createChangesLoadingModel(changesModel: GHPRChangesModel,
+                                        diffHelper: GHPRChangesDiffHelper,
+                                        dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
+                                        uiSettings: GithubPullRequestsProjectUISettings,
+                                        disposable: Disposable): GHPRChangesLoadingModel {
+    val model = GHPRChangesLoadingModel(changesModel, diffHelper, uiSettings.zipChanges)
+    projectUiSettings.addChangesListener(disposable) { model.zipChanges = projectUiSettings.zipChanges }
 
-      override fun onReset() {
-        model.commits = loadingModel.result.orEmpty()
+    val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
+      override fun commitsRequestChanged() {
+        model.dataProvider = model.dataProvider
       }
-    })
-    projectUiSettings.addChangesListener(parentDisposable) {
-      model.zipChanges = projectUiSettings.zipChanges
     }
-    return model
-  }
-
-  private fun createChangesLoadingModel(dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
-                                        parentDisposable: Disposable): GHCompletableFutureLoadingModel<List<GitCommit>> {
-    val model = GHCompletableFutureLoadingModel<List<GitCommit>>()
-
-    var listenerDisposable: Disposable? = null
-
     dataProviderModel.addValueChangedListener {
-      val provider = dataProviderModel.value
-      model.future = provider?.logCommitsRequest
-
-      listenerDisposable = listenerDisposable?.let {
-        Disposer.dispose(it)
-        null
-      }
-
-      if (provider != null) {
-        val disposable = Disposer.newDisposable().apply {
-          Disposer.register(parentDisposable, this)
-        }
-        provider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
-          override fun commitsRequestChanged() {
-            model.future = provider.logCommitsRequest
-          }
-        })
-
-        listenerDisposable = disposable
+      model.dataProvider?.removeRequestsChangesListener(requestChangesListener)
+      model.dataProvider = dataProviderModel.value?.apply {
+        addRequestsChangesListener(disposable, requestChangesListener)
       }
     }
-
     return model
   }
 
@@ -424,7 +404,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     return model
   }
 
-  private fun <T> createValueModel(loadingModel: GHLoadingModel<T>): SingleValueModel<T?> {
+  private fun <T> createValueModel(loadingModel: GHSimpleLoadingModel<T>): SingleValueModel<T?> {
     val model = SingleValueModel<T?>(null)
     loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
       override fun onLoadingCompleted() {
@@ -450,6 +430,9 @@ internal class GHPRComponentFactory(private val project: Project) {
       }
       model.value = provider
     }
+    Disposer.register(parentDisposable, Disposable {
+      model.value = null
+    })
 
     listSelectionHolder.addSelectionChangeListener(parentDisposable) {
       setNewProvider(listSelectionHolder.selectionNumber?.let(dataContext.dataLoader::getDataProvider))

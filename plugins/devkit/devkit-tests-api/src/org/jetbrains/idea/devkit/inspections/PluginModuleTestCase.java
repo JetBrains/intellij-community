@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;

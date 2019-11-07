@@ -289,6 +289,11 @@
 
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.impl.JdkDownloaderService"
+                        serviceImplementation="com.intellij.jdkDownloader.JdkDownloaderUI"/>
+    <registryKey key="jdk.downloader.ui" defaultValue="true" description="Use the list of JDKs to download and install in one click"/>
+    <registryKey key="jdk.downloader.url" description="Custom URL for JDKs list"/>
+
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
@@ -905,7 +910,11 @@
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
-    <defaultLiveTemplatesProvider implementation="com.intellij.codeInsight.template.impl.JavaDefaultLiveTemplatesProvider"/>
+    <defaultLiveTemplates file="/liveTemplates/iterations"/>
+    <defaultLiveTemplates file="/liveTemplates/other"/>
+    <defaultLiveTemplates file="/liveTemplates/output"/>
+    <defaultLiveTemplates file="/liveTemplates/plain"/>
+    <defaultLiveTemplates file="/liveTemplates/surround"/>
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
     <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowFromPanel$Provider"/>

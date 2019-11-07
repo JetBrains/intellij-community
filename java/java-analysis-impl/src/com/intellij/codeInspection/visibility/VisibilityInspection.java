@@ -354,8 +354,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-  private boolean isAccessible(RefJavaElement to, @PsiModifier.ModifierConstant String accessModifier) {
-
+  private boolean isAccessible(@NotNull RefJavaElement to, @NotNull @PsiModifier.ModifierConstant String accessModifier) {
     for (RefElement refElement : to.getInReferences()) {
       if (!isAccessibleFrom(refElement, to, accessModifier)) return false;
     }

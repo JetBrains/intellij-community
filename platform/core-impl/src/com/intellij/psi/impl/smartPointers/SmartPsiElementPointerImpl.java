@@ -198,7 +198,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     Document document = FileDocumentManager.getInstance().getCachedDocument(viewProvider.getVirtualFile());
     if (document != null &&
         ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
-      LOG.error("Smart pointers shouldn't be created during PSI changes");
+      LOG.error("Smart pointers must not be created during PSI changes");
     }
 
     SmartPointerElementInfo info = createAnchorInfo(element, containingFile);

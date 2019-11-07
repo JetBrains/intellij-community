@@ -1170,6 +1170,15 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testEmptyParenthesis() throws Exception {
+    try {
+      doTest();
+      fail("Should not work for empty parenthesis");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
   public void testQualifyWhenConflictingNamePresent() throws Exception {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;

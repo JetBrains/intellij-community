@@ -47,7 +47,8 @@ public class EditorNotificationsImpl extends EditorNotifications {
   @NotNull private final Project myProject;
 
   public EditorNotificationsImpl(@NotNull Project project) {
-    myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null, project);
+    myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null, project)
+      .usePassThroughInUnitTestMode();
     myProject = project;
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {

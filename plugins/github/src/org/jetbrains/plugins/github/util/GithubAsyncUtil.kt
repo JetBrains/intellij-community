@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.plugins.github.util.GithubAsyncUtil.extractError
 import org.jetbrains.plugins.github.util.GithubAsyncUtil.isCancellation
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
@@ -62,6 +63,14 @@ object GithubAsyncUtil {
            || error is InterruptedException
            || error.cause?.let(::isCancellation) ?: false
   }
+
+  fun extractError(error: Throwable): Throwable {
+    return when (error) {
+      is CompletionException -> extractError(error.cause!!)
+      is ExecutionException -> extractError(error.cause!!)
+      else -> error
+    }
+  }
 }
 
 fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
@@ -99,25 +108,25 @@ fun <T> CompletableFuture<T>.handleOnEdt(parentDisposable: Disposable, handler: 
   })
 
   return handleAsync(BiFunction<T?, Throwable?, Unit> { result: T?, error: Throwable? ->
-    handlerReference.get()?.invoke(result, error)
+    handlerReference.get()?.invoke(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 }
 
 fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> R): CompletableFuture<R> =
   handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
-    handler(result, error)
+    handler(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 
 fun <T, R> CompletableFuture<T>.successOnEdt(handler: (T) -> R): CompletableFuture<R> =
   handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
-    result?.let { handler(it) } ?: throw error?.cause ?: IllegalStateException()
+    result?.let { handler(it) } ?: throw error?.let { extractError(it) } ?: IllegalStateException()
   }, EDT_EXECUTOR)
 
 fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> T): CompletableFuture<T> =
   handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
     if (result != null) return@BiFunction result
     if (error != null) {
-      val actualError = if (error is CompletionException) error.cause!! else error
+      val actualError = extractError(error)
       if (isCancellation(actualError)) throw ProcessCanceledException()
       return@BiFunction handler(actualError)
     }

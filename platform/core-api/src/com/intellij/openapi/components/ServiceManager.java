@@ -15,21 +15,21 @@ public final class ServiceManager {
   private ServiceManager() { }
 
   public static <T> T getService(@NotNull Class<T> serviceClass) {
-    return ApplicationManager.getApplication().getService(serviceClass, true);
+    return ApplicationManager.getApplication().getService(serviceClass);
   }
 
   public static <T> T getService(@NotNull Project project, @NotNull Class<T> serviceClass) {
-    return project.getService(serviceClass, true);
+    return project.getService(serviceClass);
   }
 
   @Nullable
   public static <T> T getServiceIfCreated(@NotNull Project project, @NotNull Class<T> serviceClass) {
-    return project.getService(serviceClass, false);
+    return project.getServiceIfCreated(serviceClass);
   }
 
   @Nullable
   public static <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
-    return ApplicationManager.getApplication().getService(serviceClass, false);
+    return ApplicationManager.getApplication().getServiceIfCreated(serviceClass);
   }
 
   /**

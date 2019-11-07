@@ -530,7 +530,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
       if (executed) break;
 
-      TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
+      ModalityState modality = ModalityState.defaultModalityState();
       Semaphore semaphore = new Semaphore(1);
       application.invokeLater(() -> {
         if (myProject.isDisposed()) {
@@ -539,7 +539,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           return;
         }
 
-        performWhenAllCommitted(() -> semaphore.up(), contextTransaction);
+        performWhenAllCommitted(() -> semaphore.up(), modality);
       }, ModalityState.any());
 
       while (!semaphore.waitFor(10)) {
@@ -555,10 +555,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    */
   @Override
   public boolean performWhenAllCommitted(@NotNull final Runnable action) {
-    return performWhenAllCommitted(action, TransactionGuard.getInstance().getContextTransaction());
+    return performWhenAllCommitted(action, ModalityState.defaultModalityState());
   }
 
-  private boolean performWhenAllCommitted(@NotNull Runnable action, @Nullable TransactionId context) {
+  private boolean performWhenAllCommitted(@NotNull Runnable action, @NotNull ModalityState modality) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkWeAreOutsideAfterCommitHandler();
 
@@ -574,12 +574,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
     actions.add(action);
 
-    if (context != null) {
+    if (modality != ModalityState.NON_MODAL) {
       // re-add all uncommitted documents into the queue with this new modality
       // because this client obviously expects them to commit even inside modal dialog
       for (Document document : myUncommittedDocuments) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document,
-                                                       "re-added with context "+context+" because performWhenAllCommitted("+context+") was called", context);
+                                                       "re-added because performWhenAllCommitted("+modality+") was called", modality);
       }
     }
     return false;
@@ -890,7 +890,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         commitDocument(document);
       }
       else if (!document.isInBulkUpdate() && myPerformBackgroundCommit) {
-        myDocumentCommitProcessor.commitAsynchronously(myProject, document, event, TransactionGuard.getInstance().getContextTransaction());
+        myDocumentCommitProcessor.commitAsynchronously(myProject, document, event, ModalityState.defaultModalityState());
       }
     }
     else {
@@ -906,7 +906,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void bulkUpdateFinished(@NotNull Document document) {
     myDocumentCommitProcessor.commitAsynchronously(myProject, document, "Bulk update finished",
-                                                   TransactionGuard.getInstance().getContextTransaction());
+                                                   ModalityState.defaultModalityState());
   }
 
   class PriorityEventCollector implements PrioritizedInternalDocumentListener {

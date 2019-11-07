@@ -71,6 +71,16 @@ public final class StandardMethodContract extends MethodContract {
       } else if (constraint == ValueConstraint.ANY_VALUE) {
         result[i] = condition;
       }
+      else if (condition == ValueConstraint.NOT_NULL_VALUE &&
+               (constraint == ValueConstraint.TRUE_VALUE || constraint == ValueConstraint.FALSE_VALUE)) {
+        // java.lang.Boolean
+        result[i] = constraint;
+      }
+      else if (constraint == ValueConstraint.NOT_NULL_VALUE &&
+               (condition == ValueConstraint.TRUE_VALUE || condition == ValueConstraint.FALSE_VALUE)) {
+        // java.lang.Boolean
+        result[i] = condition;
+      }
       else {
         return null;
       }

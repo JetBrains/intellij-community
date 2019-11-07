@@ -36,6 +36,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.content.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
@@ -59,7 +60,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   private final ServiceModel myModel;
   private final ServiceModelFilter myModelFilter;
   private final Map<String, Collection<ServiceViewContributor<?>>> myGroups;
-  private final List<ServiceViewContentHolder> myContentHolders = ContainerUtil.newSmartList();
+  private final List<ServiceViewContentHolder> myContentHolders = new SmartList<>();
   private boolean myActivationActionsRegistered;
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
@@ -69,7 +70,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     Disposer.register(myProject, myModel);
     myModelFilter = new ServiceModelFilter();
     myGroups = loadGroups();
-    myProject.getMessageBus().connect(myModel).subscribe(ServiceEventListener.TOPIC, e -> myModel.refresh(e).onSuccess(o -> {
+    myProject.getMessageBus().connect(myModel).subscribe(ServiceEventListener.TOPIC, e -> myModel.handle(e).onSuccess(o -> {
       ServiceViewItem eventRoot = ContainerUtil.find(myModel.getRoots(), root -> e.contributorClass.isInstance(root.getRootContributor()));
       if (eventRoot != null) {
         activateToolWindow(e.contributorClass,
@@ -210,7 +211,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
             if (contentManager.getContentCount() > 1) {
               contentManager.removeContent(mainContent, false);
             }
-            else {
+            else if (mainView.hasItems()) {
+              // Hide tool window only if model roots became empty and there were some services shown in master component before update.
               hideToolWindow(toolWindowId, toolWindow);
             }
           }
@@ -276,14 +278,14 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   public Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus) {
     AsyncPromise<Void> result = new AsyncPromise<>();
     // Ensure model is updated, then iterate over service views on EDT in order to find view with service and select it.
-    myModel.getInvoker().runOrInvokeLater(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+    myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
       ServiceViewContentHolder holder = getContentHolder(contributorClass);
       if (holder == null) {
         result.setError("Content manager not initialized");
         return;
       }
       Runnable runnable = () -> {
-        List<Content> contents = ContainerUtil.newSmartList(holder.contentManager.getContents());
+        List<Content> contents = new SmartList<>(holder.contentManager.getContents());
         if (contents.isEmpty()) {
           result.setError("Content not initialized");
           return;
@@ -342,7 +344,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   @NotNull
   Promise<Void> select(@NotNull VirtualFile virtualFile) {
     AsyncPromise<Void> result = new AsyncPromise<>();
-    myModel.getInvoker().runOrInvokeLater(() -> {
+    myModel.getInvoker().invoke(() -> {
       ServiceViewItem fileItem = myModel.findItem(
         item -> {
           ServiceViewDescriptor descriptor = item.getViewDescriptor();
@@ -370,7 +372,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     ServiceViewFilter parentFilter = serviceView.getModel().getFilter();
     ServiceViewModel viewModel = ServiceViewModel.createModel(items, dragBean.getContributor(), myModel, myModelFilter, parentFilter);
-    extract(holder.contentManager, viewModel, new ServiceViewState(), true);
+    ServiceViewState state = new ServiceViewState();
+    serviceView.saveState(state);
+    extract(holder.contentManager, viewModel, state, true);
   }
 
   private void extract(ContentManager contentManager, ServiceViewModel viewModel, ServiceViewState viewState, boolean select) {
@@ -404,7 +408,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
           if (index < 0) return;
 
           contentManager.removeContent(content, true);
-          ServiceListModel listModel = new ServiceListModel(myModel, myModelFilter, ContainerUtil.newSmartList(item),
+          ServiceListModel listModel = new ServiceListModel(myModel, myModelFilter, new SmartList<>(item),
                                                             viewModel.getFilter().getParent());
           ServiceView listView = ServiceView.createView(myProject, listModel, prepareViewState(new ServiceViewState()));
           Content listContent = addServiceContent(contentManager, listView, item.getViewDescriptor().getContentPresentation(), true, index);
@@ -489,7 +493,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     Set<ServiceViewContributor<?>> contributors = ContainerUtil.newHashSet(ServiceModel.getContributors());
     if (Registry.is("ide.service.view.split")) {
       for (ServiceViewContributor<?> contributor : contributors) {
-        result.put(contributor.getClass().getName(), ContainerUtil.newSmartList(contributor));
+        result.put(contributor.getClass().getName(), new SmartList<>(contributor));
       }
     }
     else {
@@ -524,8 +528,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       myState.viewStates.add(mainState);
       holder.mainView.saveState(mainState);
       mainState.groupId = holder.toolWindowId;
+      mainState.treeStateElement = new Element("root");
+      mainState.treeState.writeExternal(mainState.treeStateElement);
 
-      List<ServiceView> processedViews = ContainerUtil.newSmartList();
+      List<ServiceView> processedViews = new SmartList<>();
       for (Content content : holder.contentManager.getContents()) {
         ServiceView serviceView = getServiceView(content);
         if (serviceView == null || isMainView(serviceView)) continue;
@@ -860,7 +866,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     List<ServiceView> getServiceViews() {
       List<ServiceView> views = ContainerUtil.mapNotNull(contentManager.getContents(), ServiceViewManagerImpl::getServiceView);
-      if (views.isEmpty()) return ContainerUtil.newSmartList(mainView);
+      if (views.isEmpty()) return new SmartList<>(mainView);
 
       if (!views.contains(mainView)) {
         views.add(0, mainView);

@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -122,6 +123,10 @@ public class OpenFileAction extends AnAction implements DumbAware {
         }
         return;
       }
+    }
+
+    if (LightEditUtil.openFile(file)) {
+      return;
     }
 
     FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);

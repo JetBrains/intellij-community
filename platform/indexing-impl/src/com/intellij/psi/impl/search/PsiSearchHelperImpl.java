@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -164,7 +163,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   offsetsInScope, processor));
   }
 
-  private boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
+  boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
                                               @NotNull String text,
                                               short searchContext,
                                               @NotNull EnumSet<Options> options,
@@ -227,7 +226,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static Processor<PsiElement> localProcessor(@NotNull StringSearcher searcher, @NotNull BulkOccurrenceProcessor processor) {
+  static Processor<PsiElement> localProcessor(@NotNull StringSearcher searcher, @NotNull BulkOccurrenceProcessor processor) {
     return new ReadActionProcessor<PsiElement>() {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
@@ -1054,13 +1053,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @Nullable final Condition<? super Integer> checker,
                                                        @NotNull final Collection<? extends IdIndexEntry> keys,
                                                        @NotNull final Processor<? super VirtualFile> processor) {
-    final FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor));
+    Computable<Boolean> query =
+      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
+
+    Boolean[] result = {null};
+    if (FileBasedIndex.indexAccessDuringDumbModeEnabled()) {
+      ReadAction.run(() -> {
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+          result[0] = Boolean.valueOf(query.compute());
+        }, project);
+      });
+    }
+    return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
   }
 
   @NotNull
-  private static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
+  static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
     List<String> words = StringUtil.getWordsInStringLongestFirst(name);
     if (words.isEmpty()) {
       String trimmed = name.trim();

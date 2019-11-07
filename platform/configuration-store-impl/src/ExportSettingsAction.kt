@@ -8,7 +8,6 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.actions.RevealFileAction
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
@@ -32,16 +31,12 @@ import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
 import gnu.trove.THashMap
 import gnu.trove.THashSet
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 internal fun isImportExportActionApplicable(): Boolean {
   val app = ApplicationManager.getApplication()
@@ -122,26 +117,11 @@ fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String
 data class ExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 fun exportInstalledPlugins(zip: Compressor) {
-  val plugins = PluginManagerCore.getPlugins().asSequence().filter { !it.isBundled && it.isEnabled }.map { it.pluginId.idString }.toList()
+  val plugins = PluginManagerCore.getPlugins().asSequence().filter { !it.isBundled && it.isEnabled }.map { it.pluginId }.toList()
   if (plugins.isNotEmpty()) {
     val buffer = StringWriter()
     PluginManagerCore.writePluginsList(plugins, buffer)
     zip.addFile(PluginManager.INSTALLED_TXT, buffer.toString().toByteArray())
-  }
-}
-
-@Deprecated("Please use `#exportInstalledPlugins(Compressor)` instead.")
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-fun exportInstalledPlugins(zipOut: ZipOutputStream) {
-  val plugins = PluginManagerCore.getPlugins().mapNotNull { if (!it.isBundled && it.isEnabled) it.pluginId.idString else null }
-  if (plugins.isNotEmpty()) {
-    zipOut.putNextEntry(ZipEntry(PluginManager.INSTALLED_TXT))
-    try {
-      PluginManagerCore.writePluginsList(plugins, OutputStreamWriter(zipOut, Charsets.UTF_8))
-    }
-    finally {
-      zipOut.closeEntry()
-    }
   }
 }
 
@@ -286,7 +266,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
   }
 
   var resourceBundleName: String?
-  if (pluginDescriptor is IdeaPluginDescriptor && PluginManagerCore.CORE_PLUGIN_ID != pluginDescriptor.pluginId.idString) {
+  if (pluginDescriptor != null && PluginManagerCore.CORE_ID != pluginDescriptor.pluginId) {
     resourceBundleName = pluginDescriptor.resourceBundleBaseName
     if (resourceBundleName == null) {
       if (pluginDescriptor.vendor == "JetBrains") {

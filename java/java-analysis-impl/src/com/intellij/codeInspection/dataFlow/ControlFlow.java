@@ -16,13 +16,12 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.FlushVariableInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.containers.FList;
 import gnu.trove.TObjectIntHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +35,7 @@ public class ControlFlow {
   private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<>();
   private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<>();
   private final DfaValueFactory myFactory;
+  private int[] myLoopNumbers;
 
   public ControlFlow(final DfaValueFactory factory) {
     myFactory = factory;
@@ -43,6 +43,10 @@ public class ControlFlow {
 
   public Instruction[] getInstructions(){
     return myInstructions.toArray(new Instruction[0]);
+  }
+
+  public Instruction getInstruction(int index) {
+    return myInstructions.get(index);
   }
 
   public int getInstructionCount() {
@@ -64,6 +68,21 @@ public class ControlFlow {
   public void addInstruction(Instruction instruction) {
     instruction.setIndex(myInstructions.size());
     myInstructions.add(instruction);
+  }
+
+  int[] getLoopNumbers() {
+    return myLoopNumbers;
+  }
+
+  void finish() {
+    addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
+
+    myLoopNumbers = LoopAnalyzer.calcInLoop(this);
+    for (int i = 0; i < myInstructions.size(); i++) {
+      if (myLoopNumbers[i] > 0 && myInstructions.get(i) instanceof BinopInstruction) {
+        ((BinopInstruction)myInstructions.get(i)).widenOperationInLoop();
+      }
+    }
   }
 
   public void removeVariable(@Nullable PsiVariable variable) {

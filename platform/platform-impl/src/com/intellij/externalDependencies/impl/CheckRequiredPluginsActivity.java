@@ -61,7 +61,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
       String pluginVersion = plugin.getVersion();
       BuildNumber currentIdeVersion = ApplicationInfo.getInstance().getBuild();
       if (plugin.isBundled() && !plugin.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
-        String pluginFromString = PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId().getIdString()) ? "" : "plugin '" + plugin.getName() + "' from ";
+        String pluginFromString = PluginManagerCore.CORE_ID == plugin.getPluginId() ? "" : "plugin '" + plugin.getName() + "' from ";
         if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {
           errorMessages.add("Project '" + project.getName() + "' requires " + pluginFromString +
                             "'" + minVersion + "' or newer build of the IDE, but the current build is '" + pluginVersion + "'.");
@@ -101,19 +101,17 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
                                   if ("enable".equals(event.getDescription())) {
                                     notification.expire();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
-                                      PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
+                                      PluginManagerCore.enablePlugin(descriptor.getPluginId());
                                     }
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
                                   else {
-                                    Set<String> pluginIds = new HashSet<>();
+                                    Set<PluginId> pluginIds = new HashSet<>();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
-                                      pluginIds.add(descriptor.getPluginId().getIdString());
+                                      pluginIds.add(descriptor.getPluginId());
                                     }
-                                    for (PluginId pluginId : notInstalled) {
-                                      pluginIds.add(pluginId.getIdString());
-                                    }
-                                    PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> notification.expire());
+                                    pluginIds.addAll(notInstalled);
+                                    PluginsAdvertiser.installAndEnable(pluginIds, () -> notification.expire());
                                   }
                                 }
                               }

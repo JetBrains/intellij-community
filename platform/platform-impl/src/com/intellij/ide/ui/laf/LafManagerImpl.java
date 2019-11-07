@@ -34,10 +34,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
@@ -234,6 +231,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           myLafComboBoxModel.replaceAll(newLaFs);
         }
         setCurrentLookAndFeel(newTheme);
+        JBColor.setDark(newTheme.getTheme().isDark());
         updateUI();
       }
 
@@ -263,6 +261,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           if (myLafComboBoxModel != null) {
             myLafComboBoxModel.setSelectedItem(switchLafTo);
           }
+          JBColor.setDark(switchLafTo == myDefaultDarkTheme);
           updateUI();
         }
       }

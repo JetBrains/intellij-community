@@ -33,7 +33,8 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
 
   protected val infoPanel = HtmlInfoPanel()
 
-  protected open val loadingText = "Loading..."
+  protected open val loadingText
+    get() = "Loading..."
 
   init {
     addToCenter(createCenterPanel(simplePanel(scrollPane).addToTop(infoPanel).apply {

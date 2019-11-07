@@ -4,7 +4,6 @@ package com.intellij.openapi.options;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,9 +87,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
   @Nullable
   private String findPathToBundle() {
-    if (bundle == null && myPluginDescriptor instanceof IdeaPluginDescriptor) {
-      IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)myPluginDescriptor;
-      return descriptor.getResourceBundleBaseName(); // can be unspecified
+    if (bundle == null && myPluginDescriptor != null) {
+      // can be unspecified
+      return myPluginDescriptor.getResourceBundleBaseName();
     }
     return bundle;
   }

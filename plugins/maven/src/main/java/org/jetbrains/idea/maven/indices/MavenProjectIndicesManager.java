@@ -32,7 +32,10 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
@@ -113,7 +116,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   public void scheduleUpdateIndicesList(@Nullable final Consumer<? super List<MavenIndex>> consumer) {
-    myUpdateQueue.queue(new Update(this) {
+    Update update = new Update(this) {
       @Override
       public void run() {
 
@@ -129,7 +132,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         else {
           newProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
         }
-        ContainerUtil.addIfNotNull(newProjectIndices, MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
+        ContainerUtil
+          .addIfNotNull(newProjectIndices, MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
         myDependencySearchService.reload();
 
         myProjectIndices = newProjectIndices;
@@ -137,7 +141,13 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
           consumer.consume(myProjectIndices);
         }
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      update.run();
+    }
+    else {
+      myUpdateQueue.queue(update);
+    }
   }
 
   private File getLocalRepository() {

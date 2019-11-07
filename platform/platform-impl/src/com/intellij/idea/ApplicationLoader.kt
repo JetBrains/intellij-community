@@ -81,7 +81,7 @@ private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
 private fun executeInitAppInEdt(args: List<String>,
                                 initAppActivity: Activity,
-                                pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptor>>) {
+                                pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>) {
   StartupUtil.patchSystem(LOG)
   val app = runActivity("create app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
@@ -108,11 +108,11 @@ private fun executeInitAppInEdt(args: List<String>,
 }
 
 @ApiStatus.Internal
-fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptor>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
+fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture
     .thenApply {
       runActivity("app component registration", ActivityCategory.MAIN) {
-        app.registerComponents(it)
+        app.registerComponents(it, false)
       }
       it
     }
@@ -347,7 +347,7 @@ private fun addActivateAndWindowsCliListeners() {
 @JvmOverloads
 fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = CompletableFuture.completedFuture(null)) {
   val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
-  val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
+  val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
   initUiTask
     .thenRunAsync(Runnable {
       val args = processProgramArguments(rawArgs)
@@ -655,11 +655,11 @@ private fun reportPluginError() {
     }
 
     val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
-    if (PluginManagerCore.ourPlugins2Disable != null && PluginManagerCore.DISABLE == description) {
-      disabledPlugins.addAll(PluginManagerCore.ourPlugins2Disable)
+    if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
+      disabledPlugins.addAll(PluginManagerCore.ourPluginsToDisable)
     }
-    else if (PluginManagerCore.ourPlugins2Enable != null && PluginManagerCore.ENABLE == description) {
-      disabledPlugins.removeAll(PluginManagerCore.ourPlugins2Enable)
+    else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
+      disabledPlugins.removeAll(PluginManagerCore.ourPluginsToEnable)
       PluginManagerMain.notifyPluginsUpdated(null)
     }
 
@@ -668,8 +668,8 @@ private fun reportPluginError() {
     }
     catch (ignore: IOException) { }
 
-    PluginManagerCore.ourPlugins2Enable = null
-    PluginManagerCore.ourPlugins2Disable = null
+    PluginManagerCore.ourPluginsToEnable = null
+    PluginManagerCore.ourPluginsToDisable = null
   })
 
   PluginManagerCore.ourPluginError = null

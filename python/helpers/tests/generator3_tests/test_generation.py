@@ -68,12 +68,14 @@ class SkeletonCachingTest(GeneratorTestCase):
                 args.append(mod_path)
 
         self.log.info('Launching generator3 as: ' + ' '.join(args))
-        process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process.wait()
-        sys.stdout.write(process.stdout.read().decode('utf-8'))
-        process.stdout.close()
-        sys.stderr.write(process.stderr.read().decode('utf-8'))
-        process.stderr.close()
+        process = subprocess.Popen(args,
+                                   env=env,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   universal_newlines=True)
+        stdout, stderr = process.communicate()
+        sys.stdout.write(stdout)
+        sys.stderr.write(stderr)
         return process.returncode == 0
 
     @property

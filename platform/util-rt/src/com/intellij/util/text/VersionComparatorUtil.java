@@ -3,6 +3,7 @@ package com.intellij.util.text;
 
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -117,11 +118,11 @@ public class VersionComparatorUtil {
    * Examples: 1.0rc1 < 1.0release, 1.0 < 1.0.1, 1.1 > 1.02
    * @return 0 if ver1 equals ver2, positive value if ver1 > ver2, negative value if ver1 < ver2
    */
-  public static int compare(String ver1, String ver2) {
+  public static int compare(@Nullable String ver1, @Nullable String ver2) {
     return compare(ver1, ver2, DEFAULT_TOKEN_PRIORITY_PROVIDER);
   }
 
-  public static int compare(String ver1, String ver2, Function<? super String, Integer> tokenPriorityProvider) {
+  public static int compare(@Nullable String ver1, @Nullable String ver2, Function<? super String, Integer> tokenPriorityProvider) {
     // todo duplicates com.intellij.openapi.util.text.StringUtil.compareVersionNumbers()
     // todo please refactor next time you make changes here
     if (ver1 == null) {

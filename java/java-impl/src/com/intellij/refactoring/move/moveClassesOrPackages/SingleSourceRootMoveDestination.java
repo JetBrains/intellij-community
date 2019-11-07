@@ -14,6 +14,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -23,15 +24,18 @@ import java.util.Collection;
 public class SingleSourceRootMoveDestination implements MoveDestination {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination");
+  @NotNull
   private final PackageWrapper myPackage;
+  @NotNull
   private final PsiDirectory myTargetDirectory;
 
-  public SingleSourceRootMoveDestination(PackageWrapper aPackage, PsiDirectory targetDirectory) {
+  public SingleSourceRootMoveDestination(@NotNull PackageWrapper aPackage, @NotNull PsiDirectory targetDirectory) {
     LOG.assertTrue(aPackage.equalToPackage(JavaDirectoryService.getInstance().getPackage(targetDirectory)));
     myPackage = aPackage;
     myTargetDirectory = targetDirectory;
   }
 
+  @NotNull
   @Override
   public PackageWrapper getTargetPackage() {
     return myPackage;
@@ -43,7 +47,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   @Override
-  public PsiDirectory getTargetIfExists(PsiFile source) {
+  public PsiDirectory getTargetIfExists(@NotNull PsiFile source) {
     return myTargetDirectory;
   }
 
@@ -68,13 +72,13 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   @Override
-  public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
+  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+                                     @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
   }
 
   @Override
-  public boolean isTargetAccessible(Project project, VirtualFile place) {
+  public boolean isTargetAccessible(@NotNull Project project, @NotNull VirtualFile place) {
     final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(place);
     final Module module = ModuleUtilCore.findModuleForFile(place, project);
     final VirtualFile targetVirtualFile = myTargetDirectory.getVirtualFile();

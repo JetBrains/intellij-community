@@ -3,14 +3,12 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +16,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +25,6 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 public class PluginManagerTest {
-
   private static String getTestDataPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort";
   }
@@ -114,19 +111,19 @@ public class PluginManagerTest {
 
   @Test
   public void testSimplePluginSort() throws Exception {
-    doPluginSortTest("simplePluginSort");
+    doPluginSortTest("simplePluginSort", false);
   }
 
   @Test
   public void testUltimatePlugins() throws Exception {
-    doPluginSortTest("ultimatePlugins");
+    doPluginSortTest("ultimatePlugins", true);
   }
 
-  private static void doPluginSortTest(@NotNull String testDataName) throws IOException, JDOMException {
+  private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
     PluginManagerCore.ourPluginError = null;
-    List<IdeaPluginDescriptorImpl> descriptors = loadDescriptors(testDataName + ".xml");
-    List<IdeaPluginDescriptorImpl> sorted = PluginManagerCore.initializePlugins(descriptors, PluginManagerTest.class.getClassLoader(), null).get(0);
-    String actual = StringUtil.join(sorted, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
+    PluginLoadingResult loadPluginResult = loadDescriptors(testDataName + ".xml", isBundled);
+    PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
+    String actual = StringUtil.join(loadPluginResult.getSortedPlugins(), o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
                     "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
     PluginManagerCore.ourPluginError = null;
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), actual);
@@ -144,20 +141,25 @@ public class PluginManagerTest {
     assertNull(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild));
   }
 
-  private static List<IdeaPluginDescriptorImpl> loadDescriptors(@NotNull String testDataName) throws IOException, JDOMException {
-    File file = new File(getTestDataPath(), testDataName);
-    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-    LoadDescriptorsContext context = new LoadDescriptorsContext(false);
-    Element root = JDOMUtil.load(file, context.getXmlFactory());
+  @NotNull
+  private static PluginLoadingResult loadDescriptors(@NotNull String testDataName, boolean isBundled)
+    throws IOException, JDOMException {
+    Path file = Paths.get(getTestDataPath(), testDataName);
+    PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
+
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(/* doesn't matter */ false, Collections.emptySet());
+    DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
+                                                                    PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
+
+    Element root = JDOMUtil.load(file, context.parentContext.getXmlFactory());
+
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
-      IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(new File(url), true);
-      d.readExternal(element, new URL(url), JDOMXIncluder.DEFAULT_PATH_RESOLVER,
-                     context.getXmlFactory().stringInterner(), false);
-      result.add(d);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
+      context.readDescriptor(descriptor, element, Paths.get(url), context.pathResolver);
+      result.add(descriptor, false);
     }
-    Collections.sort(result, (o1, o2) -> Comparing.compare(String.valueOf(o1.getPluginId()),
-                                                           String.valueOf(o2.getPluginId())));
+    result.finishLoading();
     return result;
   }
 
@@ -171,8 +173,8 @@ public class PluginManagerTest {
       sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPath().getName()).append("/META-INF/plugin.xml\">");
       sb.append("\n    <id>").append(escape.fun(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
-      for (String module : d.getModules()) {
-        sb.append("\n    <module value=\"").append(module).append("\"/>");
+      for (PluginId module : d.getModules()) {
+        sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
       PluginId[] optIds = d.getOptionalDependentPluginIds();
       Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = d.getOptionalDescriptors();

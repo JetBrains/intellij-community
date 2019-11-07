@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool can be unbounded if the {@code backendExecutorService} is.
  */
 class SchedulingWrapper implements ScheduledExecutorService {
-
   private final AtomicBoolean shutdown = new AtomicBoolean();
   @NotNull final ExecutorService backendExecutorService;
   final AppDelayQueue delayQueue;
@@ -215,6 +214,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
       boolean periodic = isPeriodic();
       if (!periodic) {
         super.run();
+        futureDone(this);
       }
       else if (runAndReset()) {
         setNextRunTime();
@@ -236,6 +236,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
     void executeMeInBackendExecutor() {
       backendExecutorService.execute(this);
     }
+  }
+
+  void futureDone(@NotNull Future<?> task) {
+
   }
 
   /**

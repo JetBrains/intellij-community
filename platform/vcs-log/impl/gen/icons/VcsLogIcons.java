@@ -5,8 +5,6 @@ import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -14,10 +12,6 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 public final class VcsLogIcons {
   private static Icon load(String path) {
     return IconManager.getInstance().getIcon(path, VcsLogIcons.class);
-  }
-
-  private static Icon load(String path, Class<?> clazz) {
-    return IconManager.getInstance().getIcon(path, clazz);
   }
 
   /** 16x16 */ public static final Icon IntelliSort = load("/icons/IntelliSort.svg");
@@ -30,10 +24,4 @@ public final class VcsLogIcons {
     /** 16x16 */ public static final Icon Dots_5 = load("/icons/process/dots_5.svg");
 
   }
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Branch */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon ShowOtherBranches = load("/vcs/branch.svg", com.intellij.icons.AllIcons.class);
 }

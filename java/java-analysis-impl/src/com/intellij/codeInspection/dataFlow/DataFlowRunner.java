@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
@@ -52,6 +53,7 @@ public class DataFlowRunner {
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
+  private TimeStats myStats;
 
   protected DataFlowRunner() {
     this(false, null);
@@ -152,55 +154,58 @@ public class DataFlowRunner {
                                    boolean ignoreAssertions,
                                    @NotNull Collection<? extends DfaMemoryState> initialStates) {
     ControlFlow flow = null;
-    DfaInstructionState lastInstructionState = null;
     try {
-      TimeStats stats = new TimeStats();
+      myStats = new TimeStats();
       flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
-      stats.endFlow();
+      myStats.endFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
 
       new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
-      stats.endLVA();
+      myStats.endLVA();
+    }
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
+    catch (RuntimeException | AssertionError e) {
+      reportDfaProblem(psiBlock, flow, null, e);
+      return RunnerResult.ABORTED;
+    }
+    List<DfaInstructionState> startingStates = createInitialInstructionStates(psiBlock, initialStates, flow);
+    if (startingStates.isEmpty()) {
+      return RunnerResult.ABORTED;
+    }
 
-      int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
+    return interpret(psiBlock, visitor, flow, startingStates);
+  }
 
-      initializeVariables(psiBlock, initialStates, flow);
+  @NotNull
+  private RunnerResult interpret(@NotNull PsiElement psiBlock,
+                                 @NotNull InstructionVisitor visitor,
+                                 @NotNull ControlFlow flow,
+                                 @NotNull List<DfaInstructionState> startingStates) {
+    int endOffset = flow.getInstructionCount();
+    myInstructions = flow.getInstructions();
+    DfaInstructionState lastInstructionState = null;
+    myNestedClosures.clear();
+    myWasForciblyMerged = false;
 
-      int endOffset = flow.getInstructionCount();
-      myInstructions = flow.getInstructions();
+    final StateQueue queue = new StateQueue();
+    for (DfaInstructionState state : startingStates) {
+      queue.offer(state);
+    }
 
-      for (int i = 0; i < endOffset; i++) {
-        if (loopNumber[i] > 0 && myInstructions[i] instanceof BinopInstruction) {
-          ((BinopInstruction)myInstructions[i]).widenOperationInLoop();
-        }
-      }
-
-      myNestedClosures.clear();
-      myWasForciblyMerged = false;
-
+    MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
+    MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
+    try {
       Set<Instruction> joinInstructions = getJoinInstructions();
-
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Analyzing code block: " + psiBlock.getText());
-        for (int i = 0; i < myInstructions.length; i++) {
-          LOG.trace(i + ": " + myInstructions[i]);
-        }
-      }
-
-      final StateQueue queue = new StateQueue();
-      for (final DfaMemoryState initialState : initialStates) {
-        queue.offer(new DfaInstructionState(myInstructions[0], initialState));
-      }
-
-      MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
-      MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
+      int[] loopNumber = flow.getLoopNumbers();
 
       int stateLimit = Registry.intValue("ide.dfa.state.limit");
       int count = 0;
       while (!queue.isEmpty()) {
-        stats.startMerge();
+        myStats.startMerge();
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
-        stats.endMerge();
+        myStats.endMerge();
         if (states.size() > MAX_STATES_PER_BRANCH) {
           LOG.trace("Too complex because too many different possible states");
           return RunnerResult.TOO_COMPLEX;
@@ -219,8 +224,6 @@ public class DataFlowRunner {
           if (LOG.isTraceEnabled()) {
             LOG.trace(instructionState.toString());
           }
-          // useful for quick debugging by uncommenting and hot-swapping
-          //System.out.println(instructionState.toString());
 
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
@@ -229,9 +232,9 @@ public class DataFlowRunner {
               continue;
             }
             if (processed.size() > MERGING_BACK_BRANCHES_THRESHOLD) {
-              stats.startMerge();
+              myStats.startMerge();
               instructionState = mergeBackBranches(instructionState, processed);
-              stats.endMerge();
+              myStats.endMerge();
               if (containsState(processed, instructionState)) {
                 continue;
               }
@@ -283,12 +286,11 @@ public class DataFlowRunner {
         }
       }
 
-      LOG.trace("Analysis ok");
       myWasForciblyMerged |= queue.wasForciblyMerged();
-      stats.endProcess();
-      if (stats.isTooSlow()) {
-        String message = "Too slow DFA\nIf you report this problem, please consider including the attachments\n" + stats+
-                         "\nControl flow size: "+flow.getInstructionCount();
+      myStats.endProcess();
+      if (myStats.isTooSlow()) {
+        String message = "Too slow DFA\nIf you report this problem, please consider including the attachments\n" + myStats +
+                         "\nControl flow size: " + flow.getInstructionCount();
         reportDfaProblem(psiBlock, flow, null, new RuntimeException(message));
       }
       return RunnerResult.OK;
@@ -300,6 +302,14 @@ public class DataFlowRunner {
       reportDfaProblem(psiBlock, flow, lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  @NotNull
+  protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                     @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                     @NotNull ControlFlow flow) {
+    initializeVariables(psiBlock, memStates, flow);
+    return ContainerUtil.map(memStates, s -> new DfaInstructionState(flow.getInstruction(0), s));
   }
 
   protected void beforeInstruction(Instruction instruction) {

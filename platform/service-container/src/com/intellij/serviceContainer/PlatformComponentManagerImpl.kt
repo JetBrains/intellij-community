@@ -9,7 +9,10 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentConfig
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -41,16 +44,12 @@ import java.util.concurrent.Executor
 
 internal val LOG = logger<PlatformComponentManagerImpl>()
 
-abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
+abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: PlatformComponentManagerImpl?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
     private val constructorParameterResolver = ConstructorParameterResolver()
 
     @JvmStatic
-    protected val fakeCorePluginDescriptor = object : PluginDescriptor {
-      override fun getPluginClassLoader() = null
-
-      override fun getPluginId() = PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)
-    }
+    protected val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
   }
 
   @Suppress("LeakingThis")
@@ -70,7 +69,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   protected open val componentStore: IComponentStore
-    get() = getService(IComponentStore::class.java)
+    get() = getService(IComponentStore::class.java)!!
 
   init {
     if (setExtensionsRootArea) {
@@ -81,9 +80,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
 
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptor>) {
-    @Suppress("UNCHECKED_CAST")
-    plugins as List<IdeaPluginDescriptorImpl>
+  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, notifyListeners: Boolean) {
     val activityNamePrefix = activityNamePrefix()
 
     val app = getApplication()
@@ -138,7 +135,6 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    val notifyListeners = LoadingState.PROJECT_OPENED.isOccurred
     for (descriptor in plugins) {
       descriptor.registerExtensions(extensionArea, this, notifyListeners)
     }
@@ -207,8 +203,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       myPicoContainer.unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything", pluginDescriptor.pluginId)
     }
 
-    val implementationClass = when {
-      config.interfaceClass == config.implementationClass -> interfaceClass.name
+    val implementationClass = when (config.interfaceClass) {
+      config.implementationClass -> interfaceClass.name
       else -> config.implementationClass
     }
 
@@ -245,7 +241,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     handlingInitComponentError = true
     try {
-      PluginManager.handleComponentError(t, componentClassName, pluginId)
+      handleComponentError(t, componentClassName, pluginId)
     }
     finally {
       handlingInitComponentError = false
@@ -277,7 +273,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
-  final override fun <T : Any> getService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+  final override fun <T : Any> getService(serviceClass: Class<T>) = doGetService(serviceClass, true)
+
+  final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>) = doGetService(serviceClass, false)
+
+  private fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val lightServices = lightServices
     if (lightServices != null && isLightService(serviceClass)) {
       return getLightService(serviceClass, createIfNeeded)
@@ -292,7 +292,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     checkCanceledIfNotInClassInit()
 
     if (parent != null) {
-      val result = parent.getService(serviceClass, createIfNeeded)
+      val result = parent.doGetService(serviceClass, createIfNeeded)
       if (result != null) {
         LOG.error("$key is registered as application service, but requested as project one")
         return result
@@ -381,7 +381,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
   protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
-    val pluginId = if (loader is PluginClassLoader) loader.pluginIdString else PluginManagerCore.CORE_PLUGIN_ID
+    val pluginId = if (loader is PluginClassLoader) loader.pluginIdString else PluginManagerCore.CORE_ID.idString
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
@@ -677,5 +677,36 @@ internal fun checkCanceledIfNotInClassInit() {
     if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
       throw e
     }
+  }
+}
+
+fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId?) {
+  if (t is StartupAbortedException) {
+    throw t
+  }
+
+  val app = ApplicationManager.getApplication()
+  if (app != null && app.isUnitTestMode) {
+    throw t
+  }
+
+  var effectivePluginId = pluginId
+  if (effectivePluginId == null || PluginManagerCore.CORE_ID == effectivePluginId) {
+    if (componentClassName != null) {
+      effectivePluginId = PluginManagerCore.getPluginByClassName(componentClassName)
+    }
+  }
+
+  if (effectivePluginId == null || PluginManagerCore.CORE_ID == effectivePluginId) {
+    if (t is ExtensionInstantiationException) {
+      effectivePluginId = t.extensionOwnerId
+    }
+  }
+
+  if (effectivePluginId != null && PluginManagerCore.CORE_ID != effectivePluginId) {
+    throw StartupAbortedException("Fatal error initializing plugin ${effectivePluginId.idString}", PluginException(t, effectivePluginId))
+  }
+  else {
+    throw StartupAbortedException("Fatal error initializing '$componentClassName'", t)
   }
 }

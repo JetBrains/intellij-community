@@ -94,4 +94,18 @@ public class JsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
                 "  \"bar\": [\"<caret><a/>\"]\n" +
                 "}", true);
   }
+
+  public void testPrefixSuffix() {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"x-intellij-language-injection\": {\n" +
+           "        \"language\": \"XML\",\n" +
+           "        \"prefix\": \"<\",\n" +
+           "        \"suffix\": \">\"\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\"x\": \"x><caret></\"}", true);
+  }
 }

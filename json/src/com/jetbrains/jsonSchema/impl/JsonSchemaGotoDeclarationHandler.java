@@ -10,11 +10,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
   @Nullable
@@ -25,7 +28,10 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
     final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class);
     if (literal == null) return null;
     final PsiElement parent = literal.getParent();
-    if (literal.getReferences().length == 0 && parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == literal) {
+    if (literal.getReferences().length == 0
+        && parent instanceof JsonProperty
+        && ((JsonProperty)parent).getNameElement() == literal
+        && canNavigateToSchema(parent)) {
       final PsiFile containingFile = literal.getContainingFile();
       final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
       final VirtualFile file = containingFile.getVirtualFile();
@@ -41,5 +47,9 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
       }
     }
     return null;
+  }
+
+  private static boolean canNavigateToSchema(PsiElement parent) {
+    return Arrays.stream(parent.getReferences()).noneMatch(r -> r instanceof FileReference);
   }
 }

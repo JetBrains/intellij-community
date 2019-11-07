@@ -22,6 +22,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.commands.Git;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.LinkedHashSet;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
@@ -81,30 +83,37 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   /**
-   * @see GitRepositoryManager#getRepositoryForRoot
+   * @deprecated Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.
    */
   @NotNull
   @Deprecated
   public static GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
-    return getInstance(root, project, project, listenToRepoChanges);
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    return notNull(repository, () -> createInstance(root, project, project, listenToRepoChanges));
   }
 
+  /**
+   * Creates a new instance of the GitRepository for the given Git root directory. <br/>
+   * Use {@link GitRepositoryManager#getRepositoryForRoot(VirtualFile)} if you need to obtain an instance
+   */
+  @ApiStatus.Internal
   @NotNull
-  public static GitRepository getInstance(@NotNull VirtualFile root,
-                                          @NotNull Project project,
-                                          @NotNull Disposable parentDisposable,
-                                          boolean listenToRepoChanges) {
-    return getInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
+  public static GitRepository createInstance(@NotNull VirtualFile root,
+                                             @NotNull Project project,
+                                             @NotNull Disposable parentDisposable,
+                                             boolean listenToRepoChanges) {
+    return createInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
   }
 
+  @ApiStatus.Internal
   @NotNull
-  public static GitRepository getInstance(@NotNull VirtualFile root,
-                                          @NotNull VirtualFile gitDir,
-                                          @NotNull Project project,
-                                          @NotNull Disposable parentDisposable,
-                                          boolean listenToRepoChanges) {
+  static GitRepository createInstance(@NotNull VirtualFile root,
+                                      @NotNull VirtualFile gitDir,
+                                      @NotNull Project project,
+                                      @NotNull Disposable parentDisposable,
+                                      boolean listenToRepoChanges) {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
     if (listenToRepoChanges) {
       repository.getUntrackedFilesHolder().setupVfsListener(project);

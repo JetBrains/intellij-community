@@ -173,7 +173,7 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   @NotNull
-  public Collection<? extends V> values() {
+  public Collection<V> values() {
     if (values == null) {
       values = new AbstractCollection<V>() {
         @NotNull

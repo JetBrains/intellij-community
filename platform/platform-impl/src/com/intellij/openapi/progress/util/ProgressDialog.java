@@ -96,8 +96,6 @@ class ProgressDialog implements Disposable {
     initDialog(cancelText);
   }
 
-  void setWasShown() { myWasShown = true; }
-
   @NotNull
   private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
     if (fullText == null || fullText.isEmpty()) return " ";
@@ -239,13 +237,10 @@ class ProgressDialog implements Disposable {
     }
   }
 
-  @Nullable
-  Window getParentWindow() {
-    return myParentWindow;
-  }
-
   void show() {
-    setWasShown();
+    if (myWasShown) return;
+    myWasShown = true;
+
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (myParentWindow == null) return;
     if (myPopup != null) {

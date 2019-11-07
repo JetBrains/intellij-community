@@ -245,6 +245,10 @@ final class ObjectTree {
     }
   }
 
+  void clearDisposedObjectTraces() {
+    myDisposedObjects.clear();
+  }
+
   @Nullable
   <D extends Disposable> D findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull D object) {
     synchronized (treeLock) {

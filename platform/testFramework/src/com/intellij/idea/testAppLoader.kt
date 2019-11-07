@@ -25,7 +25,9 @@ fun loadTestApp() {
   PluginManagerCore.isUnitTestMode = true
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
-  val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier { PluginManagerCore.getLoadedPlugins(IdeaTestApplication::class.java.classLoader) }, AppExecutorUtil.getAppExecutorService())
+  val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier {
+    PluginManagerCore.getLoadedPlugins(IdeaTestApplication::class.java.classLoader)
+  }, AppExecutorUtil.getAppExecutorService())
   StartupUtil.replaceSystemEventQueue(logger<IdeaTestApplication>())
   val app = ApplicationImpl(true, true, true, true)
   IconManager.activate()
@@ -40,10 +42,10 @@ fun loadTestApp() {
 
     preloadServiceFuture
       .thenCompose { callAppInitialized(app, boundedExecutor) }
-      .get(20, TimeUnit.SECONDS);
+      .get(20, TimeUnit.SECONDS)
   }
   catch (e: TimeoutException) {
-    throw RuntimeException("Cannot preload services in 20 seconds: ${ThreadDumper.dumpThreadsToString()}", e);
+    throw RuntimeException("Cannot preload services in 20 seconds: ${ThreadDumper.dumpThreadsToString()}", e)
   }
   catch (e: ExecutionException) {
     throw e.cause ?: e

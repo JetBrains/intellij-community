@@ -186,6 +186,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.showTreeIndentGuides = value
     }
 
+  var compactTreeIndents: Boolean
+    get() = state.compactTreeIndents
+    set(value) {
+      state.compactTreeIndents = value
+    }
+
   var moveMouseOnDefaultButton: Boolean
     get() = state.moveMouseOnDefaultButton
     set(value) {

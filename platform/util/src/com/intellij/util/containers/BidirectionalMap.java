@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
       if (array.isEmpty()) myValueToKeysMap.remove(oldValue);
     }
 
-    List<K> array = myValueToKeysMap.computeIfAbsent(value, __ -> new ArrayList<>());
+    List<K> array = myValueToKeysMap.computeIfAbsent(value, __ -> new SmartList<>());
     array.add(key);
     return oldValue;
   }

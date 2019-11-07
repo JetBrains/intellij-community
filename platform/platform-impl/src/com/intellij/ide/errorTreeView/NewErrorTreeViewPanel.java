@@ -280,7 +280,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     ));
   }
 
-  private void updateAddedElement(ErrorTreeElement element) {
+  protected void updateAddedElement(@NotNull ErrorTreeElement element) {
     Promise<?> promise;
     final Object parent = myErrorViewStructure.getParentElement(element);
     if (parent == null) {
@@ -299,8 +299,12 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
     if (element.getKind() == ErrorTreeElementKind.ERROR) {
       // expand automatically only errors
-      promise.onSuccess(p -> myStructureModel.makeVisible(element, myTree, pp->{}));
+      promise.onSuccess(p -> makeVisible(element));
     }
+  }
+
+  protected void makeVisible(@NotNull ErrorTreeElement element) {
+    myStructureModel.makeVisible(element, myTree, pp->{});
   }
 
   @Override

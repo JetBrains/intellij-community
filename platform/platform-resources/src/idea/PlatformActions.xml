@@ -1033,9 +1033,14 @@
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction" text="Disable ProcessCanceledException"
               description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
       <group id="Internal.Performance" text="Performance" popup="true">
-        <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging mode"/>
+        <action id="LaggingMode" internal="true" class="com.intellij.internal.ToggleLaggingModeAction" text="Lagging Mode"/>
       </group>
       <separator/>
+      <group id="Internal.Editor" popup="true" text="&amp;Editor">
+        <action internal="true" id="AddInlayInternalAction" class="com.intellij.internal.AddInlayInternalAction" text="Add Inlay..."/>
+        <action internal="true" id="EditorRenderingBenchmarkAction" class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"
+                text="Editor Rendering Benchmark"/>
+      </group>
       <group id="Internal.UI" popup="true" text="&amp;UI">
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
                 text="Add Test Notification"/>
@@ -1043,10 +1048,7 @@
         <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"
                 text="Show Standard Panels"/>
         <separator/>
-        <action id="EditorRenderingBenchmarkAction" internal="true" class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"
-                text="Editor Rendering Benchmark"/>
-        <separator/>
-        <group id="Internal.focusAndModality" popup="true" text="Focus and modality testing">
+        <group id="Internal.focusAndModality" popup="true" text="Focus and Modality Testing">
           <action id="CheckMessagesButtonsOrderAction" internal="true"
                   class="com.intellij.internal.validation.CheckMessagesButtonsOrderAction"
                   text="Check Messages Buttons Order"/>
@@ -1054,7 +1056,7 @@
                   class="com.intellij.notification.impl.actions.ShowDelayedMessageInternalAction"
                   text="Show Delayed Message"/>
           <action id="ManualMacMessagesTest" internal="true" class="com.intellij.internal.validation.MacMessagesTest"
-                  text="Manual test for testing MacMessages"/>
+                  text="Manual Test for Testing MacMessages"/>
           <action id="MacMessagesSequencesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesSequencesAction"
                   text="Test Mac Messages Sequences"/>
         </group>
@@ -1329,15 +1331,15 @@
 
     <group id="CopyReferencePopupGroup">
       <group id="CopyFileReference">
-        <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" text="Absolute Path"/>
+        <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" text="Absolute Path" use-shortcut-of="CopyPaths"/>
         <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider" text="Path With Line Number"/>
-        <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider" text="Content Root Path"/>
-        <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider" text="Source Root Path"/>
+        <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider" text="Path From Content Root"/>
+        <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider" text="Path From Source Root"/>
       </group>
       <separator/>
       <group id="CopyExternalReferenceGroup">
-        <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" text="Toolbox Reference"
-                icon="AllIcons.Actions.Copy"/>
+        <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" text="Toolbox URL"
+                icon="AllIcons.Nodes.Toolbox"/>
       </group>
     </group>
   </actions>

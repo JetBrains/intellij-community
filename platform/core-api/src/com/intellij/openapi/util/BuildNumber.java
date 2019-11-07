@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class BuildNumber implements Comparable<BuildNumber> {
+public final class BuildNumber implements Comparable<BuildNumber> {
   private static final Set<String> BUILD_NUMBER_PLACEHOLDERS = ContainerUtil.set("__BUILD_NUMBER__", "__BUILD__");
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
@@ -97,8 +97,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
       }
       builder.append('.');
     }
-    if (builder.charAt(builder.length() - 1) == '.') builder.setLength(builder.length() - 1);
-
+    if (builder.charAt(builder.length() - 1) == '.') {
+      builder.setLength(builder.length() - 1);
+    }
     return builder.toString();
   }
 
@@ -123,8 +124,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return fromString(version, null, productCode);
   }
 
-  public static BuildNumber fromString(String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
-    if (StringUtil.isEmptyOrSpaces(version)) return null;
+  public static BuildNumber fromString(@Nullable String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
+    if (StringUtil.isEmptyOrSpaces(version)) {
+      return null;
+    }
 
     String code = version;
     int productSeparator = code.indexOf('-');
@@ -242,6 +245,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static class Holder {
     private static final BuildNumber CURRENT_VERSION = fromFile();
 
+    @NotNull
     private static BuildNumber fromFile() {
       try {
         String home = PathManager.getHomePath();
@@ -264,6 +268,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
    * This method is for internal platform use only. In regular code use {@link com.intellij.openapi.application.ApplicationInfo#getBuild()} instead.
    */
   @ApiStatus.Internal
+  @NotNull
   public static BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
   }

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @see com.intellij.psi.stubs.BinaryFileStubBuilders#EXTENSION_POINT_NAME
+ * @see BinaryFileStubBuilders#EXTENSION_POINT_NAME
  */
 public interface BinaryFileStubBuilder {
   boolean acceptsFile(@NotNull VirtualFile file);

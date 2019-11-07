@@ -4,6 +4,7 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,23 +22,35 @@ class EdtExecutorServiceImpl extends EdtExecutorService {
   @Override
   public void execute(@NotNull Runnable command) {
     Application application = ApplicationManager.getApplication();
-    if (application == null) {
-      SwingUtilities.invokeLater(command);
-    }
-    else {
-      execute(command, application.getAnyModalityState());
-    }
+    execute(command, application == null ? ModalityState.NON_MODAL : application.getAnyModalityState());
   }
 
   @Override
   public void execute(@NotNull Runnable command, @NotNull ModalityState modalityState) {
     Application application = ApplicationManager.getApplication();
+    if (shouldManifestExceptionsImmediately() && !(command instanceof FlippantFuture)) {
+      command = new FlippantFuture<>(Executors.callable(command, null));
+    }
+
     if (application == null) {
       SwingUtilities.invokeLater(command);
     }
     else {
       application.invokeLater(command, modalityState);
     }
+  }
+
+  @Override
+  protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+    return newTaskFor(Executors.callable(runnable, value));
+  }
+
+  @Override
+  protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+    if (shouldManifestExceptionsImmediately()) {
+      return new FlippantFuture<>(callable);
+    }
+    return new FutureTask<T>(callable);
   }
 
   @NotNull
@@ -84,4 +97,29 @@ class EdtExecutorServiceImpl extends EdtExecutorService {
   }
 
   static final EdtExecutorService INSTANCE = new EdtExecutorServiceImpl();
+
+  static boolean shouldManifestExceptionsImmediately() {
+    return ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  static void manifestExceptionsIn(@NotNull Future<?> task) {
+    try {
+      task.get();
+    }
+    catch (CancellationException | InterruptedException ignored) {
+    }
+    catch (ExecutionException e) {
+      ExceptionUtil.rethrow(e.getCause());
+    }
+  }
+
+  private static class FlippantFuture<T> extends FutureTask<T> {
+    public FlippantFuture(Callable<T> callable) {super(callable);}
+
+    @Override
+    public void run() {
+      super.run();
+      manifestExceptionsIn(this);
+    }
+  }
 }

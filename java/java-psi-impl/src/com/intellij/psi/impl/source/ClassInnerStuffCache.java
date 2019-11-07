@@ -11,7 +11,7 @@ import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +145,7 @@ public class ClassInnerStuffCache {
     for (PsiMethod method : methods) {
       List<PsiMethod> list = collectedMethods.get(method.getName());
       if (list == null) {
-        collectedMethods.put(method.getName(), list = ContainerUtil.newSmartList());
+        collectedMethods.put(method.getName(), list = new SmartList<>());
       }
       list.add(method);
     }

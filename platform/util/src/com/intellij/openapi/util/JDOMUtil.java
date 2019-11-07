@@ -310,6 +310,12 @@ public final class JDOMUtil {
     return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file))), StandardCharsets.UTF_8), factory);
   }
 
+  @ApiStatus.Internal
+  @NotNull
+  public static Element load(@NotNull Path file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
+    return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), factory);
+  }
+
   /**
    * @deprecated Use {@link #load(CharSequence)}
    * <p>

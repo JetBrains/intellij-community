@@ -269,44 +269,39 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindRoot() {
-    VirtualFile root = myFS.findFileByPath("wrong_path");
-    assertNull(root);
+    assertNull(myFS.findFileByPath("wrong_path"));
 
-    VirtualFile root2;
     if (SystemInfo.isWindows) {
-      root = myFS.findFileByPath("\\\\unit-133");
+      String systemDrive = System.getenv("SystemDrive");
+      VirtualFile root = myFS.findFileByPath(systemDrive.toLowerCase(Locale.ENGLISH));
       assertNotNull(root);
-      root2 = myFS.findFileByPath("//UNIT-133");
-      assertNotNull(root2);
-      assertEquals(String.valueOf(root2), root, root2);
-      RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
+      assertEquals(systemDrive.toUpperCase(Locale.ENGLISH) + '/', root.getPath());
+      VirtualFile root2 = myFS.findFileByPath(systemDrive.toUpperCase(Locale.ENGLISH) + '\\');
+      assertSame(String.valueOf(root), root, root2);
 
-      root = myFS.findFileByIoFile(new File("\\\\unit-133"));
+      VirtualFileManager fm = VirtualFileManager.getInstance();
+      root = fm.findFileByUrl("file://" + systemDrive.toUpperCase(Locale.ENGLISH) + '/');
       assertNotNull(root);
+      root2 = fm.findFileByUrl("file:///" + systemDrive.toLowerCase(Locale.ENGLISH) + '/');
+      assertSame(String.valueOf(root), root, root2);
+
+      assertNull(myFS.findFileByPath("\\\\some-unc-server"));
+      assertNull(myFS.findFileByPath("//SOME-UNC-SERVER"));
+      assertNull(myFS.findFileByIoFile(new File("\\\\some-unc-server")));
+
+      root = myFS.findFileByPath("\\\\some-unc-server\\some-unc-share");
+      assertNotNull(root);
+      root2 = myFS.findFileByPath("//SOME-UNC-SERVER/SOME-UNC-SHARE");
+      assertSame(String.valueOf(root), root, root2);
       RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
-
-      if (new File("c:").exists()) {
-        root = myFS.findFileByPath("c:");
-        assertNotNull(root);
-        assertEquals("C:/", root.getPath());
-
-        root2 = myFS.findFileByPath("C:\\");
-        assertSame(String.valueOf(root), root, root2);
-
-        VirtualFileManager fm = VirtualFileManager.getInstance();
-        root = fm.findFileByUrl("file://C:/");
-        assertNotNull(root);
-        root2 = fm.findFileByUrl("file:///c:/");
-        assertSame(String.valueOf(root), root, root2);
-      }
     }
     else if (SystemInfo.isUnix) {
-      root = myFS.findFileByPath("/");
+      VirtualFile root = myFS.findFileByPath("/");
       assertNotNull(root);
       assertEquals("/", root.getPath());
     }
 
-    root = myFS.findFileByPath("");
+    VirtualFile root = myFS.findFileByPath("");
     assertNotNull(root);
 
     File jarFile = IoTestUtil.createTestJar();
@@ -314,7 +309,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     root = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath() + "!/");
     assertNotNull(root);
 
-    root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().replace(File.separator, "//") + "!/");
+    VirtualFile root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().replace(File.separator, "//") + "!/");
     assertEquals(String.valueOf(root2), root, root2);
 
     if (!SystemInfo.isFileSystemCaseSensitive) {

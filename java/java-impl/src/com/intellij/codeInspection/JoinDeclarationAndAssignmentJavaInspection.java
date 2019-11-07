@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Contract;
@@ -226,24 +225,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         }
 
         if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
-        WriteAction.run(() -> applyFixImpl(context));
-      }
-    }
-
-    public void applyFixImpl(@NotNull Context context) {
-      PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
-      PsiElement elementToReplace = context.myAssignment.getParent();
-      if (elementToReplace != null) {
-        PsiLocalVariable varCopy = DeclarationJoinLinesHandler.copyVarWithInitializer(context.myVariable, initializer);
-        if (varCopy != null) {
-          String text = varCopy.getText();
-
-          CommentTracker tracker = new CommentTracker();
-          tracker.markUnchanged(initializer);
-          tracker.markUnchanged(context.myVariable);
-          tracker.delete(context.myVariable);
-          tracker.replaceAndRestoreComments(elementToReplace, text);
-        }
+        WriteAction.run(() -> DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment));
       }
     }
   }

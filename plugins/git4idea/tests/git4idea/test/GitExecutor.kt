@@ -229,4 +229,8 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
     FileUtil.writeToFile(file, content + previousContent)
     return this
   }
+
+  override fun toString(): String {
+    return file.toString()
+  }
 }

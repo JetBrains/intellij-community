@@ -27,6 +27,7 @@ import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
@@ -210,8 +211,9 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject(), dataPaths.getDataStorageRoot());
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState, relativizer);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, true);
+      BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(targetIndex, buildRootIndex, timestamps, dataPaths, relativizer);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
-                                   targetIndex, buildRootIndex, ignoredFileIndex);
+                                   targetIndex, buildRootIndex, ignoredFileIndex, sourcesState);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

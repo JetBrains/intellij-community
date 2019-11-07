@@ -9,11 +9,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -121,7 +124,7 @@ public class PluginManagerConfigurable
   private PluginUpdatesService myPluginUpdatesService;
 
   private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
-  private Map<String, IdeaPluginDescriptor> myAllRepositoryPluginsMap;
+  private Map<PluginId, IdeaPluginDescriptor> myAllRepositoryPluginsMap;
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myTagsSorted;
@@ -370,8 +373,8 @@ public class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadRepositoryPlugins();
-            Map<String, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
+            Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadRepositoryPlugins();
+            Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
             Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
             try {
@@ -646,8 +649,8 @@ public class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadRepositoryPlugins();
-                Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
+                Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadRepositoryPlugins();
+                Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = p.first;
                 Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
@@ -687,7 +690,7 @@ public class PluginManagerConfigurable
                 }
 
                 Url url = PluginRepositoryRequests.createSearchUrl(parser.getUrlQuery(), 10000);
-                for (String pluginId : PluginRepositoryRequests.requestToPluginRepository(url)) {
+                for (PluginId pluginId : PluginRepositoryRequests.requestToPluginRepository(url)) {
                   IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
                   if (descriptor != null) {
                     result.descriptors.add(descriptor);
@@ -817,7 +820,7 @@ public class PluginManagerConfigurable
         boolean hideImplDetails = !Registry.is("plugins.show.implementation.details");
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-          if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
+          if (!appInfo.isEssentialPlugin(descriptor.getPluginId())) {
             if (descriptor.isBundled()) {
               if (hideImplDetails && descriptor.isImplementationDetail()) {
                 continue;
@@ -843,7 +846,7 @@ public class PluginManagerConfigurable
               myUpdateAll.setEnabled(false);
 
               for (ListPluginComponent plugin : downloaded.ui.plugins) {
-                ((ListPluginComponent)plugin).updatePlugin();
+                plugin.updatePlugin();
               }
             }
           }, null);
@@ -1110,18 +1113,18 @@ public class PluginManagerConfigurable
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
     for (UIPluginGroup group : panel.getGroups()) {
       for (ListPluginComponent plugin : group.plugins) {
-        ((ListPluginComponent)plugin).setUpdateDescriptor(null);
+        plugin.setUpdateDescriptor(null);
       }
     }
   }
 
-  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<? extends PluginDownloader> updates) {
+  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginDownloader> updates) {
     for (PluginDownloader downloader : updates) {
       IdeaPluginDescriptor descriptor = downloader.getDescriptor();
       for (UIPluginGroup group : panel.getGroups()) {
         ListPluginComponent component = group.findComponent(descriptor);
         if (component != null) {
-          ((ListPluginComponent)component).setUpdateDescriptor(descriptor);
+          component.setUpdateDescriptor(descriptor);
           break;
         }
       }
@@ -1203,7 +1206,7 @@ public class PluginManagerConfigurable
   }
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);
+    return plugin.isBundled() || PluginManager.isDevelopedByJetBrains(plugin);
   }
 
   @Nullable
@@ -1219,11 +1222,11 @@ public class PluginManagerConfigurable
   static synchronized String getFormatLength(@Nullable String len) {
     if (!StringUtil.isEmptyOrSpaces(len)) {
       try {
-        Long value = Long.valueOf(len);
+        long value = Long.parseLong(len);
         if (value > 1000) {
           return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
         }
-        return value.toString();
+        return Long.toString(value);
       }
       catch (NumberFormatException ignore) {
       }
@@ -1457,11 +1460,11 @@ public class PluginManagerConfigurable
       PluginsGroup group = myPluginModel.getDownloadedGroup();
 
       if (group == null || group.ui == null) {
-        ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+        ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfo.getInstance();
         List<IdeaPluginDescriptor> descriptorList = new ArrayList<>();
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-          if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString()) &&
+          if (!appInfo.isEssentialPlugin(descriptor.getPluginId()) &&
               !descriptor.isBundled() && descriptor.isEnabled() != myEnable) {
             descriptorList.add(descriptor);
           }
@@ -1511,7 +1514,7 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadRepositoryPlugins() {
+  private Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
       if (myAllRepositoryPluginsMap != null) {
         return Pair.create(myAllRepositoryPluginsMap, myCustomRepositoryPluginsMap);
@@ -1519,7 +1522,7 @@ public class PluginManagerConfigurable
     }
 
     List<IdeaPluginDescriptor> list = new ArrayList<>();
-    Map<String, IdeaPluginDescriptor> map = new HashMap<>();
+    Map<PluginId, IdeaPluginDescriptor> map = new HashMap<>();
     Map<String, List<IdeaPluginDescriptor>> custom = new HashMap<>();
 
     for (String host : RepositoryHelper.getPluginHosts()) {
@@ -1529,7 +1532,7 @@ public class PluginManagerConfigurable
           custom.put(host, descriptors);
         }
         for (IdeaPluginDescriptor plugin : descriptors) {
-          String id = plugin.getPluginId().getIdString();
+          PluginId id = plugin.getPluginId();
           if (!map.containsKey(id)) {
             list.add(plugin);
             map.put(id, plugin);
@@ -1583,7 +1586,7 @@ public class PluginManagerConfigurable
   }
 
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
-                        @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
+                        @NotNull Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull String name,
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
@@ -1618,8 +1621,12 @@ public class PluginManagerConfigurable
       myShutdownCallback = null;
     }
 
-    reset();
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
+  }
+
+  @Override
+  public void cancel() {
+    myPluginModel.removePluginsOnCancel();
   }
 
   @Override

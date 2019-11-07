@@ -320,5 +320,8 @@ public class ParametersListTest {
 
     final String mixedQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo='d e f'";
     assertEquals("Mixed quotes broken", expected, ParametersListUtil.parse(mixedQuotes, false, true));
+
+    assertEquals("Empty trailing parameter broken", asList("cmd", "", "-a", "", "", "text", "--long-option", ""),
+                 ParametersListUtil.parse("cmd  -a   'text' --long-option ", false, true, true));
   }
 }

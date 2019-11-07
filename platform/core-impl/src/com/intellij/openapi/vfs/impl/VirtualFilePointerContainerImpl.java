@@ -257,7 +257,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
           // getFiles() must return files under jar directories but must not return jarDirectories themselves
           cachedDirectories.remove(jarDirectory);
 
-          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor() {
+          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor<Void>() {
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
               if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {

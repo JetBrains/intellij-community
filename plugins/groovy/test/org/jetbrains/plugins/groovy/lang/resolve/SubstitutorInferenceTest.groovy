@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.LightProjectTest
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -49,6 +50,9 @@ class IdCallable {
 class GenericPropertyContainer {
   def <T> I<T> getGenericProperty() {}
   def <T> void setGenericProperty(I<T> c) {}
+  
+  def <T> List<T> getGenericList() {}
+  def <T> void setGenericList(List<T> l) {}
 }
 
 class Files {
@@ -240,6 +244,38 @@ static <T> T ppp(Producer<T> p) {}
   void 'plus assignment'() {
     def op = elementUnderCaret('new Files().files <caret>+= new File(".")', GrAssignmentExpression)
     assertSubstitutor(op.reference.advancedResolve(), 'java.io.File')
+  }
+
+  @Test
+  void 'plus assignment generic property r-value'() {
+    def ref = elementUnderCaret('new GenericPropertyContainer().<caret>genericList += new ArrayList<String>()', GrReferenceExpression)
+    assertSubstitutor(ref.RValueReference.advancedResolve(), JAVA_LANG_STRING)
+  }
+
+  @Test
+  void 'plus assignment generic property'() {
+    def op = elementUnderCaret('new GenericPropertyContainer().genericList <caret>+= new ArrayList<String>()', GrAssignmentExpression)
+    assertSubstitutor(op.reference.advancedResolve(), JAVA_LANG_STRING)
+  }
+
+  @Ignore("we don't yet infer l-value substitutors")
+  @Test
+  void 'plus assignment generic property l-value'() {
+    def ref = elementUnderCaret('new GenericPropertyContainer().<caret>genericList += new ArrayList<String>()', GrReferenceExpression)
+    assertSubstitutor(ref.LValueReference.advancedResolve(), JAVA_LANG_STRING)
+  }
+
+  @Test
+  void 'plus assignment with index r-value'() {
+    def op = elementUnderCaret('Map<Number, String> mns; mns<caret>[42] += "foo"', GrIndexProperty)
+    assertSubstitutor(op.RValueReference.advancedResolve(), JAVA_LANG_NUMBER, JAVA_LANG_STRING)
+  }
+
+  @Ignore("we don't yet infer l-value substitutors")
+  @Test
+  void 'plus assignment with index l-value'() {
+    def op = elementUnderCaret('Map<Number, String> mns; mns<caret>[42] += "foo"', GrIndexProperty)
+    assertSubstitutor(op.LValueReference.advancedResolve(), JAVA_LANG_NUMBER, JAVA_LANG_STRING)
   }
 
   @Test

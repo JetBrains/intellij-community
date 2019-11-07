@@ -388,7 +388,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                          boolean honorExcludedFromCommit) throws IOException, VcsException {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
-      progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
+      progressIndicator.setText(VcsBundle.message("shelve.changes.progress.text"));
     }
     ShelvedChangeList shelveList;
     try {

@@ -60,7 +60,9 @@ public class ActionsTreeUtil {
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();
       visited.add(id);
-      if (PluginManagerCore.CORE_PLUGIN_ID.equals(id.getIdString())) continue;
+      if (PluginManagerCore.CORE_ID == id) {
+        continue;
+      }
       for (String actionId : ActionManagerEx.getInstanceEx().getPluginActions(id)) {
         result.put(actionId, descriptor.getName());
       }

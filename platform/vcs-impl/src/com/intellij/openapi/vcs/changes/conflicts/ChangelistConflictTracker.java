@@ -2,11 +2,9 @@
 
 package com.intellij.openapi.vcs.changes.conflicts;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -23,6 +21,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,33 +58,19 @@ public class ChangelistConflictTracker {
     myCheckSetLock = new Object();
     myCheckSet = new HashSet<>();
 
-    final Application application = ApplicationManager.getApplication();
     final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, project);
-    final Runnable runnable = () -> {
-      if (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen()) {
-        return;
-      }
-      final Set<VirtualFile> localSet;
-      synchronized (myCheckSetLock) {
-        localSet = new HashSet<>();
-        localSet.addAll(myCheckSet);
-        myCheckSet.clear();
-      }
-      checkFiles(localSet);
-    };
-    myDocumentListener = new DocumentListener() {
+    myDocumentListener = new BulkAwareDocumentListener.Simple() {
       @Override
-      public void documentChanged(@NotNull DocumentEvent e) {
+      public void afterDocumentChange(@NotNull Document document) {
         if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get()) {
           return;
         }
-        Document document = e.getDocument();
         VirtualFile file = myDocumentManager.getFile(document);
-        if (file != null && ProjectUtil.guessProjectForFile(file) == myProject) {
+        if (file != null && file.isInLocalFileSystem() && ProjectUtil.guessProjectForFile(file) == myProject) {
           synchronized (myCheckSetLock) {
             myCheckSet.add(file);
           }
-          zipperUpdater.queue(runnable);
+          zipperUpdater.queue(() -> checkFiles());
         }
       }
     };
@@ -121,7 +106,16 @@ public class ChangelistConflictTracker {
     myShouldIgnoreModifications.set(value);
   }
 
-  private void checkFiles(final Collection<? extends VirtualFile> files) {
+  private void checkFiles() {
+    if (myProject.isDisposed() || !myProject.isOpen()) return;
+
+    final List<VirtualFile> files;
+    synchronized (myCheckSetLock) {
+      files = ContainerUtil.filter(myCheckSet, file -> VcsUtil.getVcsFor(myProject, file) != null);
+      myCheckSet.clear();
+    }
+    if (files.isEmpty()) return;
+
     myChangeListManager.invokeAfterUpdate(() -> {
       final LocalChangeList list = myChangeListManager.getDefaultChangeList();
       for (VirtualFile file : files) {

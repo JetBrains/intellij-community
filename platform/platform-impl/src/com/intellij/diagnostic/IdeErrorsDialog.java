@@ -7,8 +7,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
@@ -41,7 +42,6 @@ import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -58,6 +58,7 @@ import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
 import java.util.zip.CRC32;
@@ -460,7 +461,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
-    if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
+    if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId)) {
       info.append(' ').append("<a style=\"white-space: nowrap;\" href=\"" + DISABLE_PLUGIN_URL + "\">")
         .append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
     }
@@ -481,7 +482,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
-    if (submitter == null && plugin != null && !PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && plugin != null && !PluginManager.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String vendorUrl = plugin.getVendorUrl();
@@ -671,7 +672,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     if (doDisable) {
       for (IdeaPluginDescriptor plugin: pluginsToDisable) {
-        PluginManagerCore.disablePlugin(plugin.getPluginId().getIdString());
+        PluginManagerCore.disablePlugin(plugin.getPluginId());
       }
       if (doRestart) {
         ApplicationManager.getApplication().restart();
@@ -680,14 +681,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static boolean morePluginsAffected(@NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
-    JBTreeTraverser<PluginId> traverser = PluginManagerCore.pluginIdTraverser();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      if (!plugin.isEnabled()) continue;
-      if (pluginsToDisable.contains(plugin)) continue;
-      for (IdeaPluginDescriptor toDisable : pluginsToDisable) {
-        if (traverser.withRoot(plugin.getPluginId()).unique().traverse().contains(toDisable.getPluginId())) {
-          return true;
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
+      if (!rootDescriptor.isEnabled() || pluginsToDisable.contains(rootDescriptor)) {
+        continue;
+      }
+
+      if (!PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, descriptor -> {
+        if (!descriptor.isEnabled()) {
+          // if disabled, no need to process it's dependencies
+          return FileVisitResult.SKIP_SUBTREE;
         }
+        return pluginsToDisable.contains(descriptor) ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
+      })) {
+        return true;
       }
     }
     return false;
@@ -1016,7 +1023,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
-    if (plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin)) {
+    if (plugin == null || PluginManager.isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
         if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {

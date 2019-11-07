@@ -234,6 +234,10 @@ public class XmlUtil {
     return null;
   }
 
+  public static boolean isXmlToken(PsiElement element, IElementType tokenType) {
+    return element instanceof XmlToken && ((XmlToken)element).getTokenType() == tokenType;
+  }
+
   @Nullable
   public static XmlToken getTokenOfType(PsiElement element, IElementType type) {
     if (element == null) {

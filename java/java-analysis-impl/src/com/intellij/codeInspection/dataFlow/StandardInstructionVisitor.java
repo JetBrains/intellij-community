@@ -39,7 +39,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     myStopAnalysisOnNpe = false;
   }
 
-  StandardInstructionVisitor(boolean stopAnalysisOnNpe) {
+  protected StandardInstructionVisitor(boolean stopAnalysisOnNpe) {
     myStopAnalysisOnNpe = stopAnalysisOnNpe;
   }
 

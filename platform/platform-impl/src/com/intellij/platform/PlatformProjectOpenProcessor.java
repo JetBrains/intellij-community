@@ -9,6 +9,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -144,6 +145,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @Nullable
   @ApiStatus.Internal
   public static Project createTempProjectAndOpenFile(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
+    if (LightEditUtil.openFile(file)) {
+      return LightEditUtil.getProject();
+    }
     String dummyProjectName = file.getFileName().toString();
     Path baseDir;
     try {
@@ -207,6 +211,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   public static Project openExistingProject(@NotNull Path file,
                                             @Nullable("null for IPR project") Path projectDir,
                                             @NotNull OpenProjectTask options) {
+    if (options.getProject() != null && ProjectManagerEx.getInstanceEx().isProjectOpened(options.getProject())) {
+      return null;
+    }
     Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
       Project[] openProjects = ProjectUtil.getOpenProjects();

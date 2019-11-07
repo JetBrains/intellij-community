@@ -13,7 +13,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -530,6 +529,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   public int findFragmentAt(int x) {
     float curX = myIpad.left;
+    if (myBorder != null) {
+      curX += myBorder.getBorderInsets(this).left;
+    }
+    curX += getInsets().left;
+
     if (myIcon != null && !myIconOnTheRight) {
       final int iconRight = myIcon.getIconWidth() + myIconTextGap;
       if (x < iconRight) {
@@ -543,6 +547,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     int baseSize = font.getSize();
     boolean wasSmaller = false;
     synchronized (myFragments) {
+      curX += computeTextAlignShift();
+
       for (int i = 0; i < myFragments.size(); i++) {
         ColoredFragment fragment = myFragments.get(i);
         SimpleTextAttributes attributes = fragment.attributes;

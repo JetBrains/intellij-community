@@ -29,7 +29,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -145,7 +144,7 @@ public class IconUtil {
     Icon icon = providersIcon != null ? providersIcon : getBaseIcon(file);
 
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-    for (FileIconPatcher patcher : getPatchers()) {
+    for (FileIconPatcher patcher : FileIconPatcher.EP_NAME.getExtensionList()) {
       if (dumb && !DumbService.isDumbAware(patcher)) {
         continue;
       }
@@ -196,7 +195,7 @@ public class IconUtil {
 
   @Nullable
   private static Icon getProvidersIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, Project project) {
-    for (FileIconProvider provider : getProviders()) {
+    for (FileIconProvider provider : FileIconProvider.EP_NAME.getExtensionList()) {
       final Icon icon = provider.getIcon(file, flags, project);
       if (icon != null) return icon;
     }
@@ -211,24 +210,6 @@ public class IconUtil {
       baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);
     }
     return baseIcon;
-  }
-
-  private static class FileIconProviderHolder {
-    private static final List<FileIconProvider> myProviders = FileIconProvider.EP_NAME.getExtensionList();
-  }
-
-  @NotNull
-  private static List<FileIconProvider> getProviders() {
-    return FileIconProviderHolder.myProviders;
-  }
-
-  private static class FileIconPatcherHolder {
-    private static final List<FileIconPatcher> ourPatchers = FileIconPatcher.EP_NAME.getExtensionList();
-  }
-
-  @NotNull
-  private static List<FileIconPatcher> getPatchers() {
-    return FileIconPatcherHolder.ourPatchers;
   }
 
   public static Image toImage(@NotNull Icon icon) {

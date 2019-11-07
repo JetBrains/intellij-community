@@ -2,7 +2,9 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Contract;
@@ -17,6 +19,9 @@ import java.util.function.Consumer;
  * A utility for running non-blocking read actions in background thread.
  * "Non-blocking" means to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
  * {@link com.intellij.openapi.progress.ProcessCanceledException} and then restarted.
+ * Code blocks running inside should be prepared to get this exception at any moment,
+ * and they should call {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} frequently enough.
+ * They should also be side-effect-free or at least idempotent, to avoid consistency issues when restarted in the middle.
  *
  * @see ReadAction#nonBlocking
  */
@@ -90,4 +95,26 @@ public interface NonBlockingReadAction<T> {
    *                                 {@link com.intellij.util.concurrency.BoundedTaskExecutor} on top of that.
    */
   CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor);
+
+  /**
+   * Run this computation on the current thread in a non-blocking read action, when possible.
+   * Note: this method can throw various exceptions (see "Throws" section)
+   * and can block the current thread for an indefinite amount of time with just waiting,
+   * which can lead to thread starvation or unnecessary thread pool expansion.
+   * Besides that, after a read action is finished, a write action in another thread can occur at any time and make the
+   * just computed value obsolete.
+   * Therefore, it's advised to use asynchronous {@link #submit} API where possible,
+   * preferably coupled with {@link #finishOnUiThread} to ensure result validity.<p></p>
+   *
+   * If the current thread already has read access, the computation is executed as is, without any write-action-cancellability.
+   * It's the responsibility of the caller to take care about it.<p></p>
+   *
+   * {@link #finishOnUiThread} and {@link #coalesceBy} are not supported with synchronous non-blocking read actions.
+   *
+   * @return the result of the computation
+   * @throws ProcessCanceledException if the computation got expired due to {@link #expireWhen} or {@link #expireWith} or {@link #cancelWith}.
+   * @throws IllegalStateException if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
+   * @throws RuntimeException when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
+   */
+  T executeSynchronously() throws ProcessCanceledException;
 }

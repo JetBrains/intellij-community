@@ -2,18 +2,24 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.jps.cache.JpsCachesUtils;
 import com.intellij.jps.cache.client.ArtifactoryJpsServerClient;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
-import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
+import com.intellij.jps.cache.model.BuildTargetState;
+import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -22,11 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -40,10 +42,10 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String PROGRESS_TITLE = "Updating Compilation Caches";
   private static final double TOTAL_SEGMENT_SIZE = 0.9;
-  private PersistentCachingModuleHashingService myModuleHashingService;
   private final AtomicBoolean hasRunningTask;
   private final ExecutorService ourThreadPool;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
+  private final JpsMetadataLoader myMetadataLoader;
   private final JpsServerClient myServerClient;
   private final Project myProject;
 
@@ -58,41 +60,22 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     myProject = project;
     hasRunningTask = new AtomicBoolean();
     myServerClient = ArtifactoryJpsServerClient.INSTANCE;
+    myMetadataLoader = new JpsMetadataLoader(project, myServerClient);
     ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool", ProcessIOExecutorService.INSTANCE,
                                                                          getThreadPoolSize());
   }
 
-  public void initialize(@NotNull Project project) {
-    try {
-      myModuleHashingService = new PersistentCachingModuleHashingService(new File(JpsCachesUtils.getPluginStorageDir(project)), project);
-    }
-    catch (Exception e) {
-      LOG.warn("Couldn't instantiate module hashing service", e);
-    }
-  }
-
-  public boolean isInitialized() {
-    return myModuleHashingService != null;
-  }
-
   public void load(boolean isForceUpdate) {
-    if (!isInitialized()) {
-      String message = "The plugin context is not yet initialized. Please try again later";
-      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", message,
-                                                                             NotificationType.INFORMATION, null);
-      Notifications.Bus.notify(notification);
-      LOG.info(message);
-      return;
-    }
-
     Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
         if (commitInfo == null) return;
         startLoadingForCommit(commitInfo.first);
+        hasRunningTask.set(false);
       }
     };
+
     BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
     processIndicator.setIndeterminate(false);
     if (!canRunNewLoading()) return;
@@ -100,33 +83,20 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   public void notifyAboutNearestCache() {
-    if (!isInitialized()) {
-      LOG.warn("The plugin context is not yet initialized");
-      return;
-    }
-
     ourThreadPool.execute(() -> {
       Pair<String, Integer> commitInfo = getNearestCommit(false);
       if (commitInfo == null) return;
 
-      String commitToLoad = commitInfo.first;
-      String notificationContent = commitInfo.second == 0 ? "Compile server contains caches for the current commit. Do you want to update your data?"
-                                                      : "Compile server contains caches for the " + commitInfo.second + "th commit behind of yours. Do you want to update your data?";
+      String notificationContent = commitInfo.second == 0
+                                   ? "Compile server contains caches for the current commit. Do you want to update your data?"
+                                   : "Compile server contains caches for the " + commitInfo.second + "th commit behind of yours. Do you want to update your data?";
+
       ApplicationManager.getApplication().invokeLater(() -> {
         Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compile Output Loader", notificationContent,
                                                                                  NotificationType.INFORMATION, null);
         notification.addAction(NotificationAction.createSimple("Update Compile Caches", () -> {
           notification.expire();
-          Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              startLoadingForCommit(commitToLoad);
-            }
-          };
-          BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
-          processIndicator.setIndeterminate(false);
-          if (!canRunNewLoading()) return;
-          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
+          load(false);
         }));
         Notifications.Bus.notify(notification);
       });
@@ -151,27 +121,32 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
-      LOG.debug("The system contains up to date caches");
+      LOG.info("The system contains up to date caches");
       return null;
     }
     return Pair.create(commitId, commitsBehind);
   }
 
-  public void close() {
-    myModuleHashingService.close();
-  }
-
-  private void startLoadingForCommit(String commitId) {
+  private void startLoadingForCommit(@NotNull String commitId) {
     long startTime = System.currentTimeMillis();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setText("Fetching cache for commit: " + commitId);
-    indicator.setFraction(0.05);
+
+    // Loading metadata for commit
+    Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(commitId);
+    if (commitSourcesState == null) {
+      LOG.warn("Couldn't load metadata for commit: " + commitId);
+      return;
+    }
+    indicator.setFraction(0.01);
+    Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
+
     List<JpsOutputLoader> loaders = getLoaders(myProject);
     List<CompletableFuture<LoaderStatus>> completableFutures =
       ContainerUtil.map(loaders, loader -> {
         return CompletableFuture.supplyAsync(() -> {
           SegmentedProgressIndicatorManager indicatorManager = new SegmentedProgressIndicatorManager(indicator, TOTAL_SEGMENT_SIZE / loaders.size());
-          return loader.load(commitId, indicatorManager);
+          return loader.load(JpsLoaderContext.createNewContext(commitId, indicatorManager, commitSourcesState, currentSourcesState));
         }, ourThreadPool);
       });
 
@@ -185,9 +160,8 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     try {
       // Computation with loaders results. If at least one of them failed rollback all job
       initialFuture.thenAccept(loaderStatus -> {
-        LOG.debug("Loading finished with " + loaderStatus + " status");
-        CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
-          indicator.setFraction(0.97);
+        LOG.info("Loading finished with " + loaderStatus + " status");
+        CompletableFuture<Void> rollbackApplyFuture = CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
           if (loaderStatus == LoaderStatus.FAILED) {
             indicator.setText("Fetching cache failed, rolling back");
             return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
@@ -205,9 +179,19 @@ public class JpsOutputLoaderManager implements ProjectComponent {
                                                                                        NotificationType.INFORMATION, null);
                 Notifications.Bus.notify(notification);
               });
-              LOG.debug("Loading finished");
+              LOG.info("Loading finished");
             } else onFail();
           });
+
+        try {
+          rollbackApplyFuture.get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          LOG.warn("Unexpected exception rollback all progress", e);
+          onFail();
+          loaders.forEach(loader -> loader.rollback());
+          indicator.setText("Rolling back downloaded caches");
+        }
       }).handle((result, ex) -> {
         if (ex != null) {
           Throwable cause = ex.getCause();
@@ -228,7 +212,6 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       LOG.warn("Couldn't fetch jps compilation caches", e);
       onFail();
     }
-    hasRunningTask.set(false);
   }
 
   private synchronized boolean canRunNewLoading() {
@@ -243,8 +226,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
     myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, project),
-                                              new JpsProductionOutputLoader(myServerClient, project, myModuleHashingService),
-                                              new JpsTestOutputLoader(myServerClient, project, myModuleHashingService));
+                                              new JpsCompilationOutputLoader(myServerClient, project));
     return myJpsOutputLoadersLoaders;
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
@@ -37,6 +38,8 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
   private val logPrefix = "=== Start: StartUp Measurement ===\n"
 
   private val stringWriter = ExposingCharArrayWriter()
+
+  val publicStatMetrics = ObjectIntHashMap<String>()
 
   fun write(timeOffset: Long, items: List<ActivityImpl>, services: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
     stringWriter.write(logPrefix)
@@ -80,6 +83,10 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
                 totalDuration += duration
               }
 
+              if (item.name == "bootstrap" || item.name == "app initialization") {
+                publicStatMetrics.put(item.name, TimeUnit.NANOSECONDS.toMillis(duration).toInt())
+              }
+
               writeItemTimeInfo(item, duration, timeOffset, writer)
             }
           }
@@ -90,7 +97,10 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writeParallelActivities(timeOffset, writer)
 
         writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
-        writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - timeOffset))
+        val totalDurationActual = TimeUnit.NANOSECONDS.toMillis(end - timeOffset)
+        writer.writeNumberField("totalDurationActual", totalDurationActual)
+
+        publicStatMetrics.put("totalDuration", totalDurationActual.toInt())
       }
     }
   }
@@ -132,6 +142,10 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 
         item.pluginId?.let {
           StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", duration, pluginCostMap)
+        }
+
+        if (fieldName == "prepareAppInitActivities" && item.name == "splash initialization") {
+          publicStatMetrics.put("splash", TimeUnit.NANOSECONDS.toMillis(duration).toInt())
         }
 
         if (duration <= measureThreshold) {

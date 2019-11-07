@@ -4,12 +4,10 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing.haveEqualElements
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.ChangeListAdapter
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
@@ -30,20 +28,13 @@ class PredictionService(val project: Project) : Disposable {
   private val userSettings = service<UserSettings>()
   private val LOCK = Object()
 
-  private var _prediction: Collection<FilePath> = emptyList()
+  private var predictionData: PredictionData = PredictionData.EmptyPrediction(PredictionData.EmptyPredictionReason.SERVICE_INIT)
 
-  // prediction contains only unmodified files
-  val prediction: List<VirtualFile>
-    get() {
-      return synchronized(LOCK) {
-        _prediction.mapNotNull {
-          if (changeListManager.getChange(it) == null) it.virtualFile else null
-        }
-      }
-    }
+  val predictionToDisplay: Collection<VirtualFile>
+    get() = predictionData.predictionToDisplay
 
-  val isReady: Boolean
-    get() = synchronized(LOCK) { predictionRequirements?.dataManager?.dataPack?.isFull ?: false }
+  val isReadyToDisplay: Boolean
+    get() = predictionData is PredictionData.Prediction
 
   private val taskController = object : PredictionController(project, "ChangeReminder Calculation", this, {
     synchronized(LOCK) {
@@ -59,14 +50,20 @@ class PredictionService(val project: Project) : Disposable {
     get() = taskController.inProgress
 
   private val changeListsListener = object : ChangeListAdapter() {
+    private var lastChanges: Collection<Change> = listOf()
     override fun changeListsChanged() {
-      calculatePrediction()
+      val changes = changeListManager.defaultChangeList.changes
+      if (!haveEqualElements(changes, lastChanges)) {
+        calculatePrediction()
+        lastChanges = changes
+      }
     }
   }
 
   private val dataPackChangeListener = DataPackChangeListener {
     synchronized(LOCK) {
       predictionRequirements?.filesHistoryProvider?.clear()
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.DATA_PACK_CHANGED)
       calculatePrediction()
     }
   }
@@ -114,7 +111,7 @@ class PredictionService(val project: Project) : Disposable {
   }
 
   private fun removeDataManager() {
-    setPrediction(emptyList())
+    setEmptyPrediction(PredictionData.EmptyPredictionReason.DATA_MANAGER_REMOVED)
     val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
     predictionRequirements = null
     filesHistoryProvider.clear()
@@ -124,12 +121,27 @@ class PredictionService(val project: Project) : Disposable {
   }
 
   private fun calculatePrediction() = synchronized(LOCK) {
-    setPrediction(emptyList())
     val changes = changeListManager.defaultChangeList.changes
-    if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) return
-    val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
+    if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) {
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.TOO_MANY_FILES)
+      return
+    }
+    val (dataManager, filesHistoryProvider) = predictionRequirements ?: let {
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.REQUIREMENTS_NOT_MET)
+      return
+    }
+    val changeListFiles = changes.map { ChangesUtil.getFilePath(it) }
+    val currentPredictionData = predictionData
+    if (currentPredictionData is PredictionData.Prediction &&
+        haveEqualElements(currentPredictionData.requestedFiles, changeListFiles)) {
+      setPrediction(currentPredictionData)
+      return
+    }
     if (dataManager.dataPack.isFull) {
-      taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changes))
+      taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changeListFiles))
+    }
+    else {
+      setEmptyPrediction(PredictionData.EmptyPredictionReason.DATA_PACK_IS_NOT_FULL)
     }
   }
 
@@ -150,8 +162,12 @@ class PredictionService(val project: Project) : Disposable {
     Disposer.dispose(projectLogListenerDisposable)
   }
 
-  private fun setPrediction(newPrediction: Collection<FilePath>) {
-    _prediction = newPrediction
+  private fun setEmptyPrediction(reason: PredictionData.EmptyPredictionReason) {
+    setPrediction(PredictionData.EmptyPrediction(reason))
+  }
+
+  private fun setPrediction(newPrediction: PredictionData) {
+    predictionData = newPrediction
     changesViewManager.scheduleRefresh()
   }
 

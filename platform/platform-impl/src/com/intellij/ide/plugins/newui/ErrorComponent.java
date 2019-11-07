@@ -20,8 +20,7 @@ import javax.swing.text.html.StyleSheet;
  * @author Alexander Lobas
  */
 public class ErrorComponent {
-  private static final String ENABLE_KEY = "EnableCallback";
-  private static final String DISABLE_KEY = "DisableCallback";
+  private static final String KEY = "EnableCallback";
 
   @NotNull
   public static JComponent create(@NotNull JPanel panel, @Nullable Object constraints) {
@@ -39,7 +38,7 @@ public class ErrorComponent {
     editorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
-        Object callback = editorPane.getClientProperty(ENABLE_KEY.equals(e.getDescription()) ? ENABLE_KEY : DISABLE_KEY);
+        Object callback = editorPane.getClientProperty(KEY);
         if (callback instanceof Runnable) {
           ApplicationManager.getApplication().invokeLater((Runnable)callback, ModalityState.any());
         }
@@ -60,19 +59,14 @@ public class ErrorComponent {
 
   public static void show(@NotNull JComponent errorComponent,
                           @NotNull String message,
-                          @Nullable String enableAction,
-                          @Nullable Runnable enableCallback,
-                          @Nullable String disableAction,
-                          @Nullable Runnable disableCallback) {
+                          @Nullable String action,
+                          @Nullable Runnable enableCallback) {
     JEditorPane editorPane = (JEditorPane)errorComponent;
 
     editorPane.setText("<html><span>" + message + "</span>" +
-                       (enableCallback == null ? "" : "&nbsp;<a href='" + ENABLE_KEY + "'>" + enableAction + "</a>") +
-                       (disableCallback == null ? "" : (enableCallback == null ? "&nbsp;" : "<br>") + "<a href='" + DISABLE_KEY + "'>" + disableAction + "</a>") +
-                       "</html>");
+                       (enableCallback == null ? "" : "&nbsp;<a href='link'>" + action + "</a>") + "</html>");
 
-    editorPane.putClientProperty(ENABLE_KEY, enableCallback);
-    editorPane.putClientProperty(DISABLE_KEY, disableCallback);
+    editorPane.putClientProperty(KEY, enableCallback);
   }
 
   @NotNull
@@ -81,11 +75,9 @@ public class ErrorComponent {
                                 @Nullable JComponent errorComponent,
                                 @NotNull String message,
                                 @Nullable String action,
-                                @Nullable Runnable enableCallback,
-                                @Nullable String disableAction,
-                                @Nullable Runnable disableCallback) {
+                                @Nullable Runnable enableCallback) {
     JComponent component = errorComponent == null ? create(panel, constraints) : errorComponent;
-    show(component, message, action, enableCallback, disableAction, disableCallback);
+    show(component, message, action, enableCallback);
     return component;
   }
 }

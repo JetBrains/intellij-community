@@ -39,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,7 +160,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
     final boolean isFromUI = model != null;
 
-    final List<Module> modules = ContainerUtil.newSmartList();
+    final List<Module> modules = new SmartList<>();
     final Map<ModifiableRootModel, Module> moduleMap = ContainerUtil.newIdentityHashMap();
     final IdeModifiableModelsProvider modelsProvider = isFromUI ? new IdeUIModifiableModelsProvider(
       project, model, (ModulesConfigurator)modulesProvider, artifactModel) {

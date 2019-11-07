@@ -11,6 +11,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,18 +32,21 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
-  private static final Map<String, String> DESIGN_TYPES = new HashMap<>();
-  private static final Map<String, String> CONTENT_TYPES = new HashMap<>();
-  static {
-    DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES, "vb");
-    DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_TYPES, "ss");
-    DESIGN_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.GLOBAL_ELEMENTS_LOCAL_TYPES, "rd");
-    CONTENT_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.SMART_TYPE, "smart");
-    CONTENT_TYPES.put(GenerateSchemaFromInstanceDocumentDialog.STRING_TYPE, "string");
-  }
+final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
+  private static final NotNullLazyValue<Map<String, String>> DESIGN_TYPES = AtomicNotNullLazyValue.createValue(() -> {
+    Map<String, String> result = new HashMap<>();
+    result.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES, "vb");
+    result.put(GenerateSchemaFromInstanceDocumentDialog.LOCAL_ELEMENTS_TYPES, "ss");
+    result.put(GenerateSchemaFromInstanceDocumentDialog.GLOBAL_ELEMENTS_LOCAL_TYPES, "rd");
+    return result;
+  });
 
-  //private static final
+  private static final NotNullLazyValue<Map<String, String>> CONTENT_TYPES = AtomicNotNullLazyValue.createValue(() -> {
+    Map<String, String> result = new HashMap<>();
+    result.put(GenerateSchemaFromInstanceDocumentDialog.SMART_TYPE, "smart");
+    result.put(GenerateSchemaFromInstanceDocumentDialog.STRING_TYPE, "string");
+    return result;
+  });
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -83,10 +88,10 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
 
     @NonNls List<String> parameters = new LinkedList<>();
     parameters.add("-design");
-    parameters.add(DESIGN_TYPES.get(dialog.getDesignType()));
+    parameters.add(DESIGN_TYPES.getValue().get(dialog.getDesignType()));
 
     parameters.add("-simple-content-types");
-    parameters.add(CONTENT_TYPES.get(dialog.getSimpleContentType()));
+    parameters.add(CONTENT_TYPES.getValue().get(dialog.getSimpleContentType()));
 
     parameters.add("-enumerations");
     String enumLimit = dialog.getEnumerationsLimit();

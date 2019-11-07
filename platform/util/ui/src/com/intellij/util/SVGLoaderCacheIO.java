@@ -10,11 +10,12 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Set;
+
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  * Storage level for {@link SVGLoaderCache} and {@link SVGLoaderPrebuilt}
@@ -22,8 +23,7 @@ import java.util.Set;
  */
 @ApiStatus.Internal
 public class SVGLoaderCacheIO {
-  private static final Set<OpenOption> OPEN_OPTION_SET = ContainerUtil
-    .set(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+  private static final Set<OpenOption> OPEN_OPTION_SET = ContainerUtil.set(CREATE_NEW, WRITE);
 
   @Nullable
   @ApiStatus.Internal
@@ -76,8 +76,43 @@ public class SVGLoaderCacheIO {
     buff.flip();
 
     Files.createDirectories(file.getParent());
-    try (SeekableByteChannel channel = Files.newByteChannel(file, OPEN_OPTION_SET)) {
-      channel.write(buff);
+
+    // we may have a race condition:
+    // thread A - is writing the cache
+    // thread B - attempts to read the cache, fails, and attempts to remove the same cache file
+    //
+    // we write the cache file as atomic as possible with write&move strategy (worst, we'll write the same file twice)
+    Path tmpFile = file.resolve(file + ".tmp" + System.currentTimeMillis());
+    try {
+      try (SeekableByteChannel channel = Files.newByteChannel(tmpFile, OPEN_OPTION_SET)) {
+        channel.write(buff);
+      }
+
+      try {
+        Files.move(tmpFile, file, ATOMIC_MOVE);
+      }
+      catch (AtomicMoveNotSupportedException e) {
+        Files.move(tmpFile, file);
+      }
+    }
+    catch (FileAlreadyExistsException e) {
+      //parallel thread managed to create the same file, skip it
+    }
+    catch (Exception e) {
+      deleteQuietly(file);
+      throw e;
+    }
+    finally {
+      deleteQuietly(tmpFile);
+    }
+  }
+
+  private static void deleteQuietly(@NotNull Path path) {
+    try {
+      Files.deleteIfExists(path);
+    }
+    catch (Exception e) {
+      //NOP
     }
   }
 }

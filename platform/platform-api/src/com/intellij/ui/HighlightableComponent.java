@@ -27,6 +27,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
   protected boolean myHasFocus;
   protected boolean myPaintUnfocusedSelection = false;
   private boolean myDoNotHighlight = false;
+  private boolean myIconAtRight = false;
 
   public HighlightableComponent() {
     myIconTextGap = 4;
@@ -234,7 +235,8 @@ public class HighlightableComponent extends JComponent implements Accessible {
     // paint icon
 
     if (myIcon != null) {
-      myIcon.paintIcon(this, g, 0, (getHeight() - myIcon.getIconHeight()) / 2);
+      int x = isIconAtRight() ? getWidth() - myIcon.getIconWidth() : 0;
+      myIcon.paintIcon(this, g, x, (getHeight() - myIcon.getIconHeight()) / 2);
     }
 
     // paint text
@@ -335,7 +337,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
   }
 
   protected int getTextOffset() {
-    if (myIcon == null){
+    if (myIcon == null || isIconAtRight()) {
       return 2;
     }
     return myIcon.getIconWidth() + myIconTextGap;
@@ -423,6 +425,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
     if (myIcon != null){
       height = Math.max(myIcon.getIconHeight() + defFontMetrics.getLeading(), height);
+      width += myIcon.getIconWidth();
     }
 
     return new Dimension(width + 2, height);
@@ -450,6 +453,14 @@ public class HighlightableComponent extends JComponent implements Accessible {
       accessibleContext = new AccessibleHighlightable();
     }
     return accessibleContext;
+  }
+
+  public boolean isIconAtRight() {
+    return myIconAtRight;
+  }
+
+  public void setIconAtRight(boolean iconAtRight) {
+    myIconAtRight = iconAtRight;
   }
 
   protected class AccessibleHighlightable extends JComponent.AccessibleJComponent {

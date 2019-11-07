@@ -73,7 +73,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "lib/util.jar"                                              : "1.8",
     "lib/external-system-rt.jar"                                : "1.6",
     "lib/jshell-frontend.jar"                                   : "1.9",
-    "lib/sa-jdwp"                                               : "",  // ignored
+    "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
     "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
     "plugins/Groovy/lib/groovy_rt.jar"                          : "1.5",
@@ -112,6 +112,13 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
+        for (String name : JAVA_IDE_API_MODULES) {
+          withModule(name)
+        }
+        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
+          withModule(name)
+        }
+
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
         withModule("intellij.java.rt", "idea_rt.jar", null)
 

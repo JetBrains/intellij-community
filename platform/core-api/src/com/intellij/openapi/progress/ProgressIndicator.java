@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +88,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText2(String)
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   void setText(String text);
 
   /**
@@ -99,6 +101,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText(String)
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   void setText2(String text);
 
   /**

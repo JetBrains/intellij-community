@@ -2,12 +2,14 @@ package com.intellij.jps.cache.hashing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.impl.IgnoredPatternSet;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.impl.JpsFileTypesConfigurationImpl;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -88,6 +90,18 @@ public class ModuleHashingService {
       result[i] += secondHash[i];
     }
     return result;
+  }
+
+  public static String calculateStringHash(String content) {
+    try {
+      MessageDigest md = getMessageDigest();
+      md.reset();
+      return StringUtil.toHexString(md.digest(content.getBytes(StandardCharsets.UTF_8)));
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't calculate string hash for: " + content);
+    }
+    return "";
   }
 
   @NotNull

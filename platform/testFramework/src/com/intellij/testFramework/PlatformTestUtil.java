@@ -84,6 +84,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -259,7 +260,8 @@ public class PlatformTestUtil {
   }
 
   private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
-    assert getMillisSince(startTimeMillis) <= timeout : "the waiting takes too long";
+    long took = getMillisSince(startTimeMillis);
+    assert took <= timeout : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms", timeout, took);
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
@@ -329,27 +331,44 @@ public class PlatformTestUtil {
   @Nullable
   private static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
-    AtomicBoolean complete = new AtomicBoolean(false);
-    promise.onProcessed(ignore -> complete.set(true));
-    T result = null;
     long start = System.currentTimeMillis();
-    do {
-      UIUtil.dispatchAllInvocationEvents();
+    while (true) {
+      if (promise.getState() == Promise.State.PENDING) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
       try {
-        result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
+        return promise.blockingGet(20, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
       catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
         if (assertSucceeded) {
           throw new AssertionError(e);
+        } else {
+          return null;
         }
       }
       assertMaxWaitTimeSince(start, timeout);
     }
-    while (!complete.get());
-    UIUtil.dispatchAllInvocationEvents();
-    return result;
+  }
+
+  public static <T> T waitForFuture(@NotNull Future<T> future, long timeoutMillis) {
+    assertDispatchThreadWithoutWriteAccess();
+    long start = System.currentTimeMillis();
+    while (true) {
+      if (!future.isDone()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      try {
+        return future.get(10, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException ignore) {
+      }
+      catch (Exception e) {
+        throw new AssertionError(e);
+      }
+      assertMaxWaitTimeSince(start, timeoutMillis);
+    }
   }
 
   public static void waitForAlarm(final int delay) {

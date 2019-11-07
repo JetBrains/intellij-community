@@ -309,7 +309,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     else if (pos == Position.LEFT) {
       if (myLeftPanel == null) {
         myLeftPanel = new JPanel();
-        myLeftPanel.setBorder(JBUI.Borders.empty(1, 4, 0, 1));
+        myLeftPanel.setBorder(JBUI.Borders.empty(0, 4, 0, 1));
         myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
         myLeftPanel.setOpaque(false);
         add(myLeftPanel, BorderLayout.WEST);
@@ -320,7 +320,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     else {
       if (myCenterPanel == null) {
         myCenterPanel = JBUI.Panels.simplePanel().andTransparent();
-        myCenterPanel.setBorder(JBUI.Borders.empty(1, 1, 0, 1));
+        myCenterPanel.setBorder(JBUI.Borders.empty(0, 1));
         add(myCenterPanel, BorderLayout.CENTER);
       }
 

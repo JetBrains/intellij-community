@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
@@ -18,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,16 +48,27 @@ public final class PluginClassLoader extends UrlClassLoader {
                            @NotNull ClassLoader[] parents,
                            PluginId pluginId,
                            String version,
-                           File pluginRoot) {
+                           @Nullable Path pluginRoot) {
     super(build().urls(urls).allowLock().useCache());
     myParents = parents;
     myPluginId = pluginId;
     myPluginVersion = version;
-    myLibDirectories = ContainerUtil.newSmartList();
-    File libDir = new File(pluginRoot, "lib");
-    if (libDir.exists()) {
-      myLibDirectories.add(libDir.getAbsolutePath());
+    myLibDirectories = new SmartList<>();
+
+    if (pluginRoot != null) {
+      Path libDir = pluginRoot.resolve("lib");
+      if (Files.exists(libDir)) {
+        myLibDirectories.add(libDir.toAbsolutePath().toString());
+      }
     }
+  }
+
+  /**
+   * @deprecated Use {@link #PluginClassLoader(List, ClassLoader[], PluginId, String, Path)}
+   */
+  @Deprecated
+  public PluginClassLoader(@NotNull List<URL> urls, @NotNull ClassLoader[] parents, PluginId pluginId, String version, File pluginRoot) {
+    this(urls, parents, pluginId, version, pluginRoot == null ? null : pluginRoot.toPath());
   }
 
   public long getEdtTime() {
@@ -70,8 +84,8 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
-    Class c = tryLoadingClass(name, resolve, null);
+  public Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
+    Class<?> c = tryLoadingClass(name, resolve, null);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
     }
@@ -112,7 +126,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
       if (parent instanceof PluginClassLoader) {
         Result resource = actionWithPluginClassLoader.execute(name, (PluginClassLoader)parent, visited, actionWithPluginClassLoader,
-                                                              actionWithClassloader, parameter);
+          actionWithClassloader, parameter);
         if (resource != null) {
           return resource;
         }
@@ -126,26 +140,26 @@ public final class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
-  private static final ActionWithPluginClassLoader<Class, Void> loadClassInPluginCL = new ActionWithPluginClassLoader<Class, Void>() {
+  private static final ActionWithPluginClassLoader<Class<?>, Void> loadClassInPluginCL = new ActionWithPluginClassLoader<Class<?>, Void>() {
     @Override
-    Class execute(String name,
-                  PluginClassLoader classloader,
-                  Set<ClassLoader> visited,
-                  ActionWithPluginClassLoader<Class, Void> actionWithPluginClassLoader,
-                  ActionWithClassloader<Class, Void> actionWithClassloader,
-                  Void parameter) {
+    Class<?> execute(String name,
+                     PluginClassLoader classloader,
+                     Set<ClassLoader> visited,
+                     ActionWithPluginClassLoader<Class<?>, Void> actionWithPluginClassLoader,
+                     ActionWithClassloader<Class<?>, Void> actionWithClassloader,
+                     Void parameter) {
       return classloader.tryLoadingClass(name, false, visited);
     }
 
     @Override
-    protected Class doExecute(String name, PluginClassLoader classloader, Void parameter) {
+    protected Class<?> doExecute(String name, PluginClassLoader classloader, Void parameter) {
       return null;
     }
   };
 
-  private static final ActionWithClassloader<Class, Void> loadClassInCl = new ActionWithClassloader<Class, Void>() {
+  private static final ActionWithClassloader<Class<?>, Void> loadClassInCl = new ActionWithClassloader<Class<?>, Void>() {
     @Override
-    public Class execute(String name, ClassLoader classloader, Void parameter) {
+    public Class<?> execute(String name, ClassLoader classloader, Void parameter) {
       try {
         return classloader.loadClass(name);
       }
@@ -159,9 +173,9 @@ public final class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+  private Class<?> tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
     long startTime = StartUpMeasurer.getCurrentTime();
-    Class c = null;
+    Class<?> c = null;
     if (!mustBeLoadedByPlatform(name)) {
       c = loadClassInsideSelf(name);
     }
@@ -203,14 +217,15 @@ public final class PluginClassLoader extends UrlClassLoader {
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
-                                               (className.startsWith("kotlin.reflect.") && className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
+                                               (className.startsWith("kotlin.reflect.") &&
+                                                className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
   @Nullable
-  private Class loadClassInsideSelf(@NotNull String name) {
+  private Class<?> loadClassInsideSelf(@NotNull String name) {
     synchronized (getClassLoadingLock(name)) {
-      Class c = findLoadedClass(name);
+      Class<?> c = findLoadedClass(name);
       if (c != null) {
         return c;
       }
@@ -296,7 +311,9 @@ public final class PluginClassLoader extends UrlClassLoader {
                              List<Enumeration<URL>> enumerations) {
       try {
         enumerations.add(classloader.findOwnResources(name));
-      } catch (IOException ignore) {}
+      }
+      catch (IOException ignore) {
+      }
       return null;
     }
   };
@@ -308,7 +325,8 @@ public final class PluginClassLoader extends UrlClassLoader {
       try {
         enumerations.add(classloader.getResources(name));
       }
-      catch (IOException ignore) {}
+      catch (IOException ignore) {
+      }
       return null;
     }
   };
@@ -353,7 +371,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   @NotNull
   public String getPluginIdString() {
-    return myPluginId != null ? myPluginId.getIdString() : PluginManagerCore.CORE_PLUGIN_ID;
+    return myPluginId != null ? myPluginId.getIdString() : PluginManagerCore.CORE_ID.getIdString();
   }
 
   @Override

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
@@ -26,6 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -305,7 +305,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
                                                       @NotNull Function<? super String, String> nameConverter) {
     List<BeanConfigurable.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     Object instance = getInstance();
-    return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.fun(box.getTitle()), configurableId) {
+    return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override
       public boolean isOptionEnabled() {
         return box.getValue(instance);

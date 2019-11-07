@@ -35,6 +35,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public static final String GROOVY2_2 = "2.2";
   public static final String GROOVY2_2_2 = "2.2.2";
   public static final String GROOVY2_3 = "2.3";
+  public static final String GROOVY2_4 = "2.4";
   public static final String GROOVY2_5 = "2.5";
   public static final String GROOVY3_0 = "3.0";
 

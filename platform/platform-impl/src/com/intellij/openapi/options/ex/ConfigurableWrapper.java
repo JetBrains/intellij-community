@@ -54,7 +54,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(name.getExtensions(), (NullableFunction<ConfigurableEP<T>, T>)ep -> wrapConfigurable(ep));
+    return ContainerUtil.mapNotNull(name.getExtensionList(), (NullableFunction<ConfigurableEP<T>, T>)ep -> wrapConfigurable(ep));
   }
 
   public static boolean hasOwnContent(UnnamedConfigurable configurable) {
@@ -178,6 +178,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     UnnamedConfigurable configurable = myConfigurable;
     if (configurable != null) {
       configurable.disposeUIResources();
+    }
+  }
+
+  @Override
+  public void cancel() {
+    UnnamedConfigurable configurable = myConfigurable;
+    if (configurable != null) {
+      configurable.cancel();
     }
   }
 

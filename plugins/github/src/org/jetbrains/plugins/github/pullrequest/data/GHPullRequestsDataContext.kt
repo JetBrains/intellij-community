@@ -9,9 +9,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import javax.swing.ListModel
@@ -28,7 +26,9 @@ internal class GHPullRequestsDataContext(val gitRepositoryCoordinates: GitRemote
                                          val securityService: GithubPullRequestsSecurityService,
                                          val busyStateTracker: GithubPullRequestsBusyStateTracker, //TODO: move to ui
                                          val metadataService: GithubPullRequestsMetadataService,
-                                         val stateService: GithubPullRequestsStateService) : Disposable {
+                                         val stateService: GithubPullRequestsStateService,
+                                         val reviewService: GHPRReviewService,
+                                         val commentService: GHPRCommentService) : Disposable {
 
   override fun dispose() {
     Disposer.dispose(messageBus)
@@ -42,6 +42,7 @@ internal class GHPullRequestsDataContext(val gitRepositoryCoordinates: GitRemote
 
     interface PullRequestEditedListener {
       fun onPullRequestEdited(number: Long) {}
+      fun onPullRequestReviewsEdited(number: Long) {}
       fun onPullRequestCommentsEdited(number: Long) {}
     }
   }

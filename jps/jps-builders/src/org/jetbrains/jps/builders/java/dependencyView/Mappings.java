@@ -122,7 +122,7 @@ public class Mappings {
 
   private void createImplementation() throws IOException {
     if (!myIsDelta) {
-      myContext = new DependencyContext(myRootDir);
+      myContext = new DependencyContext(myRootDir, myRelativizer);
       myDebugS = myContext.getLogger(LOG);
     }
 

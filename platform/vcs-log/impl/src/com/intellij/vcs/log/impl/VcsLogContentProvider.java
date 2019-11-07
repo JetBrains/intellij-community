@@ -9,7 +9,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -37,6 +39,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Nullable private Consumer<? super VcsLogUiImpl> myOnCreatedListener;
 
   @Nullable private VcsLogUiImpl myUi;
+  @Nullable private Content myContent;
 
   public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
     myProjectLog = projectLog;
@@ -65,6 +68,23 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     return myUi;
   }
 
+  @Override
+  public void initTabContent(@NotNull Content content) {
+    myContent = content;
+    myContent.setTabName(TAB_NAME);
+    updateDisplayName();
+
+    myProjectLog.createLogInBackground(true);
+
+    content.setComponent(myContainer);
+    content.setDisposer(() -> {
+      disposeContent();
+
+      myContent.setDisplayName(TAB_NAME);
+      myContent = null;
+    });
+  }
+
   @CalledInAwt
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
@@ -74,8 +94,17 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);
 
+      updateDisplayName();
+      myUi.addFilterListener(this::updateDisplayName);
+
       if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
       myOnCreatedListener = null;
+    }
+  }
+
+  private void updateDisplayName() {
+    if (myContent != null && myUi != null) {
+      myContent.setDisplayName(ContentUtilEx.getFullName(TAB_NAME, VcsLogTabsManager.generateDisplayName(myUi)));
     }
   }
 
@@ -96,12 +125,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       myUi = null;
       Disposer.dispose(ui);
     }
-  }
-
-  @Override
-  public JComponent initContent() {
-    myProjectLog.createLogInBackground(true);
-    return myContainer;
   }
 
   /**

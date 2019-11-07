@@ -43,7 +43,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -277,6 +279,8 @@ public class SdkConfigurationUtil {
 
   /**
    * Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
+   * <p>
+   * Must be called from the EDT (because it uses {@link WriteAction#compute} under the hood).
    *
    * @param path    identifies the SDK
    * @return newly created SDK, or null.
@@ -308,6 +312,12 @@ public class SdkConfigurationUtil {
   }
 
   public static void selectSdkHome(@NotNull final SdkType sdkType, @NotNull final Consumer<? super String> consumer) {
+    selectSdkHome(sdkType, null, consumer);
+  }
+
+  public static void selectSdkHome(@NotNull final SdkType sdkType,
+                                   @Nullable Component component,
+                                   @NotNull final Consumer<? super String> consumer) {
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk sdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(sdkType);
@@ -315,7 +325,10 @@ public class SdkConfigurationUtil {
       consumer.consume(sdk.getHomePath());
       return;
     }
-    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), chosen -> {
+    // passing project instance here seems to be the right idea, but it would make the dialog
+    // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
+    // The behaviour may also depend on the FileChooser implementations which does not reuse that code
+    FileChooser.chooseFiles(descriptor, null, component, getSuggestedSdkRoot(sdkType), chosen -> {
       final String path = chosen.get(0).getPath();
       if (sdkType.isValidSdkHome(path)) {
         consumer.consume(path);

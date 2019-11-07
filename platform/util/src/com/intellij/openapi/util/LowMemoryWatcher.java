@@ -23,7 +23,19 @@ public class LowMemoryWatcher {
   private static final WeakList<LowMemoryWatcher> ourListeners = new WeakList<>();
   private final Runnable myRunnable;
   private final LowMemoryWatcherType myType;
-  public static final AtomicBoolean ourNotificationsSuppressed = new AtomicBoolean();
+  private static final AtomicBoolean ourNotificationsSuppressed = new AtomicBoolean();
+
+  public static <T> T runWithNotificationsSuppressed(Computable<T> runnable) {
+    if (ourNotificationsSuppressed.getAndSet(true)) {
+      throw new IllegalStateException("runWithNotificationsSuppressed does not support reentrancy");
+    }
+    try {
+      return runnable.compute();
+    }
+    finally {
+      ourNotificationsSuppressed.set(false);
+    }
+  }
 
   public static void onLowMemorySignalReceived(boolean afterGc) {
     if (ourNotificationsSuppressed.get()) return;

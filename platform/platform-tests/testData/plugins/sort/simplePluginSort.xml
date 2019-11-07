@@ -6,7 +6,9 @@
   </idea-plugin>
   <idea-plugin url="file://cycle0.xml">
     <id>cycle0</id>
-    <depends>cycle1</depends>
+    <depends>
+      cycle1
+    </depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://cycle1.xml">

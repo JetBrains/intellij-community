@@ -1,3 +1,3 @@
 def foo(){}
 
-"f<ref>oo"()
+"f<caret>oo"()

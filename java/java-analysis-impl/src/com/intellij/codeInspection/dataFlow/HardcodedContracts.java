@@ -167,7 +167,28 @@ public class HardcodedContracts {
     .register(staticCall(JAVA_UTIL_OBJECTS, "requireNonNullElseGet").parameterCount(2),
               ContractProvider.of(
                 StandardMethodContract.fromText("!null,_->param1"),
-                StandardMethodContract.fromText("null,_->!null")));
+                StandardMethodContract.fromText("null,_->!null")))
+    .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract());
+
+  @NotNull
+  private static ContractProvider getArraycopyContract() {
+    ContractValue src = ContractValue.argument(0);
+    ContractValue srcPos = ContractValue.argument(1);
+    ContractValue dest = ContractValue.argument(2);
+    ContractValue destPos = ContractValue.argument(3);
+    ContractValue length = ContractValue.argument(4);
+    ContractValue srcLength = src.specialField(SpecialField.ARRAY_LENGTH);
+    ContractValue dstLength = dest.specialField(SpecialField.ARRAY_LENGTH);
+    return ContractProvider.of(
+      singleConditionContract(srcPos, RelationType.GT, srcLength, fail()),
+      singleConditionContract(destPos, RelationType.GT, dstLength, fail()),
+      singleConditionContract(srcPos, RelationType.LT, ContractValue.zero(), fail()),
+      singleConditionContract(destPos, RelationType.LT, ContractValue.zero(), fail()),
+      singleConditionContract(length, RelationType.LT, ContractValue.zero(), fail()),
+      singleConditionContract(length, RelationType.GT, srcLength, fail()),
+      singleConditionContract(length, RelationType.GT, dstLength, fail())
+    );
+  }
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();

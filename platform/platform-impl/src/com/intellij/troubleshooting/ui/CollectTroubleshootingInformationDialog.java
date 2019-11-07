@@ -22,8 +22,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.settingsSummary.ProblemType;
-import com.intellij.troubleshooting.ProblemTypeAdapter;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,10 +47,6 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     TroubleInfoCollector[] extensions = TroubleInfoCollector.EP_SETTINGS.getExtensions();
     for(TroubleInfoCollector troubleInfoCollector : extensions){
       troubleTypeBox.addItem(troubleInfoCollector);
-    }
-    ProblemType[] legacyExtensions = ProblemType.EP_SETTINGS.getExtensions();
-    for(ProblemType problemType : legacyExtensions){
-      troubleTypeBox.addItem(new ProblemTypeAdapter(problemType));
     }
     troubleTypeBox.addItemListener(new ItemListener() {
       @Override

@@ -38,7 +38,7 @@ public final class LifecycleUsageTriggerCollector {
 
   private static void addIfTrue(@NotNull FeatureUsageData data, @NotNull String key, boolean value) {
     if (value) {
-      data.addData(key, value);
+      data.addData(key, true);
     }
   }
 

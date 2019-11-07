@@ -62,6 +62,7 @@ public final class ImageDescriptor {
 
   public static void clearCache() {
     ourCache.clear();
+    ImageLoader.clearCache();
   }
 
   public ImageDescriptor(@NotNull String path, double scale, @NotNull ImageType type, boolean original) {

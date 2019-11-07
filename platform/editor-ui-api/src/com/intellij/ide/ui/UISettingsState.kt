@@ -103,6 +103,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")
   var showIconInQuickNavigation by property(true)
   var showTreeIndentGuides by property(false)
+  var compactTreeIndents by property(false)
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)

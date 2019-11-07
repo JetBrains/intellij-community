@@ -18,6 +18,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -133,6 +134,7 @@ public abstract class Decompressor {
   private Condition<? super String> myFilter = null;
   private boolean myOverwrite = true;
   private Consumer<? super File> myConsumer;
+  private int myCutDirs = 0;
 
   public Decompressor filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
@@ -149,21 +151,38 @@ public abstract class Decompressor {
     return this;
   }
 
+  /**
+   * Removes several leading directories from the archive during extraction.
+   * Some entries may clash, so use {@link #overwrite(boolean)} to control it.
+   * Some short file entries may be lost.
+   *
+   * Executed AFTER filter test!
+   *
+   * @param dirsToCut how many directories has to be removed from archive entry names
+   * @return self
+   */
+  @NotNull
+  public Decompressor cutDirs(int dirsToCut) {
+    myCutDirs = dirsToCut;
+    return this;
+  }
+
   public final void extract(@NotNull File outputDir) throws IOException {
     openStream();
     try {
       Entry entry;
       while ((entry = nextEntry()) != null) {
-        String name = entry.name;
-
         if (myFilter != null) {
-          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(name, '/') ? name + '/' : name;
+          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
           if (!myFilter.value(entryName)) {
             continue;
           }
         }
 
-        File outputFile = entryFile(outputDir, name);
+        entry = entry.cutDirs(myCutDirs);
+        if (entry == null) continue;
+
+        File outputFile = entryFile(outputDir, entry.name);
 
         switch (entry.type) {
           case DIR:
@@ -194,7 +213,7 @@ public abstract class Decompressor {
           case SYMLINK:
             if (StringUtil.isEmpty(entry.linkTarget) ||
                 !FileUtil.isAncestor(outputDir, new File(FileUtil.toCanonicalPath(outputFile.getParent() + '/' + entry.linkTarget)), true)) {
-              throw new IOException("Invalid symlink entry: " + name + " -> " + entry.linkTarget);
+              throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget);
             }
             FileUtil.createParentDirs(outputFile);
             Files.createSymbolicLink(outputFile.toPath(), Paths.get(entry.linkTarget));
@@ -234,6 +253,14 @@ public abstract class Decompressor {
       this.isExecutable = isExecutable;
       this.linkTarget = linkTarget;
     }
+
+    @Nullable
+    protected Entry cutDirs(int cutDirs) throws IOException {
+      if (cutDirs == 0) return this;
+      String cutName = Decompressor.cutDirs(name, cutDirs);
+      if (cutName == null) return null;
+      return new Entry(cutName, this.type, this.isWritable, isExecutable, linkTarget);
+    }
   }
 
   protected abstract void openStream() throws IOException;
@@ -243,11 +270,25 @@ public abstract class Decompressor {
   protected abstract void closeStream() throws IOException;
   //</editor-fold>
 
-  @NotNull
-  public static File entryFile(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+  @Nullable
+  private static String cutDirs(@Nullable String entryName, int cutDirs) throws IOException {
+    if (cutDirs == 0 || entryName == null) return entryName;
+
+    ensureValidPath(entryName);
+    List<String> pathElements = FileUtil.splitPath(FileUtil.toCanonicalPath(entryName, '/'), '/');
+    if (pathElements.size() <= cutDirs) return null;
+    return StringUtil.join(pathElements.subList(cutDirs, pathElements.size()), "/");
+  }
+
+  private static void ensureValidPath(@NotNull String entryName) throws IOException {
     if (entryName.contains("..") && ArrayUtil.contains("..", entryName.split("[/\\\\]"))) {
       throw new IOException("Invalid entry name: " + entryName);
     }
+  }
+
+  @NotNull
+  public static File entryFile(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+    ensureValidPath(entryName);
     return new File(outputDir, entryName);
   }
 }

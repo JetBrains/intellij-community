@@ -187,7 +187,7 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun notifySuccess() {
-    val notification = STANDARD_NOTIFICATION.createNotification("Updated Commit Message Successfully", "", NotificationType.INFORMATION, null)
+    val notification = STANDARD_NOTIFICATION.createNotification("Commit Message Changed", "", NotificationType.INFORMATION, null)
     notification.addAction(NotificationAction.createSimple("Undo") {
       notification.expire()
       undoInBackground()

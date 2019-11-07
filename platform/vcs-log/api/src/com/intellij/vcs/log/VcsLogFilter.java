@@ -11,5 +11,5 @@ public interface VcsLogFilter {
   VcsLogFilterCollection.FilterKey<?> getKey();
 
   @NotNull
-  String getPresentation();
+  String getDisplayText();
 }

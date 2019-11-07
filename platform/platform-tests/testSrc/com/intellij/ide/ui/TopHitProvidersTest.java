@@ -8,7 +8,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.ProjectRule;
 import com.intellij.testFramework.RunsInEdt;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -33,26 +31,37 @@ public class TopHitProvidersTest {
   public void testUiSettings() {
     List<String> errors = new ArrayList<>();
 
-    List<OptionsSearchTopHitProvider> providers = getProviders();
+    List<OptionsSearchTopHitProvider> providers = ContainerUtil.concat(OptionsTopHitProvider.PROJECT_LEVEL_EP.getExtensionList(),
+                                                                       ContainerUtil.mapNotNull(SearchTopHitProvider.EP_NAME.getExtensionList(), provider -> provider instanceof OptionsSearchTopHitProvider ? (OptionsSearchTopHitProvider)provider : null));
     for (OptionsSearchTopHitProvider provider : providers) {
       for (OptionDescription option : getOptions(provider)) {
-        if (option instanceof BooleanOptionDescription) {
-          try {
-            BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
-            boolean enabled = booleanOption.isOptionEnabled();
+        if (!(option instanceof BooleanOptionDescription)) {
+          continue;
+        }
 
-            // We can't reliably restore original state for non-boolean options
-            if (option instanceof NotABooleanOptionDescription) continue;
+        try {
+          BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
+          boolean enabled = booleanOption.isOptionEnabled();
 
-            booleanOption.setOptionState(!enabled);
-            if (enabled == booleanOption.isOptionEnabled()) errors.add("Can't set " + toString(booleanOption));
-            booleanOption.setOptionState(enabled); //restore
-            if (enabled != booleanOption.isOptionEnabled()) errors.add("Can't restore " + toString(booleanOption));
+          // we can't reliably restore original state for non-boolean options
+          if (option instanceof NotABooleanOptionDescription) {
+            continue;
           }
-          catch (Throwable e) {
-            e.printStackTrace();
-            errors.add(e.getMessage());
+
+          booleanOption.setOptionState(!enabled);
+          if (enabled == booleanOption.isOptionEnabled()) {
+            errors.add("Can't set " + toString(booleanOption));
           }
+
+          // restore
+          booleanOption.setOptionState(enabled);
+          if (enabled != booleanOption.isOptionEnabled()) {
+            errors.add("Can't restore " + toString(booleanOption));
+          }
+        }
+        catch (Throwable e) {
+          e.printStackTrace();
+          errors.add(e.getMessage());
         }
       }
     }
@@ -60,12 +69,7 @@ public class TopHitProvidersTest {
     assertThat(errors).isEmpty();
   }
 
-  private static List<OptionsSearchTopHitProvider> getProviders() {
-    return Stream.concat(OptionsTopHitProvider.PROJECT_LEVEL_EP.getExtensionList().stream(),
-                         StreamEx.of(SearchTopHitProvider.EP_NAME.getExtensionList()).select(OptionsSearchTopHitProvider.class))
-      .collect(Collectors.toList());
-  }
-
+  @NotNull
   private Collection<OptionDescription> getOptions(@NotNull OptionsSearchTopHitProvider provider) {
     if (provider instanceof OptionsSearchTopHitProvider.ProjectLevelProvider) {
       return ((OptionsSearchTopHitProvider.ProjectLevelProvider)provider).getOptions(projectRule.getProject());
@@ -73,10 +77,9 @@ public class TopHitProvidersTest {
     else if (provider instanceof OptionsSearchTopHitProvider.ApplicationLevelProvider) {
       return ((OptionsSearchTopHitProvider.ApplicationLevelProvider)provider).getOptions();
     }
-    else if (provider instanceof OptionsTopHitProvider) {
-      return ((OptionsTopHitProvider)provider).getOptions(projectRule.getProject());
+    else {
+      return Collections.emptyList();
     }
-    return Collections.emptyList();
   }
 
   @NotNull

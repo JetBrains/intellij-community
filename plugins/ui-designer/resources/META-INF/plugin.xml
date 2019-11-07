@@ -32,6 +32,7 @@
 
     <fileType name="GUI_DESIGNER_FORM" extensions="form"
               implementationClass="com.intellij.uiDesigner.GuiFormFileType" fieldName="INSTANCE"/>
+    <syntaxHighlighter key="GUI_DESIGNER_FORM" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
 
     <projectConfigurable groupId="editor" instance="com.intellij.uiDesigner.GuiDesignerConfigurable" id="project.propGUI" key="title.gui.designer"
                          bundle="messages.UIDesignerBundle"/>

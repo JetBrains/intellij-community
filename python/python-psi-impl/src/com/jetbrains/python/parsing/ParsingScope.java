@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.parsing;
 
+import java.util.Objects;
+
 /**
  * @author vlan
  */
@@ -81,5 +83,23 @@ public class ParsingScope {
     result.myClass = myClass;
     result.mySuite = mySuite;
     return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (!(o instanceof ParsingScope)) return false;
+
+    final ParsingScope scope = (ParsingScope)o;
+    return myFunction == scope.myFunction &&
+           myClass == scope.myClass &&
+           mySuite == scope.mySuite &&
+           myAfterSemicolon == scope.myAfterSemicolon &&
+           myAsync == scope.myAsync;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myFunction, myClass, mySuite, myAfterSemicolon, myAsync);
   }
 }

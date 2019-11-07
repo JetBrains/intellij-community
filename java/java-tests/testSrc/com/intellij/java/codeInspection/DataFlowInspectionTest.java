@@ -670,4 +670,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testClassEqualityCornerCase() { doTest(); }
   public void testCellsComplex() { doTest(); }
   public void testArraysAsList() { doTest(); }
+  public void testArraycopy() { doTest(); }
 }

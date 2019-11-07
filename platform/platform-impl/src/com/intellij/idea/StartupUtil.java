@@ -502,7 +502,7 @@ public final class StartupUtil {
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
-    if (SystemProperties.getBooleanProperty("intellij.log.stdout", false)) {
+    if (SystemProperties.getBooleanProperty("intellij.log.stdout", true)) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
     }

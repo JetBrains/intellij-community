@@ -4,6 +4,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
+import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
@@ -185,6 +186,9 @@ public class JavaDebugProcess extends XDebugProcess {
     });
     if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
       ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
+    }
+    if (Registry.is("debugger.show.values.from.dfa")) {
+      DfaAssist.installDfaAssist(myJavaSession);
     }
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);

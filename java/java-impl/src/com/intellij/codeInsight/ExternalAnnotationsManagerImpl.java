@@ -204,6 +204,16 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     Map<Optional<XmlFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
       .collect(Collectors.groupingBy(annotation -> Optional.ofNullable(getFileForAnnotations(root, annotation.getOwner(), project))));
 
+    List<VirtualFile> files = StreamEx.ofKeys(annotationsByFiles).flatMap(StreamEx::of).map(XmlFile::getVirtualFile).nonNull().toList();
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+    if (status.hasReadonlyFiles()) {
+      VirtualFile[] readonlyFiles = status.getReadonlyFiles();
+      annotationsByFiles.keySet()
+        .removeIf(opt -> opt.map(XmlFile::getVirtualFile).filter(f -> ArrayUtil.contains(f, readonlyFiles)).isPresent());
+    }
+    
+    if (annotationsByFiles.isEmpty()) return;
+
     WriteCommandAction.writeCommandAction(project).run(() -> {
       try {
         for (Map.Entry<Optional<XmlFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
@@ -610,10 +620,6 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
         if (!file.isValid()) {
           continue;
         }
-        if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
-          .ensureFilesWritable(Collections.singletonList(file.getVirtualFile())).hasReadonlyFiles()) {
-          continue;
-        }
         final XmlDocument document = file.getDocument();
         if (document == null) {
           continue;
@@ -640,6 +646,10 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           }
         }
         if (tagsToProcess.isEmpty()) {
+          continue;
+        }
+        if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
+          .ensureFilesWritable(Collections.singletonList(file.getVirtualFile())).hasReadonlyFiles()) {
           continue;
         }
 
@@ -869,24 +879,23 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   @Nullable
   private XmlFile getFileForAnnotations(@NotNull VirtualFile root, @NotNull PsiModifierListOwner owner, Project project) {
+    final PsiFile containingFile = owner.getOriginalElement().getContainingFile();
+    if (!(containingFile instanceof PsiJavaFile)) {
+      return null;
+    }
+    String packageName = ((PsiJavaFile)containingFile).getPackageName();
+
+    List<XmlFile> annotationsFiles = findExternalAnnotationsXmlFiles(owner);
+
+    XmlFile fileInRoot = findXmlFileInRoot(annotationsFiles, root);
+    if (fileInRoot != null) {
+      return fileInRoot;
+    }
     return WriteCommandAction.writeCommandAction(project).compute(() -> {
-      final PsiFile containingFile = owner.getOriginalElement().getContainingFile();
-      if (!(containingFile instanceof PsiJavaFile)) {
+      XmlFile newAnnotationsFile = createAnnotationsXml(root, packageName);
+      if (newAnnotationsFile == null) {
         return null;
       }
-      String packageName = ((PsiJavaFile)containingFile).getPackageName();
-
-      List<XmlFile> annotationsFiles = findExternalAnnotationsXmlFiles(owner);
-
-      XmlFile fileInRoot = findXmlFileInRoot(annotationsFiles, root);
-      if (fileInRoot != null && FileModificationService.getInstance().preparePsiElementForWrite(fileInRoot)) {
-        return fileInRoot;
-      }
-
-        XmlFile newAnnotationsFile = createAnnotationsXml(root, packageName);
-        if (newAnnotationsFile == null) {
-          return null;
-        }
 
       registerExternalAnnotations(containingFile, newAnnotationsFile);
       return newAnnotationsFile;

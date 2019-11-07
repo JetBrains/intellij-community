@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -58,16 +59,16 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   @Override
   public void projectOpened() {
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, () -> {
-      boolean ready = false;
-      synchronized (LOCK) {
-        if (!myProject.isDisposed() && myProject.isOpen()) {
-          myReady = ready = true;
+      ReadAction.run(() -> {
+        boolean ready = !myProject.isDisposed() && myProject.isOpen();
+        synchronized (LOCK) {
+          myReady = ready;
         }
-      }
-      if (ready) {
-        VcsDirtyScopeVfsListener.install(myProject);
-        markEverythingDirty();
-      }
+        if (ready) {
+          VcsDirtyScopeVfsListener.install(myProject);
+          markEverythingDirty();
+        }
+      });
     });
   }
 

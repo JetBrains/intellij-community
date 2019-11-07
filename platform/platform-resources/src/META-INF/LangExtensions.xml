@@ -8,6 +8,12 @@
     <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
     <appStarter implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
 
+    <applicationService serviceInterface="com.intellij.util.Queries"
+                        serviceImplementation="com.intellij.util.QueriesImpl"/>
+    <applicationService serviceInterface="com.intellij.model.search.SearchService"
+                        serviceImplementation="com.intellij.model.search.impl.SearchServiceImpl"/>
+
+    <referencesSearch implementation="com.intellij.psi.impl.search.SearcherQueryExecutor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 
@@ -944,7 +950,7 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
     <statistics.counterUsagesCollector groupId="tooltip.action.events" version="1"/>
-    <statistics.counterUsagesCollector groupId="rename.usages" version="1"/>
+    <statistics.counterUsagesCollector groupId="rename.refactoring" version="1"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator" />
@@ -975,7 +981,7 @@
     <statistics.counterUsagesCollector groupId="searchEverywhere" version="1"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
     <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
-    <statistics.counterUsagesCollector groupId="find" version="1"/>
+    <statistics.counterUsagesCollector groupId="find" version="2"/>
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="1"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable" />

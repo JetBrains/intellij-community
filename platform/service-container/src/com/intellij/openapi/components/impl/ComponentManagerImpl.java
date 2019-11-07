@@ -27,13 +27,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.Disposable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager, Disposable {
+public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   protected final DefaultPicoContainer myPicoContainer;
@@ -177,7 +176,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public boolean isDisposed() {
-    return isContainerDisposed();
+    return isDisposedOrDisposeInProgress();
   }
 
   public final boolean isWorkspaceComponent(@NotNull Class<?> componentImplementation) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -83,11 +84,13 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     return getInitializers().length == 0 && getNamedArguments().length == 0;
   }
 
+  @NotNull
   @Override
   public PsiElement getLBrack() {
-    return findChildByType(GroovyTokenTypes.mLBRACK);
+    return findNotNullChildByType(GroovyTokenTypes.mLBRACK);
   }
 
+  @Nullable
   @Override
   public PsiElement getRBrack() {
     return findChildByType(GroovyTokenTypes.mRBRACK);

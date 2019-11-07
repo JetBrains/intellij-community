@@ -87,7 +87,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private static final String HELP_PLACEHOLDER = "?";
   private static final int LIST_REBUILD_DELAY = 100;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
-  private final AnActionEvent myActionEvent;
   private boolean myIsUsedTrigger;
   private CalcThread myCalcThread;
   private volatile ActionCallback myCurrentWorker;
@@ -420,7 +419,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     dataMap.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory());
     dataMap.put(EXECUTOR_KEY.getName(), getExecutor());
     dataMap.put(RunAnythingProvider.EXECUTING_CONTEXT.getName(), myChooseContextAction.getSelectedContext());
-    return SimpleDataContext.getSimpleContext(dataMap, myActionEvent.getDataContext());
+    return SimpleDataContext.getSimpleContext(dataMap, null);
   }
 
   public void initMySearchField() {
@@ -700,7 +699,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
     protected void check() {
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
-      assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
+      //todo: we should reconsider entire synchronization flow to fix it in proper way
+      //assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
     }
 
     private void buildAllGroups(@NotNull DataContext dataContext,
@@ -821,9 +821,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
         synchronized (lock) {
           myCurrentWorker = ActionCallback.DONE;
           myCalcThread = null;
-          myVirtualFile = null;
-          myProject = null;
-          myModule = null;
         }
       }
     });
@@ -833,13 +830,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
   public RunAnythingPopupUI(@NotNull AnActionEvent actionEvent) {
     super(actionEvent.getProject());
 
-    myActionEvent = actionEvent;
-
     myCurrentWorker = ActionCallback.DONE;
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myProject = ObjectUtils.notNull(myActionEvent.getData(CommonDataKeys.PROJECT));
-    myModule = myActionEvent.getData(LangDataKeys.MODULE);
+    myProject = ObjectUtils.notNull(actionEvent.getData(CommonDataKeys.PROJECT));
+    myModule = actionEvent.getData(LangDataKeys.MODULE);
 
     init();
 

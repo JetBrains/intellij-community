@@ -177,7 +177,7 @@ public class SvnRecursiveStatusWalker {
     Depth newDepth = Depth.INFINITY.equals(prevDepth) ? Depth.INFINITY : Depth.EMPTY;
     VirtualFileVisitor.Option[] options = newDepth.equals(Depth.EMPTY) ? ar(SKIP_ROOT, ONE_LEVEL_DEEP) : new VirtualFileVisitor.Option[0];
 
-    visitChildrenRecursively(vFile, new VirtualFileVisitor(options) {
+    visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>(options) {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {

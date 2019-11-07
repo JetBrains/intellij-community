@@ -15,7 +15,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import icons.TasksIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +58,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer {
     }
     else if (GotoTaskAction.CREATE_NEW_TASK_ACTION == value) {
       final SimpleColoredComponent c = new SimpleColoredComponent();
-      c.setIcon(LayeredIcon.create(TasksIcons.Unknown, AllIcons.Actions.New));
+      c.setIcon(LayeredIcon.create(AllIcons.FileTypes.Unknown, AllIcons.Actions.New));
       c.append(GotoTaskAction.CREATE_NEW_TASK_ACTION.getActionText());
       panel.add(c, BorderLayout.CENTER);
     }

@@ -570,16 +570,20 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     new RunAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
-        if (ApplicationManager.getApplication() == null) {
+        Application app = ApplicationManager.getApplication();
+        if (app == null) {
           return;
         }
 
         // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
         RunAll runAll = new RunAll();
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          runAll = runAll
-            .append(() -> EditorFactoryImpl.throwNotReleasedError(editor))
-            .append(() -> EditorFactory.getInstance().releaseEditor(editor));
+        EditorFactory editorFactory = app.getServiceIfCreated(EditorFactory.class);
+        if (editorFactory != null) {
+          for (Editor editor : editorFactory.getAllEditors()) {
+            runAll = runAll
+              .append(() -> EditorFactoryImpl.throwNotReleasedError(editor))
+              .append(() -> editorFactory.releaseEditor(editor));
+          }
         }
         runAll.run();
       }).run();

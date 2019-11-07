@@ -425,11 +425,15 @@ public class DfaExpressionFactory {
     }
   }
 
-  private static final class ArrayElementDescriptor implements VariableDescriptor {
+  public static final class ArrayElementDescriptor implements VariableDescriptor {
     private final int myIndex;
 
     ArrayElementDescriptor(int index) {
       myIndex = index;
+    }
+
+    public int getIndex() {
+      return myIndex;
     }
 
     @Nullable

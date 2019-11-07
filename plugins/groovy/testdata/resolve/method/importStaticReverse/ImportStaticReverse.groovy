@@ -1,5 +1,5 @@
 import static Collections.reverse
 
 final def lll = ["abc", "def"]
-r<ref>everse(lll)
+r<caret>everse(lll)
 println lll

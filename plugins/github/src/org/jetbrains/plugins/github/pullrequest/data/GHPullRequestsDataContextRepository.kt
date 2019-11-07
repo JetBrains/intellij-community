@@ -20,10 +20,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PullRequestEditedListener
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceImpl
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
+import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
@@ -66,6 +63,7 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
 
     val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, currentUser, repoWithPermissions)
     val reviewService = GHPRReviewServiceImpl(progressManager, messageBus, securityService, requestExecutor, repositoryCoordinates)
+    val commentService = GHPRCommentServiceImpl(progressManager, messageBus, securityService, requestExecutor, repositoryCoordinates)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
@@ -73,8 +71,7 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
                                         searchHolder)
 
     val dataLoader = GithubPullRequestsDataLoaderImpl {
-      GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates,
-                                        GHPRReviewServiceAdapter.create(reviewService, it), it)
+      GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates, it)
     }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(number: Long) {
@@ -82,12 +79,22 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
           val dataProvider = dataLoader.findDataProvider(number)
           dataProvider?.reloadDetails()
           dataProvider?.detailsRequest?.let { listLoader.reloadData(it) }
+          dataProvider?.timelineLoader?.loadMore(true)
+        }
+      }
+
+      override fun onPullRequestReviewsEdited(number: Long) {
+        runInEdt {
+          val dataProvider = dataLoader.findDataProvider(number)
+          dataProvider?.reloadReviewThreads()
+          dataProvider?.timelineLoader?.loadMore(true)
         }
       }
 
       override fun onPullRequestCommentsEdited(number: Long) {
         runInEdt {
-          dataLoader.findDataProvider(number)?.reloadComments()
+          val dataProvider = dataLoader.findDataProvider(number)
+          dataProvider?.timelineLoader?.loadMore(true)
         }
       }
     })
@@ -99,7 +106,7 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
 
     return GHPullRequestsDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
                                      requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
-                                     busyStateTracker, metadataService, stateService)
+                                     busyStateTracker, metadataService, stateService, reviewService, commentService)
   }
 
   companion object {

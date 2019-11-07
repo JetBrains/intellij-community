@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class SignatureParsing {
           jlo = true;
           continue;
         }
-        bounds = ContainerUtil.newSmartList();
+        bounds = new SmartList<>();
         if (jlo) {
           bounds.add(CommonClassNames.JAVA_LANG_OBJECT);
         }

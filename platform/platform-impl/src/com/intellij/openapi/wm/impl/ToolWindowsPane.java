@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -834,6 +835,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         if (c instanceof InternalDecorator) {
           InternalDecorator oldComponent = (InternalDecorator)c;
           WindowInfoImpl oldInfo = oldComponent.getWindowInfo();
+
+          IJSwingUtilities.updateComponentTreeUI(oldComponent);
+          IJSwingUtilities.updateComponentTreeUI(myNewComponent);
+
           if (myInfo.isSplit()) {
             splitter.setFirstComponent(oldComponent);
             splitter.setSecondComponent(myNewComponent);

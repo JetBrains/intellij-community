@@ -35,6 +35,7 @@ import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHand
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Contract;
@@ -400,7 +401,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
-      List<Evaluator> evaluators = ContainerUtil.newSmartList();
+      List<Evaluator> evaluators = new SmartList<>();
       PsiExpressionList caseValues = statement.getCaseValues();
       if (caseValues != null) {
         for (PsiExpression expression : caseValues.getExpressions()) {

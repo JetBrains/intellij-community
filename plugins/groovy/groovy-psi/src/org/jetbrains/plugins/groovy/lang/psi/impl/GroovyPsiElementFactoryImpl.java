@@ -1149,16 +1149,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor, languageLevel);
   }
 
-  @SuppressWarnings("deprecation")
-  @NotNull
-  @Override
-  public PsiClassType createType(@NotNull PsiClass resolve,
-                                 @NotNull PsiSubstitutor substitutor,
-                                 @NotNull LanguageLevel languageLevel,
-                                 @NotNull PsiAnnotation[] annotations) {
-    return JavaPsiFacade.getElementFactory(myProject).createType(resolve, substitutor, languageLevel, annotations);
-  }
-
   @NotNull
   @Override
   public PsiClassType createType(@NotNull PsiClass aClass, PsiType parameters) {

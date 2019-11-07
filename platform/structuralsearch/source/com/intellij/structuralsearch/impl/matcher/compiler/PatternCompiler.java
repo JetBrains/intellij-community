@@ -609,4 +609,13 @@ public class PatternCompiler {
   private static void addPredicate(SubstitutionHandler handler, @NotNull MatchPredicate predicate) {
     handler.setPredicate(handler.getPredicate() == null ? predicate : new AndPredicate(handler.getPredicate(), predicate));
   }
+
+  public static void clearStaticCaches() {
+    synchronized (LOCK) {
+      ourLastMatchOptions = null;
+      ourLastCompiledPattern = null;
+      ourLastSearchPlan = null;
+      ourLastCompileSuccessful = false;
+    }
+  }
 }

@@ -27,18 +27,18 @@ import com.intellij.vcs.log.VcsRef
 import git4idea.GitRemoteBranch
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
-import git4idea.branch.GitBranchUtil.getNewBranchNameFromUser
-import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.createOrCheckoutNewBranch
 
 internal class GitCreateNewBranchAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val data = collectData(e)
     when (data) {
-      is Data.WithCommit -> createBranchStartingFrom(data.repository, data.hash, data.name)
-      is Data.NoCommit -> createBranch(data.project, data.repositories)
+      is Data.WithCommit -> createOrCheckoutNewBranch(data.repository.project, listOf(data.repository), data.hash.toString(),
+                                                      "Create New Branch From ${data.hash.toShortString()}", data.name)
+      is Data.NoCommit -> createOrCheckoutNewBranch(data.project, data.repositories, HEAD, "Create New Branch")
     }
   }
 
@@ -106,32 +106,5 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       }
     }
     return suggestedNames.distinct().singleOrNull()
-  }
-
-  private fun createBranch(project: Project, repositories: List<GitRepository>) {
-    val options = getNewBranchNameFromUser(project, repositories, "Create New Branch", null)
-    if (options != null) {
-      val brancher = GitBrancher.getInstance(project)
-      if (options.checkout) {
-        brancher.checkoutNewBranch(options.name, repositories)
-      }
-      else {
-        brancher.createBranch(options.name, repositories.map { it to HEAD }.toMap())
-      }
-    }
-  }
-
-  private fun createBranchStartingFrom(repository: GitRepository, commit: Hash, initialName: String?) {
-    val project = repository.project
-    val options = getNewBranchNameFromUser(project, setOf(repository), "Create New Branch From ${commit.toShortString()}", initialName)
-    if (options != null) {
-      val brancher = GitBrancher.getInstance(project)
-      if (options.checkout) {
-        brancher.checkoutNewBranchStartingFrom(options.name, commit.asString(), listOf(repository), null)
-      }
-      else {
-        brancher.createBranch(options.name, mapOf(repository to commit.asString()))
-      }
-    }
   }
 }

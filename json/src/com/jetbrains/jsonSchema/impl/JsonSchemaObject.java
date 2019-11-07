@@ -7,6 +7,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
+import com.intellij.openapi.vfs.impl.http.RemoteFileState;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -36,6 +39,7 @@ public class JsonSchemaObject {
   public static final String MOCK_URL = "mock:///";
   public static final String TEMP_URL = "temp:///";
   @NonNls public static final String DEFINITIONS = "definitions";
+  @NonNls public static final String DEFINITIONS_v9 = "$defs";
   @NonNls public static final String PROPERTIES = "properties";
   @NonNls public static final String ITEMS = "items";
   @NonNls public static final String ADDITIONAL_ITEMS = "additionalItems";
@@ -43,6 +47,7 @@ public class JsonSchemaObject {
   @NonNls public static final String X_INTELLIJ_LANGUAGE_INJECTION = "x-intellij-language-injection";
   @NonNls public static final String X_INTELLIJ_CASE_INSENSITIVE = "x-intellij-case-insensitive";
   @Nullable private final String myFileUrl;
+  @Nullable private JsonSchemaObject myBackRef;
   @NotNull private final String myPointer;
   @Nullable private final VirtualFile myRawFile;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
@@ -61,10 +66,14 @@ public class JsonSchemaObject {
   @Nullable private String myDescription;
   @Nullable private String myHtmlDescription;
   @Nullable private String myLanguageInjection;
+  @Nullable private String myLanguageInjectionPrefix;
+  @Nullable private String myLanguageInjectionPostfix;
 
   @Nullable private JsonSchemaType myType;
   @Nullable private Object myDefault;
   @Nullable private String myRef;
+  private boolean myRefIsRecursive;
+  private boolean myIsRecursiveAnchor;
   @Nullable private String myFormat;
   @Nullable private Set<JsonSchemaType> myTypeVariants;
   @Nullable private Number myMultipleOf;
@@ -186,9 +195,27 @@ public class JsonSchemaObject {
     myLanguageInjection = injection;
   }
 
+  public void setLanguageInjectionPrefix(@Nullable String prefix) {
+    myLanguageInjectionPrefix = prefix;
+  }
+
+  public void setLanguageInjectionPostfix(@Nullable String postfix) {
+    myLanguageInjectionPostfix = postfix;
+  }
+
   @Nullable
   public String getLanguageInjection() {
     return myLanguageInjection;
+  }
+
+  @Nullable
+  public String getLanguageInjectionPrefix() {
+    return myLanguageInjectionPrefix;
+  }
+
+  @Nullable
+  public String getLanguageInjectionPostfix() {
+    return myLanguageInjectionPostfix;
   }
 
   @Nullable
@@ -763,6 +790,26 @@ public class JsonSchemaObject {
     myRef = ref;
   }
 
+  public void setRefRecursive(boolean isRecursive) {
+    myRefIsRecursive = isRecursive;
+  }
+
+  public boolean isRefRecursive() {
+    return myRefIsRecursive;
+  }
+
+  public void setRecursiveAnchor(boolean isRecursive) {
+    myIsRecursiveAnchor = isRecursive;
+  }
+
+  public boolean isRecursiveAnchor() {
+    return myIsRecursiveAnchor;
+  }
+
+  public void setBackReference(JsonSchemaObject object) {
+    myBackRef = object;
+  }
+
   @Nullable
   public Object getDefault() {
     if (JsonSchemaType._integer.equals(myType)) return myDefault instanceof Number ? ((Number)myDefault).intValue() : myDefault;
@@ -860,7 +907,7 @@ public class JsonSchemaObject {
     for (int i = 0; i < parts.size(); i++) {
       if (current == null) return null;
       final String part = parts.get(i);
-      if (DEFINITIONS.equals(part)) {
+      if (DEFINITIONS.equals(part) || DEFINITIONS_v9.equals(part)) {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         final String nextPart = parts.get(++i);
@@ -1068,8 +1115,9 @@ public class JsonSchemaObject {
   public JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service) {
     final String ref = getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
-    if (!myComputedRefs.containsKey(ref)){
-      JsonSchemaObject value = fetchSchemaFromRefDefinition(ref, this, service);
+    JsonSchemaObject schemaObject = myComputedRefs.getOrDefault(ref, NULL_OBJ);
+    if (schemaObject == NULL_OBJ) {
+      JsonSchemaObject value = fetchSchemaFromRefDefinition(ref, this, service, isRefRecursive());
       if (!mySubscribed.get()) {
         service.getProject().getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> myComputedRefs.clear());
         mySubscribed.set(true);
@@ -1084,16 +1132,20 @@ public class JsonSchemaObject {
           service.registerReference(virtualFile.getName());
         }
       }
+      if (value != null && value != NULL_OBJ && !Objects.equals(value.myFileUrl, myFileUrl)) {
+        value.setBackReference(this);
+      }
       myComputedRefs.put(ref, value == null ? NULL_OBJ : value);
+      return value;
     }
-    JsonSchemaObject object = myComputedRefs.getOrDefault(ref, null);
-    return object == NULL_OBJ ? null : object;
+    return schemaObject;
   }
 
   @Nullable
   private static JsonSchemaObject fetchSchemaFromRefDefinition(@NotNull String ref,
                                                                @NotNull final JsonSchemaObject schema,
-                                                               @NotNull JsonSchemaService service) {
+                                                               @NotNull JsonSchemaService service,
+                                                               boolean recursive) {
 
     final VirtualFile schemaFile = service.resolveSchemaFile(schema);
     if (schemaFile == null) return null;
@@ -1104,10 +1156,24 @@ public class JsonSchemaObject {
       if (refSchema == null) return null;
       return findRelativeDefinition(refSchema, splitter, service);
     }
-    final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
+    JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
     if (rootSchema == null) {
       LOG.debug(String.format("Schema object not found for %s", schemaFile.getPath()));
       return null;
+    }
+    if (recursive && ref.startsWith("#")) {
+      while (rootSchema.isRecursiveAnchor()) {
+        JsonSchemaObject backRef = rootSchema.myBackRef;
+        if (backRef == null) break;
+        VirtualFile file = ObjectUtils.coalesce(backRef.myRawFile, backRef.myFileUrl == null ? null : JsonFileResolver.urlToFile(backRef.myFileUrl));
+        if (file == null) break;
+        try {
+          rootSchema = JsonSchemaReader.readFromFile(service.getProject(), file);
+        }
+        catch (Exception e) {
+          break;
+        }
+      }
     }
     return findRelativeDefinition(rootSchema, splitter, service);
   }
@@ -1120,6 +1186,19 @@ public class JsonSchemaObject {
     if (refFile == null) {
       LOG.debug(String.format("Schema file not found by reference: '%s' from %s", schemaId, schemaFile.getPath()));
       return null;
+    }
+    if (refFile instanceof HttpVirtualFile) {
+      RemoteFileInfo info = ((HttpVirtualFile)refFile).getFileInfo();
+      if (info != null) {
+        RemoteFileState state = info.getState();
+        if (state == RemoteFileState.DOWNLOADING_NOT_STARTED) {
+          JsonFileResolver.startFetchingHttpFileIfNeeded(refFile, service.getProject());
+          return NULL_OBJ;
+        }
+        else if (state == RemoteFileState.DOWNLOADING_IN_PROGRESS) {
+          return NULL_OBJ;
+        }
+      }
     }
     final JsonSchemaObject refSchema = service.getSchemaObjectForSchemaFile(refFile);
     if (refSchema == null) {

@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Posit
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
@@ -70,7 +71,7 @@ import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static java.util.Arrays.asList;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
@@ -355,7 +356,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
           GroovyMethodCallReference reference = call.getImplicitCallReference();
           if (reference != null) {
-            checkCallApplicability(reference.getReceiver(), true, info);
+            Argument receiver = reference.getReceiverArgument();
+            PsiType receiverType = receiver != null ? receiver.getType() : null;
+            checkCallApplicability(receiverType, true, info);
           }
           else {
             checkMethodApplicability(resolveResult, true, info);

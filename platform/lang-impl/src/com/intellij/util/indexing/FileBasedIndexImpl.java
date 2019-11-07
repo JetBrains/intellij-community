@@ -6,7 +6,7 @@ import com.intellij.AppTopics;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.history.LocalHistory;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
@@ -27,7 +27,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
@@ -55,7 +55,6 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -92,7 +91,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -104,12 +102,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.serviceContainer.PlatformComponentManagerImplKt.handleComponentError;
+
 /**
  * @author Eugene Zhuravlev
  */
 public final class FileBasedIndexImpl extends FileBasedIndex {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
+  private static final ThreadLocal<Boolean> ourDumbModeIgnored = new ThreadLocal<>();
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private static final NotificationGroup NOTIFICATIONS = new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false);
@@ -267,6 +268,20 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public void unsavedDocumentsDropped() {
         cleanupMemoryStorage(false);
+      }
+    });
+
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appWillBeClosed(boolean isRestart) {
+        if (!myStateFuture.isDone() || !myAllIndicesInitializedFuture.isDone()) {
+          ProgressManager.getInstance().run(new Task.Modal(null, "Preparing Indexes to Shutdown", false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              waitUntilAllIndicesAreInitialized();
+            }
+          });
+        }
       }
     });
 
@@ -750,7 +765,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
     if (filter == GlobalSearchScope.EMPTY_SCOPE) {
       return;
     }
-    if (ActionUtil.isDumbMode(project)) {
+    if (ourDumbModeIgnored.get() != Boolean.TRUE && ActionUtil.isDumbMode(project)) {
       handleDumbMode(project);
     }
 
@@ -766,7 +781,9 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
           if (!RebuildStatus.isOk(indexId)) {
             throw new ServiceNotReadyException();
           }
-          forceUpdate(project, filter, restrictedFile);
+          if (ourDumbModeIgnored.get() != Boolean.TRUE) {
+            forceUpdate(project, filter, restrictedFile);
+          }
           if (!areUnsavedDocumentsIndexed(indexId)) { // todo: check scope ?
             indexUnsavedDocuments(indexId, project, filter, restrictedFile);
           }
@@ -1169,6 +1186,24 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
                                         @NotNull Processor<? super VirtualFile> processor,
                                         @NotNull GlobalSearchScope filter) {
     return processFilesContainingAllKeys(indexId, dataKeys, filter, null, processor);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @Override
+  public void ignoreDumbMode(@NotNull Runnable runnable, @NotNull Project project) {
+    assert ApplicationManager.getApplication().isReadAccessAllowed();
+    if (DumbService.isDumb(project) && FileBasedIndex.indexAccessDuringDumbModeEnabled()) {
+      ourDumbModeIgnored.set(Boolean.TRUE);
+      try {
+        runnable.run();
+      }
+      finally {
+        ourDumbModeIgnored.set(null);
+      }
+    } else {
+      runnable.run();
+    }
   }
 
   @Override
@@ -1920,7 +1955,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
     return (FileTypeManagerImpl)FileTypeManager.getInstance();
   }
 
-  static final class ChangedFilesCollector extends IndexedFilesListener {
+  public static final class ChangedFilesCollector extends IndexedFilesListener {
     private final IntObjectMap<VirtualFile> myFilesToUpdate = ContainerUtil.createConcurrentIntObjectMap();
     private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
     private final Phaser myWorkersFinishedSync = new Phaser() {
@@ -1990,6 +2025,10 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
 
     private void removeFileIdFromFilesScheduledForUpdate(int fileId) {
       myFilesToUpdate.remove(fileId);
+    }
+
+    public boolean containsFile(VirtualFile file) {
+      return myFilesToUpdate.containsKey(getIdMaskingNonIdBasedFile(file));
     }
 
     Collection<VirtualFile> getAllFilesToUpdate() {
@@ -2130,9 +2169,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
 
     private void processFilesInReadActionWithYieldingToWriteAction() {
       while (getEventMerger().hasChanges()) {
-        if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(this::processFilesInReadAction)) {
-          ProgressIndicatorUtils.yieldToPendingWriteActions();
-        }
+        ReadAction.nonBlocking(this::processFilesInReadAction).executeSynchronously();
       }
     }
   }
@@ -2452,7 +2489,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
             throw io;
           }
           catch (Throwable t) {
-            PluginManager.handleComponentError(t, extension.getClass().getName(), null);
+            handleComponentError(t, extension.getClass().getName(), null);
           }
         });
       }

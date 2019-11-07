@@ -1,14 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.externalSystem.util.ui.*
+import com.intellij.openapi.externalSystem.util.properties.PropertyGraph
+import com.intellij.openapi.externalSystem.util.properties.ObservableClearableProperty
+import com.intellij.openapi.externalSystem.util.properties.PropertyView.Companion.comap
+import com.intellij.openapi.externalSystem.util.properties.PropertyView.Companion.map
+import com.intellij.openapi.externalSystem.util.properties.UiPropertyImpl.Companion.uiProperty
+import com.intellij.openapi.externalSystem.util.ui.DataView
+import com.intellij.openapi.externalSystem.util.ui.bind
+import com.intellij.openapi.externalSystem.util.ui.myComboBox
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleLocalFileDescriptor
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
@@ -17,11 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.JBUI
 import java.io.File
 import java.util.Comparator.comparing
 import java.util.function.Function
-import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.JTextField
 import javax.swing.ListCellRenderer
@@ -32,12 +36,13 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
 
   abstract fun findAllParents(): List<Data>
 
-  private val entityNameProperty = property(::suggestName)
-  private val locationProperty = property { getUiPath(suggestLocationByName()) }
-  private val parentProperty = property(::suggestParentByLocation)
-  private val groupIdProperty = property(::suggestGroupIdByParent)
-  private val artifactIdProperty = property(::suggestArtifactIdByName)
-  private val versionProperty = property(::suggestVersionByParent)
+  private val propertyGraph = PropertyGraph()
+  private val entityNameProperty = propertyGraph.uiProperty(::suggestName)
+  private val locationProperty = propertyGraph.uiProperty { getUiPath(suggestLocationByName()) }
+  private val parentProperty = propertyGraph.uiProperty(::suggestParentByLocation)
+  private val groupIdProperty = propertyGraph.uiProperty(::suggestGroupIdByParent)
+  private val artifactIdProperty = propertyGraph.uiProperty(::suggestArtifactIdByName)
+  private val versionProperty = propertyGraph.uiProperty(::suggestVersionByParent)
 
   var entityName by entityNameProperty.map { it.trim() }
   var location by locationProperty.map { getModelPath(it) }.comap { getUiPath(it) }
@@ -61,14 +66,11 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
     locationProperty.dependsOn(parentProperty) { getUiPath(suggestLocationByParentAndName()) }
     locationProperty.dependsOn(entityNameProperty) { getUiPath(suggestLocationByParentAndName()) }
     groupIdProperty.dependsOn(parentProperty, ::suggestGroupIdByParent)
-    groupIdProperty.dependsOn(artifactIdProperty) { groupId } // dependent validation
     artifactIdProperty.dependsOn(entityNameProperty, ::suggestArtifactIdByName)
-    artifactIdProperty.dependsOn(groupIdProperty) { artifactId } // dependent validation
     versionProperty.dependsOn(parentProperty, ::suggestVersionByParent)
   }
 
   private val contentPanel by lazy {
-    val horizontalSize = JBUI.scale(450)
     panel {
       if (!context.isCreatingNewProject) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
@@ -109,17 +111,16 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
         }
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
           textField(versionProperty.asBinding()).apply {
-            comment(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.help"))
             component.bind(versionProperty, ::validateVersion, context.disposable)
           }
         }
       }
-    }.withMaximumWidth(horizontalSize)
+    }
   }
 
   override fun getPreferredFocusedComponent() = contentPanel.preferredFocusedComponent
 
-  override fun getComponent() = JBUI.Panels.simplePanel().addToLeft(contentPanel)
+  override fun getComponent() = contentPanel
 
   override fun updateStep() = (preferredFocusedComponent as JTextField).selectAll()
 
@@ -131,7 +132,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
                              selected: Boolean,
                              hasFocus: Boolean) {
         text = value.presentationName
-        icon = value.icon
+        icon = DataView.getIcon(value)
       }
     }
   }
@@ -265,12 +266,6 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
         }
       }
     }
-    else {
-      if (locationProperty.isModified()) {
-        val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.directory.not.exist.warning")
-        return ValidationInfo(message).asWarning().withOKEnabled()
-      }
-    }
     return null
   }
 
@@ -290,14 +285,14 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
     private val EMPTY_VIEW = object : DataView<Nothing>() {
       override val data: Nothing by lazy { throw UnsupportedOperationException() }
       override val location: String = ""
-      override val icon: Icon = AllIcons.Nodes.EmptyNode
-      override val presentationName: String = "none"
+      override val icon: Nothing by lazy { throw UnsupportedOperationException() }
+      override val presentationName: String = "<None>"
       override val groupId: String = "org.example"
       override val version: String = "1.0-SNAPSHOT"
 
       override val isPresent: Boolean = false
     }
 
-    private fun <T> Property<T>.asBinding() = PropertyBinding(::get, ::set)
+    private fun <T> ObservableClearableProperty<T>.asBinding() = PropertyBinding(::get, ::set)
   }
 }

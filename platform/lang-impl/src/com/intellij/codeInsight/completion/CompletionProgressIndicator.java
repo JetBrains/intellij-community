@@ -44,6 +44,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
@@ -151,7 +152,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
 
     myQueue = new MergingUpdateQueue("completion lookup progress", ourShowPopupAfterFirstItemGroupingTime, true, myEditor.getContentComponent());
-    myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -185,10 +185,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
+    PsiUtilCore.ensureValid(parameters.getPosition());
     if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
-      myLookup.setFocusDegree(CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
-                              ? LookupImpl.FocusDegree.FOCUSED
-                              : LookupImpl.FocusDegree.SEMI_FOCUSED);
+      myLookup.setLookupFocusDegree(CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
+                                    ? LookupFocusDegree.FOCUSED
+                                    : LookupFocusDegree.SEMI_FOCUSED);
     }
     addDefaultAdvertisements(parameters);
 

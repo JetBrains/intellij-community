@@ -194,7 +194,7 @@ public abstract class XmlTagDelegate {
   private TextRange[] getValueTextRanges() {
     TextRange[] elements = myTextElements;
     if (elements == null) {
-      List<TextRange> list = ContainerUtil.newSmartList();
+      List<TextRange> list = new SmartList<>();
       // don't use getValue().getXmlElements() because it processes includes & entities, and we only need textual AST here
       for (ASTNode child = myTag.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
         PsiElement psi = child.getPsi();
@@ -282,7 +282,6 @@ public abstract class XmlTagDelegate {
   @NotNull
   private Map<String, CachedValue<XmlNSDescriptor>> getNSDescriptorsMap() {
     XmlTag tag = myTag;
-    myTag.getAttributes();
     return CachedValuesManager.getCachedValue(tag, () ->
       Result.create(computeNsDescriptorMap(tag),
                     PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker(tag)));

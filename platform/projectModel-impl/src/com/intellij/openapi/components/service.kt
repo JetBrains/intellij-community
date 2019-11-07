@@ -6,15 +6,15 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.project.Project
 import com.intellij.project.ProjectStoreOwner
 
-inline fun <reified T : Any> service(): T = ApplicationManager.getApplication().getService(T::class.java, true)
+inline fun <reified T : Any> service(): T = ApplicationManager.getApplication().getService(T::class.java)
 
-inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplication().getService(T::class.java, true)
+inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplication().getService(T::class.java)
 
 inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getApplication().getServiceIfCreated(T::class.java)
 
-inline fun <reified T : Any> Project.service(): T = getService(T::class.java, true)
+inline fun <reified T : Any> Project.service(): T = getService(T::class.java)
 
-inline fun <reified T : Any> Project.serviceIfCreated(): T? = getService(T::class.java, false)
+inline fun <reified T : Any> Project.serviceIfCreated(): T? = getServiceIfCreated(T::class.java)
 
 val ComponentManager.stateStore: IComponentStore
   get() {
@@ -26,10 +26,3 @@ val ComponentManager.stateStore: IComponentStore
       }
     }
   }
-
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-@Deprecated(message = "do not use", replaceWith = ReplaceWith("getComponentInstancesOfType(baseClass)"))
-fun <T> ComponentManager.getComponents(baseClass: Class<T>): List<T> {
-  @Suppress("DEPRECATION")
-  return getComponentInstancesOfType(baseClass, false)
-}

@@ -93,26 +93,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   @Override
   protected void tearDown() {
     myOrder.clear();
-    final boolean[] inModalState = {true};
-    ApplicationManager.getApplication().invokeLater(() -> {
-      synchronized (inModalState) {
-        inModalState[0] = false;
-      }
-    }, ModalityState.NON_MODAL);
     flushSwingQueue();
-    flushSwingQueue();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      while (true) {
-        synchronized (inModalState) {
-          if (!inModalState[0]) break;
-        }
-        flushSwingQueue();
-        synchronized (inModalState) {
-          if (inModalState[0] && LaterInvocator.isInModalContext()) LaterInvocator.leaveAllModals();
-        }
-      }
-    });
-
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.leaveAllModals());
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 
@@ -681,6 +663,32 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       AtomicBoolean invoked = new AtomicBoolean();
       ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), state);
       
+      UIUtil.dispatchAllInvocationEvents();
+      assertTrue(invoked.get());
+    });
+  }
+
+  public void testInvokeLaterGoesIntoTransparentModality() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      AtomicBoolean invoked = new AtomicBoolean();
+      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.NON_MODAL);
+      LaterInvocator.enterModal(myWindow1);
+
+      UIUtil.dispatchAllInvocationEvents();
+      assertFalse(invoked.get());
+
+      LaterInvocator.markTransparent(ModalityState.current());
+      UIUtil.dispatchAllInvocationEvents();
+      assertTrue(invoked.get());
+    });
+  }
+
+  public void testInvokeLaterGoesIntoModalityDeclaredTransparentBeforeEntering() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      AtomicBoolean invoked = new AtomicBoolean();
+      LaterInvocator.markTransparent(ModalityState.stateForComponent(myModalDialog));
+      ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.NON_MODAL);
+      LaterInvocator.enterModal(myModalDialog);
       UIUtil.dispatchAllInvocationEvents();
       assertTrue(invoked.get());
     });

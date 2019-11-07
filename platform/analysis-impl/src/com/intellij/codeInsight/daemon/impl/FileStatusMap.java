@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentMap;
 
 public final class FileStatusMap implements Disposable {
@@ -155,11 +155,9 @@ public final class FileStatusMap implements Disposable {
   }
 
   private void assertAllowModifications() {
-    try {
-      assert myAllowDirt : CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING;
-    }
-    finally {
+    if (!myAllowDirt) {
       myAllowDirt = true; //give next test a chance
+      throw new AssertionError(CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING);
     }
   }
 
@@ -337,8 +335,11 @@ public final class FileStatusMap implements Disposable {
   }
   public static void log(@NonNls @NotNull Object... info) {
     if (LOG.isDebugEnabled()) {
-      String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
-      LOG.debug(s);
+      StringJoiner joiner = new StringJoiner(", ", StringUtil.repeatSymbol(' ', getThreadNum() * 4) + "[", "]\n");
+      for (Object o : info) {
+        joiner.add(String.valueOf(o));
+      }
+      LOG.debug(joiner.toString());
     }
   }
 }

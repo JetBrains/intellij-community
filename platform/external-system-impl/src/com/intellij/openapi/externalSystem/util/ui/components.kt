@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.util.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.util.properties.UiProperty
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -24,12 +25,11 @@ fun <T> Cell.myComboBox(model: ComboBoxModel<T>,
 
 fun <T> ComboBox<T>.bind(property: UiProperty<T>, validate: () -> ValidationInfo?, parentDisposable: Disposable) {
   property.bind(this, validate, parentDisposable)
-  property.addListener { selectedItem = it }
+  property.afterChange { if (selectedItem != it) selectedItem = it }
   addItemListener {
     if (it.stateChange == ItemEvent.SELECTED) {
       @Suppress("UNCHECKED_CAST")
       property.set(it.item as T)
-      property.validate()
     }
   }
 }
@@ -40,11 +40,10 @@ fun TextFieldWithBrowseButton.bind(property: UiProperty<String>, validate: () ->
 
 fun JTextField.bind(property: UiProperty<String>, validate: () -> ValidationInfo?, parentDisposable: Disposable) {
   property.bind(this, validate, parentDisposable)
-  property.addListener { text = it }
+  property.afterChange { if (text != it) text = it }
   document.addDocumentListener(object : DocumentAdapter() {
     override fun textChanged(e: DocumentEvent) {
       property.set(text)
-      property.validate()
     }
   })
 }

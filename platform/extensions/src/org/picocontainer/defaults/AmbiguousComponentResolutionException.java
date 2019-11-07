@@ -24,46 +24,45 @@ import java.util.Arrays;
  * @author Jon Tirs&eacute;n
  * @since 1.0
  */
-public class AmbiguousComponentResolutionException extends PicoIntrospectionException {
-    private Class component;
-    private final Class ambiguousDependency;
-    private final Object[] ambiguousComponentKeys;
+public final class AmbiguousComponentResolutionException extends PicoIntrospectionException {
+  private Class<?> component;
+  private final Class<?> ambiguousDependency;
+  private final Object[] ambiguousComponentKeys;
 
+  /**
+   * Construct a new exception with the ambigous class type and the ambiguous component keys.
+   *
+   * @param ambiguousDependency the unresolved dependency type
+   * @param componentKeys       the ambiguous keys.
+   */
+  public AmbiguousComponentResolutionException(Class ambiguousDependency, Object[] componentKeys) {
+    super("");
+    this.ambiguousDependency = ambiguousDependency;
+    this.ambiguousComponentKeys = new Class[componentKeys.length];
+    System.arraycopy(componentKeys, 0, ambiguousComponentKeys, 0, componentKeys.length);
+  }
 
-    /**
-     * Construct a new exception with the ambigous class type and the ambiguous component keys.
-     *
-     * @param ambiguousDependency the unresolved dependency type
-     * @param componentKeys the ambiguous keys.
-     */
-    public AmbiguousComponentResolutionException(Class ambiguousDependency, Object[] componentKeys) {
-        super("");
-        this.ambiguousDependency = ambiguousDependency;
-        this.ambiguousComponentKeys = new Class[componentKeys.length];
-        System.arraycopy(componentKeys, 0, ambiguousComponentKeys, 0, componentKeys.length);
-    }
+  /**
+   * @return Returns a string containing the unresolved class type and the ambiguous keys.
+   */
+  @Override
+  public String getMessage() {
+    return component +
+           " has ambiguous dependency on " +
+           ambiguousDependency +
+           ", " +
+           "resolves to multiple classes: " +
+           Arrays.asList(getAmbiguousComponentKeys());
+  }
 
-    /**
-     * @return Returns a string containing the unresolved class type and the ambiguous keys.
-     */
-    @Override
-    public String getMessage() {
-        return component +
-               " has ambiguous dependency on " +
-               ambiguousDependency +
-               ", " +
-               "resolves to multiple classes: " +
-               Arrays.asList(getAmbiguousComponentKeys());
-    }
+  /**
+   * @return Returns the ambiguous component keys as array.
+   */
+  public Object[] getAmbiguousComponentKeys() {
+    return ambiguousComponentKeys;
+  }
 
-    /**
-     * @return Returns the ambiguous component keys as array.
-     */
-    public Object[] getAmbiguousComponentKeys() {
-        return ambiguousComponentKeys;
-    }
-
-    public void setComponent(Class component) {
-        this.component = component;
-    }
+  public void setComponent(Class component) {
+    this.component = component;
+  }
 }

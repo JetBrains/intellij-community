@@ -106,7 +106,6 @@
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert" text="Abort Revert"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
-      <action id="Git.Cleanup.Branches" class="git4idea.branch.GitCleanupBranchesAction" text="Cleanup Branches" internal="true"/>.
     </group>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
@@ -185,6 +184,11 @@
 
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
             text="Test Git Login Dialog" internal="true"/>
+
+    <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider"
+            text="Path From Repository Root">
+      <add-to-group group-id="CopyFileReference"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -296,6 +300,9 @@
     <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
+
+    <changesViewContent id="git.branches" tabName="Branches" className="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider"
+                        predicateClassName="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider$BranchesTabVisibilityPredicate" order="last"/>
   </extensions>
 
   <extensionPoints>

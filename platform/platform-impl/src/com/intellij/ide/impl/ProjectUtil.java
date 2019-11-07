@@ -35,6 +35,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.ui.FocusUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -357,15 +358,23 @@ public class ProjectUtil {
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
     JFrame f = WindowManager.getInstance().getFrame(p);
     if (f != null) {
+      Component mostRecentFocusOwner = f.getMostRecentFocusOwner();
       if (executeIfAppInactive) {
         AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
         f.toFront();
         if (!SystemInfo.isMac && !f.isAutoRequestFocus()) {
-          IdeFocusManager.getInstance(p).requestFocus(f.getMostRecentFocusOwner(), true);
+          IdeFocusManager.getInstance(p).requestFocus(mostRecentFocusOwner, true);
         }
       }
       else {
-        IdeFocusManager.getInstance(p).requestFocusInProject(f.getMostRecentFocusOwner(), p);
+        if (mostRecentFocusOwner != null) {
+          IdeFocusManager.getInstance(p).requestFocusInProject(mostRecentFocusOwner, p);
+        } else {
+          Component defaultFocusComponentInPanel = FocusUtil.getDefaultComponentInPanel(f.getFocusCycleRootAncestor());
+          if (defaultFocusComponentInPanel != null) {
+            IdeFocusManager.getInstance(p).requestFocusInProject(defaultFocusComponentInPanel, p);
+          }
+        }
       }
     }
   }

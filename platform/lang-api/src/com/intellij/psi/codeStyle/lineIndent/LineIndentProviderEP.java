@@ -23,15 +23,10 @@ import org.jetbrains.annotations.Nullable;
  * Line indent provider extension point
  */
 public class LineIndentProviderEP {
-  public final static ExtensionPointName<LineIndentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lineIndentProvider");
+  private final static ExtensionPointName<LineIndentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lineIndentProvider");
   
   @Nullable
   public static LineIndentProvider findLineIndentProvider(@Nullable Language language) {
-    for (LineIndentProvider provider : EP_NAME.getExtensions()) {
-      if (provider.isSuitableFor(language)) {
-        return provider;
-      }
-    }
-    return null;
+    return EP_NAME.getExtensionList().stream().filter(provider -> provider.isSuitableFor(language)).findFirst().orElse(null);
   }
 }

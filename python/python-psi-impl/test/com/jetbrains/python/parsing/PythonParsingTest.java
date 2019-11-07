@@ -925,6 +925,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON38);
   }
 
+  // PY-36167
+  public void testFunctionWithPassAndAwaitAfterInPy36() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
@@ -15,10 +16,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +28,7 @@ public class MyLookupExpression extends Expression {
   protected final String myName;
   protected final LookupElement[] myLookupItems;
   private final String myAdvertisementText;
+  private volatile LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
 
   public MyLookupExpression(String name,
                             @Nullable LinkedHashSet<String> names,
@@ -48,14 +48,7 @@ public class MyLookupExpression extends Expression {
     if (names == null) {
       if (elementToRename == null) return LookupElement.EMPTY_ARRAY;
       names = new LinkedHashSet<>();
-      for (NameSuggestionProvider provider : NameSuggestionProvider.EP_NAME.getExtensionList()) {
-        final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(elementToRename, nameSuggestionContext, names);
-        if (suggestedNameInfo != null &&
-            provider instanceof PreferrableNameSuggestionProvider &&
-            !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {
-          break;
-        }
-      }
+      NameSuggestionProvider.suggestNames(elementToRename, nameSuggestionContext, names);
     }
     final LookupElement[] lookupElements = new LookupElement[names.size()];
     final Iterator<String> iterator = names.iterator();
@@ -107,5 +100,15 @@ public class MyLookupExpression extends Expression {
   @Override
   public String getAdvertisingText() {
     return myAdvertisementText;
+  }
+
+  @NotNull
+  @Override
+  public LookupFocusDegree getLookupFocusDegree() {
+    return myLookupFocusDegree;
+  }
+
+  public void setLookupFocusDegree(@NotNull LookupFocusDegree lookupFocusDegree) {
+    myLookupFocusDegree = lookupFocusDegree;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +43,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private HighlighterClient myEditor;
   private final Lexer myLexer;
   private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
-  private final SegmentArrayWithData mySegments;
+  private SegmentArrayWithData mySegments;
   private final SyntaxHighlighter myHighlighter;
   @NotNull
   private EditorColorsScheme myScheme;
@@ -412,34 +413,38 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
   }
 
-  protected class TokenProcessor {
-    public void addToken(final int i, final int startOffset, final int endOffset, final int data, @NotNull IElementType tokenType) {
-      mySegments.setElementAt(i, startOffset, endOffset, data);
-    }
+  protected interface TokenProcessor {
+    void addToken(int tokenIndex, int startOffset, int endOffset, int data, @NotNull IElementType tokenType);
 
-    public void finish() {
-    }
+    default void finish() {}
   }
 
   private void doSetText(@NotNull CharSequence text) {
     if (Comparing.equal(myText, text)) return;
-    myText = ImmutableCharSequence.asImmutable(text);
+    text = ImmutableCharSequence.asImmutable(text);
 
-    final TokenProcessor processor = createTokenProcessor(0);
-    final int textLength = text.length();
+    SegmentArrayWithData tempSegments = createSegments();
+    TokenProcessor processor = createTokenProcessor(0, tempSegments, text);
+    int textLength = text.length();
+
     myLexer.start(text, 0, textLength, myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
-    mySegments.removeAll();
     int i = 0;
     while (true) {
       final IElementType tokenType = myLexer.getTokenType();
       if (tokenType == null) break;
 
       int state = myLexer.getState();
-      int data = mySegments.packData(tokenType, state, canRestart(state));
+      int data = tempSegments.packData(tokenType, state, canRestart(state));
       processor.addToken(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data, tokenType);
       i++;
+      if (i % 1024 == 0) {
+        ProgressManager.checkCanceled();
+      }
       myLexer.advance();
     }
+
+    myText = text;
+    mySegments = tempSegments;
     processor.finish();
 
     if (textLength > 0 && (mySegments.mySegmentCount == 0 || mySegments.myEnds[mySegments.mySegmentCount - 1] != textLength)) {
@@ -452,8 +457,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @NotNull
-  protected TokenProcessor createTokenProcessor(final int startIndex) {
-    return new TokenProcessor();
+  protected TokenProcessor createTokenProcessor(int startIndex, SegmentArrayWithData segments, CharSequence myText) {
+    return (tokenIndex, startOffset, endOffset, data, tokenType) -> segments.setElementAt(tokenIndex, startOffset, endOffset, data);
   }
 
   @NotNull

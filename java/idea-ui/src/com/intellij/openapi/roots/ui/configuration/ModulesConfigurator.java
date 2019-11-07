@@ -217,7 +217,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<>();
     final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<>();
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-      final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
+      final ModuleRootModel rootModel = moduleEditor.getRootModel();
       final ContentEntry[] contents = rootModel.getContentEntries();
       final String moduleName = moduleEditor.getName();
       Set<VirtualFile> sourceRoots = new HashSet<>();

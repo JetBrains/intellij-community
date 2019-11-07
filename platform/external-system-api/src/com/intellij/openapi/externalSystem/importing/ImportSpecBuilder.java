@@ -29,6 +29,7 @@ public class ImportSpecBuilder {
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   private boolean myCreateDirectoriesForEmptyContentRoots;
+  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -90,6 +91,12 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  @ApiStatus.Experimental
+  public ImportSpecBuilder projectResolverPolicy(@NotNull ProjectResolverPolicy projectResolverPolicy) {
+    myProjectResolverPolicy = projectResolverPolicy;
+    return this;
+  }
+
   /**
    * @deprecated no need to call the method, default callback is used by default
    */
@@ -111,6 +118,7 @@ public class ImportSpecBuilder {
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
     mySpec.setCallback(myCallback == null ? new DefaultProjectRefreshCallback(mySpec) : myCallback);
+    mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
     return mySpec;
   }
 

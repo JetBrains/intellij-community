@@ -56,6 +56,7 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
       }
     }
     if (settingsChanged) {
+      listener.didLanguageStatusChanged()
       listener.didSettingsChanged()
     }
   }
@@ -182,12 +183,17 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     /**
      * @param newEnabled whether inlay hints are globally switched on or off now
      */
-    fun didGlobalEnabledStatusChanged(newEnabled: Boolean)
+    fun didGlobalEnabledStatusChanged(newEnabled: Boolean) {}
+
+    /**
+     * Called, when hints are enabled/disabled for some language
+     */
+    fun didLanguageStatusChanged() {}
 
     /**
      * Called when any settings in inlay hints were changed
      */
-    fun didSettingsChanged()
+    fun didSettingsChanged() {}
   }
 }
 

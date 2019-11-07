@@ -3,13 +3,16 @@ package git4idea.rebase;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitRebaseParams;
@@ -313,25 +316,28 @@ public class GitRebaseDialog extends DialogWrapper {
    * Load tags and branches
    */
   protected void loadRefs() {
-    try {
-      myLocalBranches.clear();
-      myRemoteBranches.clear();
-      myTags.clear();
-      final VirtualFile root = gitRoot();
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-      if (repository != null) {
-        myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
-        myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
-        myCurrentBranch = repository.getCurrentBranch();
-      }
-      else {
-        LOG.error("Repository is null for root " + root);
-      }
-      myTags.addAll(GitTag.list(myProject, root));
+    myLocalBranches.clear();
+    myRemoteBranches.clear();
+    myTags.clear();
+    final VirtualFile root = gitRoot();
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    if (repository != null) {
+      myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
+      myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
+      myCurrentBranch = repository.getCurrentBranch();
     }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(myProject, e, "git branch -a");
+    else {
+      LOG.error("Repository is null for root " + root);
     }
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        myTags.addAll(ContainerUtil.map(GitBranchUtil.getAllTags(myProject, root), GitTag::new));
+      }
+      catch (VcsException e) {
+        LOG.warn(e);
+      }
+    }, "Loading Tags...", true, myProject);
   }
 
   /**
@@ -343,8 +349,14 @@ public class GitRebaseDialog extends DialogWrapper {
       String currentBranch = (String)myBranchComboBox.getSelectedItem();
       GitBranch trackedBranch = null;
       if (currentBranch != null) {
-        String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
-        String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
+        Pair<String, String> remoteAndMerge = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
+          String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
+          return Pair.create(remote, mergeBranch);
+        }, "Loading Branch Configuration...", true, myProject);
+        String remote = remoteAndMerge.first;
+        String mergeBranch = remoteAndMerge.second;
+
         if (remote == null || mergeBranch == null) {
           trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
         }

@@ -240,7 +240,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
         return (compress(typeParameter.extendsListTypes.asList()) ?: getJavaLangObject(method)).accept(this)
       }
       else {
-        return factory.createType(classType.resolve() ?: return null, *classType.parameters.map { it.accept(this) }.toTypedArray())
+        return factory.createType(classType.resolve() ?: return null, *classType.parameters.mapNotNull { it.accept(this) }.toTypedArray())
       }
     }
 

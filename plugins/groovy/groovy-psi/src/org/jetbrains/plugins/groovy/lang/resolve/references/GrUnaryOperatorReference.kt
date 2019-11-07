@@ -2,26 +2,27 @@
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
-import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveImpl2
 
 class GrUnaryOperatorReference(element: GrUnaryExpression) : GroovyMethodCallReferenceBase<GrUnaryExpression>(element) {
 
   override fun getRangeInElement(): TextRange = element.operationToken.textRangeInParent
 
-  override val receiver: PsiType? get() = element.operand?.type
+  override val receiverArgument: Argument? get() = element.operand?.let(::ExpressionArgument)
 
-  override val methodName: String get() = unaryOperatorMethodNames[element.operationTokenType]!!
+  override val methodName: String
+    get() {
+      val tokenType = element.operationTokenType
+      return unaryOperatorMethodNames[tokenType] ?: error("unexpected token type: $tokenType")
+    }
 
   override val arguments: Arguments? get() = emptyList()
-
-  override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> = resolveImpl2(incomplete)
 
   companion object {
     private val unaryOperatorMethodNames = mapOf(

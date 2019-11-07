@@ -1558,4 +1558,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public boolean mayHaveChildren(int id) {
     return FSRecords.mayHaveChildren(id);
   }
+
+  @TestOnly
+  ConcurrentIntObjectMap<VirtualFileSystemEntry> getIdToDirCache() {
+    return myIdToDirCache;
+  }
 }

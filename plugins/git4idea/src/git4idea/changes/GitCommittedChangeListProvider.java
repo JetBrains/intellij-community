@@ -85,7 +85,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   public void loadCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount,
                                    final AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException {
     try {
-      getCommittedChangesImpl(settings, location, maxCount, gitCommittedChangeList -> consumer.consume(gitCommittedChangeList));
+      getCommittedChangesImpl(settings, location, maxCount, consumer);
     }
     finally {
       consumer.finished();
