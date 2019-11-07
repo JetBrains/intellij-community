@@ -19,10 +19,13 @@
     <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.EventLog$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
+
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.ide.bookmarks.BookmarkManager$BookmarkManagerPsiDocumentManagerListener" topic="com.intellij.psi.PsiDocumentListener" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$PsiListener" topic="com.intellij.psi.util.PsiModificationTracker$Listener"/>
     <listener class="com.intellij.execution.lineMarker.RunLineMarkerProvider$RunnableStatusListener" topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyFileEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
 </idea-plugin>
