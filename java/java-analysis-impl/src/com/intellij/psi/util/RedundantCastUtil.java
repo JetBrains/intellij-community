@@ -646,6 +646,13 @@ public class RedundantCastUtil {
         }
       }
 
+      if (parent instanceof PsiExpressionStatement &&
+          operand instanceof PsiFunctionalExpression &&
+          parent.getParent() instanceof PsiSwitchLabeledRuleStatement &&
+          !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
+        return;
+      }
+
       if (arrayAccessAtTheLeftSideOfAssignment(parent, typeCast)) {
         if (TypeConversionUtil.isAssignable(opType, castTo, false) && opType.getArrayDimensions() == castTo.getArrayDimensions()) {
           addToResults(typeCast);
