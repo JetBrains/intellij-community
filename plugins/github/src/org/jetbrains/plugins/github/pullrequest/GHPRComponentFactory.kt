@@ -48,12 +48,7 @@ import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import javax.swing.KeyStroke
-import javax.swing.SwingUtilities
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
@@ -177,18 +172,6 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
       emptyText.clear()
-      addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent) {
-          if (SwingUtilities.isLeftMouseButton(e) && e.clickCount >= 2 && ListUtil.isPointOnSelection(this@apply, e.x, e.y)) {
-            openTimelineForSelection(dataContext, actionDataContext, this@apply)
-            e.consume()
-          }
-        }
-      })
-      registerKeyboardAction(
-        { openTimelineForSelection(dataContext, actionDataContext, this@apply) },
-        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
     }.also {
       installPopup(it)
       installSelectionSaver(it, listSelectionHolder)
