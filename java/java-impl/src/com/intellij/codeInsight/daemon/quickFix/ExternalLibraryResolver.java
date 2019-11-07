@@ -41,7 +41,7 @@ public abstract class ExternalLibraryResolver {
     return null;
   }
 
-  public static class ExternalClassResolveResult {
+  public static final class ExternalClassResolveResult {
     private final String myQualifiedClassName;
     private final ExternalLibraryDescriptor myLibrary;
 
