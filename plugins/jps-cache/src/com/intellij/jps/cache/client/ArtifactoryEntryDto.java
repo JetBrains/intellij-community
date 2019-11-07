@@ -7,7 +7,7 @@ public class ArtifactoryEntryDto {
   private String path;
   private String name;
   private String type;
-  private Integer size;
+  private Long size;
 
   public String getRepo() {
     return repo;
@@ -41,11 +41,11 @@ public class ArtifactoryEntryDto {
     this.type = type;
   }
 
-  public Integer getSize() {
+  public Long getSize() {
     return size;
   }
 
-  public void setSize(Integer size) {
+  public void setSize(Long size) {
     this.size = size;
   }
 
