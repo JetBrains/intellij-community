@@ -55,7 +55,29 @@ class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, 
   }
 
   override fun hashCode() = entry.url.hashCode()
-  override fun equals(other: Any?) = sourceRootEntity == (other as? SourceFolderViaTypedEntity)?.sourceRootEntity
+  override fun equals(other: Any?): Boolean {
+    if (other !is SourceFolderViaTypedEntity) return false
+
+    if (sourceRootEntity.url != other.sourceRootEntity.url) return false
+    if (sourceRootEntity.rootType != other.sourceRootEntity.rootType) return false
+    if (sourceRootEntity.tests != other.sourceRootEntity.tests) return false
+
+    val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
+    val otherJavaSourceRoot = other.sourceRootEntity.asJavaSourceRoot()
+    if (javaSourceRoot?.generated != otherJavaSourceRoot?.generated) return false
+    if (javaSourceRoot?.packagePrefix != otherJavaSourceRoot?.packagePrefix) return false
+
+    val javaResourceRoot = sourceRootEntity.asJavaResourceRoot()
+    val otherJavaResourceRoot = other.sourceRootEntity.asJavaResourceRoot()
+    if (javaResourceRoot?.generated != otherJavaResourceRoot?.generated) return false
+    if (javaResourceRoot?.relativeOutputPath != otherJavaResourceRoot?.relativeOutputPath) return false
+
+    val customRoot = sourceRootEntity.asCustomSourceRoot()
+    val otherCustomRoot = other.sourceRootEntity.asCustomSourceRoot()
+    if (customRoot?.propertiesXmlTag != otherCustomRoot?.propertiesXmlTag) return false
+
+    return true
+  }
 
   override fun setPackagePrefix(packagePrefix: String) {
     if (getPackagePrefix() == packagePrefix) return
