@@ -144,6 +144,8 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
 
     if (SWITCH_COMMAND.equals(command)) {
       boolean enabled = isGroupEnabled(group);
+      CustomizeIDEWizardInteractions.INSTANCE.record(enabled ? CustomizeIDEWizardInteractionType.BundledPluginGroupDisabled : CustomizeIDEWizardInteractionType.BundledPluginGroupEnabled,
+                                                     null, group);
       List<IdSet> sets = myPluginGroups.getSets(group);
       for (IdSet idSet : sets) {
         for (PluginId id : idSet.getIds()) {
@@ -154,6 +156,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
       return;
     }
     if (CUSTOMIZE_COMMAND.equals(command)) {
+      CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.BundledPluginGroupCustomized, null, group);
       myCustomizePanel.update(group);
       myCardLayout.show(this, CUSTOMIZE);
       setButtonsVisible(false);

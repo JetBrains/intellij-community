@@ -85,6 +85,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (mySteps.isEmpty()) {
       throw new IllegalStateException("no steps provided");  // use showIfNeeded() instead
     }
+    CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
   }
 
@@ -156,6 +157,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   @Override
   public void actionPerformed(@NotNull ActionEvent e) {
     if (e.getSource() == mySkipButton) {
+      CustomizeIDEWizardInteractions.INSTANCE.setSkippedOnPage(myIndex);
       doOKAction();
       return;
     }
