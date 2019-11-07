@@ -131,6 +131,7 @@ private fun isSafeType(type: PsiType?, set: MutableSet<PsiClass>): Boolean {
       if (!set.add(psiClass)) return true
       when {
         SAFE_CLASSES.contains(psiClass.qualifiedName) -> true
+        psiClass.isEnum -> true
         InheritanceUtil.isInheritor(psiClass, "com.intellij.psi.PsiElement") -> true
         psiClass.hasModifierProperty(PsiModifier.FINAL) -> {
           psiClass.allFields.any { f -> isSafeType(f.type, set) }
