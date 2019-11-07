@@ -27,6 +27,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     platformPrefix = "PyCharmCore"
     applicationInfoModule = "intellij.pycharm.community"
     brandingResourcePaths = ["$communityHome/python/resources"]
+    scrambleMainJar = false
 
     productLayout.mainModules = ["intellij.pycharm.community.main"]
     productLayout.productApiModules = ["intellij.xml.dom"]
