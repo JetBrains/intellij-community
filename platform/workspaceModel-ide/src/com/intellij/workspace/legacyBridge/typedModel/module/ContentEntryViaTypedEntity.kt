@@ -14,7 +14,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedEntityImpl,
                                  val sourceRootEntities: List<SourceRootEntity>,
                                  val entity: ContentRootEntity) : ContentEntry {
-  private val rootPointer = model.filePointerProvider.getAndCacheFilePointer(entity.url)
   private val excludeFolders by lazy {
     entity.excludedUrls.map { ExcludeFolderViaTypedEntity(this, it) }
   }
@@ -22,9 +21,9 @@ class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedEntityImpl
     sourceRootEntities.map { SourceFolderViaTypedEntity(this, it) }
   }
 
-  override fun getFile(): VirtualFile? = rootPointer.file
+  override fun getFile(): VirtualFile? = model.filePointerProvider.getAndCacheFilePointer(entity.url).file
 
-  override fun getUrl(): String = rootPointer.url
+  override fun getUrl(): String = entity.url.url
 
   override fun getSourceFolders(): Array<SourceFolder> = sourceFolders.toTypedArray()
   override fun getExcludeFolders(): Array<ExcludeFolder> = excludeFolders.toTypedArray()

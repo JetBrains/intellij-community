@@ -45,6 +45,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -92,6 +93,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -516,6 +520,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }).
       append(() -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
+      append(() -> WriteAction.runAndWait(() -> {
+        if (LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(module)).disposeAndClearCaches();
+          }
+
+          ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(project)).disposeAndClearCaches();
+        }
+      })).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> UiInterceptors.clear()).

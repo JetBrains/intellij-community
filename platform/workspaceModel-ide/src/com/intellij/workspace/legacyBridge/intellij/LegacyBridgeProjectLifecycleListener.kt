@@ -18,8 +18,10 @@ import com.intellij.workspace.ide.WorkspaceModelImpl
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
+import org.jetbrains.annotations.ApiStatus
 
-internal class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
+@ApiStatus.Internal
+class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
     const val ENABLED_REGISTRY_KEY = "ide.new.project.model"
 

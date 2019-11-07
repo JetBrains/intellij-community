@@ -14,9 +14,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 
 abstract class ContentFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
-  private val rootPointer = entry.model.filePointerProvider.getAndCacheFilePointer(contentFolderUrl)
-
-  override fun getFile(): VirtualFile? = rootPointer.file
+  override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(contentFolderUrl).file
   override fun getContentEntry(): ContentEntryViaTypedEntity = entry
   override fun getUrl(): String = contentFolderUrl.url
   override fun isSynthetic(): Boolean = false
