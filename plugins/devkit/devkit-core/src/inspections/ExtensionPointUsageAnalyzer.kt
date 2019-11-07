@@ -90,17 +90,10 @@ private fun analyzeGetExtensionsCall(call: UCallExpression, fullExpression: UExp
   if (loop != null) {
     if (fullExpression != loop.iteratedValue) return listOf(Leak("Call is not loop's iterated value", fullExpression.sourcePsi))
     val parameter = loop.variable.sourcePsi ?: return listOf(Leak("Can't resolve loop variable", loop.sourcePsi))
-    val leaks = mutableListOf<Leak>()
-    for (psiReference in ReferencesSearch.search(parameter).findAll()) {
-      val ref = psiReference.element.toUElement()
-      if (ref != null) {
-        leaks.addAll(analyzeObjectLeak(ref, "Extension instance"))
-      }
-    }
-    return leaks
+    return findVariableUsageLeaks(parameter, "Extension instance")
   }
 
-  return analyzeObjectLeak(fullExpression, "Extension list")
+  return findObjectLeaks(fullExpression, "Extension list")
 }
 
 private fun findEnclosingCall(expr: UElement?): UCallExpression? {
@@ -113,7 +106,7 @@ private fun findEnclosingCall(expr: UElement?): UCallExpression? {
   return null
 }
 
-private fun analyzeLeakThroughCall(call: UCallExpression, text: String): List<Leak> {
+private fun findLeaksThroughCall(call: UCallExpression, text: String): List<Leak> {
   val callee = call.resolve() ?: return listOf(Leak("Unresolved method call", call.sourcePsi))
   if (JavaMethodContractUtil.isPure(callee)) {
     val type = call.returnType
@@ -121,7 +114,7 @@ private fun analyzeLeakThroughCall(call: UCallExpression, text: String): List<Le
       return listOf(Leak("${text} passed to method with unknown return type", call.sourcePsi))
     }
     if (isSafeType(type, mutableSetOf())) return emptyList()
-    return analyzeObjectLeak(call, "${text}: return value of '${callee.name}' (type: ${type.presentableText})")
+    return findObjectLeaks(call, "${text}: return value of '${callee.name}' (type: ${type.presentableText})")
   }
   return listOf(Leak("${text} passed to impure method, side-effect is possible " +
                      "(annotate as '@Contract(pure = true)' if this should not be so)", call.sourcePsi))
@@ -150,38 +143,37 @@ private fun isSafeType(type: PsiType?, set: MutableSet<PsiClass>): Boolean {
   }
 }
 
-private fun analyzeObjectLeak(e: UElement, text: String): List<Leak> {
+private fun findObjectLeaks(e: UElement, text: String): List<Leak> {
   if (e is UExpression) {
     val type = e.getExpressionType()
     if (isSafeType(type, mutableSetOf())) return emptyList()
-    val parent = e.uastParent
+    var parent = e.uastParent
     if (parent is UParenthesizedExpression ||
         parent is UIfExpression ||
-        parent is UBinaryExpressionWithType) return analyzeObjectLeak(parent, text)
-    if (parent is UBinaryExpression && parent.operator !is UastBinaryOperator.AssignOperator) {
+        parent is UBinaryExpressionWithType) return findObjectLeaks(parent, text)
+    if (parent is UBinaryExpression && parent.operator != UastBinaryOperator.ASSIGN) {
       return emptyList()
     }
     if (parent is USwitchClauseExpression) {
       val switchExpr = parent.getParentOfType<USwitchExpression>()
       if (switchExpr != null) {
-        return analyzeObjectLeak(switchExpr, text)
+        return findObjectLeaks(switchExpr, text)
       }
     }
     val call = findEnclosingCall(e)
     if (call != null) {
-      return analyzeLeakThroughCall(call, text)
+      return findLeaksThroughCall(call, text)
+    }
+    if (parent is UBinaryExpression && parent.operator == UastBinaryOperator.ASSIGN) {
+      val leftOperand = parent.leftOperand
+      if (leftOperand is USimpleNameReferenceExpression) {
+        parent = leftOperand.resolveToUElement()
+      }
     }
     if (parent is ULocalVariable) {
       val sourcePsi = parent.sourcePsi
       if (sourcePsi != null) {
-        val leaks = mutableListOf<Leak>()
-        for (psiReference in ReferencesSearch.search(sourcePsi).findAll()) {
-          val ref = psiReference.element.toUElement()
-          if (ref != null) {
-            leaks.addAll(analyzeObjectLeak(ref, text))
-          }
-        }
-        return leaks
+        return findVariableUsageLeaks(sourcePsi, text)
       }
     }
     if (parent is UReturnExpression) {
@@ -209,7 +201,7 @@ private fun analyzeObjectLeak(e: UElement, text: String): List<Leak> {
               }
             }
             if (uElement != null) {
-              result.addAll(analyzeObjectLeak(uElement, "${text}: returned from method ${psiMethod.name}"))
+              result.addAll(findObjectLeaks(uElement, "${text}: returned from method ${psiMethod.name}"))
             }
             return@Processor true
           })
@@ -224,6 +216,18 @@ private fun analyzeObjectLeak(e: UElement, text: String): List<Leak> {
     }
   }
   return listOf(Leak("${text}: Unknown usage", e.sourcePsi?.parent))
+}
+
+private fun findVariableUsageLeaks(sourcePsi: PsiElement,
+                                   text: String): MutableList<Leak> {
+  val leaks = mutableListOf<Leak>()
+  for (psiReference in ReferencesSearch.search(sourcePsi).findAll()) {
+    val ref = psiReference.element.toUElement()
+    if (ref != null) {
+      leaks.addAll(findObjectLeaks(ref, text))
+    }
+  }
+  return leaks
 }
 
 class AnalyzeEPUsageAction : AnAction() {
