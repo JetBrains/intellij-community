@@ -191,9 +191,16 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       .setMoveUpAction(new MoveUpDownActionListener(MoveDirection.UP))
       .setMoveDownAction(new MoveUpDownActionListener(MoveDirection.DOWN))
       .createPanel();
+    tablePanel.setBorder(JBUI.Borders.empty());
     detailsSplitter.setFirstComponent(tablePanel);
     detailsSplitter.setSecondComponent(myFullCommitDetailsListPanel);
     return detailsSplitter;
+  }
+
+  @NotNull
+  @Override
+  protected DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
   }
 
   @NotNull
