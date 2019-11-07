@@ -179,22 +179,26 @@ public class NewMappings implements Disposable {
     List<VcsDirectoryMapping> mappings = myMappings;
     Mappings newMappedRoots = collectMappedRoots(mappings);
 
+    boolean mappedRootsChanged;
     synchronized (myUpdateLock) {
-      boolean mappedRootsChanged = !myMappedRoots.equals(newMappedRoots.mappedRoots);
-      if (!mappedRootsChanged || myMappings != mappings) {
+      if (myMappings != mappings) {
         Disposer.dispose(newMappedRoots.filePointerDisposable);
         return;
       }
 
       Disposer.dispose(myFilePointerDisposable);
-      myMappedRoots = newMappedRoots.mappedRoots;
-      myMappedRootsMapping = new FilePathMapping(newMappedRoots.mappedRoots);
       myFilePointerDisposable = newMappedRoots.filePointerDisposable;
 
-      dumpMappedRootsToLog();
+      mappedRootsChanged = !myMappedRoots.equals(newMappedRoots.mappedRoots);
+      if (mappedRootsChanged) {
+        myMappedRoots = newMappedRoots.mappedRoots;
+        myMappedRootsMapping = new FilePathMapping(newMappedRoots.mappedRoots);
+
+        dumpMappedRootsToLog();
+      }
     }
 
-    if (fireMappingsChangedEvent) mappingsChanged();
+    if (fireMappingsChangedEvent && mappedRootsChanged) mappingsChanged();
   }
 
   @NotNull
