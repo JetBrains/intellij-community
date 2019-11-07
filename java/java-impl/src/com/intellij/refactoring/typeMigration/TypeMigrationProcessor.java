@@ -43,6 +43,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private final Function<PsiElement, PsiType> myRootTypes;
   private final boolean myAllowDependentRoots;
   private final TypeMigrationRules myRules;
+  private final boolean myStopOnFirstFailedConversion;
   private TypeMigrationLabeler myLabeler;
 
   public TypeMigrationProcessor(final Project project,
@@ -50,11 +51,21 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                 final Function<PsiElement, PsiType> rootTypes,
                                 final TypeMigrationRules rules,
                                 final boolean allowDependentRoots) {
+    this(project, roots, rootTypes, rules, allowDependentRoots, false);
+  }
+
+  public TypeMigrationProcessor(final Project project,
+                                final PsiElement[] roots,
+                                final Function<PsiElement, PsiType> rootTypes,
+                                final TypeMigrationRules rules,
+                                final boolean allowDependentRoots,
+                                final boolean stopOnFirstFailedConversion) {
     super(project);
     myRoots = roots;
     myRules = rules;
     myRootTypes = rootTypes;
     myAllowDependentRoots = allowDependentRoots;
+    myStopOnFirstFailedConversion = stopOnFirstFailedConversion;
   }
 
   public static void runHighlightingTypeMigration(final Project project,
@@ -212,7 +223,8 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   public UsageInfo[] findUsages() {
-    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject);
+    myLabeler =
+      new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject, myStopOnFirstFailedConversion);
 
     try {
       return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);

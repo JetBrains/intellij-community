@@ -52,6 +52,7 @@ public class TypeMigrationLabeler {
   private volatile MigrateException myException;
   private final Semaphore myDialogSemaphore = new Semaphore();
   private final Project myProject;
+  private final boolean myStopOnFirstFailedConversion;
 
   public TypeMigrationRules getRules() {
     return myRules;
@@ -84,6 +85,14 @@ public class TypeMigrationLabeler {
                               Function<PsiElement, PsiType> migrationRootTypeFunction,
                               @Nullable("any root accepted if null") PsiElement[] allowedRoots,
                               Project project) {
+    this(rules, migrationRootTypeFunction, allowedRoots, project, false);
+  }
+  
+  public TypeMigrationLabeler(TypeMigrationRules rules,
+                              Function<PsiElement, PsiType> migrationRootTypeFunction,
+                              @Nullable("any root accepted if null") PsiElement[] allowedRoots,
+                              Project project,
+                              boolean stopOnFirstFailedConversion) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
     myAllowedRoots = allowedRoots == null ? null : ContainerUtil.set(allowedRoots);
@@ -93,6 +102,7 @@ public class TypeMigrationLabeler {
     myNewExpressionTypeChange = new LinkedHashMap<>();
     myClassTypeArgumentsChange = new LinkedHashMap<>();
     myProject = project;
+    myStopOnFirstFailedConversion = stopOnFirstFailedConversion;
   }
 
   public boolean hasFailedConversions() {
@@ -872,8 +882,12 @@ public class TypeMigrationLabeler {
     LOG.assertTrue(typePair.getSecond() != null);
     final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> key =
       Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), typePair.getSecond());
-    if (!myFailedConversions.containsKey(key)) {
-      myFailedConversions.put(key, getCurrentRoot());
+    if (myFailedConversions.containsKey(key)) {
+      return;
+    }
+    myFailedConversions.put(key, getCurrentRoot());
+    if (myStopOnFirstFailedConversion) {
+      throw new MigrateException();
     }
   }
 

@@ -138,13 +138,17 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
     doTest(() -> this.performAction(className, provider));
   }
 
+  protected boolean stopOnFirstFailedConversion(){
+    return false;
+  }
+  
   private void performAction(String className, RulesProvider provider) throws Exception {
     PsiClass aClass = myFixture.findClass(className);
     final PsiElement[] migrationElements = provider.victims(aClass);
     final PsiType migrationType = provider.migrationType(migrationElements[0]);
     final TypeMigrationRules rules = new TypeMigrationRules(getProject());
     rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
-    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElements, migrationType, rules);
+    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElements, migrationType, rules, stopOnFirstFailedConversion());
 
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
@@ -170,8 +174,8 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
   }
 
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
-    TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules) {
-      super(project, roots, Functions.constant(migrationType), rules, true);
+    TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules, final boolean stopOnFirstFailedConversion) {
+      super(project, roots, Functions.constant(migrationType), rules, true, stopOnFirstFailedConversion);
     }
   }
 
