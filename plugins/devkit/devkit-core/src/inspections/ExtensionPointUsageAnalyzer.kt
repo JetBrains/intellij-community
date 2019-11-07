@@ -119,7 +119,7 @@ private fun findLeaksThroughCall(call: UCallExpression, text: String): List<Leak
                      "(annotate as '@Contract(pure = true)' if this should not be so)", call.sourcePsi))
 }
 
-private val SAFE_CLASSES = setOf(CommonClassNames.JAVA_LANG_STRING, "javax.swing.Icon")
+private val SAFE_CLASSES = setOf(CommonClassNames.JAVA_LANG_STRING, "javax.swing.Icon", "java.net.URL", "java.io.File", "java.net.URI")
 
 private fun isSafeType(type: PsiType?, set: MutableSet<PsiClass>): Boolean {
   return when (type) {
