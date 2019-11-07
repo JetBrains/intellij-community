@@ -18,6 +18,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
+    scrambleMainJar = false
     buildCrossPlatformDistribution = true
 
     productLayout.productImplementationModules = ["intellij.platform.main"]
