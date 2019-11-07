@@ -22,8 +22,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import static org.jetbrains.jps.incremental.storage.Md5HashingService.HASH_SIZE;
-import static org.jetbrains.jps.incremental.storage.Md5HashingService.getStringHash;
+import static org.jetbrains.jps.incremental.storage.MurmurHashingService.HASH_SIZE;
+import static org.jetbrains.jps.incremental.storage.MurmurHashingService.getStringHash;
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
 
 /**

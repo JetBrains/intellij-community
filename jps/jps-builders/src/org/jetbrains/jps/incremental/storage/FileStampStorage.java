@@ -18,7 +18,7 @@ import java.util.Arrays;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPerTarget;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
-import static org.jetbrains.jps.incremental.storage.Md5HashingService.*;
+import static org.jetbrains.jps.incremental.storage.MurmurHashingService.*;
 
 public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements TimestampStorage<FileStamp> {
   private final FileTimestampStorage myTimestampStorage;
