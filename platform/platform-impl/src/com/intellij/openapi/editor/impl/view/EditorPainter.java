@@ -23,6 +23,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -664,6 +665,10 @@ public class EditorPainter implements TextDrawingCallback {
       return Math.max(1, Math.round(scale * unscaledSize));
     }
 
+    private static float roundToPixelCenter(double value, Graphics2D g) {
+      return (float)(PaintUtil.alignToInt(value, g, PaintUtil.RoundingMode.FLOOR) + PaintUtil.devPixel(g) / 2);
+    }
+
     private void paintWhitespace(float x, int y, int start, int end,
                                  LineWhitespacePaintingStrategy whitespacePaintingStrategy,
                                  VisualLineFragmentsIterator.Fragment fragment, BasicStroke stroke, float scale) {
@@ -686,15 +691,15 @@ public class EditorPainter implements TextDrawingCallback {
           int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
 
           if (c == ' ') {
-            float size = 2 * scale;
+            // making center point lie at the center of device pixel
+            float dotX = roundToPixelCenter((startX + endX) / 2., myGraphics) - scale / 2;
+            float dotY = roundToPixelCenter(yToUse + 1 - myAscent + myLineHeight / 2., myGraphics) - scale / 2;
             myTextDrawingTasks.add((g) -> {
-              // making center point lie exactly between pixels
-              //noinspection IntegerDivisionInFloatingPointContext
-              CachingPainter.paint(g, (startX + endX) / 2 - size / 2, yToUse + 1 - myAscent + myLineHeight / 2 - size / 2, size, size,
+              CachingPainter.paint(g, dotX, dotY, scale, scale,
                                    _g -> {
                                      _g.setColor(color);
                                      _g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                                     _g.fill(new Ellipse2D.Float(0, 0, size, size));
+                                     _g.fill(new Ellipse2D.Float(0, 0, scale, scale));
                                    }, ourCachedDot, color);
             });
           }
