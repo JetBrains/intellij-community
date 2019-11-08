@@ -669,6 +669,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                 break;
               case _string:
               case _integer:
+              case _number:
                 insertPropertyWithEnum(context, editor, defaultValueAsString, values, finalType, comma, myWalker, insertColon);
                 break;
               default:

@@ -118,4 +118,8 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
   public void testPreserveColonInsertWsNonString() throws Exception {
     baseInsertTest("preserveColon", "testInsertNonStringAndWhitespace");
   }
+
+  public void testInsertNumericValue() throws Exception {
+    baseInsertTest("insertNumericValue", "testInsertNumericValue");
+  }
 }
