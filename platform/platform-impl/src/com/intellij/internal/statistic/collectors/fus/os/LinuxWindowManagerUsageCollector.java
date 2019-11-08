@@ -63,6 +63,7 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
       WINDOW_MANAGERS.put("icewm", "ICEWM");
       WINDOW_MANAGERS.put("ukui", "UKUI");
       WINDOW_MANAGERS.put("fluxbox", "Fluxbox");
+      WINDOW_MANAGERS.put("lg3d", "LG3D");
       WINDOW_MANAGERS.put("enlightenment", "Enlightenment");
       WINDOW_MANAGERS.put("default.desktop", "default.desktop");
     }

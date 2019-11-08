@@ -35,10 +35,15 @@ class LinuxWindowManagerCollectorTest(private val wmName: String, val reported: 
         arrayOf("Awesome_GNOME", "Awesome_GNOME"),
 
         arrayOf("X-Cinnamon", "X-Cinnamon"),
+        arrayOf("x-cinnamon", "X-Cinnamon"),
+        arrayOf("xfce", "XFCE"),
         arrayOf("XFCE", "XFCE"),
+        arrayOf("deepin", "Deepin"),
         arrayOf("Deepin", "Deepin"),
         arrayOf("Unity", "Unity"),
+        arrayOf("UNITY", "Unity"),
         arrayOf("Pantheon", "Pantheon"),
+        arrayOf("PANTHEON", "Pantheon"),
         arrayOf("i3", "i3"),
         arrayOf("KDE", "KDE"),
         arrayOf("LXDE", "LXDE"),
@@ -54,6 +59,8 @@ class LinuxWindowManagerCollectorTest(private val wmName: String, val reported: 
         arrayOf("ICEWM", "ICEWM"),
         arrayOf("UKUI", "UKUI"),
         arrayOf("Fluxbox", "Fluxbox"),
+        arrayOf("LG3D", "LG3D"),
+        arrayOf("lg3d", "LG3D"),
         arrayOf("Enlightenment", "Enlightenment"),
         arrayOf("default.desktop", "default.desktop")
       )
