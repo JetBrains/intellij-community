@@ -277,11 +277,13 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
                                                    : GlobalSearchScope.allScope(myProject);
 
-    if (JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+    if (myProject.isDefault() ||
+        JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
       aModel.addElement(JUnitConfigurationModel.CATEGORY);
     }
 
-    if (JUnitUtil.isJUnit5(searchScope, myProject) ||
+    if (myProject.isDefault() ||
+        JUnitUtil.isJUnit5(searchScope, myProject) ||
         TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
       aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
       aModel.addElement(JUnitConfigurationModel.TAGS);
