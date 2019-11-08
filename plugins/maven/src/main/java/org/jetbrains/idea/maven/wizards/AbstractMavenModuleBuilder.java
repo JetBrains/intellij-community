@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -34,6 +33,8 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private MavenProject myAggregatorProject;
@@ -101,7 +102,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public Icon getNodeIcon() {
-    return MavenIcons.MavenLogo;
+    return RepositoryLibraryLogo;
   }
 
   @Override

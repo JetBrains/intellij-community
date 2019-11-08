@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.project.ProjectBundle.message;
 
@@ -998,7 +999,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
-      setUniformIcon(MavenIcons.Phase);
+      setUniformIcon(Task);
     }
 
     public MavenProject getMavenProject() {
@@ -1080,7 +1081,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (String goal : PHASES) {
         myGoalNodes.add(new StandardGoalNode(this, goal));
       }
-      setUniformIcon(MavenIcons.PhasesClosed);
+      setUniformIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override
@@ -1110,7 +1111,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.PhasesClosed);
+      setUniformIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override
@@ -1413,7 +1414,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public RunConfigurationsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.Phase);
+      setUniformIcon(Task);
     }
 
     @Override

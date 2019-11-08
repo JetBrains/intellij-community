@@ -47,7 +47,6 @@ import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
-import icons.MavenIcons;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -92,6 +91,7 @@ import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
+import static icons.ExternalSystemIcons.Task;
 
 public class MavenUtil {
   @ApiStatus.Experimental
@@ -856,7 +856,7 @@ public class MavenUtil {
 
     List<LookupElement> res = new ArrayList<>(goals.size());
     for (String goal : goals) {
-      res.add(LookupElementBuilder.create(goal).withIcon(MavenIcons.Phase));
+      res.add(LookupElementBuilder.create(goal).withIcon(Task));
     }
 
     return res;

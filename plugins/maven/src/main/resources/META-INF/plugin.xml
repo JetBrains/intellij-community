@@ -539,7 +539,7 @@
     <action id="Maven.ToggleOffline"
             class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
             description="Toggle offline mode for Maven builds"
-            icon="MavenIcons.OfflineMode">
+            icon="AllIcons.Actions.OfflineMode">
     </action>
 
     <action id="Maven.ToggleSkipTests"
@@ -675,7 +675,7 @@
     </group>
 
     <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true" text="Maven"
-           icon="MavenIcons.MavenLogo">
+           icon="OpenapiIcons.RepositoryLibraryLogo">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <reference ref="Maven.BaseProjectMenu"/>

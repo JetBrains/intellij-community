@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowId;
-import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 /**
  * Implementation of maven console which uses {@link BuildView} and can be displayed at:
@@ -105,7 +105,7 @@ public class BuildViewMavenConsole extends MavenConsole {
         actions.add(BuildTreeFilters.createFilteringActionsGroup(myBuildView));
         JComponent consolePanel = createConsolePanel(myBuildView, actions);
         RunContentDescriptor descriptor =
-          new RunContentDescriptor(myBuildView, processHandler, consolePanel, myTitle, MavenIcons.MavenLogo);
+          new RunContentDescriptor(myBuildView, processHandler, consolePanel, myTitle, RepositoryLibraryLogo);
         descriptor.setExecutionId(myExecutionId);
         RunnerAndConfigurationSettings configuration = processHandler.getUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY);
         if (configuration != null) {

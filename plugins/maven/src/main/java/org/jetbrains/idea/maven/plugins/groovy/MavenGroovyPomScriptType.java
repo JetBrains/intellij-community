@@ -18,7 +18,6 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType;
@@ -30,6 +29,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 import static org.jetbrains.plugins.groovy.bundled.BundledGroovy.getBundledGroovyFile;
 
 /**
@@ -46,7 +46,7 @@ public class MavenGroovyPomScriptType extends GroovyRunnableScriptType {
   @NotNull
   @Override
   public Icon getScriptIcon() {
-    return MavenIcons.MavenLogo;
+    return RepositoryLibraryLogo;
   }
 
   @Override
