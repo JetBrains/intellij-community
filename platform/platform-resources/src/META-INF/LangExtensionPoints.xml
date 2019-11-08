@@ -835,7 +835,7 @@
                     interface="com.intellij.testIntegration.TestFinder"/>
     <extensionPoint name="testSrcLocator"
                     interface="com.intellij.testIntegration.TestLocationProvider"/>
-    <extensionPoint name="testSourcesFilter" interface="com.intellij.openapi.roots.TestSourcesFilter"/>
+    <extensionPoint name="testSourcesFilter" interface="com.intellij.openapi.roots.TestSourcesFilter" dynamic="true"/>
 
     <extensionPoint name="testCreator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
