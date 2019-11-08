@@ -199,7 +199,7 @@
 
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
-    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
+    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider" dynamic="true"/>
 
     <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider"/>
 
