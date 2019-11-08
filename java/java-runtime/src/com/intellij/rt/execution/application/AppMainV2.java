@@ -33,9 +33,6 @@ public class AppMainV2 {
   public static final String LAUNCHER_PORT_NUMBER = "idea.launcher.port";
   public static final String LAUNCHER_BIN_PATH = "idea.launcher.bin.path";
 
-  private static final String JAVAFX_LAUNCHER = "com.sun.javafx.application.LauncherImpl";
-  private static final String LAUNCH_APPLICATION_METHOD_NAME = "launchApplication";
-
   private static native void triggerControlBreak();
 
   private static boolean loadHelper(String binPath) {
@@ -135,11 +132,11 @@ public class AppMainV2 {
     }
   }
 
-  private static boolean startJavaFXApplication(String[] params, Class appClass) throws NoSuchMethodException {
+  private static boolean startJavaFXApplication(String[] params, Class appClass) {
     try {
       //check in launch method for application class in the stack trace leads to this hack here
       Class[] types = {appClass.getClass(), params.getClass()};
-      Method launchApplication = Class.forName(JAVAFX_LAUNCHER).getMethod(LAUNCH_APPLICATION_METHOD_NAME, types);
+      Method launchApplication = Class.forName("com.sun.javafx.application.LauncherImpl").getMethod("launchApplication", types);
       launchApplication.invoke(null, new Object[] {appClass, params});
       return true;
     }
