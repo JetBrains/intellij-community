@@ -3,7 +3,11 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -28,16 +32,26 @@ public class InspectStubIndexAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
-    actionPerformed(project);
+    ProgressManager.getInstance().run(new Task.Modal(project, "Inspecting Stub Index", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        ReadAction.run(() -> {
+          actionPerformed(project, indicator);
+        });
+      }
+    });
   }
 
-  public static void actionPerformed(Project project) {
+  public static void actionPerformed(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     Collection<Integer> fileIds = FileBasedIndex.getInstance().getAllKeys(StubUpdatingIndex.INDEX_ID, project);
 
     TIntArrayList staleFileIds = new TIntArrayList();
     List<VirtualFile> staleFiles = new ArrayList<>();
     List<Trinity<VirtualFile, StubIndexKey, Object>> mismatchedKeys = new ArrayList<>();
+    indicator.setIndeterminate(false);
+    int counter = 0;
     for (Integer id : fileIds) {
+      indicator.setFraction(((double) (++counter)) / fileIds.size());
       VirtualFile vFile;
       try {
         vFile = ManagingFS.getInstance().findFileById(id);
