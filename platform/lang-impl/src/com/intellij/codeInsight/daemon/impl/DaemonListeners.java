@@ -362,7 +362,7 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         removeQuickFixesContributedByPlugin(pluginDescriptor);
       }
     });
