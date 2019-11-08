@@ -26,7 +26,7 @@
     <extensionPoint name="xml.namespaceHelper"
                     interface="com.intellij.xml.XmlNamespaceHelper"/>
     <extensionPoint name="xml.tagNameProvider"
-                    interface="com.intellij.xml.XmlTagNameProvider"/>
+                    interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
     <extensionPoint name="xml.fileNSInfoProvider"
                     interface="com.intellij.psi.xml.XmlFileNSInfoProvider"/>
     <extensionPoint name="xml.attributeDescriptorsProvider"
