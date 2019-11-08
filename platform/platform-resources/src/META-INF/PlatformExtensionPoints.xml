@@ -197,7 +197,7 @@
 
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
-    <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
+    <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
     <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
 
