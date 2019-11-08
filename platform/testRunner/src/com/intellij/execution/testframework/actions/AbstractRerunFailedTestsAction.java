@@ -290,7 +290,6 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
       return myConfiguration.clone();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public int getUniqueID() {
       return myConfiguration.getUniqueID();
