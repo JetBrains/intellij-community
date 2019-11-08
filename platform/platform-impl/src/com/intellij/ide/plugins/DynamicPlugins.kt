@@ -38,8 +38,11 @@ interface DynamicPluginListener {
   fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
   }
 
+  /**
+   * @param isUpdate true if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
+   */
   @JvmDefault
-  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor) {
+  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
   }
 
   companion object {
@@ -119,10 +122,10 @@ object DynamicPlugins {
 
   @JvmStatic
   @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false): Boolean {
+  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false, isUpdate: Boolean = false): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
 
-    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor)
+    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
 
     // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
     // We need to find the real plugin loaded into the current instance and unload its classloader.
@@ -236,7 +239,7 @@ object DynamicPlugins {
   @JvmStatic
   fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor) {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         callback.run()
       }
     })

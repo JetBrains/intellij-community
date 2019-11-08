@@ -148,7 +148,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
     for (IdeaPluginDescriptor pluginDescriptor : myDynamicPluginsToUninstall) {
-      if (!PluginInstaller.uninstallDynamicPlugin(pluginDescriptor)) {
+      if (!PluginInstaller.uninstallDynamicPlugin(pluginDescriptor, false)) {
         uninstallsRequiringRestart.add(pluginDescriptor.getPluginId());
       }
       else {
@@ -183,7 +183,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public void removePluginsOnCancel() {
-    myPluginsToRemoveOnCancel.forEach(PluginInstaller::uninstallDynamicPlugin);
+    myPluginsToRemoveOnCancel.forEach(pluginDescriptor -> PluginInstaller.uninstallDynamicPlugin(pluginDescriptor, false));
     myPluginsToRemoveOnCancel.clear();
   }
 
@@ -342,7 +342,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         allowUninstallWithoutRestart = false;
       }
       else if (DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor)) {
-        if (!PluginInstaller.uninstallDynamicPlugin(installedPluginDescriptor)) {
+        if (!PluginInstaller.uninstallDynamicPlugin(installedPluginDescriptor, true)) {
           allowUninstallWithoutRestart = false;
         }
       }
