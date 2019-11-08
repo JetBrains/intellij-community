@@ -51,6 +51,9 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
 interface JpsFileEntityTypeSerializer<E : TypedEntity> : JpsFileEntitiesSerializer<E> {
   val entityFilter: (E) -> Boolean
     get() = { true }
+
+  val additionalEntityTypes: List<Class<out TypedEntity>>
+    get() = emptyList()
 }
 
 /**
@@ -254,7 +257,11 @@ class JpsEntitiesSerializationData(fileSerializers: List<JpsFileEntitiesSerializ
     for (serializer in entityTypeSerializers) {
       if (serializer.mainEntityClass in newEntities ||
         entitiesToSave.any { serializer.mainEntityClass in it.value }) {
-        serializersToRun.add(Pair(serializer, mapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))))
+        val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
+        serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
+          storage.entities(it.kotlin).toList()
+        }
+        serializersToRun.add(Pair(serializer, entitiesMap))
       }
     }
 
