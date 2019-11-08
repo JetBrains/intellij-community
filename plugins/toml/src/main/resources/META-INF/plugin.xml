@@ -29,6 +29,6 @@
         <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
         <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
         <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
-        <annotator language="TOML" implementationClass="org.toml.ide.TomlAnnotator"/>
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
     </extensions>
 </idea-plugin>

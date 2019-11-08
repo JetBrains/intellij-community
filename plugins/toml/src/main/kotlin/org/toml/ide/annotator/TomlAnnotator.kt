@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-package org.toml.ide
+package org.toml.ide.annotator
 
+import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.toml.lang.psi.TomlInlineTable
 
-class TomlAnnotator : Annotator {
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+class TomlAnnotator : AnnotatorBase() {
+    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (element is TomlInlineTable) {
             val whiteSpaces = PsiTreeUtil.findChildrenOfType(element, PsiWhiteSpace::class.java)
             if (whiteSpaces.any { it.textContains('\n') }) {
