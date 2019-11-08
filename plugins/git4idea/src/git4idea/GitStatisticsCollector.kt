@@ -33,7 +33,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     addEnumIfDiffers(set, settings, defaultSettings, { it.syncSetting }, "repo.sync")
     addEnumIfDiffers(set, settings, defaultSettings, { it.updateMethod }, "update.type")
-    addEnumIfDiffers(set, settings, defaultSettings, { it.updateChangesPolicy() }, "save.policy")
+    addEnumIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, "save.policy")
     addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isUseIdeaSsh }, "use.builtin.ssh")
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, "push.autoupdate")

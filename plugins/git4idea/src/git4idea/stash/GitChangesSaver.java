@@ -58,8 +58,8 @@ public abstract class GitChangesSaver {
                                          @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator,
                                          @NotNull String stashMessage,
-                                         @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
-    if (saveMethod == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
+                                         @NotNull GitVcsSettings.SaveChangesPolicy saveMethod) {
+    if (saveMethod == GitVcsSettings.SaveChangesPolicy.SHELVE) {
       return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
     }
     return new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
