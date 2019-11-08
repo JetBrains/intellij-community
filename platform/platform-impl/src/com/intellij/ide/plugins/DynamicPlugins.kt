@@ -192,7 +192,7 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, enable: Boolean) {
     val coreLoader = ReflectionUtil.findCallerClass(1)!!.classLoader
     val pluginsWithNewPlugin = (PluginManagerCore.getPlugins().filterIsInstance<IdeaPluginDescriptorImpl>() + listOf(pluginDescriptor)).toTypedArray()
     PluginManagerCore.initClassLoader(pluginDescriptor, coreLoader, PluginManagerCore.pluginIdTraverser(pluginsWithNewPlugin))
@@ -206,7 +206,13 @@ object DynamicPlugins {
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
 
-    PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+    if (enable) {
+      // Update list of disabled plugins
+      PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+    }
+    else {
+      PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+    }
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
   }
 
