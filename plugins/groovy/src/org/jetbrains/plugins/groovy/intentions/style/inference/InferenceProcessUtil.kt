@@ -231,6 +231,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
   val substitutions = mutableListOf<PsiType>()
   val allowedTypeParameters = method.typeParameters.asList()
   val factory = GroovyPsiElementFactory.getInstance(method.project)
+  val unboundedWildcard = PsiWildcardType.createUnbounded(method.manager)
 
   class ForeignTypeParameterEraser : PsiTypeMapper() {
     override fun visitClassType(classType: PsiClassType?): PsiType? {
@@ -240,7 +241,9 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
         return (compress(typeParameter.extendsListTypes.asList()) ?: getJavaLangObject(method)).accept(this)
       }
       else {
-        return factory.createType(classType.resolve() ?: return null, *classType.parameters.mapNotNull { it.accept(this) }.toTypedArray())
+        val resolvedClass = classType.resolve() ?: return null
+        val classParameters = classType.parameters.map { it?.accept(this) ?: unboundedWildcard }.toTypedArray()
+        return factory.createType(resolvedClass, *classParameters)
       }
     }
 
