@@ -299,7 +299,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   private ThreeState isProbableKeyword(String keyword) {
     PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
     if (PsiKeyword.RETURN.equals(keyword)) {
-      if (isLastStatement(parentStatement) && !isOnTopLevelInVoidMethod(parentStatement)) {
+      if (isLastStatement(parentStatement) &&
+          !isOnTopLevelInVoidMethod(parentStatement) &&
+          !(parentStatement.getParent() instanceof PsiLoopStatement)) {
         return ThreeState.YES;
       }
     }
