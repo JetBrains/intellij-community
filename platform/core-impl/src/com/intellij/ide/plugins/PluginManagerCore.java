@@ -1173,18 +1173,9 @@ public final class PluginManagerCore {
     }
 
     try {
-      boolean skipPythonCommunity = isRunningFromSources && PlatformUtils.PYCHARM_PREFIX.equals(platformPrefix);
       Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
       while (enumeration.hasMoreElements()) {
-        URL url = enumeration.nextElement();
-        if (skipPythonCommunity) {
-          String file = url.getFile();
-          if (file.endsWith("/classes/production/intellij.python.community.plugin/META-INF/plugin.xml") ||
-              file.endsWith("/classes/production/intellij.pycharm.community.customization/META-INF/plugin.xml")) {
-            continue;
-          }
-        }
-        urls.put(url, PLUGIN_XML);
+        urls.put(enumeration.nextElement(), PLUGIN_XML);
       }
     }
     catch (IOException e) {
