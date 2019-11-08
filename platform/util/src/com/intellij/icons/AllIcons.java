@@ -3333,24 +3333,6 @@ public class AllIcons {
     }
     /** 32x32 */ public static final Icon Register = load("/welcome/register.png");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon CreateNewProjectfromExistingFiles = load("/toolbarDecorator/import.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon ImportProject = load("/toolbarDecorator/import.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon OpenProject = load("/actions/menu-open.svg");
-
   }
 
   public final static class Windows {
