@@ -14,7 +14,9 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.AddToGroup;
 import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.Reference;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UastContextKt;
@@ -25,8 +27,35 @@ public class ActionOrGroupPresentationProvider extends PresentationProvider<Acti
 
   @Override
   @Nullable
-  public Icon getIcon(ActionOrGroup actionOrGroup) {
-    if (!DomUtil.hasXml(actionOrGroup.getIcon())) {
+  public Icon getIcon(@Nullable ActionOrGroup actionOrGroup) {
+    return getIconForActionOrGroup(actionOrGroup);
+  }
+
+  public static class ForReference extends PresentationProvider<Reference> {
+
+    @Nullable
+    @Override
+    public Icon getIcon(Reference reference) {
+      if (DomUtil.hasXml(reference.getId())) {
+        return getIconForActionOrGroup(reference.getId().getValue());
+      }
+
+      return getIconForActionOrGroup(reference.getRef().getValue());
+    }
+  }
+
+  public static class ForAddToGroup extends PresentationProvider<AddToGroup> {
+
+    @Nullable
+    @Override
+    public Icon getIcon(AddToGroup addToGroup) {
+      return getIconForActionOrGroup(addToGroup.getGroupId().getValue());
+    }
+  }
+
+  @Nullable
+  private static Icon getIconForActionOrGroup(@Nullable ActionOrGroup actionOrGroup) {
+    if (actionOrGroup == null || !DomUtil.hasXml(actionOrGroup.getIcon())) {
       return actionOrGroup instanceof Group ? AllIcons.Actions.GroupByPackage : null;
     }
 
