@@ -51,7 +51,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }
   }
 
-  override fun onSuccess(handler: Consumer<in T>): Promise<T> {
+  override fun onSuccess(handler: Consumer<in T>): AsyncPromise<T> {
     return AsyncPromise(f.whenComplete { value, exception ->
       if (exception == null && !InternalPromiseUtil.isHandlerObsolete(handler)) {
         try {
@@ -66,7 +66,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }, hasErrorHandler)
   }
 
-  override fun onError(rejected: Consumer<in Throwable>): Promise<T> {
+  override fun onError(rejected: Consumer<in Throwable>): AsyncPromise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
@@ -78,7 +78,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }, hasErrorHandler)
   }
 
-  override fun onProcessed(processed: Consumer<in T>): Promise<T> {
+  override fun onProcessed(processed: Consumer<in T>): AsyncPromise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { value, _ ->
       if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
