@@ -51,12 +51,6 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     ourListener = listener;
   }
 
-  public static void unregisterEventsListener(@NonNull EventsListener listener) {
-    assert ourListener == listener;
-    ourListener = null;
-  }
-
-
   public interface EventsListener {
     void countActionInvocation(Class<? extends AnAction> aClass, Presentation presentation, AnActionEvent event);
 
