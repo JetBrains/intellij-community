@@ -166,7 +166,7 @@ class CanonicalPathMap {
     for (int i = 0; i < pathComponents.size(); ++i) {
       String currentPathComponent = pathComponents.get(i);
       if (runningPath == null) {
-        runningPath = new File(currentPathComponent.isEmpty() ? "/" : currentPathComponent);
+        runningPath = new File(currentPathComponent + File.separatorChar);
       }
       else {
         runningPath = new File(runningPath, currentPathComponent);
