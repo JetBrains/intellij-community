@@ -134,10 +134,10 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   fun `test custom packaging elements`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/customPackagingElements/javaeeSampleProject.ipr")
     val storage = loadProject(projectDir)
-    val artifacts = storage.entities(ArtifactEntity::class).toList()
+    val artifacts = storage.entities(ArtifactEntity::class).sortedBy { it.name }.toList()
     assertEquals(6, artifacts.size)
-    assertEquals("javaeeSampleProject:war exploded", artifacts[0].name)
-    val artifactChildren = artifacts[0].rootElement.children
+    assertEquals("javaeeSampleProject:war exploded", artifacts[5].name)
+    val artifactChildren = artifacts[5].rootElement.children
     assertEquals(2, artifactChildren.size)
     val customElement = artifactChildren[0] as CustomPackagingElementEntity
     assertEquals("javaee-facet-resources", customElement.typeId)
