@@ -1043,6 +1043,7 @@ public class HighlightMethodUtil {
       PsiParameter parameter = null;
       if (i < parameters.length) {
         parameter = parameters[i];
+        varargAdded = parameter.isVarArgs();
       }
       else if (!varargAdded) {
         parameter = parameters[parameters.length - 1];
