@@ -68,6 +68,16 @@ final class FieldAccessor implements MutableAccessor {
   }
 
   @Override
+  public void setChar(@NotNull Object host, char value) {
+    try {
+      myField.setChar(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new SerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
   public void setBoolean(@NotNull Object host, boolean value) {
     try {
       myField.setBoolean(host, value);
@@ -81,6 +91,16 @@ final class FieldAccessor implements MutableAccessor {
   public void setInt(@NotNull Object host, int value) {
     try {
       myField.setInt(host, value);
+    }
+    catch (IllegalAccessException e) {
+      throw new SerializationException("Writing " + myField, e);
+    }
+  }
+
+  @Override
+  public void setByte(@NotNull Object host, byte value) {
+    try {
+      myField.setByte(host, value);
     }
     catch (IllegalAccessException e) {
       throw new SerializationException("Writing " + myField, e);
