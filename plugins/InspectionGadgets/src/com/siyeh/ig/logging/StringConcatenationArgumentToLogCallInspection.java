@@ -188,7 +188,10 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             newMethodCall.append(text, 1, text.length() - 1);
           }
           else if (operand instanceof PsiLiteralExpression && PsiType.CHAR.equals(operand.getType()) && inStringLiteral) {
-            newMethodCall.append(text, 1, text.length() - 1);
+            final Object value = ((PsiLiteralExpression)operand).getValue();
+            if (value instanceof Character) {
+              newMethodCall.append(StringUtil.escapeStringCharacters(value.toString()));
+            }
           }
           else {
             if (inStringLiteral) {

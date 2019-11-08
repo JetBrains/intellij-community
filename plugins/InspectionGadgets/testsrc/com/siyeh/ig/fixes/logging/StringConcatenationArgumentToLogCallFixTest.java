@@ -18,6 +18,7 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
 
   public void testUseOfConstant() { doTest(); }
   public void testCharLiteral() { doTest(); }
+  public void testQuoteCharLiteral() { doTest(); }
 
   @Override
   protected String getRelativePath() {
