@@ -243,7 +243,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       if (!needRestart) {
         for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
-          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
+          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor, true);
         }
         return true;
       }

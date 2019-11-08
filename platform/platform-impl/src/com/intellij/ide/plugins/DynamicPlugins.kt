@@ -217,7 +217,7 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, enable: Boolean) {
     PluginManagerCore.initClassLoader(pluginDescriptor)
 
     val application = ApplicationManager.getApplication() as ApplicationImpl
@@ -232,7 +232,13 @@ object DynamicPlugins {
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
 
-    PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+    if (enable) {
+      // Update list of disabled plugins
+      PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+    }
+    else {
+      PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+    }
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
   }
 
