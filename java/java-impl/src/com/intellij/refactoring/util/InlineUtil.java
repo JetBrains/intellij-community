@@ -602,8 +602,7 @@ public class InlineUtil {
     }
 
     PsiExpression initializer = variable.getInitializer();
-    boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && false;
-    return canInlineParameterOrThisVariable(variable.getProject(), initializer, shouldBeFinal, false,
+    return canInlineParameterOrThisVariable(variable.getProject(), initializer, false, false,
                                             refs.size(), isAccessedForWriting);
   }
 
