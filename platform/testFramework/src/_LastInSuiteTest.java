@@ -67,20 +67,20 @@ public class _LastInSuiteTest extends TestCase {
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensions.forEach((ep, references) -> {
-      System.out.printf("##teamcity[testStarted name='%s']%n", escape(unloadingTestName(ep)));
+      String testName = escape("Dynamic EP unloading " + ep.getName());
+      System.out.printf("##teamcity[testStarted name='%s']%n", testName);
       System.out.flush();
 
       List<Object> alive = ContainerUtil.mapNotNull(references, WeakReference::get);
       if (!alive.isEmpty()) {
         String aliveExtensions = StringUtil.join(alive, o -> o.getClass().getName(), "\n");
-        System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED,
-                          escape(unloadingTestName(ep)), 
+        System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName, 
                           escape("Not unloaded extensions:\n" + aliveExtensions + "\n\n" + "See testDynamicExtensions output to find a heapDump"));
         System.out.flush();
         failed.set(true);
       }
       else {
-        System.out.printf("##teamcity[testFinished name='%s']%n", escape(unloadingTestName(ep)));
+        System.out.printf("##teamcity[testFinished name='%s']%n", testName);
         System.out.flush();
       }
     });
@@ -89,11 +89,6 @@ public class _LastInSuiteTest extends TestCase {
       String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
       fail("Some of dynamic extensions have not been unloaded. See individual tests for details. Heap dump: " + heapDump);
     }
-  }
-
-  @NotNull
-  private static String unloadingTestName(ExtensionPoint<?> ep) {
-    return "Dynamic EP unloading " + ep.getName();
   }
 
   @NotNull
