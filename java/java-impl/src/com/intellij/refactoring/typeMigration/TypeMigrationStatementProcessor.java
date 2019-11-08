@@ -32,7 +32,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -335,6 +334,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
     if (arrayInitializer != null) {
       processArrayInitializer(arrayInitializer, expression);
+    } else {
+      processCallExpression(expression);
     }
   }
 
@@ -442,15 +443,19 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   @Override
   public void visitMethodCallExpression(final PsiMethodCallExpression methodCallExpression) {
     super.visitMethodCallExpression(methodCallExpression);
-    final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
+    processCallExpression(methodCallExpression);
+  }
+  
+  private void processCallExpression(final PsiCallExpression callExpression){
+    final JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
     final PsiElement method = resolveResult.getElement();
     if (method instanceof PsiMethod) {
-      if (migrateEqualsMethod(methodCallExpression, (PsiMethod)method)) {
+      if (migrateEqualsMethod(callExpression, (PsiMethod)method)) {
         return;
       }
-      final PsiExpression[] psiExpressions = methodCallExpression.getArgumentList().getExpressions();
+      final PsiExpression[] psiExpressions = callExpression.getArgumentList().getExpressions();
       final PsiParameter[] originalParams = ((PsiMethod)method).getParameterList().getParameters();
-      final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, methodCallExpression);
+      final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, callExpression);
       for (int i = 0; i < psiExpressions.length; i++) {
         PsiParameter originalParameter;
         if (originalParams.length <= i) {
@@ -465,7 +470,13 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         }
         processVariable(originalParameter, psiExpressions[i], null, resolveResult.getSubstitutor(), evalSubstitutor, true);
       }
-      final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+      final PsiExpression qualifier;
+      LOG.assertTrue(callExpression instanceof PsiMethodCallExpression || callExpression instanceof PsiNewExpression);
+      if (callExpression instanceof PsiMethodCallExpression) {
+        qualifier = ((PsiMethodCallExpression)callExpression).getMethodExpression().getQualifierExpression();
+      } else {
+        qualifier = ((PsiNewExpression)callExpression).getQualifier();
+      }
       if (qualifier != null && qualifier.isPhysical() && !new TypeView(qualifier).isChanged()) { //substitute property otherwise
         final PsiType qualifierType = qualifier.getType();
         if (qualifierType instanceof PsiClassType) {
@@ -478,7 +489,11 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
   }
 
-  private boolean migrateEqualsMethod(PsiMethodCallExpression methodCallExpression, PsiMethod method) {
+  private boolean migrateEqualsMethod(PsiCallExpression callExpression, PsiMethod method) {
+    if (!(callExpression instanceof PsiMethodCallExpression)) {
+      return false;
+    }
+    PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)callExpression;
     final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
     if (qualifier == null) {
       return false;

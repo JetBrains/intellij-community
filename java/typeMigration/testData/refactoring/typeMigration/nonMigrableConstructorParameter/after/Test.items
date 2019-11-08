@@ -1,0 +1,11 @@
+Types:
+PsiField:FIRST : long
+PsiParameter:number : long
+PsiReferenceExpression:FIRST : long
+
+Conversions:
+0 -> $
+FIRST -> $
+
+New expression type changes:
+Fails:

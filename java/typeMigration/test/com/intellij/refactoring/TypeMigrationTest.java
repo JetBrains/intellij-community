@@ -880,6 +880,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
+  public void testNonMigrableConstructorParameter(){
+    doTestFieldType("FIRST", PsiType.LONG);
+  }
+  
   private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {
       @Override
