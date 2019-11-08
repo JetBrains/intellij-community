@@ -233,7 +233,7 @@ class CustomMethodHandlers {
     else {
       size = factory.getInt(args.myArguments.length / factor);
     }
-    SpecialFieldValue sizeConstraint = COLLECTION_SIZE.withValue(size);
+    SpecialFieldValue sizeConstraint = size == DfaUnknownValue.getInstance() ? null : COLLECTION_SIZE.withValue(size);
     DfaFactMap facts = DfaFactMap.EMPTY
       .with(DfaFactType.TYPE_CONSTRAINT, dfaType.asConstraint())
       .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
