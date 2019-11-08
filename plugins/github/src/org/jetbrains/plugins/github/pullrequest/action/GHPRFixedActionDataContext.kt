@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 
 class GHPRFixedActionDataContext internal constructor(private val delegate: GHPRActionDataContext,
-                                                      dataProvider: GithubPullRequestDataProvider)
+                                                      dataProvider: GithubPullRequestDataProvider,
+                                                      details: GHPullRequestShort? = null)
   : GHPRActionDataContext {
 
   override val securityService = delegate.securityService
@@ -22,7 +24,7 @@ class GHPRFixedActionDataContext internal constructor(private val delegate: GHPR
   override val currentUser = delegate.securityService.currentUser
 
   override val pullRequest = dataProvider.number
-  override val pullRequestDetails = delegate.pullRequestDetails
+  override val pullRequestDetails = details
   override val pullRequestDataProvider = dataProvider
 
   override fun resetAllData() = delegate.resetAllData()
