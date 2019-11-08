@@ -1,6 +1,5 @@
 package com.intellij.workspace.jps
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspace.api.*
@@ -133,7 +132,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test custom packaging elements`() {
-    val projectDir = File(PathManager.getHomePath(), "plugins/javaee/core/javaee-jps-plugin/testData/javaeeSampleProject/javaeeSampleProject.ipr")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/customPackagingElements/javaeeSampleProject.ipr")
     val storage = loadProject(projectDir)
     val artifacts = storage.entities(ArtifactEntity::class).toList()
     assertEquals(6, artifacts.size)
