@@ -83,7 +83,10 @@ public class PluginDescriptorStructureUtil {
         return toShortName(epQualifiedName);
       }
     }
-
+    else if (element instanceof Separator) {
+      return "----------";
+    }
+    
     return toDisplayName(element.getXmlElementName()); // default
   }
 
