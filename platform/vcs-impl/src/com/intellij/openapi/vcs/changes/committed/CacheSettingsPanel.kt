@@ -1,105 +1,50 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.vcs.changes.committed
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.ui.layout.*
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+object CacheSettingsDialog {
+  @JvmStatic
+  fun showSettingsDialog(project: Project): Boolean =
+    ShowSettingsUtil.getInstance().editConfigurable(project, CacheSettingsPanel(project))
+}
 
-import static com.intellij.openapi.vcs.VcsBundle.message;
+private const val COLUMNS_COUNT = 6
 
-/**
- * @author yole
- */
-public class CacheSettingsPanel implements Configurable {
-  private JSpinner myCountSpinner;
-  private JPanel myTopPanel;
-  private JSpinner myRefreshSpinner;
-  private JCheckBox myRefreshCheckbox;
-  private JSpinner myDaysSpinner;
-  private JLabel myCountLabel;
-  private JLabel myDaysLabel;
-  private CommittedChangesCache myCache;
+internal class CacheSettingsPanel(project: Project) : BoundConfigurable(message("cache.settings.dialog.title")) {
+  private val cache = CommittedChangesCache.getInstance(project)
+  private val cacheState = CommittedChangesCacheState().apply { copyFrom(cache.state) }
 
-  public CacheSettingsPanel() {
-    myRefreshCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateControls();
+  override fun apply() {
+    super.apply()
+    cache.loadState(cacheState)
+  }
+
+  override fun createPanel(): DialogPanel =
+    panel {
+      if (cache.isMaxCountSupportedForProject) countRow() else daysRow()
+      row {
+        val refreshCheckBox = checkBox("Refresh changes every", cacheState::isRefreshEnabled).actsAsLabel()
+        cell {
+          intTextField(cacheState::refreshInterval, COLUMNS_COUNT, 1..60 * 24)
+            .enableIf(refreshCheckBox.selected)
+          label("minutes")
+        }
       }
-    });
-  }
-
-  public void initPanel(final Project project) {
-    myCache = CommittedChangesCache.getInstance(project);
-  }
-
-  @Override
-  public void apply() {
-    final CommittedChangesCacheState state = new CommittedChangesCacheState();
-    state.setInitialCount(((SpinnerNumberModel)myCountSpinner.getModel()).getNumber().intValue());
-    state.setInitialDays(((SpinnerNumberModel)myDaysSpinner.getModel()).getNumber().intValue());
-    state.setRefreshInterval(((SpinnerNumberModel)myRefreshSpinner.getModel()).getNumber().intValue());
-    state.setRefreshEnabled(myRefreshCheckbox.isSelected());
-    myCache.loadState(state);
-  }
-
-  @Override
-  public boolean isModified() {
-    CommittedChangesCacheState state = myCache.getState();
-
-    if (state.getInitialCount() != ((SpinnerNumberModel)myCountSpinner.getModel()).getNumber().intValue()) return true;
-    if (state.getInitialDays() != ((SpinnerNumberModel)myDaysSpinner.getModel()).getNumber().intValue()) return true;
-    if (state.getRefreshInterval() != ((SpinnerNumberModel)myRefreshSpinner.getModel()).getNumber().intValue()) return true;
-    if (state.isRefreshEnabled() != myRefreshCheckbox.isSelected()) return true;
-
-    return false;
-  }
-
-  @Override
-  public void reset() {
-    final CommittedChangesCacheState state = myCache.getState();
-
-    myCountSpinner.setModel(new SpinnerNumberModel(state.getInitialCount(), 1, 100000, 10));
-    myDaysSpinner.setModel(new SpinnerNumberModel(state.getInitialDays(), 1, 720, 10));
-    myRefreshSpinner.setModel(new SpinnerNumberModel(state.getRefreshInterval(), 1, 60 * 24, 1));
-    if (myCache.isMaxCountSupportedForProject()) {
-      myDaysLabel.setVisible(false);
-      myDaysSpinner.setVisible(false);
     }
-    else {
-      myCountLabel.setVisible(false);
-      myCountSpinner.setVisible(false);
+
+  private fun LayoutBuilder.countRow() =
+    row("Changelists to cache initially:") {
+      intTextField(cacheState::initialCount, COLUMNS_COUNT, 1..100000)
     }
-    myRefreshCheckbox.setSelected(state.isRefreshEnabled());
-    updateControls();
 
-  }
-
-  private void updateControls() {
-    myRefreshSpinner.setEnabled(myRefreshCheckbox.isSelected());
-  }
-
-  public JComponent getPanel() {
-    return myTopPanel;
-  }
-
-  @Override
-  @Nls
-  public String getDisplayName() {
-    return message("cache.settings.dialog.title");
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return getPanel();
-  }
-
-  public void setEnabled(final boolean value) {
-    myRefreshCheckbox.setEnabled(value);
-  }
-
+  private fun LayoutBuilder.daysRow() =
+    row("Days of history to cache initially:") {
+      intTextField(cacheState::initialDays, COLUMNS_COUNT, 1..720)
+    }
 }
