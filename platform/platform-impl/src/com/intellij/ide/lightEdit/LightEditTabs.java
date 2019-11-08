@@ -12,9 +12,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,12 +29,20 @@ class LightEditTabs extends JBEditorTabs {
   LightEditTabs(@NotNull Disposable parent, LightEditorManager editorManager) {
     super(null, ActionManager.getInstance(), null, parent);
     myEditorManager = editorManager;
+    addListener(new TabsListener() {
+      @Override
+      public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+        onSelectionChange(newSelection);
+      }
+    });
   }
 
-  void addEditorTab(@NotNull Editor editor, @NotNull String title) {
+  void addEditorTab(@NotNull Editor editor, @NotNull VirtualFile file) {
     TabInfo tabInfo = new TabInfo(createEditorContainer(editor))
-      .setText(title)
+      .setText(file.getPresentableName())
       .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+
+    tabInfo.setObject(new LightEditorInfo(editor, file));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTabAction(editor));
@@ -44,6 +55,17 @@ class LightEditTabs extends JBEditorTabs {
     JPanel editorPanel = new JPanel(new BorderLayout());
     editorPanel.add(editor.getComponent(), BorderLayout.CENTER);
     return editorPanel;
+  }
+
+  private void onSelectionChange(@Nullable TabInfo tabInfo) {
+    LightEditorInfo selectedEditorInfo = null;
+    if (tabInfo != null) {
+      Object data = tabInfo.getObject();
+      if (data instanceof LightEditorInfo) {
+        selectedEditorInfo = (LightEditorInfo)data;
+      }
+    }
+    myEditorManager.fireEditorSelected(selectedEditorInfo);
   }
 
   private class CloseTabAction extends DumbAwareAction {

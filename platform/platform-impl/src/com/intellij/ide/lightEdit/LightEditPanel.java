@@ -4,7 +4,6 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,20 +13,23 @@ import java.awt.*;
 public class LightEditPanel extends JPanel implements Disposable {
 
   private final LightEditorManager myEditorManager;
-  private final LightEditTabs myTabs;
+  private final LightEditTabs      myTabs;
 
-  public LightEditPanel() {
-    myEditorManager = new LightEditorManager();
-    Disposer.register(this, myEditorManager);
+  public LightEditPanel(LightEditorManager editorManager) {
+    myEditorManager = editorManager;
     setLayout(new BorderLayout());
     myTabs = new LightEditTabs(this, myEditorManager);
     add(myTabs, BorderLayout.CENTER);
   }
 
+  void addEditorTab(@NotNull Editor editor, @NotNull VirtualFile file) {
+    myTabs.addEditorTab(editor, file);
+  }
+
   public void loadFile(@NotNull VirtualFile file) {
     Editor editor = myEditorManager.createEditor(file);
     if (editor != null) {
-      myTabs.addEditorTab(editor, file.getPresentableName());
+      myTabs.addEditorTab(editor, file);
     }
   }
 

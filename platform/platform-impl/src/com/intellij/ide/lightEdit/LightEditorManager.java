@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.List;
 
 class LightEditorManager implements Disposable {
   private final List<Editor> myEditors = new ArrayList<>();
+  private final EventDispatcher<LightEditorListener> myEventDispatcher = EventDispatcher.create(LightEditorListener.class);
 
   @NotNull
   Editor createEditor(@NotNull Document document) {
@@ -45,6 +47,7 @@ class LightEditorManager implements Disposable {
     myEditors.stream()
       .filter(editor -> !editor.isDisposed())
       .forEach(editor -> EditorFactory.getInstance().releaseEditor(editor));
+    myEditors.clear();
   }
 
   void closeEditor(@NotNull Editor editor) {
@@ -52,6 +55,14 @@ class LightEditorManager implements Disposable {
     if (!editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
     }
+  }
+
+  void addListener(@NotNull LightEditorListener listener) {
+    myEventDispatcher.addListener(listener);
+  }
+
+  void fireEditorSelected(@Nullable LightEditorInfo editorInfo) {
+    myEventDispatcher.getMulticaster().afterSelect(editorInfo);
   }
 
   @NotNull
