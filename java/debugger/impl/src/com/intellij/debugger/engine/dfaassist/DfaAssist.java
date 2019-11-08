@@ -118,13 +118,19 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   @NotNull
-  static Map<PsiExpression, DfaHint> computeHints(StackFrame frame, PsiElement element) throws AbsentInformationException {
+  static Map<PsiExpression, DfaHint> computeHints(StackFrame frame, PsiElement element) {
     Method method = frame.location().method();
     if (!element.isValid()) return Collections.emptyMap();
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (psiMethod == null || !psiMethod.getName().equals(method.name()) ||
-        psiMethod.getParameterList().getParametersCount() != method.arguments().size()) {
+    boolean methodMatches = false;
+    try {
+      methodMatches = psiMethod == null || !psiMethod.getName().equals(method.name()) ||
+                      psiMethod.getParameterList().getParametersCount() != method.arguments().size(); 
+    }
+    catch (AbsentInformationException ignored) {
+    }
+    if (!methodMatches) {
       return Collections.emptyMap();
     }
     PsiStatement statement = getAnchorStatement(element);
