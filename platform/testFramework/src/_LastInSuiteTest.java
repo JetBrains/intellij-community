@@ -49,7 +49,10 @@ public class _LastInSuiteTest extends TestCase {
 
   @Override
   public String getName() {
-    String name = super.getName();
+    return getTestName(super.getName());
+  }
+
+  private static String getTestName(String name) {
     String buildConf = System.getProperty("teamcity.buildConfName");
     return buildConf == null ? name : name + "[" + buildConf + "]";
   }
@@ -67,7 +70,7 @@ public class _LastInSuiteTest extends TestCase {
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensions.forEach((ep, references) -> {
-      String testName = escape("Dynamic EP unloading " + ep.getName());
+      String testName = escape(getTestName("Dynamic EP unloading " + ep.getName()));
       System.out.printf("##teamcity[testStarted name='%s']%n", testName);
       System.out.flush();
 
