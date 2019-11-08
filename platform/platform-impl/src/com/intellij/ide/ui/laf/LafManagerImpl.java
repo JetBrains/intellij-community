@@ -7,6 +7,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
@@ -110,6 +112,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private boolean myFirstSetup = true;
+  private boolean myUpdatingPlugin = false;
+  private final Set<String> myThemesInUpdatedPlugin = new HashSet<>();
 
   LafManagerImpl() {
     ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
@@ -229,9 +233,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (myLafComboBoxModel != null) {
           myLafComboBoxModel.replaceAll(newLaFs);
         }
-        setCurrentLookAndFeel(newTheme);
-        JBColor.setDark(newTheme.getTheme().isDark());
-        updateUI();
+        // When updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
+        if (!myThemesInUpdatedPlugin.contains(theme.getId())) {
+          setCurrentLookAndFeel(newTheme);
+          JBColor.setDark(newTheme.getTheme().isDark());
+          updateUI();
+        }
       }
 
       @Override
@@ -244,6 +251,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             if (theme.getId().equals(provider.id)) {
               if (lookAndFeel == getCurrentLookAndFeel()) {
                 switchLafTo = theme.isDark() ? myDefaultDarkTheme : myDefaultLightTheme;
+              }
+              else if (myUpdatingPlugin) {
+                myThemesInUpdatedPlugin.add(theme.getId());
               }
               ((EditorColorsManagerImpl) EditorColorsManager.getInstance()).handleThemeRemoved(theme);
               continue;
@@ -265,6 +275,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
       }
     }, this);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        myUpdatingPlugin = isUpdate;
+      }
+
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        myThemesInUpdatedPlugin.clear();
+      }
+    });
   }
 
   public void updateWizardLAF(boolean wasUnderDarcula) {

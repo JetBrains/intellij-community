@@ -105,8 +105,8 @@ public class PluginInstaller {
     StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
   }
 
-  public static boolean uninstallDynamicPlugin(IdeaPluginDescriptor pluginDescriptor) {
-    boolean uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
+  public static boolean uninstallDynamicPlugin(IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+    boolean uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
     if (uninstalledWithoutRestart) {
       FileUtil.delete(pluginDescriptor.getPath());
     }
