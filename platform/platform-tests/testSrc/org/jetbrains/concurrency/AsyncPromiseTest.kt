@@ -13,7 +13,9 @@ import org.junit.Test
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertTrue
 import kotlin.test.fail
 
 @Suppress("UsePropertyAccessSyntax")
@@ -333,4 +335,14 @@ class AsyncPromiseTest {
       }
     promise.setError(error)
   }
-}
+
+  @Test
+  fun `test onProcessed is called even for canceled promise`() {
+    val called = AtomicBoolean();
+    val promise = AsyncPromise<String>()
+    promise.onProcessed {
+      called.set(true)
+    }
+    promise.cancel()
+    assertTrue(called.get())
+  }}
