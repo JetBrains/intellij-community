@@ -50,6 +50,7 @@ class LightEditTabs extends JBEditorTabs {
 
     tabInfo.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     addTabSilently(tabInfo, -1);
+    select(tabInfo, true);
   }
 
   private static JComponent createEditorContainer(@NotNull Editor editor) {
