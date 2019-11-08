@@ -33,6 +33,7 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
    * @see #getUnderlyingFrameworkTypeId()
    */
   @Nullable
+  @Contract(pure = true)
   public FrameworkGroup<?> getParentGroup() {
     return null;
   }
@@ -42,6 +43,7 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
    * @see #getParentGroup()
    */
   @Nullable
+  @Contract(pure = true)
   public String getUnderlyingFrameworkTypeId() {
     return null;
   }
@@ -50,6 +52,7 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
   @Contract(pure = true)
   public abstract FrameworkSupportInModuleProvider createProvider();
 
+  @Contract(pure = true)
   public <V extends FrameworkVersion> List<V> getVersions() {
     return Collections.emptyList();
   }

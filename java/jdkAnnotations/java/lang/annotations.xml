@@ -62,6 +62,12 @@
   <item name='java.lang.Character java.lang.Character valueOf(char)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.Class T cast(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;param1&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Class boolean isAssignableFrom(java.lang.Class&lt;?&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

@@ -15,6 +15,7 @@
  */
 package com.intellij.framework;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +33,11 @@ public abstract class FrameworkType {
 
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)
+  @Contract(pure = true)
   public abstract String getPresentableName();
 
   @NotNull
+  @Contract(pure = true)
   public abstract Icon getIcon();
 
   @NotNull
