@@ -73,7 +73,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
   }
 
-  override fun onSuccess(handler: Consumer<in T>): Promise<T> {
+  override fun onSuccess(handler: Consumer<in T>): AsyncPromise<T> {
     return AsyncPromise(f.whenComplete { value, error ->
       if (error != null) {
         throw error
@@ -85,7 +85,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }, hasErrorHandler, addExceptionHandler = true)
   }
 
-  override fun onError(rejected: Consumer<in Throwable>): Promise<T> {
+  override fun onError(rejected: Consumer<in Throwable>): AsyncPromise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
@@ -96,7 +96,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }, hasErrorHandler, addExceptionHandler = false)
   }
 
-  override fun onProcessed(processed: Consumer<in T>): Promise<T> {
+  override fun onProcessed(processed: Consumer<in T>): AsyncPromise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { value, _ ->
       if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
