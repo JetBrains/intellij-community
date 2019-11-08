@@ -50,11 +50,13 @@ class LightEditorManager implements Disposable {
     myEditors.clear();
   }
 
-  void closeEditor(@NotNull Editor editor) {
+  void closeEditor(@NotNull LightEditorInfo editorInfo) {
+    Editor editor = editorInfo.getEditor();
     myEditors.remove(editor);
     if (!editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
     }
+    myEventDispatcher.getMulticaster().afterClose(editorInfo);
   }
 
   void addListener(@NotNull LightEditorListener listener) {
@@ -68,5 +70,9 @@ class LightEditorManager implements Disposable {
   @NotNull
   private static EditorHighlighter getHighlighter(@NotNull VirtualFile file, @NotNull Editor editor) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(file, editor.getColorsScheme(), null);
+  }
+
+  int getEditorCount() {
+    return myEditors.size();
   }
 }

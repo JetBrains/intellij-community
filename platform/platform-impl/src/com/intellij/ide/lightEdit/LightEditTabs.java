@@ -111,7 +111,7 @@ class LightEditTabs extends JBEditorTabs {
     private void closeTab(@NotNull TabInfo tabInfo) {
       ActionCallback result = removeTab(tabInfo);
       if (result.isDone()) {
-        myEditorManager.closeEditor(myEditorInfo.getEditor());
+        myEditorManager.closeEditor(myEditorInfo);
       }
     }
   }

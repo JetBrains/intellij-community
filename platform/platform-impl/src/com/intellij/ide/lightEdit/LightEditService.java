@@ -93,4 +93,11 @@ public class LightEditService implements Disposable, LightEditorListener {
       myWrapper.setTitle(getAppName() + (editorInfo != null ? ": " + editorInfo.getFile().getPresentableUrl() : ""));
     }
   }
+
+  @Override
+  public void afterClose(@NotNull LightEditorInfo editorInfo) {
+    if (myEditorManager.getEditorCount() == 0) {
+      handleClose();
+    }
+  }
 }
