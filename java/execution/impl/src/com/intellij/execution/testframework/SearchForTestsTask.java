@@ -7,6 +7,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -83,19 +84,27 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
     });
   }
 
+  protected boolean requiresSmartMode() {
+    return true;
+  }
+  
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       mySocket = myServerSocket.accept();
       final ExecutionException[] ex = new ExecutionException[1];
-      ReadAction.nonBlocking(() -> {
+      NonBlockingReadAction<Void> readAction = ReadAction.nonBlocking(() -> {
         try {
           search();
         }
         catch (ExecutionException e) {
           ex[0] = e;
         }
-      }).inSmartMode(myProject).executeSynchronously();
+      });
+      if (requiresSmartMode()) {
+        readAction = readAction.inSmartMode(myProject);
+      }
+      readAction.executeSynchronously();
       if (ex[0] != null) {
         logCantRunException(ex[0]);
       }
@@ -131,7 +140,12 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       }
       finish();
     };
-    DumbService.getInstance(getProject()).runWhenSmart(runnable);
+    if (requiresSmartMode()) {
+      DumbService.getInstance(getProject()).runWhenSmart(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   public void finish() {

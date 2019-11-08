@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -152,7 +153,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return TestObject.fromString(myData.TEST_OBJECT, this, env);
+    TestObject testObject = TestObject.fromString(myData.TEST_OBJECT, this, env);
+    DumbService dumbService = DumbService.getInstance(getProject());
+    if (dumbService.isDumb() && !DumbService.isDumbAware(testObject)) {
+      throw new ExecutionException("Running tests is disabled during index update");
+    }
+    return testObject;
   }
 
   @Override

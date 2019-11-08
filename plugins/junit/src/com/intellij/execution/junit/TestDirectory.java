@@ -96,6 +96,11 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
+  protected boolean requiresSmartMode() {
+    return true;
+  }
+
+  @Override
   protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
     if (module != null) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());

@@ -12,6 +12,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -68,7 +69,7 @@ public class TestPackage extends TestObject {
         final SourceScope sourceScope = getSourceScope();
         if (sourceScope != null) {
           try {
-            final TestClassFilter classFilter = getClassFilter(data);
+            final TestClassFilter classFilter = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> getClassFilter(data));
             LOG.assertTrue(classFilter.getBase() != null);
             if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
               searchTests5(module, classFilter, myClasses);
@@ -95,7 +96,16 @@ public class TestPackage extends TestObject {
         }
         catch (Exception ignored) {}
       }
+
+      @Override
+      protected boolean requiresSmartMode() {
+        return TestPackage.this.requiresSmartMode();
+      }
     };
+  }
+
+  protected boolean requiresSmartMode() {
+    return !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner());
   }
 
   protected boolean filterOutputByDirectoryForJunit5(final Set<Location<?>> classNames) {

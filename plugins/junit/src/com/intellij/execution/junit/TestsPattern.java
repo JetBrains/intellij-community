@@ -45,6 +45,11 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
+  protected boolean requiresSmartMode() {
+    return true;
+  }
+
+  @Override
   protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) {
     searchTests(module, classFilter, classes, true);
   }

@@ -212,14 +212,19 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected abstract void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException;
 
+  protected Sdk getJdk() {
+    Project project = getConfiguration().getProject();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
+
+    return module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
+  }
+  
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
     Project project = getConfiguration().getProject();
     final Module module = getConfiguration().getConfigurationModule().getModule();
-
-    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
-    javaParameters.setJdk(jdk);
+    javaParameters.setJdk(getJdk());
 
     final String parameters = getConfiguration().getProgramParameters();
     getConfiguration().setProgramParameters(null);
