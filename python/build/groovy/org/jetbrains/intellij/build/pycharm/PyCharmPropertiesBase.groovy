@@ -41,6 +41,8 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework"
     ]
+    productLayout.buildAllCompatiblePlugins = true
+    productLayout.compatiblePluginsToIgnore.add("intellij.python.conda")
   }
 
   @Override
@@ -200,5 +202,13 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     }
 
     folderWithUnzipContent.deleteDir()
+  }
+
+  static void downloadMiniconda(BuildContext context, String targetDirectory, String osName) {
+    final String installer = "Miniconda3-latest-$osName-x86_64.${if (osName == "Windows") "exe" else "sh"}"
+
+    context.ant.mkdir(dir: "$targetDirectory/$PyCharmBuildOptions.minicondaInstallerFolderName")
+    context.ant.get(src: "https://repo.continuum.io/miniconda/$installer",
+                    dest: "$targetDirectory/$PyCharmBuildOptions.minicondaInstallerFolderName")
   }
 }
