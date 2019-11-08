@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.jvm.compiler
+package org.jetbrains.kotlin.checkers
 
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import java.io.File
+import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 
-abstract class AbstractLoadJavaWithFastClassReadingTest : AbstractLoadJavaTest() {
-    override fun useFastClassFilesReading() = true
-
-    override fun getExpectedFile(expectedFileName: String): File {
-        val differentResultFile = KotlinTestUtils.replaceExtension(File(expectedFileName), "fast.txt")
-        if (differentResultFile.exists()) return differentResultFile
-        return super.getExpectedFile(expectedFileName)
+abstract class AbstractForeignAnnotationsNoAnnotationInClasspathWithPsiClassReadingTest :
+    AbstractForeignAnnotationsNoAnnotationInClasspathTest() {
+    override fun performCustomConfiguration(configuration: CompilerConfiguration) {
+        super.performCustomConfiguration(configuration)
+        configuration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
     }
 }
