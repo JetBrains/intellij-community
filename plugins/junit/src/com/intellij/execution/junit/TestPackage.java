@@ -112,7 +112,7 @@ public class TestPackage extends TestObject {
   }
 
   protected boolean requiresSmartMode() {
-    return !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner());
+    return !JUnitStarter.JUNIT5_PARAMETER.equals(ReadAction.compute(() -> getRunner()));
   }
 
   protected boolean filterOutputByDirectoryForJunit5(final Set<Location<?>> classNames) {
