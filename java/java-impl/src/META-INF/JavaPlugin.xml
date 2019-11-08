@@ -155,7 +155,7 @@
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.optionsManager"
-                    interface="com.intellij.compiler.options.CompilerOptionsFilter"/>
+                    interface="com.intellij.compiler.options.CompilerOptionsFilter" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.java.programPatcher"
                     interface="com.intellij.execution.runners.JavaProgramPatcher"/>
@@ -168,7 +168,7 @@
     <extensionPoint qualifiedName="com.intellij.packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"/>
     <extensionPoint qualifiedName="com.intellij.packaging.artifactPropertiesProvider" interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider"/>
     <extensionPoint qualifiedName="com.intellij.packaging.sourceItemProvider" interface="com.intellij.packaging.ui.PackagingSourceItemsProvider"/>
-    <extensionPoint qualifiedName="com.intellij.packaging.sourceItemFilter" interface="com.intellij.packaging.ui.PackagingSourceItemFilter"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.sourceItemFilter" interface="com.intellij.packaging.ui.PackagingSourceItemFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.packaging.artifactType" interface="com.intellij.packaging.artifacts.ArtifactType"/>
 
     <extensionPoint qualifiedName="com.intellij.frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
@@ -184,7 +184,7 @@
     <extensionPoint qualifiedName="com.intellij.projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
 
     <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableFilter"
-                    interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
+                    interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableAdder"
                     interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableContributor"/>
 
@@ -213,7 +213,7 @@
                     interface="com.intellij.execution.JUnitPatcher"/>
 
     <extensionPoint qualifiedName="com.intellij.junitRecognizer"
-                    interface="com.intellij.execution.JUnitRecognizer"/>
+                    interface="com.intellij.execution.JUnitRecognizer" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.unusedDeclarationFixProvider"
                     interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider"/>
