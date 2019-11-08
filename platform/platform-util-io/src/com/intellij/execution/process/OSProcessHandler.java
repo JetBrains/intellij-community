@@ -183,7 +183,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @Override
   protected void onOSProcessTerminated(int exitCode) {
-    ProgressManager.getInstance().runProcess(() ->super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
+    ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
     deleteTempFiles(myFilesToDelete);
   }
 
