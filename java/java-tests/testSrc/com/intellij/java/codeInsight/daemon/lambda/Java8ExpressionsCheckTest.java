@@ -57,6 +57,14 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     assertEquals(CommonClassNames.JAVA_LANG_STRING, type.getCanonicalText());
   }
 
+  public void testTypeOfThrowsExpression() {
+    configure();
+    PsiMethodCallExpression fooCall =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+
+    assertNotNull(fooCall.getType());
+  }
+
   public void testRecursiveApplicabilityCheck() {
     configure();
     PsiMethodCallExpression getDataCall =
