@@ -31,5 +31,6 @@
         <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
         <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
         <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
     </extensions>
 </idea-plugin>
