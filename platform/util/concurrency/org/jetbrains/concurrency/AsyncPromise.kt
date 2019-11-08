@@ -78,7 +78,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }, hasErrorHandler)
   }
 
-  override fun onProcessed(processed: Consumer<in T>): AsyncPromise<T> {
+  override fun onProcessed(processed: Consumer<in T?>): AsyncPromise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { value, _ ->
       if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
