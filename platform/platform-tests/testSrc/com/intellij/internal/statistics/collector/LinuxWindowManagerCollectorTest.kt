@@ -62,7 +62,10 @@ class LinuxWindowManagerCollectorTest(private val wmName: String, val reported: 
         arrayOf("LG3D", "LG3D"),
         arrayOf("lg3d", "LG3D"),
         arrayOf("Enlightenment", "Enlightenment"),
-        arrayOf("default.desktop", "default.desktop")
+        arrayOf("default.desktop", "default.desktop"),
+
+        arrayOf("unknown value", "unknown value"),
+        arrayOf("UNKNOWN VALUE", "unknown value")
       )
     }
   }

@@ -88,7 +88,7 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
         return entry.getValue();
       }
     }
-    return "Unknown";
+    return original;
   }
 
   @NotNull
