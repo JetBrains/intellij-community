@@ -122,7 +122,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
 
-  public SearchForTestsTask createSearchingForTestsTask() {
+  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
   }
 

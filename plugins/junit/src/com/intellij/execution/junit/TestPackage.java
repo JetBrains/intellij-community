@@ -13,6 +13,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -57,20 +58,26 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  public SearchForTestsTask createSearchingForTestsTask() {
+  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
+    final TestClassFilter classFilter;
+    try {
+      classFilter =
+        DumbService.getInstance(getConfiguration().getProject()).computeWithAlternativeResolveEnabled(() -> getClassFilter(data));
+      LOG.assertTrue(classFilter.getBase() != null);
+    }
+    catch (IndexNotReadyException e) {
+      throw new ExecutionException("Running tests is disabled during index update");
+    }
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
       private final Set<Location<?>> myClasses = new LinkedHashSet<>();
-
       @Override
       protected void search() {
         myClasses.clear();
         final SourceScope sourceScope = getSourceScope();
         if (sourceScope != null) {
           try {
-            final TestClassFilter classFilter = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> getClassFilter(data));
-            LOG.assertTrue(classFilter.getBase() != null);
             if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
               searchTests5(module, classFilter, myClasses);
             }
