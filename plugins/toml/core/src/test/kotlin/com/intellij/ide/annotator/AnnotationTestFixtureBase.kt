@@ -5,7 +5,9 @@
 
 package com.intellij.ide.annotator
 
+import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.InspectionTestUtil
@@ -156,5 +158,10 @@ abstract class AnnotationTestFixtureBase(
     private fun applyQuickFix(name: String) {
         val action = codeInsightFixture.findSingleIntention(name)
         codeInsightFixture.launchAction(action)
+    }
+
+    fun registerSeverities(severities: List<HighlightSeverity>) {
+        val testSeverityProvider = TestSeverityProvider(severities)
+        SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(testSeverityProvider, testRootDisposable)
     }
 }
