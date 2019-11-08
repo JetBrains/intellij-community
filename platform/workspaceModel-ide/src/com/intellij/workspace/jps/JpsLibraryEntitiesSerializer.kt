@@ -4,6 +4,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
@@ -123,8 +124,9 @@ internal fun loadLibrary(name: String,
 internal fun saveLibrary(library: LibraryEntity, savedEntities: MutableList<TypedEntity>): Element {
   savedEntities.add(library)
   val libraryTag = Element(LIBRARY_TAG)
-  if (!library.name.startsWith(LibraryEntity.UNNAMED_LIBRARY_NAME_PREFIX)) {
-    libraryTag.setAttribute(NAME_ATTRIBUTE, library.name)
+  val legacyName = LegacyBridgeLibraryImpl.getLegacyLibraryName(library.persistentId())
+  if (legacyName != null) {
+    libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
   }
   val customProperties = library.getCustomProperties()
   if (customProperties != null) {

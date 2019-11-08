@@ -164,7 +164,7 @@ class LegacyBridgeProjectLibraryTableImpl(
     if (name == null) error("Creating unnamed project libraries is unsupported")
 
     if (getLibraryByName(name) != null) {
-      error("Library named $name already exists")
+      error("Project library named $name already exists")
     }
 
     val modifiableModel = modifiableModel

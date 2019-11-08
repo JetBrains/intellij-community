@@ -31,7 +31,6 @@ import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEn
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import java.util.concurrent.atomic.AtomicInteger
 
 class LegacyBridgeModifiableRootModel(
   private val legacyBridgeModule: LegacyBridgeModule,
@@ -500,15 +499,15 @@ class LegacyBridgeModifiableRootModel(
 
       modifiableModel.assertModelIsLive()
 
-      if (name != null && modifiableModel.moduleLibraryTable.getLibraryByName(name) != null) {
-        error("Module library named '$name' already exists in module '${modifiableModel.moduleId.name}'")
-      }
+      val tableId = LibraryTableId.ModuleLibraryTableId(modifiableModel.moduleEntity.persistentId())
 
-      val libraryEntityName = name ?: "${LibraryEntity.UNNAMED_LIBRARY_NAME_PREFIX}-MODULE-${nextIndex.incrementAndGet()}"
+      val libraryEntityName = LegacyBridgeLibraryImpl.generateLibraryEntityName(name) { existsName ->
+        modifiableModel.diff.resolve(LibraryId(existsName, tableId)) != null
+      }
 
       val libraryEntity = modifiableModel.diff.addLibraryEntity(
         roots = emptyList(),
-        tableId = LibraryTableId.ModuleLibraryTableId(modifiableModel.moduleEntity.persistentId()),
+        tableId = tableId,
         name = libraryEntityName,
         excludedRoots = emptyList(),
         source = modifiableModel.moduleEntity.entitySource
@@ -591,10 +590,6 @@ class LegacyBridgeModifiableRootModel(
 
     override fun removeListener(listener: LibraryTable.Listener) =
       throw UnsupportedOperationException("Not implemented for module-level library table")
-
-    companion object {
-      private val nextIndex = AtomicInteger()
-    }
   }
 }
 

@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jdom.Element
 import java.io.StringReader
 
@@ -54,7 +55,7 @@ class LibraryViaTypedEntity(val libraryEntity: LibraryEntity,
   override val libraryId: LibraryId
     get() = libraryEntity.persistentId()
 
-  override fun getName(): String? = if (libraryEntity.name.startsWith(LibraryEntity.UNNAMED_LIBRARY_NAME_PREFIX)) null else libraryEntity.name
+  override fun getName(): String? = LegacyBridgeLibraryImpl.getLegacyLibraryName(libraryId)
 
   override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = roots[LibraryRootTypeId(rootType.name())]
                                                                          ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)

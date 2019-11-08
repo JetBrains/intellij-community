@@ -36,6 +36,41 @@ class LegacyBridgeLibraryImpl(
   parent: Disposable
 ) : LegacyBridgeLibrary, RootProvider, TraceableDisposable(true) {
 
+  companion object {
+    private const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
+    private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"
+
+    fun getLegacyLibraryName(libraryId: LibraryId): String? {
+      if (libraryId.name.startsWith(UNNAMED_LIBRARY_NAME_PREFIX)) return null
+      if (libraryId.name.contains(UNIQUE_INDEX_LIBRARY_NAME_SUFFIX)) return libraryId.name.substringBefore(UNIQUE_INDEX_LIBRARY_NAME_SUFFIX)
+      return libraryId.name
+    }
+
+    fun generateLibraryEntityName(legacyLibraryName: String?, exists: (String) -> Boolean): String {
+      if (legacyLibraryName == null) {
+        for (index in 1..10000) {
+          val candidate = "$UNNAMED_LIBRARY_NAME_PREFIX$index"
+          if (!exists(candidate)) {
+            return candidate
+          }
+        }
+
+        error("Unable to suggest unique name for unnamed module library")
+      }
+
+      if (!exists(legacyLibraryName)) return legacyLibraryName
+
+      for (index in 1..10000) {
+        val candidate = "$legacyLibraryName${UNIQUE_INDEX_LIBRARY_NAME_SUFFIX}$index"
+        if (!exists(candidate)) {
+          return candidate
+        }
+      }
+
+      error("Unable to suggest unique name for module library '$legacyLibraryName'")
+    }
+  }
+
   override fun getModule(): Module? = (libraryTable as? LegacyBridgeModuleLibraryTable)?.module
 
   init {
@@ -116,7 +151,7 @@ class LegacyBridgeLibraryImpl(
   override fun getExternalSource(): ProjectModelExternalSource? = snapshot.externalSource
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = snapshot.getInvalidRootUrls(type)
   override fun getKind(): PersistentLibraryKind<*>? = snapshot.kind
-  override fun getName(): String? = if (entityId.name.startsWith(LibraryEntity.UNNAMED_LIBRARY_NAME_PREFIX)) null else entityId.name
+  override fun getName(): String? = getLegacyLibraryName(entityId)
   override fun getUrls(rootType: OrderRootType): Array<String> = snapshot.getUrls(rootType)
   override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = snapshot.getFiles(rootType)
   override fun getProperties(): LibraryProperties<*>? = snapshot.properties

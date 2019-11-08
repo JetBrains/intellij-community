@@ -9,11 +9,11 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.isEmpty
-import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
 import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
@@ -91,7 +91,7 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
     }
 
     fun Element.isExported() = getAttributeValue(EXPORTED_ATTRIBUTE) != null
-    val moduleLibraryNameGenerator = UniqueNameGenerator()
+    val moduleLibraryNames = mutableListOf<String>()
     val dependencyItems = rootManagerElement.getChildrenAndDetach(
       ORDER_ENTRY_TAG).mapTo(ArrayList()) { dependencyElement ->
       when (dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
@@ -109,7 +109,8 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
           val libraryElement = dependencyElement.getChild(LIBRARY_TAG)!!
           // TODO. Probably we want a fixed name based on hashed library roots
           val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
-          val name = nameAttributeValue ?: moduleLibraryNameGenerator.generateUniqueName(LibraryEntity.UNNAMED_LIBRARY_NAME_PREFIX)
+          val name = LegacyBridgeLibraryImpl.generateLibraryEntityName(nameAttributeValue) { nameToCheck -> moduleLibraryNames.contains(nameToCheck) }
+          moduleLibraryNames.add(name)
           val tableId = LibraryTableId.ModuleLibraryTableId(ModuleId(moduleName))
           loadLibrary(name, libraryElement, tableId, builder, source)
           val libraryId = LibraryId(name, tableId)

@@ -158,10 +158,6 @@ interface LibraryEntity : TypedEntityWithPersistentId, ReferableTypedEntity {
 
   @JvmDefault
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
-
-  companion object {
-    const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
-  }
 }
 
 data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity>() {
