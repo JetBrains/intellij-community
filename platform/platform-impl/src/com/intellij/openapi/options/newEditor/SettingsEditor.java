@@ -333,7 +333,9 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       mySearch.setText("");
       return false;
     }
-    myEditor.cancel(source);
+    for (Configurable configurable : myFilter.myContext.getModified()) {
+      configurable.cancel();
+    }
     return super.cancel(source);
   }
 
