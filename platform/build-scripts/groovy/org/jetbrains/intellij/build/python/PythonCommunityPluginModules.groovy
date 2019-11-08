@@ -11,9 +11,8 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 class PythonCommunityPluginModules {
   static List<String> COMMUNITY_MODULES = [
     "intellij.python.community",
-    "intellij.python.community.plugin",
+    "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
-    "intellij.python.community.plugin.minor",
     "intellij.python.psi",
     "intellij.python.psi.impl",
     "intellij.python.pydev",
@@ -24,7 +23,11 @@ class PythonCommunityPluginModules {
     "intellij.python.reStructuredText",
   ]
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    pythonPlugin("intellij.python.community.plugin", "python-ce", COMMUNITY_MODULES) {
+    def communityOnlyModules = [
+      "intellij.python.community.plugin",
+      "intellij.python.community.plugin.minor",
+    ]
+    pythonPlugin("intellij.python.community.plugin", "python-ce", COMMUNITY_MODULES + communityOnlyModules) {
       body.delegate = delegate
       body()
     }
