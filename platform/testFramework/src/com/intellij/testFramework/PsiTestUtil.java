@@ -460,6 +460,18 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
+
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
+    if (libraryTable.getLibraryByName(libName) != null) {
+      for (int index = 0; index < 100000; index++) {
+        String candidate = libName + "-" + index;
+        if (libraryTable.getLibraryByName(candidate) == null) {
+          libName = candidate;
+          break;
+        }
+      }
+    }
+
     return addProjectLibrary(model, libName, classesRoots, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
