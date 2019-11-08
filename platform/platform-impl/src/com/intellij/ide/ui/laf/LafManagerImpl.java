@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.BasicOptionButtonUI;
@@ -678,10 +677,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private static void patchTreeUI(UIDefaults defaults) {
     patchBorder(defaults, "Tree.border");
-    if (Registry.is("ide.tree.ui.experimental")) {
-      defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
-      defaults.put("Tree.repaintWholeRow", true);
-    }
+    defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
+    defaults.put("Tree.repaintWholeRow", true);
     if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
       defaults.put("Tree.collapsedIcon", LafIconLookup.getIcon("treeCollapsed"));
       defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"));
