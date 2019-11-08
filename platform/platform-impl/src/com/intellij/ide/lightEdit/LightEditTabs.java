@@ -42,10 +42,11 @@ class LightEditTabs extends JBEditorTabs {
       .setText(file.getPresentableName())
       .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
-    tabInfo.setObject(new LightEditorInfo(editor, file));
+    final LightEditorInfo editorInfo = new LightEditorInfo(editor, file);
+    tabInfo.setObject(editorInfo);
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
-    tabActions.add(new CloseTabAction(editor));
+    tabActions.add(new CloseTabAction(editorInfo));
 
     tabInfo.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     addTabSilently(tabInfo, -1);
@@ -69,10 +70,10 @@ class LightEditTabs extends JBEditorTabs {
   }
 
   private class CloseTabAction extends DumbAwareAction {
-    private final Editor myEditor;
+    private final LightEditorInfo myEditorInfo;
 
-    private CloseTabAction(@NotNull Editor editor) {
-      myEditor = editor;
+    private CloseTabAction(@NotNull LightEditorInfo editorInfo) {
+      myEditorInfo = editorInfo;
     }
 
     @Override
@@ -95,7 +96,7 @@ class LightEditTabs extends JBEditorTabs {
 
 
     private void closeCurrentTab() {
-      TabInfo tabInfo = getSelectedInfo();
+      TabInfo tabInfo = findInfo(myEditorInfo);
       if (tabInfo != null) {
         closeTab(tabInfo);
       }
@@ -110,7 +111,7 @@ class LightEditTabs extends JBEditorTabs {
     private void closeTab(@NotNull TabInfo tabInfo) {
       ActionCallback result = removeTab(tabInfo);
       if (result.isDone()) {
-        myEditorManager.closeEditor(myEditor);
+        myEditorManager.closeEditor(myEditorInfo.getEditor());
       }
     }
   }
