@@ -48,18 +48,6 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal object BranchTreeNodes {
-  val rootNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT))
-  val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
-  val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
-}
-
-internal fun getRootNodeDescriptors(localNodeExist: Boolean, remoteNodeExist: Boolean) =
-  mutableListOf<BranchNodeDescriptor>().apply {
-    if (localNodeExist) add(BranchTreeNodes.localBranchesNode.getNodeDescriptor())
-    if (remoteNodeExist) add(BranchTreeNodes.remoteBranchesNode.getNodeDescriptor())
-  }
-
 internal fun Set<BranchInfo>.toNodeDescriptors() =
   asSequence()
     .map { BranchNodeDescriptor(NodeType.BRANCH, it) }

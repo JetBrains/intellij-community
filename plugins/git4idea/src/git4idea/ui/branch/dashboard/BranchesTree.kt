@@ -128,10 +128,14 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
 
 internal class FilteringBranchesTree(project: Project,
                                      val component: BranchesTreeComponent,
-                                     private val uiController: BranchesDashboardController)
-  : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, BranchTreeNodes.rootNode) {
+                                     private val uiController: BranchesDashboardController,
+                                     rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)))
+  : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
 
   private val expandedPaths = SmartHashSet<TreePath>()
+
+  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
+  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
 
   private val localBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
   private val remoteBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
@@ -139,9 +143,9 @@ internal class FilteringBranchesTree(project: Project,
 
   private val baseNodeDescriptorsToNodes =
     mapOf(
-      BranchTreeNodes.rootNode.getNodeDescriptor() to BranchTreeNodes.rootNode,
-      BranchTreeNodes.localBranchesNode.getNodeDescriptor() to BranchTreeNodes.localBranchesNode,
-      BranchTreeNodes.remoteBranchesNode.getNodeDescriptor() to BranchTreeNodes.remoteBranchesNode
+      rootNode.getNodeDescriptor() to rootNode,
+      localBranchesNode.getNodeDescriptor() to localBranchesNode,
+      remoteBranchesNode.getNodeDescriptor() to remoteBranchesNode
     )
 
   init {
@@ -231,6 +235,12 @@ internal class FilteringBranchesTree(project: Project,
   }
 
   override fun getText(nodeDescriptor: BranchNodeDescriptor?) = nodeDescriptor?.branchInfo?.branchName
+
+  private fun getRootNodeDescriptors(localNodeExist: Boolean, remoteNodeExist: Boolean) =
+    mutableListOf<BranchNodeDescriptor>().apply {
+      if (localNodeExist) add(localBranchesNode.getNodeDescriptor())
+      if (remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
+    }
 }
 
 internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1, d2 ->
