@@ -48,8 +48,7 @@ data class Leak(val reason: String, val targetElement: PsiElement?)
 
 private data class QualifiedCall(val callExpression: UCallExpression, val fullExpression: UExpression)
 
-private fun findQualifiedCall(reference: PsiReference): QualifiedCall? {
-  val element = reference.element.toUElement()
+private fun findQualifiedCall(element: UElement?): QualifiedCall? {
   val callExpression = element?.getParentOfType<UCallExpression>()
   if (callExpression != null && element == callExpression.receiver) {
     return QualifiedCall(callExpression, callExpression)
@@ -105,20 +104,36 @@ internal class LeakSearchContext(val project: Project) {
       return emptyList()
     }
 
-    val qualifiedCall = findQualifiedCall(reference) ?: return listOf(Leak("No call found", reference.element))
-    val methodName = qualifiedCall.callExpression.methodName
-    if (methodName == "getExtensions" || methodName == "getExtensionList" || methodName == "allForLanguage") {
-      return analyzeGetExtensionsCall(qualifiedCall.callExpression, qualifiedCall.fullExpression)
-    }
-    if (methodName == "findExtension" || methodName == "forLanguage") {
-      return findObjectLeaks(qualifiedCall.callExpression, "Extension instance")
+    val element = reference.element.toUElement()
+    val qualifiedCall = findQualifiedCall(element)
+    if (qualifiedCall != null) {
+      val methodName = qualifiedCall.callExpression.methodName
+      if (methodName == "getExtensions" || methodName == "getExtensionList" || methodName == "allForLanguage") {
+        return analyzeGetExtensionsCall(qualifiedCall.fullExpression)
+      }
+      if (methodName == "findExtension" || methodName == "forLanguage") {
+        return findObjectLeaks(qualifiedCall.callExpression, "Extension instance")
+      }
     }
 
-    return listOf(Leak("Unknown call found", reference.element))
+    var parent = element?.uastParent
+
+    while (parent is UQualifiedReferenceExpression && parent.selector == element) {
+      parent = parent.uastParent
+    }
+
+    if (parent is UQualifiedReferenceExpression) {
+      val name = (parent.referenceNameElement as? UIdentifier)?.name
+      if (name == "extensions" || name == "extensionList") {
+        return analyzeGetExtensionsCall(parent)
+      }
+    }
+
+    return listOf(Leak("Unknown usage of ExtensionPoint", reference.element))
   }
 
-  private fun analyzeGetExtensionsCall(call: UCallExpression, fullExpression: UExpression): List<Leak> {
-    val loop = call.getParentOfType<UForEachExpression>()
+  private fun analyzeGetExtensionsCall(fullExpression: UExpression): List<Leak> {
+    val loop = fullExpression.getParentOfType<UForEachExpression>()
     if (loop != null) {
       if (fullExpression != loop.iteratedValue) return listOf(Leak("Call is not loop's iterated value", fullExpression.sourcePsi))
       return findVariableUsageLeaks(loop.variable, "Extension instance")
@@ -257,10 +272,17 @@ internal class LeakSearchContext(val project: Project) {
           val result = mutableListOf<Leak>()
           for (methodToFind in methodsToFind) {
             MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(Processor { ref: PsiReference ->
-              var uElement = ref.element.toUElement()
+              val element = ref.element
+              var uElement = element.toUElement()
               if (uElement is UReferenceExpression) {
-                if (uElement.uastParent is UCallExpression) {
-                  uElement = uElement.uastParent
+                val uParent = element.parent?.toUElement()
+                if (uParent is UCallExpression) {
+                  uElement = uParent
+                } else {
+                  val maybeCall = (uParent as? UQualifiedReferenceExpression)?.selector as? UCallExpression
+                  if (maybeCall != null) {
+                    uElement = maybeCall
+                  }
                 }
               }
               if (uElement != null) {
