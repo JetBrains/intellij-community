@@ -36,7 +36,6 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private final SimpleModificationTracker myAllLanguagesTracker = new SimpleModificationTracker();
   private final Map<Language, SimpleModificationTracker> myLanguageTrackers =
     ConcurrentFactoryMap.createWeakMap(language -> new SimpleModificationTracker());
-  private final Runnable myPluginsListener = () -> doIncCounter();
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
@@ -53,8 +52,6 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
         doIncCounter();
       }
     });
-    PluginManager.getInstance().addDisablePluginListener(myPluginsListener);
-    Disposer.register(bus, () -> PluginManager.getInstance().removeDisablePluginListener(myPluginsListener));
   }
 
   private void doIncCounter() {
