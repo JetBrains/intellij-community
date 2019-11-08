@@ -4,7 +4,9 @@ Reports on declarations whose modifiers are not in the canonical
 preferred order (as stated in the Java Language Specification).
 <!-- tooltip end -->
 <p>
-Use the checkbox below to specify that annotations should always be sorted before keyword modifiers.
+Use the checkbox below to specify that annotations should also be sorted.
+Annotations with <b>ElementType.TYPE_USE</b> should go after the modifier keywords, other annotations before the modifier keywords.
+Modifier lists with annotations in the middle of modifiers will always be reported.
 <p>
 
 </body>
