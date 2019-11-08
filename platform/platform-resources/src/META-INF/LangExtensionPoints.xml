@@ -831,8 +831,7 @@
     <extensionPoint name="filePasteProvider"
                     interface="com.intellij.ide.PasteProvider"/>
 
-    <extensionPoint name="testFinder"
-                    interface="com.intellij.testIntegration.TestFinder"/>
+    <extensionPoint name="testFinder" interface="com.intellij.testIntegration.TestFinder" dynamic="true"/>
     <extensionPoint name="testSrcLocator"
                     interface="com.intellij.testIntegration.TestLocationProvider"/>
     <extensionPoint name="testSourcesFilter" interface="com.intellij.openapi.roots.TestSourcesFilter" dynamic="true"/>
