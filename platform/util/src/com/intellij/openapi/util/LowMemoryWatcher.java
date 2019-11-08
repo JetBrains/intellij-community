@@ -38,7 +38,6 @@ public class LowMemoryWatcher {
   }
 
   public static void onLowMemorySignalReceived(boolean afterGc) {
-    if (ourNotificationsSuppressed.get()) return;
     LOG.info("Low memory signal received: afterGc=" + afterGc);
     for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
       try {
@@ -51,6 +50,10 @@ public class LowMemoryWatcher {
         LOG.info(e);
       }
     }
+  }
+
+  static boolean notificationsSuppressed() {
+    return ourNotificationsSuppressed.get();
   }
 
   /**
