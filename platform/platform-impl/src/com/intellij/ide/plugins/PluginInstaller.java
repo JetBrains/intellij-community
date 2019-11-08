@@ -267,7 +267,7 @@ public class PluginInstaller {
     if (targetFile != null) {
       IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
-        DynamicPlugins.loadPlugin(targetDescriptor);
+        DynamicPlugins.loadPlugin(targetDescriptor, false);
         return targetDescriptor;
       }
     }
