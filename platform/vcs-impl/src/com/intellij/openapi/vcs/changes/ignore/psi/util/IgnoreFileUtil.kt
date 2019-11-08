@@ -32,7 +32,15 @@ fun addNewElementsToIgnoreBlock(project: Project,
                                 ignoreFile: VirtualFile,
                                 ignoredGroupDescription: String,
                                 vararg newEntries: IgnoredFileDescriptor) {
-  changeIgnoreFile(project, ignoreFile) { provider ->
+  addNewElementsToIgnoreBlock(project, ignoreFile, ignoredGroupDescription, null, *newEntries)
+}
+
+fun addNewElementsToIgnoreBlock(project: Project,
+                                ignoreFile: VirtualFile,
+                                ignoredGroupDescription: String,
+                                vcs: AbstractVcs? = null,
+                                vararg newEntries: IgnoredFileDescriptor) {
+  changeIgnoreFile(project, ignoreFile, vcs) { provider ->
     addNewElementsToIgnoreBlock(ignoredGroupDescription, ignoreFile, newEntries, provider)
   }
 }

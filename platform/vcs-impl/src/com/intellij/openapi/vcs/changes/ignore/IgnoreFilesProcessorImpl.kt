@@ -150,8 +150,13 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     val storeDir = findStoreDir(project)
 
     val ignoreFileRoot =
-      if (ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
-          && storeDir != null && file.underProjectStoreDir(storeDir)) storeDir
+      if (storeDir != null
+          && ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
+          && file.underProjectStoreDir(storeDir)) {
+        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()){
+          storeDir
+        } else return null
+      }
       else VcsUtil.getVcsRootFor(project, file) ?: return null
 
     return ignoreFileRoot.findChild(ignoredContentProvider.fileName) ?: runWriteAction {

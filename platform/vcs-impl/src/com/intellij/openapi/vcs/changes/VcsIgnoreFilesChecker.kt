@@ -27,25 +27,10 @@ class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
       .subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
         StartupManager.getInstance(project).runWhenProjectIsInitialized {
           BackgroundTaskUtil.executeOnPooledThread(project, Runnable {
-            generateVcsIgnoreFileInStoreDirIfNeeded(project)
             generateVcsIgnoreFileInRootIfNeeded(project)
           })
         }
       })
-  }
-
-  /**
-   * Generate ignore file in .idea directory silently
-   */
-  private fun generateVcsIgnoreFileInStoreDirIfNeeded(project: Project) {
-    if (project.isDisposed || !project.isDirectoryBased) return
-
-    val projectConfigDirPath = project.stateStore.projectConfigDir ?: return
-    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByPath(projectConfigDirPath) ?: return
-    val vcs = VcsUtil.getVcsFor(project, projectConfigDirVFile) ?: return
-
-    LOG.debug("Generate VCS ignore file in $projectConfigDirPath for vcs ${vcs.name}")
-    VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectConfigDirVFile)
   }
 
   /**

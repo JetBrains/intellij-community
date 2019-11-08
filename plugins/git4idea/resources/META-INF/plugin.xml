@@ -238,6 +238,7 @@
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
     <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
+    <projectService serviceImplementation="git4idea.ignore.GitIgnoreInStoreDirGenerator"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
@@ -286,6 +287,7 @@
      <!--END Git exclude lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
+    <backgroundPostStartupActivity implementation="git4idea.ignore.GitIgnoreInStoreDirGeneratorActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig" />
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
