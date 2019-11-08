@@ -158,7 +158,7 @@ public class PsiLiteralExpressionImpl
     String[] lines = getTextBlockLines();
     if (lines == null) return null;
 
-    int prefix = getTextBlockIndent(lines);
+    int prefix = PsiLiteralUtil.getTextBlockIndent(lines);
 
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
@@ -176,19 +176,7 @@ public class PsiLiteralExpressionImpl
   public int getTextBlockIndent() {
     String[] lines = getTextBlockLines();
     if (lines == null) return -1;
-    return getTextBlockIndent(lines);
-  }
-  
-  private static int getTextBlockIndent(String[] lines) {
-    int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      int indent = 0;
-      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
-      if (indent == line.length() && i < lines.length - 1) lines[i] = "";
-      else if (indent < prefix) prefix = indent;
-    }
-    return prefix;
+    return PsiLiteralUtil.getTextBlockIndent(lines);
   }
 
   @Nullable

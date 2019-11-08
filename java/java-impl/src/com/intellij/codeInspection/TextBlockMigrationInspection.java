@@ -46,6 +46,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         for (PsiExpression operand : operands) {
           PsiLiteralExpressionImpl literal = getLiteralExpression(operand);
           if (literal == null) return;
+          if (nNewLines > 1) continue;
           String text = literal.getText();
           int newLineIdx = getNewLineIndex(text, 0);
           if (newLineIdx == -1) continue;
@@ -57,7 +58,6 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
             nNewLines++;
             newLineIdx = getNewLineIndex(text, newLineIdx + 1);
           }
-          if (nNewLines > 1) break;
         }
         if (nNewLines <= 1) return;
         holder.registerProblem(expression, firstNewLineTextRange,
@@ -106,22 +106,55 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     private static void replaceWithTextBlock(@NotNull PsiExpression[] operands, @NotNull PsiExpression toReplace) {
-      StringBuilder textBlock = new StringBuilder();
-      textBlock.append("\"\"\"\n");
+      String[] lines = getContentLines(operands);
+      if (lines == null) return;
+      String textBlock = getTextBlock(lines);
+      PsiReplacementUtil.replaceExpression(toReplace, textBlock, new CommentTracker());
+    }
+
+    @NotNull
+    private static String getTextBlock(@NotNull String[] lines) {
+      int indent = PsiLiteralUtil.getTextBlockIndent(lines);
+      // we need additional indent call only when significant trailing line is missing
+      if (indent > 0 && lines.length > 0 && lines[lines.length - 1].endsWith("\n")) indent = 0;
+      String content = getTextBlockContent(lines, indent);
+      return "\"\"\"\n" + content + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
+    }
+
+    @NotNull
+    private static String getTextBlockContent(@NotNull String[] lines, int indent) {
+      StringBuilder content = new StringBuilder();
       boolean escapeStartQuote = false;
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        boolean isLastLine = i == lines.length - 1;
+        if (indent < line.length()) line = line.substring(indent);
+        line = PsiLiteralUtil.escapeTextBlockCharacters(line, escapeStartQuote, isLastLine, isLastLine);
+        escapeStartQuote = line.endsWith("\"");
+        content.append(line);
+      }
+      return content.toString();
+    }
+
+    @Nullable
+    private static String[] getContentLines(@NotNull PsiExpression[] operands) {
+      String[] lines = new String[operands.length];
       for (int i = 0; i < operands.length; i++) {
         PsiExpression operand = operands[i];
         PsiLiteralExpressionImpl literal = getLiteralExpression(operand);
-        if (literal == null) return;
-        String text = getLiteralText(literal);
-        if (text == null) return;
-        boolean isLastLine = i == operands.length - 1;
-        text = PsiLiteralUtil.escapeTextBlockCharacters(text, escapeStartQuote, isLastLine, isLastLine);
-        escapeStartQuote = text.endsWith("\"");
-        textBlock.append(text);
+        if (literal == null) return null;
+        String line = getLiteralText(literal);
+        if (line == null) return null;
+        lines[i] = line;
       }
-      textBlock.append("\"\"\"");
-      PsiReplacementUtil.replaceExpression(toReplace, textBlock.toString(), new CommentTracker());
+      return lines;
+    }
+
+    @Nullable
+    private static String getLiteralText(@NotNull PsiLiteralExpressionImpl literal) {
+      if (literal.getLiteralElementType() == JavaTokenType.STRING_LITERAL) return literal.getInnerText();
+      Object value = literal.getValue();
+      return value == null ? null : value.toString();
     }
   }
 
@@ -150,12 +183,5 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     PsiLiteralExpressionImpl literal = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiLiteralExpressionImpl.class);
     if (literal == null || literal.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) return null;
     return literal;
-  }
-
-  @Nullable
-  private static String getLiteralText(@NotNull PsiLiteralExpressionImpl literal) {
-    if (literal.getLiteralElementType() == JavaTokenType.STRING_LITERAL) return literal.getInnerText();
-    Object value = literal.getValue();
-    return value == null ? null : value.toString();
   }
 }
