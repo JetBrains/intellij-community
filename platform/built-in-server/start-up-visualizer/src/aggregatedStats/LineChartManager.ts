@@ -55,6 +55,7 @@ export class LineChartManager {
 
     const chart = this.chart
     chart.legend = new am4charts.Legend()
+    chart.colors.step = 3
     addExportMenu(chart)
 
     // const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
@@ -187,6 +188,8 @@ export class LineChartManager {
     if (metric.hiddenByDefault) {
       series.hidden = true
     }
+
+    // series.strokeWidth = 2
   }
 
   dispose(): void {
