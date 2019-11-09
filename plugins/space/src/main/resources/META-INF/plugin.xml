@@ -31,7 +31,7 @@
         />
 
         <toolWindow id="Space"
-                    icon="CircletIcons.mainIcon"
+                    icon="CircletIcons.mainToolWindowIcon"
                     anchor="right"
                     canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
