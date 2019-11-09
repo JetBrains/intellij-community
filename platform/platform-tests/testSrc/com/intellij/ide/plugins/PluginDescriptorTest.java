@@ -146,10 +146,12 @@ public class PluginDescriptorTest {
     Path pluginFile = inMemoryFs.getFs().getPath("plugin/META-INF/plugin.xml");
     PathKt.write(pluginFile, "<idea-plugin>\n" +
                              "  <id>bar</id>\n" +
+                             "  <vendor>JetBrains</vendor>\n" +
                              "  <product-descriptor code=\"IJ\" release-date=\"20190811\" release-version=\"42\"/>\n" +
                              "</idea-plugin>");
     IdeaPluginDescriptorImpl descriptor = loadDescriptor(pluginFile.getParent().getParent());
     assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getVendor()).isEqualTo("JetBrains");
     assertThat(new SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.getReleaseDate())).isEqualTo("20190811");
   }
 

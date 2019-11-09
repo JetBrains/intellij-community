@@ -320,7 +320,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           break;
 
         case "vendor":
-          myVendor = StringUtil.nullize(child.getChildTextTrim("name"));
+          myVendor = StringUtil.nullize(child.getTextTrim());
           myVendorEmail = StringUtil.nullize(child.getAttributeValue("email"));
           myVendorUrl = StringUtil.nullize(child.getAttributeValue("url"));
           break;
