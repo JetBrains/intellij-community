@@ -5,7 +5,6 @@ import com.google.common.collect.Iterables;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,10 +29,6 @@ public class SwitchedFileHolder implements FileHolder {
   @Override
   public void cleanAll() {
     myMap.clear();
-  }
-
-  @Override
-  public void notifyVcsStarted(AbstractVcs scope) {
   }
 
   @Override

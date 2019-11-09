@@ -3,7 +3,6 @@ package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
@@ -19,8 +18,6 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   protected abstract fun getHolder(repository: REPOSITORY): VcsRepositoryIgnoredFilesHolder
 
   override fun isInUpdatingMode() = vcsIgnoredHolderMap.values.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
-
-  override fun notifyVcsStarted(vcs: AbstractVcs?) {}
 
   override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) {}
 

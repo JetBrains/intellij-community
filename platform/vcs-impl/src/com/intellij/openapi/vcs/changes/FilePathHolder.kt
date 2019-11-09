@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import java.util.*
 
@@ -12,8 +11,6 @@ class FilePathHolder(private val project: Project) : FileHolder {
 
   // todo track number of copies made
   fun getFiles() = files.toList()
-
-  override fun notifyVcsStarted(vcs: AbstractVcs) {}
 
   override fun cleanAll() {
     files.clear()

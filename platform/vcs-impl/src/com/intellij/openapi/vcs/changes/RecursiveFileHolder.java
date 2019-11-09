@@ -27,10 +27,6 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
   }
 
   @Override
-  public void notifyVcsStarted(AbstractVcs scope) {
-  }
-
-  @Override
   public void addFile(@NotNull FilePath file) {
     if (!containsFile(file)) {
       myMap.add(file);

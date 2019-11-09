@@ -69,7 +69,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   }
 
   @Override
-  public void notifyVcsStarted(AbstractVcs vcs) {
+  public void notifyVcsStarted(@NotNull AbstractVcs vcs) {
     if (!myVcsIgnoredHolderMap.containsKey(vcs)) {
       myVcsIgnoredHolderMap.put(vcs, getHolderForVcs(myProject, vcs));
     }

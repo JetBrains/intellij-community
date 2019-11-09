@@ -11,5 +11,6 @@ public interface FileHolder {
 
   FileHolder copy();
 
-  void notifyVcsStarted(AbstractVcs vcs);
+  default void notifyVcsStarted(@NotNull AbstractVcs vcs) {
+  }
 }
