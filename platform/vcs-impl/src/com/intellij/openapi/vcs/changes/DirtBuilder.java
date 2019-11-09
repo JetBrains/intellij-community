@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-public final class DirtBuilder implements DirtBuilderReader {
+public final class DirtBuilder {
   private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
   private final MultiMap<AbstractVcs, FilePath> myFiles = MultiMap.createSet();
@@ -43,24 +43,20 @@ public final class DirtBuilder implements DirtBuilderReader {
     myDirs.putValue(vcs, dir);
   }
 
-  @Override
   public boolean isEverythingDirty() {
     return myEverythingDirty;
   }
 
-  @Override
   @NotNull
   public MultiMap<AbstractVcs, FilePath> getFilesForVcs() {
     return myFiles;
   }
 
-  @Override
   @NotNull
   public MultiMap<AbstractVcs, FilePath> getDirsForVcs() {
     return myDirs;
   }
 
-  @Override
   public boolean isEmpty() {
     return myFiles.isEmpty() && myDirs.isEmpty();
   }
