@@ -3,13 +3,13 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ObjectUtils;
@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
-class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
+final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManager.class);
 
   private final Future<Map<EngineInfo, ScriptEngineFactory>> myStateFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
@@ -106,14 +106,16 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       .append(new ScriptEngineManager(AllPluginsLoader.INSTANCE).getEngineFactories()) // from plugins (Kotlin)
       .unique(o -> o.getClass().getName())
       .toMap(factory -> {
-        PluginId pluginId = PluginManagerCore.getPluginByClassName(factory.getClass().getName());
+        Class<? extends ScriptEngineFactory> aClass = factory.getClass();
+        ClassLoader classLoader = aClass.getClassLoader();
+        IdeaPluginDescriptor plugin = classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
         return new EngineInfo(factory.getEngineName(),
                               factory.getEngineVersion(),
                               factory.getLanguageName(),
                               factory.getLanguageVersion(),
                               factory.getExtensions(),
-                              factory.getClass().getName(),
-                              pluginId);
+                              aClass.getName(),
+                              plugin);
       }, o -> o);
   }
 

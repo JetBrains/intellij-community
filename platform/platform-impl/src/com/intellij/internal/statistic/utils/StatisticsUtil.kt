@@ -254,9 +254,7 @@ internal fun isSafeToReportFrom(descriptor: PluginDescriptor): Boolean {
  * so API from it may be reported
  */
 fun getPluginType(clazz: Class<*>): PluginType {
-  val pluginId = PluginManagerCore.getPluginByClassName(clazz.name) ?: return PluginType.PLATFORM
-  val plugin = PluginManagerCore.getPlugin(pluginId) ?: return PluginType.UNKNOWN
-
+  val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(clazz.name) ?: return PluginType.PLATFORM
   if (PluginManager.isDevelopedByJetBrains(plugin)) {
     return if (plugin.isBundled) PluginType.JB_BUNDLED else PluginType.JB_NOT_BUNDLED
   }

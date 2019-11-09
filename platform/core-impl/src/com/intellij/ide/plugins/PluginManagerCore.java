@@ -12,10 +12,7 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
@@ -475,7 +472,16 @@ public final class PluginManagerCore {
 
   @Nullable
   public static PluginId getPluginOrPlatformByClassName(@NotNull String className) {
-    if (className.startsWith("java.") ||
+    PluginDescriptor result = getPluginDescriptorOrPlatformByClassName(className);
+    return result == null ? null : result.getPluginId();
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static PluginDescriptor getPluginDescriptorOrPlatformByClassName(@NotNull String className) {
+    List<IdeaPluginDescriptorImpl> loadedPlugins = ourLoadedPlugins;
+    if (loadedPlugins == null ||
+        className.startsWith("java.") ||
         className.startsWith("javax.") ||
         className.startsWith("kotlin.") ||
         className.startsWith("groovy.")) {
@@ -483,7 +489,7 @@ public final class PluginManagerCore {
     }
 
     IdeaPluginDescriptor result = null;
-    for (IdeaPluginDescriptorImpl o : getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptorImpl o : loadedPlugins) {
       ClassLoader classLoader = o.getPluginClassLoader();
       if (classLoader == null || !hasLoadedClass(className, classLoader)) {
         continue;
@@ -503,7 +509,7 @@ public final class PluginManagerCore {
         className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
         className.startsWith("com.android.") ||
         className.startsWith("git4idea.") || className.startsWith("org.angularjs.")) {
-      return result.getPluginId();
+      return result;
     }
 
     // otherwise we need to check plugins with use-idea-classloader="true"
@@ -512,7 +518,7 @@ public final class PluginManagerCore {
       return null;
     }
 
-    for (IdeaPluginDescriptorImpl o : getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptorImpl o : loadedPlugins) {
       if (!o.getUseIdeaClassLoader()) {
         continue;
       }
@@ -525,7 +531,7 @@ public final class PluginManagerCore {
       result = o;
       break;
     }
-    return result.getPluginId();
+    return result;
   }
 
   private static boolean hasLoadedClass(@NotNull String className, @NotNull ClassLoader loader) {
@@ -627,7 +633,7 @@ public final class PluginManagerCore {
       for (Path pathElement : classPath) {
         urls.add(classpathElementToUrl(pathElement, descriptor));
       }
-      return new PluginClassLoader(urls, parentLoaders, descriptor.getPluginId(), descriptor.getVersion(), descriptor.getPluginPath());
+      return new PluginClassLoader(urls, parentLoaders, descriptor);
     }
   }
 
@@ -647,10 +653,6 @@ public final class PluginManagerCore {
     //noinspection NonPrivateFieldAccessedInSynchronizedContext
     ourLoadedPlugins = null;
     ourDisabledPlugins = null;
-  }
-
-  public static boolean isPluginClass(@NotNull String className) {
-    return ourPlugins != null && getPluginByClassName(className) != null;
   }
 
   private static void logPlugins(@NotNull IdeaPluginDescriptorImpl[] plugins) {

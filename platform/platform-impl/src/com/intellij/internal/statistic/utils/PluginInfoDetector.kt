@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 
@@ -11,7 +12,18 @@ import com.intellij.openapi.extensions.PluginId
  * so API from it may be reported
  */
 fun getPluginInfo(clazz: Class<*>): PluginInfo {
-  return getPluginInfo(clazz.name)
+  val classLoader = clazz.classLoader
+  when {
+    classLoader is PluginClassLoader -> {
+      return getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
+    }
+    PluginManagerCore.isRunningFromSources() -> {
+      return unknownPlugin
+    }
+    else -> {
+      return getPluginInfo(clazz.name)
+    }
+  }
 }
 
 fun getPluginInfo(className: String): PluginInfo {
@@ -20,8 +32,8 @@ fun getPluginInfo(className: String): PluginInfo {
     return platformPlugin
   }
 
-  val pluginId = PluginManager.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
-  return getPluginInfoByDescriptor(PluginManager.getInstance().findEnabledPlugin(pluginId) ?: return unknownPlugin)
+  val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className) ?: return unknownPlugin
+  return getPluginInfoByDescriptor(plugin)
 }
 
 /**

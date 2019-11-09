@@ -423,7 +423,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     setOKButtonTooltip(submitter != null ? null : DiagnosticBundle.message("error.report.impossible.tooltip"));
   }
 
-  private void updateLabels(MessageCluster cluster) {
+  private void updateLabels(@NotNull MessageCluster cluster) {
     AbstractMessage message = cluster.first;
 
     myCountLabel.setText(DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size()));
@@ -828,7 +828,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /* helpers */
 
-  private static class MessageCluster {
+  private static final class MessageCluster {
     private final AbstractMessage first;
     private final @Nullable PluginId pluginId;
     private final @Nullable IdeaPluginDescriptor plugin;
@@ -885,7 +885,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
   }
 
-  public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
+  @Nullable
+  public static IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -899,7 +900,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin;
   }
 
-  public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
+  @Nullable
+  public static PluginId findPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
@@ -911,10 +913,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     for (StackTraceElement element : t.getStackTrace()) {
       if (element != null) {
         String className = element.getClassName();
-        if (visitedClassNames.add(className) && PluginManagerCore.isPluginClass(className)) {
+        if (visitedClassNames.add(className)) {
           PluginId id = PluginManagerCore.getPluginByClassName(className);
-          logPluginDetection(className, id);
-          return id;
+          if (id != null) {
+            logPluginDetection(className, id);
+            return id;
+          }
         }
       }
     }
@@ -940,10 +944,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof ClassNotFoundException) {
       // check is class from plugin classes
       if (t.getMessage() != null) {
-        String className = t.getMessage();
-
-        if (PluginManagerCore.isPluginClass(className)) {
-          return PluginManagerCore.getPluginByClassName(className);
+        PluginId id = PluginManagerCore.getPluginByClassName(t.getMessage());
+        if (id != null) {
+          return id;
         }
       }
     }
@@ -953,7 +956,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (className.indexOf('/') > 0) {
         className = className.replace('/', '.');
       }
-      if (PluginManagerCore.isPluginClass(className)) {
+
+      PluginId id = PluginManagerCore.getPluginByClassName(className);
+      if (id != null) {
         return PluginManagerCore.getPluginByClassName(className);
       }
     }
@@ -965,16 +970,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         pos = s.lastIndexOf('.');
         if (pos >= 0) {
           s = s.substring(0, pos);
-          if (PluginManagerCore.isPluginClass(s)) {
-            return PluginManagerCore.getPluginByClassName(s);
+          PluginId id = PluginManagerCore.getPluginByClassName(s);
+          if (id != null) {
+            return id;
           }
         }
       }
     }
     else if (t instanceof ExtensionException) {
       String className = ((ExtensionException)t).getExtensionClass().getName();
-      if (PluginManagerCore.isPluginClass(className)) {
-        return PluginManagerCore.getPluginByClassName(className);
+      PluginId id = PluginManagerCore.getPluginByClassName(className);
+      if (id != null) {
+        return id;
       }
     }
 

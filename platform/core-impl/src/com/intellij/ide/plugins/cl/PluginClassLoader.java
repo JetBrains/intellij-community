@@ -3,6 +3,8 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +38,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
+  private final IdeaPluginDescriptor myPluginDescriptor;
   private final String myPluginVersion;
   private final List<String> myLibDirectories;
 
@@ -47,11 +50,14 @@ public final class PluginClassLoader extends UrlClassLoader {
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader[] parents,
                            PluginId pluginId,
+                           @Nullable IdeaPluginDescriptor pluginDescriptor,
                            String version,
                            @Nullable Path pluginRoot) {
     super(build().urls(urls).allowLock().useCache());
+
     myParents = parents;
     myPluginId = pluginId;
+    myPluginDescriptor = pluginDescriptor;
     myPluginVersion = version;
     myLibDirectories = new SmartList<>();
 
@@ -63,12 +69,18 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
   }
 
+  public PluginClassLoader(@NotNull List<URL> urls,
+                           @NotNull ClassLoader[] parents,
+                           @NotNull IdeaPluginDescriptorImpl descriptor) {
+    this(urls, parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
+  }
+
   /**
-   * @deprecated Use {@link #PluginClassLoader(List, ClassLoader[], PluginId, String, Path)}
+   * @deprecated Use {@link #PluginClassLoader(List, ClassLoader[], IdeaPluginDescriptorImpl)}
    */
   @Deprecated
   public PluginClassLoader(@NotNull List<URL> urls, @NotNull ClassLoader[] parents, PluginId pluginId, String version, File pluginRoot) {
-    this(urls, parents, pluginId, version, pluginRoot == null ? null : pluginRoot.toPath());
+    this(urls, parents, pluginId, null, version, pluginRoot == null ? null : pluginRoot.toPath());
   }
 
   public long getEdtTime() {
@@ -367,6 +379,11 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   public PluginId getPluginId() {
     return myPluginId;
+  }
+
+  @Nullable
+  public IdeaPluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
   }
 
   @NotNull
