@@ -46,4 +46,11 @@ class BasePathResolver implements PathBasedJdomXIncluder.PathResolver<Path> {
     }
     return element;
   }
+
+  @NotNull
+  @Override
+  public Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
+    throws IOException, JDOMException {
+    return JDOMUtil.load(basePath.resolve(relativePath), jdomFactory);
+  }
 }

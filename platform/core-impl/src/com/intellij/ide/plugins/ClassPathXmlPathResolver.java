@@ -65,4 +65,28 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
       return JDOMUtil.load(stream, jdomFactory);
     }
   }
+
+  @NotNull
+  @Override
+  public Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
+    String path;
+    if (relativePath.charAt(0) == '/') {
+      path = relativePath.substring(1);
+    }
+    else {
+      if (relativePath.startsWith("./")) {
+        PluginManagerCore.getLogger().error("Do not use prefix ./: " + relativePath);
+        relativePath = relativePath.substring(2);
+      }
+      path = "META-INF/" + relativePath;
+    }
+
+    InputStream stream = classLoader.getResourceAsStream(path);
+    if (stream == null) {
+      throw new NoSuchFileException(relativePath);
+    }
+    else {
+      return JDOMUtil.load(stream, jdomFactory);
+    }
+  }
 }

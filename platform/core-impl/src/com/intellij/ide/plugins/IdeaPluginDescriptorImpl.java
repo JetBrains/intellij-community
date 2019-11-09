@@ -149,7 +149,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   public boolean readExternal(@NotNull Element element,
-                              @Nullable Path basePath,
+                              @NotNull Path basePath,
                               @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                               @NotNull DescriptorLoadingContext context,
                               @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
@@ -1045,9 +1045,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
                                      @NotNull IdeaPluginDescriptorImpl descriptor,
                                      @NotNull List<PluginDependency> dependencies,
                                      @NotNull DescriptorLoadingContext context,
-                                     @Nullable Path basePath,
+                                     @NotNull Path basePath,
                                      @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver) {
-      List<T> pathResolverStack = null;
       List<String> visitedFiles = null;
 
       // https://youtrack.jetbrains.com/issue/IDEA-206274
@@ -1075,23 +1074,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           continue;
         }
 
-        if (pathResolverStack == null) {
-          pathResolverStack = pathResolver.createNewStack(basePath);
-        }
-
         Element element;
-        int oldStackSize = pathResolverStack.size();
         try {
-          element = pathResolver.resolvePath(pathResolverStack, configFile, null, context.parentContext.getXmlFactory());
+          element = pathResolver.resolvePath(basePath, configFile, context.parentContext.getXmlFactory());
         }
         catch (IOException | JDOMException e) {
           context.parentContext.getLogger().info("Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile);
           continue;
-        }
-        finally {
-          if (oldStackSize != pathResolverStack.size()) {
-            pathResolverStack.remove(pathResolverStack.size() - 1);
-          }
         }
 
         if (visitedFiles == null) {

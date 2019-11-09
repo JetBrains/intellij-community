@@ -198,6 +198,9 @@ final class PathBasedJdomXIncluder<T> {
                         @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
 
     @NotNull
+    Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
+
+    @NotNull
     List<T> createNewStack(@Nullable Path base);
   }
 }

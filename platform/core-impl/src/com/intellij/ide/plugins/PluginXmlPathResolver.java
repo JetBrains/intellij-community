@@ -41,31 +41,64 @@ final class PluginXmlPathResolver extends BasePathResolver {
       return super.resolvePath(bases, relativePath, base, jdomFactory);
     }
     catch (NoSuchFileException mainError) {
-      for (Path jarFile : pluginJarFiles) {
-        FileSystem fileSystem;
-        try {
-          fileSystem = context.open(jarFile);
-        }
-        catch (IOException e) {
-          LOG.error("Corrupted jar file: " + jarFile, e);
-          continue;
-        }
-
-        Path path = fileSystem.getPath(relativePath);
-        if (Files.exists(path)) {
-          return JDOMUtil.load(path, jdomFactory);
-        }
+      if (relativePath.charAt(0) != '/' && !bases.isEmpty()) {
+        relativePath = bases.get(bases.size() - 1) + "/" + relativePath;
       }
 
-      // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
-      if (relativePath.startsWith("/META-INF/")) {
-        InputStream stream = PluginXmlPathResolver.class.getResourceAsStream(relativePath);
-        if (stream != null) {
-          return JDOMUtil.load(stream);
-        }
+      Element element = findInJarFiles(relativePath, jdomFactory);
+      if (element != null) {
+        return element;
       }
 
       throw mainError;
     }
+  }
+
+  @NotNull
+  @Override
+  public Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
+    try {
+      return super.resolvePath(basePath, relativePath, jdomFactory);
+    }
+    catch (NoSuchFileException mainError) {
+      if (relativePath.charAt(0) != '/') {
+        relativePath = basePath.toString() + "/" + relativePath;
+      }
+
+      Element element = findInJarFiles(relativePath, jdomFactory);
+      if (element != null) {
+        return element;
+      }
+
+      throw mainError;
+    }
+  }
+
+  @Nullable
+  private Element findInJarFiles(@NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws JDOMException, IOException {
+    for (Path jarFile : pluginJarFiles) {
+      FileSystem fileSystem;
+      try {
+        fileSystem = context.open(jarFile);
+      }
+      catch (IOException e) {
+        LOG.error("Corrupted jar file: " + jarFile, e);
+        continue;
+      }
+
+      Path path = fileSystem.getPath(relativePath);
+      if (Files.exists(path)) {
+        return JDOMUtil.load(path, jdomFactory);
+      }
+    }
+
+    // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
+    if (relativePath.startsWith("/META-INF/")) {
+      InputStream stream = PluginXmlPathResolver.class.getResourceAsStream(relativePath);
+      if (stream != null) {
+        return JDOMUtil.load(stream);
+      }
+    }
+    return null;
   }
 }
