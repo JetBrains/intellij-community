@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import java.util.*
@@ -14,8 +13,6 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
   // todo track number of copies made
   val files: List<VirtualFile>
     get() = ArrayList(myFiles)
-
-  override fun notifyVcsStarted(vcs: AbstractVcs) {}
 
   override fun cleanAll() = myFiles.clear()
 

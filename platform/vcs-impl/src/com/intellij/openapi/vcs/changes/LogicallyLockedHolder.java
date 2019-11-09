@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,10 +37,6 @@ public class LogicallyLockedHolder implements FileHolder {
     final LogicallyLockedHolder result = new LogicallyLockedHolder(myProject);
     result.myMap.putAll(myMap);
     return result;
-  }
-
-  @Override
-  public void notifyVcsStarted(AbstractVcs vcs) {
   }
 
   public boolean containsKey(final VirtualFile vf) {
