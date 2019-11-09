@@ -103,17 +103,23 @@ public final class PluginsAdvertiser {
         JsonElement bundledExt = jsonObject.get("bundled");
         boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
         IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
-        if (fromServerPluginDescription == null && !isBundled) continue;
+        if (fromServerPluginDescription == null && !isBundled) {
+          continue;
+        }
 
         IdeaPluginDescriptor loadedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-        if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
+        if (loadedPlugin != null && loadedPlugin.isEnabled()) {
+          continue;
+        }
 
         if (loadedPlugin != null && fromServerPluginDescription != null &&
             StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
           continue;
         }
 
-        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
+        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) {
+          continue;
+        }
 
         JsonElement ext = jsonObject.get("implementationName");
         String extension = StringUtil.unquoteString(ext.toString());

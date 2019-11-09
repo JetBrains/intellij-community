@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 final class DescriptorListLoadingContext implements AutoCloseable {
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
+  static final int SKIP_DISABLED_PLUGINS = 4;
 
   private static final Logger LOG = Logger.getInstance(PluginManager.class);
 
@@ -46,6 +47,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   private volatile String defaultVersion;
 
   final boolean ignoreMissingInclude;
+  final boolean skipDisabledPlugins;
 
   // enable when unit tests will be added
   @SuppressWarnings("FieldMayBeStatic")
@@ -60,6 +62,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     this.loadingResult = loadingResult;
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
+    skipDisabledPlugins = (flags & SKIP_DISABLED_PLUGINS) == SKIP_DISABLED_PLUGINS;
 
     maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {

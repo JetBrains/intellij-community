@@ -104,6 +104,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private boolean myDeleted;
   private boolean myExtensionsCleared = false;
 
+  boolean incomplete;
+
   public IdeaPluginDescriptorImpl(@NotNull Path pluginPath, boolean bundled) {
     myPath = pluginPath;
     myBundled = bundled;
@@ -146,22 +148,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     PluginManager.loadDescriptorFromFile(this, file.toPath(), factory, ignoreMissingInclude, PluginManagerCore.disabledPlugins());
   }
 
-  public void readExternal(@NotNull Element element,
-                           @Nullable Path basePath,
-                           @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                           @NotNull DescriptorLoadingContext context,
-                           @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
+  public boolean readExternal(@NotNull Element element,
+                              @Nullable Path basePath,
+                              @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
+                              @NotNull DescriptorLoadingContext context,
+                              @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
-      return;
+      markAsIncomplete(context);
+      return false;
     }
 
     XmlReader.readIdAndName(this, element);
 
-    boolean skipRead = false;
     if (myId != null && context.isPluginDisabled(myId)) {
-      skipRead = true;
+      markAsIncomplete(context);
     }
     else {
       PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, context, pathResolver);
@@ -170,16 +172,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         XmlReader.readIdAndName(this, element);
 
         if (myId != null && context.isPluginDisabled(myId)) {
-          skipRead = true;
+          markAsIncomplete(context);
         }
       }
     }
 
-    if (skipRead) {
+    if (incomplete) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
       }
-      return;
+      return false;
     }
 
     XmlReader.readMetaInfo(this, element);
@@ -252,38 +254,42 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           if (!dependencyIdString.isEmpty()) {
             PluginId dependencyId = PluginId.getId(dependencyIdString);
             boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
-            boolean isUnavailable = false;
-            IdeaPluginDescriptorImpl dependencyDescriptor;
+            boolean isAvailable = true;
+            IdeaPluginDescriptorImpl dependencyDescriptor = null;
             if (context.isPluginDisabled(dependencyId)) {
-              isUnavailable = true;
-              dependencyDescriptor = null;
+              if (!isOptional) {
+                context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is disabled)");
+                markAsIncomplete(context);
+                return false;
+              }
+
+              isAvailable = false;
             }
             else {
               dependencyDescriptor = context.parentContext.loadingResult.idMap.get(dependencyId);
               if (dependencyDescriptor != null && context.isBroken(dependencyDescriptor)) {
-                isUnavailable = true;
-                dependencyDescriptor = null;
+                if (!isOptional) {
+                  context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
+                  markAsIncomplete(context);
+                  return false;
+                }
+
+                isAvailable = false;
               }
             }
 
-            if (isUnavailable) {
-              if (isOptional) {
-                continue;
+            if (isAvailable) {
+              if (dependencies == null) {
+                dependencies = new ArrayList<>();
               }
-              // have to add dependency to inform later that dependency cannot be resolved
-            }
 
-            if (dependencies == null) {
-              dependencies = new ArrayList<>();
+              PluginDependency dependency = new PluginDependency();
+              dependency.pluginId = dependencyId;
+              dependency.optional = isOptional;
+              dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
+              dependency.dependency = dependencyDescriptor;
+              dependencies.add(dependency);
             }
-
-            PluginDependency dependency = new PluginDependency();
-            dependency.pluginId = dependencyId;
-            dependency.optional = isOptional;
-            dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
-            dependency.isUnavailable = isUnavailable;
-            dependency.dependency = dependencyDescriptor;
-            dependencies.add(dependency);
           }
           break;
 
@@ -334,6 +340,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
     if (dependencies != null) {
       XmlReader.readDependencies(rootDescriptor, this, dependencies, context, basePath, pathResolver);
+    }
+
+    return true;
+  }
+
+  private void markAsIncomplete(@NotNull DescriptorLoadingContext context) {
+    incomplete = true;
+    setEnabled(false);
+    if (myId != null) {
+      context.parentContext.loadingResult.incompletePlugins.put(myId, this);
     }
   }
 
@@ -938,8 +954,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
     // maybe null if not yet read (as we read in parallel)
     public IdeaPluginDescriptorImpl dependency;
-
-    public boolean isUnavailable;
   }
 
   private static final class XmlReader {
@@ -1057,7 +1071,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
         // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
         String configFile = dependency.configFile;
-        if (configFile == null || dependency.isUnavailable) {
+        if (configFile == null) {
           continue;
         }
 
@@ -1098,13 +1112,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
 
         visitedFiles.add(configFile);
-        tempDescriptor.readExternal(element, basePath, pathResolver, context, rootDescriptor);
+        if (!tempDescriptor.readExternal(element, basePath, pathResolver, context, rootDescriptor)) {
+          tempDescriptor = null;
+        }
         visitedFiles.clear();
 
-        if (descriptor.optionalConfigs == null) {
-          descriptor.optionalConfigs = new LinkedHashMap<>();
+        if (tempDescriptor != null) {
+          if (descriptor.optionalConfigs == null) {
+            descriptor.optionalConfigs = new LinkedHashMap<>();
+          }
+          ContainerUtilRt.putValue(dependency.pluginId, tempDescriptor, descriptor.optionalConfigs);
         }
-        ContainerUtilRt.putValue(dependency.pluginId, tempDescriptor, descriptor.optionalConfigs);
       }
 
       PluginId[] dependentPlugins = new PluginId[size];

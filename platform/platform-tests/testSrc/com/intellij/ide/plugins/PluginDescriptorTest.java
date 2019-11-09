@@ -51,16 +51,16 @@ public class PluginDescriptorTest {
   @Test
   public void testOptionalDescriptors() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("family");
-    assertNotNull(descriptor);
-    assertEquals(1, descriptor.optionalConfigs.size());
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.optionalConfigs.size()).isEqualTo(1);
   }
 
   @Test
   public void testMultipleOptionalDescriptors() {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("multipleOptionalDescriptors");
-    assertNotNull(descriptor);
+    assertThat(descriptor).isNotNull();
     Set<PluginId> ids = descriptor.optionalConfigs.keySet();
-    assertEquals(2, ids.size());
+    assertThat(ids).hasSize(2);
     PluginId[] idsArray = ids.toArray(PluginId.EMPTY_ARRAY);
     assertEquals("dep2", idsArray[0].getIdString());
     assertEquals("dep1", idsArray[1].getIdString());

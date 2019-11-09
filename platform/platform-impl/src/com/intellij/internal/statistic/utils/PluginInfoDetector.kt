@@ -53,7 +53,7 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
-  val listed = !plugin.isBundled && isSafeToReport(id)
+  val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
   return if (listed) {
     PluginInfo(PluginType.LISTED, id)
   }

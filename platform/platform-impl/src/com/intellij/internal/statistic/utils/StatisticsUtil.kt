@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.RepositoryHelper
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Getter
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ObjectIntHashMap
@@ -202,77 +200,53 @@ private fun addAll(result: ObjectIntHashMap<String>, usages: Set<UsageDescriptor
   }
 }
 
-private val safeToReportPluginIds: Getter<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
-  val plugins = collectSafePluginDescriptors()
-  val ids = mutableSetOf<String>()
-  plugins.mapNotNullTo(ids) { descriptor: PluginDescriptor -> descriptor.pluginId?.idString }
-  ids
-};
-
-/**
- * We are safe to report only plugins which are developed by JetBrains or in our official plugin repository due to GDPR
- */
-private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
+private val pluginIdsFromOfficialJbPluginRepo: Getter<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
   // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
-  if (ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
+  try {
+    val cached = RepositoryHelper.loadCachedPlugins()
+    if (cached != null) {
+      return@TimeoutCachedValue cached.mapNotNullTo(HashSet(cached.size)) { it.pluginId }
+    }
+  }
+  catch (ignored: IOException) {
+  }
+
+  // schedule plugins loading, will take them the next time
+  ApplicationManager.getApplication().executeOnPooledThread {
     try {
-      val cached = RepositoryHelper.loadCachedPlugins()
-      if (cached != null) {
-        val plugins = ArrayList<IdeaPluginDescriptor>()
-        plugins.addAll(cached)
-        plugins.addAll(getBundledJetBrainsPluginDescriptors())
-        return plugins
-      }
-      else {
-        // schedule plugins loading, will take them the next time
-        ApplicationManager.getApplication().executeOnPooledThread {
-          try {
-            RepositoryHelper.loadPlugins(null)
-          }
-          catch (ignored: IOException) {
-          }
-        }
-        return emptyList() //report nothing until repo plugins loaded
-      }
+      RepositoryHelper.loadPlugins(null)
     }
     catch (ignored: IOException) {
     }
   }
 
-  return getBundledJetBrainsPluginDescriptors()
-}
-
-/**
- * Note that there may be private custom IDE build with bundled custom plugins;
- * so isBundled check is not enough
- */
-private fun getBundledJetBrainsPluginDescriptors(): List<IdeaPluginDescriptor> {
-  return PluginManagerCore.getPlugins().filter { it.isBundled && PluginManager.isDevelopedByJetBrains(it) }.toList()
+  //report nothing until repo plugins loaded
+  emptySet<PluginId>()
 }
 
 /**
  * Checks this plugin is created by JetBrains or from official repository, so API from it may be reported
  */
-fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
-  if (descriptor == null) {
-    return false
-  }
-  if (isDevelopedByJetBrains(descriptor.pluginId)) {
+internal fun isSafeToReportFrom(descriptor: PluginDescriptor): Boolean {
+  if (PluginManager.isDevelopedByJetBrains(descriptor)) {
     return true
+  }
+  else if (descriptor.isBundled) {
+    // bundled, but not from JetBrains, so, some custom unknown plugin
+    return false
   }
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
-  return !descriptor.isBundled && isSafeToReport(descriptor.pluginId?.idString)
-}
+  val pluginId = descriptor.pluginId ?: return false
 
-/**
- * Checks plugin with same id is created by JetBrains or from official repository, so pluginId may be reported.
- *
- * On the very first invocation may need to load cached plugins later; in that case no plugins are considered safe
- */
-fun isSafeToReport(pluginId: String?): Boolean {
-  return pluginId != null && safeToReportPluginIds.get().contains(pluginId)
+  // not official JetBrains repository - is used, so, not safe to report
+  if (!ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
+    return false
+  }
+
+  // if in official JetBrains repository, then it is safe to report
+  return pluginIdsFromOfficialJbPluginRepo.get().contains(pluginId)
 }
 
 /**
@@ -289,17 +263,6 @@ fun getPluginType(clazz: Class<*>): PluginType {
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
-  val listed = !plugin.isBundled && isSafeToReport(pluginId.idString)
+  val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
   return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
-}
-
-private class DelayModificationTracker internal constructor(delay: Long, unit: TimeUnit) : ModificationTracker {
-
-  private val myStamp = System.currentTimeMillis()
-  private val myDelay: Long = TimeUnit.MILLISECONDS.convert(delay, unit)
-
-  override fun getModificationCount(): Long {
-    val diff = System.currentTimeMillis() - (myStamp + myDelay)
-    return if (diff > 0) diff else 0
-  }
 }

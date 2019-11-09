@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 /**
  * @author Kir
  */
-public class TimeoutCachedValue<T> implements Getter<T> {
+public final class TimeoutCachedValue<T> implements Getter<T> {
   private final long myTimeoutMs;
   @NotNull private final Supplier<? extends T> myValueSupplier;
   private long myLastCalcTime;

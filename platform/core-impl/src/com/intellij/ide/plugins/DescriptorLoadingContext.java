@@ -34,7 +34,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {
-    return id != PluginManagerCore.CORE_ID && parentContext.disabledPlugins.contains(id);
+    return id != PluginManagerCore.CORE_ID && (parentContext.disabledPlugins.contains(id) || parentContext.loadingResult.incompletePlugins.containsKey(id));
   }
 
   boolean isBroken(@NotNull IdeaPluginDescriptorImpl descriptor) {

@@ -834,9 +834,9 @@ public final class PluginManagerCore {
     }
 
     try {
+      Element element = JDOMUtil.load(descriptorFile, context.parentContext.getXmlFactory());
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), context.isBundled);
-      descriptor.readExternal(JDOMUtil.load(descriptorFile, context.parentContext.getXmlFactory()), descriptorFile.getParent(),
-                              context.pathResolver, context, descriptor);
+      descriptor.readExternal(element, descriptorFile.getParent(), context.pathResolver, context, descriptor);
       return descriptor;
     }
     catch (SerializationException | JDOMException | IOException e) {
@@ -873,8 +873,9 @@ public final class PluginManagerCore {
       }
 
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), context.isBundled);
-      descriptor.readExternal(element, metaInf, pathResolver, context, descriptor);
-      descriptor.jarFiles = Collections.singletonList(descriptor.getPluginPath());
+      if (descriptor.readExternal(element, metaInf, pathResolver, context, descriptor)) {
+        descriptor.jarFiles = Collections.singletonList(descriptor.getPluginPath());
+      }
       return descriptor;
     }
     catch (SerializationException | InvalidDataException e) {
@@ -1627,7 +1628,8 @@ public final class PluginManagerCore {
       });
     }
 
-    if (!idMap.containsKey(CORE_ID)) {
+    IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
+    if (coreDescriptor == null) {
       throw new EssentialPluginMissingException(Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
@@ -1670,7 +1672,7 @@ public final class PluginManagerCore {
     }
 
     mergeOptionalConfigs(enabledPlugins, idMap);
-    configureClassLoaders(coreLoader, graph, idMap.get(CORE_ID), enabledPlugins);
+    configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins);
 
     if (checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap);
@@ -1873,7 +1875,16 @@ public final class PluginManagerCore {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors(isRunningFromSources());
       initializePlugins(result, coreLoader, !isUnitTestMode);
+
       ourPlugins = result.getSortedPlugins();
+      if (!result.incompletePlugins.isEmpty()) {
+        int oldSize = result.getSortedPlugins().length;
+        IdeaPluginDescriptorImpl[] all = new IdeaPluginDescriptorImpl[oldSize + result.incompletePlugins.size()];
+        System.arraycopy(result.getSortedPlugins(), 0, all, 0, oldSize);
+        ArrayUtil.copy(result.incompletePlugins.values(), all, oldSize);
+        ourPlugins = all;
+      }
+
       ourPluginsToDisable = result.getEffectiveDisabledIds();
       ourPluginsToEnable = result.getDisabledRequiredIds();
       ourLoadedPlugins = result.getSortedEnabledPlugins();

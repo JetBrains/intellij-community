@@ -15,6 +15,7 @@ final class PluginLoadingResult {
   final Map<PluginId, Set<String>> brokenPluginVersions;
 
   final List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>();
+  final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = ContainerUtil.newConcurrentMap();
   final List<IdeaPluginDescriptorImpl> pluginsWithoutId = new ArrayList<>();
 
   private final Set<IdeaPluginDescriptorImpl> existingResults = new HashSet<>();
@@ -86,6 +87,10 @@ final class PluginLoadingResult {
     if (id == null) {
       pluginsWithoutId.add(descriptor);
       errors.add("No id is provided by \"" + descriptor.getPluginPath().getFileName().toString() + "\"");
+      return true;
+    }
+
+    if (descriptor.incomplete) {
       return true;
     }
 
