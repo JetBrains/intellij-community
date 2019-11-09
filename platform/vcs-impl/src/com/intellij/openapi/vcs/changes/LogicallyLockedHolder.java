@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -34,15 +34,10 @@ public class LogicallyLockedHolder implements FileHolder {
   }
 
   @Override
-  public FileHolder copy() {
+  public LogicallyLockedHolder copy() {
     final LogicallyLockedHolder result = new LogicallyLockedHolder(myProject);
     result.myMap.putAll(myMap);
     return result;
-  }
-
-  @Override
-  public HolderType getType() {
-    return HolderType.LOGICALLY_LOCKED;
   }
 
   @Override

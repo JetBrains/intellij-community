@@ -7,13 +7,11 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import java.util.*
 
-class FilePathHolder(private val project: Project, private val type: FileHolder.HolderType) : FileHolder {
+class FilePathHolder(private val project: Project) : FileHolder {
   private val files = HashSet<FilePath>()
 
   // todo track number of copies made
   fun getFiles() = files.toList()
-
-  override fun getType() = type
 
   override fun notifyVcsStarted(vcs: AbstractVcs) {}
 
@@ -34,7 +32,7 @@ class FilePathHolder(private val project: Project, private val type: FileHolder.
   }
 
   override fun copy(): FilePathHolder {
-    val copyHolder = FilePathHolder(project, type)
+    val copyHolder = FilePathHolder(project)
     copyHolder.files.addAll(files)
     return copyHolder
   }

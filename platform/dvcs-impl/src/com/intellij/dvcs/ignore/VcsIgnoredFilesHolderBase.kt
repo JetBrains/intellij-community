@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.FileHolder
 import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 
@@ -18,8 +17,6 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
       hashMapOf<REPOSITORY, VcsRepositoryIgnoredFilesHolder>()) { it to getHolder(it) }
 
   protected abstract fun getHolder(repository: REPOSITORY): VcsRepositoryIgnoredFilesHolder
-
-  override fun getType() = FileHolder.HolderType.IGNORED
 
   override fun isInUpdatingMode() = vcsIgnoredHolderMap.values.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
 
