@@ -106,7 +106,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     dirtyScopeManager.fileDirty(file)
 
     val invalidated = retrieveDirtyScopes()
-    assertTrue(invalidated.isEmpty)
+    assertTrue(invalidated.isEmpty())
     assertFalse(invalidated.isEverythingDirty)
   }
 

@@ -84,7 +84,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
     synchronized (LOCK) {
       if (myReady) {
-        myDirtBuilder.everythingDirty();
+        myDirtBuilder.setEverythingDirty(true);
       }
     }
 
