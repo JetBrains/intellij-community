@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +27,13 @@ class BasePathResolver implements PathBasedJdomXIncluder.PathResolver<Path> {
 
   @NotNull
   @Override
-  public Element resolvePath(@NotNull List<Path> bases, @NotNull String relativePath, @Nullable String base) throws
-                                                                                                              IOException,
-                                                                                                              JDOMException {
+  public Element resolvePath(@NotNull List<Path> bases,
+                             @NotNull String relativePath,
+                             @Nullable String base,
+                             @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
     Path basePath = base == null ? bases.get(bases.size() - 1) : Paths.get(base);
     Path path = basePath == null ? Paths.get(relativePath) : basePath.resolve(relativePath);
-    Element element = JDOMUtil.load(path);
+    Element element = JDOMUtil.load(path, jdomFactory);
     if (basePath == null) {
       bases.add(path.getParent());
     }

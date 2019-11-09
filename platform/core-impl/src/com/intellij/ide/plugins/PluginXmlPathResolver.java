@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +33,12 @@ final class PluginXmlPathResolver extends BasePathResolver {
 
   @NotNull
   @Override
-  public Element resolvePath(@NotNull List<Path> bases, @NotNull String relativePath, @Nullable String base) throws
-                                                                                                             IOException,
-                                                                                                             JDOMException {
+  public Element resolvePath(@NotNull List<Path> bases,
+                             @NotNull String relativePath,
+                             @Nullable String base,
+                             @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
     try {
-      return super.resolvePath(bases, relativePath, base);
+      return super.resolvePath(bases, relativePath, base, jdomFactory);
     }
     catch (NoSuchFileException mainError) {
       for (Path jarFile : pluginJarFiles) {
@@ -51,7 +53,7 @@ final class PluginXmlPathResolver extends BasePathResolver {
 
         Path path = fileSystem.getPath(relativePath);
         if (Files.exists(path)) {
-          return JDOMUtil.load(path);
+          return JDOMUtil.load(path, jdomFactory);
         }
       }
 

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -30,11 +31,11 @@ final class PathBasedJdomXIncluder<T> {
   private static final String XML = "xml";
   private static final String XPOINTER = "xpointer";
 
-  private final boolean ignoreMissing;
+  private final DescriptorLoadingContext context;
   private final PathResolver<T> pathResolver;
 
-  private PathBasedJdomXIncluder(boolean ignoreMissing, @NotNull PathResolver<T> pathResolver) {
-    this.ignoreMissing = ignoreMissing;
+  private PathBasedJdomXIncluder(@NotNull DescriptorLoadingContext context, @NotNull PathResolver<T> pathResolver) {
+    this.context = context;
     this.pathResolver = pathResolver;
   }
 
@@ -43,11 +44,10 @@ final class PathBasedJdomXIncluder<T> {
    */
   public static <T> void resolveNonXIncludeElement(@NotNull Element original,
                                                    @Nullable Path base,
-                                                   boolean ignoreMissing,
+                                                   @NotNull DescriptorLoadingContext context,
                                                    @NotNull PathResolver<T> pathResolver) {
     LOG.assertTrue(!isIncludeElement(original));
-
-    new PathBasedJdomXIncluder<>(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, pathResolver.createNewStack(base));
+    new PathBasedJdomXIncluder<>(context, pathResolver).resolveNonXIncludeElement(original, pathResolver.createNewStack(base));
   }
 
   private static boolean isIncludeElement(Element element) {
@@ -135,7 +135,7 @@ final class PathBasedJdomXIncluder<T> {
         // to simplify implementation, no need to support obscure and not used base attribute
         LOG.error("Do not use xml:base attribute: " + base);
       }
-      Element root = pathResolver.resolvePath(bases, relativePath, base);
+      Element root = pathResolver.resolvePath(bases, relativePath, base, context.parentContext.getXmlFactory());
 
       List<Element> list;
       if (isIncludeElement(root)) {
@@ -161,7 +161,7 @@ final class PathBasedJdomXIncluder<T> {
         // TODO[yole] return contents of fallback element (we don't have fallback elements with content ATM)
         return Collections.emptyList();
       }
-      else if (ignoreMissing) {
+      else if (context.parentContext.ignoreMissingInclude) {
         LOG.info(relativePath + " include ignored: " + e.getMessage());
         return Collections.emptyList();
       }
@@ -175,24 +175,27 @@ final class PathBasedJdomXIncluder<T> {
     List<Content> contentList = original.getContent();
     for (int i = contentList.size() - 1; i >= 0; i--) {
       Content content = contentList.get(i);
-      if (content instanceof Element) {
-        Element element = (Element)content;
-        if (isIncludeElement(element)) {
-          original.setContent(i, resolveXIncludeElement(element, bases));
-        }
-        else {
-          // process child element to resolve possible includes
-          resolveNonXIncludeElement(element, bases);
-        }
+      if (!(content instanceof Element)) {
+        continue;
+      }
+
+      Element element = (Element)content;
+      if (isIncludeElement(element)) {
+        original.setContent(i, resolveXIncludeElement(element, bases));
+      }
+      else {
+        // process child element to resolve possible includes
+        resolveNonXIncludeElement(element, bases);
       }
     }
   }
 
-  public interface PathResolver<T> {
+  interface PathResolver<T> {
     @NotNull
-    Element resolvePath(@NotNull List<T> bases, @NotNull String relativePath, @Nullable String base) throws
-                                                                                                      IOException,
-                                                                                                      JDOMException;
+    Element resolvePath(@NotNull List<T> bases,
+                        @NotNull String relativePath,
+                        @Nullable String base,
+                        @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
 
     @NotNull
     List<T> createNewStack(@Nullable Path base);

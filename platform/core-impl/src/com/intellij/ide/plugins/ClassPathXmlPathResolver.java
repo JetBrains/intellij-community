@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -32,9 +33,10 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
 
   @NotNull
   @Override
-  public Element resolvePath(@NotNull List<String> bases, @NotNull String relativePath, @Nullable String base) throws
-                                                                                                                IOException,
-                                                                                                                JDOMException {
+  public Element resolvePath(@NotNull List<String> bases,
+                             @NotNull String relativePath,
+                             @Nullable String base,
+                             @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
     String path;
     if (relativePath.charAt(0) != '/') {
       if (base == null) {
@@ -60,7 +62,7 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
       throw new NoSuchFileException(relativePath);
     }
     else {
-      return JDOMUtil.load(stream);
+      return JDOMUtil.load(stream, jdomFactory);
     }
   }
 }

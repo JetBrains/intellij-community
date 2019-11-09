@@ -163,7 +163,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       skipRead = true;
     }
     else {
-      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, context.parentContext.ignoreMissingInclude, pathResolver);
+      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, context, pathResolver);
       if (myId == null || myName == null) {
         // read again after resolve
         XmlReader.readIdAndName(this, element);
@@ -1067,7 +1067,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         Element element;
         int oldStackSize = pathResolverStack.size();
         try {
-          element = pathResolver.resolvePath(pathResolverStack, configFile, null);
+          element = pathResolver.resolvePath(pathResolverStack, configFile, null, context.parentContext.getXmlFactory());
         }
         catch (IOException | JDOMException e) {
           context.parentContext.getLogger().info("Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile);
