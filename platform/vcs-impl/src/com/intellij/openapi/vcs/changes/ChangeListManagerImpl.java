@@ -529,8 +529,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         });
 
         for (VcsDirtyScope scope : scopes) {
-          AbstractVcs vcs = scope.getVcs();
-          if (vcs != null && vcs.isTrackingUnchangedContent()) {
+          if (scope.getVcs().isTrackingUnchangedContent()) {
             scope.iterateExistingInsideScope(file -> {
               LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
               return true;
@@ -573,12 +572,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     for (final VcsDirtyScope scope : scopes) {
       indicator.checkCanceled();
 
-      final AbstractVcs vcs = scope.getVcs();
-      if (vcs == null) continue;
-
       myChangesViewManager.setBusy(true);
-
-      actualUpdate(builder, scope, vcs, dataHolder, updater, indicator);
+      actualUpdate(builder, scope, scope.getVcs(), dataHolder, updater, indicator);
 
       synchronized (myDataLock) {
         if (myUpdateException != null) break;

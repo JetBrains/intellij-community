@@ -237,7 +237,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
     Map<AbstractVcs, VcsDirtyScopeImpl> scopes = new HashMap<>();
     for (AbstractVcs key : keys) {
-      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject, isEverythingDirty);
+      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, isEverythingDirty);
       scopes.put(key, scope);
       scope.addDirtyData(dirs.get(key), files.get(key));
     }
