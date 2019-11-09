@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -15,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @SuppressWarnings("DuplicatedCode")
 final class PathBasedJdomXIncluder<T> {
@@ -23,7 +23,6 @@ final class PathBasedJdomXIncluder<T> {
 
   public static final PathResolver<Path> DEFAULT_PATH_RESOLVER = new BasePathResolver();
 
-  private static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace("xi", "http://www.w3.org/2001/XInclude");
   private static final String INCLUDE = "include";
   private static final String HREF = "href";
   private static final String BASE = "base";
@@ -52,7 +51,7 @@ final class PathBasedJdomXIncluder<T> {
   }
 
   private static boolean isIncludeElement(Element element) {
-    return element.getName().equals(INCLUDE) && element.getNamespace().equals(XINCLUDE_NAMESPACE);
+    return element.getName().equals(INCLUDE) && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
   }
 
   @NotNull
@@ -92,12 +91,6 @@ final class PathBasedJdomXIncluder<T> {
     return remoteParsed;
   }
 
-  //xpointer($1)
-  private static final Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
-
-  // /$1(/$2)?/*
-  private static final Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
-
   @NotNull
   private static List<Element> extractNeededChildren(@NotNull Element element, @NotNull List<Element> remoteElements) {
     final String xpointer = element.getAttributeValue(XPOINTER);
@@ -105,13 +98,13 @@ final class PathBasedJdomXIncluder<T> {
       return remoteElements;
     }
 
-    Matcher matcher = XPOINTER_PATTERN.matcher(xpointer);
+    Matcher matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer);
     if (!matcher.matches()) {
       throw new RuntimeException("Unsupported XPointer: " + xpointer);
     }
 
     String pointer = matcher.group(1);
-    matcher = CHILDREN_PATTERN.matcher(pointer);
+    matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer);
     if (!matcher.matches()) {
       throw new RuntimeException("Unsupported pointer: " + pointer);
     }

@@ -32,9 +32,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("HardCodedStringLiteral")
 public final class JDOMUtil {
   private static final String X = "x";
   private static final String Y = "y";
@@ -42,6 +42,12 @@ public final class JDOMUtil {
   private static final String HEIGHT = "height";
 
   private static final Predicate<Attribute> NOT_EMPTY_VALUE_CONDITION = attribute -> !StringUtil.isEmpty(attribute.getValue());
+
+  //xpointer($1)
+  public static final Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
+  public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace("xi", "http://www.w3.org/2001/XInclude");
+  // /$1(/$2)?/*
+  public static final Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
 
   private static final String XML_INPUT_FACTORY_KEY = "javax.xml.stream.XMLInputFactory";
   private static final String XML_INPUT_FACTORY_IMPL = "com.sun.xml.internal.stream.XMLInputFactoryImpl";
@@ -205,7 +211,9 @@ public final class JDOMUtil {
                                            @NotNull List<? extends Attribute> l2,
                                            boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
+      //noinspection SSBasedInspection
       l1 = l1.isEmpty() ? Collections.emptyList() : l1.stream().filter(NOT_EMPTY_VALUE_CONDITION).collect(Collectors.toList());
+      //noinspection SSBasedInspection
       l2 = l2.isEmpty() ? Collections.emptyList() : l2.stream().filter(NOT_EMPTY_VALUE_CONDITION).collect(Collectors.toList());
     }
     if (l1.size() != l2.size()) {

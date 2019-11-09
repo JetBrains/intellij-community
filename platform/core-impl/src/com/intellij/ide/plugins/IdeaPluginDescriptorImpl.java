@@ -1070,8 +1070,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           element = pathResolver.resolvePath(pathResolverStack, configFile, null);
         }
         catch (IOException | JDOMException e) {
-          String message = "Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile;
-          context.parentContext.getLogger().info(message);
+          context.parentContext.getLogger().info("Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile);
           continue;
         }
         finally {

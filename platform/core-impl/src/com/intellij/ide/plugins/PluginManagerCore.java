@@ -1355,10 +1355,6 @@ public final class PluginManagerCore {
           }
         }
 
-        if (descriptor == mergedDescriptor) {
-          throw new RuntimeException("");
-        }
-
         mergedDescriptor.mergeOptionalConfig(descriptor);
         mergeOptionalDescriptors(mergedDescriptor, descriptor, idMap);
       }
