@@ -21,6 +21,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 final class DescriptorListLoadingContext implements AutoCloseable {
+  static final int IS_PARALLEL = 1;
+  static final int IGNORE_MISSING_INCLUDE = 2;
+
+  private static final Logger LOG = Logger.getInstance(PluginManager.class);
+
   @NotNull
   private final ExecutorService executorService;
 
@@ -33,15 +38,30 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   private final int maxThreads;
 
   @NotNull
+  final PluginLoadingResult loadingResult;
+
+  @NotNull
   final Set<PluginId> disabledPlugins;
 
   private volatile String defaultVersion;
-  private volatile Logger logger;
 
-  DescriptorListLoadingContext(boolean isParallel, @NotNull Set<PluginId> disabledPlugins) {
+  final boolean ignoreMissingInclude;
+
+  // enable when unit tests will be added
+  @SuppressWarnings("FieldMayBeStatic")
+  final boolean readConditionalConfigDirectlyIfPossible = false;
+
+  @NotNull
+  static DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
+    return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap()));
+  }
+
+  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult loadingResult) {
+    this.loadingResult = loadingResult;
     this.disabledPlugins = disabledPlugins;
+    ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
 
-    maxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
+    maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
       executorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads, false);
       toDispose = new ConcurrentLinkedQueue<>();
@@ -65,12 +85,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   @NotNull
   Logger getLogger() {
-    Logger result = logger;
-    if (result == null) {
-      result = Logger.getInstance(PluginManager.class);
-      logger = result;
-    }
-    return result;
+    return LOG;
   }
 
   @NotNull
@@ -121,6 +136,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   public DateFormat getDateParser() {
     return xmlFactorySupplier.get().releaseDateFormat;
   }
+
+  @NotNull
+  public List<String> getVisitedFiles() {
+    return xmlFactorySupplier.get().visitedFiles;
+  }
 }
 
 /**
@@ -151,6 +171,7 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   };
 
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
+  final List<String> visitedFiles = new ArrayList<>(3);
 
   @NotNull
   @Override

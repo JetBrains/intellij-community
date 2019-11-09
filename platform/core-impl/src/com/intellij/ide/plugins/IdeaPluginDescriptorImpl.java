@@ -79,7 +79,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
 
   // used only during initializing
-  transient Map<PluginId, List<Map.Entry<String, IdeaPluginDescriptorImpl>>> optionalConfigs;
+  transient Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalConfigs;
 
   private @Nullable List<Element> myActionElements;
   // extension point name -> list of extension elements
@@ -147,9 +147,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   public void readExternal(@NotNull Element element,
                            @Nullable Path basePath,
-                           boolean ignoreMissingInclude,
                            @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                           @NotNull DescriptorLoadingContext loadingContext) {
+                           @NotNull DescriptorLoadingContext context,
+                           @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -158,15 +158,27 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
     XmlReader.readIdAndName(this, element);
 
-    if (myId == null || !loadingContext.parentContext.disabledPlugins.contains(myId)) {
-      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, ignoreMissingInclude, pathResolver);
+    boolean skipRead = false;
+    if (myId != null && context.isPluginDisabled(myId)) {
+      skipRead = true;
+    }
+    else {
+      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, context.parentContext.ignoreMissingInclude, pathResolver);
       if (myId == null || myName == null) {
         // read again after resolve
         XmlReader.readIdAndName(this, element);
+
+        if (myId != null && context.isPluginDisabled(myId)) {
+          skipRead = true;
+        }
       }
     }
-    else if (LOG.isDebugEnabled()) {
-      LOG.debug("Skipping resolving of " + myId + " from " + basePath);
+
+    if (skipRead) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
+      }
+      return;
     }
 
     XmlReader.readMetaInfo(this, element);
@@ -180,11 +192,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       Element child = (Element)content;
       switch (child.getName()) {
         case "extensions":
-          XmlReader.readExtensions(this, loadingContext.parentContext.getStringInterner(), child);
+          XmlReader.readExtensions(this, context.parentContext.getStringInterner(), child);
           break;
 
         case "extensionPoints":
-          XmlReader.readExtensionPoints(loadingContext.effectivePlugin == null ? this : loadingContext.effectivePlugin, child);
+          XmlReader.readExtensionPoints(rootDescriptor, this, child);
           break;
 
         case "actions":
@@ -235,16 +247,41 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           break;
 
         case "depends":
-          String pluginId = child.getTextTrim();
-          if (!pluginId.isEmpty()) {
+          String dependencyIdString = child.getTextTrim();
+          if (!dependencyIdString.isEmpty()) {
+            PluginId dependencyId = PluginId.getId(dependencyIdString);
+            boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
+            boolean isUnavailable = false;
+            IdeaPluginDescriptorImpl dependencyDescriptor;
+            if (context.isPluginDisabled(dependencyId)) {
+              isUnavailable = true;
+              dependencyDescriptor = null;
+            }
+            else {
+              dependencyDescriptor = context.parentContext.loadingResult.idMap.get(dependencyId);
+              if (dependencyDescriptor != null && context.isBroken(dependencyDescriptor)) {
+                isUnavailable = true;
+                dependencyDescriptor = null;
+              }
+            }
+
+            if (isUnavailable) {
+              if (isOptional) {
+                continue;
+              }
+              // have to add dependency to inform later that dependency cannot be resolved
+            }
+
             if (dependencies == null) {
               dependencies = new ArrayList<>();
             }
 
             PluginDependency dependency = new PluginDependency();
-            dependency.pluginId = PluginId.getId(pluginId);
-            dependency.optional = Boolean.parseBoolean(child.getAttributeValue("optional"));
+            dependency.pluginId = dependencyId;
+            dependency.optional = isOptional;
             dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
+            dependency.isUnavailable = isUnavailable;
+            dependency.dependency = dependencyDescriptor;
             dependencies.add(dependency);
           }
           break;
@@ -271,7 +308,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
         case "product-descriptor":
           myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
-          myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), loadingContext.parentContext);
+          myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context.parentContext);
           myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
           break;
 
@@ -291,11 +328,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     if (myVersion == null) {
-      myVersion = loadingContext.parentContext.getDefaultVersion();
+      myVersion = context.parentContext.getDefaultVersion();
     }
 
     if (dependencies != null) {
-      XmlReader.readDependencies(this, dependencies);
+      XmlReader.readDependencies(rootDescriptor, this, dependencies, context, basePath, pathResolver);
     }
   }
 
@@ -897,6 +934,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     public PluginId pluginId;
     public boolean optional;
     public String configFile;
+
+    // maybe null if not yet read (as we read in parallel)
+    public IdeaPluginDescriptorImpl dependency;
+
+    public boolean isUnavailable;
   }
 
   private static final class XmlReader {
@@ -930,7 +972,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     static void readIdAndName(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
-      String idString = element.getChildTextTrim("id");
+      String idString = descriptor.myId == null ? element.getChildTextTrim("id") : descriptor.myId.getIdString();
       String name = element.getChildTextTrim("name");
       if (idString == null) {
         idString = name;
@@ -940,7 +982,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       }
 
       descriptor.myName = name;
-      descriptor.myId = StringUtil.isEmpty(idString) ? null : PluginId.getId(idString);
+      if (descriptor.myId == null) {
+        descriptor.myId = StringUtil.isEmpty(idString) ? null : PluginId.getId(idString);
+      }
     }
 
     static void readMetaInfo(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
@@ -982,7 +1026,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       }
     }
 
-    static void readDependencies(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull List<PluginDependency> dependencies) {
+    static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                     @NotNull IdeaPluginDescriptorImpl descriptor,
+                                     @NotNull List<PluginDependency> dependencies,
+                                     @NotNull DescriptorLoadingContext context,
+                                     @Nullable Path basePath,
+                                     @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver) {
+      List<T> pathResolverStack = null;
+      List<String> visitedFiles = null;
+
       // https://youtrack.jetbrains.com/issue/IDEA-206274
       int size = 0;
       for (int i = 0, n = dependencies.size(); i < n; i++) {
@@ -1001,6 +1053,58 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             break;
           }
         }
+
+        // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
+        String configFile = dependency.configFile;
+        if (configFile == null || dependency.isUnavailable) {
+          continue;
+        }
+
+        if (pathResolverStack == null) {
+          pathResolverStack = pathResolver.createNewStack(basePath);
+        }
+
+        Element element;
+        int oldStackSize = pathResolverStack.size();
+        try {
+          element = pathResolver.resolvePath(pathResolverStack, configFile, null);
+        }
+        catch (IOException | JDOMException e) {
+          String message = "Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile;
+          context.parentContext.getLogger().info(message);
+          continue;
+        }
+        finally {
+          if (oldStackSize != pathResolverStack.size()) {
+            pathResolverStack.remove(pathResolverStack.size() - 1);
+          }
+        }
+
+        if (visitedFiles == null) {
+          visitedFiles = context.parentContext.getVisitedFiles();
+        }
+
+        checkCycle(rootDescriptor, configFile, visitedFiles);
+
+        IdeaPluginDescriptorImpl tempDescriptor;
+        IdeaPluginDescriptorImpl dependencyDescriptor = dependency.dependency;
+        if (dependencyDescriptor != null && context.parentContext.readConditionalConfigDirectlyIfPossible) {
+          // read directly into effective descriptor
+          tempDescriptor = rootDescriptor;
+        }
+        else {
+          // effective descriptor cannot be used because not yet clear, is dependency resolvable or not
+          tempDescriptor = new IdeaPluginDescriptorImpl(descriptor.myPath, false);
+        }
+
+        visitedFiles.add(configFile);
+        tempDescriptor.readExternal(element, basePath, pathResolver, context, rootDescriptor);
+        visitedFiles.clear();
+
+        if (descriptor.optionalConfigs == null) {
+          descriptor.optionalConfigs = new LinkedHashMap<>();
+        }
+        ContainerUtilRt.putValue(dependency.pluginId, tempDescriptor, descriptor.optionalConfigs);
       }
 
       PluginId[] dependentPlugins = new PluginId[size];
@@ -1011,17 +1115,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           continue;
         }
 
-        PluginId id = dependency.pluginId;
         dependentPlugins[index++] = dependency.pluginId;
-
-        // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
-        if (dependency.configFile != null) {
-          if (descriptor.optionalConfigs == null) {
-            descriptor.optionalConfigs = new LinkedHashMap<>();
-          }
-          ContainerUtilRt.putValue(id, new AbstractMap.SimpleEntry<>(dependency.configFile, null), descriptor.optionalConfigs);
-        }
-
         if (dependency.optional) {
           optionalSize++;
         }
@@ -1046,11 +1140,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       }
     }
 
+    private static void checkCycle(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                   @NotNull String configFile,
+                                   @NotNull List<String> visitedFiles) {
+      for (int i = 0, n = visitedFiles.size(); i < n; i++) {
+        if (configFile.equals(visitedFiles.get(i))) {
+          List<String> cycle = visitedFiles.subList(i, visitedFiles.size());
+          PluginId pluginId = rootDescriptor.getPluginId();
+          throw new RuntimeException("Plugin " + pluginId + " optional descriptors form a cycle: " + String.join(", ", cycle));
+        }
+      }
+    }
+
     private static boolean getBoolean(@NotNull String name, @NotNull Element child) {
       String value = child.getAttributeValue(name);
       return value == null || Boolean.parseBoolean(value);
     }
-
 
     static void readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Interner<String> stringInterner, Element child) {
       String ns = child.getAttributeValue("defaultExtensionNs");
@@ -1094,7 +1199,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       }
     }
 
-    static void readExtensionPoints(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element parentElement) {
+    /**
+     * EP cannot be added directly to root descriptor, because probably later EP list will be ignored if dependency plugin is not available.
+     * So, we use rootDescriptor as plugin id (because descriptor plugin id is null - it is not plugin descriptor, but optional config descriptor)
+     * and for BeanExtensionPoint/InterfaceExtensionPoint (because instances will be used only if merged).
+     *
+     * And descriptor as data container.
+     */
+    static void readExtensionPoints(@NotNull IdeaPluginDescriptorImpl rootDescriptor, @NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element parentElement) {
       for (Content child : parentElement.getContent()) {
         if (!(child instanceof Element)) {
           continue;
@@ -1109,16 +1221,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           continue;
         }
 
-        String pointName = getExtensionPointName(element, descriptor.getPluginId());
+        String pointName = getExtensionPointName(element, rootDescriptor.getPluginId());
 
         String beanClassName = element.getAttributeValue("beanClass");
         String interfaceClassName = element.getAttributeValue("interface");
         if (beanClassName == null && interfaceClassName == null) {
-          throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + descriptor.getPluginId() + "' plugin");
+          throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + rootDescriptor.getPluginId() + "' plugin");
         }
 
         if (beanClassName != null && interfaceClassName != null) {
-          throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + descriptor.getPluginId() + "' plugin");
+          throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + rootDescriptor.getPluginId() + "' plugin");
         }
 
         List<ExtensionPointImpl<?>> result = containerDescriptor.extensionPoints;
@@ -1130,10 +1242,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         boolean dynamic = Boolean.parseBoolean(element.getAttributeValue("dynamic"));
         ExtensionPointImpl<Object> point;
         if (interfaceClassName == null) {
-          point = new BeanExtensionPoint<>(pointName, beanClassName, descriptor, dynamic);
+          point = new BeanExtensionPoint<>(pointName, beanClassName, rootDescriptor, dynamic);
         }
         else {
-          point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, descriptor, dynamic);
+          point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, rootDescriptor, dynamic);
         }
 
         result.add(point);

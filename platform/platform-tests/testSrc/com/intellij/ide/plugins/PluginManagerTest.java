@@ -145,9 +145,7 @@ public class PluginManagerTest {
   private static PluginLoadingResult loadDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
-    PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
-
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(/* doesn't matter */ false, Collections.emptySet());
+    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
 
@@ -156,11 +154,11 @@ public class PluginManagerTest {
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
-      context.readDescriptor(descriptor, element, Paths.get(url), context.pathResolver);
-      result.add(descriptor, false);
+      descriptor.readExternal(element, Paths.get(url), context.pathResolver, context, descriptor);
+      parentContext.loadingResult.add(descriptor, false);
     }
-    result.finishLoading();
-    return result;
+    parentContext.loadingResult.finishLoading();
+    return parentContext.loadingResult;
   }
 
   /** @noinspection unused */
@@ -177,23 +175,18 @@ public class PluginManagerTest {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
       PluginId[] optIds = d.getOptionalDependentPluginIds();
-      Map<PluginId, List<Map.Entry<String, IdeaPluginDescriptorImpl>>> optionalConfigs = d.optionalConfigs;
+      Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalConfigs = d.optionalConfigs;
       for (PluginId depId : d.getDependentPluginIds()) {
         if (ArrayUtil.indexOf(optIds, depId) == -1) {
           sb.append("\n    <depends>").append(escape.apply(depId.getIdString())).append("</depends>");
         }
         else {
-          List<Map.Entry<String, IdeaPluginDescriptorImpl>> optionalConfigPerId = optionalConfigs == null ? null : optionalConfigs.get(depId);
+          List<IdeaPluginDescriptorImpl> optionalConfigPerId = optionalConfigs == null ? null : optionalConfigs.get(depId);
           if (optionalConfigPerId == null || optionalConfigPerId.isEmpty()) {
             sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(depId.getIdString())).append("</depends>");
           }
           else {
-            for (Map.Entry<String, IdeaPluginDescriptorImpl> entry : optionalConfigPerId) {
-              IdeaPluginDescriptorImpl descriptor = entry.getValue();
-              if (descriptor == null) {
-                continue;
-              }
-
+            for (IdeaPluginDescriptorImpl descriptor : optionalConfigPerId) {
               sb.append("\n    <depends optional=\"true\" config-file=\"")
                 .append(descriptor.getPath().getName()).append("\">").append(escape.apply(depId.getIdString())).append("</depends>");
             }

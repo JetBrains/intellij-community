@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.intellij.ide.plugins.DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
+
 @Service
 public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
@@ -74,8 +76,8 @@ public final class PluginManager {
                                                         @NotNull String fileName,
                                                         @Nullable Set<PluginId> disabledPlugins) {
     Set<PluginId> disabled = disabledPlugins == null ? Collections.emptySet() : disabledPlugins;
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(new DescriptorListLoadingContext(false, disabled), false, false,
-                                                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabled);
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return PluginManagerCore.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }
@@ -178,10 +180,14 @@ public final class PluginManager {
                                             @Nullable SafeJdomFactory factory,
                                             boolean ignoreMissingInclude,
                                             @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(/* doesn't matter */ false, disabledPlugins);
+    int flags = 0;
+    if (ignoreMissingInclude) {
+      flags |= IGNORE_MISSING_INCLUDE;
+    }
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, new PluginLoadingResult(Collections.emptyMap()));
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, descriptor.isBundled(), /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
-    descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), ignoreMissingInclude, context.pathResolver, context);
+    descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), context.pathResolver, context, descriptor);
   }
 
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {

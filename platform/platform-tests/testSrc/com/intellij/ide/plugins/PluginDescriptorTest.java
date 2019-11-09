@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -19,6 +18,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -26,6 +26,8 @@ import java.util.*;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Dmitry Avdeev
@@ -66,38 +68,23 @@ public class PluginDescriptorTest {
 
   @Test
   public void testMalformedDescriptor() {
-    assertNull(loadDescriptor("malformed"));
+    assertThatThrownBy(() -> {
+      loadDescriptor("malformed");
+    }).hasMessageContaining("Content is not allowed in prolog.");
   }
 
   @Test
   public void testAnonymousDescriptor() {
-    assertNull(loadDescriptor("anonymous"));
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("anonymous");
+    assertThat(descriptor.getPluginId()).isNull();
+    assertThat(descriptor.getName()).isNull();
   }
 
   @Test
   public void testCyclicOptionalDeps() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("cyclicOptionalDeps");
-    assertThat(descriptor).isNotNull();
-    ArrayList<IdeaPluginDescriptorImpl> allOptionalDescriptors = new ArrayList<>();
-    collectDescriptors(descriptor, allOptionalDescriptors);
-    assertThat(allOptionalDescriptors).hasSize(2);
-  }
-
-  private static void collectDescriptors(@NotNull IdeaPluginDescriptorImpl rootDescriptor, @NotNull List<IdeaPluginDescriptorImpl> result) {
-    Map<PluginId, List<Map.Entry<String, IdeaPluginDescriptorImpl>>> optionalConfigs = rootDescriptor.optionalConfigs;
-    if (optionalConfigs == null) {
-      return;
-    }
-
-    optionalConfigs.forEach((id, entries) -> {
-      for (Map.Entry<String, IdeaPluginDescriptorImpl> entry : entries) {
-        IdeaPluginDescriptorImpl descriptor = entry.getValue();
-        if (descriptor != null) {
-          result.add(descriptor);
-          collectDescriptors(descriptor, result);
-        }
-      }
-    });
+    assertThatThrownBy(() -> {
+      loadDescriptor("cyclicOptionalDeps");
+    }).hasMessage("Plugin someId optional descriptors form a cycle: a.xml, b.xml");
   }
 
   @Test
@@ -111,7 +98,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void testProductionPlugins() throws Exception {
-    Assume.assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
+    assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
 
     List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"));
     assertThat(descriptors).isNotEmpty();
@@ -120,7 +107,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void testProductionProductLib() throws Exception {
-    Assume.assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
+    assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
 
     List<URL> urls = new ArrayList<>();
     for (File it : new File("/Applications/Idea.app/Contents/lib").listFiles()) {
@@ -133,7 +120,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void testProduction2() throws Exception {
-    Assume.assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
+    assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
 
     List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"));
     assertThat(descriptors).isNotEmpty();
@@ -267,7 +254,13 @@ public class PluginDescriptorTest {
   private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path dir) {
     assertThat(dir).exists();
     PluginManagerCore.ourPluginError = null;
-    IdeaPluginDescriptorImpl result = PluginManager.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+
+    IdeaPluginDescriptorImpl result;
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+      result = PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir));
+    }
+
     if (result == null) {
       assertThat(PluginManagerCore.ourPluginError).isNotNull();
       PluginManagerCore.ourPluginError = null;

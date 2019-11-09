@@ -2,6 +2,8 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,13 +12,19 @@ import java.util.*;
 
 @ApiStatus.Internal
 final class PluginLoadingResult {
+  final Map<PluginId, Set<String>> brokenPluginVersions;
+
   final List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>();
   final List<IdeaPluginDescriptorImpl> pluginsWithoutId = new ArrayList<>();
 
   private final Set<IdeaPluginDescriptorImpl> existingResults = new HashSet<>();
 
+  // only read is concurrent, write from the only thread
+  final Map<PluginId, IdeaPluginDescriptorImpl> idMap = ContainerUtil.newConcurrentMap();
+
   @Nullable
-  private Map<PluginId, IdeaPluginDescriptorImpl> duplicateMap = null;
+  private Map<PluginId, IdeaPluginDescriptorImpl> duplicateMap;
+  Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
   final List<String> errors = new ArrayList<>();
 
@@ -24,8 +32,6 @@ final class PluginLoadingResult {
   private List<IdeaPluginDescriptorImpl> sortedEnabledPlugins;
   private Set<PluginId> effectiveDisabledIds;
   private Set<PluginId> disabledRequiredIds;
-
-  Map<PluginId, Set<String>> brokenPluginVersions;
 
   PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions) {
     this.brokenPluginVersions = brokenPluginVersions;
@@ -101,10 +107,14 @@ final class PluginLoadingResult {
 
     if (existingResults.add(descriptor)) {
       plugins.add(descriptor);
+      idMap.put(descriptor.getPluginId(), descriptor);
+
+      for (PluginId module : descriptor.getModules()) {
+        checkAndAdd(descriptor, module);
+      }
       return true;
     }
-
-    if (silentlyIgnoreIfDuplicate) {
+    else if (silentlyIgnoreIfDuplicate) {
       return false;
     }
 
@@ -112,18 +122,43 @@ final class PluginLoadingResult {
     // unrealistic case, but still
     if (index == -1) {
       errors.add("internal error: cannot find duplicated descriptor for " + descriptor);
+      return false;
     }
-    else {
-      IdeaPluginDescriptorImpl existing = plugins.remove(index);
-      if (duplicateMap == null) {
-        duplicateMap = new HashMap<>();
-      }
 
-      duplicateMap.put(id, existing);
-      existingResults.remove(descriptor);
-      errors.add(descriptor + " duplicates " + existing);
+    IdeaPluginDescriptorImpl existing = plugins.remove(index);
+    if (duplicateMap == null) {
+      duplicateMap = new HashMap<>();
     }
+
+    duplicateMap.put(id, existing);
+    existingResults.remove(descriptor);
+    idMap.remove(descriptor.getPluginId());
+    errors.add(descriptor + " duplicates " + existing);
     return false;
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  private void checkAndAdd(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull PluginId id) {
+    if (duplicateModuleMap != null && duplicateModuleMap.containsKey(id)) {
+      ContainerUtilRt.putValue(id, descriptor, duplicateModuleMap);
+      return;
+    }
+
+    IdeaPluginDescriptorImpl existingDescriptor = idMap.put(id, descriptor);
+    if (existingDescriptor == null) {
+      return;
+    }
+
+    // if duplicated, both are removed
+    idMap.remove(id);
+    if (duplicateModuleMap == null) {
+      duplicateModuleMap = new LinkedHashMap<>();
+    }
+
+    List<IdeaPluginDescriptorImpl> list = new ArrayList<>();
+    list.add(existingDescriptor);
+    list.add(descriptor);
+    duplicateModuleMap.put(id, list);
   }
 
   void replace(int prevIndex, @NotNull IdeaPluginDescriptorImpl oldDescriptor, @NotNull IdeaPluginDescriptorImpl newDescriptor) {

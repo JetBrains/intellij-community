@@ -1,19 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.extensions.PluginId;
 import gnu.trove.THashMap;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 final class DescriptorLoadingContext implements AutoCloseable {
   final Map<Path, FileSystem> openedFiles = new THashMap<>();
@@ -21,14 +18,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
   final boolean isBundled;
   final boolean isEssential;
 
-  private List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> visitedFiles;
-
-  Path lastZipWithDescriptor;
-
   final PathBasedJdomXIncluder.PathResolver<?> pathResolver;
-
-  @Nullable
-  IdeaPluginDescriptorImpl effectivePlugin;
 
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
@@ -43,14 +33,17 @@ final class DescriptorLoadingContext implements AutoCloseable {
     this.pathResolver = pathResolver;
   }
 
-  @NotNull
-  List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> getVisitedFiles() {
-    List<AbstractMap.SimpleEntry<String, IdeaPluginDescriptorImpl>> result = visitedFiles;
-    if (result == null) {
-      result = new ArrayList<>(3);
-      visitedFiles = result;
+  boolean isPluginDisabled(@NotNull PluginId id) {
+    return id != PluginManagerCore.CORE_ID && parentContext.disabledPlugins.contains(id);
+  }
+
+  boolean isBroken(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    if (descriptor.getVersion() == null || descriptor.isBundled() || descriptor.isImplementationDetail()) {
+      return false;
     }
-    return result;
+
+    Set<String> set = parentContext.loadingResult.brokenPluginVersions.get(descriptor.getPluginId());
+    return set != null && set.contains(descriptor.getVersion());
   }
 
   @NotNull
@@ -76,15 +69,6 @@ final class DescriptorLoadingContext implements AutoCloseable {
 
   @NotNull
   public DescriptorLoadingContext copy(boolean isEssential) {
-    DescriptorLoadingContext result = new DescriptorLoadingContext(parentContext, isBundled, isEssential, pathResolver);
-    result.effectivePlugin = effectivePlugin;
-    return result;
-  }
-
-  void readDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor,
-                      @NotNull Element element,
-                      @NotNull Path basePath,
-                      @NotNull PathBasedJdomXIncluder.PathResolver<?> resolver) {
-    descriptor.readExternal(element, basePath, PluginManagerCore.isUnitTestMode, resolver, this);
+    return new DescriptorLoadingContext(parentContext, isBundled, isEssential, pathResolver);
   }
 }

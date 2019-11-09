@@ -25,7 +25,6 @@
   <depends optional="true" config-file="remote-servers-git-java.xml">com.intellij.java</depends>
 
   <actions>
-
     <action id="Git.Init" class="git4idea.actions.GitInit" text="Create Git Repository...">
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
