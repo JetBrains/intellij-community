@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
@@ -8,16 +8,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import java.util.*
 
-class VirtualFileHolder(private val myProject: Project, private val myType: FileHolder.HolderType) : FileHolder {
+class VirtualFileHolder(private val myProject: Project) : FileHolder {
   private val myFiles = HashSet<VirtualFile>()
 
   // todo track number of copies made
   val files: List<VirtualFile>
     get() = ArrayList(myFiles)
-
-  override fun getType(): FileHolder.HolderType {
-    return myType
-  }
 
   override fun notifyVcsStarted(vcs: AbstractVcs) {}
 
@@ -34,7 +30,7 @@ class VirtualFileHolder(private val myProject: Project, private val myType: File
   }
 
   override fun copy(): VirtualFileHolder {
-    val copyHolder = VirtualFileHolder(myProject, myType)
+    val copyHolder = VirtualFileHolder(myProject)
     copyHolder.myFiles.addAll(myFiles)
     return copyHolder
   }

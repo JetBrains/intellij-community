@@ -124,7 +124,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myConflictTracker = new ChangelistConflictTracker(project, this, EditorNotifications.getInstance(project));
 
-    myComposite = new FileHolderComposite(project);
+    myComposite = FileHolderComposite.create(project);
     myDelayedNotificator = new DelayedNotificator(this, myListeners, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 

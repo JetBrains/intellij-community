@@ -37,17 +37,12 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   }
 
   @Override
-  public FileHolder copy() {
+  public IgnoredFilesCompositeHolder copy() {
     final IgnoredFilesCompositeHolder result = new IgnoredFilesCompositeHolder(myProject);
     for (Map.Entry<AbstractVcs, IgnoredFilesHolder> entry : myVcsIgnoredHolderMap.entrySet()) {
       result.myVcsIgnoredHolderMap.put(entry.getKey(), (IgnoredFilesHolder)entry.getValue().copy());
     }
     return result;
-  }
-
-  @Override
-  public HolderType getType() {
-    return HolderType.IGNORED;
   }
 
   public void addFile(@NotNull AbstractVcs vcs, @NotNull FilePath file) {
@@ -89,7 +84,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     for (VcsIgnoredFilesHolder.Provider provider : VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.getExtensionList(project)) {
       if (provider.getVcs().equals(vcs)) return provider.createHolder();
     }
-    return new RecursiveFileHolder(project, HolderType.IGNORED);
+    return new RecursiveFileHolder(project);
   }
 
   @Override
