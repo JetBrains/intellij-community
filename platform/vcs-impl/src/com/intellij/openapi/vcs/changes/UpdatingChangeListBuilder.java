@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -108,7 +108,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   @Override
   public void processUnversionedFile(FilePath filePath) {
     if (acceptFilePath(filePath, false)) {
-      myComposite.getPathHolder(FileHolder.HolderType.UNVERSIONED).addFile(filePath);
+      myComposite.getUnversionedFileHolder().addFile(filePath);
       SwitchedFileHolder switchedFileHolder = myComposite.getSwitchedFileHolder();
       if (!switchedFileHolder.isEmpty()) {
         // if a file was previously marked as switched through recursion, remove it from switched list
@@ -143,7 +143,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("processModifiedWithoutCheckout " + file);
       }
-      myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).addFile(file);
+      myComposite.getModifiedWithoutEditingFileHolder().addFile(file);
     }
   }
 
@@ -165,7 +165,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processLockedFolder(VirtualFile file) {
     if (acceptFile(file, true)) {
       if (myFoldersCutDownWorker.addCurrent(file)) {
-        myComposite.getVFHolder(FileHolder.HolderType.LOCKED).addFile(file);
+        myComposite.getLockedFileHolder().addFile(file);
       }
     }
   }
