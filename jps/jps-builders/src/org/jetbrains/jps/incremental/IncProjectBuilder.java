@@ -688,7 +688,9 @@ public class IncProjectBuilder {
       if (applicability == Applicability.NONE) {
         continue;
       }
-      boolean okToDelete = applicability == Applicability.ALL;
+      // It makes no sense to delete already empty root, but instead it makes sense to cleanup the target, because there may exist
+      // a directory that has been previously the output root for the target
+      boolean okToDelete = applicability == Applicability.ALL && !isEmpty(outputRoot);
       if (okToDelete && !moduleIndex.isExcluded(outputRoot)) {
         // if output root itself is directly or indirectly excluded,
         // there cannot be any manageable sources under it, even if the output root is located under some source root
@@ -705,7 +707,13 @@ public class IncProjectBuilder {
             }
           }
         }
+        if (!okToDelete) {
+          context.processMessage(new CompilerMessage(
+            "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
+          );
+        }
       }
+
       if (okToDelete) {
         // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
         final File[] children = outputRoot.listFiles();
@@ -724,12 +732,6 @@ public class IncProjectBuilder {
         registerTargetsWithClearedOutput(context, rootTargets);
       }
       else {
-        if (applicability == Applicability.ALL) {
-          // only warn if unable to delete because of roots intersection
-          context.processMessage(new CompilerMessage(
-            "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
-          );
-        }
         context.processMessage(new ProgressMessage("Cleaning output directories..."));
         // clean only those files we are aware of
         for (BuildTarget<?> target : rootTargets) {
@@ -753,6 +755,11 @@ public class IncProjectBuilder {
       }
     }
     LOG.info("Cleaned output directories in " + (System.currentTimeMillis() - cleanStart) + " ms");
+  }
+
+  private static boolean isEmpty(File outputRoot) {
+    final String[] files = outputRoot.list();
+    return files == null || files.length == 0;
   }
 
   private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {
