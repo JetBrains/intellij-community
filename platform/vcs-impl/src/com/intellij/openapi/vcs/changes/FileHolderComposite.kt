@@ -1,119 +1,56 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.changes.FileHolder.HolderType.*
 
-import java.util.HashMap;
-import java.util.Map;
+internal class FileHolderComposite : FileHolder {
+  private val fileHolders = mutableMapOf<FileHolder.HolderType, FileHolder>()
 
-public class FileHolderComposite implements FileHolder {
-  private final Map<HolderType, FileHolder> myHolders = new HashMap<>();
+  val unversionedFileHolder: FilePathHolder get() = fileHolders[UNVERSIONED] as FilePathHolder
+  val ignoredFileHolder: IgnoredFilesCompositeHolder get() = fileHolders[IGNORED] as IgnoredFilesCompositeHolder
+  val modifiedWithoutEditingFileHolder: VirtualFileHolder get() = fileHolders[MODIFIED_WITHOUT_EDITING] as VirtualFileHolder
+  val lockedFileHolder: VirtualFileHolder get() = fileHolders[LOCKED] as VirtualFileHolder
+  val logicallyLockedFileHolder: LogicallyLockedHolder get() = fileHolders[LOGICALLY_LOCKED] as LogicallyLockedHolder
+  val rootSwitchFileHolder: SwitchedFileHolder get() = fileHolders[ROOT_SWITCH] as SwitchedFileHolder
+  val switchedFileHolder: SwitchedFileHolder get() = fileHolders[SWITCHED] as SwitchedFileHolder
+  val deletedFileHolder: DeletedFilesHolder get() = fileHolders[DELETED] as DeletedFilesHolder
 
-  public FileHolderComposite(Project project) {
-    add(new FilePathHolder(project, HolderType.UNVERSIONED));
-    add(new SwitchedFileHolder(project, HolderType.ROOT_SWITCH));
-    add(new SwitchedFileHolder(project, HolderType.SWITCHED));
-    add(new VirtualFileHolder(project, HolderType.MODIFIED_WITHOUT_EDITING));
-    add(new IgnoredFilesCompositeHolder(project));
-    add(new VirtualFileHolder(project, HolderType.LOCKED));
-    add(new LogicallyLockedHolder(project));
-    add(new DeletedFilesHolder());
+  constructor(project: Project) {
+    add(FilePathHolder(project, UNVERSIONED))
+    add(SwitchedFileHolder(project, ROOT_SWITCH))
+    add(SwitchedFileHolder(project, SWITCHED))
+    add(VirtualFileHolder(project, MODIFIED_WITHOUT_EDITING))
+    add(IgnoredFilesCompositeHolder(project))
+    add(VirtualFileHolder(project, LOCKED))
+    add(LogicallyLockedHolder(project))
+    add(DeletedFilesHolder())
   }
 
-  private FileHolderComposite(FileHolderComposite holder) {
-    for (FileHolder fileHolder : holder.myHolders.values()) {
-      addCopy(fileHolder);
-    }
+  private constructor(holder: FileHolderComposite) {
+    holder.fileHolders.values.forEach { add(it.copy()) }
   }
 
-  private void add(@NotNull FileHolder fileHolder) {
-    myHolders.put(fileHolder.getType(), fileHolder);
+  private fun add(fileHolder: FileHolder) {
+    fileHolders[fileHolder.type] = fileHolder
   }
 
-  private void addCopy(@NotNull FileHolder fileHolder) {
-    myHolders.put(fileHolder.getType(), fileHolder.copy());
+  override fun cleanAll() = fileHolders.values.forEach { it.cleanAll() }
+  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = fileHolders.values.forEach { it.cleanAndAdjustScope(scope) }
+
+  override fun copy(): FileHolderComposite = FileHolderComposite(this)
+
+  override fun getType(): FileHolder.HolderType = throw UnsupportedOperationException()
+
+  override fun notifyVcsStarted(vcs: AbstractVcs) = fileHolders.values.forEach { it.notifyVcsStarted(vcs) }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is FileHolderComposite) return false
+
+    return fileHolders == other.fileHolders
   }
 
-
-  @Override
-  public void cleanAll() {
-    for (FileHolder holder : myHolders.values()) {
-      holder.cleanAll();
-    }
-  }
-
-  @Override
-  public void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope) {
-    for (FileHolder holder : myHolders.values()) {
-      holder.cleanAndAdjustScope(scope);
-    }
-  }
-
-
-  @Override
-  public FileHolderComposite copy() {
-    return new FileHolderComposite(this);
-  }
-
-  public FilePathHolder getUnversionedFileHolder() {
-    return (FilePathHolder)myHolders.get(HolderType.UNVERSIONED);
-  }
-
-  public IgnoredFilesCompositeHolder getIgnoredFileHolder() {
-    return (IgnoredFilesCompositeHolder)myHolders.get(HolderType.IGNORED);
-  }
-
-  public VirtualFileHolder getModifiedWithoutEditingFileHolder() {
-    return (VirtualFileHolder)myHolders.get(HolderType.MODIFIED_WITHOUT_EDITING);
-  }
-
-  public VirtualFileHolder getLockedFileHolder() {
-    return (VirtualFileHolder)myHolders.get(HolderType.LOCKED);
-  }
-
-  public LogicallyLockedHolder getLogicallyLockedFileHolder() {
-    return (LogicallyLockedHolder)myHolders.get(HolderType.LOGICALLY_LOCKED);
-  }
-
-  public SwitchedFileHolder getRootSwitchFileHolder() {
-    return (SwitchedFileHolder)myHolders.get(HolderType.ROOT_SWITCH);
-  }
-
-  public SwitchedFileHolder getSwitchedFileHolder() {
-    return (SwitchedFileHolder)myHolders.get(HolderType.SWITCHED);
-  }
-
-  public DeletedFilesHolder getDeletedFileHolder() {
-    return (DeletedFilesHolder)myHolders.get(HolderType.DELETED);
-  }
-
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final FileHolderComposite another = (FileHolderComposite)o;
-    return myHolders.equals(another.myHolders);
-  }
-
-  @Override
-  public int hashCode() {
-    return myHolders.hashCode();
-  }
-
-
-  @Override
-  public HolderType getType() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void notifyVcsStarted(AbstractVcs vcs) {
-    for (FileHolder fileHolder : myHolders.values()) {
-      fileHolder.notifyVcsStarted(vcs);
-    }
-  }
+  override fun hashCode(): Int = fileHolders.hashCode()
 }
