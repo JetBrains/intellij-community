@@ -594,11 +594,17 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  private static ClassLoader createPluginClassLoader(@NotNull List<Path> classPath,
-                                                     @NotNull ClassLoader[] parentLoaders,
-                                                     @NotNull IdeaPluginDescriptorImpl descriptor) {
+  private static ClassLoader createPluginClassLoader(@NotNull ClassLoader[] parentLoaders, @NotNull IdeaPluginDescriptorImpl descriptor) {
     if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
       return null;
+    }
+
+    List<Path> classPath = descriptor.jarFiles;
+    if (classPath == null) {
+      classPath = descriptor.collectClassPath();
+    }
+    else {
+      descriptor.jarFiles = null;
     }
 
     if (descriptor.getUseIdeaClassLoader()) {
@@ -868,6 +874,7 @@ public final class PluginManagerCore {
 
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(ObjectUtils.notNull(pluginPath, file), context.isBundled);
       descriptor.readExternal(element, metaInf, pathResolver, context, descriptor);
+      descriptor.jarFiles = Collections.singletonList(descriptor.getPluginPath());
       return descriptor;
     }
     catch (SerializationException | InvalidDataException e) {
@@ -944,28 +951,25 @@ public final class PluginManagerCore {
     putMoreLikelyPluginJarsFirst(file, files);
 
     List<Path> pluginJarFiles = null;
+    List<Path> dirs = null;
     for (Path childFile : files) {
       if (Files.isDirectory(childFile)) {
-        IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(childFile, descriptorRelativePath, file, context);
-        if (otherDescriptor != null) {
-          if (descriptor != null) {
-            context.parentContext.getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
-            return null;
-          }
-          descriptor = otherDescriptor;
+        if (dirs == null) {
+          dirs = new ArrayList<>();
         }
+        dirs.add(childFile);
       }
       else {
         String path = childFile.toString();
         if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
           if (files.size() == 1) {
             pluginJarFiles = Collections.singletonList(childFile);
+            break;
           }
           else {
             if (pluginJarFiles == null) {
               pluginJarFiles = new ArrayList<>();
             }
-            //noinspection ConstantConditions
             pluginJarFiles.add(childFile);
           }
         }
@@ -977,10 +981,27 @@ public final class PluginManagerCore {
       for (Path jarFile : pluginJarFiles) {
         descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file);
         if (descriptor != null) {
-          break;
+          descriptor.jarFiles = pluginJarFiles;
+          return descriptor;
         }
       }
     }
+
+    if (dirs == null) {
+      return null;
+    }
+
+    for (Path dir : dirs) {
+      IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(dir, descriptorRelativePath, file, context);
+      if (otherDescriptor != null) {
+        if (descriptor != null) {
+          context.parentContext.getLogger().info("Cannot load " + file + " because two or more plugin.xml's detected");
+          return null;
+        }
+        descriptor = otherDescriptor;
+      }
+    }
+
     return descriptor;
   }
 
@@ -1412,7 +1433,7 @@ public final class PluginManagerCore {
     }
 
     ClassLoader[] array = parentLoaders.isEmpty() ? new ClassLoader[]{PluginManagerCore.class.getClassLoader()} : parentLoaders.toArray(new ClassLoader[0]);
-    rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.collectClassPath(), array, rootDescriptor));
+    rootDescriptor.setLoader(createPluginClassLoader(array, rootDescriptor));
   }
 
   @NotNull
@@ -1696,7 +1717,7 @@ public final class PluginManagerCore {
       }
 
       ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
-      rootDescriptor.setLoader(createPluginClassLoader(rootDescriptor.collectClassPath(), parentLoaders, rootDescriptor));
+      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor));
     }
   }
 

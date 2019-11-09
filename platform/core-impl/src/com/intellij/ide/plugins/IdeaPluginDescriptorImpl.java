@@ -80,6 +80,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   // used only during initializing
   transient Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalConfigs;
+  transient List<Path> jarFiles;
 
   private @Nullable List<Element> myActionElements;
   // extension point name -> list of extension elements
