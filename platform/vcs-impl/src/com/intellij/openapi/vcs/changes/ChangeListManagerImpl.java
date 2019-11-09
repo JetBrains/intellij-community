@@ -478,7 +478,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
             LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
                       "\nignored: " + myComposite.getIgnoredFileHolder().values().size() +
-                      "\nunversioned: " + myComposite.getPathHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() +
+                      "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
                       "\ncurrent changes: " + myWorker);
           }
         }
@@ -510,7 +510,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
               if (LOG.isDebugEnabled()) {
                 LOG.debug("refresh procedure finished, unversioned size: " +
-                          dataHolder.getComposite().getPathHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() +
+                          dataHolder.getComposite().getUnversionedFileHolder().getFiles().size() +
                           "\nchanges: " + myWorker);
               }
               final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
@@ -757,7 +757,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public List<FilePath> getUnversionedFilesPaths() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return myComposite.getPathHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+        return myComposite.getUnversionedFileHolder().getFiles();
       }
     });
   }
@@ -767,7 +767,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public List<VirtualFile> getModifiedWithoutEditing() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).getFiles();
+        return myComposite.getModifiedWithoutEditingFileHolder().getFiles();
       }
     });
   }
@@ -802,7 +802,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public List<VirtualFile> getLockedFolders() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return myComposite.getVFHolder(FileHolder.HolderType.LOCKED).getFiles();
+        return myComposite.getLockedFileHolder().getFiles();
       }
     });
   }
@@ -1091,7 +1091,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public boolean isUnversioned(VirtualFile file) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return myComposite.getPathHolder(FileHolder.HolderType.UNVERSIONED).containsFile(VcsUtil.getFilePath(file));
+        return myComposite.getUnversionedFileHolder().containsFile(VcsUtil.getFilePath(file));
       }
     });
   }
@@ -1102,8 +1102,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         FilePath filePath = VcsUtil.getFilePath(file);
-        if (myComposite.getPathHolder(FileHolder.HolderType.UNVERSIONED).containsFile(filePath)) return FileStatus.UNKNOWN;
-        if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
+        if (myComposite.getUnversionedFileHolder().containsFile(filePath)) return FileStatus.UNKNOWN;
+        if (myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
         if (myComposite.getIgnoredFileHolder().containsFile(filePath)) return FileStatus.IGNORED;
 
         final FileStatus status = ObjectUtils.notNull(myWorker.getStatus(file), FileStatus.NOT_CHANGED);
@@ -1270,7 +1270,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void scheduleUnversionedUpdate() {
     Couple<Collection<FilePath>> couple = ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        Collection<FilePath> unversioned = myComposite.getPathHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+        Collection<FilePath> unversioned = myComposite.getUnversionedFileHolder().getFiles();
         Collection<FilePath> ignored = myComposite.getIgnoredFileHolder().values();
         return Couple.of(unversioned, ignored);
       }

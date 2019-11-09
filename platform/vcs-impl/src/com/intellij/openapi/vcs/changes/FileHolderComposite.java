@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -57,20 +57,20 @@ public class FileHolderComposite implements FileHolder {
     return new FileHolderComposite(this);
   }
 
-  public FileHolder get(HolderType type) {
-    return myHolders.get(type);
-  }
-
-  public VirtualFileHolder getVFHolder(HolderType type) {
-    return (VirtualFileHolder)myHolders.get(type);
-  }
-
-  public FilePathHolder getPathHolder(HolderType type) {
-    return (FilePathHolder)myHolders.get(type);
+  public FilePathHolder getUnversionedFileHolder() {
+    return (FilePathHolder)myHolders.get(HolderType.UNVERSIONED);
   }
 
   public IgnoredFilesCompositeHolder getIgnoredFileHolder() {
     return (IgnoredFilesCompositeHolder)myHolders.get(HolderType.IGNORED);
+  }
+
+  public VirtualFileHolder getModifiedWithoutEditingFileHolder() {
+    return (VirtualFileHolder)myHolders.get(HolderType.MODIFIED_WITHOUT_EDITING);
+  }
+
+  public VirtualFileHolder getLockedFileHolder() {
+    return (VirtualFileHolder)myHolders.get(HolderType.LOCKED);
   }
 
   public LogicallyLockedHolder getLogicallyLockedFileHolder() {
