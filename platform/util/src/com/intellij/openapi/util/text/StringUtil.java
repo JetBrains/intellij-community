@@ -521,6 +521,11 @@ public class StringUtil extends StringUtilRt {
     "per", "nor", "the", "to", "up", "upon", "via", "with"
   };
 
+  /**
+   * @deprecated Use {@link #isPreposition(String, int, int, String[])}.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
   @Contract(pure = true)
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
     return isPreposition(s, firstChar, lastChar, ourPrepositions);
