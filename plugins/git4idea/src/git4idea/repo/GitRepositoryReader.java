@@ -85,6 +85,9 @@ class GitRepositoryReader {
   }
 
   private void logDebugAllRefsFiles() {
+    LOG.debug("Logging .git/refs files. " +
+              ".git/refs/heads " + (myRefsHeadsDir.exists() ? "exists" : "doesn't exist") +
+              ".git/refs/remotes " + (myRefsRemotesDir.exists() ? "exists" : "doesn't exist"));
     if (LOG.isDebugEnabled()) {
       logDebugAllFilesIn(myRefsHeadsDir);
       logDebugAllFilesIn(myRefsRemotesDir);
