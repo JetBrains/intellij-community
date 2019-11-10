@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -176,7 +177,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
         }
 
         File outFile = getProjectRelativeFile(state.getRelativePath());
-        if (!outFile.exists() && checkExistance) {
+        if (checkExistance && (!outFile.exists() || ArrayUtil.isEmpty(outFile.listFiles()))) {
           affectedModules.add(new AffectedModule(type, name, state.getHash(), outFile));
         }
       });
