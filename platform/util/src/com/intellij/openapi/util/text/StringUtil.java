@@ -469,7 +469,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String wordsToBeginFromUpperCase(@NotNull String s) {
-    return fixCapitalization(s, ourPrepositions, true);
+    return fixCapitalization(s, ArrayUtil.mergeArrays(ourPrepositions, ourOtherNonCapitalizableWords), true);
   }
 
   @NotNull
@@ -521,6 +521,10 @@ public class StringUtil extends StringUtilRt {
     "per", "nor", "the", "to", "up", "upon", "via", "with"
   };
 
+  private static final String[] ourOtherNonCapitalizableWords = {
+    "iOS", "iPhone", "iPad", "iMac"
+  };
+
   /**
    * @deprecated Use {@link #isPreposition(String, int, int, String[])}.
    */
@@ -538,7 +542,7 @@ public class StringUtil extends StringUtilRt {
       if (lastChar - firstChar + 1 == preposition.length()) {
         found = true;
         for (int j = 0; j < preposition.length(); j++) {
-          if (toLowerCase(s.charAt(firstChar + j)) != preposition.charAt(j)) {
+          if (toLowerCase(s.charAt(firstChar + j)) != toLowerCase(preposition.charAt(j))) {
             found = false;
             break;
           }
