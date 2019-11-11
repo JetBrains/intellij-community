@@ -275,6 +275,9 @@ public class JavadocHighlightUtil {
           PsiReference reference = value.getReference();
           if (reference != null) {
             String paramName = reference.getCanonicalText();
+            if(((PsiDocParamRef)value).isTypeParamRef()){
+              paramName = "<" + paramName + ">";
+            }
             documentedParamNames = set(documentedParamNames);
             if (documentedParamNames.contains(paramName)) {
               holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.param", paramName), null);
