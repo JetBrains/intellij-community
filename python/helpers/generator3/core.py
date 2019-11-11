@@ -428,17 +428,15 @@ class SkeletonGenerator(object):
         if name_pattern is None:
             name_pattern = '*'
 
-        interpreter_descr = collapse_user(sys.executable)
-
         all_modules = sorted(self.collect_builtin_modules(), key=(lambda b: b.qname))
 
         if not builtins_only:
-            progress("Discovering binary modules for {}...".format(interpreter_descr))
+            progress("Discovering binary modules...")
             all_modules.extend(sorted(self.discover_binary_modules(), key=(lambda b: b.qname)))
 
         matching_modules = [m for m in all_modules if fnmatch.fnmatchcase(m.qname, name_pattern)]
 
-        progress("Updating skeletons for {}...".format(interpreter_descr))
+        progress("Updating skeletons...")
         for i, mod in enumerate(matching_modules):
             progress(text=mod.qname, fraction=float(i) / len(matching_modules), minor=True)
             self.process_module(mod.qname, mod.path)
