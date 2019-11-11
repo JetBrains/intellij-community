@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +59,6 @@ public class SvnChangeProvider implements ChangeProvider {
     final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
     zipper.run();
 
-    final MultiMap<FilePath, FilePath> nonRecursiveMap = zipper.getNonRecursiveDirs();
-
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
@@ -75,8 +72,7 @@ public class SvnChangeProvider implements ChangeProvider {
         walker.go(path, Depth.INFINITY);
       }
 
-      walker.setNonRecursiveScope(nonRecursiveMap);
-      for (FilePath path : nonRecursiveMap.keySet()) {
+      for (FilePath path : zipper.getNonRecursiveDirs().keySet()) {
         walker.go(path, Depth.IMMEDIATES);
       }
 
