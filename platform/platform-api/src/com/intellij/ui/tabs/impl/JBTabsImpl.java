@@ -59,6 +59,7 @@ public class JBTabsImpl extends JComponent
   static final int DEFAULT_MAX_TAB_WIDTH = JBUIScale.scale(300);
 
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
+  private static final Logger LOG = Logger.getInstance(JBTabsImpl.class);
 
   @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<>();
@@ -533,7 +534,7 @@ public class JBTabsImpl extends JComponent
   @Override
   public void remove(int index) {
     if (myRemoveNotifyInProgress) {
-      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+      LOG.warn(new IllegalStateException("removeNotify in progress"));
     }
     super.remove(index);
   }
@@ -541,7 +542,7 @@ public class JBTabsImpl extends JComponent
   @Override
   public void removeAll() {
     if (myRemoveNotifyInProgress) {
-      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+      LOG.warn(new IllegalStateException("removeNotify in progress"));
     }
     super.removeAll();
   }
@@ -1853,7 +1854,7 @@ public class JBTabsImpl extends JComponent
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
     if (myRemoveNotifyInProgress) {
-      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+      LOG.warn(new IllegalStateException("removeNotify in progress"));
     }
     if (myPopupInfo == info) myPopupInfo = null;
 
