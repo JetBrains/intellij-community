@@ -143,7 +143,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       LOG.error("No visitors registered. list=" +
                 list +
                 "; all visitors are:" +
-                Arrays.asList(HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(myProject)));
+                HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(myProject));
     }
 
     return visitors.toArray(new HighlightVisitor[0]);
