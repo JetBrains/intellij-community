@@ -321,11 +321,9 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * @return whether this action should be wrapped into a single transaction. PSI/VFS-related actions
-   * that can show progresses or modal dialogs should return true. The default value is false, to prevent
-   * transaction-related assertions from actions in harmless dialogs like "Enter password" shown inside invokeLater.
-   * @see com.intellij.openapi.application.TransactionGuard
+   * @deprecated unused
    */
+  @Deprecated
   public boolean startInTransaction() {
     return false;
   }

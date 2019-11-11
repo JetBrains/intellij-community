@@ -17,11 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class NewProjectAction extends AnAction implements DumbAware, NewProjectOrModuleAction {
   @Override
-  public boolean startInTransaction() {
-    return true;
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
     NewProjectUtil.createNewProject(wizard);

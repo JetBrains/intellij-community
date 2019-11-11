@@ -1084,11 +1084,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     @Override
-    public boolean startInTransaction() {
-      return true;
-    }
-
-    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
     }

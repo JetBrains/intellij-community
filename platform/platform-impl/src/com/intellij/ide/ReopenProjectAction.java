@@ -41,11 +41,6 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public boolean startInTransaction() {
-    return true;
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     // force move focus to IdeFrame
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
