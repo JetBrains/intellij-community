@@ -1,6 +1,5 @@
 package circlet.app.idea.integration
 
-import circlet.pipelines.*
 import circlet.pipelines.config.api.*
 import circlet.pipelines.config.dsl.api.*
 import circlet.pipelines.config.dsl.script.exec.common.*
@@ -8,20 +7,14 @@ import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.ui.*
 import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.openapi.components.*
-import com.intellij.testFramework.fixtures.*
-import com.intellij.testFramework.fixtures.impl.*
-import com.intellij.util.*
+import com.intellij.openapi.project.*
+import com.intellij.testFramework.*
 import libraries.coroutines.extra.*
 import kotlin.test.*
 
+class SmokeTest : HeavyPlatformTestCase() {
 
-class TestProjectExecutor(override val listener: ProjectElementListener) : ProjectExecutor {
-    override val vcsBranch: String = "test"
-}
-
-class SmokeTest : BasePlatformTestCase() {
-
-    private var testLifetimeImpl : LifetimeSource? = null
+    private var testLifetimeImpl: LifetimeSource? = null
 
     private val testLifetime: Lifetime
         get() = testLifetimeImpl!!
@@ -29,17 +22,6 @@ class SmokeTest : BasePlatformTestCase() {
     override fun setUp() {
         testLifetimeImpl = Lifetime.Eternal.nested()
         super.setUp()
-        myFixture.tearDown()
-
-        val factory = IdeaTestFixtureFactory.getFixtureFactory()
-        val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor)
-        val fixture = fixtureBuilder.fixture
-
-        val tempDirFixture = TempDirTestFixtureImpl()
-        myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture)
-
-        myFixture.testDataPath = testDataPath
-        myFixture.setUp()
     }
 
     override fun tearDown() {
@@ -47,15 +29,9 @@ class SmokeTest : BasePlatformTestCase() {
         testLifetimeImpl!!.terminate()
     }
 
-    override fun getTestDataPath(): String {
-        return "src/test/resources/integrationTestGold"
-    }
-
     // dsl exists on start
     fun testBuildModelWhenDslExistsFromBeginning() {
-        val project = myFixture.project
-        val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
-        myFixture.copyFileToProject(DefaultDslFileName, "../$projectFileFolderName/$DefaultDslFileName")
+        addSpaceKts()
 
         val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
         val viewModel = circletModelStore.viewModel
@@ -80,8 +56,6 @@ class SmokeTest : BasePlatformTestCase() {
 
     // dsl doesnt exist on start and added later
     fun testBuildModelWhenDslDoesnotExistFromBeginning() {
-        val project = myFixture.project
-
         val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
         val viewModel = circletModelStore.viewModel
 
@@ -89,7 +63,7 @@ class SmokeTest : BasePlatformTestCase() {
         assertNull(script, "script should be null without dsl file")
         assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
 
-
+        addSpaceKts()
         val newScript = viewModel.script.value
         assertNotSame(script, newScript, "new instance of script should be created")
         script = newScript
@@ -97,12 +71,16 @@ class SmokeTest : BasePlatformTestCase() {
         assertTrue(script.isScriptEmpty(), "script should be empty after added dsl")
     }
 
+    private fun addSpaceKts() {
+        project.guessProjectDir()!!.writeChild(".space.kts", myTask)
+    }
+
     private fun ScriptViewModel.isScriptEmpty(): Boolean {
         val config = this.config
         return config.pipelines.isEmpty() && config.targets.isEmpty() && config.tasks.isEmpty()
     }
 
-    private fun createGoldModel() : ProjectConfig {
+    private fun createGoldModel(): ProjectConfig {
         val projectElementListener = ProjectConfigBuilder()
         val executor = TestProjectExecutor(projectElementListener)
 
@@ -120,3 +98,15 @@ class SmokeTest : BasePlatformTestCase() {
         return projectElementListener.build()
     }
 }
+
+class TestProjectExecutor(override val listener: ProjectElementListener) : ProjectExecutor {
+    override val vcsBranch: String = "test"
+}
+
+private const val myTask = """job("myTask") {
+    this.parallel {
+        container("hello-world1")
+        container("hello-world2")
+    }
+}
+"""

@@ -34,5 +34,6 @@ class CircletIdeaAGraphExecutionEntity(
 
     override val problems = emptySet<Int>()
 
-    override val changes: Set<CommitHash> = emptySet()
+    override val changesFromExclude: CommitHash = commit
+    override val changesCount: Int = 0
 }

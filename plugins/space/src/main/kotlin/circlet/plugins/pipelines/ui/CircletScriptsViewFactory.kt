@@ -251,7 +251,7 @@ class CircletScriptsViewFactory : KLogging() {
                     application.runWriteAction {
                         val file = baseDirFile.createChildData(this, DefaultDslFileName)
                         val newLine = System.getProperty("line.separator", "\n")
-                        val newFileContent = "//todo add link to help/tutorial${newLine}task(\"My First Task\") {$newLine  run(\"hello-world\")$newLine}"
+                        val newFileContent = "//todo add link to help/tutorial${newLine}job(\"My First Task\") {$newLine  container(\"hello-world\")$newLine}"
                         VfsUtil.saveText(file, newFileContent)
                         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true)
                     }

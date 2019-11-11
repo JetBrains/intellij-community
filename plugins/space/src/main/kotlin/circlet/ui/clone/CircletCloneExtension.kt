@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ui.cloneDialog.*
 import git4idea.commands.*
 import icons.*
+import platform.common.*
 import javax.swing.*
 
 class CircletCloneExtension : VcsCloneDialogExtension {
@@ -17,7 +18,7 @@ class CircletCloneExtension : VcsCloneDialogExtension {
 
     override fun getIcon(): Icon = CircletIcons.mainIcon
 
-    override fun getName(): String = "Space"
+    override fun getName(): String = ProductName
 
     override fun getAdditionalStatusLines(): List<VcsCloneDialogExtensionStatusLine> {
         // todo: simplify host obtaining
