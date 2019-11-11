@@ -23,7 +23,7 @@ public class IdeaFreezeReporter {
 
   public IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isEAP() || app.isUnitTestMode() || PluginManagerCore.isRunningFromSources()) {
+    if ((!app.isEAP() && !app.isInternal()) || app.isUnitTestMode() || PluginManagerCore.isRunningFromSources()) {
       return;
     }
 
