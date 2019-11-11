@@ -2,6 +2,8 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -27,9 +29,13 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
     return JAVA_8;
   }
 
-  public void testAssert() { doTestWithLevel(LanguageLevel.JDK_1_3); }
+  public void testAssert() {
+    withLevel(LanguageLevel.JDK_1_3, this::doTest);
+  }
 
-  public void testEnum() { doTestWithLevel(LanguageLevel.JDK_1_3); }
+  public void testEnum() {
+    withLevel(LanguageLevel.JDK_1_3, this::doTest);
+  }
 
   public void testUnqualifiedYield() { doTest(); }
 
@@ -38,13 +44,21 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
   public void testVarClassesWarning() { doTest(); }
 
   public void testModuleInfoWarning() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_9, getTestRootDisposable());
-    myFixture.configureByFile("module-info.java");
-    myFixture.testHighlighting(true, false, false);
+    withLevel(LanguageLevel.JDK_1_9, () -> {
+      myFixture.configureByFile("module-info.java");
+      myFixture.testHighlighting(true, false, false);
+    });
   }
 
-  public void doTestWithLevel(LanguageLevel languageLevel) {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), languageLevel, getTestRootDisposable());
-    doTest();
+  public void withLevel(LanguageLevel languageLevel, Runnable runnable) {
+    Module module = getModule();
+    LanguageLevel prev = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    IdeaTestUtil.setModuleLanguageLevel(module, languageLevel);
+    try {
+      runnable.run();
+    }
+    finally {
+      IdeaTestUtil.setModuleLanguageLevel(module, prev);
+    }
   }
 }

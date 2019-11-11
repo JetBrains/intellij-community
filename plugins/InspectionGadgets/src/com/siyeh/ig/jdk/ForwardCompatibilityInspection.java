@@ -3,10 +3,11 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,45 +16,64 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
-    JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(holder.getFile());
     return new JavaElementVisitor() {
       @Override
       public void visitIdentifier(PsiIdentifier identifier) {
+        String message = getIdentifierWarning(identifier);
+        if (message != null) {
+          holder.registerProblem(identifier, message, new RenameFix());
+        }
+      }
+
+      @Nullable
+      private String getIdentifierWarning(PsiIdentifier identifier) {
         String name = identifier.getText();
-        if ("_".equals(name) && sdkVersion != null &&
-            sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8) && languageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
-          String message = JavaErrorMessages.message("underscore.identifier.warn");
-          holder.registerProblem(identifier, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        }
         PsiElement parent = identifier.getParent();
-        if (PsiKeyword.VAR.equals(name) && parent instanceof PsiClass &&
-            languageLevel.isLessThan(LanguageLevel.JDK_10)) {
-          String message = JavaErrorMessages.message("var.identifier.warn");
-          holder.registerProblem(identifier, message, new RenameFix());
+        switch (name) {
+          case PsiKeyword.ASSERT:
+            if (languageLevel.isLessThan(LanguageLevel.JDK_1_4) &&
+                (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
+              return JavaErrorMessages.message("assert.identifier.warn");
+            }
+            break;
+          case PsiKeyword.ENUM:
+            if (languageLevel.isLessThan(LanguageLevel.JDK_1_5) &&
+                (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
+              return JavaErrorMessages.message("enum.identifier.warn");
+            }
+            break;
+          case "_":
+            if (languageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
+              return JavaErrorMessages.message("underscore.identifier.warn");
+            }
+            break;
+          case PsiKeyword.VAR:
+            if (languageLevel.isLessThan(LanguageLevel.JDK_10) && parent instanceof PsiClass) {
+              return JavaErrorMessages.message("var.identifier.warn");
+            }
+            break;
+          case PsiKeyword.YIELD:
+            if (languageLevel.isLessThan(LanguageLevel.JDK_X) && parent instanceof PsiClass) {
+              return JavaErrorMessages.message("yield.identifier.warn");
+            }
+            break;
         }
-        if (PsiKeyword.ASSERT.equals(name) && languageLevel.isLessThan(LanguageLevel.JDK_1_4) && 
-            (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
-          String message = JavaErrorMessages.message("assert.identifier.warn");
-          holder.registerProblem(identifier, message, new RenameFix());
-        }
-        if (PsiKeyword.ENUM.equals(name) && languageLevel.isLessThan(LanguageLevel.JDK_1_5) &&
-            (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
-          String message = JavaErrorMessages.message("enum.identifier.warn");
-          holder.registerProblem(identifier, message, new RenameFix());
-        }
+        return null;
       }
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         PsiReferenceExpression ref = expression.getMethodExpression();
         PsiElement nameElement = ref.getReferenceNameElement();
-        if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null) {
+        if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
+            languageLevel.isLessThan(LanguageLevel.JDK_X)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression());
           holder.registerProblem(nameElement, JavaErrorMessages.message("yield.unqualified.method.warn"),
                                    qualifier == null ? null : new QualifyCallFix(), new RenameFix());
