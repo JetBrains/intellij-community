@@ -360,20 +360,16 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(
-    @NotNull PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     final PsiElement element = expression.resolve();
-    final PsiElement elementParentClass =
-      ClassUtils.getContainingClass(element);
-    final PsiElement expressionParentClass =
-      ClassUtils.getContainingClass(expression);
+    final PsiElement elementParentClass = ClassUtils.getContainingClass(element);
+    final PsiElement expressionParentClass = ClassUtils.getContainingClass(expression);
     if (expressionParentClass == null || expressionParentClass
       .equals(elementParentClass)) {
       return;
     }
-    PsiElement parentOfParentClass =
-      ClassUtils.getContainingClass(expressionParentClass);
+    PsiElement parentOfParentClass = ClassUtils.getContainingClass(expressionParentClass);
     while (parentOfParentClass != null &&
            !parentOfParentClass.equals(clazz)) {
       if (!(expressionParentClass instanceof PsiAnonymousClass)) {
@@ -397,9 +393,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
           }
           isStatic = true;
         }
-        final String returnTypeSignature =
-          ClassUtil.getBinaryPresentation(type).replace('/',
-                                                        '.');
+        final String returnTypeSignature = ClassUtil.getClassObjectPresentation(type);
         final String className = clazz.getQualifiedName();
         @NonNls final StringBuilder signatureBuffer =
           new StringBuilder("(");
@@ -463,7 +457,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
           signature = ClassUtil.getAsmMethodSignature(method).replace('/', '.');
         }
         else {
-          final String returnTypeSignature = ClassUtil.getBinaryPresentation(method.getReturnType()).replace('/', '.');
+          final String returnTypeSignature = ClassUtil.getClassObjectPresentation(method.getReturnType());
           @NonNls final StringBuilder signatureBuffer =
             new StringBuilder();
           signatureBuffer.append("(L");
@@ -471,7 +465,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
           final PsiParameter[] parameters = method.getParameterList().getParameters();
           for (final PsiParameter parameter : parameters) {
             final PsiType type = parameter.getType();
-            final String typeSignature = ClassUtil.getBinaryPresentation(type).replace('/', '.');
+            final String typeSignature = ClassUtil.getClassObjectPresentation(type);
             signatureBuffer.append(typeSignature);
           }
           signatureBuffer.append(')');
