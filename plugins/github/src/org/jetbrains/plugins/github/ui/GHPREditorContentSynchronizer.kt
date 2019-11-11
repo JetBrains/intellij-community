@@ -14,7 +14,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerListener
-import com.intellij.vcs.log.impl.VcsLogEditorTabSelector
+import com.intellij.vcs.log.impl.VcsContentEditorTabSelector
 import org.jetbrains.plugins.github.pullrequest.GHPRAccountsComponent
 import org.jetbrains.plugins.github.pullrequest.GHPRComponentFactory
 
@@ -46,7 +46,7 @@ class GHPREditorContentSynchronizer {
     }
   }
 
-  private class MyGHPRLogEditorSelector(private val project: Project) : VcsLogEditorTabSelector(project) {
+  private class MyGHPRLogEditorSelector(private val project: Project) : VcsContentEditorTabSelector(project) {
     override fun selectEditorTab(content: Content) {
       val component = content.component
       val ghprAccountsComponent = component as? GHPRAccountsComponent
