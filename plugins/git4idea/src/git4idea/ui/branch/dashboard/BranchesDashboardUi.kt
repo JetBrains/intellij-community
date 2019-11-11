@@ -66,7 +66,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     if (::logUi.isInitialized) {
       val ui = logUi
       val branchNames = tree.getSelectedBranchNames()
-      ui.mainFrame.filterUi.setFilter(if (branchNames.isNotEmpty()) VcsLogFilterObject.fromBranches(branchNames) else null)
+      ui.filterUi.setFilter(if (branchNames.isNotEmpty()) VcsLogFilterObject.fromBranches(branchNames) else null)
     }
   }
 
@@ -83,7 +83,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     uiController.registerDataPackListener(ui.logData)
     branchViewSplitter.secondComponent = VcsLogPanel(logManager, ui)
     logUi = ui
-    branchesSearchField.setVerticalSizeReferent(ui.mainFrame.toolbar)
+    branchesSearchField.setVerticalSizeReferent(ui.toolbar)
     tree.component.addTreeSelectionListener(treeSelectionListener)
   }
 
