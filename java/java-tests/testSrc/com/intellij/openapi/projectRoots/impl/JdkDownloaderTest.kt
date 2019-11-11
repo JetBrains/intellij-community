@@ -59,9 +59,15 @@ class JdkDownloaderTest {
   }
 
   @Test
-  fun `unpacking tar gz cut dirs`() = testUnpacking(mockTarGZ.copy(unpackPrefixFilter = "TODO")) { dir ->
+  fun `unpacking tar gz cut dirs`() = testUnpacking(mockTarGZ.copy(unpackPrefixFilter = "TheApp/FooBar.app")) { dir ->
     assertThat(File(dir, "theApp")).isFile()
-    assertThat(File(dir, "ggg.txt")).isFile()
+    assertThat(File(dir, "ggg.txt")).doesNotExist()
+  }
+
+  @Test
+  fun `unpacking tar gz cut dirs complex prefix`() = testUnpacking(mockTarGZ.copy(unpackPrefixFilter = "./TheApp/FooBar.app")) { dir ->
+    assertThat(File(dir, "theApp")).isFile()
+    assertThat(File(dir, "ggg.txt")).doesNotExist()
   }
 
   @Test
@@ -127,7 +133,7 @@ class JdkDownloaderTest {
       unpackPrefixFilter = "folder/file")
   ) { dir ->
     assertThat(File(dir, "readme2")).doesNotExist()
-    assertThat(File(dir, "folder/file")).isFile()
+    assertThat(File(dir, "folder/file")).doesNotExist()
   }
 
   private inline fun testUnpacking(item: JdkItem, resultDir: (File) -> Unit) {
