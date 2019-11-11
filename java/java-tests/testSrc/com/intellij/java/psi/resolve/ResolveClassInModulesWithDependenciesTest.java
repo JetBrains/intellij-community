@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.easymock.IArgumentMatcher;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Set;
 
@@ -118,7 +119,9 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
 
   private static PsiElementFinder createMockFinder() {
     Set<String> ignoredMethods = ContainerUtil.newHashSet("getClassesFilter", "processPackageDirectories", "getClasses");
-    Method[] methods = ContainerUtil.findAllAsArray(PsiElementFinder.class.getDeclaredMethods(), m -> !ignoredMethods.contains(m.getName()));
+    Method[] methods = ContainerUtil.findAllAsArray(
+      PsiElementFinder.class.getDeclaredMethods(),
+      m -> !ignoredMethods.contains(m.getName()) && !Modifier.isPrivate(m.getModifiers()) && !Modifier.isStatic(m.getModifiers()));
     PsiElementFinder mock = createMockBuilder(PsiElementFinder.class).addMockedMethods(methods).createMock();
     expect(mock.findClasses(anyObject(), anyObject())).andReturn(PsiClass.EMPTY_ARRAY).anyTimes();
     expect(mock.findPackage(eq("foo"))).andReturn(null);
