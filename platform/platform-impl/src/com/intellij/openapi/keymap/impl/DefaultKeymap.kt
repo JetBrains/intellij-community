@@ -43,7 +43,7 @@ open class DefaultKeymap {
 
     private fun isKnownMacOSKeymap(keymapName: String?) = when (keymapName) {
       KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP,
-      "Eclipse (Mac OS X)", "Sublime Text (Mac OS X)", "Xcode" -> true
+      "Eclipse (Mac OS X)", "Sublime Text (Mac OS X)", "Xcode", "ReSharper OSX" -> true
       else -> false
     }
   }
