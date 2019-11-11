@@ -126,7 +126,8 @@
                     interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector"/>
 
     <extensionPoint name="languageInjector"
-                    interface="com.intellij.psi.LanguageInjector"/>
+                    interface="com.intellij.psi.LanguageInjector"
+                    dynamic="true"/>
     <extensionPoint name="concatenationAwareInjector"
                     interface="com.intellij.lang.injection.ConcatenationAwareInjector"
                     area="IDEA_PROJECT"/>
