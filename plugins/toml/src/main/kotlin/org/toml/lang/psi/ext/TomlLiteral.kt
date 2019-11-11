@@ -7,6 +7,7 @@ package org.toml.lang.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.psi.LiteralOffsets
+import org.toml.lang.lexer.unescapeToml
 import org.toml.lang.psi.TOML_LITERALS
 import org.toml.lang.psi.TOML_STRING_LITERALS
 import org.toml.lang.psi.TomlElementTypes.*
@@ -31,8 +32,7 @@ sealed class TomlLiteralKind(val node: ASTNode) {
     class String(node: ASTNode) : TomlLiteralKind(node) {
         val value: kotlin.String?
             get() {
-                // TODO: unescape
-                return offsets.value?.substring(node.text)
+                return offsets.value?.substring(node.text)?.unescapeToml(node.elementType)
             }
 
         val offsets: LiteralOffsets by lazy { offsetsForTomlText(node) }
