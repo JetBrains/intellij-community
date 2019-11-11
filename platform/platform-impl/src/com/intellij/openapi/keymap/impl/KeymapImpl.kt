@@ -739,7 +739,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
       "ReSharper OSX" -> "com.intellij.plugins.resharperkeymap"
       "Sublime Text",
       "Sublime Text (Mac OS X)" -> "com.intellij.plugins.sublimetextkeymap"
-      "Visual Studio",
+      "Visual Studio" -> "com.intellij.plugins.visualstudiokeymap"
       "Xcode" -> "com.intellij.plugins.xcodekeymap"
       else -> null
     }
