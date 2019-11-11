@@ -69,7 +69,7 @@ public class FileDropHandler implements EditorDropHandler {
         if (editorWindow != null) {
           Pair<FileEditor[], FileEditorProvider[]> pair = fileEditorManager.openFileWithProviders(vFile, true, editorWindow);
           if (pair.first.length > 0) {
-            return;
+            continue;
           }
         }
         PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true);
