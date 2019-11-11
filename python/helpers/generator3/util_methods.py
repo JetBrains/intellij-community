@@ -843,18 +843,20 @@ def is_text_file(path):
 _bytes_that_never_appears_in_text = set(range(7)) | {11} | set(range(14, 27)) | set(range(28, 32)) | {127}
 
 
+# This wrapper is intentionally made top-level: local functions can't be pickled.
+def _multiprocessing_wrapper(q, func, *args, **kwargs):
+    q.put(func(*args, **kwargs))
+
+
 def execute_in_subprocess_synchronously(name, func, args, kwargs, failure_result=None):
     import multiprocessing as mp
-
-    def wrapper(q, func, *args, **kwargs):
-        q.put(func(*args, **kwargs))
 
     extra_process_kwargs = {}
     if sys.version_info[0] >= 3:
         extra_process_kwargs['daemon'] = True
 
     q = mp.Queue(1)
-    p = mp.Process(name=name, target=wrapper, args=(q, func) + args, kwargs=kwargs, **extra_process_kwargs)
+    p = mp.Process(name=name, target=_multiprocessing_wrapper, args=(q, func) + args, kwargs=kwargs, **extra_process_kwargs)
     p.start()
     p.join()
     try:
