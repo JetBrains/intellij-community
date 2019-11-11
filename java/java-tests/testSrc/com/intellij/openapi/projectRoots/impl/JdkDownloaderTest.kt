@@ -3,6 +3,7 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.jdkDownloader.*
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
@@ -41,6 +42,12 @@ class JdkDownloaderTest {
                                          size = 249,
                                          sha256 = "ffc8825d96e3f89cb4a8ca64b9684c37f55d6c5bd54628ebf984f8282f8a59ff"
   )
+
+  private val mockTarGZ2 = jdkItemForTest(packageType = JdkPackageType.TAR_GZ,
+                                         url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data-2.tar.gz",
+                                         size = 318,
+                                         sha256 = "963af2c1578a376340f60c5adabf217f59006cfc8b2b3fc97edda2e90c0295e2"
+  )
   private val mockZip = jdkItemForTest(packageType = JdkPackageType.ZIP,
                                        url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.zip",
                                        size = 604,
@@ -62,6 +69,18 @@ class JdkDownloaderTest {
   fun `unpacking tar gz cut dirs`() = testUnpacking(mockTarGZ.copy(unpackPrefixFilter = "TheApp/FooBar.app")) { dir ->
     assertThat(File(dir, "theApp")).isFile()
     assertThat(File(dir, "ggg.txt")).doesNotExist()
+  }
+
+  @Test
+  fun `unpacking tar gz cut dirs 2`() {
+    require(SystemInfo.isMac || SystemInfo.isLinux)
+
+    testUnpacking(mockTarGZ2.copy(unpackPrefixFilter = "this/jdk")) { dir ->
+      assertThat(File(dir, "bin/java")).isFile()
+      assertThat(File(dir, "bin/javac")).isFile()
+      assertThat(File(dir, "file")).isFile()
+      assertThat(File(dir, "bin/symlink").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "file").toPath())
+    }
   }
 
   @Test
