@@ -18,7 +18,7 @@ class JdkDownloaderTest {
                              packageType: JdkPackageType,
                              size: Long,
                              sha256: String,
-                             cutDirs: Int = 0) = JdkItem(
+                             prefix: String = "") = JdkItem(
     JdkProduct("Vendor", null, null),
     false,
     123,
@@ -31,8 +31,7 @@ class JdkDownloaderTest {
     sha256,
     size,
     10 * size,
-    cutDirs,
-    "",
+    prefix,
     url.split("/").last(),
     url.split("/").last().removeSuffix(".tar.gz").removeSuffix(".zip")
   )
@@ -60,7 +59,7 @@ class JdkDownloaderTest {
   }
 
   @Test
-  fun `unpacking tar gz cut dirs`() = testUnpacking(mockTarGZ.copy(unpackCutDirs = 2)) { dir ->
+  fun `unpacking tar gz cut dirs`() = testUnpacking(mockTarGZ.copy(unpackPrefixFilter = "TODO")) { dir ->
     assertThat(File(dir, "theApp")).isFile()
     assertThat(File(dir, "ggg.txt")).isFile()
   }
@@ -68,7 +67,6 @@ class JdkDownloaderTest {
   @Test
   fun `unpacking tar gz cut dirs and prefix`() = testUnpacking(
     mockTarGZ.copy(
-      unpackCutDirs = 2,
       unpackPrefixFilter = "TheApp/FooBar.app")
   ) { dir ->
     assertThat(File(dir, "theApp")).isFile()
@@ -108,7 +106,6 @@ class JdkDownloaderTest {
   @Test
   fun `unpacking zip cut dirs and wrong prefix`() = testUnpacking(
     mockZip.copy(
-      unpackCutDirs = 1,
       unpackPrefixFilter = "wrong")
   ) { dir ->
     assertThat(File(dir, "folder/readme2")).doesNotExist()
@@ -118,7 +115,6 @@ class JdkDownloaderTest {
   @Test
   fun `unpacking zip cut dirs and prefix`() = testUnpacking(
     mockZip.copy(
-      unpackCutDirs = 1,
       unpackPrefixFilter = "folder")
   ) { dir ->
     assertThat(File(dir, "readme2")).isDirectory()
@@ -128,7 +124,6 @@ class JdkDownloaderTest {
   @Test
   fun `unpacking zip and prefix`() = testUnpacking(
     mockZip.copy(
-      unpackCutDirs = 0,
       unpackPrefixFilter = "folder/file")
   ) { dir ->
     assertThat(File(dir, "readme2")).doesNotExist()
