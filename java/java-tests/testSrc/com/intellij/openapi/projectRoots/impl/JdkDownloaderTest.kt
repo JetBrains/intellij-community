@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -89,7 +90,7 @@ class JdkDownloaderTest {
 
   @Test
   fun `unpacking tar gz cut dirs 2`() {
-    require(SystemInfo.isMac || SystemInfo.isLinux)
+    Assume.assumeTrue(SystemInfo.isMac || SystemInfo.isLinux)
 
     testUnpacking(mockTarGZ2.copy(unpackPrefixFilter = "this/jdk")) { dir ->
       assertThat(File(dir, "bin/java")).isFile()

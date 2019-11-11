@@ -191,8 +191,6 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathFillMatch() {
-    assumeSymLinkCreationIsSupported()
-
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
       writeEntry(it, "./a/f")
@@ -204,8 +202,6 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathWithSlashTar() {
-    assumeSymLinkCreationIsSupported()
-
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
       writeEntry(it, "./a/f")
@@ -221,8 +217,6 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathWithDotTar() {
-    assumeSymLinkCreationIsSupported()
-
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
       writeEntry(it, "./a/b/f")
@@ -264,8 +258,6 @@ class DecompressorTest {
   }
 
   @Test fun prefixPathSkipsTooShortPaths() {
-    assumeSymLinkCreationIsSupported()
-
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
       writeEntry(it, "missed")
