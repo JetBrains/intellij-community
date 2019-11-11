@@ -44,7 +44,7 @@ public final class JDOMXIncluder {
   }
 
   /**
-   * Original element will be mutated in place.
+   * The original element will be mutated in place.
    */
   @NotNull
   public static Element resolveRoot(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
@@ -68,6 +68,26 @@ public final class JDOMXIncluder {
   @ApiStatus.ScheduledForRemoval
   public static Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
     return new Document(resolveRoot(original.getRootElement(), new URL((base))));
+  }
+
+  /**
+   * The original element will be mutated in place.
+   *
+   * (used by groovy).
+   */
+  @SuppressWarnings("unused")
+  public static void resolveNonXIncludeElement(@NotNull Element original,
+                                               @Nullable URL base,
+                                               boolean ignoreMissing,
+                                               @NotNull PathResolver pathResolver)
+    throws XIncludeException, MalformedURLException {
+    LOG.assertTrue(!isIncludeElement(original));
+
+    Stack<URL> bases = new Stack<>();
+    if (base != null) {
+      bases.push(base);
+    }
+    new JDOMXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
   }
 
   @NotNull
