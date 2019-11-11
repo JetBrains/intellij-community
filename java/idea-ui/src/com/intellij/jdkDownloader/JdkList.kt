@@ -276,14 +276,14 @@ object JdkListDownloader {
       downloadJdkList(feedUrl, progress)
     }
     catch (t: IOException) {
-      throw RuntimeException("Failed to download and process the JDKs list from $feedUrl. ${t.message}", t)
+      throw RuntimeException("Failed to download list of available JDKs from $feedUrl. ${t.message}", t)
     }
 
     val json = try {
       ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
     }
     catch (t: Throwable) {
-      throw RuntimeException("Failed to parse downloaded JDKs list from $feedUrl. ${t.message}", t)
+      throw RuntimeException("Failed to parse the downloaded list of available JDKs. ${t.message}", t)
     }
 
     try {
@@ -296,7 +296,7 @@ object JdkListDownloader {
       return parseJdkList(json, JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS))
     }
     catch (t: Throwable) {
-      throw RuntimeException("Failed to process downloaded JDKs list from $feedUrl. ${t.message}", t)
+      throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)
     }
   }
 

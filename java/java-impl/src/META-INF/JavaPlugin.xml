@@ -291,7 +291,7 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.impl.JdkDownloaderService"
                         serviceImplementation="com.intellij.jdkDownloader.JdkDownloaderUI"/>
     <registryKey key="jdk.downloader.ui" defaultValue="true" description="Use the list of JDKs to download and install in one click"/>
-    <registryKey key="jdk.downloader.url" description="Custom URL for JDKs list"/>
+    <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
 

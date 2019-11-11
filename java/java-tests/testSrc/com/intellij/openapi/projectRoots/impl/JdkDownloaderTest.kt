@@ -10,6 +10,7 @@ import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.lang.RuntimeException
 
 class JdkDownloaderTest {
   @get:Rule
@@ -55,8 +56,23 @@ class JdkDownloaderTest {
 
   @Test
   fun `default model can be downloaded and parsed`() {
-    val data = JdkListDownloader.downloadModel(null)
-    Assert.assertTrue(data.isNotEmpty())
+    lateinit var lastError: Throwable
+    run {
+      repeat(5) {
+        val result = runCatching {
+          val data = JdkListDownloader.downloadModel(null)
+          Assert.assertTrue(data.isNotEmpty())
+        }
+        if (result.isSuccess) return
+        lastError = result.exceptionOrNull()!!
+
+        if (lastError.message?.startsWith("Failed to download list of available JDKs") == true) {
+          Thread.sleep(5000)
+        }
+        else throw lastError
+      }
+    }
+    throw RuntimeException("Failed to download JDK list within several tries", lastError)
   }
 
   @Test
