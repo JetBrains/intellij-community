@@ -523,7 +523,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-11977
   public void testMetaclassInstanceMembersProvidedAndNoTypeCheckWarningWhenPassIntoMethodUseThisMembers() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 
   // PY-28720
