@@ -98,22 +98,28 @@ public class PySkeletonGenerator {
   private static final Gson ourGson = new GsonBuilder().create();
 
   protected final Sdk mySdk;
-  @Nullable private String myCurrentFolder;
-  private String mySkeletonsPath;
+  @Nullable private final String myCurrentFolder;
+  private final String mySkeletonsPath;
 
   /**
    * @param skeletonPath  path where skeletons should be generated
    * @param pySdk         SDK
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
+  // TODO get rid of skeletonPath and currentFolder parameters and configure generator explicitly with builder
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
     mySkeletonsPath = skeletonPath;
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
   }
 
+  @NotNull
   public final Builder commandBuilder() {
-    return new Builder();
+    final Builder builder = new Builder();
+    if (myCurrentFolder != null) {
+      builder.workingDir(myCurrentFolder);
+    }
+    return builder;
   }
 
 
@@ -123,31 +129,28 @@ public class PySkeletonGenerator {
    * default initialization before the run.
    */
   public final class Builder {
-    private Map<String, String> myExtraEnv;
-    private List<String> myExtraSysPath = new ArrayList<>();
-    private List<String> myAssemblyRefs = new ArrayList<>();
-    private List<String> myExtraArgs = new ArrayList<>();
+    private final List<String> myExtraSysPath = new ArrayList<>();
+    private final List<String> myAssemblyRefs = new ArrayList<>();
+    private final List<String> myExtraArgs = new ArrayList<>();
+    private String myWorkingDir;
     private String myTargetModuleName;
     private String myTargetModulePath;
     private boolean myPrebuilt = false;
     private int myTimeout;
     private String myStdin;
 
-    @NotNull
-    public Builder extraEnvironment(@NotNull Map<String, String> environment) {
-      myExtraEnv = environment;
-      return this;
+    private Builder() {
     }
 
     @NotNull
     public Builder extraSysPath(@NotNull List<String> roots) {
-      myExtraSysPath = roots;
+      myExtraSysPath.addAll(roots);
       return this;
     }
 
     @NotNull
     public Builder assemblyRefs(@NotNull List<String> assemblyRefs) {
-      myAssemblyRefs = assemblyRefs;
+      myAssemblyRefs.addAll(assemblyRefs);
       return this;
     }
 
@@ -164,7 +167,7 @@ public class PySkeletonGenerator {
 
     @NotNull
     public Builder workingDir(@NotNull String path) {
-      myCurrentFolder = path;
+      myWorkingDir = path;
       return this;
     }
 
@@ -213,9 +216,7 @@ public class PySkeletonGenerator {
         commandLine.add("-s");
         commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));
       }
-      if (!ContainerUtil.isEmpty(myExtraArgs)) {
-        commandLine.addAll(myExtraArgs);
-      }
+      commandLine.addAll(myExtraArgs);
       if (StringUtil.isNotEmpty(myTargetModuleName)) {
         commandLine.add(myTargetModuleName);
         if (StringUtil.isNotEmpty(myTargetModulePath)) {
@@ -229,11 +230,9 @@ public class PySkeletonGenerator {
     public Map<String, String> getEnvironment() {
       Map<String, String> env = new HashMap<>();
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
-      if (myCurrentFolder != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
-        env = PySdkUtil.mergeEnvVariables(env, ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myCurrentFolder));
-      }
-      if (myExtraEnv != null) {
-        env = PySdkUtil.mergeEnvVariables(env, myExtraEnv);
+      // TODO Investigate whether it's possible to pass this directory as an ordinary "extraSysPath" entry
+      if (myWorkingDir != null && flavor != null && ENV_PATH_PARAM.containsKey(flavor.getClass())) {
+        env = PySdkUtil.mergeEnvVariables(env, ImmutableMap.of(ENV_PATH_PARAM.get(flavor.getClass()), myWorkingDir));
       }
       env = PySdkUtil.mergeEnvVariables(env, PythonSdkType.activateVirtualEnv(mySdk));
       PythonEnvUtil.setPythonDontWriteBytecode(env);
@@ -245,8 +244,8 @@ public class PySkeletonGenerator {
 
     @NotNull
     public String getWorkingDir() throws InvalidSdkException {
-      if (myCurrentFolder != null) {
-        return myCurrentFolder;
+      if (myWorkingDir != null) {
+        return myWorkingDir;
       }
       final String binaryPath = mySdk.getHomePath();
       if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
