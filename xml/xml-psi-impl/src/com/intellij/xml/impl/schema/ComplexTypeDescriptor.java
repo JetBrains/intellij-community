@@ -435,7 +435,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(ns)) {
         return !namespace.equals(myDocumentDescriptor.getDefaultNamespace()) ? canContainAttributeType : CanContainAttributeType.CanNotContain;
       }
-      else if ("##any".equals(ns)) {
+      else if (ns == null || "##any".equals(ns)) {
         return CanContainAttributeType.CanContainAny;
       }
       return canContainAttributeType;
