@@ -102,9 +102,9 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="dce20bcd-9119-4d02-8065-3cdddca6a1d3" />
-      <option name="name" value="dce20bcd-9119-4d02-8065-3cdddca6a1d3" />
-      <option name="url" value="https://kotlin.bintray.com/kotlin-plugin/" />
+      <option name="id" value="b7513459-458a-4892-b2b4-eca932d3c82a" />
+      <option name="name" value="b7513459-458a-4892-b2b4-eca932d3c82a" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-plugin/" />
     </remote-repository>
   </component>
 </project>
