@@ -146,7 +146,9 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
         tablePane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       }
     });
+    treePane.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
     tablePane.setVerticalScrollBar(treePane.getVerticalScrollBar());
+    tablePane.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
 
     myTree.getSelectionModel().addTreeSelectionListener(selection);
     myTable.getSelectionModel().addListSelectionListener(selection);
