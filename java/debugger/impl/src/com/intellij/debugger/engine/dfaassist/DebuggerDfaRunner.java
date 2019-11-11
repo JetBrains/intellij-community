@@ -123,6 +123,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       // TODO: support references to outer classes
     }
     if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
+      // TODO: support captured locals
       try {
         LocalVariable variable = myFrame.visibleVariableByName(((PsiVariable)psi).getName());
         if (variable != null) {

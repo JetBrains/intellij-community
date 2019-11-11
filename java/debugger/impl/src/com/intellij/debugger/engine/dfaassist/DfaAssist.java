@@ -125,8 +125,8 @@ public class DfaAssist implements DebuggerContextListener {
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     boolean methodMatches = false;
     try {
-      methodMatches = psiMethod == null || !psiMethod.getName().equals(method.name()) ||
-                      psiMethod.getParameterList().getParametersCount() != method.arguments().size(); 
+      methodMatches = psiMethod != null && psiMethod.getName().equals(method.name()) &&
+                      psiMethod.getParameterList().getParametersCount() == method.arguments().size(); 
     }
     catch (AbsentInformationException ignored) {
     }
