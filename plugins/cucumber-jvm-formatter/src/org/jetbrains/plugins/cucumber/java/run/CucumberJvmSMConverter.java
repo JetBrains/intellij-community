@@ -32,7 +32,7 @@ public class CucumberJvmSMConverter {
     outCommand(TEMPLATE_SCENARIO_COUNTING_STARTED, "0", getCurrentTime());
   }
 
-  protected void handleTestCaseStarted(IdeaTestCase testCase) {
+  protected void handleTestCaseStarted(CucumberJvmTestCase testCase) {
     String uri = testCase.getUri();
     if (currentFilePath == null) {
       outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri, getFeatureFileDescription(uri));
@@ -65,7 +65,7 @@ public class CucumberJvmSMConverter {
                getScenarioName(testCase));
   }
 
-  protected void handleTestCaseFinished(IdeaTestCase testCase) {
+  protected void handleTestCaseFinished(CucumberJvmTestCase testCase) {
     outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getScenarioName(testCase));
     outCommand(TEMPLATE_SCENARIO_FINISHED, getCurrentTime());
   }
@@ -75,20 +75,20 @@ public class CucumberJvmSMConverter {
     outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getFeatureFileDescription(currentFilePath));
   }
 
-  protected void handleWriteEvent(IdeaWriteEvent event) {
+  protected void handleWriteEvent(CucumberJvmWriteEvent event) {
     myOut.println(event.getText());
   }
 
-  protected void handleTestStepStarted(IdeaTestStep testStep) {
+  protected void handleTestStepStarted(CucumberJvmTestStep testStep) {
     outCommand(TEMPLATE_TEST_STARTED, getCurrentTime(), testStep.getLocation(), testStep.getStepName());
   }
 
-  protected void handleTestStepFinished(IdeaTestStepFinishedEvent event) {
-    if (event.getResult() == IdeaTestStepFinishedEvent.Status.PASSED) {
+  protected void handleTestStepFinished(CucumberJvmTestStepFinishedEvent event) {
+    if (event.getResult() == CucumberJvmTestStepFinishedEvent.Status.PASSED) {
       // write nothing
     }
-    else if (event.getResult() == IdeaTestStepFinishedEvent.Status.SKIPPED ||
-             event.getResult() == IdeaTestStepFinishedEvent.Status.PENDING) {
+    else if (event.getResult() == CucumberJvmTestStepFinishedEvent.Status.SKIPPED ||
+             event.getResult() == CucumberJvmTestStepFinishedEvent.Status.PENDING) {
       outCommand(TEMPLATE_TEST_PENDING, event.getTestStep().getStepName(), getCurrentTime());
     }
     else {
@@ -106,7 +106,7 @@ public class CucumberJvmSMConverter {
     outCommand(TEMPLATE_TEST_FINISHED, getCurrentTime(), String.valueOf(event.getDuration()), event.getTestStep().getStepName());
   }
 
-  protected void handleTestSourceRead(IdeaTestSourceReadEvent event) {
+  protected void handleTestSourceRead(CucumberJvmTestSourceReadEvent event) {
     closeCurrentScenarioOutline();
     pathToDescription.put(event.getUri(), getFeatureName(event.getSource()));
   }
@@ -156,7 +156,7 @@ public class CucumberJvmSMConverter {
     myOut.println(escapeCommand(command, parameters));
   }
 
-  private static String getScenarioName(IdeaTestCase testCase) {
+  private static String getScenarioName(CucumberJvmTestCase testCase) {
     if (testCase.isScenarioOutline()) {
       return SCENARIO_OUTLINE_CAPTION + testCase.getLine();
     }
