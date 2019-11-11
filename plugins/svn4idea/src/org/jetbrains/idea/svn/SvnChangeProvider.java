@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
@@ -56,9 +57,6 @@ public class SvnChangeProvider implements ChangeProvider {
   @Override
   public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder, @NotNull ProgressIndicator progress,
                          @NotNull ChangeListManagerGate addGate) throws VcsException {
-    final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
-    zipper.run();
-
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
@@ -68,11 +66,11 @@ public class SvnChangeProvider implements ChangeProvider {
 
       final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), progress);
 
-      for (FilePath path : zipper.getRecursiveDirs()) {
+      for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
         walker.go(path, Depth.INFINITY);
       }
 
-      for (FilePath path : zipper.getNonRecursiveDirs().keySet()) {
+      for (FilePath path : map2SetNotNull(dirtyScope.getDirtyFilesNoExpand(), it -> it.isDirectory() ? it : it.getParentPath())) {
         walker.go(path, Depth.IMMEDIATES);
       }
 
