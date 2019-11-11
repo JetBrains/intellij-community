@@ -10,6 +10,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
@@ -109,12 +111,26 @@ public class _LastInSuiteTest extends TestCase {
 
   @NotNull
   private static Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> collectDynamicNonPlatformExtensions() {
-    Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = new HashMap<>();
     boolean useWhiteList = !SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
     ExtensionsArea area = Extensions.getRootArea();
-    if (area == null) {
-      return extensions;
+
+    Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = new HashMap<>();
+    ProjectManager pm = ProjectManager.getInstanceIfCreated();
+    if (pm != null) {
+      for (Project project : pm.getOpenProjects()) {
+        collectForArea(project.getExtensionArea(), useWhiteList, extensions);
+      }
     }
+    collectForArea(area, useWhiteList, extensions);
+    
+    return extensions;
+  }
+
+  private static void collectForArea(ExtensionsArea area,
+                                     boolean useWhiteList,
+                                     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions) {
+    if (area == null) return;
+
     for (ExtensionPoint<?> ep : area.getExtensionPoints()) {
       if (!ep.isDynamic()) continue;
       if (useWhiteList && !EXTENSION_POINTS_WHITE_LIST.contains(ep.getName())) continue;
@@ -124,7 +140,6 @@ public class _LastInSuiteTest extends TestCase {
         .map(WeakReference<Object>::new)
         .collect(Collectors.toList()));
     }
-    return extensions;
   }
 
   private static boolean isPlatformExtension(ExtensionPoint<?> ep, Object extension) {
