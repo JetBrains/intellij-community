@@ -250,7 +250,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   protected void restartAnalysis(final Project project, final AnalysisScope scope) {
-    AppUIExecutor.onUiThread().inSmartMode(project).inTransaction(project).execute(() -> analyze(project, scope));
+    AppUIExecutor.onUiThread().inSmartMode(project).execute(() -> analyze(project, scope));
   }
 
   private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {

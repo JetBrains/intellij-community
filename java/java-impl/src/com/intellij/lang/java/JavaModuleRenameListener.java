@@ -64,7 +64,6 @@ public class JavaModuleRenameListener implements StartupActivity, ModuleListener
       AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
           .later()
           .inSmartMode(project)
-          .inTransaction(project)
           .execute(() -> renameModules(project, suggestions));
     }
   }
