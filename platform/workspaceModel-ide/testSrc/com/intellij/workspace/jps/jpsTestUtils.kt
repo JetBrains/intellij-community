@@ -89,10 +89,10 @@ internal fun JpsFileContentWriterImpl.writeFiles(baseProjectDir: File) {
 }
 
 internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToIgnore: Set<String>, componentsToIgnore: List<String>) {
-  val actualFiles = actualDir.walk().filter { it.isFile }.associateBy { FileUtil.getRelativePath(actualDir.absolutePath, it.absolutePath, '/') }
+  val actualFiles = actualDir.walk().filter { it.isFile }.associateBy { FileUtil.toSystemIndependentName(FileUtil.getRelativePath(actualDir, it)!!) }
   val expectedFiles = expectedDir.walk()
     .filter { it.isFile }
-    .associateBy { FileUtil.getRelativePath(expectedDir.absolutePath, it.absolutePath, '/') }
+    .associateBy { FileUtil.toSystemIndependentName(FileUtil.getRelativePath(expectedDir, it)!!) }
     .filterKeys { it !in filesToIgnore }
 
   for (actualPath in actualFiles.keys) {
