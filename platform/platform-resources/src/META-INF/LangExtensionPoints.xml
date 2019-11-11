@@ -27,7 +27,7 @@
     <!-- Code Insight -->
     <extensionPoint name="highlightVisitor"
                     interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="highlightErrorFilter"
                     interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter"
                     area="IDEA_PROJECT"
