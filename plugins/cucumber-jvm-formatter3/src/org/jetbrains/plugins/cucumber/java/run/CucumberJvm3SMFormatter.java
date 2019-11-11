@@ -12,14 +12,14 @@ public class CucumberJvm3SMFormatter extends CucumberJvmSMConverter implements F
   private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
     @Override
     public void receive(TestCaseStarted event) {
-      CucumberJvm3SMFormatter.this.handleTestCaseStarted(new CucumberJvm3Adapter.IdeaTestCaseEvent(event));
+      CucumberJvm3SMFormatter.this.handleTestCaseStarted(new CucumberJvm3Adapter.IdeaTestCase(event.testCase));
     }
   };
 
   private final EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
     @Override
     public void receive(TestCaseFinished event) {
-      handleTestCaseFinished(new CucumberJvm3Adapter.IdeaTestCaseEvent(event));
+      handleTestCaseFinished(new CucumberJvm3Adapter.IdeaTestCase(event.testCase));
     }
   };
 
@@ -33,14 +33,14 @@ public class CucumberJvm3SMFormatter extends CucumberJvmSMConverter implements F
   private final EventHandler<WriteEvent> writeEventHandler = new EventHandler<WriteEvent>() {
     @Override
     public void receive(WriteEvent event) {
-      CucumberJvm3SMFormatter.this.handleWriteEvent(new CucumberJvmAdapter.IdeaWriteEvent(event.text));
+      CucumberJvm3SMFormatter.this.handleWriteEvent(new IdeaWriteEvent(event.text));
     }
   };
 
   private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
     @Override
     public void receive(TestStepStarted event) {
-      handleTestStepStarted(new CucumberJvm3Adapter.IdeaTestStepEvent(event));
+      handleTestStepStarted(new CucumberJvm3Adapter.IdeaTestStep(event.testStep));
     }
   };
 
@@ -54,7 +54,7 @@ public class CucumberJvm3SMFormatter extends CucumberJvmSMConverter implements F
   private final EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
     @Override
     public void receive(TestSourceRead event) {
-      CucumberJvm3SMFormatter.this.handleTestSourceRead(new CucumberJvmAdapter.IdeaTestSourceReadEvent(event.uri, event.source));
+      CucumberJvm3SMFormatter.this.handleTestSourceRead(new IdeaTestSourceReadEvent(event.uri, event.source));
     }
   };
 

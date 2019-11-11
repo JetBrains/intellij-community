@@ -12,52 +12,18 @@ import java.lang.reflect.Method;
 import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.FILE_RESOURCE_PREFIX;
 
 public class CucumberJvm2Adapter {
-  public static class IdeaTestCaseEvent implements CucumberJvmAdapter.IdeaTestCaseEvent {
-    private final IdeaTestCase myTestCase;
-
-    public IdeaTestCaseEvent(TestCaseStarted testCaseStarted) {
-      myTestCase = new IdeaTestCase(testCaseStarted.testCase);
-    }
-
-    public IdeaTestCaseEvent(TestCaseFinished testCaseFinished) {
-      myTestCase = new IdeaTestCase(testCaseFinished.testCase);
-    }
-
-
-    @Override
-    public CucumberJvmAdapter.IdeaTestCase getTestCase() {
-      return myTestCase;
-    }
-
-    @Override
-    public String getUri() {
-      return myTestCase.getUri();
-    }
-  }
-
-  public static class IdeaTestStepEvent implements CucumberJvmAdapter.IdeaTestStepEvent {
+  public static class IdeaTestStepFinishedEvent implements org.jetbrains.plugins.cucumber.java.run.IdeaTestStepFinishedEvent {
     private final IdeaTestStep myTestStep;
-
-    public IdeaTestStepEvent(TestStepStarted testStepStarted) {
-      this(testStepStarted.testStep);
-    }
-
-    public IdeaTestStepEvent(TestStep testStep) {
-      myTestStep = new IdeaTestStep(testStep);
-    }
-
-    @Override
-    public CucumberJvmAdapter.IdeaTestStep getTestStep() {
-      return myTestStep;
-    }
-  }
-
-  public static class IdeaTestStepFinishedEvent extends IdeaTestStepEvent implements CucumberJvmAdapter.IdeaTestStepFinishedEvent {
-    TestStepFinished myRealEvent;
+    private final TestStepFinished myRealEvent;
 
     public IdeaTestStepFinishedEvent(TestStepFinished testStepFinished) {
-      super(testStepFinished.testStep);
+      myTestStep = new IdeaTestStep(testStepFinished.testStep);
       myRealEvent = testStepFinished;
+    }
+
+    @Override
+    public org.jetbrains.plugins.cucumber.java.run.IdeaTestStep getTestStep() {
+      return myTestStep;
     }
 
     @Override
@@ -81,7 +47,7 @@ public class CucumberJvm2Adapter {
     }
   }
 
-  public static class IdeaTestCase implements CucumberJvmAdapter.IdeaTestCase {
+  public static class IdeaTestCase implements org.jetbrains.plugins.cucumber.java.run.IdeaTestCase {
     private final TestCase myRealTestCase;
 
     IdeaTestCase(TestCase realTestCase) {
@@ -119,7 +85,7 @@ public class CucumberJvm2Adapter {
     }
   }
 
-  public static class IdeaTestStep implements CucumberJvmAdapter.IdeaTestStep {
+  public static class IdeaTestStep implements org.jetbrains.plugins.cucumber.java.run.IdeaTestStep {
     private final TestStep myRealStep;
 
     public IdeaTestStep(TestStep realStep) {

@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.cucumber.java.run;
 
-import cucumber.api.TestStep;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -97,14 +95,14 @@ public class CucumberJvmSMFormatterUtil {
   }
 
   public static String getStepKeyword(String filePath, int lineNumber) throws IOException {
-    String line = readLineNumber(filePath, lineNumber);
+    String line = readLineWithNumber(filePath, lineNumber);
     if (line != null) {
       return line.trim().split(" ", 2)[0];
     }
     return null;
   }
 
-  private static String readLineNumber(String filePath, int lineNumber) throws IOException {
+  private static String readLineWithNumber(String filePath, int lineNumber) throws IOException {
     int currentLineNumber = 0;
     FileReader fileStream = null;
     try {
