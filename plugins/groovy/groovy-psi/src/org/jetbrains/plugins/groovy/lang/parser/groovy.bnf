@@ -249,6 +249,7 @@ annotation ::= '@' annotation_reference after_annotation_reference
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationElementType'
   consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
 private annotation_reference ::= simple_reference { name = 'annotation reference' }
 private after_annotation_reference ::= mb_nl annotation_argument_list | empty_annotation_argument_list
@@ -262,6 +263,7 @@ annotation_member_value_pair ::= annotation_key '=' annotation_value | annotatio
   name = 'annotation attribute'
   pin('.*') = 2
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrNameValuePairElementType'
+  extraRoot = true
 }
 private annotation_key ::= IDENTIFIER | 'as' | 'def' | 'in'
 private annotation_value ::= annotation | annotation_array_value | expression
@@ -570,12 +572,14 @@ constructor_block ::= '{' mb_separators [constructor_call_expression block_level
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrConstructorBlockElementType'
   pin = 1
+  extraRoot = true
 }
 lazy_block ::= <<parseBlockLazy open_block 'OPEN_BLOCK'>> { elementType = '' }
 open_block ::= '{' mb_separators block_levels '}'
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType'
   pin = 1
+  extraRoot = true
 }
 // endregion
 
@@ -949,6 +953,9 @@ private call_tail_with_nl_before_closure ::= call_argument_list (mb_nl lazy_clos
 
 //region Lambda expression
 lambda_expression ::= !<<isClosureParameter>> lambda_expression_base | clear_variants_and_fail
+{
+  extraRoot = true
+}
 private lambda_expression_base ::= lambda_expression_head mb_nl lambda_body { pin = 1 }
 private lambda_expression_head ::= lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl parse_parameter)>> ')' { elementType = parameter_list }
@@ -977,6 +984,7 @@ lazy_block_lambda_body ::= <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY
 block_lambda_body ::= '{' mb_nl block_levels '}' {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
   consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
 // endregion
 
@@ -990,6 +998,7 @@ closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
 private closure_header ::= closure_header_with_arrow | empty_parameter_list
 private closure_header_with_arrow ::= empty_parameter_list mb_nl closure_arrow | closure_parameter_list mb_nl closure_arrow
@@ -1205,6 +1214,9 @@ argument_label ::= IDENTIFIER | string_literal_tokens | primitive_type | modifie
 
 // region Type elements
 type_element ::= (primitive_type_element | class_type_element) array_type_elements
+{
+  extraRoot = true
+}
 
 primitive_type_element ::= primitive_type <<setTypeWasPrimitive>>
 external primitive_type ::= parsePrimitiveType
@@ -1236,6 +1248,9 @@ private any_type_element ::= <<anyTypeElement type_element>>
 
 // region Code references
 code_reference ::= code_reference_base
+{
+  extraRoot = true
+}
 private code_reference_base ::= short_code_reference code_reference_tail*
 qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
 short_code_reference ::= code_reference_part { elementType = code_reference }
