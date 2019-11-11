@@ -1064,6 +1064,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           try {
             detected = detector.detect(file, firstBytes, text);
           }
+          catch (ProcessCanceledException pce) {
+            // detection canceled => don't log the error, just proceed to the next detector
+            LOG.debug("Detector " + detector + " (" + detector.getClass() + ") was canceled");
+          }
           catch (Exception e) {
             LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
           }
