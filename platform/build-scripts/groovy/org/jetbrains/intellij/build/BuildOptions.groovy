@@ -65,6 +65,8 @@ class BuildOptions {
   static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
   /** Build community distributives */
   static final String COMMUNITY_DIST_STEP = "community_dist"
+  /** Publish artifacts to TeamCity storage. Affects many small publication steps */
+  static final String TEAMCITY_ARTIFACTS_PUBLICATION = "teamcity_artifacts_publication"
 
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
