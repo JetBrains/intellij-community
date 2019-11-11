@@ -70,8 +70,9 @@ abstract class DvcsCloneDialogComponent(var project: Project,
 
   abstract override fun doClone(project: Project, listener: CheckoutProvider.Listener)
 
-  fun getDirectory() = directoryField.text
-  fun getUrl() = urlEditor.text
+  fun getDirectory() = directoryField.text.trim()
+
+  fun getUrl() = urlEditor.text.trim()
 
   override fun dispose() {}
 }
