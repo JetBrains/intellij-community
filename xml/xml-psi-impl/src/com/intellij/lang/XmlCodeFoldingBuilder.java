@@ -27,6 +27,7 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.html.HtmlEmbeddedContentImpl;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
@@ -107,7 +108,8 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       }
       else {
         final Language language = child.getLanguage();
-        if (!(language instanceof XMLLanguage) && language != Language.ANY) {
+        if (!(language instanceof XMLLanguage) && language != Language.ANY ||
+            child instanceof HtmlEmbeddedContentImpl) {
           final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
 
           if (foldingBuilder != null) {
