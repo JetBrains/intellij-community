@@ -32,8 +32,6 @@ import java.awt.event.*;
 import static java.awt.BorderLayout.*;
 
 public class TabLabel extends JPanel implements Accessible, Disposable {
-  private static final Logger LOG = Logger.getInstance(TabLabel.class);
-
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
@@ -59,7 +57,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new MyTabLabelLayout());
+    setLayout(new BorderLayout());
 
     myLabelPlaceholder.setOpaque(false);
     myLabelPlaceholder.setFocusable(false);
@@ -603,133 +601,6 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PAGE_TAB;
-    }
-  }
-
-  private static class MyTabLabelLayout implements LayoutManager2 {
-
-    final BorderLayout myBorderLayout = new BorderLayout();
-
-    @Override
-    public void addLayoutComponent(Component comp, Object constraints) {
-      checkConstraints(constraints);
-      myBorderLayout.addLayoutComponent(comp, constraints);
-    }
-
-    private static void checkConstraints(Object constraints) {
-      if (NORTH.equals(constraints) || SOUTH.equals(constraints)) {
-        LOG.warn(new IllegalArgumentException("constraints=" + constraints));
-      }
-    }
-
-    @Override
-    public Dimension maximumLayoutSize(Container target) {
-      return myBorderLayout.maximumLayoutSize(target);
-    }
-
-    @Override
-    public float getLayoutAlignmentX(Container target) {
-      return myBorderLayout.getLayoutAlignmentX(target);
-    }
-
-    @Override
-    public float getLayoutAlignmentY(Container target) {
-      return myBorderLayout.getLayoutAlignmentY(target);
-    }
-
-    @Override
-    public void invalidateLayout(Container target) {
-      myBorderLayout.invalidateLayout(target);
-    }
-
-    @Override
-    public void addLayoutComponent(String name, Component comp) {
-      myBorderLayout.addLayoutComponent(name, comp);
-    }
-
-    @Override
-    public void removeLayoutComponent(Component comp) {
-      myBorderLayout.removeLayoutComponent(comp);
-    }
-
-    @Override
-    public Dimension preferredLayoutSize(Container parent) {
-      return myBorderLayout.preferredLayoutSize(parent);
-    }
-
-    @Override
-    public Dimension minimumLayoutSize(Container parent) {
-      synchronized (parent.getTreeLock()) {
-        Component center = myBorderLayout.getLayoutComponent(CENTER);
-        if (center != null) {
-          return center.getMinimumSize();
-        }
-        else {
-          return new Dimension(0, 0);
-        }
-      }
-    }
-
-    @Override
-    public void layoutContainer(Container parent) {
-      synchronized (parent.getTreeLock()) {
-        layoutContainer_locked(parent);
-      }
-    }
-
-    private void layoutContainer_locked(Container parent) {
-
-      Component west = myBorderLayout.getLayoutComponent(WEST);
-      Component center = myBorderLayout.getLayoutComponent(CENTER);
-      Component east = myBorderLayout.getLayoutComponent(EAST);
-
-      if (center == null) {
-        myBorderLayout.layoutContainer(parent);
-        return;
-      }
-
-      int spaceTop = parent.getInsets().top;
-      int spaceLeft = parent.getInsets().left;
-      int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
-      int spaceRight = parent.getWidth() - parent.getInsets().right;
-      int spaceWidth = spaceRight - spaceLeft;
-      int spaceHeight = spaceBottom - spaceTop;
-      int prefWestWidth = west == null ? 0 : west.getPreferredSize().width;
-      int prefCenterWidth = center.getPreferredSize().width;
-      int prefEastWidth = east == null ? 0 : east.getPreferredSize().width;
-
-      int prefAllWidth = prefCenterWidth;
-      if (west != null) {
-        prefAllWidth += prefWestWidth + myBorderLayout.getHgap();
-      }
-      if (east != null) {
-        prefAllWidth += prefEastWidth + myBorderLayout.getHgap();
-      }
-
-      if (prefAllWidth <= spaceWidth) {
-        myBorderLayout.layoutContainer(parent);
-        return;
-      }
-
-      int centerLeft = spaceLeft;  // position of left side of central element
-      int centerRight = spaceRight;
-      if (west != null) {
-        setBoundsWithVAlign(west, centerLeft, prefWestWidth, spaceTop, spaceHeight);
-        centerLeft += prefWestWidth + myBorderLayout.getHgap();
-      }
-      if (east != null) {
-        setBoundsWithVAlign(east, spaceRight - prefEastWidth, prefEastWidth, spaceTop, spaceHeight);
-        centerRight -= prefEastWidth + myBorderLayout.getHgap();
-      }
-      setBoundsWithVAlign(center, centerLeft, centerRight - centerLeft, spaceTop, spaceHeight);
-    }
-
-    private static void setBoundsWithVAlign(Component component, int left, int width, int spaceTop, int spaceHeight) {
-      if (component == null) return;
-
-      int height = component.getPreferredSize().height;
-      int top = spaceTop + (spaceHeight - height) / 2;
-      component.setBounds(left, top, width, height);
     }
   }
 }
