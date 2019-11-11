@@ -210,9 +210,9 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   @Override
   public String getHTMLHeader() {
     return "<html><body><h2>Tune " +
-           ApplicationNamesInfo.getInstance().getProductName() +
+           ApplicationNamesInfo.getInstance().getFullProductName() +
            " to your tasks</h2>" +
-           ApplicationNamesInfo.getInstance().getProductName() +
+           ApplicationNamesInfo.getInstance().getFullProductName() +
            " has a lot of tools enabled by default. You can set only ones you need or leave them all." +
            "</body></html>";
   }
