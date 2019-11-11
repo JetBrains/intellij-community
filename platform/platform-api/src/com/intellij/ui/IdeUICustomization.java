@@ -67,4 +67,12 @@ public class IdeUICustomization {
   public String getActionText(@NotNull String actionId) {
     return null;
   }
+
+  /**
+   * Returns the name of the Version Control tool window
+   */
+  @NotNull
+  public String getVcsToolWindowName() {
+    return UIBundle.message("tool.window.name.version.control");
+  }
 }

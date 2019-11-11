@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.UIBundle;
 
 public interface ToolWindowId {
@@ -33,7 +34,7 @@ public interface ToolWindowId {
   String INSPECTION = UIBundle.message("tool.window.name.inspection");
   String TODO_VIEW = UIBundle.message("tool.window.name.todo");
   String DEPENDENCIES = UIBundle.message("tool.window.name.dependency.viewer");
-  String VCS = UIBundle.message("tool.window.name.version.control");
+  String VCS = IdeUICustomization.getInstance().getVcsToolWindowName();
   String MODULES_DEPENDENCIES = UIBundle.message("tool.window.name.module.dependencies");
   String DUPLICATES = UIBundle.message("tool.window.name.module.duplicates");
   String EXTRACT_METHOD = UIBundle.message("tool.window.name.extract.method");
