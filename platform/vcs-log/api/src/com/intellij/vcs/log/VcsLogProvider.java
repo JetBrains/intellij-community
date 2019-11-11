@@ -206,6 +206,9 @@ public interface VcsLogProvider {
     return readMetadata(root, hashes);
   }
 
+  /**
+   * @deprecated was used only for indexing and replaced by the methods in {@link com.intellij.vcs.log.impl.VcsLogIndexer}.
+   */
   @Deprecated
   default void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
     throws VcsException {
