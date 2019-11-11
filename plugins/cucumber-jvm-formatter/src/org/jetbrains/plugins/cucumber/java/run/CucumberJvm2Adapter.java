@@ -12,17 +12,17 @@ import java.lang.reflect.Method;
 import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.FILE_RESOURCE_PREFIX;
 
 public class CucumberJvm2Adapter {
-  public static class IdeaTestStepFinishedEvent implements org.jetbrains.plugins.cucumber.java.run.IdeaTestStepFinishedEvent {
-    private final IdeaTestStep myTestStep;
+  public static class CucumberJvmTestStepFinishedEvent implements org.jetbrains.plugins.cucumber.java.run.CucumberJvmTestStepFinishedEvent {
+    private final CucumberJvmTestStep myTestStep;
     private final TestStepFinished myRealEvent;
 
-    public IdeaTestStepFinishedEvent(TestStepFinished testStepFinished) {
-      myTestStep = new IdeaTestStep(testStepFinished.testStep);
+    public CucumberJvmTestStepFinishedEvent(TestStepFinished testStepFinished) {
+      myTestStep = new CucumberJvmTestStep(testStepFinished.testStep);
       myRealEvent = testStepFinished;
     }
 
     @Override
-    public org.jetbrains.plugins.cucumber.java.run.IdeaTestStep getTestStep() {
+    public org.jetbrains.plugins.cucumber.java.run.CucumberJvmTestStep getTestStep() {
       return myTestStep;
     }
 
@@ -47,10 +47,10 @@ public class CucumberJvm2Adapter {
     }
   }
 
-  public static class IdeaTestCase implements org.jetbrains.plugins.cucumber.java.run.IdeaTestCase {
+  public static class CucumberJvmTestCase implements org.jetbrains.plugins.cucumber.java.run.CucumberJvmTestCase {
     private final TestCase myRealTestCase;
 
-    IdeaTestCase(TestCase realTestCase) {
+    CucumberJvmTestCase(TestCase realTestCase) {
       myRealTestCase = realTestCase;
     }
 
@@ -85,10 +85,10 @@ public class CucumberJvm2Adapter {
     }
   }
 
-  public static class IdeaTestStep implements org.jetbrains.plugins.cucumber.java.run.IdeaTestStep {
+  public static class CucumberJvmTestStep implements org.jetbrains.plugins.cucumber.java.run.CucumberJvmTestStep {
     private final TestStep myRealStep;
 
-    public IdeaTestStep(TestStep realStep) {
+    public CucumberJvmTestStep(TestStep realStep) {
       myRealStep = realStep;
     }
 

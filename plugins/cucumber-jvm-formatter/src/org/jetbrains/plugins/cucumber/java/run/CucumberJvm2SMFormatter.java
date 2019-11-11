@@ -19,14 +19,14 @@ public class CucumberJvm2SMFormatter extends CucumberJvmSMConverter implements F
   private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
     @Override
     public void receive(TestCaseStarted event) {
-      CucumberJvm2SMFormatter.this.handleTestCaseStarted(new CucumberJvm2Adapter.IdeaTestCase(event.testCase));
+      CucumberJvm2SMFormatter.this.handleTestCaseStarted(new CucumberJvm2Adapter.CucumberJvmTestCase(event.testCase));
     }
   };
 
   private final EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
     @Override
     public void receive(TestCaseFinished event) {
-      handleTestCaseFinished(new CucumberJvm2Adapter.IdeaTestCase(event.testCase));
+      handleTestCaseFinished(new CucumberJvm2Adapter.CucumberJvmTestCase(event.testCase));
     }
   };
 
@@ -40,28 +40,28 @@ public class CucumberJvm2SMFormatter extends CucumberJvmSMConverter implements F
   private final EventHandler<WriteEvent> writeEventHandler = new EventHandler<WriteEvent>() {
     @Override
     public void receive(WriteEvent event) {
-      CucumberJvm2SMFormatter.this.handleWriteEvent(new IdeaWriteEvent(event.text));
+      CucumberJvm2SMFormatter.this.handleWriteEvent(new CucumberJvmWriteEvent(event.text));
     }
   };
 
   private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
     @Override
     public void receive(TestStepStarted event) {
-      handleTestStepStarted(new CucumberJvm2Adapter.IdeaTestStep(event.testStep));
+      handleTestStepStarted(new CucumberJvm2Adapter.CucumberJvmTestStep(event.testStep));
     }
   };
 
   private final EventHandler<TestStepFinished> testStepFinishedHandler = new EventHandler<TestStepFinished>() {
     @Override
     public void receive(TestStepFinished event) {
-      handleTestStepFinished(new CucumberJvm2Adapter.IdeaTestStepFinishedEvent(event));
+      handleTestStepFinished(new CucumberJvm2Adapter.CucumberJvmTestStepFinishedEvent(event));
     }
   };
 
   private final EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
     @Override
     public void receive(TestSourceRead event) {
-      CucumberJvm2SMFormatter.this.handleTestSourceRead(new IdeaTestSourceReadEvent(event.uri, event.source));
+      CucumberJvm2SMFormatter.this.handleTestSourceRead(new CucumberJvmTestSourceReadEvent(event.uri, event.source));
     }
   };
 
