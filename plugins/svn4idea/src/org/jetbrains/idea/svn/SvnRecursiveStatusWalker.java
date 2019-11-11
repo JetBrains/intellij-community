@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -13,14 +13,11 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ErrorCode;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
@@ -46,7 +43,6 @@ public class SvnRecursiveStatusWalker {
   @NotNull private final StatusReceiver myReceiver;
   @NotNull private final LinkedList<MyItem> myQueue;
   @NotNull private final MyHandler myHandler;
-  @Nullable private MultiMap<FilePath, FilePath> myNonRecursiveScope;
 
   public SvnRecursiveStatusWalker(@NotNull SvnVcs vcs, @NotNull StatusReceiver receiver, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
@@ -57,10 +53,6 @@ public class SvnRecursiveStatusWalker {
     myProgress = progress;
     myQueue = new LinkedList<>();
     myHandler = new MyHandler();
-  }
-
-  public void setNonRecursiveScope(@Nullable MultiMap<FilePath, FilePath> nonRecursiveScope) {
-    myNonRecursiveScope = nonRecursiveScope;
   }
 
   public void go(@NotNull FilePath rootPath, @NotNull Depth depth) throws SvnBindException {
@@ -199,23 +191,9 @@ public class SvnRecursiveStatusWalker {
 
   @NotNull
   private MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
-    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient(myNonRecursiveScope, createEventHandler());
+    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient();
 
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
-  }
-
-  @NotNull
-  public ProgressTracker createEventHandler() {
-    return new ProgressTracker() {
-      @Override
-      public void consume(ProgressEvent event) {
-      }
-
-      @Override
-      public void checkCancelled() throws ProcessCanceledException {
-        SvnRecursiveStatusWalker.this.checkCanceled();
-      }
-    };
   }
 
   private class MyHandler implements StatusConsumer {
