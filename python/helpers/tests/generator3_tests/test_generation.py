@@ -113,11 +113,14 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         if mod_path and not os.path.isabs(mod_path):
             mod_path = os.path.join(extra_syspath[0], mod_path)
 
-        env = {
+        # On Windows we have to propagate entire parent environment explicitly to a subprocess
+        # see https://www.scivision.dev/python-calling-python-subprocess/
+        env = dict(os.environ)
+        env.update({
             ENV_TEST_MODE_FLAG: 'True',
             ENV_VERSION: gen_version or TEST_GENERATOR_VERSION,
             'PYTHONPATH': _helpers_root,
-        }
+        })
         if required_gen_version_file_path:
             env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path
 
@@ -362,7 +365,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
             'module_origin': 'mod.py',
             'generation_status': 'GENERATED'
         }, result.control_messages)
-        
+
     def test_trailing_slash_in_sdk_skeletons_path_does_not_affect_cache_location(self):
         self.run_generator('mod', 'mod.py', output_dir=self.temp_skeletons_dir + os.path.sep)
         self.assertDirLayoutEquals(self.temp_python_stubs_root, """
