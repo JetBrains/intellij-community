@@ -16,10 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.getInjectedEditorForInjectedFile;
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
@@ -53,7 +52,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
                  if (editor == null) return;
 
                  if (InjectedLanguageManager.getInstance(project).getInjectionHost(element) != null && !(editor instanceof EditorWindow)) {
-                   editor = getInjectedEditorForInjectedFile(editor, element.getContainingFile());
+                   editor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, element.getContainingFile());
                  }
 
                  final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
