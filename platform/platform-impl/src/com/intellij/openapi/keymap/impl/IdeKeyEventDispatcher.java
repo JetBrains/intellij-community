@@ -10,6 +10,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -548,7 +549,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static boolean hasMnemonic(@Nullable Container container, int keyCode) {
     Component component = UIUtil.uiTraverser(container)
       .traverse()
-      .find(c -> MnemonicHelper.hasMnemonic(c, keyCode));
+      .find(c -> !(c instanceof ActionMenu) && MnemonicHelper.hasMnemonic(c, keyCode));
     return component != null;
   }
 
