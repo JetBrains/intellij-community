@@ -35,8 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
@@ -62,7 +60,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 /**
  * @author egor
@@ -306,7 +303,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     private void scanPoints() {
       if (Registry.is("debugger.capture.points.annotations")) {
         List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        processCaptureAnnotations((capture, e) -> {
+        processCaptureAnnotations((capture, e, annotation) -> {
           if (e instanceof PsiMethod) {
             addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
           }
@@ -520,7 +517,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     return DebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
-  static void processCaptureAnnotations(BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
+  interface CapturePointConsumer {
+    void accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
+  }
+
+  static void processCaptureAnnotations(CapturePointConsumer consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
@@ -531,19 +532,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static void scanPointsInt(Project project,
                                     DebuggerProjectSettings debuggerProjectSettings,
                                     boolean capture,
-                                    BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
+                                    CapturePointConsumer consumer) {
     try {
-      GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      for (String annotationName : getAsyncAnnotations(debuggerProjectSettings, capture)) {
-        PsiClass annotationClass = psiFacade.findClass(annotationName, allScope);
-        if (annotationClass != null) {
-          AnnotatedElementsSearch.<PsiModifierListOwner>searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
-            .forEach(e -> {
-              consumer.accept(capture, e);
-            });
-        }
-      }
+      getAsyncAnnotations(debuggerProjectSettings, capture)
+        .forEach(annotationName -> NodeRendererSettings.visitAnnotatedElements(annotationName, project,
+                                                                               (e, annotation) -> consumer.accept(capture, e, annotation)));
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
