@@ -4,10 +4,7 @@ package com.intellij.util.pico;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.Parameter;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoInitializationException;
-import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 
 import java.lang.annotation.Annotation;
@@ -28,7 +25,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   private static final ThreadLocal<Set<CachingConstructorInjectionComponentAdapter>> ourGuard = new ThreadLocal<>();
   private Object myInstance;
 
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException {
     super(componentKey, componentImplementation, parameters, allowNonPublicClasses);
   }
 
@@ -36,7 +33,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     this(componentKey, componentImplementation, parameters, false);
   }
 
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) throws AssignabilityRegistrationException {
     this(componentKey, componentImplementation, null);
   }
 
@@ -44,8 +41,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   public Object getComponentInstance(@NotNull PicoContainer container) throws
                                                                        PicoInitializationException,
                                                                        PicoIntrospectionException,
-                                                                       AssignabilityRegistrationException,
-                                                                       NotConcreteRegistrationException {
+                                                                       AssignabilityRegistrationException {
     Object instance = myInstance;
     if (instance == null) {
       myInstance = instance = instantiateGuarded(container, getComponentImplementation());
@@ -117,7 +113,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   @NotNull
   private Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
                                                                                     PicoIntrospectionException,
-                                                                                    AssignabilityRegistrationException, NotConcreteRegistrationException {
+                                                                                    AssignabilityRegistrationException {
     final Set<Constructor<?>> conflicts = new HashSet<>();
     final Set<List<Class<?>>> unsatisfiableDependencyTypes = new HashSet<>();
     List<Constructor<?>> sortedMatchingConstructors = getSortedMatchingConstructors();
@@ -255,11 +251,12 @@ abstract class InstantiatingComponentAdapter extends AbstractComponentAdapter {
     this.allowNonPublicClasses = allowNonPublicClasses;
   }
 
-  private void checkConcrete() throws NotConcreteRegistrationException {
+  private void checkConcrete() {
     // Assert that the component class is concrete.
-    boolean isAbstract = (getComponentImplementation().getModifiers() & Modifier.ABSTRACT) == Modifier.ABSTRACT;
-    if (getComponentImplementation().isInterface() || isAbstract) {
-      throw new NotConcreteRegistrationException(getComponentImplementation());
+    Class<?> componentImplementation = getComponentImplementation();
+    boolean isAbstract = (componentImplementation.getModifiers() & Modifier.ABSTRACT) == Modifier.ABSTRACT;
+    if (componentImplementation.isInterface() || isAbstract) {
+      throw new PicoRegistrationException("Bad Access: '" + componentImplementation.getName() + "' is not instantiable");
     }
   }
 

@@ -2,17 +2,15 @@
 package com.intellij.util.pico;
 
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.ComponentAdapter;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.Parameter;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.defaults.*;
+import org.picocontainer.*;
+import org.picocontainer.defaults.AbstractComponentAdapter;
+import org.picocontainer.defaults.AmbiguousComponentResolutionException;
+import org.picocontainer.defaults.AssignabilityRegistrationException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,18 +34,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Override
   public Collection<ComponentAdapter> getComponentAdapters() {
     return componentAdapters.getImmutableSet();
-  }
-
-  private void appendNonAssignableAdaptersOfType(@NotNull Class<?> componentType, @NotNull List<? super ComponentAdapter> result) {
-    List<ComponentAdapter> comp = new ArrayList<>();
-    for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
-      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-        comp.add(componentAdapter);
-      }
-    }
-    for (int i = comp.size() - 1; i >= 0; i--) {
-      result.add(comp.get(i));
-    }
   }
 
   @Override
@@ -104,14 +90,18 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       return Collections.emptyList();
     }
 
-    List<ComponentAdapter> result = new SmartList<>();
+    List<ComponentAdapter> result = new ArrayList<>();
 
-    final ComponentAdapter cacheHit = classNameToAdapter.get(componentType.getName());
+    ComponentAdapter cacheHit = classNameToAdapter.get(componentType.getName());
     if (cacheHit != null) {
       result.add(cacheHit);
     }
 
-    appendNonAssignableAdaptersOfType(componentType, result);
+    for (ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
+      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+        result.add(componentAdapter);
+      }
+    }
     return result;
   }
 
@@ -119,7 +109,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   public ComponentAdapter registerComponent(@NotNull ComponentAdapter componentAdapter) {
     Object componentKey = componentAdapter.getComponentKey();
     if (componentKeyToAdapterCache.containsKey(componentKey)) {
-      throw new DuplicateComponentKeyRegistrationException(componentKey);
+      throw new PicoRegistrationException("Key " + componentKey + " duplicated");
     }
 
     if (componentAdapter instanceof AssignableToComponentAdapter) {
@@ -308,7 +298,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     private final Object componentInstance;
 
     public InstanceComponentAdapter(Object componentKey, @NotNull Object componentInstance)
-      throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+      throws AssignabilityRegistrationException {
       super(componentKey, componentInstance.getClass());
 
       this.componentInstance = componentInstance;
