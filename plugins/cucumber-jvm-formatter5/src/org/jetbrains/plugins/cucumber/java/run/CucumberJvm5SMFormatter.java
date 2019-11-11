@@ -20,14 +20,14 @@ public class CucumberJvm5SMFormatter extends CucumberJvmSMConverter implements C
   private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
     @Override
     public void receive(TestCaseStarted event) {
-      CucumberJvm5SMFormatter.this.handleTestCaseStarted(new CucumberJvm5Adapter.IdeaTestCaseEvent(event));
+      CucumberJvm5SMFormatter.this.handleTestCaseStarted(new CucumberJvm5Adapter.IdeaTestCase(event.getTestCase()));
     }
   };
 
   private final EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
     @Override
     public void receive(TestCaseFinished event) {
-      handleTestCaseFinished(new CucumberJvm5Adapter.IdeaTestCaseEvent(event));
+      handleTestCaseFinished(new CucumberJvm5Adapter.IdeaTestCase(event.getTestCase()));
     }
   };
 
@@ -41,14 +41,14 @@ public class CucumberJvm5SMFormatter extends CucumberJvmSMConverter implements C
   private final EventHandler<WriteEvent> writeEventHandler = new EventHandler<WriteEvent>() {
     @Override
     public void receive(WriteEvent event) {
-      CucumberJvm5SMFormatter.this.handleWriteEvent(new CucumberJvmAdapter.IdeaWriteEvent(event.getText()));
+      CucumberJvm5SMFormatter.this.handleWriteEvent(new IdeaWriteEvent(event.getText()));
     }
   };
 
   private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
     @Override
     public void receive(TestStepStarted event) {
-      handleTestStepStarted(new CucumberJvm5Adapter.IdeaTestStepEvent(event));
+      handleTestStepStarted(new CucumberJvm5Adapter.IdeaTestStep(event.getTestStep()));
     }
   };
 
@@ -63,7 +63,7 @@ public class CucumberJvm5SMFormatter extends CucumberJvmSMConverter implements C
     @Override
     public void receive(TestSourceRead event) {
       CucumberJvm5SMFormatter.this
-        .handleTestSourceRead(new CucumberJvmAdapter.IdeaTestSourceReadEvent(event.getUri().getPath(), event.getSource()));
+        .handleTestSourceRead(new IdeaTestSourceReadEvent(event.getUri().getPath(), event.getSource()));
     }
   };
 

@@ -1065,7 +1065,7 @@ public class PlatformTestUtil {
         latch.countDown();
       }
     });
-    latch.await();
+    latch.await(60, TimeUnit.SECONDS);
     ProcessHandler processHandler = refRunContentDescriptor.get().getProcessHandler();
     if (processHandler == null) {
       return null;
@@ -1073,7 +1073,7 @@ public class PlatformTestUtil {
 
     CapturingProcessAdapter capturingProcessAdapter = new CapturingProcessAdapter();
     processHandler.addProcessListener(capturingProcessAdapter);
-    processHandler.waitFor();
+    processHandler.waitFor(60000);
 
     if (capturingProcessAdapter.getOutput().getStderr().length() > 0) {
       LOG.warn(capturingProcessAdapter.getOutput().getStderr());
