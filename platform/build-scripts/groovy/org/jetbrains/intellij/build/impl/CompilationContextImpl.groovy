@@ -410,6 +410,9 @@ class CompilationContextImpl implements CompilationContext {
   private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()
   @Override
   void notifyArtifactBuilt(String artifactPath) {
+    if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION)) {
+      return
+    }
     def file = new File(artifactPath)
     def artifactsDir = new File(paths.artifacts)
 
