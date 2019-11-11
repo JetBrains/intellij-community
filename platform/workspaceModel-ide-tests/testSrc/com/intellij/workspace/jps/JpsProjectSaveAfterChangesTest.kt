@@ -139,7 +139,7 @@ class JpsProjectSaveAfterChangesTest {
     val expectedDir = FileUtil.createTempDirectory("jpsProjectTest", "expected")
     FileUtil.copyDir(projectData.originalProjectDir, expectedDir)
     if (changedFilesDirectoryName != null) {
-      val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/reload/$changedFilesDirectoryName")
+      val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide-tests/testData/serialization/reload/$changedFilesDirectoryName")
       FileUtil.copyDir(changedDir, expectedDir)
     }
     pathsToRemove.forEach {

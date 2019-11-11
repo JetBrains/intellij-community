@@ -2,8 +2,6 @@ package com.intellij.workspace.jps
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.workspace.api.KryoEntityStorageSerializer
-import com.intellij.workspace.api.TestEntityTypesResolver
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.verifySerializationRoundTrip
 import org.junit.ClassRule
@@ -27,7 +25,7 @@ class ImlSerializationTest {
     val storageBuilder = TypedEntityStorageBuilder.create()
     JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder)
     val storage = storageBuilder.toStorage()
-    val byteArray = verifySerializationRoundTrip(storage, KryoEntityStorageSerializer(TestEntityTypesResolver()))
+    val byteArray = verifySerializationRoundTrip(storage)
     println("Serialized size: ${byteArray.size}")
   }
 

@@ -132,7 +132,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test custom packaging elements`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/customPackagingElements/javaeeSampleProject.ipr")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide-tests/testData/serialization/customPackagingElements/javaeeSampleProject.ipr")
     val storage = loadProject(projectDir)
     val artifacts = storage.entities(ArtifactEntity::class.java).toList()
     assertEquals(6, artifacts.size)
@@ -145,7 +145,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   }
 
   fun `test custom source root`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide/testData/serialization/customSourceRoot/customSourceRoot.ipr")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide-tests/testData/serialization/customSourceRoot/customSourceRoot.ipr")
     val storage = loadProject(projectDir)
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())

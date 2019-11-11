@@ -9,6 +9,9 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.lang.JavaVersion
+import gnu.trove.THashSet
+import gnu.trove.TObjectHashingStrategy
+import org.jetbrains.annotations.TestOnly
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.*

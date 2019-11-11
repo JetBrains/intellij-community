@@ -33,11 +33,9 @@ internal data class SampleEntityForSerializationSource(val name: String) : Entit
 class SerializationInProxyBasedStorageTest {
   @Rule @JvmField val tempDir = TempDirectory()
 
-  private val serializer = KryoEntityStorageSerializer(TestEntityTypesResolver())
-
   @Test
   fun empty() {
-    verifySerializationRoundTrip(TypedEntityStorageBuilder.create().toStorage(), serializer)
+    verifySerializationRoundTrip(TypedEntityStorageBuilder.create().toStorage())
   }
 
   @Test
@@ -60,14 +58,14 @@ class SerializationInProxyBasedStorageTest {
       )
     }
 
-    verifySerializationRoundTrip(builder.toStorage(), serializer)
+    verifySerializationRoundTrip(builder.toStorage())
   }
 
   @Test
   fun singletonEntitySource() {
     val builder = TypedEntityStorageBuilder.create()
     builder.addSampleEntity("c2", source = SingletonEntitySource)
-    verifySerializationRoundTrip(builder.toStorage(), serializer)
+    verifySerializationRoundTrip(builder.toStorage())
   }
 
   object SingletonEntitySource : EntitySource

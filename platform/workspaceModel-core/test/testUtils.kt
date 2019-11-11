@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api
 
 import org.jetbrains.annotations.TestOnly
@@ -15,7 +16,7 @@ class TestEntityTypesResolver: EntityTypesResolver {
   }
 }
 
-fun verifySerializationRoundTrip(storage: TypedEntityStorage, serializer: EntityStorageSerializer): ByteArray {
+fun verifySerializationRoundTrip(storage: TypedEntityStorage): ByteArray {
   storage as ProxyBasedEntityStorage
 
   fun assertEntityDataEquals(expected: EntityData, actual: EntityData) {
@@ -61,6 +62,9 @@ fun verifySerializationRoundTrip(storage: TypedEntityStorage, serializer: Entity
       assertEntityDataSetEquals(expected.entitiesByPersistentIdHash.getValue(idHash), actual.entitiesByPersistentIdHash.getValue(idHash))
     }
   }
+
+  val serializer = KryoEntityStorageSerializer(
+    TestEntityTypesResolver())
 
   val stream = ByteArrayOutputStream()
   serializer.serializeCache(stream, storage)

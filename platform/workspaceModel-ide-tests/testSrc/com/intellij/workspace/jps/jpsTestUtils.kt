@@ -119,8 +119,7 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
   UsefulTestCase.assertEmpty(expectedFiles.keys - actualFiles.keys)
 }
 
-internal fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String,
-                                                           storage: TypedEntityStorage) {
+fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {
   directorySerializerFactoriesByUrl.forEach { (url, directorySerializer) ->
     assertEquals(url, directorySerializer.directoryUrl)
     val fileSerializers = serializerToDirectoryFactory.getKeysByValue(directorySerializer)!!
