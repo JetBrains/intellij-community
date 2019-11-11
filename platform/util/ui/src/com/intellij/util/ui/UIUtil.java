@@ -1267,6 +1267,7 @@ public final class UIUtil {
    * @deprecated Alloy Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
   }
@@ -1275,6 +1276,7 @@ public final class UIUtil {
    * @deprecated Native OS Look-n-Feel is not supported anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsLookAndFeel() {
     return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
@@ -1352,6 +1354,7 @@ public final class UIUtil {
 
   @SuppressWarnings("HardCodedStringLiteral")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderGTKLookAndFeel() {
     return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
@@ -1373,6 +1376,7 @@ public final class UIUtil {
   @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static String getGtkThemeName() {
     final LookAndFeel laf = UIManager.getLookAndFeel();
     if (laf != null && "GTKLookAndFeel".equals(laf.getClass().getSimpleName())) {
