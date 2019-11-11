@@ -59,11 +59,11 @@ public class DfaAssist implements DebuggerContextListener {
     }
     PsiJavaFile file = ObjectUtils.tryCast(sourcePosition.getFile(), PsiJavaFile.class);
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(myProject);
-    if (debugProcess == null || file == null) {
+    PsiElement element = sourcePosition.getElementAt();
+    if (debugProcess == null || file == null || element == null) {
       disposeInlays();
       return;
     }
-    PsiElement element = sourcePosition.getElementAt();
     debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
@@ -118,7 +118,7 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   @NotNull
-  static Map<PsiExpression, DfaHint> computeHints(StackFrame frame, PsiElement element) {
+  static Map<PsiExpression, DfaHint> computeHints(@NotNull StackFrame frame, @NotNull PsiElement element) {
     Method method = frame.location().method();
     if (!element.isValid()) return Collections.emptyMap();
 
