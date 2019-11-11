@@ -5,7 +5,6 @@ import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.api.oauth.*
 import circlet.platform.client.*
-import circlet.projects.*
 import circlet.runtime.*
 import circlet.settings.*
 import com.intellij.dvcs.*
@@ -61,7 +60,7 @@ internal class CircletCloneComponent(val project: Project,
     private val reposInfo: MutableMap<PR_RepositoryInfo, RepoDetails> = mutableMapOf()
 
     // api
-    private lateinit var projectsVM: ProjectsListViewVM
+    private lateinit var projectsVM: CircletCloneComponentVM
 
     // UI
     private val directoryField: SelectChildTextFieldWithBrowseButton = SelectChildTextFieldWithBrowseButton(
@@ -162,12 +161,14 @@ internal class CircletCloneComponent(val project: Project,
                 })
 
                 val client: KCircletClient = st.workspace.client
-                projectsVM = ProjectsListViewVM(null,
-                                                client.pr,
-                                                client.repoService,
-                                                client.star,
-                                                client,
-                                                uiLifetime)
+                projectsVM = CircletCloneComponentVM(
+                    client.pr,
+                    client.repoService,
+                    client.star,
+                    client,
+                    uiLifetime
+                )
+
                 list.setPaintBusy(true)
 
                 projectsVM.starredProjectsWithRepos.forEach(uiLifetime) { listPrRepos ->
@@ -204,8 +205,7 @@ internal class CircletCloneComponent(val project: Project,
                             state.value = CircletLoginState.Disconnected(serverName, response.description)
                         }
                     }
-                }
-                catch (th: Throwable) {
+                } catch (th: Throwable) {
                     circlet.settings.log.error(th)
                     state.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
                 }
