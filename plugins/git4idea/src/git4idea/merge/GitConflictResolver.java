@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,7 +25,6 @@ import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
@@ -196,43 +194,32 @@ public class GitConflictResolver {
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {
     try {
-      boolean resolved = false;
-
-      final Collection<VirtualFile> unmergedFiles = getUnmergedFiles(myRoots);
-      if (!unmergedFiles.isEmpty()) {
-        showMergeDialog(unmergedFiles);
-        resolved = true;
-      }
-
-      List<FilePath> unstagedFiles = getUnstagedFiles(myRoots);
-      if (!unstagedFiles.isEmpty()) {
-        showStageDialog(unstagedFiles);
-        resolved = true;
-      }
-
-      List<VirtualFile> remainingUnmergedFiles = getUnmergedFiles(myRoots);
-      List<FilePath> remainingUnstagedFiles = getUnstagedFiles(myRoots);
-
-      if (!remainingUnmergedFiles.isEmpty() || !remainingUnstagedFiles.isEmpty()) {
-        LOG.info("mergeFiles unmerged files remain: " + remainingUnmergedFiles + "; unstaged: " + remainingUnstagedFiles);
-        if (mergeDialogInvokedFromNotification) {
-          notifyUnresolvedRemainAfterNotification();
-        }
-        else {
-          notifyUnresolvedRemain();
-        }
-        return false;
+      final Collection<VirtualFile> initiallyUnmergedFiles = getUnmergedFiles(myRoots);
+      if (initiallyUnmergedFiles.isEmpty()) {
+        LOG.info("merge: no unmerged files");
+        return mergeDialogInvokedFromNotification ? true : proceedIfNothingToMerge();
       }
       else {
-        LOG.info("merge no more unmerged files");
-        if (mergeDialogInvokedFromNotification) return true;
-        return resolved ? proceedAfterAllMerged() : proceedIfNothingToMerge();
+        showMergeDialog(initiallyUnmergedFiles);
+
+        final Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myRoots);
+        if (unmergedFilesAfterResolve.isEmpty()) {
+          LOG.info("merge no more unmerged files");
+          return mergeDialogInvokedFromNotification ? true : proceedAfterAllMerged();
+        } else {
+          LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
+          if (mergeDialogInvokedFromNotification) {
+            notifyUnresolvedRemainAfterNotification();
+          } else {
+            notifyUnresolvedRemain();
+          }
+        }
       }
-    }
-    catch (VcsException e) {
+    } catch (VcsException e) {
       notifyException(e);
-      return false;
     }
+    return false;
+
   }
 
   private void showMergeDialog(@NotNull Collection<? extends VirtualFile> initiallyUnmergedFiles) {
@@ -241,24 +228,6 @@ public class GitConflictResolver {
       MergeProvider mergeProvider = new GitMergeProvider(myProject, myParams.reverse);
       myVcsHelper.showMergeDialog(new ArrayList<>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
     });
-  }
-
-  private void showStageDialog(@NotNull List<FilePath> unstagedFiles) throws VcsException {
-    boolean[] isOk = new boolean[1];
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      String message = StringUtil.isNotEmpty(myParams.myMergeDescription) ? myParams.myMergeDescription
-                                                                          : "Stage changed files to continue.";
-      SelectFilePathsDialog dialog = new SelectFilePathsDialog(myProject, unstagedFiles, message,
-                                                               null, "Stage and Continue", "Cancel", false);
-      dialog.setTitle("Unstaged Files");
-      isOk[0] = dialog.showAndGet();
-    });
-    if (isOk[0]) {
-      for (Map.Entry<VirtualFile, List<FilePath>> entry : GitUtil.sortFilePathsByGitRoot(myProject, unstagedFiles).entrySet()) {
-        final VirtualFile root = entry.getKey();
-        GitFileUtils.addPaths(myProject, root, entry.getValue());
-      }
-    }
   }
 
   private void notifyException(@NotNull VcsException e) {
@@ -271,18 +240,20 @@ public class GitConflictResolver {
 
   /**
    * @return unmerged files in the given Git roots, all in a single collection.
+   * @see #getUnmergedFiles(VirtualFile)
    */
   @NotNull
-  private List<VirtualFile> getUnmergedFiles(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
-    final Collection<VirtualFile> files = new HashSet<>();
+  private Collection<VirtualFile> getUnmergedFiles(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
+    final Collection<VirtualFile> unmergedFiles = new HashSet<>();
     for (VirtualFile root : roots) {
-      files.addAll(getUnmergedFiles(root));
+      unmergedFiles.addAll(getUnmergedFiles(root));
     }
-    return new ArrayList<>(files);
+    return unmergedFiles;
   }
 
   /**
    * @return unmerged files in the given Git root.
+   * @see #getUnmergedFiles(Collection)
    */
   @NotNull
   private Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
@@ -294,20 +265,5 @@ public class GitConflictResolver {
 
     List<FilePath> files = GitChangeUtils.getUnmergedFiles(repository);
     return ContainerUtil.map(files, it -> LocalFileSystem.getInstance().refreshAndFindFileByPath(it.getPath()));
-  }
-
-  @NotNull
-  private List<FilePath> getUnstagedFiles(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
-    final Collection<FilePath> files = new HashSet<>();
-    for (VirtualFile root : roots) {
-      files.addAll(getUnstagedFiles(root));
-    }
-    return new ArrayList<>(files);
-  }
-
-  @NotNull
-  private Collection<FilePath> getUnstagedFiles(@NotNull VirtualFile root) throws VcsException {
-    Collection<GitChangeUtils.GitDiffChange> changes = GitChangeUtils.getUnstagedChanges(myProject, root, false);
-    return ContainerUtil.map(changes, it -> it.afterPath);
   }
 }
