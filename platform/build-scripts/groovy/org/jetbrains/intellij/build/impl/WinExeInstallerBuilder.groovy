@@ -205,7 +205,7 @@ class WinExeInstallerBuilder {
 !define SHOULD_SET_DEFAULT_INSTDIR "0"
 """
 
-    def versionString = buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
+    def versionString = !productProperties.includeVersionToInstallDir ? "" : buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
     new File(box, "nsiconf/version.nsi").text = """
 !define MUI_VERSION_MAJOR "${buildContext.applicationInfo.majorVersion}"
 !define MUI_VERSION_MINOR "${buildContext.applicationInfo.minorVersion}"
