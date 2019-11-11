@@ -30,7 +30,8 @@
     <extensionPoint name="xml.fileNSInfoProvider"
                     interface="com.intellij.psi.xml.XmlFileNSInfoProvider"/>
     <extensionPoint name="xml.attributeDescriptorsProvider"
-                    interface="com.intellij.xml.XmlAttributeDescriptorsProvider"/>
+                    interface="com.intellij.xml.XmlAttributeDescriptorsProvider"
+                    dynamic="true"/>
     <extensionPoint name="xml.elementDescriptorProvider"
                     interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider"/>
     <extensionPoint name="xml.util.htmlDoctypeProvider"
