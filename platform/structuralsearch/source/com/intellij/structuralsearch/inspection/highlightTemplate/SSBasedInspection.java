@@ -78,13 +78,13 @@ public class SSBasedInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    final Matcher matcher = new Matcher(holder.getManager().getProject());
     final Map<Configuration, MatchContext> compiledOptions =
-      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(myConfigurations, holder.getProject());
+      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(myConfigurations, matcher);
 
     if (compiledOptions.isEmpty()) return super.buildVisitor(holder, isOnTheFly);
 
     return new PsiElementVisitor() {
-      final Matcher matcher = new Matcher(holder.getManager().getProject());
       final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
         final PsiElement element = matchResult.getMatch();
         final String name = configuration.getName();

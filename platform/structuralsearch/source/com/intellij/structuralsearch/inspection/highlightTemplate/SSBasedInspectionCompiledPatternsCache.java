@@ -23,7 +23,8 @@ public class SSBasedInspectionCompiledPatternsCache {
   private static final Key<Map<Configuration, MatchContext>> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");
 
   @NotNull
-  static Map<Configuration, MatchContext> getCompiledOptions(@NotNull List<Configuration> configurations, @NotNull Project project) {
+  static Map<Configuration, MatchContext> getCompiledOptions(@NotNull List<Configuration> configurations, @NotNull Matcher matcher) {
+    final Project project = matcher.getProject();
     final Map<Configuration, MatchContext> cache = project.getUserData(COMPILED_OPTIONS_KEY);
     if (areConfigurationsInCache(configurations, cache)) {
       return cache;
@@ -35,7 +36,7 @@ public class SSBasedInspectionCompiledPatternsCache {
       newCache.keySet().retainAll(configurations);
     }
     if (configurations.size() != newCache.size()) {
-      new Matcher(project).precompileOptions(configurations, newCache);
+      matcher.precompileOptions(configurations, newCache);
     }
     project.putUserData(COMPILED_OPTIONS_KEY, Collections.unmodifiableMap(newCache));
     return newCache;

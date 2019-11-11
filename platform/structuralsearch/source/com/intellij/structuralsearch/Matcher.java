@@ -127,7 +127,7 @@ public class Matcher {
           return false;
         }
         final MatchingHandler matchingHandler = pattern.getHandler(patternNode);
-        if (matchingHandler == null || !matchingHandler.canMatch(patternNode, matchedNode, context)) {
+        if (!matchingHandler.canMatch(patternNode, matchedNode, context)) {
           return false;
         }
         matchedNodes.advance();
@@ -294,6 +294,10 @@ public class Matcher {
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
+  }
+
+  public Project getProject() {
+    return project;
   }
 
   private CompiledPattern prepareMatching(MatchResultSink sink, MatchOptions options) {
