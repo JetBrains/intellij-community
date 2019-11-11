@@ -215,12 +215,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public boolean commitAllDocumentsUnderProgress() {
     Application application = ApplicationManager.getApplication();
-    //backward compatibility with unit tests
-    if (application.isUnitTestMode()) {
+    if (application.isWriteAccessAllowed()) {
       commitAllDocuments();
+      //there are lot of existing actions/processors/tests which execute it under write lock
+      //show this message only to developer in internal mode
+      if (application.isInternal() && !application.isUnitTestMode()) {
+        LOG.error("Do not call commitAllDocumentsUnderProgress inside write-action");
+      }
       return true;
     }
-    assert !application.isWriteAccessAllowed() : "Do not call commitAllDocumentsUnderProgress inside write-action";
     final int semaphoreTimeoutInMs = 50;
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
