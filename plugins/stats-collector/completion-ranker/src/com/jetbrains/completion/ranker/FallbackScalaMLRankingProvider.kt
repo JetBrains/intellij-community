@@ -2,7 +2,7 @@
 package com.jetbrains.completion.ranker
 
 import com.completion.ranker.model.scala.MLWhiteBox
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.ModelMetadata
 import com.intellij.internal.ml.completion.CompletionRankingModelBase
@@ -20,7 +20,7 @@ class FallbackScalaMLRankingProvider : JarCompletionModelProvider("Scala", "scal
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("Scala", ignoreCase = true) == 0
 
   override fun canBeUsed(): Boolean {
-    return PluginManager.getInstance().findEnabledPlugin(PluginId.findId(SCALA_PLUGIN_ID) ?: return false)?.isEnabled ?: false
+    return PluginManagerCore.getPlugin(PluginId.findId(SCALA_PLUGIN_ID))?.isEnabled ?: false
   }
 
   override fun shouldReplace(): Boolean = false
