@@ -85,6 +85,10 @@ import java.util.*;
  * @see Builder
  */
 public class PySkeletonGenerator {
+  private static class Run {
+    static final Logger LOG = Logger.getInstance(Run.class);
+  }
+
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final String GENERATOR3 = "generator3/__main__.py";
 
@@ -308,13 +312,13 @@ public class PySkeletonGenerator {
             final String level = controlMessage.get("level").getAsString();
             final String message = controlMessage.get("message").getAsString();
             if (level.equals("info")) {
-              LOG.info(message);
+              Run.LOG.info(message);
             }
             else if (level.equals("debug")) {
-              LOG.debug(message);
+              Run.LOG.debug(message);
             }
             else if (level.equals("trace")) {
-              LOG.trace(message);
+              Run.LOG.trace(message);
             }
           }
           else if (msgType.equals("generation_result")) {
@@ -325,7 +329,7 @@ public class PySkeletonGenerator {
 
       @Override
       public void onStderrLine(@NotNull String line) {
-        LOG.info(StringUtil.trimTrailing(line));
+        Run.LOG.info(StringUtil.trimTrailing(line));
       }
     };
 
