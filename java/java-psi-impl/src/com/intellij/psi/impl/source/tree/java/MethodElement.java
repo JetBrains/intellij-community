@@ -17,8 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
@@ -54,13 +52,6 @@ public class MethodElement extends CompositeElement implements Constants {
       }
     }
     return super.addInternal(first, last, anchor, before);
-  }
-
-  @Override
-  public ASTNode copyElement() {
-    CharTable table = SharedImplUtil.findCharTableByTree(this);
-    final PsiClass psiClass = ((PsiMethod)getPsi()).getContainingClass();
-    return psiClass != null ? ChangeUtil.copyElement(this, psiClass.getTypeParameterList(), table) : super.copyElement();
   }
 
   @Override
