@@ -150,8 +150,7 @@ internal class FilteringBranchesTree(project: Project,
 
   init {
     runInEdt {
-      PopupHandler.installFollowingSelectionTreePopup(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup",
-                                                      ActionManager.getInstance())
+      PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
       setupTreeExpansionListener()
     }
   }
