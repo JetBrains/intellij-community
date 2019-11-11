@@ -101,6 +101,11 @@ public interface SearchableConfigurable extends Configurable {
     }
   }
 
+  @FunctionalInterface
+  interface Merged {
+    Configurable[] getMergedConfigurables();
+  }
+
   /**
    * Intended to use some search utility methods with any configurable.
    *
