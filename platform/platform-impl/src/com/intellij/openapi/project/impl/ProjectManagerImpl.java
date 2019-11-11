@@ -6,7 +6,10 @@ import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
-import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
@@ -25,7 +28,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -37,7 +39,10 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -411,11 +416,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return true;
       }
     }
-    else {
-      assertInTransaction();
-      if (loadProjectUnderProgress(project)) {
-        return true;
-      }
+    else if (loadProjectUnderProgress(project)) {
+      return true;
     }
 
     GuiUtils.invokeLaterIfNeeded(() -> {
@@ -476,15 +478,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         startupManager.scheduleBackgroundPostStartupActivities();
       }
     }, ModalityState.NON_MODAL, project.getDisposed());
-  }
-
-  private static void assertInTransaction() {
-    if (!ApplicationManager.getApplication().isUnitTestMode() &&
-        ApplicationManager.getApplication().isInternal() &&
-        TransactionGuard.getInstance().getContextTransaction() == null) {
-      LOG.error("Project opening should be done in a transaction",
-                new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
-    }
   }
 
   private boolean addToOpened(@NotNull Project project) {
