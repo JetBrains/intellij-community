@@ -14,6 +14,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
@@ -32,6 +33,8 @@ import java.awt.event.*;
 import static java.awt.BorderLayout.*;
 
 public class TabLabel extends JPanel implements Accessible, Disposable {
+  private static final Logger LOG = Logger.getInstance(TabLabel.class);
+
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
@@ -57,7 +60,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new BorderLayout());
+    setLayout(new MyTabLabelLayout());
 
     myLabelPlaceholder.setOpaque(false);
     myLabelPlaceholder.setFocusable(false);
@@ -601,6 +604,70 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PAGE_TAB;
+    }
+  }
+
+
+  private class MyTabLabelLayout extends BorderLayout {
+
+    @Override
+    public void addLayoutComponent(Component comp, Object constraints) {
+      checkConstraints(constraints);
+      super.addLayoutComponent(comp, constraints);
+    }
+
+    private void checkConstraints(Object constraints) {
+      if (NORTH.equals(constraints) || SOUTH.equals(constraints)) {
+        LOG.warn(new IllegalArgumentException("constraints=" + constraints));
+      }
+    }
+
+    @Override
+    public void layoutContainer(Container parent) {
+      synchronized (parent.getTreeLock()) {
+        boolean success = doCustomLayout(parent);
+        if (!success) {
+          super.layoutContainer(parent);
+        }
+      }
+    }
+
+    private boolean doCustomLayout(Container parent) {
+      if (!(myTabs != null &&
+            myTabs.getEffectiveLayout() instanceof ScrollableSingleRowLayout &&
+            parent.getWidth() < parent.getPreferredSize().width)) {
+        return false;
+      }
+
+      int spaceTop = parent.getInsets().top;
+      int spaceLeft = parent.getInsets().left;
+      int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
+      int spaceHeight = spaceBottom - spaceTop;
+
+      int xOffset = spaceLeft;
+
+      xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
+      xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
+      layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
+
+      return true;
+    }
+
+    private int layoutComponent(int xOffset, Component component, int spaceTop, int spaceHeight) {
+      if (component != null) {
+        int prefWestWidth = component.getPreferredSize().width;
+        setBoundsWithVAlign(component, xOffset, prefWestWidth, spaceTop, spaceHeight);
+        xOffset += prefWestWidth + getHgap();
+      }
+      return xOffset;
+    }
+
+    private void setBoundsWithVAlign(Component component, int left, int width, int spaceTop, int spaceHeight) {
+      if (component == null) return;
+
+      int height = component.getPreferredSize().height;
+      int top = spaceTop + (spaceHeight - height) / 2;
+      component.setBounds(left, top, width, height);
     }
   }
 }
