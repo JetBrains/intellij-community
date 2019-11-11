@@ -94,7 +94,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   }
 
   @NotNull
-  public MainFrame getMainFrame() {
+  protected MainFrame getMainFrame() {
     return myMainFrame;
   }
 

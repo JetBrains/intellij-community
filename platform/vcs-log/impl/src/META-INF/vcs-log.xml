@@ -1,7 +1,6 @@
 <idea-plugin>
   <projectListeners>
     <listener class="com.intellij.vcs.log.impl.VcsToolWindowEditorSynchronizer$MyFileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" />
-    <listener class="com.intellij.vcs.log.impl.VcsToolWindowEditorSynchronizer$MyToolwindowListener" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener" />
   </projectListeners>
 
   <extensionPoints>
@@ -23,7 +22,6 @@
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogSharedSettings"/>
 
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsToolWindowEditorSynchronizer"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>

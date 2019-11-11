@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -94,8 +95,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
     override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
-                                                                  logUi.mainFrame.changesBrowser.preferredFocusedComponent,
-                                                                  logUi.mainFrame.filterUi.textFilterComponent.textEditor)
+                                                                  logUi.changesBrowser.preferredFocusedComponent,
+                                                                  logUi.filterUi.textFilterComponent.textEditor)
   }
 
   init {
@@ -109,7 +110,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     uiController.registerDataPackListener(logUi.logData)
     uiController.registerLogUiPropertiesListener(logUi.properties)
     branchesSearchField.setVerticalSizeReferent(logUi.toolbar)
-    branchViewSplitter.secondComponent = logUi.mainFrame
+    branchViewSplitter.secondComponent = logUi.mainLogComponent
     val isDiffPreviewInEditor = isDiffPreviewInEditor()
     val diffPreview = logUi.createDiffPreview(isDiffPreviewInEditor)
     if (isDiffPreviewInEditor) {
@@ -268,6 +269,12 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
   private val branchesUi =
     BranchesDashboardUi(logData.project, this)
       .also { branchesUi -> Disposer.register(this, branchesUi) }
+
+  internal val mainLogComponent: JComponent
+    get() = mainFrame
+
+  internal val changesBrowser: ChangesBrowserBase
+    get() = mainFrame.changesBrowser
 
   override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx) =
     MainFrame(logData, this, uiProperties, filterUi, false)
