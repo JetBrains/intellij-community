@@ -549,10 +549,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     public boolean isModifiedDocumentTrackingRequired() {
       return false;
     }
-
-    @Override
-    public void doCleanup(List<VirtualFile> files) {
-    }
   }
 
   private class MyTask extends Task {
