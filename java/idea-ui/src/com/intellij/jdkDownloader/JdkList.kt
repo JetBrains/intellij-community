@@ -79,10 +79,7 @@ data class JdkItem(
   val archiveSize: Long,
   val unpackedSize: Long,
 
-  // normally archive container a root folder inside, or several for macOS bundles
-  // we need to know how many to skip
-  val unpackCutDirs: Int,
-  // we should only extract items tarting from the given prefix (e.g. masOS bundle)
+  // we should only extract items that has the given prefix removing the prefix
   val unpackPrefixFilter: String,
 
   val archiveFileName: String,
@@ -263,7 +260,6 @@ object JdkListDownloader {
                         sha256 = pkg["sha256"]?.asText() ?: continue,
                         archiveSize = pkg["archive_size"]?.asLong() ?: continue,
                         archiveFileName = pkg["archive_file_name"]?.asText() ?: continue,
-                        unpackCutDirs = pkg["unpack_cut_dirs"]?.asInt() ?: continue,
                         unpackPrefixFilter = pkg["unpack_prefix_filter"]?.asText() ?: continue,
 
                         unpackedSize = pkg["unpacked_size"]?.asLong() ?: continue,

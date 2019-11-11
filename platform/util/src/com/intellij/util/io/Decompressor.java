@@ -131,10 +131,10 @@ public abstract class Decompressor {
     //</editor-fold>
   }
 
-  private Condition<? super String> myFilter = null;
+  @Nullable private Condition<? super String> myFilter = null;
+  @Nullable private List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
-  private Consumer<? super File> myConsumer;
-  private int myCutDirs = 0;
+  @Nullable private Consumer<? super File> myConsumer;
 
   public Decompressor filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
@@ -152,18 +152,18 @@ public abstract class Decompressor {
   }
 
   /**
-   * Removes several leading directories from the archive during extraction.
-   * Some entries may clash, so use {@link #overwrite(boolean)} to control it.
-   * Some short file entries may be lost.
+   * Extracts only items whose paths starts with the normalized prefix of {@code prefix + '/'} <br/>
+   * Paths are normalized before comparison. <br/>
+   * The prefix test is applied after {@link #filter(Condition)} predicate is tested. <br/>
+   * Some entries may clash, so use {@link #overwrite(boolean)} to control it. <br/>
+   * Some items with path that does not start from the prefix could be ignored
    *
-   * Executed AFTER filter test!
-   *
-   * @param dirsToCut how many directories has to be removed from archive entry names
+   * @param prefix prefix to remove from every archive entry paths
    * @return self
    */
   @NotNull
-  public Decompressor cutDirs(int dirsToCut) {
-    myCutDirs = dirsToCut;
+  public Decompressor removePrefixPath(@Nullable final String prefix) throws IOException {
+    myPathsPrefix = prefix != null ? normalizePathAndSplit(prefix) : null;
     return this;
   }
 
@@ -179,8 +179,10 @@ public abstract class Decompressor {
           }
         }
 
-        entry = entry.cutDirs(myCutDirs);
-        if (entry == null) continue;
+        if (myPathsPrefix != null) {
+          entry = entry.mapPathPrefix(myPathsPrefix);
+          if (entry == null) continue;
+        }
 
         File outputFile = entryFile(outputDir, entry.name);
 
@@ -255,11 +257,12 @@ public abstract class Decompressor {
     }
 
     @Nullable
-    protected Entry cutDirs(int cutDirs) throws IOException {
-      if (cutDirs == 0) return this;
-      String cutName = Decompressor.cutDirs(name, cutDirs);
-      if (cutName == null) return null;
-      return new Entry(cutName, this.type, this.isWritable, isExecutable, linkTarget);
+    protected Entry mapPathPrefix(@NotNull List<String> prefix) throws IOException {
+      List<String> ourPathSplit = normalizePathAndSplit(name);
+      if (prefix.size() >= ourPathSplit.size()) return null;
+      if (!ourPathSplit.subList(0,prefix.size()).equals(prefix)) return null;
+      String newName = StringUtil.join(ourPathSplit.subList(prefix.size(), ourPathSplit.size()), "/");
+      return new Entry(newName, this.type, this.isWritable, isExecutable, linkTarget);
     }
   }
 
@@ -270,14 +273,10 @@ public abstract class Decompressor {
   protected abstract void closeStream() throws IOException;
   //</editor-fold>
 
-  @Nullable
-  private static String cutDirs(@Nullable String entryName, int cutDirs) throws IOException {
-    if (cutDirs == 0 || entryName == null) return entryName;
-
-    ensureValidPath(entryName);
-    List<String> pathElements = FileUtil.splitPath(FileUtil.toCanonicalPath(entryName, '/'), '/');
-    if (pathElements.size() <= cutDirs) return null;
-    return StringUtil.join(pathElements.subList(cutDirs, pathElements.size()), "/");
+  private static List<String> normalizePathAndSplit(@NotNull String path) throws IOException {
+    ensureValidPath(path);
+    String canonicalPath = FileUtil.toCanonicalPath(path, '/');
+    return FileUtil.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
   }
 
   private static void ensureValidPath(@NotNull String entryName) throws IOException {

@@ -71,22 +71,12 @@ object JdkInstaller {
 
       val decompressor = item.packageType.openDecompressor(downloadFile)
       //handle cancellation via postProcessor (instead of inheritance)
-      decompressor.cutDirs(item.unpackCutDirs)
       decompressor.postprocessor { indicator?.checkCanceled() }
 
-
       val fullMatchPath = item.unpackPrefixFilter.trim('/')
-
       if (!fullMatchPath.isBlank()) {
-        val baseMatchPath = item.unpackPrefixFilter.trim('/') + "/"
-        decompressor.filter { entry ->
-          indicator?.checkCanceled()
-          if (entry.trim('/').equals(fullMatchPath, ignoreCase = true)) return@filter true
-          if (entry.trimStart('/').startsWith(baseMatchPath, ignoreCase = true)) return@filter true
-          false
-        }
+        decompressor.removePrefixPath(fullMatchPath)
       }
-
       decompressor.extract(targetDir)
     }
     catch (t: Throwable) {
