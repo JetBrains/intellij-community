@@ -18,6 +18,7 @@ import org.gradle.util.GFileUtils
 
 repositories {
   maven { url 'https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/' }
+  maven { url 'https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-plugin/' }
   maven { url 'https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies/' }
   ivy {
     // TODO: re-publish android-sdk:android-sdk using maven layout and remove Ivy repository
@@ -37,11 +38,18 @@ configurations {
 def currentOs = org.gradle.internal.os.OperatingSystem.current()
 def osFamily = currentOs.familyName
 
-ext.kotlin_version = "1.3.50"
+// infer kotlin_version from kotlin-plugin (i.e. "1.3.60-eap-143" in "1.3.60-eap-143-IJ2019.3-1:EAP")
+def kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ20")
+ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
 ext.android_m2_version = "26.5.0.1"
 ext.android_sdk_version = "${osFamily}.3.3.3"
 
 dependencies {
+/*  FIXME: configurations androidOfflineRepo and androidSdk are resolved eagerly (and downloads ~3GB). This is caused by "singleFile" method
+     invocation, e.g. in configurations.androidSdk.singleFile. There is no nice solution for this problem.
+     See discussions here: https://discuss.gradle.org/t/lazy-configuration-resolution-with-artifact-repack/12747/5
+     and here: https://discuss.gradle.org/t/lazy-dependency-resolution-completely-conditional-configuration-dependency/5032
+ */
   androidOfflineRepo "org.jetbrains.intellij.deps.android.tools:android-sdk-offline-repo:${android_m2_version}@zip"
   androidSdk "android-sdk:android-sdk:${android_sdk_version}:@tar.gz"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
@@ -70,8 +78,7 @@ task syncOfflineRepo(dependsOn: configurations.androidOfflineRepo, type: Version
   into "${project.buildDir}/android-sdk"
 }
 
-task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo], type: VersionedCopyTask) {
-  versionStr kotlin_version
+task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo], type: Sync) {
   from "$buildDir/kotlin"
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
 }
@@ -83,11 +90,15 @@ task syncAndroidSdk(dependsOn: [configurations.androidSdk, syncOfflineRepo], typ
 }
 
 task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncOfflineRepo], type: OfflineMavenRepository) {
+  def verFile = "${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/${kotlin_version}"
   onlyIf {
-    !(file("${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/${kotlin_version}").isDirectory())
+    !(file(verFile).isFile())
   }
   configurationName = "kotlinDeps"
   repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
+  doLast {
+    file(verFile).write(kotlin_version)
+  }
 }
 
 task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk, updateKotlinLibs]) {
@@ -95,6 +106,7 @@ task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, sy
 }
 
 class VersionedCopyTask extends Copy {
+
   void setVersionStr(String versionStr) {
     def versionFile = { return new File("${getDestinationDir()}/${versionStr}.version") }
     onlyIf {
