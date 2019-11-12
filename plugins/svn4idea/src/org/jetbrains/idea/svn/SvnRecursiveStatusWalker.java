@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
@@ -31,6 +30,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class SvnRecursiveStatusWalker {
   private static final Logger LOG = Logger.getInstance(SvnRecursiveStatusWalker.class);
@@ -114,7 +114,7 @@ public class SvnRecursiveStatusWalker {
       final VirtualFile virtualFile = item.getPath().getVirtualFile();
       if (virtualFile != null && !isIgnoredByVcs(virtualFile) && !myChangeListManager.isIgnoredFile(virtualFile)) {
         // self is unversioned
-        myReceiver.processUnversioned(virtualFile);
+        myReceiver.processUnversioned(item.getPath());
 
         if (virtualFile.isDirectory()) {
           processRecursively(virtualFile, item.getDepth());
@@ -162,7 +162,7 @@ public class SvnRecursiveStatusWalker {
   private void processRecursively(@NotNull VirtualFile vFile, @NotNull Depth prevDepth) {
     if (Depth.EMPTY.equals(prevDepth)) return;
     if (isIgnoredIdeaLevel(vFile)) {
-      myReceiver.processIgnored(vFile);
+      myReceiver.processIgnored(getFilePath(vFile));
       return;
     }
 
@@ -174,15 +174,15 @@ public class SvnRecursiveStatusWalker {
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
         if (isIgnoredIdeaLevel(file)) {
-          myReceiver.processIgnored(file);
+          myReceiver.processIgnored(getFilePath(file));
           return SKIP_CHILDREN;
         }
         else if (file.isDirectory() && file.findChild(SvnUtil.SVN_ADMIN_DIR_NAME) != null) {
-          myQueue.add(createItem(VcsUtil.getFilePath(file), newDepth, true));
+          myQueue.add(createItem(getFilePath(file), newDepth, true));
           return SKIP_CHILDREN;
         }
         else {
-          myReceiver.processUnversioned(file);
+          myReceiver.processUnversioned(getFilePath(file));
           return CONTINUE;
         }
       }
@@ -233,10 +233,10 @@ public class SvnRecursiveStatusWalker {
 
       if (vf != null) {
         if (status.is(StatusType.STATUS_IGNORED)) {
-          myReceiver.processIgnored(vf);
+          myReceiver.processIgnored(path);
         }
         else if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_NONE)) {
-          myReceiver.processUnversioned(vf);
+          myReceiver.processUnversioned(path);
           processRecursively(vf, myCurrentItem.getDepth());
         }
         else if (!status.is(StatusType.OBSTRUCTED)) {
@@ -263,15 +263,15 @@ public class SvnRecursiveStatusWalker {
       if (vFile != null && status.is(StatusType.STATUS_UNVERSIONED)) {
         if (vFile.isDirectory()) {
           if (!FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
-            myQueue.add(createItem(VcsUtil.getFilePath(vFile), Depth.INFINITY, true));
+            myQueue.add(createItem(getFilePath(vFile), Depth.INFINITY, true));
           }
         }
         else {
-          myReceiver.processUnversioned(vFile);
+          myReceiver.processUnversioned(getFilePath(vFile));
         }
       }
       else {
-        myReceiver.process(VcsUtil.getFilePath(ioFile, status.getNodeKind().isDirectory()), status);
+        myReceiver.process(getFilePath(ioFile, status.getNodeKind().isDirectory()), status);
       }
     }
   }

@@ -66,13 +66,13 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void processIgnored(VirtualFile vFile) {
-    myChangelistBuilder.processIgnoredFile(vFile);
+  public void processIgnored(@NotNull FilePath path) {
+    myChangelistBuilder.processIgnoredFile(path);
   }
 
   @Override
-  public void processUnversioned(VirtualFile vFile) {
-    myChangelistBuilder.processUnversionedFile(vFile);
+  public void processUnversioned(@NotNull FilePath path) {
+    myChangelistBuilder.processUnversionedFile(path);
   }
 
   @Override
