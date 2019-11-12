@@ -3,9 +3,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -236,12 +234,12 @@ public class UrlClassLoader extends ClassLoader {
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
-    myURLs = ContainerUtilRt.map2List(builder.myURLs, new Function<URL, URL>() {
-      @Override
-      public URL fun(URL url) {
-        return internProtocol(url);
-      }
-    });
+
+    myURLs = new ArrayList<URL>(builder.myURLs.size());
+    for (URL url : builder.myURLs) {
+      myURLs.add(internProtocol(url));
+    }
+
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
     myClassLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
