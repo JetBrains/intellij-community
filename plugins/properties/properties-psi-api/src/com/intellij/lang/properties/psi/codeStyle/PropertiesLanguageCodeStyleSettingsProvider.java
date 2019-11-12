@@ -1,13 +1,39 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesLanguage;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+
+  @NotNull
+  @Override
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
+                                                  @NotNull CodeStyleSettings modelSettings) {
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, "Properties Files") {
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.codestyle.properties";
+      }
+
+      @Override
+      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+        return new PropertiesCodeStyleSettingsPanel(settings);
+      }
+    };
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new PropertiesCodeStyleSettings(settings);
+  }
+
   @NotNull
   @Override
   public Language getLanguage() {
