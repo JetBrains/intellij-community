@@ -236,6 +236,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         // When updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
         if (!myThemesInUpdatedPlugin.contains(theme.getId())) {
           setCurrentLookAndFeel(newTheme);
+          if (myLafComboBoxModel != null) {
+            myLafComboBoxModel.setSelectedItem(newTheme);
+          }
           JBColor.setDark(newTheme.getTheme().isDark());
           updateUI();
         }
