@@ -13,8 +13,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.io.File;
@@ -33,7 +35,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class PluginClassLoader extends UrlClassLoader {
   static {
-    if (registerAsParallelCapable()) markParallelCapable(PluginClassLoader.class);
+    if (registerAsParallelCapable()) {
+      markParallelCapable(PluginClassLoader.class);
+    }
   }
 
   private final ClassLoader[] myParents;
@@ -421,5 +425,13 @@ public final class PluginClassLoader extends UrlClassLoader {
       }
       return myEnumerations[myIndex].nextElement();
     }
+  }
+
+  @NotNull
+  @TestOnly
+  @ApiStatus.Internal
+  public List<ClassLoader> _getParents() {
+    //noinspection SSBasedInspection
+    return Collections.unmodifiableList(Arrays.asList(myParents));
   }
 }

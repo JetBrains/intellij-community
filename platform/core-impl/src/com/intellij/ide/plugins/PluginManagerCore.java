@@ -1133,8 +1133,10 @@ public final class PluginManagerCore {
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromDir(@NotNull Path dir)
     throws ExecutionException, InterruptedException {
     PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap());
-    loadDescriptorsFromDir(dir, result, true, new DescriptorListLoadingContext(0, Collections.emptySet(), result));
+    loadDescriptorsFromDir(dir, result, true, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()));
     result.finishLoading();
+
+    initializePlugins(result, UrlClassLoader.build().get(), false, true);
     return result.plugins;
   }
 
@@ -1620,7 +1622,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static void initializePlugins(@NotNull PluginLoadingResult loadResult, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
+  static void initializePlugins(@NotNull PluginLoadingResult loadResult, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins, boolean usePluginClassLoader) {
     List<String> errors = new ArrayList<>(loadResult.errors);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadResult.idMap;
 
@@ -1631,7 +1633,7 @@ public final class PluginManagerCore {
     }
 
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
-    if (coreDescriptor == null) {
+    if (checkEssentialPlugins && coreDescriptor == null) {
       throw new EssentialPluginMissingException(Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
@@ -1674,7 +1676,7 @@ public final class PluginManagerCore {
     }
 
     mergeOptionalConfigs(enabledPlugins, idMap);
-    configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins);
+    configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins, usePluginClassLoader);
 
     if (checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap);
@@ -1685,8 +1687,9 @@ public final class PluginManagerCore {
 
   private static void configureClassLoaders(@NotNull ClassLoader coreLoader,
                                             @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph,
-                                            @NotNull IdeaPluginDescriptor coreDescriptor,
-                                            @NotNull List<IdeaPluginDescriptorImpl> enabledPlugins) {
+                                            @Nullable IdeaPluginDescriptor coreDescriptor,
+                                            @NotNull List<IdeaPluginDescriptorImpl> enabledPlugins,
+                                            boolean usePluginClassLoader) {
     ArrayList<ClassLoader> loaders = new ArrayList<>();
     ClassLoader[] emptyClassLoaderArray = new ClassLoader[0];
     for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
@@ -1695,7 +1698,7 @@ public final class PluginManagerCore {
         continue;
       }
 
-      if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
+      if (!usePluginClassLoader) {
         rootDescriptor.setLoader(null);
         continue;
       }
@@ -1876,7 +1879,7 @@ public final class PluginManagerCore {
     try {
       Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
       result = loadDescriptors(isRunningFromSources());
-      initializePlugins(result, coreLoader, !isUnitTestMode);
+      initializePlugins(result, coreLoader, !isUnitTestMode, !isUnitTestMode || ourUnitTestWithBundledPlugins);
 
       ourPlugins = result.getSortedPlugins();
       if (!result.incompletePlugins.isEmpty()) {

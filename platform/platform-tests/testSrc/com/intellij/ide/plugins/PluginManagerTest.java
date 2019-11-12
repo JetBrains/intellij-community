@@ -122,7 +122,7 @@ public class PluginManagerTest {
   private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
     PluginManagerCore.ourPluginError = null;
     PluginLoadingResult loadPluginResult = loadDescriptors(testDataName + ".xml", isBundled);
-    PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
+    PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, false);
     String actual = StringUtil.join(loadPluginResult.getSortedPlugins(), o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
                     "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
     PluginManagerCore.ourPluginError = null;

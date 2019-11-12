@@ -3,6 +3,7 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
@@ -15,11 +16,11 @@ import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.intellij.lang.annotations.Language
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.io.IOException
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -125,8 +126,7 @@ class PluginDescriptorTest {
         urls.add(path.toUri().toURL())
       }
     }
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(
-      URLClassLoader(urls.toTypedArray(), null))
+    val descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
     // core and com.intellij.workspace
     assertThat(descriptors).hasSize(1)
   }
@@ -135,8 +135,7 @@ class PluginDescriptorTest {
   @Throws(Exception::class)
   fun testProduction2() {
     assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(
-      Paths.get("/Volumes/data/plugins"))
+    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"))
     assertThat(descriptors).isNotEmpty()
   }
 
@@ -158,7 +157,6 @@ class PluginDescriptorTest {
   }
 
   @Test
-  @Throws(IOException::class)
   fun releaseDate() {
     val pluginFile = inMemoryFs.fs.getPath("plugin/META-INF/plugin.xml")
     pluginFile.write("""
@@ -171,6 +169,63 @@ class PluginDescriptorTest {
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.vendor).isEqualTo("JetBrains")
     assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
+  }
+
+  @Test
+  fun classLoader() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    writeDescriptor("foo", pluginDir, """
+    <idea-plugin>
+      <id>foo</id>
+      <depends>bar</depends>
+      <vendor>JetBrains</vendor>
+    </idea-plugin>""")
+    writeDescriptor("bar", pluginDir, """
+    <idea-plugin>
+      <id>bar</id>
+      <vendor>JetBrains</vendor>
+    </idea-plugin>""")
+
+    checkClassLoader(pluginDir)
+  }
+
+  @Test
+  fun `classLoader - optional dependency`() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    writeDescriptor("foo", pluginDir, """
+    <idea-plugin>
+      <id>foo</id>
+      <depends optional="true" config-file="stream-debugger.xml">bar</depends>
+      <vendor>JetBrains</vendor>
+    </idea-plugin>""")
+
+    pluginDir.resolve("foo/META-INF/stream-debugger.xml").write("""
+       <idea-plugin>
+        <actions>
+        </actions>
+      </idea-plugin>
+    """.trimIndent())
+
+    writeDescriptor("bar", pluginDir, """
+    <idea-plugin>
+      <id>bar</id>
+      <vendor>JetBrains</vendor>
+    </idea-plugin>""")
+
+    checkClassLoader(pluginDir)
+  }
+
+  private fun checkClassLoader(pluginDir: Path) {
+    val list = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir)
+    assertThat(list).hasSize(2)
+
+    val bar = list[0]
+    assertThat(bar.pluginId.idString).isEqualTo("bar")
+
+    val foo = list[1]
+    assertThat(foo.pluginId.idString).isEqualTo("foo")
+    val fooClassLoader = foo.pluginClassLoader as PluginClassLoader
+    assertThat(fooClassLoader._getParents()).containsExactly(bar.pluginClassLoader)
   }
 
   @Test
@@ -243,4 +298,8 @@ class PluginDescriptorTest {
     TestCase.assertEquals(impl1.hashCode(), impl2.hashCode())
     TestCase.assertNotSame(impl1.name, impl2.name)
   }
+}
+
+private fun writeDescriptor(id: String, pluginDir: Path, @Language("xml") data: String) {
+  pluginDir.resolve("$id/META-INF/plugin.xml").write(data.trimIndent())
 }
