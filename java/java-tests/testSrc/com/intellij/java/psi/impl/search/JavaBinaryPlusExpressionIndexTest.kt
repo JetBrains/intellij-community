@@ -20,6 +20,9 @@ class JavaBinaryPlusExpressionIndexTest : BasePlatformTestCase() {
                   String s = "qwe" + "asd";
                   String s1 = "qwe" + o;
                   String s2 = "qwe" + o2 + "xxx";
+                  String x = "uuu" + o + 
+                              /*"  <inspection_tool class=\"ManifestDomInspection\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +*/
+                             "asd";
                 }
             }
     """).virtualFile
@@ -27,9 +30,11 @@ class JavaBinaryPlusExpressionIndexTest : BasePlatformTestCase() {
     content.putUserData(IndexingDataKeys.PROJECT, project)
     val data = JavaBinaryPlusExpressionIndex().indexer.map(content).entries.first().value.offsets!!
 
-    assertEquals(3, data.size)
+    assertEquals(5, data.size)
     assertEquals(190, data[0])
     assertEquals(231, data[1])
     assertEquals(236, data[2])
+    assertEquals(280, data[3])
+    assertEquals(284, data[4])
   }
 }
