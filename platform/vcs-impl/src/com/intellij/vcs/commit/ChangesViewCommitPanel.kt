@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -86,7 +85,7 @@ private fun JBPopup.showAbove(component: JComponent) {
 
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
-public open class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
+open class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
   BorderLayoutPanel(), ChangesViewCommitWorkflowUi, EditorColorsListener, ComponentContainer, DataProvider {
 
   private val project get() = changesView.project
@@ -385,11 +384,11 @@ public open class ChangesViewCommitPanel(private val changesView: ChangesListVie
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
 
-  override fun getDisplayedUnversionedFiles(): List<VirtualFile> =
-    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java).mapNotNull { it.virtualFile }
+  override fun getDisplayedUnversionedFiles(): List<FilePath> =
+    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
 
-  override fun getIncludedUnversionedFiles(): List<VirtualFile> =
-    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java).mapNotNull { it.virtualFile }
+  override fun getIncludedUnversionedFiles(): List<FilePath> =
+    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
 
   override var inclusionModel: InclusionModel?
     get() = changesView.inclusionModel
