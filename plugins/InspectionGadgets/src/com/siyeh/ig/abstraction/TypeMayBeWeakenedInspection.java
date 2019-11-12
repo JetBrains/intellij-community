@@ -451,7 +451,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       }
       if (variable instanceof PsiParameter) {
         PsiMethod method = PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
-        if (method == null || UnusedSymbolUtil.isImplicitUsage(variable.getProject(), method, null)) return;
+        if (method == null || UnusedSymbolUtil.isImplicitUsage(variable.getProject(), method)) return;
       }
       if (UnusedSymbolUtil.isImplicitWrite(variable) || UnusedSymbolUtil.isImplicitRead(variable)) {
         return;

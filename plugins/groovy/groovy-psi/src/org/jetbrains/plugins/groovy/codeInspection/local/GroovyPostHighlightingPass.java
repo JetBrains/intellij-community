@@ -117,7 +117,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
 
         if (deadCodeEnabled &&
             element instanceof GrNamedElement && element instanceof PsiModifierListOwner &&
-            !UnusedSymbolUtil.isImplicitUsage(element.getProject(), (PsiModifierListOwner)element, progress) &&
+            !UnusedSymbolUtil.isImplicitUsage(element.getProject(), (PsiModifierListOwner)element) &&
             !GroovySuppressableInspectionTool.isElementToolSuppressedIn(element, GroovyUnusedDeclarationInspection.SHORT_NAME)) {
           PsiElement nameId = ((GrNamedElement)element).getNameIdentifierGroovy();
           if (nameId.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
