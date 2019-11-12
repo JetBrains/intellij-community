@@ -90,7 +90,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static void selectBranchAndPerformAction(@NotNull VcsLogUi ui,
+  private static void selectBranchAndPerformAction(@NotNull AbstractVcsLogUi ui,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Consumer<? super String> consumer,
                                                    @NotNull Collection<? extends VirtualFile> visibleRoots) {
@@ -113,11 +113,8 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     if (inputEvent instanceof MouseEvent) {
       popup.show(new RelativePoint((MouseEvent)inputEvent));
     }
-    else if (ui instanceof AbstractVcsLogUi) {
-      popup.showInCenterOf(((AbstractVcsLogUi)ui).getTable());
-    }
     else {
-      popup.showInBestPositionFor(event.getDataContext());
+      popup.showInCenterOf(ui.getTable());
     }
   }
 
