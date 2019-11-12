@@ -1126,7 +1126,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updatePlugins(MavenProject mavenProject) {
 
       List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
-      MavenUtil.runInBackground(myProject, "Updating plugins", false, new UpdatePluginsTreeTask(this, plugins), boundedUpdateService);
+      boundedUpdateService.execute(new UpdatePluginsTreeTask(this, plugins));
     }
   }
 
@@ -1510,7 +1510,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  private class UpdatePluginsTreeTask implements MavenTask {
+  private class UpdatePluginsTreeTask implements Runnable {
     @NotNull private final PluginsNode myParentNode;
     private final List<MavenPlugin> myPlugins;
     private final List<PluginNode> myNodes;
@@ -1531,7 +1531,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     @Override
-    public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    public void run() {
       Map<MavenPlugin, MavenPluginInfo> pluginsToUpdate = new HashMap<>();
       Map<MavenPlugin, MavenPluginInfo> pluginsToAdd = new HashMap<>();
       List<MavenPlugin> pluginsToDelete = new ArrayList<>();
