@@ -51,7 +51,6 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -294,14 +293,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   //todo move it out from MainFrame
   private String getTabName() {
-    VcsLogContentProvider instance = VcsLogContentProvider.getInstance(myLogData.getProject());
-    if (instance != null) {
-      VcsLogUiImpl ui = instance.getUi();
-      if (ui != null && ui.getMainFrame() == this) {
-        return VcsLogContentProvider.TAB_NAME;
-      }
-    }
-
     String name = "all";
     VcsLogFilterCollection filters = myFilterUi.getFilters();
     if (!filters.isEmpty()) {
