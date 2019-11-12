@@ -21,8 +21,10 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.graph.DefaultColorGenerator;
 import com.intellij.vcs.log.graph.EdgePrintElement;
@@ -54,6 +56,9 @@ import static git4idea.history.GitLogUtil.readFullDetailsForHashes;
 public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @NotNull private static final String DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion";
+  @NotNull private static final String DIMENSION_KEY = "Git.Interactive.Rebase.Dialog";
+  private static final int DIALOG_HEIGHT = 450;
+  private static final int DIALOG_WIDTH = 800;
 
   @NotNull private final MyTableModel myTableModel;
   @NotNull private final JBTable myCommitsTable;
@@ -211,7 +216,9 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     tablePanel.setBorder(JBUI.Borders.empty());
     detailsSplitter.setFirstComponent(tablePanel);
     detailsSplitter.setSecondComponent(myFullCommitDetailsListPanel);
-    return detailsSplitter;
+    BorderLayoutPanel centerPanel = new BorderLayoutPanel().addToCenter(detailsSplitter);
+    centerPanel.setPreferredSize(new JBDimension(DIALOG_WIDTH, DIALOG_HEIGHT));
+    return centerPanel;
   }
 
   @NotNull
@@ -227,7 +234,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @Override
   protected String getDimensionServiceKey() {
-    return getClass().getName();
+    return DIMENSION_KEY;
   }
 
   @Override
