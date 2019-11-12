@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -35,6 +36,9 @@ public class PostponableLogRefresher implements VcsLogRefresher {
 
   @NotNull
   public Disposable addLogWindow(@NotNull VcsLogWindow window) {
+    LOG.assertTrue(!ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId())),
+                   "Log window with id '" + window.getId() + "' was already added.");
+
     myLogWindows.add(window);
     refresherActivated(window.getRefresher(), true);
     return () -> {
