@@ -1,6 +1,9 @@
 package com.jetbrains.python.fixture;
 
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -24,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class CommonPythonTestCase extends TestCase {
   protected CommonPythonCodeInsightTestFixture myFixture;
@@ -156,6 +160,10 @@ public abstract class CommonPythonTestCase extends TestCase {
     assertEmpty(collection.toString(), collection);
   }
 
+  public static void assertEmpty(@NotNull Object[] array) {
+    assertOrderedEquals(array);
+  }
+
   @NotNull
   public static String toString(@NotNull Iterable<?> collection) {
     if (!collection.iterator().hasNext()) {
@@ -256,5 +264,105 @@ public abstract class CommonPythonTestCase extends TestCase {
     assertInstanceOf(file, PyFileImpl.class);
     assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
                ((PyFileImpl)file).getTreeElement());
+  }
+
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
+  @SafeVarargs
+  public static <T> void assertSameElements(@NotNull T[] actual, @NotNull T... expected) {
+    assertSameElements(Arrays.asList(actual), expected);
+  }
+
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
+  @SafeVarargs
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull T... expected) {
+    assertSameElements(actual, Arrays.asList(expected));
+  }
+
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+    assertSameElements("", actual, expected);
+  }
+
+  /**
+   * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+   */
+  public static <T> void assertSameElements(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+    if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
+      Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
+    }
+  }
+
+  @SafeVarargs
+  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+    assertContainsElements(collection, Arrays.asList(expected));
+  }
+
+  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
+    ArrayList<T> copy = new ArrayList<>(collection);
+    copy.retainAll(expected);
+    assertSameElements(toString(collection), copy, expected);
+  }
+
+  @SafeVarargs
+  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull T... notExpected) {
+    assertDoesntContain(collection, Arrays.asList(notExpected));
+  }
+
+  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
+    ArrayList<T> expected = new ArrayList<>(collection);
+    expected.removeAll(notExpected);
+    assertSameElements(collection, expected);
+  }
+
+  public static void assertNullOrEmpty(@Nullable Collection<?> collection) {
+    if (collection == null) return;
+    assertEmpty("", collection);
+  }
+
+  public static void assertSize(int expectedSize, @NotNull Object[] array) {
+    if (array.length != expectedSize) {
+      assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    }
+  }
+
+  public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
+    if (c.size() != expectedSize) {
+      assertEquals(toString(c), expectedSize, c.size());
+    }
+  }
+
+  protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (__) -> runnable.run());
+  }
+
+  private static void runWithAdditionalRoot(@NotNull Sdk sdk,
+                                            @NotNull VirtualFile root,
+                                            @NotNull OrderRootType rootType,
+                                            @NotNull Consumer<VirtualFile> rootConsumer) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      modificator.addRoot(root, rootType);
+      modificator.commitChanges();
+    });
+    try {
+      rootConsumer.accept(root);
+    }
+    finally {
+      WriteAction.run(() -> {
+        final SdkModificator modificator = sdk.getSdkModificator();
+        assertNotNull(modificator);
+        modificator.removeRoot(root, rootType);
+        modificator.commitChanges();
+      });
+    }
   }
 }

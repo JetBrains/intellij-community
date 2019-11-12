@@ -15,5 +15,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" scope="TEST"/>
+    <orderEntry type="library" name="StreamEx" level="project" scope="TEST"/>
   </component>
 </module>
