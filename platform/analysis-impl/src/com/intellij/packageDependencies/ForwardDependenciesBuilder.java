@@ -166,7 +166,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
           collectedDeps.addAll(found);
 
           psiManager.dropResolveCaches();
-          InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
+          InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(psiFile);
         }
       }
       collectedDeps.removeAll(processed);

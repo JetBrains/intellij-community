@@ -171,9 +171,14 @@ public abstract class DependenciesBuilder {
   public static void analyzeFileDependencies(@NotNull PsiFile file,
                                              @NotNull DependencyProcessor processor,
                                              @NotNull DependencyVisitorFactory.VisitorOptions options) {
+    Boolean prev = file.getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING);
     file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
-    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
+    try {
+      file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
+    }
+    finally {
+      file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, prev);
+    }
   }
 
   public interface DependencyProcessor {
