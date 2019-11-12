@@ -26,7 +26,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
@@ -133,7 +133,7 @@ public class VcsLogUiUtil {
   }
 
   @NotNull
-  public static History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
+  public static History installNavigationHistory(@NotNull VcsLogUiEx ui) {
     History history = new History(new VcsLogPlaceNavigator(ui));
     ui.getTable().getSelectionModel().addListSelectionListener((e) -> {
       if (!history.isNavigatingNow() && !e.getValueIsAdjusting()) {
@@ -173,9 +173,9 @@ public class VcsLogUiUtil {
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {
     private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
-    @NotNull private final AbstractVcsLogUi myUi;
+    @NotNull private final VcsLogUiEx myUi;
 
-    private VcsLogPlaceNavigator(@NotNull AbstractVcsLogUi ui) {
+    private VcsLogPlaceNavigator(@NotNull VcsLogUiEx ui) {
       myUi = ui;
     }
 

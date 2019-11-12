@@ -28,6 +28,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.*;
@@ -96,13 +97,13 @@ public class VcsProjectLog implements Disposable {
   }
 
   /**
-   * The instance of the {@link VcsLogUiImpl} or null if the log was not initialized yet.
+   * The instance of the {@link MainVcsLogUi} or null if the log was not initialized yet.
    */
   @Nullable
   public VcsLogUiImpl getMainLogUi() {
     VcsLogContentProvider logContentProvider = VcsLogContentProvider.getInstance(myProject);
     if (logContentProvider == null) return null;
-    return logContentProvider.getUi();
+    return (VcsLogUiImpl)logContentProvider.getUi();
   }
 
   @Nullable
@@ -117,7 +118,7 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAwt
   @Nullable
-  public VcsLogUiImpl openLogTab(@Nullable VcsLogFilterCollection filters) {
+  public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters) {
     VcsLogManager logManager = getLogManager();
     if (logManager == null) return null;
     return myTabsManager.openAnotherLogTab(logManager, filters);

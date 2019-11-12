@@ -32,10 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.List;
 
-public class VcsLogUiImpl extends AbstractVcsLogUi {
+public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   private static final String HELP_ID = "reference.changesToolWindow.log";
 
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -109,7 +108,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
-          VcsLogUiImpl ui = projectLog.openLogTab(VcsLogFilterObject.collection());
+          MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
           if (ui != null) {
             ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
                               pack -> pack.getFilters().isEmpty());
@@ -136,6 +135,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     toolbar.repaint();
   }
 
+  @Override
   public void addFilterListener(@NotNull VcsLogFilterListener listener) {
     myFilterListenerDispatcher.addListener(listener);
   }
@@ -158,6 +158,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myMainFrame.getFilterUi();
   }
 
+  @Override
   @NotNull
   public JComponent getToolbar() {
     return myMainFrame.getToolbar();
@@ -233,9 +234,5 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       myVisiblePack.getVisibleGraph().getActionController()
         .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
-  }
-
-  public interface VcsLogFilterListener extends EventListener {
-    void onFiltersChanged();
   }
 }

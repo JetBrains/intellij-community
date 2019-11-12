@@ -8,10 +8,11 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -45,16 +46,16 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
     triggerFileHistoryUsage(paths, hash)
 
-    val historyUiConsumer = { ui: AbstractVcsLogUi, firstTime: Boolean ->
+    val logManager = VcsProjectLog.getInstance(project).logManager!!
+
+    val historyUiConsumer = { ui: VcsLogUiEx, firstTime: Boolean ->
       if (hash != null) {
-        ui.jumpToNearestCommit(hash, root, true)
+        ui.jumpToNearestCommit(logManager.dataManager.storage, hash, root, true)
       }
       else if (firstTime) {
         ui.jumpToRow(0, true)
       }
     }
-
-    val logManager = VcsProjectLog.getInstance(project).logManager!!
 
     if (paths.size == 1) {
       val correctedPath = getCorrectedPath(project, paths.single(), root, revisionNumber != null)
@@ -87,7 +88,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
   private fun findOrOpenHistory(project: Project, logManager: VcsLogManager,
                                 root: VirtualFile, path: FilePath, hash: Hash?,
-                                consumer: (AbstractVcsLogUi, Boolean) -> Unit) {
+                                consumer: (VcsLogUiEx, Boolean) -> Unit) {
     var fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi::class.java) { ui -> ui.matches(path, hash) }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
@@ -99,8 +100,8 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
   }
 
   private fun findOrOpenFolderHistory(project: Project, hashFilter: VcsLogFilter, pathsFilter: VcsLogFilter,
-                                      consumer: (AbstractVcsLogUi, Boolean) -> Unit) {
-    var ui = VcsLogContentUtil.findAndSelect(project, VcsLogUiImpl::class.java) { logUi ->
+                                      consumer: (VcsLogUiEx, Boolean) -> Unit) {
+    var ui = VcsLogContentUtil.findAndSelect(project, MainVcsLogUi::class.java) { logUi ->
       matches(logUi.filterUi.filters, pathsFilter, hashFilter)
     }
     val firstTime = ui == null
@@ -167,11 +168,11 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
   }
 }
 
-private fun AbstractVcsLogUi.jumpToNearestCommit(hash: Hash, root: VirtualFile, silently: Boolean) {
+private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, root: VirtualFile, silently: Boolean) {
   jumpTo(hash, { model: GraphTableModel, h: Hash? ->
-    if (!logData.storage.containsCommit(CommitId(h!!, root))) return@jumpTo GraphTableModel.COMMIT_NOT_FOUND
-    
-    val commitIndex: Int = logData.getCommitIndex(h, root)
+    if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo GraphTableModel.COMMIT_NOT_FOUND
+
+    val commitIndex: Int = storage.getCommitIndex(h, root)
     val visiblePack = model.visiblePack
     var rowIndex = visiblePack.visibleGraph.getVisibleRowIndex(commitIndex)
     if (rowIndex == null) {

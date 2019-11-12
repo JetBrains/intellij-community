@@ -9,7 +9,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -58,18 +58,18 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
-  VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
+  MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
     return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, filters);
   }
 
   @NotNull
-  private VcsLogUiImpl openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus,
+  private MainVcsLogUi openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus,
                                   @Nullable VcsLogFilterCollection filters) {
     if (filters != null) myUiProperties.resetState(tabId);
 
-    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory =
+    VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory =
       new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters));
-    VcsLogUiImpl ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
+    MainVcsLogUi ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
     updateTabName(ui);
     ui.addFilterListener(() -> updateTabName(ui));
     return ui;
@@ -86,17 +86,17 @@ public class VcsLogTabsManager {
     return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
   }
 
-  private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
-    private final VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> myFactory;
+  private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
+    private final VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> myFactory;
 
-    PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory) {
+    PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory) {
       myFactory = factory;
     }
 
     @Override
-    public VcsLogUiImpl createLogUi(@NotNull Project project,
+    public MainVcsLogUi createLogUi(@NotNull Project project,
                                     @NotNull VcsLogData logData) {
-      VcsLogUiImpl ui = myFactory.createLogUi(project, logData);
+      MainVcsLogUi ui = myFactory.createLogUi(project, logData);
       myUiProperties.addTab(ui.getId());
       Disposer.register(ui, () -> {
         if (Disposer.isDisposing(myProject) || myIsLogDisposing) return; // need to restore the tab after project/log is recreated

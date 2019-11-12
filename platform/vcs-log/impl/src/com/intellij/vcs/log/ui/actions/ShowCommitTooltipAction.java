@@ -22,7 +22,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +40,8 @@ public class ShowCommitTooltipAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setEnabledAndVisible(ui instanceof AbstractVcsLogUi &&
-                                               ((AbstractVcsLogUi)ui).getTable().getSelectedRowCount() == 1);
+      e.getPresentation().setEnabledAndVisible(ui instanceof VcsLogUiEx &&
+                                               ((VcsLogUiEx)ui).getTable().getSelectedRowCount() == 1);
     }
   }
 
@@ -49,7 +49,7 @@ public class ShowCommitTooltipAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    VcsLogGraphTable table = ((AbstractVcsLogUi)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)).getTable();
+    VcsLogGraphTable table = ((VcsLogUiEx)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)).getTable();
     int row = table.getSelectedRow();
     if (ScrollingUtil.isVisible(table, row)) {
       table.showTooltip(row, VcsLogColumn.COMMIT);

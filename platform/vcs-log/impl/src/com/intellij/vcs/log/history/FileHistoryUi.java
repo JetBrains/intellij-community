@@ -34,6 +34,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
@@ -161,7 +162,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
     else {
       showWarningWithLink(mainText, "View in Log", () -> {
-        VcsLogContentUtil.openMainLogAndExecute(myProject, ui -> {
+        VcsLogContentUtil.runInMainLog(myProject, ui -> {
           if (commitId instanceof Hash) {
             ui.jumpToCommit((Hash)commitId, myRoot);
           }
@@ -203,7 +204,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @NotNull
   @Override
-  public Component getMainComponent() {
+  public JComponent getMainComponent() {
     return myFileHistoryPanel;
   }
 

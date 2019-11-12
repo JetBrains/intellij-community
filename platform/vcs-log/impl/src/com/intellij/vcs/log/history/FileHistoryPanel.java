@@ -98,7 +98,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel = new VcsLogCommitDetailsListPanel(myLogData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {
-        VcsLogContentUtil.openMainLogAndExecute(myLogData.getProject(), ui -> {
+        VcsLogContentUtil.runInMainLog(myLogData.getProject(), ui -> {
           ui.jumpToCommit(commit.getHash(), commit.getRoot());
         });
       }

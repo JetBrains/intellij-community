@@ -28,8 +28,8 @@ import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
@@ -47,7 +47,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    executeAction((VcsLogUiImpl)ui);
+    executeAction((MainVcsLogUi)ui);
   }
 
   @Override
@@ -78,12 +78,12 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     e.getPresentation().setDescription(getPrefix() + LINEAR_BRANCHES_DESCRIPTION);
   }
 
-  protected abstract void executeAction(@NotNull VcsLogUiImpl vcsLogUi);
+  protected abstract void executeAction(@NotNull MainVcsLogUi vcsLogUi);
 
   @NotNull
   protected abstract String getPrefix();
 
-  protected void performLongAction(@NotNull VcsLogUiImpl logUi, @NotNull GraphAction graphAction, @NotNull String title) {
+  protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull String title) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ActionController<Integer> actionController = logUi.getDataPack().getVisibleGraph().getActionController();
       GraphAnswer<Integer> answer = actionController.performAction(graphAction);

@@ -43,9 +43,9 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -103,7 +103,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   // BasicTableUI.viewIndexForColumn uses reference equality, so we should not change TableColumn during DnD.
   private final List<TableColumn> myTableColumns = new ArrayList<>();
 
-  public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
+  public VcsLogGraphTable(@NotNull VcsLogUiEx ui,
                           @NotNull VcsLogData logData,
                           @NotNull Consumer<Runnable> requestMore) {
     super(new GraphTableModel(logData, requestMore, ui.getProperties()));

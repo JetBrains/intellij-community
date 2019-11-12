@@ -23,8 +23,9 @@ import com.intellij.vcs.log.data.VcsLogStatusBarProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
@@ -105,24 +106,24 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, boolean isToolWindowTab, boolean isClosedOnDispose) {
+  public MainVcsLogUi createLogUi(@NotNull String logId, boolean isToolWindowTab, boolean isClosedOnDispose) {
     return createLogUi(getMainLogUiFactory(logId, null), isToolWindowTab, isClosedOnDispose);
   }
 
   @NotNull
-  public VcsLogUiFactory<? extends VcsLogUiImpl> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
+  public VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
     return new MainVcsLogUiFactory(logId, filters);
   }
 
   @NotNull
-  public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
+  public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
     return createLogUi(factory, isToolWindowTab, true);
   }
 
   @NotNull
-  public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
-                                                    boolean isToolWindowTab,
-                                                    boolean isClosedOnDispose) {
+  public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
+                                              boolean isToolWindowTab,
+                                              boolean isClosedOnDispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) throw new ProcessCanceledException();
 
@@ -256,11 +257,11 @@ public class VcsLogManager implements Disposable {
   }
 
   @FunctionalInterface
-  public interface VcsLogUiFactory<T extends AbstractVcsLogUi> {
+  public interface VcsLogUiFactory<T extends VcsLogUiEx> {
     T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 
-  private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
+  private class MainVcsLogUiFactory implements VcsLogUiFactory<MainVcsLogUi> {
     @NotNull private final String myLogId;
     @Nullable private final VcsLogFilterCollection myFilters;
 
@@ -270,7 +271,7 @@ public class VcsLogManager implements Disposable {
     }
 
     @Override
-    public VcsLogUiImpl createLogUi(@NotNull Project project,
+    public MainVcsLogUi createLogUi(@NotNull Project project,
                                     @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),

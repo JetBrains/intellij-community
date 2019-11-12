@@ -16,8 +16,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  */
 public class VcsLogContentUtil {
   @Nullable
-  public static AbstractVcsLogUi getLogUi(@NotNull JComponent c) {
+  public static VcsLogUiEx getLogUi(@NotNull JComponent c) {
     VcsLogPanel vcsLogPanel = null;
     if (c instanceof VcsLogPanel) {
       vcsLogPanel = (VcsLogPanel)c;
@@ -62,24 +63,24 @@ public class VcsLogContentUtil {
     }
     return null;
   }
-  
+
   @Nullable
-  public static <U extends AbstractVcsLogUi> U findAndSelect(@NotNull Project project,
-                                                             @NotNull Class<U> clazz,
-                                                             @NotNull Condition<? super U> condition) {
+  public static <U extends VcsLogUiEx> U findAndSelect(@NotNull Project project,
+                                                       @NotNull Class<U> clazz,
+                                                       @NotNull Condition<? super U> condition) {
     return find(project, clazz, true, condition);
   }
 
   @Nullable
-  public static <U extends AbstractVcsLogUi> U find(@NotNull Project project,
-                                                    @NotNull Class<U> clazz, boolean select,
-                                                    @NotNull Condition<? super U> condition) {
+  public static <U extends VcsLogUiEx> U find(@NotNull Project project,
+                                              @NotNull Class<U> clazz, boolean select,
+                                              @NotNull Condition<? super U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     if (toolWindow == null) return null;
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
-      AbstractVcsLogUi ui = getLogUi(c);
+      VcsLogUiEx ui = getLogUi(c);
       if (ui != null) {
         //noinspection unchecked
         return clazz.isInstance(ui) && condition.value((U)ui);
@@ -98,7 +99,7 @@ public class VcsLogContentUtil {
 
   @Nullable
   public static String getId(@NotNull Content content) {
-    AbstractVcsLogUi ui = getLogUi(content.getComponent());
+    VcsLogUiEx ui = getLogUi(content.getComponent());
     if (ui == null) return null;
     return ui.getId();
   }
@@ -111,7 +112,7 @@ public class VcsLogContentUtil {
     TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, VcsLogContentProvider.TAB_NAME);
     if (tabbedContent != null) {
       existingIds = ContainerUtil.map2SetNotNull(tabbedContent.getTabs(), pair -> {
-        AbstractVcsLogUi ui = getLogUi(pair.second);
+        VcsLogUiEx ui = getLogUi(pair.second);
         if (ui == null) return null;
         return ui.getId();
       });
@@ -131,9 +132,9 @@ public class VcsLogContentUtil {
     }
   }
 
-  public static <U extends AbstractVcsLogUi> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                          @NotNull String tabGroupName, @NotNull String shortName,
-                                                          @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
+  public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
+                                                    @NotNull String tabGroupName, @NotNull String shortName,
+                                                    @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, true);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
@@ -146,7 +147,7 @@ public class VcsLogContentUtil {
 
   public static boolean closeLogTab(@NotNull ContentManager manager, @NotNull String tabId) {
     return ContentUtilEx.closeContentTab(manager, c -> {
-      AbstractVcsLogUi ui = getLogUi(c);
+      VcsLogUiEx ui = getLogUi(c);
       if (ui != null) {
         return ui.getId().equals(tabId);
       }
@@ -154,7 +155,15 @@ public class VcsLogContentUtil {
     });
   }
 
+  /**
+   * @deprecated replaced by {@link VcsLogContentUtil#runInMainLog(Project, Consumer)}
+   */
+  @Deprecated
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<? super VcsLogUiImpl> consumer) {
+    runInMainLog(project, ui -> consumer.consume((VcsLogUiImpl)ui));
+  }
+
+  public static void runInMainLog(@NotNull Project project, @NotNull Consumer<? super MainVcsLogUi> consumer) {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (!selectMainLog(window)) {
       showLogIsNotAvailableMessage(project);
