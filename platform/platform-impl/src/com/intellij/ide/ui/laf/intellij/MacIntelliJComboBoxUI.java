@@ -154,12 +154,17 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       g2.translate(r.x, r.y);
 
       Object value = comboBox.getSelectedItem();
+      Color coloredItemColor = value instanceof ColoredItem ? ((ColoredItem)value).getColor() : null;
+
       boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
-      Color background0 = comboBox.getBackground();
+      Color bg = comboBox.getBackground();
+
       Color background = editable ? editor.getBackground() :
-                         comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                         !comboBox.isEnabled() ? UIManager.getColor("ComboBox.disabledBackground") :
-                         ObjectUtils.notNull(value instanceof ColoredItem ? ((ColoredItem)value).getColor() : null, UIManager.getColor("ComboBox.background"));
+                         ObjectUtils.notNull(coloredItemColor,
+                                             comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg :
+                                             comboBox.isEnabled() ? UIManager.getColor("ComboBox.background") :
+                                                                    UIUtil.getComboBoxDisabledBackground());
+
       g2.setColor(background);
 
       float arc = comboBox.isEditable() ? 0 : ARC.getFloat();

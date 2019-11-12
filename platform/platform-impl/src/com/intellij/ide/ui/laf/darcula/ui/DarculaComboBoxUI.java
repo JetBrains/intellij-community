@@ -248,15 +248,17 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   private Color getBackgroundColor() {
+    Color bg = comboBox.getBackground();
     if (comboBox.isEditable() && editor != null) {
-      return comboBox.isEnabled() ? editor.getBackground() : comboBox.getBackground();
+      return comboBox.isEnabled() ? editor.getBackground() :
+             comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg : UIUtil.getComboBoxDisabledBackground();
     }
     else {
-      Color bg = comboBox.getBackground();
       Object value = comboBox.getSelectedItem();
       Color coloredItemColor = value instanceof ColoredItem ? ((ColoredItem)value).getColor(): null;
       return ObjectUtils.notNull(coloredItemColor,
-              !comboBox.isEnabled() || comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg : NON_EDITABLE_BACKGROUND);
+              comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg :
+              comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getComboBoxDisabledBackground());
     }
   }
 
