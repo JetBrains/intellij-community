@@ -701,8 +701,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         PsiJavaCodeReferenceElement newRef = ref instanceof PsiReferenceExpression ?
                                              (PsiReferenceExpression)factory.createExpressionFromText(template, null) :
                                              factory.createReferenceFromText(template, null);
-        ref = (PsiJavaCodeReferenceElement)ref.replace(newRef);
-        Objects.requireNonNull(ref.getQualifier()).putCopyableUserData(PRESERVE_QUALIFIER, oldQualifier != null);
+        Objects.requireNonNull(newRef.getQualifier()).putCopyableUserData(PRESERVE_QUALIFIER, oldQualifier != null);
+        ref.replace(newRef);
       }
     }
   }
