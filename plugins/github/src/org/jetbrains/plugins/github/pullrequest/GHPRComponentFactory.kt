@@ -208,7 +208,7 @@ internal class GHPRComponentFactory(private val project: Project) {
         firstComponent = detailsLoadingPanel
         secondComponent = changesLoadingPanel
       }.also {
-        (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerShortcutOn(it)
+        (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerCustomShortcutSet(it, disposable)
       }
     }.also {
       changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
@@ -251,7 +251,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val listReloadAction = actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction
     val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).also {
-      listReloadAction.registerShortcutOn(it)
+      listReloadAction.registerCustomShortcutSet(it, disposable)
     }
 
     Disposer.register(disposable, Disposable {
