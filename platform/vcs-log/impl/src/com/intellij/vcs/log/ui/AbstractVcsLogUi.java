@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.history.ReachableNodesUtilKt;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -93,18 +92,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
     fireFilterChangeEvent(myVisiblePack, permGraphChanged);
     getTable().repaint();
-  }
-
-  public void jumpToNearestCommit(@NotNull Hash hash, @NotNull VirtualFile root, boolean silently) {
-    jumpTo(hash, (model, h) -> {
-      if (!myLogData.getStorage().containsCommit(new CommitId(h, root))) return GraphTableModel.COMMIT_NOT_FOUND;
-      int commitIndex = myLogData.getCommitIndex(h, root);
-      Integer rowIndex = myVisiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
-      if (rowIndex == null) {
-        rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
-      }
-      return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
-    }, SettableFuture.create(), silently);
   }
 
   protected abstract void onVisiblePackUpdated(boolean permGraphChanged);
@@ -190,10 +177,10 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     jumpTo(commitId, rowGetter, future, false);
   }
 
-  protected <T> void jumpTo(@NotNull final T commitId,
-                            @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
-                            @NotNull final SettableFuture<? super Boolean> future,
-                            boolean silently) {
+  public <T> void jumpTo(@NotNull final T commitId,
+                         @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
+                         @NotNull final SettableFuture<? super Boolean> future,
+                         boolean silently) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
