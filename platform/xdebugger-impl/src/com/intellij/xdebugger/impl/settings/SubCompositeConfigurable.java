@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent, SearchableConfigurable.Merged {
@@ -81,9 +82,11 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
 
   @NotNull
   @Override
-  public final Configurable[] getMergedConfigurables() {
+  public final List<Configurable> getMergedConfigurables() {
     buildConfigurables();
-    return isChildrenMerged() ? children : DebuggerConfigurable.EMPTY_CONFIGURABLES;
+    return isChildrenMerged()
+           ? Arrays.asList(children)
+           : Arrays.asList(DebuggerConfigurable.EMPTY_CONFIGURABLES);
   }
 
   private void buildConfigurables() {
