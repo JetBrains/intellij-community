@@ -72,6 +72,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final Key<List<PsiErrorElement>> ERRORS = new Key<>("STRUCTURAL_SEARCH_ERRORS");
   private static final Comparator<PsiErrorElement> ERROR_COMPARATOR =
     Comparator.comparingInt(PsiErrorElement::getTextOffset).thenComparing(PsiErrorElement::getErrorDescription);
+  private static final Set<String> RESERVED_WORDS =
+    ContainerUtil.set(MatchOptions.MODIFIER_ANNOTATION_NAME, MatchOptions.INSTANCE_MODIFIER_NAME, PsiModifier.PACKAGE_LOCAL);
 
   @Override
   public String getText(PsiElement match, int start, int end) {
@@ -917,7 +919,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public Collection<String> getReservedWords() {
-    return Collections.singleton(PsiModifier.PACKAGE_LOCAL);
+    return RESERVED_WORDS;
   }
 
   @Override
