@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   private final int myTransitive;
   @Nullable
   private final GlobalSearchScope myTargetScope;
+  private Set<VirtualFile> myStarted = new THashSet<>();
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
@@ -111,7 +113,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       if (virtualFile != null) {
         indicator.setText2(getRelativeToProjectPath(virtualFile));
       }
-      if ( myTotalFileCount > 0) {
+      if ( myTotalFileCount > 0 && myStarted.add(virtualFile)) {
         indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
       }
     }
