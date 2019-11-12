@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.KeyedLazyInstance;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
@@ -38,16 +39,16 @@ public class FileTypeUtil {
         types = null;
       }
     });
-    application.getExtensionArea().<FileTypeExtensionPoint<UpdateCopyrightsProvider>>getExtensionPoint("com.intellij.copyright.updater")
+    Objects.requireNonNull(CopyrightUpdaters.INSTANCE.getPoint())
       .addExtensionPointListener(
-        new ExtensionPointListener<FileTypeExtensionPoint<UpdateCopyrightsProvider>>() {
+        new ExtensionPointListener<KeyedLazyInstance<UpdateCopyrightsProvider >> () {
           @Override
-          public void extensionAdded(@NotNull FileTypeExtensionPoint<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
+          public void extensionAdded(@NotNull KeyedLazyInstance<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
             types = null;
           }
 
           @Override
-          public void extensionRemoved(@NotNull FileTypeExtensionPoint<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
+          public void extensionRemoved(@NotNull KeyedLazyInstance<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
             types = null;
           }
         }, false, application);
