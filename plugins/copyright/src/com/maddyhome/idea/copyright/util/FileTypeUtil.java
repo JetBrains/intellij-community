@@ -38,16 +38,16 @@ public class FileTypeUtil {
         types = null;
       }
     });
-    application.getExtensionArea().<UpdateCopyrightsProvider>getExtensionPoint("com.intellij.copyright.updater")
+    application.getExtensionArea().<FileTypeExtensionPoint<UpdateCopyrightsProvider>>getExtensionPoint("com.intellij.copyright.updater")
       .addExtensionPointListener(
-        new ExtensionPointListener<UpdateCopyrightsProvider>() {
+        new ExtensionPointListener<FileTypeExtensionPoint<UpdateCopyrightsProvider>>() {
           @Override
-          public void extensionAdded(@NotNull UpdateCopyrightsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          public void extensionAdded(@NotNull FileTypeExtensionPoint<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
             types = null;
           }
 
           @Override
-          public void extensionRemoved(@NotNull UpdateCopyrightsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          public void extensionRemoved(@NotNull FileTypeExtensionPoint<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
             types = null;
           }
         }, false, application);
