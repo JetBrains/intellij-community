@@ -19,8 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAction;
@@ -46,13 +44,12 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    executeAction((MainVcsLogUi)ui);
+    executeAction(e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI));
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
     if (ui != null && !ui.getDataPack().isEmpty() && properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {

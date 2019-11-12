@@ -52,9 +52,9 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogData dataProvider = e.getData(VcsLogInternalDataKeys.LOG_DATA);
-    if (project == null || dataProvider == null || !(ui instanceof MainVcsLogUi)) {
+    if (project == null || dataProvider == null || ui == null) {
       return false;
     }
     return DeepComparator.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
@@ -63,12 +63,11 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    final VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogData dataProvider = e.getData(VcsLogInternalDataKeys.LOG_DATA);
-    if (project == null || dataProvider == null || !(logUi instanceof MainVcsLogUi)) {
+    if (project == null || dataProvider == null || ui == null) {
       return;
     }
-    MainVcsLogUi ui = (MainVcsLogUi)logUi;
 
     final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
     if (selected) {
