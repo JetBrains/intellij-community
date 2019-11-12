@@ -1087,6 +1087,7 @@
         <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction" text="LaF Defaults">
           <abbreviation value="laf"/>
         </action>
+        <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction" text="Ruler Guide" />
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"
                 text="Add Test Process"/>
