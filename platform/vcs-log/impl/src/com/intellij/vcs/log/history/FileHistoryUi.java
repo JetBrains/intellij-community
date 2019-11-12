@@ -163,10 +163,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       showWarningWithLink(mainText, "View in Log", () -> {
         VcsLogContentUtil.openMainLogAndExecute(myProject, ui -> {
           if (commitId instanceof Hash) {
-            ui.jumpToCommit((Hash)commitId, myRoot, SettableFuture.create());
+            ui.jumpToCommit((Hash)commitId, myRoot);
           }
           else if (commitId instanceof String) {
-            ui.jumpToHash((String)commitId, SettableFuture.create());
+            ui.jumpToHash((String)commitId);
           }
         });
       });

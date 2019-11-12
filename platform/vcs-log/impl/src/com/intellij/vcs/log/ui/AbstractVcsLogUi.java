@@ -153,22 +153,22 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    jumpToCommit(commitHash, root, future);
+    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
     return future;
   }
 
-  public void jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, @NotNull SettableFuture<? super Boolean> future) {
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
-  }
-
-  public void jumpToHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
+  @NotNull
+  public ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
+    SettableFuture<Boolean> future = SettableFuture.create();
     String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
     if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit or reference '" + commitHash + "' not found", MessageType.WARNING);
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit or reference '" + commitHash + "' not found",
+                                                    MessageType.WARNING);
       future.set(false);
-      return;
+      return future;
     }
     jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future, false);
+    return future;
   }
 
   public <T> void jumpTo(@NotNull final T commitId,
