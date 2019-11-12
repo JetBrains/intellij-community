@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
@@ -41,8 +43,10 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -1275,12 +1279,32 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {
-      Class<?> clazz0 = component.getClass();
-      Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
+      Class<?> clazz = component.getClass();
       myProperties.add(new PropertyBean(prefix + "class", clazz.getName()));
+
+      if (clazz.isAnonymousClass()) {
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+          myProperties.add(new PropertyBean(prefix + "superclass", superClass.getName(), true));
+        }
+      }
+
+      Class<?> declaringClass = clazz.getDeclaringClass();
+      if (declaringClass != null) {
+        myProperties.add(new PropertyBean(prefix + "declaringClass", declaringClass.getName()));
+      }
+
+      if (component instanceof com.intellij.ui.treeStructure.Tree) {
+        TreeModel model = ((Tree)component).getModel();
+        if (model != null) {
+          myProperties.add(new PropertyBean(prefix + "treeModelClass", model.getClass().getName(), true));
+        }
+      }
+
       addActionInfo(component);
       addToolbarInfo(component);
       addGutterInfo(component);
+
       StringBuilder classHierarchy = new StringBuilder();
       for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
         if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
@@ -1288,6 +1312,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         if (JComponent.class.getName().equals(cl.getName())) break;
       }
       myProperties.add(new PropertyBean(prefix + "hierarchy", classHierarchy.toString()));
+
+      if (component instanceof Component) {
+        DialogWrapper dialog = DialogWrapper.findInstance((Component)component);
+        if (dialog != null) {
+          myProperties.add(new PropertyBean(prefix + "dialogWrapperClass", dialog.getClass().getName(), true));
+        }
+      }
+
       addPropertiesFromMethodNames(prefix, component, methodNames);
     }
 
