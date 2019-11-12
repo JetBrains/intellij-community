@@ -1265,6 +1265,8 @@ public final class PluginManagerCore {
 
   /**
    * Think twice before use and get approve from core team.
+   *
+   * Returns enabled plugins only.
    */
   @NotNull
   @ApiStatus.Internal
