@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem
 
-final def IJ_DIR = new File("../../../").canonicalFile
+final def IJ_DIR = project.file("../../..").canonicalFile
 final def REPOSITORY = "https://repo.labs.intellij.net/clion"
 
 task setupCidr
