@@ -15,6 +15,7 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -188,7 +189,7 @@ public class VcsLogContentUtil {
     return false;
   }
 
-  public static void renameLogUi(@NotNull Project project, @NotNull VcsLogUiImpl ui, @NotNull String newName) {
+  public static void renameLogUi(@NotNull Project project, @NotNull VcsLogUi ui, @NotNull String newName) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     if (toolWindow == null) return;
 

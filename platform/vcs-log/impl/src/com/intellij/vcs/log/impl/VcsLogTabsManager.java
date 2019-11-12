@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
@@ -74,12 +75,12 @@ public class VcsLogTabsManager {
     return ui;
   }
 
-  private void updateTabName(@NotNull VcsLogUiImpl ui) {
+  private void updateTabName(@NotNull VcsLogUi ui) {
     VcsLogContentUtil.renameLogUi(myProject, ui, generateDisplayName(ui));
   }
 
   @NotNull
-  public static String generateDisplayName(@NotNull VcsLogUiImpl ui) {
+  public static String generateDisplayName(@NotNull VcsLogUi ui) {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
     if (filters.isEmpty()) return "all";
     return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
