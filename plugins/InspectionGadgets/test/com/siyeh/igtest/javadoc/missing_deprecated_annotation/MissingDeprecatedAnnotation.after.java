@@ -1,7 +1,7 @@
 /**
  * @deprecated
  */
-public class <warning descr="Missing '@Deprecated' annotation">MissingDeprecatedAnnotation</warning> {
+public class MissingDeprecatedAnnotation {
 
   /**
    * @deprecated Use {@link #b()} instead
@@ -12,28 +12,37 @@ public class <warning descr="Missing '@Deprecated' annotation">MissingDeprecated
   /**
    * @deprecated
    */
-  void <warning descr="Missing '@Deprecated' annotation">b</warning>() {}
+  void b() {}
 
   /**
    * @deprecated
    */
-  String <warning descr="Missing '@Deprecated' annotation">s</warning>;
+  String s;
 
 }
+/**
+ * @deprecated TODO: explain
+ */
 @Deprecated
-class <warning descr="Missing '@deprecated' Javadoc tag explanation"><caret>Two</warning> {
+class Two {
 
   /**
    * @deprecated
    */
   @Deprecated
-  void <warning descr="Missing '@deprecated' Javadoc tag explanation">a</warning>() {}
+  void a() {}
 
+  /**
+   * @deprecated TODO: explain
+   */
   @Deprecated
-  void <warning descr="Missing '@deprecated' Javadoc tag explanation">b</warning>() {}
+  void b() {}
 
+  /**
+   * @deprecated TODO: explain
+   */
   @Deprecated
-  String <warning descr="Missing '@deprecated' Javadoc tag explanation">s</warning>;
+  String s;
 }
 class Parent {
   /** @deprecated don't use */
