@@ -87,14 +87,12 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       CtrlYActionChooser.askAboutShortcut()
     }
     fun removeKeymap(keymapName: String) {
-      if (schemeManager.activeScheme?.name.equals(keymapName)) {
-        val newKeymap = schemeManager.allSchemes.firstOrNull() { it.name.startsWith("Default") }
-        if (newKeymap != null) {
-          schemeManager.setCurrent(newKeymap, true, true)
-        }
-      }
+      val isCurrent = schemeManager.activeScheme?.name.equals(keymapName)
       schemeManager.removeScheme(keymapName)
       DefaultKeymap.instance.removeKeymap(keymapName)
+      if (isCurrent) {
+        schemeManager.setCurrent(activeKeymap, true, true)
+      }
     }
     BundledKeymapBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapBean> {
       override fun extensionAdded(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
@@ -123,7 +121,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
             override fun read() = ep.load(fileName) { JDOMUtil.load(it) }
           }, pluginDescriptor.pluginId)
           schemeManager.addScheme(keymap)
-          schemeManager.setCurrent(keymap, true, true)
+          // do no set current keymap here, consider: multi-keymap plugins, parent keymaps loading
         }
       }
 
