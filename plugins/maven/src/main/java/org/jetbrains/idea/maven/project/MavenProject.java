@@ -1087,6 +1087,8 @@ public class MavenProject {
         else {
           MavenPropertyResolver.resolve(encoding, domModel);
         }
+      } else {
+        return encoding;
       }
     }
     return getSourceEncoding();
