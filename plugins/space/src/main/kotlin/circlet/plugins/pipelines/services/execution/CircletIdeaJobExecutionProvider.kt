@@ -50,7 +50,7 @@ class CircletIdeaJobExecutionProvider(
 
         val dummyContainer = DummyContainer(jobLifetimeSource)
         runningJobs[jobExec.id] = dummyContainer
-        changeState(this, jobEntity, ExecutionStatus.RUNNING)
+        changeState(this, jobEntity, JobState.Running)
 
         var counter = 0
 
@@ -91,15 +91,15 @@ class CircletIdeaJobExecutionProvider(
         //todo
     }
 
-    private fun changeState(tx: AutomationStorageTransaction, job: AJobExecutionEntity<*>, newStatus: ExecutionStatus) {
+    private fun changeState(tx: AutomationStorageTransaction, job: AJobExecutionEntity<*>, newStatus: JobState) {
         savedHandler(tx, setOf(JobExecutionStatusUpdate(job, newStatus)))
     }
 
-    private fun generateFinalState(imageName: String) : ExecutionStatus {
+    private fun generateFinalState(imageName: String) : JobState {
         if (imageName.endsWith("_toFail")) {
-            return ExecutionStatus.FAILED
+            return JobState.Failed("Should fail because of the image name $imageName")
         }
-        return ExecutionStatus.FINISHED
+        return JobState.Finished(0)
     }
 
     private fun launch(body: suspend () -> Unit) {
