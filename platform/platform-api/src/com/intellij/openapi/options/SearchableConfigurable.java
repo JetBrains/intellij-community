@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * SearchableConfigurable instances would be instantiated on buildSearchableOptions step during Installer's build to index of all available options. 
@@ -103,7 +104,7 @@ public interface SearchableConfigurable extends Configurable {
 
   @FunctionalInterface
   interface Merged {
-    Configurable[] getMergedConfigurables();
+    List<Configurable> getMergedConfigurables();
   }
 
   /**

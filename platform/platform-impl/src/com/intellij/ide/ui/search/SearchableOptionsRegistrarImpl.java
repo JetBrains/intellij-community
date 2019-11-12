@@ -336,7 +336,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
           needToRemove = false;
         }
         if (configurable instanceof SearchableConfigurable.Merged) {
-          final Configurable[] mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
+          final List<Configurable> mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
           for (Configurable mergedConfigurable : mergedConfigurables) {
             if (mergedConfigurable instanceof SearchableConfigurable &&
                 helpIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
