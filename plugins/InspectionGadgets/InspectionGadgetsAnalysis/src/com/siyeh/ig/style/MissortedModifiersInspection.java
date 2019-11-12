@@ -190,7 +190,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
             final PsiAnnotation annotation = (PsiAnnotation)child;
             if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !isMethodWithVoidReturnType(modifierList.getParent())) {
               // type annotations go next to the type
-              // see e.g. http://www.oracle.com/technetwork/articles/java/ma14-architect-annotations-2177655.html
+              // see e.g. https://www.oracle.com/technical-resources/articles/java/ma14-architect-annotations.html
               final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
               if (currentModifier != null ||
                   AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
