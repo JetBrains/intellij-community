@@ -4,6 +4,8 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 
@@ -172,6 +174,32 @@ class MavenEncodingImporterTest : MavenImportingTestCase() {
 
     TestCase.assertEquals(StandardCharsets.UTF_16, EncodingProjectManager.getInstance(myProject).getEncoding(subFile1, true))
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(myProject).getEncoding(subFile2, true))
+  }
+
+  @Test
+  fun testShouldSetResourceEncodingAsProperties() {
+    importProject("""<groupId>test</groupId>
+                     <artifactId>project</artifactId>
+                     <version>1</version>
+                     <properties>
+                        <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+                     </properties>
+                     <build>
+                       <plugins>
+                         <plugin>
+                            <artifactId>maven-resources-plugin</artifactId>
+                            <version>2.6</version>
+                            <configuration>
+                              <encoding>${'$'}{project.encoding}</encoding>
+                            </configuration>
+                          </plugin>
+                       </plugins>
+                     </build>
+                     """
+    )
+    val mavenProject = MavenProjectsManager.getInstance(myProject).rootProjects.first()
+
+    TestCase.assertEquals("ISO-8859-1", mavenProject.getResourceEncoding(myProject))
   }
 
 

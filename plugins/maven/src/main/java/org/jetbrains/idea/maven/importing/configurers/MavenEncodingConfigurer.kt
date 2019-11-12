@@ -39,7 +39,7 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
     val projectManagerImpl = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
 
     fillSourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
-    fillResourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
+    fillResourceEncoding(project, mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
 
     if (newMap.isEmpty()) {
       return
@@ -52,11 +52,12 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
     }
   }
 
-  private fun fillResourceEncoding(mavenProject: MavenProject,
+  private fun fillResourceEncoding(project: Project,
+                                   mavenProject: MavenProject,
                                    newMap: LinkedHashMap<VirtualFile, Charset>,
                                    leaveAsIsMap: LinkedHashMap<VirtualFile, Charset>,
                                    projectManagerImpl: EncodingProjectManagerImpl) {
-    mavenProject.resourceEncoding?.let(this::getCharset)?.let { charset ->
+    mavenProject.getResourceEncoding(project)?.let(this::getCharset)?.let { charset ->
       mavenProject.resources.forEach { resource ->
         val dirVfile = LocalFileSystem.getInstance().findFileByIoFile(File(resource.directory)) ?: return
         newMap[dirVfile] = charset
@@ -64,7 +65,7 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
           if (FileUtil.isAncestor(resource.directory, it.key.path, false)) {
             newMap[it.key] = charset
           }
-          else  {
+          else {
             leaveAsIsMap[it.key] = it.value
           }
         }
