@@ -55,6 +55,7 @@
                         serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
+    <getDataRule key="Vcs.Log.UiEx" implementationClass="com.intellij.vcs.log.ui.VcsLogUiExDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
         implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider"/>

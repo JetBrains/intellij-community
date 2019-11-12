@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -41,10 +40,8 @@ public class GoToHashOrRefAction extends DumbAwareAction {
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
-    VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiEx logUi = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_EX);
     VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
-    assert ui instanceof VcsLogUiEx;
-    VcsLogUiEx logUi = (VcsLogUiEx)ui;
 
     Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
     GoToHashOrRefPopup popup =
@@ -58,7 +55,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi instanceof VcsLogUiEx);
+    VcsLogUiEx logUi = e.getData(VcsLogInternalDataKeys.LOG_UI_EX);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi != null);
   }
 }
