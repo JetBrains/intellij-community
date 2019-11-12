@@ -1161,19 +1161,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return;
     }
 
-    myTransactionGuard.submitTransactionAndWait(() -> {
-      int prevBase = myWriteStackBase;
-      myWriteStackBase = myWriteActionsStack.size();
-      try (AccessToken ignored = myLock.writeSuspend()) {
-        runModalProgress(project, title, () -> {
-          try (AccessToken ignored1 = myLock.grantReadPrivilege()) {
-            runnable.run();
-          }
-        });
-      } finally {
-        myWriteStackBase = prevBase;
-      }
-    });
+    int prevBase = myWriteStackBase;
+    myWriteStackBase = myWriteActionsStack.size();
+    try (AccessToken ignored = myLock.writeSuspend()) {
+      runModalProgress(project, title, () -> {
+        try (AccessToken ignored1 = myLock.grantReadPrivilege()) {
+          runnable.run();
+        }
+      });
+    } finally {
+      myWriteStackBase = prevBase;
+    }
   }
 
   private static void runModalProgress(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
