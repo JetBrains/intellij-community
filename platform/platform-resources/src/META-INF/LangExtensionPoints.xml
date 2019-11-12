@@ -282,8 +282,7 @@
                     interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="cacheBuilder"
-                    beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP">
+    <extensionPoint name="cacheBuilder" beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP">
       <with attribute="wordsScannerClass" implements="com.intellij.lang.cacheBuilder.WordsScanner"/>
     </extensionPoint>
 
@@ -306,40 +305,27 @@
     <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker" dynamic="true"/>
 
     <extensionPoint name="gotoActionAliasMatcher" interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher" dynamic="true"/>
-    <extensionPoint name="gotoClassContributor"
-                    interface="com.intellij.navigation.ChooseByNameContributor"
-                    dynamic="true"/>
-    <extensionPoint name="gotoSymbolContributor"
-                    interface="com.intellij.navigation.ChooseByNameContributor"
-                    dynamic="true"/>
-    <extensionPoint name="gotoFileContributor"
-                    interface="com.intellij.navigation.ChooseByNameContributor"/>
-    <extensionPoint name="anonymousElementProvider"
-                    interface="com.intellij.navigation.AnonymousElementProvider" dynamic="true"/>
-    <extensionPoint name="searchEverywhereContributor"
-                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory"/>
-    <extensionPoint name="searchEverywhereResultsEqualityProvider"
-                    interface="com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider"/>
-
+    <extensionPoint name="gotoClassContributor" interface="com.intellij.navigation.ChooseByNameContributor" dynamic="true"/>
+    <extensionPoint name="gotoSymbolContributor" interface="com.intellij.navigation.ChooseByNameContributor" dynamic="true"/>
+    <extensionPoint name="gotoFileContributor" interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider" dynamic="true"/>
+    
+    <extensionPoint name="anonymousElementProvider" interface="com.intellij.navigation.AnonymousElementProvider" dynamic="true"/>
+    
+    <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory"/>
+    <extensionPoint name="searchEverywhereResultsEqualityProvider" interface="com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider"/>
 
-    <extensionPoint name="runAnything.executionProvider"
-                    interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider"/>
-
+    <extensionPoint name="runAnything.executionProvider" interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider"/>
     <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler"/>
-
     <extensionPoint name="runAnything.helpGroup" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup"/>
-
-    <extensionPoint name="runAnything.commandCustomizer"
-                    interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer"/>
+    <extensionPoint name="runAnything.commandCustomizer" interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer"/>
 
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
     <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
     <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
     <extensionPoint name="orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory"/>
-    <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
-                    area="IDEA_PROJECT"/>
+    <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy" area="IDEA_PROJECT"/>
     <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"/>
     <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider"/>
 
