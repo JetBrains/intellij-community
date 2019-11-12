@@ -210,7 +210,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     var run: PsiElement? = parent.parent
     while (run != null) {
       if (run is GrParenthesizedExpression) return false
-      if (run is GrReturnStatement || run is GrAssertStatement || run is GrThrowStatement) return true
+      if (run is GrReturnStatement || run is GrAssertStatement || run is GrThrowStatement || run is GrCommandArgumentList) return true
       run = run.parent
     }
     return false
