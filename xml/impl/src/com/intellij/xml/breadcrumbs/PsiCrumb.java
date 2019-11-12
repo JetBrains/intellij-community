@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.editor.Editor;
@@ -67,16 +68,15 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
       moveEditorCaretTo(editor, offset);
     }
 
+    FeatureUsageData data = new FeatureUsageData();
     if (withSelection) {
-      UIEventLogger.logUIEvent(UIEventId.BreadcrumbNavigateWithSelection);
+      data.addData("with_selection", true);
       final TextRange range = getHighlightRange();
       if (range != null) {
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
       }
     }
-    else {
-      UIEventLogger.logUIEvent(UIEventId.BreadcrumbNavigate);
-    }
+    UIEventLogger.logUIEvent(UIEventId.BreadcrumbNavigate, data);
   }
 
   private static void moveEditorCaretTo(Editor editor, int offset) {

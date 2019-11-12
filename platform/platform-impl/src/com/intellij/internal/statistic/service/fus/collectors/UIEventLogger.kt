@@ -2,6 +2,8 @@
 @file:JvmName("UIEventLogger")
 package com.intellij.internal.statistic.service.fus.collectors
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+
 /**
  * @author yole
  */
@@ -21,4 +23,8 @@ enum class UIEventId {
 
 fun logUIEvent(eventId: UIEventId) {
   FUCounterUsageLogger.getInstance().logEvent("ui.event", eventId.name)
+}
+
+fun logUIEvent(eventId: UIEventId, data: FeatureUsageData) {
+  FUCounterUsageLogger.getInstance().logEvent("ui.event", eventId.name, data)
 }
