@@ -1321,11 +1321,8 @@ public class TypeConversionUtil {
       // identity cast, including (boolean)boolValue
       if (castType.equals(primitiveType)) return operand;
       final int rankFrom = getTypeRank(primitiveType);
-      if (rankFrom > caster.length) return null;
       final int rankTo = getTypeRank(castType);
-      if (rankTo > caster.length) return null;
-
-      value = caster[rankFrom - 1][rankTo - 1].cast(operand);
+      value = cast(operand, rankFrom, rankTo);
     }
     return value;
   }
@@ -1511,79 +1508,148 @@ public class TypeConversionUtil {
     return true;
   }
 
-  @FunctionalInterface
-  private interface Caster {
-    @NotNull
-    Object cast(@NotNull Object operand);
+  private static Object cast(Object operand, int from, int to) {
+    switch (from) {
+      case BYTE_RANK:
+        switch (to) {
+          case BYTE_RANK:
+            return operand;
+          case SHORT_RANK:
+            return (short)((Number)operand).intValue();
+          case CHAR_RANK:
+            return (char)((Number)operand).intValue();
+          case INT_RANK:
+            return ((Number)operand).intValue();
+          case LONG_RANK:
+            return (long)((Number)operand).intValue();
+          case FLOAT_RANK:
+            return (float)((Number)operand).intValue();
+          case DOUBLE_RANK:
+            return (double)((Number)operand).intValue();
+          default:
+            return null;
+        }
+      case SHORT_RANK:
+        switch (to) {
+          case BYTE_RANK:
+            return (byte)((Short)operand).shortValue();
+          case SHORT_RANK:
+            return operand;
+          case CHAR_RANK:
+            return (char)((Short)operand).shortValue();
+          case INT_RANK:
+            return (int)(Short)operand;
+          case LONG_RANK:
+            return (long)(Short)operand;
+          case FLOAT_RANK:
+            return (float)(Short)operand;
+          case DOUBLE_RANK:
+            return (double)(Short)operand;
+          default:
+            return null;
+        }
+      case CHAR_RANK:
+        switch (to) {
+          case BYTE_RANK:
+            return (byte)((Character)operand).charValue();
+          case SHORT_RANK:
+            return (short)((Character)operand).charValue();
+          case CHAR_RANK:
+            return operand;
+          case INT_RANK:
+            return (int)(Character)operand;
+          case LONG_RANK:
+            return (long)(Character)operand;
+          case FLOAT_RANK:
+            return (float)(Character)operand;
+          case DOUBLE_RANK:
+            return (double)(Character)operand;
+          default:
+            return null;
+        }
+      case INT_RANK:
+        switch (to) {
+          case BYTE_RANK:
+            return (byte)((Integer)operand).intValue();
+          case SHORT_RANK:
+            return (short)((Integer)operand).intValue();
+          case CHAR_RANK:
+            return (char)((Integer)operand).intValue();
+          case INT_RANK:
+            return operand;
+          case LONG_RANK:
+            return (long)(Integer)operand;
+          case FLOAT_RANK:
+            return (float)(Integer)operand;
+          case DOUBLE_RANK:
+            return (double)(Integer)operand;
+          default:
+            return null;
+        }
+      case LONG_RANK:
+        switch (to) {
+          case BYTE_RANK:
+            return (byte)((Long)operand).longValue();
+          case SHORT_RANK:
+            return (short)((Long)operand).longValue();
+          case CHAR_RANK:
+            return (char)((Long)operand).longValue();
+          case INT_RANK:
+            return (int)((Long)operand).longValue();
+          case LONG_RANK:
+            return operand;
+          case FLOAT_RANK:
+            return (float)(Long)operand;
+          case DOUBLE_RANK:
+            return (double)(Long)operand;
+          default:
+            return null;
+        }
+      case FLOAT_RANK:
+        switch (to) {
+          case BYTE_RANK:
+            return (byte)((Float)operand).floatValue();
+          case SHORT_RANK:
+            return (short)((Float)operand).floatValue();
+          case CHAR_RANK:
+            return (char)((Float)operand).floatValue();
+          case INT_RANK:
+            return (int)((Float)operand).floatValue();
+          case LONG_RANK:
+            return (long)((Float)operand).floatValue();
+          case FLOAT_RANK:
+            return operand;
+          case DOUBLE_RANK:
+            return (double)(Float)operand;
+          default:
+            return null;
+        }
+      case DOUBLE_RANK:
+        switch (to) {
+          case BYTE_RANK:
+            return (byte)((Double)operand).doubleValue();
+          case SHORT_RANK:
+            return (short)((Double)operand).doubleValue();
+          case CHAR_RANK:
+            return (char)((Double)operand).doubleValue();
+          case INT_RANK:
+            return (int)((Double)operand).doubleValue();
+          case LONG_RANK:
+            return (long)((Double)operand).doubleValue();
+          case FLOAT_RANK:
+            return new Float((Double)operand);
+          case DOUBLE_RANK:
+            return operand;
+          default:
+            return null;
+        }
+      default:
+        return null;
+    }
   }
 
-  private static final Caster[][] caster = {
-    {
-      operand -> operand
-      , operand -> (short)((Number)operand).intValue()
-      , operand -> (char)((Number)operand).intValue()
-      , operand -> ((Number)operand).intValue()
-      , operand -> (long)((Number)operand).intValue()
-      , operand -> (float)((Number)operand).intValue()
-      , operand -> (double)((Number)operand).intValue()
-    },
-    {
-      operand -> (byte)((Short)operand).shortValue()
-      , operand -> operand
-      , operand -> (char)((Short)operand).shortValue()
-      , operand -> (int)(Short)operand
-      , operand -> (long)(Short)operand
-      , operand -> (float)(Short)operand
-      , operand -> (double)(Short)operand
-    },
-    {
-      operand -> (byte)((Character)operand).charValue()
-      , operand -> (short)((Character)operand).charValue()
-      , operand -> operand
-      , operand -> (int)(Character)operand
-      , operand -> (long)(Character)operand
-      , operand -> (float)(Character)operand
-      , operand -> (double)(Character)operand
-    },
-    {
-      operand -> (byte)((Integer)operand).intValue()
-      , operand -> (short)((Integer)operand).intValue()
-      , operand -> (char)((Integer)operand).intValue()
-      , operand -> operand
-      , operand -> (long)(Integer)operand
-      , operand -> (float)(Integer)operand
-      , operand -> (double)(Integer)operand
-    },
-    {
-      operand -> (byte)((Long)operand).longValue()
-      , operand -> (short)((Long)operand).longValue()
-      , operand -> (char)((Long)operand).longValue()
-      , operand -> (int)((Long)operand).longValue()
-      , operand -> operand
-      , operand -> (float)(Long)operand
-      , operand -> (double)(Long)operand
-    },
-    {
-      operand -> (byte)((Float)operand).floatValue()
-      , operand -> (short)((Float)operand).floatValue()
-      , operand -> (char)((Float)operand).floatValue()
-      , operand -> (int)((Float)operand).floatValue()
-      , operand -> (long)((Float)operand).floatValue()
-      , operand -> operand
-      , operand -> (double)(Float)operand
-    },
-    {
-      operand -> (byte)((Double)operand).doubleValue()
-      , operand -> (short)((Double)operand).doubleValue()
-      , operand -> (char)((Double)operand).doubleValue()
-      , operand -> (int)((Double)operand).doubleValue()
-      , operand -> (long)((Double)operand).doubleValue()
-      , operand -> new Float((Double)operand)
-      , operand -> operand
-    },
-  };
-
   private static final Map<Class, PsiType> WRAPPER_TO_PRIMITIVE = new THashMap<>(8);
+
   static {
     WRAPPER_TO_PRIMITIVE.put(Boolean.class, PsiType.BOOLEAN);
     WRAPPER_TO_PRIMITIVE.put(Byte.class, PsiType.BYTE);
