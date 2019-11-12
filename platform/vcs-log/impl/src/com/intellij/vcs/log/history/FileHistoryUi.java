@@ -156,7 +156,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
       showWarningWithLink(mainText + " in current branch", "View and Show All Branches", () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false));
       });
     }
     else {

@@ -158,7 +158,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   }
 
   public void jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, @NotNull SettableFuture<? super Boolean> future) {
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
+    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
   }
 
   public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
@@ -168,13 +168,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       future.set(false);
       return;
     }
-    jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future);
-  }
-
-  protected <T> void jumpTo(@NotNull final T commitId,
-                            @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
-                            @NotNull final SettableFuture<? super Boolean> future) {
-    jumpTo(commitId, rowGetter, future, false);
+    jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future, false);
   }
 
   public <T> void jumpTo(@NotNull final T commitId,

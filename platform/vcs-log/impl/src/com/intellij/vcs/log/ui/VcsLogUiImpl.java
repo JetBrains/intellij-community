@@ -100,7 +100,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       @Override
       public void run() {
         getFilterUi().setFilter(null);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()),
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false),
                        pack -> pack.getFilters().isEmpty());
       }
     });
@@ -111,7 +111,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
         public void run() {
           VcsLogUiImpl ui = projectLog.openLogTab(VcsLogFilterObject.collection());
           if (ui != null) {
-            ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
+            ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
                               pack -> pack.getFilters().isEmpty());
           }
         }
