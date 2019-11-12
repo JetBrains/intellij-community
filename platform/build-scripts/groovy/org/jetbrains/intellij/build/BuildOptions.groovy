@@ -65,7 +65,11 @@ class BuildOptions {
   static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
   /** Build community distributives */
   static final String COMMUNITY_DIST_STEP = "community_dist"
-  /** Publish artifacts to TeamCity storage. Affects many small publication steps */
+  /**
+   * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
+   * Comprises many small publication steps.
+   * Note: skipping this step won't affect publication of 'Artifact paths' in TeamCity build settings and vice versa
+   */
   static final String TEAMCITY_ARTIFACTS_PUBLICATION = "teamcity_artifacts_publication"
 
   /**
