@@ -96,7 +96,7 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = Collections.emptyList();
-    private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
+    private Set<URL> myURLsWithProtectionDomain;
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -109,6 +109,8 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myLogJarAccess;
     private @Nullable CachePoolImpl myCachePool;
     private @Nullable CachingCondition myCachingCondition;
+
+    private boolean myUrlsInterned;
 
     Builder() { }
 
@@ -160,6 +162,9 @@ public class UrlClassLoader extends ClassLoader {
 
     @NotNull
     public Builder logJarAccess(boolean logJarAccess) { myLogJarAccess = logJarAccess; return this; }
+
+    @NotNull
+    public Builder urlsInterned() { myUrlsInterned = true; return this; }
 
     /**
      * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
@@ -235,9 +240,17 @@ public class UrlClassLoader extends ClassLoader {
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
 
-    myURLs = new ArrayList<URL>(builder.myURLs.size());
-    for (URL url : builder.myURLs) {
-      myURLs.add(internProtocol(url));
+    if (builder.myUrlsInterned) {
+      myURLs = builder.myURLs;
+    }
+    else {
+      myURLs = new ArrayList<URL>(builder.myURLs.size());
+      for (URL url : builder.myURLs) {
+        URL internedUrl = internProtocol(url);
+        if (internedUrl != null) {
+          myURLs.add(internedUrl);
+        }
+      }
     }
 
     myClassPath = createClassPath(builder);
@@ -247,15 +260,21 @@ public class UrlClassLoader extends ClassLoader {
 
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder builder) {
+    Set<URL> urlsWithProtectionDomain = builder.myURLsWithProtectionDomain;
+    if (urlsWithProtectionDomain == null) {
+      urlsWithProtectionDomain = Collections.emptySet();
+    }
+
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                          builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                         builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain,
+                         builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, urlsWithProtectionDomain,
                          builder.myLogJarAccess);
   }
 
   /**
    * Interns a value of the {@link URL#protocol} ("file" or "jar") and {@link URL#host} (empty string) fields.
    */
+  @Nullable
   public static URL internProtocol(@NotNull URL url) {
     String protocol = url.getProtocol();
     boolean interned = false;

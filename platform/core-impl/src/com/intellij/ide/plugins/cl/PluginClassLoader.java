@@ -57,7 +57,16 @@ public final class PluginClassLoader extends UrlClassLoader {
                            @Nullable IdeaPluginDescriptor pluginDescriptor,
                            String version,
                            @Nullable Path pluginRoot) {
-    super(build().urls(urls).allowLock().useCache());
+    this(build().urls(urls).allowLock().useCache(), parents, pluginId, pluginDescriptor, version, pluginRoot);
+  }
+
+  public PluginClassLoader(@NotNull Builder builder,
+                           @NotNull ClassLoader[] parents,
+                           PluginId pluginId,
+                           @Nullable IdeaPluginDescriptor pluginDescriptor,
+                           String version,
+                           @Nullable Path pluginRoot) {
+    super(builder);
 
     myParents = parents;
     myPluginId = pluginId;
@@ -76,7 +85,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader[] parents,
                            @NotNull IdeaPluginDescriptorImpl descriptor) {
-    this(urls, parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
+    this(build().urls(urls).allowLock().useCache().urlsInterned(), parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
   }
 
   /**

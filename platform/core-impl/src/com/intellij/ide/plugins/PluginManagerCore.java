@@ -600,7 +600,7 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  private static ClassLoader createPluginClassLoader(@NotNull ClassLoader[] parentLoaders, @NotNull IdeaPluginDescriptorImpl descriptor) {
+  private static ClassLoader createPluginClassLoader(@NotNull ClassLoader[] parentLoaders, @NotNull IdeaPluginDescriptorImpl descriptor, @NotNull UrlClassLoader.Builder urlLoaderBuilder) {
     if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
       return null;
     }
@@ -620,7 +620,7 @@ public final class PluginManagerCore {
         // `UrlClassLoader#addURL` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
         MethodHandle addURL = MethodHandles.lookup().findVirtual(loader.getClass(), "addURL", MethodType.methodType(void.class, URL.class));
         for (Path pathElement : classPath) {
-          addURL.invoke(loader, classpathElementToUrl(pathElement, descriptor));
+          addURL.invoke(loader, localFileToUrl(pathElement, descriptor));
         }
         return loader;
       }
@@ -631,20 +631,20 @@ public final class PluginManagerCore {
     else {
       List<URL> urls = new ArrayList<>(classPath.size());
       for (Path pathElement : classPath) {
-        urls.add(classpathElementToUrl(pathElement, descriptor));
+        urls.add(localFileToUrl(pathElement, descriptor));
       }
-      return new PluginClassLoader(urls, parentLoaders, descriptor);
+      return new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
     }
   }
 
   @NotNull
-  private static URL classpathElementToUrl(@NotNull Path cpElement, IdeaPluginDescriptor descriptor) {
+  private static URL localFileToUrl(@NotNull Path file, IdeaPluginDescriptor descriptor) {
     try {
       // it is important not to have traversal elements in classpath
-      return cpElement.normalize().toUri().toURL();
+      return new URL("file", "", file.normalize().toUri().getRawPath());
     }
     catch (MalformedURLException e) {
-      throw new PluginException("Corrupted path element: `" + cpElement + '`', e, descriptor.getPluginId());
+      throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
     }
   }
 
@@ -1438,7 +1438,12 @@ public final class PluginManagerCore {
     }
 
     ClassLoader[] array = parentLoaders.isEmpty() ? new ClassLoader[]{PluginManagerCore.class.getClassLoader()} : parentLoaders.toArray(new ClassLoader[0]);
-    rootDescriptor.setLoader(createPluginClassLoader(array, rootDescriptor));
+    rootDescriptor.setLoader(createPluginClassLoader(array, rootDescriptor, createUrlClassLoaderBuilder()));
+  }
+
+  @NotNull
+  private static UrlClassLoader.Builder createUrlClassLoaderBuilder() {
+    return UrlClassLoader.build().allowLock().useCache().urlsInterned();
   }
 
   @NotNull
@@ -1692,6 +1697,7 @@ public final class PluginManagerCore {
                                             boolean usePluginClassLoader) {
     ArrayList<ClassLoader> loaders = new ArrayList<>();
     ClassLoader[] emptyClassLoaderArray = new ClassLoader[0];
+    UrlClassLoader.Builder urlClassLoaderBuilder = createUrlClassLoaderBuilder();
     for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
       if (rootDescriptor == coreDescriptor || rootDescriptor.isUseCoreClassLoader()) {
         rootDescriptor.setLoader(coreLoader);
@@ -1724,7 +1730,7 @@ public final class PluginManagerCore {
       }
 
       ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
-      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor));
+      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder));
     }
   }
 
