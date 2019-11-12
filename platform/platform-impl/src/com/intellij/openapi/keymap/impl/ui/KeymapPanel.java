@@ -85,7 +85,7 @@ import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAll
 public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
   private JCheckBox preferKeyPositionOverCharOption;
 
-  private final KeymapSchemeManager myManager = new KeymapSelector(this::currentKeymapChanged).getManager();
+  private final KeymapSchemeManager myManager = new KeymapSelector(this::currentKeymapChanged, this).getManager();
   private final ActionsTree myActionsTree = new ActionsTree();
   private FilterComponent myFilterComponent;
   private TreeExpansionMonitor myTreeExpansionMonitor;
@@ -851,7 +851,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         else {
           if (manager == null) {
             manager = new KeymapSelector(selectedKeymap -> {
-            }).getManager();
+            }, null).getManager();
             manager.reset();
           }
           mutable = manager.getMutableKeymap(selected);
