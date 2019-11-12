@@ -465,7 +465,7 @@ public abstract class DialogWrapper {
   }
 
   protected static boolean isMoveHelpButtonLeft() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
+    return true;
   }
 
   private static boolean isRemoveHelpButton() {
