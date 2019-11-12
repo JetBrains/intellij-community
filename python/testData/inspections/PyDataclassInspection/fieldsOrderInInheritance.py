@@ -1,5 +1,6 @@
 import attr
 import dataclasses
+import pydantic
 
 @dataclasses.dataclass
 class A1:
@@ -53,3 +54,33 @@ class A52:
 class B5(A51, A52):
     pass
 
+
+@pydantic.dataclasses.dataclass
+class A6:
+    x1: int
+    x2: int = 1
+
+@pydantic.dataclasses.dataclass
+class <error descr="Non-default argument(s) follows default argument(s) defined in 'A6'">B6</error>(A6):
+    y1: str
+    y2: str = "1"
+
+@pydantic.dataclasses.dataclass
+class A7:
+    x1: int
+
+@pydantic.dataclasses.dataclass
+class B7(A7):
+    y1: str
+
+@pydantic.dataclasses.dataclass
+class A81:
+    field1: int
+
+@pydantic.dataclasses.dataclass
+class A82:
+    field2: str = "1"
+
+@pydantic.dataclasses.dataclass
+class B8<error descr="Inherited non-default argument(s) defined in A81 follows inherited default argument defined in A82">(A81, A82)</error>:
+    pass

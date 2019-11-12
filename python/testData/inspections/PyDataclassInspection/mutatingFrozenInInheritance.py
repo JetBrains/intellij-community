@@ -1,6 +1,6 @@
 import attr
 import dataclasses
-
+import pydantic
 
 @dataclasses.dataclass(frozen=True)
 class A1:
@@ -52,3 +52,15 @@ class B4(A4):
 A4().a = 2
 <error descr="'B4' object attribute 'a' is read-only">B4().a</error> = 2
 <error descr="'B4' object attribute 'b' is read-only">B4().b</error> = "2"
+
+@pydantic.dataclasses.dataclass(frozen=True)
+class A5:
+    a: int = 1
+
+@pydantic.dataclasses.dataclass(frozen=True)
+class B5(A5):
+    b: str = "1"
+
+<error descr="'A5' object attribute 'a' is read-only">A5().a</error> = 2
+<error descr="'B5' object attribute 'a' is read-only">B5().a</error> = 2
+<error descr="'B5' object attribute 'b' is read-only">B5().b</error> = "2"

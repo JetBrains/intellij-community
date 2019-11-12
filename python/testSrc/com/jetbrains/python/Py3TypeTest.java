@@ -1133,6 +1133,182 @@ public class Py3TypeTest extends PyTestCase {
            "expr = f'foo'");
   }
 
+  // PY-37802
+  public void testPydanticDataclassPostInitParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doMultiFileTest("int",
+                            "from dataclasses import InitVar\n" +
+                            "from pydantic.dataclasses import dataclass\n" +
+                            "@dataclass\n" +
+                            "class Foo:\n" +
+                            "    i: int\n" +
+                            "    j: int\n" +
+                            "    d: InitVar[int]\n" +
+                            "    def __post_init__(self, d):\n" +
+                            "        expr = d")
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassPostInitParameterNoInit() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doMultiFileTest("Any",
+                            "from dataclasses import InitVar\n" +
+                            "from pydantic.dataclasses import dataclass\n" +
+                            "@dataclass(init=False)\n" +
+                            "class Foo:\n" +
+                            "    i: int\n" +
+                            "    j: int\n" +
+                            "    d: InitVar[int]\n" +
+                            "    def __post_init__(self, d):\n" +
+                            "        expr = d")
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassPostInitInheritedParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
+
+        // both are dataclasses with enabled `init`
+        doTest("int",
+               "from dataclasses import InitVar\n" +
+               "from pydantic.dataclasses import dataclass\n" +
+               "\n" +
+               "@dataclass\n" +
+               "class A:\n" +
+               "    a: InitVar[int]\n" +
+               "\n" +
+               "@dataclass\n" +
+               "class B(A):\n" +
+               "    b: InitVar[str]\n" +
+               "\n" +
+               "    def __post_init__(self, a, b):\n" +
+               "        expr = a");
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassPostInitInheritedParameter2() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
+
+        // both are dataclasses, base with enabled `init`
+        doTest("Any",
+               "from dataclasses import InitVar\n" +
+               "from pydantic.dataclasses import dataclass\n" +
+               "\n" +
+               "@dataclass\n" +
+               "class A:\n" +
+               "    a: InitVar[int]\n" +
+               "\n" +
+               "@dataclass(init=False)\n" +
+               "class B(A):\n" +
+               "    b: InitVar[str]\n" +
+               "\n" +
+               "    def __post_init__(self, a, b):\n" +
+               "        expr = a");
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassPostInitInheritedParameter3() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
+
+        // both are dataclasses, derived with enabled `init`
+        doTest("int",
+               "from dataclasses import InitVar\n" +
+               "from pydantic.dataclasses import dataclass\n" +
+               "\n" +
+               "@dataclass(init=False)\n" +
+               "class A:\n" +
+               "    a: InitVar[int]\n" +
+               "\n" +
+               "@dataclass\n" +
+               "class B(A):\n" +
+               "    b: InitVar[str]\n" +
+               "\n" +
+               "    def __post_init__(self, a, b):\n" +
+               "        expr = a");
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassPostInitInheritedParameter4() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
+
+        // both are dataclasses with disabled `init`
+        doTest("Any",
+               "from dataclasses import InitVar\n" +
+               "from pydantic.dataclasses import dataclass\n" +
+               "\n" +
+               "@dataclass(init=False)\n" +
+               "class A:\n" +
+               "    a: InitVar[int]\n" +
+               "\n" +
+               "@dataclass(init=False)\n" +
+               "class B(A):\n" +
+               "    b: InitVar[str]\n" +
+               "\n" +
+               "    def __post_init__(self, a, b):\n" +
+               "        expr = a");
+      }
+    );
+  }
+
+  // PY-37802
+  public void testMixedPydanticDataclassPostInitInheritedParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
+
+        doTest("Any",
+               "from dataclasses import InitVar\n" +
+               "from pydantic.dataclasses import dataclass\n" +
+               "\n" +
+               "class A:\n" +
+               "    a: InitVar[int]\n" +
+               "\n" +
+               "@dataclass\n" +
+               "class B(A):\n" +
+               "    b: InitVar[str]\n" +
+               "\n" +
+               "    def __post_init__(self, a, b):\n" +
+               "        expr = a");
+
+        doTest("Any",
+               "from dataclasses import InitVar\n" +
+               "from pydantic.dataclasses import dataclass\n" +
+               "\n" +
+               "@dataclass\n" +
+               "class A:\n" +
+               "    a: InitVar[int]\n" +
+               "\n" +
+               "class B(A):\n" +
+               "    b: InitVar[str]\n" +
+               "\n" +
+               "    def __post_init__(self, a, b):\n" +
+               "        expr = a");
+      }
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

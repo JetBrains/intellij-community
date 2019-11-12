@@ -82,6 +82,7 @@ public class PyKnownDecoratorUtil {
     ATTR_ATTRS("attr.attrs"),
     ATTR_ATTRIBUTES("attr.attributes"),
     ATTR_DATACLASS("attr.dataclass"),
+    PYDANTIC_DATACLASS("pydantic.dataclasses.dataclass"),
 
     PYTEST_FIXTURE("pytest.fixture");
 

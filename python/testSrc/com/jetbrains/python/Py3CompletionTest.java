@@ -408,6 +408,30 @@ public class Py3CompletionTest extends PyTestCase {
     assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
   }
 
+  // PY-37802
+  public void testPydanticDataclassPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-37802
+  public void testPydanticDataclassWithInitVarPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-37802
+  public void testPydanticDataclassPostInitPostParse() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-37802
+  public void testPydanticDataclassWithInitVarPostInitPostParse() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-37802
+  public void testPydanticDataclassPostInitNoInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
 
   @Override
   protected String getTestDataPath() {

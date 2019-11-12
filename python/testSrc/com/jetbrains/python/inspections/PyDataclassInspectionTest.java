@@ -276,6 +276,75 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-37802
+  public void testPydanticDefaultFieldValue() { doTest(); }
+
+  // PY-37802
+  public void testPydanticAccessToInitVar() { doTest(); }
+
+  // PY-37802
+  public void testPydanticAccessToInitVarInHierarchy() { doTest(); }
+
+  // PY-37802
+  public void testComparisonForManuallyOrderedInPydanticInheritance() { doTest(); }
+
+  // PY-37802
+  public void testComparisonForOrderedPydantic() { doTest(); }
+
+  // PY-37802
+  public void testComparisonForUnorderedPydantic() { doTest(); }
+
+  // PY-37802
+  public void testComparisonForOrderedAndUnorderedPydantic() { doTest(); }
+
+  // PY-37802
+  public void testComparisonInPydanticInheritance() { doTest(); }
+
+  // PY-37802
+  public void testPydanticFieldDefaultAndDefaultFactory() { doTest(); }
+
+  // PY-37802
+  public void testPydanticFieldsOrder() { doTest(); }
+
+  // PY-37802
+  public void testPydanticHelpersArgument() { doTest(); }
+
+  // PY-37802
+  public void testUselessDunderPydanticPostInit() { doTest(); }
+
+  // PY-37802
+  public void testHelpersArgumentInPydanticInheritance() { doTest(); }
+
+  // PY-37802
+  public void testPydanticLackingTypeAnnotation() { doTest(); }
+
+  // PY-37802
+  public void testMutatingFrozenPydantic() { doTest(); }
+
+  // PY-37802
+  public void testPydanticOrderAndNotEq() { doTest(); }
+
+  // PY-37802
+  public void testPydanticUselessFrozen() { doTest(); }
+
+  // PY-37802
+  public void testPyndaticUselessInitReprEq() { doTest(); }
+
+  // PY-37802
+  public void testPydanticUselessInitVar() { doTest(); }
+
+  // PY-37802
+  public void testPydanticUselessOrder() { doTest(); }
+
+  // PY-37802
+  public void testPydanticUselessUnsafeHash() { doTest(); }
+
+  // PY-37802
+  public void testWrongDunderPydanticPostInitSignature() { doTest(); }
+
+  // PY-37802
+  public void testWrongDunderPydanticPostInitPostParseSignature() { doTest(); }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(

@@ -37,7 +37,7 @@ class PyDataclassCompletionContributor : CompletionContributor() {
       val dataclassParameters = parseDataclassParameters(cls, typeEvalContext)
       if (dataclassParameters == null || !dataclassParameters.init) return
 
-      if (dataclassParameters.type == PyDataclassParameters.Type.STD) {
+      if (dataclassParameters.type == PyDataclassParameters.Type.STD || dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
         cls.processClassLevelDeclarations { element, _ ->
@@ -59,6 +59,10 @@ class PyDataclassCompletionContributor : CompletionContributor() {
         }
 
         addMethodToResult(result, cls, typeEvalContext, DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
+
+        if (dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC) {
+          addMethodToResult(result, cls, typeEvalContext, DUNDER_PYDATNIC_POST_INIT_POST_PARSE, postInitParameters.joinToString(prefix = "(", postfix = ")"))
+        }
       }
       else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
         addMethodToResult(result, cls, typeEvalContext, DUNDER_ATTRS_POST_INIT)

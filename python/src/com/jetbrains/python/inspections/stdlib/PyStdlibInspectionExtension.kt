@@ -2,17 +2,13 @@
 package com.jetbrains.python.inspections.stdlib
 
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.DUNDER_POST_INIT
-import com.jetbrains.python.psi.types.PyNamedTupleType
+import com.jetbrains.python.codeInsight.*
 import com.jetbrains.python.psi.types.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
-import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.types.PyClassLikeType
-import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 class PyStdlibInspectionExtension : PyInspectionExtension() {
 
@@ -23,7 +19,8 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
   override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {
     if (type is PyClassLikeType) {
       return type is PyNamedTupleType && type.fields.containsKey(name) ||
-             type.getAncestorTypes(context).filterIsInstance<PyNamedTupleType>().any { it.fields.containsKey(name) }
+             type.getAncestorTypes(context).filterIsInstance<PyNamedTupleType>().any { it.fields.containsKey(name) } ||
+             type is PyClassTypeImpl && parsePydanticDataclassParameters(type.pyClass, context) != null && PYDANTIC_HIDDEN_MEMBERS.contains(name)
     }
 
     return false
@@ -40,6 +37,8 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
     return function.name == "__prepare__" &&
            function.getParameters(context).let { it.size == 3 && !it.any { p -> p.isKeywordContainer || p.isPositionalContainer } } ||
            function.name == DUNDER_POST_INIT &&
-           function.containingClass?.let { parseStdDataclassParameters(it, context) != null } == true
+           function.containingClass?.let { parseStdOrPydanticDataclassParameters(it, context) != null } == true ||
+           function.name == DUNDER_PYDATNIC_POST_INIT_POST_PARSE &&
+           function.containingClass?.let { parsePydanticDataclassParameters(it, context) != null } == true
   }
 }

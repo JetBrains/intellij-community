@@ -27,6 +27,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Tests parameter info available via ^P at call sites.
@@ -59,9 +60,16 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     Arrays
       .stream(new File(absoluteDirectory).listFiles())
+      .flatMap(file -> {
+        if (file.isDirectory()) {
+          return Stream.of(file.listFiles());
+        } else {
+          return Stream.of(file);
+        }
+      })
       .map(File::getPath)
       .filter(path -> !path.equals(absoluteMainFile))
-      .forEach(path -> myFixture.copyFileToProject(path, new File(path).getName()));
+      .forEach(path -> myFixture.copyFileToProject(path, path.replaceFirst(absoluteDirectory + "/", "")));
 
     return marks;
   }
@@ -1009,6 +1017,125 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                  "covariant: bool=False, contravariant: bool=False",
                                  new String[]{"name: str, "},
                                  ArrayUtilRt.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticInitializingDataclass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(11);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check(
+          Arrays.asList("self: object", "cls: object"),
+          Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY),
+          Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"})
+        );
+
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: B2, x: int", new String[]{"x: int"}, new String[]{"self: B2, "});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("b: int", new String[]{"b: int"});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("b: int", new String[]{"b: int"});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("a: int, b: int", new String[]{"a: int, "});
+
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("a: int, b: int, d: int=..., e: int=...", new String[]{"a: int, "});
+
+        feignCtrlP(marks.get("<arg9>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg10>").getTextOffset()).check(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        feignCtrlP(marks.get("<arg11>").getTextOffset()).check("baz: str", new String[]{"baz: str"});
+
+         }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticInitializingDataclassHierarchy() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int", new String[]{"a: int"});
+
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
+                                                              Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY),
+                                                              Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
+
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int=15, y: int=0, z: int=10", new String[]{"x: int=15, "});
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticInitializingDataclassMixedHierarchy() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: str", new String[]{"b: str"});
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: B3, b: str", new String[]{"b: str"}, new String[]{"self: B3, "});
+
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
+                                                              Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY),
+                                                              Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
+
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, z: str", new String[]{"x: int, "});
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassesReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(4);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: A, *, a: int=..., b: str=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B, *, a: int=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: C, *, a: int=..., b: str=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassesHierarchyReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int=..., b: str=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, a: int=..., b: str=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: B3, *, a: int=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: B5, *, x: int=..., y: int=..., z: int=...",
+                                                              ArrayUtilRt.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
+  // PY-37802
+  public void testPydanticDataclassesMixedHierarchyReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(5);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, b: str=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: C5, *, x: int=..., z: str=...", ArrayUtilRt.EMPTY_STRING_ARRAY);
       }
     );
   }

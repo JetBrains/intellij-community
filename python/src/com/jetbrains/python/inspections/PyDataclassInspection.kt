@@ -70,7 +70,8 @@ class PyDataclassInspection : PyInspection() {
         val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
 
         if (dataclassParameters != null) {
-          if (dataclassParameters.type == PyDataclassParameters.Type.STD) {
+          if (dataclassParameters.type == PyDataclassParameters.Type.STD ||
+              dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC) {
             processDataclassParameters(node, dataclassParameters)
 
             val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
@@ -92,6 +93,12 @@ class PyDataclassInspection : PyInspection() {
             if (postInit != null) {
               processPostInitDefinition(node, postInit, dataclassParameters, localInitVars)
             }
+            if (dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC) {
+              val postInitPostParse = node.findMethodByName(DUNDER_PYDATNIC_POST_INIT_POST_PARSE, false, myTypeEvalContext)
+              if (postInitPostParse != null) {
+                processPostInitPostParseDefinition(node, postInitPostParse, dataclassParameters, localInitVars)
+              }
+            }
           }
           else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
             processAttrsParameters(node, dataclassParameters)
@@ -104,13 +111,13 @@ class PyDataclassInspection : PyInspection() {
             processAttrsInitializersAndValidators(node)
             processAttrIbFunctionCalls(node)
           }
-
           processAnnotationsExistence(node, dataclassParameters)
 
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
             { parseDataclassParameters(it, myTypeEvalContext) != null },
-            dataclassParameters.type == PyDataclassParameters.Type.STD,
+            dataclassParameters.type == PyDataclassParameters.Type.STD ||
+            dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC,
             myTypeEvalContext,
             this::registerProblem,
             {
@@ -335,7 +342,7 @@ class PyDataclassInspection : PyInspection() {
 
       var frozenInHierarchy: Boolean? = null
       for (current in StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext))) {
-        val currentFrozen = parseStdDataclassParameters(current, myTypeEvalContext)?.frozen ?: continue
+        val currentFrozen = parseStdOrPydanticDataclassParameters(current, myTypeEvalContext)?.frozen ?: continue
 
         if (frozenInHierarchy == null) {
           frozenInHierarchy = currentFrozen
@@ -497,6 +504,7 @@ class PyDataclassInspection : PyInspection() {
 
     private fun processAnnotationsExistence(cls: PyClass, dataclassParameters: PyDataclassParameters) {
       if (dataclassParameters.type == PyDataclassParameters.Type.STD ||
+          dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC ||
           PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["auto_attribs"]), false)) {
         cls.processClassLevelDeclarations { element, _ ->
           if (element is PyTargetExpression && element.annotation == null && PyDataclassFieldStubImpl.create(element) != null) {
@@ -582,7 +590,7 @@ class PyDataclassInspection : PyInspection() {
 
       val allInitVars = mutableListOf<PyTargetExpression>()
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext).asReversed()) {
-        if (parseStdDataclassParameters(ancestor, myTypeEvalContext) == null) continue
+        if (parseStdOrPydanticDataclassParameters(ancestor, myTypeEvalContext) == null) continue
 
         ancestor.processClassLevelDeclarations { element, _ ->
           if (element is PyTargetExpression && isInitVar(element)) {
@@ -613,6 +621,44 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
+    private fun processPostInitPostParseDefinition(cls: PyClass,
+                                                   postInitPostParse: PyFunction,
+                                                   dataclassParameters: PyDataclassParameters,
+                                                   localInitVars: List<PyTargetExpression>) {
+
+      val allInitVars = mutableListOf<PyTargetExpression>()
+      for (ancestor in cls.getAncestorClasses(myTypeEvalContext).asReversed()) {
+        if (parseStdOrPydanticDataclassParameters(ancestor, myTypeEvalContext) == null) continue
+
+        ancestor.processClassLevelDeclarations { element, _ ->
+          if (element is PyTargetExpression && isInitVar(element)) {
+            allInitVars.add(element)
+          }
+
+          return@processClassLevelDeclarations true
+        }
+      }
+      allInitVars.addAll(localInitVars)
+
+      val implicitParameters = postInitPostParse.getParameters(myTypeEvalContext)
+      val parameters = if (implicitParameters.isEmpty()) emptyList<PyCallableParameter>() else ContainerUtil.subList(implicitParameters, 1)
+      val message = "'$DUNDER_PYDATNIC_POST_INIT_POST_PARSE' " +
+                    "should take all init-only variables" +
+                    "${if (allInitVars.size != localInitVars.size) " (incl. inherited)" else ""} " +
+                    "in the same order as they are defined"
+
+      if (parameters.size != allInitVars.size) {
+        registerProblem(postInitPostParse.parameterList, message, ProblemHighlightType.GENERIC_ERROR)
+      }
+      else {
+        parameters
+          .asSequence()
+          .zip(allInitVars.asSequence())
+          .all { it.first.name == it.second.name }
+          .also { if (!it) registerProblem(postInitPostParse.parameterList, message) }
+      }
+    }
+
     private fun processAttrsPostInitDefinition(postInit: PyFunction, dataclassParameters: PyDataclassParameters) {
       if (!dataclassParameters.init) {
         registerProblem(postInit.nameIdentifier,
@@ -633,7 +679,8 @@ class PyDataclassInspection : PyInspection() {
       val allowDefinition = calleeQName == "dataclasses.fields"
 
       val type = myTypeEvalContext.getType(argument)
-      if (!isExpectedDataclass(type, PyDataclassParameters.Type.STD, allowDefinition, true, calleeQName != "dataclasses.asdict")) {
+      if (!isExpectedDataclass(type, setOf(PyDataclassParameters.Type.STD, PyDataclassParameters.Type.PYDANTIC), allowDefinition,
+                               true, calleeQName != "dataclasses.asdict")) {
         val message = "'$calleeQName' method should be called on dataclass instances" + if (allowDefinition) " or types" else ""
 
         registerProblem(argument, message)
@@ -645,7 +692,7 @@ class PyDataclassInspection : PyInspection() {
 
       val instance = calleeQName != "attr.fields" && calleeQName != "attr.fields_dict"
 
-      if (!isExpectedDataclass(myTypeEvalContext.getType(argument), PyDataclassParameters.Type.ATTRS, !instance, instance, true)) {
+      if (!isExpectedDataclass(myTypeEvalContext.getType(argument), setOf(PyDataclassParameters.Type.ATTRS), !instance, instance, true)) {
         val message = "'$calleeQName' method should be called on attrs " + if (instance) "instances" else "types"
 
         registerProblem(argument, message)
@@ -657,22 +704,22 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun isExpectedDataclass(type: PyType?,
-                                    dataclassType: PyDataclassParameters.Type,
+                                    dataclassTypes: Set<PyDataclassParameters.Type>,
                                     allowDefinition: Boolean,
                                     allowInstance: Boolean,
                                     allowSubclass: Boolean): Boolean {
       if (type is PyStructuralType || PyTypeChecker.isUnknown(type, myTypeEvalContext)) return true
       if (type is PyUnionType) return type.members.any {
-        isExpectedDataclass(it, dataclassType, allowDefinition, allowInstance, allowSubclass)
+        isExpectedDataclass(it, dataclassTypes, allowDefinition, allowInstance, allowSubclass)
       }
 
       return type is PyClassType &&
              (allowDefinition || !type.isDefinition) &&
              (allowInstance || type.isDefinition) &&
              (
-               parseDataclassParameters(type.pyClass, myTypeEvalContext)?.type == dataclassType ||
+               dataclassTypes.contains(parseDataclassParameters(type.pyClass, myTypeEvalContext)?.type)||
                allowSubclass && type.getAncestorTypes(myTypeEvalContext).any {
-                 isExpectedDataclass(it, dataclassType, true, false, false)
+                 isExpectedDataclass(it, dataclassTypes, true, false, false)
                }
              )
     }

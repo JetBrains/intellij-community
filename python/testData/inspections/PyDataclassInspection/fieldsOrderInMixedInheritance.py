@@ -1,5 +1,6 @@
 import attr
 import dataclasses
+import pydantic
 
 class A1:
     x1: int
@@ -34,5 +35,23 @@ class A4:
     x2: int = 1
 
 class B4(A4):
+    y1: str
+    y2: str = "1"
+
+class A5:
+    x1: int
+    x2: int = 1
+
+@pydantic.dataclasses.dataclass
+class B5(A5):
+    y1: str
+    y2: str = "1"
+
+@pydantic.dataclasses.dataclass
+class A6:
+    x1: int
+    x2: int = 1
+
+class B6(A6):
     y1: str
     y2: str = "1"

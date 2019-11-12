@@ -24,20 +24,30 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
-    if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null && func.name == DUNDER_POST_INIT) {
+    if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null
+        && (func.name == DUNDER_POST_INIT ||func.name == DUNDER_PYDATNIC_POST_INIT_POST_PARSE)) {
       val cls = func.containingClass
       val name = param.name
 
-      if (cls != null && name != null && parseStdDataclassParameters(cls, context)?.init == true) {
+      if (cls != null && name != null) {
+        val dataclassType = parseDataclassParameters(cls, context)
+          ?.takeIf {
+            when (it.type) {
+              PyDataclassParameters.Type.STD -> func.name == DUNDER_POST_INIT && it.init
+              PyDataclassParameters.Type.PYDANTIC -> it.init
+              else -> false
+            }
+          }?.type ?: return null
+
         cls
-          .findClassAttribute(name, false, context) // `true` is not used here because ancestor should be a dataclass
-          ?.let { return Ref.create(getTypeForParameter(cls, it, PyDataclassParameters.Type.STD, context)) }
+           .findClassAttribute(name, false, context) // `true` is not used here because ancestor should be a dataclass
+          ?.let { return Ref.create(getTypeForParameter(cls, it, dataclassType, context)) }
 
         for (ancestor in cls.getAncestorClasses(context)) {
-          if (parseStdDataclassParameters(ancestor, context) != null) {
+          if (parseDataclassParameters(ancestor, context)?.takeIf { it.type == dataclassType } != null) {
             ancestor
               .findClassAttribute(name, false, context)
-              ?.let { return Ref.create(getTypeForParameter(ancestor, it, PyDataclassParameters.Type.STD, context)) }
+              ?.let { return Ref.create(getTypeForParameter(ancestor, it, dataclassType, context)) }
           }
         }
       }
@@ -140,7 +150,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             parameter.name?.let {
               // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
-              if (parameters.type == PyDataclassParameters.Type.STD) {
+              if (parameters.type == PyDataclassParameters.Type.STD || parameters.type == PyDataclassParameters.Type.PYDANTIC) {
                 // std: attribute that overrides ancestor's attribute does not change the order but updates type
                 collected[it] = collected.remove(it) ?: parameter
               }

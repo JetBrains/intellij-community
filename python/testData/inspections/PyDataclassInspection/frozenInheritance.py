@@ -1,6 +1,6 @@
 import attr
 import dataclasses
-
+import pydantic
 
 @dataclasses.dataclass(frozen=True)
 class A1:
@@ -36,3 +36,21 @@ class A4:
 @attr.s(frozen=True)
 class B4(A4):
     b: str = "2"
+
+@pydantic.dataclasses.dataclass(frozen=True)
+class A5:
+    a: int = 1
+
+@pydantic.dataclasses.dataclass
+class <error descr="Frozen dataclasses can not inherit non-frozen one and vice versa">B5</error>(A5):
+    b: str = "2"
+
+
+@pydantic.dataclasses.dataclass
+class A6:
+    a: int = 1
+
+@pydantic.dataclasses.dataclass(<error descr="Frozen dataclasses can not inherit non-frozen one and vice versa">frozen=True</error>)
+class B6(A6):
+    b: str = "2"
+

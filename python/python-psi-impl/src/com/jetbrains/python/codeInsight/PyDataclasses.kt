@@ -24,9 +24,13 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 const val DATACLASSES_INITVAR_TYPE: String = "dataclasses.InitVar"
 const val DUNDER_POST_INIT: String = "__post_init__"
 const val DUNDER_ATTRS_POST_INIT: String = "__attrs_post_init__"
+const val DUNDER_PYDATNIC_POST_INIT_POST_PARSE: String = "__post_init_post_parse__"
 
 private val STD_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen")
 private val ATTRS_PARAMETERS = listOf("these", "repr_ns", "repr", "cmp", "hash", "init", "slots", "frozen", "str", "auto_attribs")
+private val PYDANTIC_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "config")
+
+val PYDANTIC_HIDDEN_MEMBERS = setOf("__validate__", "__get_validators__", "__post_init_original__", "__pydantic_model__", "__initialised__")
 
 /**
  * It should be used only to map arguments to parameters and
@@ -37,12 +41,21 @@ private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
   Triple(KnownDecorator.ATTR_S, Type.ATTRS, ATTRS_PARAMETERS),
   Triple(KnownDecorator.ATTR_ATTRS, Type.ATTRS, ATTRS_PARAMETERS),
   Triple(KnownDecorator.ATTR_ATTRIBUTES, Type.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DATACLASS, Type.ATTRS, ATTRS_PARAMETERS)
+  Triple(KnownDecorator.ATTR_DATACLASS, Type.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.PYDANTIC_DATACLASS, Type.PYDANTIC, PYDANTIC_PARAMETERS)
 )
 
 
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
   return parseDataclassParameters(cls, context)?.takeIf { it.type == Type.STD }
+}
+
+fun parsePydanticDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
+  return parseDataclassParameters(cls, context)?.takeIf { it.type == Type.PYDANTIC }
+}
+
+fun parseStdOrPydanticDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
+  return parseDataclassParameters(cls, context)?.takeIf { it.type == Type.STD || it.type == Type.PYDANTIC }
 }
 
 fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
@@ -63,6 +76,7 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclas
  * This method MUST be used only while building stub for dataclass.
  *
  * @see parseStdDataclassParameters
+ * @see parsePydanticDataclassParameters
  * @see parseDataclassParameters
  */
 fun parseDataclassParametersForStub(cls: PyClass): PyDataclassParameters? = parseDataclassParametersFromAST(
@@ -75,6 +89,7 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: PyDataclassParamete
     return when (type) {
       PyDataclassParameters.Type.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
       PyDataclassParameters.Type.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
+      PyDataclassParameters.Type.PYDANTIC -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
     }
   }
 
@@ -177,7 +192,7 @@ data class PyDataclassParameters(val init: Boolean,
                                  val others: Map<String, PyExpression>) {
 
   enum class Type {
-    STD, ATTRS
+    STD, ATTRS, PYDANTIC
   }
 }
 
@@ -240,7 +255,7 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
       }
     }
 
-    if (type == PyDataclassParameters.Type.STD) {
+    if (type == PyDataclassParameters.Type.STD || type == PyDataclassParameters.Type.PYDANTIC) {
       when (name) {
         "eq" -> {
           eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)

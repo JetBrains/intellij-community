@@ -1041,4 +1041,31 @@ public class PyStubsTest extends PyTestCase {
       assertEquals(initValue, fieldStub.initValue());
     }
   }
+
+  // PY-37802
+  public void testPydanticDataclassField() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final PyFile file1 = getTestFile("pydanticDataclassField/a.py");
+        final PyFile file2 = getTestFile("pydanticDataclassField/dataclasses.py");
+        final PyFile file3 = getTestFile("pydanticDataclassField/b.py");
+
+        final DataclassFieldChecker checker = new DataclassFieldChecker(file1.findTopLevelClass("A"));
+        checker.check("a", true, false, true);
+        checker.check("b", false, true, true);
+        checker.check("c", false, false, false);
+        checker.check("d", false, false, true);
+        checker.check("e", false, false, true); // fallback `init` value
+        checker.check("f", false, false, true); // fallback `init` value
+        checker.check("g", false, false, true); // fallback `init` value
+        checker.check("h", false, false, true);
+        checker.check("i", false, false, true);
+
+        assertNotParsed(file1);
+        assertNotParsed(file2);
+        assertNotParsed(file3);
+      }
+    );
+  }
 }
