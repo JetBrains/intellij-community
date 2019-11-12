@@ -111,8 +111,7 @@
     </extensionPoint>
 
     <!-- com.intellij.psi.PsiElement -->
-    <extensionPoint name="cantBeStatic"
-                    interface="com.intellij.openapi.util.Condition"/>
+    <extensionPoint name="cantBeStatic" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
     <extensionPoint name="daemon.changeLocalityDetector"
                     interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector"/>
