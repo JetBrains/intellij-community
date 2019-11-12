@@ -8,6 +8,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
@@ -189,7 +190,6 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     WriteCommandAction.writeCommandAction(myProject).run(() -> p1.delete(this));
 
     waitForReadingCompletion();
-
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);
   }
@@ -213,6 +213,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, goal);
 
     myProjectsManager.setIgnoredState(Collections.singletonList(myProjectsManager.findProject(p1)), true);
+
 
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);
