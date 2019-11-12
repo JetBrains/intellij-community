@@ -34,7 +34,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {
-    return id != PluginManagerCore.CORE_ID && (parentContext.disabledPlugins.contains(id) || parentContext.loadingResult.incompletePlugins.containsKey(id));
+    return id != PluginManagerCore.CORE_ID && (parentContext.disabledPlugins.contains(id) || parentContext.result.incompletePlugins.containsKey(id));
   }
 
   boolean isBroken(@NotNull IdeaPluginDescriptorImpl descriptor) {
@@ -42,7 +42,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
       return false;
     }
 
-    Set<String> set = parentContext.loadingResult.brokenPluginVersions.get(descriptor.getPluginId());
+    Set<String> set = parentContext.result.brokenPluginVersions.get(descriptor.getPluginId());
     return set != null && set.contains(descriptor.getVersion());
   }
 

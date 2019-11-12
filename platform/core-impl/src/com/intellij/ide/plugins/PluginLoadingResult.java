@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @ApiStatus.Internal
 final class PluginLoadingResult {
@@ -27,7 +28,7 @@ final class PluginLoadingResult {
   private Map<PluginId, IdeaPluginDescriptorImpl> duplicateMap;
   Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
-  final List<String> errors = new ArrayList<>();
+  final Collection<String> errors = new ConcurrentLinkedQueue<>();
 
   private IdeaPluginDescriptorImpl[] sortedPlugins;
   private List<IdeaPluginDescriptorImpl> sortedEnabledPlugins;

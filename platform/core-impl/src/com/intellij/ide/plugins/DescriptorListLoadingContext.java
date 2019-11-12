@@ -39,7 +39,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   private final int maxThreads;
 
   @NotNull
-  final PluginLoadingResult loadingResult;
+  final PluginLoadingResult result;
 
   @NotNull
   final Set<PluginId> disabledPlugins;
@@ -58,8 +58,8 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap()));
   }
 
-  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult loadingResult) {
-    this.loadingResult = loadingResult;
+  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
+    this.result = result;
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
     skipDisabledPlugins = (flags & SKIP_DISABLED_PLUGINS) == SKIP_DISABLED_PLUGINS;

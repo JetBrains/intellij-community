@@ -155,10 +155,10 @@ public class PluginManagerTest {
       String url = element.getAttributeValue("url");
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
       descriptor.readExternal(element, Paths.get(url), context.pathResolver, context, descriptor);
-      parentContext.loadingResult.add(descriptor, false);
+      parentContext.result.add(descriptor, false);
     }
-    parentContext.loadingResult.finishLoading();
-    return parentContext.loadingResult;
+    parentContext.result.finishLoading();
+    return parentContext.result;
   }
 
   /** @noinspection unused */

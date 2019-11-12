@@ -266,7 +266,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
               isAvailable = false;
             }
             else {
-              dependencyDescriptor = context.parentContext.loadingResult.idMap.get(dependencyId);
+              dependencyDescriptor = context.parentContext.result.idMap.get(dependencyId);
               if (dependencyDescriptor != null && context.isBroken(dependencyDescriptor)) {
                 if (!isOptional) {
                   context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
@@ -328,6 +328,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         case "idea-version":
           mySinceBuild = StringUtil.nullize(child.getAttributeValue("since-build"));
           myUntilBuild = StringUtil.nullize(child.getAttributeValue("until-build"));
+          if (!checkCompatibility(context)) {
+            return false;
+          }
           break;
       }
 
@@ -345,11 +348,37 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return true;
   }
 
+  private boolean checkCompatibility(@NotNull DescriptorLoadingContext context) {
+    if (isBundled() || (mySinceBuild == null && myUntilBuild == null)) {
+      return true;
+    }
+
+    String message = PluginManagerCore.isIncompatible(PluginManagerCore.getBuildNumber(), mySinceBuild, myUntilBuild);
+    if (message == null) {
+      return true;
+    }
+
+    markAsIncomplete(context);
+
+    String since = mySinceBuild;
+    if (since == null) {
+      since = "0.0";
+    }
+
+    String until = myUntilBuild;
+    if (until == null) {
+      since = "*.*";
+    }
+    context.parentContext.result.errors.add("Plugin " + myName + " (id=" + myId + ", path=" + myPath + ") is incompatible (target build " +
+                                            (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")");
+    return false;
+  }
+
   private void markAsIncomplete(@NotNull DescriptorLoadingContext context) {
     incomplete = true;
     setEnabled(false);
     if (myId != null) {
-      context.parentContext.loadingResult.incompletePlugins.put(myId, this);
+      context.parentContext.result.incompletePlugins.put(myId, this);
     }
   }
 

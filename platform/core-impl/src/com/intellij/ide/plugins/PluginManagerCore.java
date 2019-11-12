@@ -1156,7 +1156,7 @@ public final class PluginManagerCore {
       }));
     }
 
-    PluginLoadingResult result = loadingContext.parentContext.loadingResult;
+    PluginLoadingResult result = loadingContext.parentContext.result;
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
@@ -1501,16 +1501,10 @@ public final class PluginManagerCore {
 
     boolean shouldLoadPlugins = shouldLoadPlugins();
 
-    BuildNumber buildNumber = getBuildNumber();
-    Set<PluginId> disabledPlugins = getDisabledIds();
-
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       String errorSuffix;
       if (descriptor == coreDescriptor) {
         errorSuffix = null;
-      }
-      else if (!descriptor.isEnabled()) {
-        errorSuffix = "is not enabled";
       }
       else if (explicitlyEnabled != null) {
         if (explicitlyEnabled.contains(descriptor)) {
@@ -1532,17 +1526,6 @@ public final class PluginManagerCore {
         // If a plugin does not include any module dependency tags in its plugin.xml,
         // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
         errorSuffix = "defines no module dependencies (supported only in IntelliJ IDEA)";
-      }
-      else if (disabledPlugins.contains(descriptor.getPluginId())) {
-        // do not log disabled plugins on each start
-        errorSuffix = "";
-      }
-      else if (!descriptor.isBundled() && isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null) {
-        String since = ObjectUtils.chooseNotNull(descriptor.getSinceBuild(), "0.0");
-        String until = ObjectUtils.chooseNotNull(descriptor.getUntilBuild(), "*.*");
-        errorSuffix = "is incompatible (target build " +
-                      (since.equals(until) ? "is " + since
-                                           : "range is " + since + " to " + until) + ")";
       }
       else {
         errorSuffix = null;
