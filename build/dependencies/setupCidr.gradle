@@ -2,6 +2,21 @@ import org.gradle.internal.os.OperatingSystem
 
 final def IJ_DIR = project.file("../../..").canonicalFile
 final def REPOSITORY = "https://repo.labs.intellij.net/clion"
+final def SETUP_ALL_PLATFORMS = Boolean.getBoolean("intellij.cidr.setup.all.platforms")
+
+final def CURRENT_PLATFORM = {
+  def os = OperatingSystem.current()
+
+  if (os.isWindows()) "win"
+  else if (os.isMacOsX()) "mac"
+  else "linux"
+}()
+
+final def PACKAGE_EXTENSIONS = [
+  win: "zip",
+  mac: "tar.gz",
+  linux: "tar.gz"
+]
 
 task setupCidr
 
@@ -50,52 +65,56 @@ task setupCidr
     no_platform_subdir: true
   ]
 ].each { name, settings ->
-  def (platform, packageExtension) = currentPlatformNameAndPackageExtension()
-  def archs = settings.platforms[platform]
+  settings.platforms.findAll {
+    SETUP_ALL_PLATFORMS || it.key == CURRENT_PLATFORM
+  }.each { platform, archs ->
+    archs.each { arch ->
+      def taskSuffix = "${name.capitalize()}${platform.capitalize()}${arch.capitalize()}"
+      def packageExtension = PACKAGE_EXTENSIONS[platform]
+      def packageName = "${name}-${settings.version}-${platform}-${arch}.${packageExtension}"
+      def downloadUrl = "${REPOSITORY}/${name}/${settings.version}/${packageName}"
 
-  archs.each { arch ->
-    def packageName = "${name}-${settings.version}-${platform}-${arch}.${packageExtension}"
-    def downloadUrl = "${REPOSITORY}/${name}/${settings.version}/${packageName}"
-    def unpackDir = "${IJ_DIR}/${settings.path}" +
-                    "${settings.no_platform_subdir ? '' : "/${platform}"}" +
-                    "${archs.size > 1 ? "/${arch}" : ''}"
+      def unpackDir = "${IJ_DIR}/${settings.path}" +
+                      "${settings.no_platform_subdir ? '' : "/${platform}"}" +
+                      "${archs.size > 1 ? "/${arch}" : ''}"
 
-    def downloadTool = task("downloadCidr${name.capitalize()}${arch.capitalize()}") {
-      def packageArchive = "${buildDir}/cidr/${packageName}"
-      outputs.file(packageArchive)
+      def downloadTool = task("downloadCidr${taskSuffix}") {
+        def packageArchive = "${buildDir}/cidr/${packageName}"
+        outputs.file(packageArchive)
 
-      doLast {
-        download {
-          src downloadUrl
-          dest packageArchive
-          tempAndMove true
+        doLast {
+          download {
+            src downloadUrl
+            dest packageArchive
+            tempAndMove true
+          }
         }
       }
+
+      setupCidr.dependsOn(
+        tasks.create(
+          name: "setupCidr${taskSuffix}",
+          dependsOn: [downloadTool], type: Copy
+        ) {
+          def packageArchive = downloadTool.outputs.files.singleFile
+
+          inputs.files(packageArchive)
+          outputs.dir(unpackDir)
+
+          outputs.upToDateWhen {
+            !fileTree(unpackDir).isEmpty()
+          }
+
+          from {
+            if (packageExtension == "zip")
+              zipTree(packageArchive)
+            else if(packageExtension == "tar.gz")
+              tarTree(resources.gzip(packageArchive))
+          }
+          into unpackDir
+        }
+      )
     }
-
-    setupCidr.dependsOn(
-      tasks.create(
-        name: "setupCidr${name.capitalize()}${arch.capitalize()}",
-        dependsOn: [downloadTool], type: Copy
-      ) {
-        def packageArchive = downloadTool.outputs.files.singleFile
-
-        inputs.files(packageArchive)
-        outputs.dir(unpackDir)
-
-        outputs.upToDateWhen {
-          !fileTree(unpackDir).isEmpty()
-        }
-
-        from {
-          if (packageExtension == "zip")
-            zipTree(packageArchive)
-          else if(packageExtension == "tar.gz")
-            tarTree(resources.gzip(packageArchive))
-        }
-        into unpackDir
-      }
-    )
   }
 }
 
@@ -106,19 +125,5 @@ task cleanSetupCidr() {
       delete setupToolTask.outputs.files.singleFile
       delete downloadToolTask.outputs.files.singleFile
     }
-  }
-}
-
-static def currentPlatformNameAndPackageExtension() {
-  def os = OperatingSystem.current()
-
-  if (os.isWindows()) {
-    ["win", "zip"]
-  }
-  else if (os.isMacOsX()) {
-    ["mac", "tar.gz"]
-  }
-  else {
-    ["linux", "tar.gz"]
   }
 }
