@@ -60,7 +60,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
-  private volatile TransactionId myDumbStartTransaction;
+  private volatile ModalityState myDumbStartModality;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
   private final Set<Object> myQueuedEquivalences = new HashSet<>();
@@ -282,8 +282,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @VisibleForTesting
   void queueAsynchronousTask(@NotNull DumbModeTask task) {
     Throwable trace = new Throwable(); // please report exceptions here to peter
-    TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
-    Runnable runnable = () -> queueTaskOnEdt(task, contextTransaction, trace);
+    ModalityState modality = ModalityState.defaultModalityState();
+    Runnable runnable = () -> queueTaskOnEdt(task, modality, trace);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run(); // will log errors if not already in a write-safe context
     } else {
@@ -291,13 +291,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  private void queueTaskOnEdt(@NotNull DumbModeTask task,
-                              @Nullable TransactionId contextTransaction,
-                              @NotNull Throwable trace) {
+  private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace) {
     if (!addTaskToQueue(task)) return;
 
     if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
-      enterDumbMode(contextTransaction, trace);
+      enterDumbMode(modality, trace);
       ApplicationManager.getApplication().invokeLater(this::startBackgroundProcess, myProject.getDisposed());
     }
   }
@@ -317,7 +315,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return true;
   }
 
-  private void enterDumbMode(@Nullable TransactionId contextTransaction, @NotNull Throwable trace) {
+  private void enterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
     WriteAction.run(() -> {
       synchronized (myRunWhenSmartQueue) {
@@ -325,7 +323,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
       myDumbStart = trace;
       myDumbEnterTrace = new Throwable();
-      myDumbStartTransaction = contextTransaction;
+      myDumbStartModality = modality;
       myModificationCount++;
     });
     if (wasSmart) {
@@ -346,7 +344,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
       myCurrentSuspender = null;
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, this::updateFinished));
+        () -> ApplicationManager.getApplication().invokeLater(this::updateFinished, myDumbStartModality, myProject.getDisposed()));
     }
   }
 
