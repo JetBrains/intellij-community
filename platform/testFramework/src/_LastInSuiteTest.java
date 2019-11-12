@@ -20,6 +20,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ref.GCUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
@@ -66,6 +67,7 @@ public class _LastInSuiteTest extends TestCase {
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
     unloadExtensionPoints(extensions.keySet());
 
+    GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
     System.gc();
 
