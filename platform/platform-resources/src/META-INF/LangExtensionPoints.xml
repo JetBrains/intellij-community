@@ -50,7 +50,7 @@
     </extensionPoint>
 
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
-                    interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
+                    interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider" dynamic="true"/>
 
     <extensionPoint name="intentionMenuContributor"
                     interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor" dynamic="true"/>
