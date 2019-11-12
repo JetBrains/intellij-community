@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -542,10 +543,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       });
       NullabilityProblemKind.nullableFunctionReturn.ifMyProblem(
         problem, expr -> reporter.registerProblem(expression == null ? expr : expression, problem.getMessage(expressions)));
-      NullabilityProblemKind.assigningToNotNull.ifMyProblem(
-        problem, expr -> reportNullabilityProblem(reporter, problem, expression, expressions));
-      NullabilityProblemKind.storingToNotNullArray.ifMyProblem(
-        problem, expr -> reportNullabilityProblem(reporter, problem, expression, expressions));
+      Consumer<PsiExpression> reportNullability = expr -> reportNullabilityProblem(reporter, problem, expression, expressions);
+      NullabilityProblemKind.assigningToNotNull.ifMyProblem(problem, reportNullability);
+      NullabilityProblemKind.storingToNotNullArray.ifMyProblem(problem, reportNullability);
       if (SUGGEST_NULLABLE_ANNOTATIONS) {
         NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.ifMyProblem(
           problem, methodRef -> reporter.registerProblem(methodRef, problem.getMessage(expressions)));
