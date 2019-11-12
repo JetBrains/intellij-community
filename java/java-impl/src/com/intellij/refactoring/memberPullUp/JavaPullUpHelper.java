@@ -100,16 +100,23 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     member.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiExpression qualifierExpression = expression.getQualifierExpression();
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        final PsiElement qualifierExpression = reference.getQualifier();
         if (qualifierExpression != null) {
           final Boolean preserveQualifier = qualifierExpression.getCopyableUserData(PRESERVE_QUALIFIER);
           if (preserveQualifier != null && !preserveQualifier) {
-            qualifierExpression.delete();
-            return;
+            PsiElement target = reference.resolve();
+            if (target != null) {
+              PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)reference.copy();
+              Objects.requireNonNull(copy.getQualifier()).delete();
+              if (copy.resolve() == target) {
+                qualifierExpression.delete();
+                return;
+              }
+            }
           }
         }
-        super.visitReferenceExpression(expression);
+        super.visitReferenceElement(reference);
       }
     });
 
@@ -686,15 +693,16 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       PsiClass aClass = classes.get(i);
 
       if (namedElement instanceof PsiNamedElement) {
-        PsiReferenceExpression newRef =
-                (PsiReferenceExpression) factory.createExpressionFromText
-                ("a." + ((PsiNamedElement) namedElement).getName(),
-                        null);
-        PsiExpression qualifierExpression = newRef.getQualifierExpression();
-        assert qualifierExpression != null;
-        qualifierExpression = (PsiExpression)qualifierExpression.replace(factory.createReferenceExpression(aClass));
-        qualifierExpression.putCopyableUserData(PRESERVE_QUALIFIER, ref.isQualified());
-        ref.replace(newRef);
+        PsiElement oldQualifier = ref.getQualifier();
+        if (oldQualifier != null) {
+          oldQualifier.delete();
+        }
+        String template = aClass.getQualifiedName() + "." + ref.getText();
+        PsiJavaCodeReferenceElement newRef = ref instanceof PsiReferenceExpression ?
+                                             (PsiReferenceExpression)factory.createExpressionFromText(template, null) :
+                                             factory.createReferenceFromText(template, null);
+        ref = (PsiJavaCodeReferenceElement)ref.replace(newRef);
+        Objects.requireNonNull(ref.getQualifier()).putCopyableUserData(PRESERVE_QUALIFIER, oldQualifier != null);
       }
     }
   }
