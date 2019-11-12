@@ -179,30 +179,36 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullability getTypeNullability(@Nullable PsiType type) {
-    if (type == null || type instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
+    NullabilityAnnotationInfo info = getTypeNullabilityInfo(type);
+    return info == null ? Nullability.UNKNOWN : info.getNullability();
+  }
 
-    Ref<Nullability> result = Ref.create(Nullability.UNKNOWN);
+  @Nullable
+  public static NullabilityAnnotationInfo getTypeNullabilityInfo(@Nullable PsiType type) {
+    if (type == null || type instanceof PsiPrimitiveType) return null;
+
+    Ref<NullabilityAnnotationInfo> result = Ref.create(null);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
       result.set(getTypeOwnNullability(eachType));
-      return result.get() == Nullability.UNKNOWN &&
+      return result.get() == null &&
              (!(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter);
     });
     return result.get();
   }
 
-  @NotNull
-  private static Nullability getTypeOwnNullability(PsiType eachType) {
+  @Nullable
+  private static NullabilityAnnotationInfo getTypeOwnNullability(PsiType eachType) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
       if (nnn.getNullables().contains(qualifiedName)) {
-        return Nullability.NULLABLE;
+        return new NullabilityAnnotationInfo(annotation, Nullability.NULLABLE, false);
       }
       if (nnn.getNotNulls().contains(qualifiedName)) {
-        return Nullability.NOT_NULL;
+        return new NullabilityAnnotationInfo(annotation, Nullability.NOT_NULL, false);
       }
     }
-    return Nullability.UNKNOWN;
+    return null;
   }
 
   /**
