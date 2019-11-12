@@ -1078,6 +1078,10 @@ public class MavenProject {
     if (pluginConfiguration != null) {
 
       String encoding = pluginConfiguration.getChildTextTrim("encoding");
+      if (encoding == null) {
+        return null;
+      }
+
       if (encoding.startsWith("$")) {
         MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(project, this.getFile());
         if (domModel == null) {
@@ -1087,7 +1091,8 @@ public class MavenProject {
         else {
           MavenPropertyResolver.resolve(encoding, domModel);
         }
-      } else {
+      }
+      else {
         return encoding;
       }
     }
