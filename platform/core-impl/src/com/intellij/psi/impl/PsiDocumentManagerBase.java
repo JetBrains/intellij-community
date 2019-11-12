@@ -218,8 +218,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (application.isWriteAccessAllowed()) {
       commitAllDocuments();
       //there are lot of existing actions/processors/tests which execute it under write lock
-      //show this message only to developer in internal mode
-      if (application.isInternal() && !application.isUnitTestMode()) {
+      //do not show this message in unit test mode
+      if (!application.isUnitTestMode()) {
         LOG.error("Do not call commitAllDocumentsUnderProgress inside write-action");
       }
       return true;
