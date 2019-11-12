@@ -76,11 +76,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
     assertNotNull(file);
     createFile(myModule, dir, "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
     //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
-    DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
-      @Override
-      public void process(PsiElement place, PsiElement dependency) {
-      }
-    });
+    DependenciesBuilder.analyzeFileDependencies(psiFile, (place, dependency) -> { });
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 

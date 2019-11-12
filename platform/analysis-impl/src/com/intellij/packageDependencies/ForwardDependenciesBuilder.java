@@ -137,23 +137,19 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             processed.add(psiFile);
           }
         }
-        if (!processed.contains(psiFile)) {
-          processed.add(psiFile);
+        if (processed.add(psiFile)) {
           Set<PsiFile> found = new HashSet<>();
-          analyzeFileDependencies(psiFile, new DependencyProcessor() {
-            @Override
-            public void process(PsiElement place, PsiElement dependency) {
-              PsiFile dependencyFile = dependency.getContainingFile();
-              if (dependencyFile != null) {
-                if (viewProvider == dependencyFile.getViewProvider()) return;
-                if (dependencyFile.isPhysical()) {
-                  final VirtualFile virtualFile = dependencyFile.getVirtualFile();
-                  if (virtualFile != null
-                      && (fileIndex.isInContent(virtualFile) || fileIndex.isInLibrary(virtualFile))
-                      && (myTargetScope == null || myTargetScope.contains(virtualFile))) {
-                    final PsiElement navigationElement = dependencyFile.getNavigationElement();
-                    found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
-                  }
+          analyzeFileDependencies(psiFile, (place, dependency) -> {
+            PsiFile dependencyFile = dependency.getContainingFile();
+            if (dependencyFile != null) {
+              if (viewProvider == dependencyFile.getViewProvider()) return;
+              if (dependencyFile.isPhysical()) {
+                final VirtualFile depFile = dependencyFile.getVirtualFile();
+                if (depFile != null
+                    && (fileIndex.isInContent(depFile) || fileIndex.isInLibrary(depFile))
+                    && (myTargetScope == null || myTargetScope.contains(depFile))) {
+                  final PsiElement navigationElement = dependencyFile.getNavigationElement();
+                  found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
                 }
               }
             }
