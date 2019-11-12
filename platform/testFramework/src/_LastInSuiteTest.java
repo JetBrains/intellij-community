@@ -4,7 +4,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -151,7 +150,7 @@ public class _LastInSuiteTest extends TestCase {
   public void testProjectLeak() {
     if (Boolean.getBoolean("idea.test.guimode")) {
       Application application = ApplicationManager.getApplication();
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      application.invokeAndWait(() -> {
         IdeEventQueue.getInstance().flushQueue();
         application.exit(true, true, false);
       });
