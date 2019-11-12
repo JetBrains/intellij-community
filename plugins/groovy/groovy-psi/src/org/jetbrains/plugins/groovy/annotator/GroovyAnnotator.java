@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -1382,12 +1383,16 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotation(@NotNull GrAnnotation annotation) {
-    new AnnotationChecker(myHolder).checkApplicability(annotation, annotation.getOwner());
+    AnnotationChecker.checkApplicability(annotation, annotation.getOwner(), myHolder, annotation.getClassReference());
   }
 
   @Override
   public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
-    new AnnotationChecker(myHolder).checkAnnotationArgumentList((GrAnnotation)annotationArgumentList.getParent());
+    GrAnnotation parent = (GrAnnotation)annotationArgumentList.getParent();
+    Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder, parent.getClassReference());
+    if (r != null && r.getFirst() != null) {
+      myHolder.createErrorAnnotation(r.getFirst(), r.getSecond());
+    }
   }
 
   @Override
@@ -1404,7 +1409,10 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiType type = annotationMethod.getReturnType();
 
-    CustomAnnotationChecker.checkAnnotationValueByType(myHolder, value, type, false);
+    Pair<PsiElement, String> result = CustomAnnotationChecker.checkAnnotationValueByType(value, type, false);
+    if (result != null) {
+      myHolder.createErrorAnnotation(result.getFirst(), result.getSecond());
+    }
   }
 
   @Override

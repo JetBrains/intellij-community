@@ -10,8 +10,11 @@ class NamedParamAnnotationChecker : CustomAnnotationChecker() {
   override fun checkArgumentList(holder: AnnotationHolder, annotation: GrAnnotation): Boolean {
     if (GROOVY_TRANSFORM_NAMED_PARAM != annotation.qualifiedName) return false
     val annotationClass = ResolveUtil.resolveAnnotation(annotation) ?: return false
-    CustomAnnotationChecker.checkAnnotationArguments(holder, annotationClass, annotation.classReference,
-                                                     annotation.parameterList.attributes, false)
+    val r = checkAnnotationArguments(annotationClass, annotation.classReference,
+                                     annotation.parameterList.attributes, false)
+    if (r?.getFirst() != null) {
+      holder.createErrorAnnotation(r.getFirst(), r.getSecond())
+    }
 
     return true
   }
