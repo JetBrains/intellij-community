@@ -1,272 +1,246 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+@file:Suppress("UsePropertyAccessSyntax")
 
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.rules.InMemoryFsRule;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PathKt;
-import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
-import org.junit.Test;
+package com.intellij.ide.plugins
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.write
+import com.intellij.util.lang.UrlClassLoader
+import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Assume.assumeTrue
+import org.junit.Rule
+import org.junit.Test
+import java.io.File
+import java.io.IOException
+import java.net.URL
+import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.text.SimpleDateFormat
+import java.util.*
 
-import static com.intellij.testFramework.UsefulTestCase.*;
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assume.assumeTrue;
+private val testDataPath: String
+  get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor"
 
-/**
- * @author Dmitry Avdeev
- */
-public class PluginDescriptorTest {
-  private static String getTestDataPath() {
-    return PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor";
+private fun loadDescriptor(dirName: String): IdeaPluginDescriptorImpl {
+  return loadDescriptor(Paths.get(testDataPath, dirName))
+}
+
+private fun loadDescriptor(dir: Path): IdeaPluginDescriptorImpl {
+  assertThat(dir).exists()
+  PluginManagerCore.ourPluginError = null
+  val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(emptySet())
+  val result = DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
+    PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
   }
+  if (result == null) {
+    @Suppress("USELESS_CAST")
+    assertThat(PluginManagerCore.ourPluginError as String?).isNotNull()
+    PluginManagerCore.ourPluginError = null
+  }
+  return result!!
+}
 
+class PluginDescriptorTest {
   @Rule
-  public final InMemoryFsRule inMemoryFs = new InMemoryFsRule();
+  @JvmField
+  val inMemoryFs = InMemoryFsRule()
 
   @Test
-  public void testDescriptorLoading() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("asp.jar");
-    assertNotNull(descriptor);
-    assertEquals("com.jetbrains.plugins.asp", descriptor.getPluginId().getIdString());
-    assertEquals("ASP", descriptor.getName());
+  fun testDescriptorLoading() {
+    val descriptor = loadDescriptor("asp.jar")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.pluginId.idString).isEqualTo("com.jetbrains.plugins.asp")
+    assertThat(descriptor.name).isEqualTo("ASP")
   }
 
   @Test
-  public void testOptionalDescriptors() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("family");
-    assertThat(descriptor).isNotNull();
-    assertThat(descriptor.optionalConfigs.size()).isEqualTo(1);
+  fun testOptionalDescriptors() {
+    val descriptor = loadDescriptor("family")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.optionalConfigs.size).isEqualTo(1)
   }
 
   @Test
-  public void testMultipleOptionalDescriptors() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("multipleOptionalDescriptors");
-    assertThat(descriptor).isNotNull();
-    Set<PluginId> ids = descriptor.optionalConfigs.keySet();
-    assertThat(ids).hasSize(2);
-    PluginId[] idsArray = ids.toArray(PluginId.EMPTY_ARRAY);
-    assertEquals("dep2", idsArray[0].getIdString());
-    assertEquals("dep1", idsArray[1].getIdString());
+  fun testMultipleOptionalDescriptors() {
+    val descriptor = loadDescriptor("multipleOptionalDescriptors")
+    assertThat(descriptor).isNotNull()
+    val ids = descriptor.optionalConfigs.keys
+    assertThat(ids).hasSize(2)
+    assertThat(ids.map { it.idString }).containsExactly("dep2", "dep1")
   }
 
   @Test
-  public void testMalformedDescriptor() {
-    assertThatThrownBy(() -> {
-      loadDescriptor("malformed");
-    }).hasMessageContaining("Content is not allowed in prolog.");
+  fun testMalformedDescriptor() {
+    assertThatThrownBy { loadDescriptor("malformed") }
+      .hasMessageContaining("Content is not allowed in prolog.")
   }
 
   @Test
-  public void testAnonymousDescriptor() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("anonymous");
-    assertThat(descriptor.getPluginId()).isNull();
-    assertThat(descriptor.getName()).isNull();
+  fun testAnonymousDescriptor() {
+    val descriptor = loadDescriptor("anonymous")
+    assertThat(descriptor.pluginId).isNull()
+    assertThat(descriptor.name).isNull()
   }
 
   @Test
-  public void testCyclicOptionalDeps() {
-    assertThatThrownBy(() -> {
-      loadDescriptor("cyclicOptionalDeps");
-    }).hasMessage("Plugin someId optional descriptors form a cycle: a.xml, b.xml");
+  fun testCyclicOptionalDeps() {
+    assertThatThrownBy { loadDescriptor("cyclicOptionalDeps") }
+      .hasMessage("Plugin someId optional descriptors form a cycle: a.xml, b.xml")
   }
 
   @Test
-  public void testFilteringDuplicates() throws Exception {
-    URL[] urls = {
-      Paths.get(getTestDataPath(), "duplicate1.jar").toUri().toURL(),
-      Paths.get(getTestDataPath(), "duplicate2.jar").toUri().toURL()
-    };
-    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls, null))).hasSize(1);
+  fun testFilteringDuplicates() {
+    val urls = arrayOf(
+      Paths.get(testDataPath, "duplicate1.jar").toUri().toURL(),
+      Paths.get(testDataPath, "duplicate2.jar").toUri().toURL()
+    )
+    assertThat(
+      PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
   }
 
   @Test
-  public void testProductionPlugins() throws Exception {
-    assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
-
-    List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"));
-    assertThat(descriptors).isNotEmpty();
-    assertThat(ContainerUtil.find(descriptors, it -> it.getPluginId().getIdString().equals("com.intellij.java"))).isNotNull();
+  fun testProductionPlugins() {
+    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
+    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"))
+    assertThat(descriptors).isNotEmpty()
+    assertThat(ContainerUtil.find(descriptors) { it!!.pluginId.idString == "com.intellij.java" }).isNotNull
   }
 
   @Test
-  public void testProductionProductLib() throws Exception {
-    assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
-
-    List<URL> urls = new ArrayList<>();
-    for (File it : new File("/Applications/Idea.app/Contents/lib").listFiles()) {
-      urls.add(it.toURI().toURL());
+  fun testProductionProductLib() {
+    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
+    val urls = ArrayList<URL>()
+    Paths.get("/Applications/Idea.app/Contents/lib").directoryStreamIfExists {
+      for (path in it) {
+        urls.add(path.toUri().toURL())
+      }
     }
-    List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(new URLClassLoader(urls.toArray(new URL[0]), null));
+    val descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(
+      URLClassLoader(urls.toTypedArray(), null))
     // core and com.intellij.workspace
-    assertThat(descriptors).hasSize(1);
+    assertThat(descriptors).hasSize(1)
   }
 
   @Test
-  public void testProduction2() throws Exception {
-    assumeTrue(SystemInfo.isMac && !IS_UNDER_TEAMCITY);
-
-    List<? extends IdeaPluginDescriptor> descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"));
-    assertThat(descriptors).isNotEmpty();
+  @Throws(Exception::class)
+  fun testProduction2() {
+    assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
+    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(
+      Paths.get("/Volumes/data/plugins"))
+    assertThat(descriptors).isNotEmpty()
   }
 
   @Test
-  public void testDuplicateDependency() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("duplicateDependency");
-    assertThat(descriptor).isNotNull();
-    assertThat(descriptor.getOptionalDependentPluginIds()).isEmpty();
-    assertThat(descriptor.getDependentPluginIds()).containsExactly(PluginId.getId("foo"));
+  fun testDuplicateDependency() {
+    val descriptor = loadDescriptor("duplicateDependency")
+    assertThat(descriptor).isNotNull()
+    assertThat(
+      descriptor.optionalDependentPluginIds).isEmpty()
+    assertThat(
+      descriptor.dependentPluginIds).containsExactly(PluginId.getId("foo"))
   }
 
   @Test
-  public void testPluginNameAsId() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("noId");
-    assertThat(descriptor).isNotNull();
-    assertThat(descriptor.getPluginId().getIdString()).isEqualTo(descriptor.getName());
+  fun testPluginNameAsId() {
+    val descriptor = loadDescriptor("noId")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.pluginId.idString).isEqualTo(descriptor.name)
   }
 
   @Test
-  public void releaseDate() throws IOException {
-    Path pluginFile = inMemoryFs.getFs().getPath("plugin/META-INF/plugin.xml");
-    PathKt.write(pluginFile, "<idea-plugin>\n" +
-                             "  <id>bar</id>\n" +
-                             "  <vendor>JetBrains</vendor>\n" +
-                             "  <product-descriptor code=\"IJ\" release-date=\"20190811\" release-version=\"42\"/>\n" +
-                             "</idea-plugin>");
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor(pluginFile.getParent().getParent());
-    assertThat(descriptor).isNotNull();
-    assertThat(descriptor.getVendor()).isEqualTo("JetBrains");
-    assertThat(new SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.getReleaseDate())).isEqualTo("20190811");
+  @Throws(IOException::class)
+  fun releaseDate() {
+    val pluginFile = inMemoryFs.fs.getPath("plugin/META-INF/plugin.xml")
+    pluginFile.write("""
+<idea-plugin>
+  <id>bar</id>
+  <vendor>JetBrains</vendor>
+  <product-descriptor code="IJ" release-date="20190811" release-version="42"/>
+</idea-plugin>""")
+    val descriptor = loadDescriptor(pluginFile.parent.parent)
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.vendor).isEqualTo("JetBrains")
+    assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
   }
 
   @Test
-  public void componentConfig() throws IOException {
-    Path pluginFile = inMemoryFs.getFs().getPath("/plugin/META-INF/plugin.xml");
-    PathKt.write(pluginFile, "<idea-plugin>\n" +
-                             "  <id>bar</id>\n" +
-                             "  <project-components>\n" +
-                             "    <component>\n" +
-                             "      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>\n" +
-                             "      <option name=\"workspace\" value=\"true\"/>\n" +
-                             "    </component>\n" +
-                             "\n" +
-                             "    \n" +
-                             "  </project-components>\n" +
-                             "</idea-plugin>");
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor(pluginFile.getParent().getParent());
-    assertThat(descriptor).isNotNull();
-    assertThat(descriptor.getProjectContainerDescriptor().components.get(0).options).isEqualTo(Collections.singletonMap("workspace", "true"));
+  fun componentConfig() {
+    val pluginFile = inMemoryFs.fs.getPath("/plugin/META-INF/plugin.xml")
+    pluginFile.write("<idea-plugin>\n  <id>bar</id>\n  <project-components>\n    <component>\n      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>\n      <option name=\"workspace\" value=\"true\"/>\n    </component>\n\n    \n  </project-components>\n</idea-plugin>")
+    val descriptor = loadDescriptor(pluginFile.parent.parent)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.projectContainerDescriptor.components!![0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
   }
 
   @Test
-  public void testPluginIdAsName() {
-    IdeaPluginDescriptorImpl descriptor = loadDescriptor("noName");
-    assertThat(descriptor).isNotNull();
-    assertThat(descriptor.getName()).isEqualTo(descriptor.getPluginId().getIdString());
+  fun testPluginIdAsName() {
+    val descriptor = loadDescriptor("noName")
+    assertThat(descriptor).isNotNull()
+    assertThat(descriptor.name).isEqualTo(descriptor.pluginId.idString)
   }
 
   @Test
-  public void testUrlTolerance() throws Exception {
-    final class SingleUrlEnumeration implements Enumeration<URL> {
-      private final URL myUrl;
-      private boolean hasMoreElements = true;
-
-      SingleUrlEnumeration(URL url) {
-        myUrl = url;
+  fun testUrlTolerance() {
+    class SingleUrlEnumeration(private val myUrl: URL) : Enumeration<URL> {
+      private var hasMoreElements = true
+      override fun hasMoreElements(): Boolean {
+        return hasMoreElements
       }
 
-      @Override
-      public boolean hasMoreElements() {
-        return hasMoreElements;
+      override fun nextElement(): URL {
+        if (!hasMoreElements) throw NoSuchElementException()
+        hasMoreElements = false
+        return myUrl
       }
 
-      @Override
-      public URL nextElement() {
-        if (!hasMoreElements) throw new NoSuchElementException();
-        hasMoreElements = false;
-        return myUrl;
-      }
     }
 
-    class TestLoader extends UrlClassLoader {
-      private final URL myUrl;
+    class TestLoader(prefix: String, suffix: String) : UrlClassLoader(build()) {
+      private val url = URL(prefix + File(testDataPath).toURI().toURL().toString() + suffix + "META-INF/plugin.xml")
 
-      TestLoader(String prefix, String suffix) throws MalformedURLException {
-        super(build());
-        myUrl = new URL(prefix + new File(getTestDataPath()).toURI().toURL().toString() + suffix + "META-INF/plugin.xml");
-      }
+      override fun getResource(name: String) = null
 
-      @Override
-      public URL getResource(String name) {
-        return null;
-      }
-
-      @Override
-      public Enumeration<URL> getResources(String name) {
-        return new SingleUrlEnumeration(myUrl);
-      }
+      override fun getResources(name: String) = SingleUrlEnumeration(url)
     }
 
-    ClassLoader loader1 = new TestLoader("", "/spaces%20spaces/");
-    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader1).size());
-
-    ClassLoader loader2 = new TestLoader("", "/spaces spaces/");
-    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader2).size());
-
-    ClassLoader loader3 = new TestLoader("jar:", "/jar%20spaces.jar!/");
-    assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader3).size());
-
-    ClassLoader loader4 = new TestLoader("jar:", "/jar spaces.jar!/");
-    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(loader4)).hasSize(1);
+    val loader1 = TestLoader("", "/spaces%20spaces/")
+    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader1).size)
+    val loader2 = TestLoader("", "/spaces spaces/")
+    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader2).size)
+    val loader3 = TestLoader("jar:", "/jar%20spaces.jar!/")
+    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader3).size)
+    val loader4 = TestLoader("jar:", "/jar spaces.jar!/")
+    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(loader4)).hasSize(1)
   }
 
   @Test
-  public void testEqualityById() throws IOException {
-    FileSystem fs = inMemoryFs.getFs();
-    Path tempFile = fs.getPath("/", PluginManagerCore.PLUGIN_XML_PATH);
-    PathKt.write(tempFile, "<idea-plugin>\n<id>ID</id>\n<name>A</name>\n</idea-plugin>");
-    IdeaPluginDescriptorImpl impl1 = loadDescriptor(fs.getPath("/"));
-    PathKt.write(tempFile, "<idea-plugin>\n<id>ID</id>\n<name>B</name>\n</idea-plugin>");
-    IdeaPluginDescriptorImpl impl2 = loadDescriptor(fs.getPath("/"));
-    assertEquals(impl1, impl2);
-    assertEquals(impl1.hashCode(), impl2.hashCode());
-    assertNotSame(impl1.getName(), impl2.getName());
-  }
-
-  private static IdeaPluginDescriptorImpl loadDescriptor(String dirName) {
-    return loadDescriptor(Paths.get(getTestDataPath(), dirName));
-  }
-
-  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path dir) {
-    assertThat(dir).exists();
-    PluginManagerCore.ourPluginError = null;
-    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
-
-    IdeaPluginDescriptorImpl result;
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
-      result = PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir));
-    }
-
-    if (result == null) {
-      assertThat(PluginManagerCore.ourPluginError).isNotNull();
-      PluginManagerCore.ourPluginError = null;
-    }
-    return result;
+  fun testEqualityById() {
+    val fs = inMemoryFs.fs
+    val tempFile = fs.getPath("/", PluginManagerCore.PLUGIN_XML_PATH)
+    tempFile.write("""
+<idea-plugin>
+  <id>ID</id>
+  <name>A</name>
+</idea-plugin>""")
+    val impl1 = loadDescriptor(fs.getPath("/"))
+    tempFile.write("""
+<idea-plugin>
+  <id>ID</id>
+  <name>B</name>
+</idea-plugin>""")
+    val impl2 = loadDescriptor(fs.getPath("/"))
+    TestCase.assertEquals(impl1, impl2)
+    TestCase.assertEquals(impl1.hashCode(), impl2.hashCode())
+    TestCase.assertNotSame(impl1.name, impl2.name)
   }
 }
