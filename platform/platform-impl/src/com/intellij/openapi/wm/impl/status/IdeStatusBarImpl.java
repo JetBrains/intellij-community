@@ -467,7 +467,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     Disposer.register(this, widget);
   }
 
-  private static JComponent wrap(@NotNull final StatusBarWidget widget) {
+  public static JComponent wrap(@NotNull final StatusBarWidget widget) {
     if (widget instanceof CustomStatusBarWidget) {
       JComponent component = ((CustomStatusBarWidget)widget).getComponent();
       if (component.getBorder() == null) {
@@ -628,7 +628,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @FunctionalInterface
-  private interface StatusBarWrapper {
+  public interface StatusBarWrapper {
     void beforeUpdate();
   }
 

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class LightEditorManager implements Disposable {
+public class LightEditorManager implements Disposable {
   private final List<Editor> myEditors = new ArrayList<>();
   private final EventDispatcher<LightEditorListener> myEventDispatcher = EventDispatcher.create(LightEditorListener.class);
 
@@ -63,7 +63,7 @@ class LightEditorManager implements Disposable {
     myEventDispatcher.getMulticaster().afterClose(editorInfo);
   }
 
-  void addListener(@NotNull LightEditorListener listener) {
+  public void addListener(@NotNull LightEditorListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
