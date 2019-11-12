@@ -82,9 +82,7 @@ class WinExeInstallerBuilder {
     }
 
     ant.copy(todir: "$box/nsiconf") {
-      fileset(dir: "$communityHome/build/conf/nsis") {
-        exclude(name: "version*")
-      }
+      fileset(dir: "$communityHome/build/conf/nsis")
     }
 
     generateInstallationConfigFileForSilentMode()
