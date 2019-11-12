@@ -1,5 +1,6 @@
 package com.intellij.jps.cache.loader;
 
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.client.ArtifactoryJpsServerClient;
@@ -172,6 +173,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
           .thenRun(() -> {
             if (loaderStatus == LoaderStatus.COMPLETE) {
               PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
+              BuildManager.getInstance().clearState(myProject);
               long endTime = (System.currentTimeMillis() - startTime) / 1000;
               ApplicationManager.getApplication().invokeLater(() -> {
                 String message = "Update compilation caches completed successfully in " + endTime + " s";
