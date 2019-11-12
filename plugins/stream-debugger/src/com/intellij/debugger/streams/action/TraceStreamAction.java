@@ -88,7 +88,7 @@ public final class TraceStreamAction extends AnAction {
 
     String elementLanguageId = element.getLanguage().getID();
     List<StreamChainWithLibrary> chains = new ArrayList<>();
-    for (LibrarySupportProvider provider : LibrarySupportProvider.EP_NAME.getExtensionList()) {
+    LibrarySupportProvider.EP_NAME.forEachExtensionSafe(provider -> {
       if (provider.getLanguageId().equals(elementLanguageId)) {
         StreamChainBuilder chainBuilder = provider.getChainBuilder();
         if (chainBuilder.isChainExists(element)) {
@@ -97,7 +97,7 @@ public final class TraceStreamAction extends AnAction {
           }
         }
       }
-    }
+    });
 
     if (chains.isEmpty()) {
       LOG.warn("stream chain is not built");
