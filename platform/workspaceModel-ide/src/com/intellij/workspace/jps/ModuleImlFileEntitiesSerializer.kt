@@ -41,7 +41,7 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
                             reader: JpsFileContentReader) {
     val moduleName = modulePath.moduleName
     val source = entitySource
-    val moduleEntity = builder.addModuleEntity(moduleName, emptyList(), source)
+    val moduleEntity = builder.addModuleEntity(moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), source)
 
     val rootManagerElement = reader.loadComponent(source.file.url, MODULE_ROOT_MANAGER_COMPONENT_NAME)?.clone()
     if (rootManagerElement == null) {
@@ -92,8 +92,7 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
 
     fun Element.isExported() = getAttributeValue(EXPORTED_ATTRIBUTE) != null
     val moduleLibraryNames = mutableListOf<String>()
-    val dependencyItems = rootManagerElement.getChildrenAndDetach(
-      ORDER_ENTRY_TAG).mapTo(ArrayList()) { dependencyElement ->
+    val dependencyItems = rootManagerElement.getChildrenAndDetach(ORDER_ENTRY_TAG).mapTo(ArrayList()) { dependencyElement ->
       when (dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
         SOURCE_FOLDER_TYPE -> ModuleDependencyItem.ModuleSourceDependency
         JDK_TYPE -> ModuleDependencyItem.SdkDependency(dependencyElement.getAttributeValueStrict(JDK_NAME_ATTRIBUTE),

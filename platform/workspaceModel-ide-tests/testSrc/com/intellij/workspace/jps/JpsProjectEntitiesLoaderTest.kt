@@ -1,6 +1,11 @@
 package com.intellij.workspace.jps
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspace.api.*
 import org.jetbrains.jps.util.JpsPathUtil
@@ -19,6 +24,37 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val projectFile = sampleFileBasedProjectFile
     val storage = loadProject(projectFile)
     checkSampleProjectConfiguration(storage, projectFile.parentFile)
+  }
+
+  @Test
+  fun `test load module without NewModuleRootManager component`() {
+    val moduleFile = File(project.basePath, "xxx.iml")
+    moduleFile.writeText("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <module type="JAVA_MODULE" version="4">
+      </module>
+    """.trimIndent())
+
+    val module = WriteAction.computeAndWait<Module, Exception> { ModuleManager.getInstance(project).loadModule(moduleFile.path) }
+    val orderEntries = ModuleRootManager.getInstance(module).orderEntries
+    assertEquals(1, orderEntries.size)
+    assertTrue(orderEntries[0] is ModuleSourceOrderEntry)
+  }
+
+  @Test
+  fun `test load module with empty NewModuleRootManager component`() {
+    val moduleFile = File(project.basePath, "xxx.iml")
+    moduleFile.writeText("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <module type="JAVA_MODULE" version="4">
+        <component name="NewModuleRootManager" />
+      </module>
+    """.trimIndent())
+
+    val module = WriteAction.computeAndWait<Module, Exception> { ModuleManager.getInstance(project).loadModule(moduleFile.path) }
+    val orderEntries = ModuleRootManager.getInstance(module).orderEntries
+    assertEquals(1, orderEntries.size)
+    assertTrue(orderEntries[0] is ModuleSourceOrderEntry)
   }
 
   private fun checkSampleProjectConfiguration(storage: TypedEntityStorage, projectDir: File) {
