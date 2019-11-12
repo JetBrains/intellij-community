@@ -24,6 +24,11 @@ import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.graph.DefaultColorGenerator;
+import com.intellij.vcs.log.graph.EdgePrintElement;
+import com.intellij.vcs.log.graph.NodePrintElement;
+import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel;
 import git4idea.history.GitCommitRequirements;
 import git4idea.i18n.GitBundle;
@@ -33,9 +38,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.*;
 
 import static git4idea.history.GitLogUtil.readFullDetailsForHashes;
@@ -121,7 +129,23 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     installSpeedSearch();
     myCopyProvider = new MyCopyProvider();
 
-    adjustActionColumnWidth();
+    TableColumn commitIconColor = myCommitsTable.getColumnModel().getColumn(MyTableModel.COMMIT_ICON_COLUMN);
+    MyCommitIconRenderer renderer = new MyCommitIconRenderer();
+    commitIconColor.setCellRenderer(new TableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        renderer.update(table, isSelected, hasFocus, row, column, row == table.getRowCount() - 1);
+        return renderer;
+      }
+    });
+
+    adjustColumnWidth(MyTableModel.COMMIT_ICON_COLUMN);
+    adjustColumnWidth(MyTableModel.ACTION_COLUMN);
     init();
   }
 
@@ -145,9 +169,9 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     return myCommitsTable;
   }
 
-  private void adjustActionColumnWidth() {
-    int contentWidth = myCommitsTable.getExpandedColumnWidth(MyTableModel.ACTION_COLUMN) + UIUtil.DEFAULT_HGAP;
-    TableColumn column = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
+  private void adjustColumnWidth(int columnId) {
+    int contentWidth = myCommitsTable.getExpandedColumnWidth(columnId) + UIUtil.DEFAULT_HGAP;
+    TableColumn column = myCommitsTable.getColumnModel().getColumn(columnId);
     column.setMaxWidth(contentWidth);
     column.setPreferredWidth(contentWidth);
   }
@@ -225,9 +249,14 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     return null;
   }
 
+  private static class MyCommitIcon {
+    @NotNull static MyCommitIcon INSTANCE = new MyCommitIcon();
+  }
+
   private class MyTableModel extends AbstractTableModel implements EditableModel {
-    private static final int ACTION_COLUMN = 0;
-    private static final int SUBJECT_COLUMN = 1;
+    private static final int COMMIT_ICON_COLUMN = 0;
+    private static final int ACTION_COLUMN = 1;
+    private static final int SUBJECT_COLUMN = 2;
 
     @NotNull private final List<GitRebaseEntryWithDetails> myEntries;
     private int[] myLastEditableSelectedRows = new int[]{};
@@ -238,18 +267,15 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      return columnIndex == ACTION_COLUMN ? GitRebaseEntry.Action.class : String.class;
-    }
-
-    @Override
-    public String getColumnName(int column) {
-      switch (column) {
+      switch (columnIndex) {
+        case COMMIT_ICON_COLUMN:
+          return MyCommitIcon.class;
         case ACTION_COLUMN:
-          return GitBundle.getString("rebase.editor.action.column");
+          return GitRebaseEntry.Action.class;
         case SUBJECT_COLUMN:
-          return GitBundle.getString("rebase.editor.comment.column");
+          return String.class;
         default:
-          throw new IllegalArgumentException("Unsupported column index: " + column);
+          throw new IllegalArgumentException("Unsupported column index: " + columnIndex);
       }
     }
 
@@ -267,6 +293,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     public Object getValueAt(int rowIndex, int columnIndex) {
       GitRebaseEntry e = myEntries.get(rowIndex);
       switch (columnIndex) {
+        case COMMIT_ICON_COLUMN:
+          return MyCommitIcon.INSTANCE;
         case ACTION_COLUMN:
           return e.getAction();
         case SUBJECT_COLUMN:
@@ -466,6 +494,115 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
         return lines;
       }
       return null;
+    }
+  }
+
+  private static class MyCommitIconRenderer extends SimpleColoredRenderer {
+    @NotNull static final EdgePrintElement UP_EDGE = getEdge(EdgePrintElement.Type.UP);
+    @NotNull static final EdgePrintElement DOWN_EDGE = getEdge(EdgePrintElement.Type.DOWN);
+    @NotNull static final NodePrintElement NODE = getNode();
+    @NotNull final SimpleGraphCellPainter myPainter;
+
+    private boolean myIsHead = false;
+
+    MyCommitIconRenderer() {
+      JBColor nodeColor = new DefaultColorGenerator().getColor(1);
+      myPainter = new SimpleGraphCellPainter(colorId -> nodeColor);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      drawCommitIcon((Graphics2D)g);
+    }
+
+    void update(JTable table, boolean isSelected, boolean hasFocus, int row, int column, boolean isHead) {
+      clear();
+      setPaintFocusBorder(false);
+      acquireState(table, isSelected, hasFocus, row, column);
+      getCellState().updateRenderer(this);
+      setBorder(null);
+      myIsHead = isHead;
+    }
+
+    private void drawCommitIcon(Graphics2D g2) {
+      List<PrintElement> elements = new ArrayList<>();
+      elements.add(UP_EDGE);
+      elements.add(NODE);
+      if (!myIsHead) {
+        elements.add(DOWN_EDGE);
+      }
+      myPainter.draw(g2, elements);
+    }
+
+    @NotNull
+    private static EdgePrintElement getEdge(EdgePrintElement.Type type) {
+      return new EdgePrintElement() {
+        @Override
+        public int getPositionInOtherRow() {
+          return 0;
+        }
+
+        @NotNull
+        @Override
+        public Type getType() {
+          return type;
+        }
+
+        @NotNull
+        @Override
+        public LineStyle getLineStyle() {
+          return LineStyle.SOLID;
+        }
+
+        @Override
+        public boolean hasArrow() {
+          return false;
+        }
+
+        @Override
+        public int getRowIndex() {
+          return 0;
+        }
+
+        @Override
+        public int getPositionInCurrentRow() {
+          return 0;
+        }
+
+        @Override
+        public int getColorId() { return 0; }
+
+        @Override
+        public boolean isSelected() {
+          return false;
+        }
+      };
+    }
+
+    @NotNull
+    private static NodePrintElement getNode() {
+      return new NodePrintElement() {
+        @Override
+        public int getRowIndex() {
+          return 0;
+        }
+
+        @Override
+        public int getPositionInCurrentRow() {
+          return 0;
+        }
+
+        @Override
+        public int getColorId() {
+          return 0;
+        }
+
+        @Override
+        public boolean isSelected() {
+          return false;
+        }
+      };
     }
   }
 }
