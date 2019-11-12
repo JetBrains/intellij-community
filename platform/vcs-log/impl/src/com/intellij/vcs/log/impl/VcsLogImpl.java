@@ -87,7 +87,7 @@ public class VcsLogImpl implements VcsLog {
       List<VcsRef> matchingRefs = refs.stream().filter(ref -> ref.getName().startsWith(reference)).collect(Collectors.toList());
       ApplicationManager.getApplication().invokeLater(() -> {
         if (matchingRefs.isEmpty()) {
-          myUi.jumpToCommitByPartOfHash(reference, future);
+          myUi.jumpToHash(reference, future);
         }
         else {
           VcsRef ref = Collections.min(matchingRefs, new VcsGoToRefComparator(myUi.getDataPack().getLogProviders()));

@@ -166,7 +166,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
             ui.jumpToCommit((Hash)commitId, myRoot, SettableFuture.create());
           }
           else if (commitId instanceof String) {
-            ui.jumpToCommitByPartOfHash((String)commitId, SettableFuture.create());
+            ui.jumpToHash((String)commitId, SettableFuture.create());
           }
         });
       });

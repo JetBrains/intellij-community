@@ -161,7 +161,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
   }
 
-  public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
+  public void jumpToHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
     String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
     if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit or reference '" + commitHash + "' not found", MessageType.WARNING);
