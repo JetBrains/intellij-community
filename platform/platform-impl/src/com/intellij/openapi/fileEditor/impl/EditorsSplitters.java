@@ -842,12 +842,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     @Override
     protected JPanel processFiles(@NotNull List<? extends Element> fileElements, Element parent, final JPanel context) {
       final Ref<EditorWindow> windowRef = new Ref<>();
+      long start = StartUpMeasurer.getCurrentTime();
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        long waitEnd = StartUpMeasurer.getCurrentTime();
         EditorWindow editorWindow = context == null ? createEditorWindow() : findWindowWith(context);
         windowRef.set(editorWindow);
         if (editorWindow != null) {
           updateTabSizeLimit(editorWindow, parent.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString()));
         }
+        long end = StartUpMeasurer.getCurrentTime();
+        FileEditorManagerImpl.reportFileOpeningTimes(start, waitEnd, end, "createWindow");
       });
 
       final EditorWindow window = windowRef.get();

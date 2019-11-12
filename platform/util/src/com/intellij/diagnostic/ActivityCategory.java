@@ -26,6 +26,8 @@ public enum ActivityCategory {
   POST_STARTUP_ACTIVITY("projectPostStartupActivity"),
   GC("GC"),
   REOPENING_EDITOR("reopeningEditor"),
+  REOPENING_EDITOR_EDT("reopeningEditorEDT"),
+  REOPENING_EDITOR_WAIT("reopeningEditorWait"),
 
   SERVICE_WAITING("serviceWaiting"),
   ;
