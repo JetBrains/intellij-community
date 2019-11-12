@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -100,16 +101,13 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     installSynchronizer();
   }
 
-  /**
-   * We have to make this method public to allow BegMenuItemUI to invoke it.
-   */
   @Override
   public void fireActionPerformed(ActionEvent event) {
     Application app = ApplicationManager.getApplication();
     if (!app.isDisposed() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       MainMenuCollector.getInstance().record(myAction.getAction());
     }
-    TransactionGuard.submitTransaction(app, () -> super.fireActionPerformed(event));
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> super.fireActionPerformed(event));
   }
 
   @Override
