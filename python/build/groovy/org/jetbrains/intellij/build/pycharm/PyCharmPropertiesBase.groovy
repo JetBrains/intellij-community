@@ -23,7 +23,7 @@ import static org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions.GENERATE_
 /**
  * @author nik
  */
-abstract class PyCharmPropertiesBase extends ProductProperties {
+abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   protected String dependenciesPath
 
   PyCharmPropertiesBase() {

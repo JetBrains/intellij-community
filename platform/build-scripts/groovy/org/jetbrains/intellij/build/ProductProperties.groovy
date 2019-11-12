@@ -85,7 +85,7 @@ abstract class ProductProperties {
   /**
    * If {@code true} the main product JAR file will be scrambled using {@link ProprietaryBuildTools#scrambleTool}
    */
-  boolean scrambleMainJar = true
+  boolean scrambleMainJar = false
 
   /**
    * If {@code false} names of private fields won't be scrambled (to avoid problems with serialization). This field is ignored if
