@@ -302,11 +302,10 @@
     <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer"/>
 
-    <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
-    <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
+    <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>
+    <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker" dynamic="true"/>
 
-    <extensionPoint name="gotoActionAliasMatcher"
-                    interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher"/>
+    <extensionPoint name="gotoActionAliasMatcher" interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher" dynamic="true"/>
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"
                     dynamic="true"/>
@@ -316,13 +315,13 @@
     <extensionPoint name="gotoFileContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="anonymousElementProvider"
-                    interface="com.intellij.navigation.AnonymousElementProvider"/>
+                    interface="com.intellij.navigation.AnonymousElementProvider" dynamic="true"/>
     <extensionPoint name="searchEverywhereContributor"
                     interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory"/>
     <extensionPoint name="searchEverywhereResultsEqualityProvider"
                     interface="com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider"/>
 
-    <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
+    <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider" dynamic="true"/>
 
     <extensionPoint name="runAnything.executionProvider"
                     interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider"/>
