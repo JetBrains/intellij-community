@@ -29,28 +29,6 @@ import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 
-private val testDataPath: String
-  get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor"
-
-private fun loadDescriptor(dirName: String): IdeaPluginDescriptorImpl {
-  return loadDescriptor(Paths.get(testDataPath, dirName))
-}
-
-private fun loadDescriptor(dir: Path): IdeaPluginDescriptorImpl {
-  assertThat(dir).exists()
-  PluginManagerCore.ourPluginError = null
-  val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(emptySet())
-  val result = DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
-    PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
-  }
-  if (result == null) {
-    @Suppress("USELESS_CAST")
-    assertThat(PluginManagerCore.ourPluginError as String?).isNotNull()
-    PluginManagerCore.ourPluginError = null
-  }
-  return result!!
-}
-
 class PluginDescriptorTest {
   @Rule
   @JvmField
@@ -82,6 +60,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testMalformedDescriptor() {
+    @Suppress("GrazieInspection")
     assertThatThrownBy { loadDescriptor("malformed") }
       .hasMessageContaining("Content is not allowed in prolog.")
   }
@@ -112,7 +91,7 @@ class PluginDescriptorTest {
   @Test
   fun testProductionPlugins() {
     assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"))
+    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins")).plugins
     assertThat(descriptors).isNotEmpty()
     assertThat(ContainerUtil.find(descriptors) { it!!.pluginId.idString == "com.intellij.java" }).isNotNull
   }
@@ -135,7 +114,7 @@ class PluginDescriptorTest {
   @Throws(Exception::class)
   fun testProduction2() {
     assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"))
+    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins")).plugins
     assertThat(descriptors).isNotEmpty()
   }
 
@@ -171,6 +150,61 @@ class PluginDescriptorTest {
     assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
   }
 
+  @Suppress("PluginXmlValidity")
+  @Test
+  fun `use newer plugin`() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    writeDescriptor("foo_1-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>1.0</version>
+      </idea-plugin>""")
+    writeDescriptor("foo_2-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>2.0</version>
+      </idea-plugin>""")
+
+    val result = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir)
+    assertThat(result.plugins).hasSize(1)
+    val foo = result.plugins[0]
+    assertThat(foo.version).isEqualTo("2.0")
+    assertThat(foo.pluginId.idString).isEqualTo("foo")
+
+    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
+    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
+  }
+
+  @Suppress("PluginXmlValidity")
+  @Test
+  fun `use first plugin if both versions the same`() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    writeDescriptor("foo_1-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>1.0</version>
+      </idea-plugin>""")
+    writeDescriptor("foo_another", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>1.0</version>
+      </idea-plugin>""")
+
+    val result = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir)
+    assertThat(result.plugins).hasSize(1)
+    val foo = result.plugins[0]
+    assertThat(foo.version).isEqualTo("1.0")
+    assertThat(foo.pluginId.idString).isEqualTo("foo")
+
+    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
+    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
+  }
+
+  @Suppress("PluginXmlValidity")
   @Test
   fun classLoader() {
     val pluginDir = inMemoryFs.fs.getPath("/plugins")
@@ -189,6 +223,7 @@ class PluginDescriptorTest {
     checkClassLoader(pluginDir)
   }
 
+  @Suppress("PluginXmlValidity")
   @Test
   fun `classLoader - optional dependency`() {
     val pluginDir = inMemoryFs.fs.getPath("/plugins")
@@ -216,13 +251,16 @@ class PluginDescriptorTest {
   }
 
   private fun checkClassLoader(pluginDir: Path) {
-    val list = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir)
+    val list = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir).plugins
     assertThat(list).hasSize(2)
 
     val bar = list[0]
     assertThat(bar.pluginId.idString).isEqualTo("bar")
 
     val foo = list[1]
+
+    assertThat(foo.dependentPluginIds).containsExactly(bar.pluginId)
+
     assertThat(foo.pluginId.idString).isEqualTo("foo")
     val fooClassLoader = foo.pluginClassLoader as PluginClassLoader
     assertThat(fooClassLoader._getParents()).containsExactly(bar.pluginClassLoader)
@@ -302,4 +340,26 @@ class PluginDescriptorTest {
 
 private fun writeDescriptor(id: String, pluginDir: Path, @Language("xml") data: String) {
   pluginDir.resolve("$id/META-INF/plugin.xml").write(data.trimIndent())
+}
+
+private val testDataPath: String
+  get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor"
+
+private fun loadDescriptor(dirName: String): IdeaPluginDescriptorImpl {
+  return loadDescriptor(Paths.get(testDataPath, dirName))
+}
+
+private fun loadDescriptor(dir: Path): IdeaPluginDescriptorImpl {
+  assertThat(dir).exists()
+  PluginManagerCore.ourPluginError = null
+  val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(emptySet())
+  val result = DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
+    PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
+  }
+  if (result == null) {
+    @Suppress("USELESS_CAST")
+    assertThat(PluginManagerCore.ourPluginError as String?).isNotNull()
+    PluginManagerCore.ourPluginError = null
+  }
+  return result!!
 }

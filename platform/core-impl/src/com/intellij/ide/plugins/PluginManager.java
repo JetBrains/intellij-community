@@ -184,7 +184,7 @@ public final class PluginManager {
     if (ignoreMissingInclude) {
       flags |= IGNORE_MISSING_INCLUDE;
     }
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, new PluginLoadingResult(Collections.emptyMap()));
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, descriptor.isBundled(), /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
     descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), context.pathResolver, context, descriptor);

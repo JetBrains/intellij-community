@@ -859,8 +859,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myUseCoreClassLoader;
   }
 
-  void setUseCoreClassLoader(@SuppressWarnings("SameParameterValue") boolean useCoreClassLoader) {
-    myUseCoreClassLoader = useCoreClassLoader;
+  void setUseCoreClassLoader() {
+    myUseCoreClassLoader = true;
   }
 
   @Override

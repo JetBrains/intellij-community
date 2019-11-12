@@ -2,8 +2,10 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +16,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @ApiStatus.Internal
 final class PluginLoadingResult {
   final Map<PluginId, Set<String>> brokenPluginVersions;
+  @NotNull
+  final BuildNumber productBuildNumber;
 
   final List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>();
   final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = ContainerUtil.newConcurrentMap();
@@ -25,7 +29,6 @@ final class PluginLoadingResult {
   final Map<PluginId, IdeaPluginDescriptorImpl> idMap = ContainerUtil.newConcurrentMap();
 
   @Nullable
-  private Map<PluginId, IdeaPluginDescriptorImpl> duplicateMap;
   Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
   final Collection<String> errors = new ConcurrentLinkedQueue<>();
@@ -35,8 +38,9 @@ final class PluginLoadingResult {
   private Set<PluginId> effectiveDisabledIds;
   private Set<PluginId> disabledRequiredIds;
 
-  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions) {
+  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber) {
     this.brokenPluginVersions = brokenPluginVersions;
+    this.productBuildNumber = productBuildNumber;
   }
 
   /**
@@ -65,10 +69,6 @@ final class PluginLoadingResult {
   void finishLoading() {
     existingResults.clear();
     plugins.sort(Comparator.comparing(IdeaPluginDescriptorImpl::getPluginId));
-
-    if (duplicateMap != null) {
-      duplicateMap = null;
-    }
   }
 
   void finishInitializing(@NotNull IdeaPluginDescriptorImpl[] sortedPlugins,
@@ -83,9 +83,10 @@ final class PluginLoadingResult {
     this.disabledRequiredIds = disabledRequiredIds;
   }
 
-  boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, boolean silentlyIgnoreIfDuplicate) {
-    PluginId id = descriptor.getPluginId();
-    if (id == null) {
+  @SuppressWarnings("UnusedReturnValue")
+  boolean add(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    PluginId pluginId = descriptor.getPluginId();
+    if (pluginId == null) {
       pluginsWithoutId.add(descriptor);
       errors.add("No id is provided by \"" + descriptor.getPluginPath().getFileName().toString() + "\"");
       return true;
@@ -96,51 +97,41 @@ final class PluginLoadingResult {
     }
 
     if (!descriptor.isBundled()) {
-      Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
+      Set<String> set = brokenPluginVersions.get(pluginId);
       if (set != null && set.contains(descriptor.getVersion())) {
         errors.add("Version " + descriptor.getVersion() + " was marked as incompatible for " + descriptor);
         return true;
       }
     }
 
-    if (!silentlyIgnoreIfDuplicate && duplicateMap != null) {
-      IdeaPluginDescriptorImpl existing = duplicateMap.get(id);
-      if (existing != null) {
-        errors.add(descriptor + " duplicates " + existing);
-        return false;
-      }
-    }
-
     if (existingResults.add(descriptor)) {
       plugins.add(descriptor);
-      idMap.put(descriptor.getPluginId(), descriptor);
+      idMap.put(pluginId, descriptor);
 
       for (PluginId module : descriptor.getModules()) {
         checkAndAdd(descriptor, module);
       }
       return true;
     }
-    else if (silentlyIgnoreIfDuplicate) {
+
+    int prevIndex = plugins.indexOf(descriptor);
+    IdeaPluginDescriptorImpl prevDescriptor = plugins.get(prevIndex);
+    boolean compatible = isCompatible(descriptor);
+    boolean prevCompatible = isCompatible(prevDescriptor);
+    boolean newer = VersionComparatorUtil.compare(descriptor.getVersion(), prevDescriptor.getVersion()) > 0;
+    if ((compatible && !prevCompatible) || (compatible == prevCompatible && newer)) {
+      replace(prevIndex, prevDescriptor, descriptor);
+      PluginManagerCore.getLogger().info(descriptor.getPath() + " overrides " + prevDescriptor.getPath());
+      idMap.put(pluginId, descriptor);
+      return true;
+    }
+    else {
       return false;
     }
+  }
 
-    int index = plugins.indexOf(descriptor);
-    // unrealistic case, but still
-    if (index == -1) {
-      errors.add("internal error: cannot find duplicated descriptor for " + descriptor);
-      return false;
-    }
-
-    IdeaPluginDescriptorImpl existing = plugins.remove(index);
-    if (duplicateMap == null) {
-      duplicateMap = new HashMap<>();
-    }
-
-    duplicateMap.put(id, existing);
-    existingResults.remove(descriptor);
-    idMap.remove(descriptor.getPluginId());
-    errors.add(descriptor + " duplicates " + existing);
-    return false;
+  private boolean isCompatible(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    return PluginManagerCore.isIncompatible(productBuildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
   }
 
   @SuppressWarnings("DuplicatedCode")
@@ -167,7 +158,7 @@ final class PluginLoadingResult {
     duplicateModuleMap.put(id, list);
   }
 
-  void replace(int prevIndex, @NotNull IdeaPluginDescriptorImpl oldDescriptor, @NotNull IdeaPluginDescriptorImpl newDescriptor) {
+  private void replace(int prevIndex, @NotNull IdeaPluginDescriptorImpl oldDescriptor, @NotNull IdeaPluginDescriptorImpl newDescriptor) {
     existingResults.remove(oldDescriptor);
     existingResults.add(newDescriptor);
     plugins.set(prevIndex, newDescriptor);

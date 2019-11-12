@@ -236,8 +236,9 @@ public final class RepositoryHelper {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
+
       if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node, build)) {
-        LOG.debug("Incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
+        LOG.debug("An incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
 

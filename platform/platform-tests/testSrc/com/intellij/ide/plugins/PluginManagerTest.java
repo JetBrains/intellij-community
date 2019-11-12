@@ -121,8 +121,7 @@ public class PluginManagerTest {
 
   private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
     PluginManagerCore.ourPluginError = null;
-    PluginLoadingResult loadPluginResult = loadDescriptors(testDataName + ".xml", isBundled);
-    PluginManagerCore.initializePlugins(loadPluginResult, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, false);
+    PluginLoadingResult loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     String actual = StringUtil.join(loadPluginResult.getSortedPlugins(), o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
                     "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
     PluginManagerCore.ourPluginError = null;
@@ -142,7 +141,7 @@ public class PluginManagerTest {
   }
 
   @NotNull
-  private static PluginLoadingResult loadDescriptors(@NotNull String testDataName, boolean isBundled)
+  private static PluginLoadingResult loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
@@ -155,9 +154,10 @@ public class PluginManagerTest {
       String url = element.getAttributeValue("url");
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
       descriptor.readExternal(element, Paths.get(url), context.pathResolver, context, descriptor);
-      parentContext.result.add(descriptor, false);
+      parentContext.result.add(descriptor);
     }
     parentContext.result.finishLoading();
+    PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
     return parentContext.result;
   }
 

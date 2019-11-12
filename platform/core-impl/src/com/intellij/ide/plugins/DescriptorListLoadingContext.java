@@ -21,6 +21,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 final class DescriptorListLoadingContext implements AutoCloseable {
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  final static boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
+
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
   static final int SKIP_DISABLED_PLUGINS = 4;
@@ -53,9 +56,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   @SuppressWarnings("FieldMayBeStatic")
   final boolean readConditionalConfigDirectlyIfPossible = false;
 
+  boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
+
   @NotNull
   static DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
-    return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap()));
+    return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
   }
 
   DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
@@ -129,7 +134,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   public String getDefaultVersion() {
     String result = defaultVersion;
     if (result == null) {
-      result = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+      result = this.result.productBuildNumber.asStringWithoutProductCode();
       defaultVersion = result;
     }
     return result;
@@ -147,10 +152,10 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 }
 
 /**
- * Consider using some threshold in StringInterner - CDATA is not interned at all,
+ * Consider using some threshold in StringInterner (CDATA is not interned at all),
  * but maybe some long text for Text node doesn't make sense to intern too.
  */
-// don't intern CDATA - in most cases it is used for some unique large text (e.g. plugin description)
+// don't intern CDATA because in most cases it is used for some unique large text (e.g. plugin description)
 final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   // doesn't make sense to intern class name since it is unique
   // ouch, do we really cannot agree how to name implementation class attribute?
