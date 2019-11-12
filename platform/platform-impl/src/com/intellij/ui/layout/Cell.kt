@@ -96,6 +96,12 @@ interface CellBuilder<T : JComponent> {
   fun onIsModified(callback: () -> Boolean): CellBuilder<T>
 
   /**
+   * All components of the same group share will get the same BoundSize (min/preferred/max),
+   * which is that of the biggest component in the group
+   */
+  fun sizeGroup(name: String): CellBuilder<T>
+
+  /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
    */
   fun applyIfEnabled(): CellBuilder<T>

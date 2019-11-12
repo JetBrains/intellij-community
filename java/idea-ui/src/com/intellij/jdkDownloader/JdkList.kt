@@ -97,15 +97,13 @@ data class JdkItem(
   }
 
   val versionPresentationText: String
-    get() = buildString {
-      append(jdkVersion)
-      append(" (")
-      append(StringUtil.formatFileSize(archiveSize))
-      append(")")
-    }
+    get() = jdkVersion
+
+  val downloadSizePresentationText: String
+    get() = StringUtil.formatFileSize(archiveSize)
 
   val fullPresentationText: String
-    get() = product.packagePresentationText + " " + versionPresentationText
+    get() = product.packagePresentationText + " " + jdkVersion
 }
 
 enum class JdkPackageType(@NonNls val type: String) {

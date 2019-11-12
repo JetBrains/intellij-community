@@ -14,21 +14,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.impl.JdkDownloaderService
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
+import com.intellij.openapi.projectRoots.impl.JdkDownloaderService
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
 import com.intellij.util.Consumer
 import java.awt.Component
-import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
+import javax.swing.Action
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.event.DocumentEvent
 
 private const val DIALOG_TITLE = "Download JDK"
@@ -74,7 +78,7 @@ internal class JdkDownloaderUI : JdkDownloaderService() {
         indicator.checkCanceled()
         invokeLater {
           if (project?.isDisposed == true) return@invokeLater
-          val jdkHome = DownloadJdkDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJdk()
+          val jdkHome = JdkDownloadDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJdk()
           addSdkIfNotNull(jdkHome)
         }
       }
@@ -90,20 +94,16 @@ private fun showJdkSelectorFromDisk(sdkType: SdkType, component: Component?): St
   return jdkHome
 }
 
-private class DownloadJdkDialog(
+private class JdkDownloadDialog(
   val project: Project?,
   val parentComponent: Component?,
   val sdkType: SdkType,
   val items: List<JdkItem>
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
-  private val LOG = logger<DownloadJdkDialog>()
+  private val LOG = logger<JdkDownloadDialog>()
 
   private val panel: JComponent
   private var installDirTextField: TextFieldWithBrowseButton
-
-  private val selectFromDiskAction = object : DialogWrapperAction("Find on the disk...") {
-    override fun doAction(e: ActionEvent?) = doSelectFromDiskAction()
-  }
 
   private lateinit var selectedItem: JdkItem
   private lateinit var selectedPath: String
@@ -123,7 +123,13 @@ private class DownloadJdkDialog(
 
     val versionModel = DefaultComboBoxModel<JdkItem>()
     val versionComboBox = ComboBox(versionModel)
-    versionComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.versionPresentationText) }
+    versionComboBox.renderer = object: ColoredListCellRenderer<JdkItem>() {
+      override fun customizeCellRenderer(list: JList<out JdkItem>, value: JdkItem, index: Int, selected: Boolean, hasFocus: Boolean) {
+        append(value.versionPresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        append(" ")
+        append(value.downloadSizePresentationText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    }
 
     fun selectVersions(newProduct: JdkProduct) {
       val newVersions = items.filter { it.product == newProduct }.sorted()
@@ -135,17 +141,18 @@ private class DownloadJdkDialog(
 
     installDirTextField = textFieldWithBrowseButton(
       project = project,
-      browseDialogTitle = "Select installation path for the JDK",
+      browseDialogTitle = "Select Path to Install JDK",
       fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     )
 
     fun selectInstallPath(newVersion: JdkItem) {
       val installFolderName = newVersion.installFolderName
+      val home = FileUtil.toCanonicalPath(System.getProperty("user.home") ?: ".")
       val path = when {
-        SystemInfo.isLinux ->  "~/.jdks/$installFolderName"
+        SystemInfo.isLinux ->  "$home/.jdks/$installFolderName"
         //see https://youtrack.jetbrains.com/issue/IDEA-206163#focus=streamItem-27-3270022.0-0
-        SystemInfo.isMac ->  "~/Library/Java/JavaVirtualMachines/$installFolderName"
-        SystemInfo.isWindows -> "${System.getProperty("user.home")}\\.jdks\\${installFolderName}"
+        SystemInfo.isMac ->  "$home/Library/Java/JavaVirtualMachines/$installFolderName"
+        SystemInfo.isWindows -> "$home\\.jdks\\${installFolderName}"
         else -> error("Unsupported OS")
       }
       installDirTextField.text = path
@@ -159,10 +166,12 @@ private class DownloadJdkDialog(
     }
 
     panel = panel {
-      row("Vendor:") { vendorComboBox.invoke() }
-      row("Version:") { versionComboBox.invoke() }
+      row("Vendor:") { vendorComboBox.invoke().sizeGroup("combo").focused() }
+      row("Version:") { versionComboBox.invoke().sizeGroup("combo") }
       row("Location:") { installDirTextField.invoke() }
     }
+
+    myOKAction.putValue(Action.NAME, "Download")
 
     init()
     selectVersions(defaultItem.product)
@@ -176,16 +185,7 @@ private class DownloadJdkDialog(
     return error?.let { ValidationInfo(error, installDirTextField) }
   }
 
-  override fun createActions() = arrayOf(selectFromDiskAction, *super.createActions())
   override fun createCenterPanel() = panel
-
-  private fun doSelectFromDiskAction() {
-    val jdkHome = showJdkSelectorFromDisk(sdkType, panel)
-    if (jdkHome != null) {
-      resultingJdkHome = jdkHome
-      close(OK_EXIT_CODE)
-    }
-  }
 
   override fun doOKAction() {
     val installItem = selectedItem

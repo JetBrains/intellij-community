@@ -485,6 +485,12 @@ class CellBuilderImpl<T : JComponent> internal constructor(
       pushY(0.0f)
     }
   }
+
+  override fun sizeGroup(name: String) = apply {
+    builder.updateComponentConstraints(component) {
+      sizeGroup(name)
+    }
+  }
 }
 
 private fun getCommentLeftInset(component: JComponent): Int {
