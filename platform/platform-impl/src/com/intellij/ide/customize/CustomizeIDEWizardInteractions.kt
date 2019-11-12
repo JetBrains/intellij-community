@@ -2,8 +2,10 @@
 package com.intellij.ide.customize
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.ApplicationManager
 
 object CustomizeIDEWizardInteractions {
@@ -11,8 +13,8 @@ object CustomizeIDEWizardInteractions {
   val interactions = mutableListOf<CustomizeIDEWizardInteraction>()
 
   @JvmOverloads
-  fun record(type: CustomizeIDEWizardInteractionType, pluginId: String? = null, groupId: String? = null) {
-    interactions.add(CustomizeIDEWizardInteraction(type, pluginId, groupId))
+  fun record(type: CustomizeIDEWizardInteractionType, pluginDescriptor: IdeaPluginDescriptor? = null, groupId: String? = null) {
+    interactions.add(CustomizeIDEWizardInteraction(type, System.currentTimeMillis(), pluginDescriptor, groupId))
   }
 }
 
@@ -27,7 +29,12 @@ enum class CustomizeIDEWizardInteractionType {
   FeaturedPluginInstalled
 }
 
-data class CustomizeIDEWizardInteraction(val type: CustomizeIDEWizardInteractionType, val pluginId: String?, val groupId: String?)
+data class CustomizeIDEWizardInteraction(
+  val type: CustomizeIDEWizardInteractionType,
+  val timestamp: Long,
+  val pluginDescriptor: IdeaPluginDescriptor?,
+  val groupId: String?
+)
 
 class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListener {
   override fun componentsInitialized() {
@@ -41,7 +48,8 @@ class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListener {
 
       for (interaction in CustomizeIDEWizardInteractions.interactions) {
         val data = FeatureUsageData()
-        interaction.pluginId?.let { data.addData("plugin_id", it) }
+        data.addData("timestamp", interaction.timestamp)
+        interaction.pluginDescriptor?.let { data.addPluginInfo(getPluginInfoByDescriptor(it)) }
         interaction.groupId?.let { data.addData("group", it) }
         FUCounterUsageLogger.getInstance().logEvent("customize.wizard", interaction.type.toString(), data)
       }

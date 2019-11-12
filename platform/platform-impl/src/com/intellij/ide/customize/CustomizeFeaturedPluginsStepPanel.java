@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -184,7 +185,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       installButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.FeaturedPluginInstalled, descriptor.getPluginId().getIdString());
+          CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.FeaturedPluginInstalled, descriptor);
           wrapperLayout.show(buttonWrapper, "progress");
           ourService.execute(new Runnable() {
             @Override
