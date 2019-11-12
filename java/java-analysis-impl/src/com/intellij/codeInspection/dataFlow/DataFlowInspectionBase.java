@@ -904,6 +904,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (method == null) return;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(method);
+    if (info == null) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(block));
     PsiAnnotation anno = info == null ? null : info.getAnnotation();
     Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
     if (nullability == Nullability.NULLABLE) {
