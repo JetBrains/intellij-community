@@ -251,9 +251,9 @@ class GitRepositoryReader {
       result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
       return result;
     }
-    catch (Exception e) {
-      LOG.error("Error reading refs from files", e);
+    catch (Throwable e) {
       logDebugAllRefsFiles();
+      LOG.error("Error reading refs from files", e);
       return emptyMap();
     }
   }
