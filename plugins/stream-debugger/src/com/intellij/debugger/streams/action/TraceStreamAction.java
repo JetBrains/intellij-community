@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -35,20 +35,19 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceStreamAction extends AnAction {
+public final class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final List<SupportedLibrary> mySupportedLibraries =
-    ContainerUtil.map(LibrarySupportProvider.getList(), SupportedLibrary::new);
+  private final List<SupportedLibrary> mySupportedLibraries = ContainerUtil.map(LibrarySupportProvider.getList(), SupportedLibrary::new);
   private final Set<String> mySupportedLanguages = StreamEx.of(mySupportedLibraries).map(x -> x.languageId).toSet();
   private int myLastVisitedPsiElementHash;
 
@@ -80,17 +79,23 @@ public class TraceStreamAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final XDebugSession session = getCurrentSession(e);
+    XDebugSession session = getCurrentSession(e);
     LibrarySupportProvider.EP_NAME.getExtensionList();
     XSourcePosition position = session.getCurrentPosition();
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
 
     if (element != null || position == null) {
-      final List<StreamChainWithLibrary> chains = mySupportedLibraries.stream()
-        .filter(library -> library.languageId.equals(element.getLanguage().getID()))
-        .filter(library -> library.builder.isChainExists(element))
-        .flatMap(library -> library.builder.build(element).stream().map(x -> new StreamChainWithLibrary(x, library)))
-        .collect(Collectors.toList());
+      List<StreamChainWithLibrary> chains = new ArrayList<>();
+      for (SupportedLibrary library : mySupportedLibraries) {
+        if (library.languageId.equals(element.getLanguage().getID())) {
+          if (library.builder.isChainExists(element)) {
+            for (StreamChain x : library.builder.build(element)) {
+              StreamChainWithLibrary withLibrary = new StreamChainWithLibrary(x, library);
+              chains.add(withLibrary);
+            }
+          }
+        }
+      }
       if (chains.isEmpty()) {
         LOG.warn("stream chain is not built");
         return;
