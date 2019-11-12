@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -38,9 +39,20 @@ final class PluginLoadingResult {
   private Set<PluginId> effectiveDisabledIds;
   private Set<PluginId> disabledRequiredIds;
 
+  final boolean checkModuleDependencies;
+
   PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber) {
+    this(brokenPluginVersions, productBuildNumber, !PlatformUtils.isIntelliJ());
+  }
+
+  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber, boolean checkModuleDependencies) {
     this.brokenPluginVersions = brokenPluginVersions;
     this.productBuildNumber = productBuildNumber;
+
+    // https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+    // If a plugin does not include any module dependency tags in its plugin.xml,
+    // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
+    this.checkModuleDependencies = checkModuleDependencies;
   }
 
   /**
@@ -101,6 +113,11 @@ final class PluginLoadingResult {
       if (set != null && set.contains(descriptor.getVersion())) {
         errors.add("Version " + descriptor.getVersion() + " was marked as incompatible for " + descriptor);
         return true;
+      }
+
+      if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
+        errors.add("Plugin " + descriptor + " defines no module dependencies (supported only in IntelliJ IDEA)");
+        return false;
       }
     }
 

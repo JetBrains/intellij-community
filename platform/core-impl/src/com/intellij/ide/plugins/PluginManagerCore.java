@@ -71,6 +71,7 @@ public final class PluginManagerCore {
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
   public static final String CORE_PLUGIN_ID = "com.intellij";
 
+  private static final PluginId JAVA_PLUGIN_ID = PluginId.getId("com.intellij.java");
   private static final PluginId JAVA_MODULE_ID = PluginId.getId("com.intellij.modules.java");
 
   public static final String PLUGIN_XML = "plugin.xml";
@@ -553,30 +554,22 @@ public final class PluginManagerCore {
   private static IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor,
                                                                 @Nullable IdeaPluginDescriptorImpl javaDep,
                                                                 boolean hasAllModules) {
-    // Skip our plugins as expected to be up-to-date whether bundled or not.
-    if (descriptor.getPluginId() == CORE_ID || descriptor == javaDep ||
+    // skip our plugins as expected to be up-to-date whether bundled or not
+    if (descriptor.getPluginId() == CORE_ID || descriptor.getPluginId() == JAVA_PLUGIN_ID ||
         VENDOR_JETBRAINS.equals(descriptor.getVendor()) ||
         !hasAllModules ||
         javaDep == null) {
       return null;
     }
 
-    if (!descriptor.isBundled()) {
-      return javaDep;
-    }
-
     // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
     // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
-    boolean isLegacyPlugin = !hasModuleDependencies(descriptor);
-    // Many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency
-    // on some other platform modules). This is definitely a misconfiguration but lets temporary add the Java plugin to their dependencies
-    // to avoid breaking compatibility.
-    return isLegacyPlugin ? javaDep : null;
+    return hasModuleDependencies(descriptor) ? null : javaDep;
   }
 
-  private static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
+  static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
     for (PluginId depId : descriptor.getDependentPluginIds()) {
-      if (isModuleDependency(depId)) {
+      if (depId == JAVA_PLUGIN_ID || depId == JAVA_MODULE_ID || isModuleDependency(depId)) {
         return true;
       }
     }
@@ -1439,9 +1432,6 @@ public final class PluginManagerCore {
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
-    boolean checkModuleDependencies = coreDescriptor != null &&
-                                      !coreDescriptor.getModules().isEmpty() && !coreDescriptor.getModules().contains(ALL_MODULES_MARKER);
-
     Set<IdeaPluginDescriptor> explicitlyEnabled = null;
     if (selectedIds != null) {
       Set<PluginId> set = new HashSet<>();
@@ -1501,12 +1491,6 @@ public final class PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         errorSuffix = "is skipped (plugins loading disabled)";
-      }
-      else if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
-        // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-        // If a plugin does not include any module dependency tags in its plugin.xml,
-        // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
-        errorSuffix = "defines no module dependencies (supported only in IntelliJ IDEA)";
       }
       else {
         errorSuffix = null;

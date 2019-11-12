@@ -144,7 +144,7 @@ public class PluginManagerTest {
   private static PluginLoadingResult loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
-    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), true));
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
 
