@@ -34,7 +34,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Edit Injection Settings";
+    return "Edit injection settings";
   }
 
   @Override
