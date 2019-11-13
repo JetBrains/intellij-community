@@ -17,8 +17,7 @@ enum class UIEventId {
   ProgressPaused,
   ProgressResumed,
   BreadcrumbShowTooltip,
-  BreadcrumbNavigate,
-  BreadcrumbNavigateWithSelection
+  BreadcrumbNavigate
 }
 
 fun logUIEvent(eventId: UIEventId) {
