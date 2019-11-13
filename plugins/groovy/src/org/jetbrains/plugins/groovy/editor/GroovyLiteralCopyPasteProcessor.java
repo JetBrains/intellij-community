@@ -18,7 +18,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
@@ -40,7 +39,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       if (text == null) return null;
       return GroovyStringLiteralManipulator.getLiteralRange(text).shiftRight(node.getStartOffset());
     }
-    if (tokenType == GroovyTokenTypes.mREGEX_CONTENT) {
+    if (tokenType == SLASHY_CONTENT || tokenType == DOLLAR_SLASHY_CONTENT) {
       return token.getTextRange();
     }
     return null;
