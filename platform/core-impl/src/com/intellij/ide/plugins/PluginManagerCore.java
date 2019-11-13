@@ -1103,12 +1103,26 @@ public final class PluginManagerCore {
 
   @TestOnly
   @NotNull
-  public static PluginLoadingResult testLoadDescriptorsFromDir(@NotNull Path dir)
-    throws ExecutionException, InterruptedException {
-    DescriptorListLoadingContext context = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+  public static PluginLoadingResult testLoadDescriptorsFromDir(@NotNull Path dir, @NotNull BuildNumber buildNumber)
+    throws IOException {
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), buildNumber));
     context.usePluginClassLoader = true;
     PluginLoadingResult result = context.result;
-    loadDescriptorsFromDir(dir, true, context);
+
+    // constant order in tests
+    List<Path> paths;
+    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
+      paths = ContainerUtil.collect(dirStream.iterator());
+    }
+    paths.sort(null);
+
+    for (Path file : paths) {
+      IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, /* isBundled */ false, context);
+      if (descriptor != null) {
+        context.result.add(descriptor, context);
+      }
+    }
+
     initializePlugins(context, UrlClassLoader.build().get(), false);
     return result;
   }

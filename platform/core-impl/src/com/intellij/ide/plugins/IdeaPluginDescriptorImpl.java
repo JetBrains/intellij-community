@@ -153,7 +153,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
                               @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                               @NotNull DescriptorLoadingContext context,
                               @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
-    // root element always `!isIncludeElement` and it means that result always is a singleton list
+    // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
       markAsIncomplete(context);
@@ -256,7 +256,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
             boolean isAvailable = true;
             IdeaPluginDescriptorImpl dependencyDescriptor = null;
-            if (context.isPluginDisabled(dependencyId)) {
+            if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
               if (!isOptional) {
                 context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is disabled)");
                 markAsIncomplete(context);
@@ -355,7 +355,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       return true;
     }
 
-    String message = PluginManagerCore.isIncompatible(PluginManagerCore.getBuildNumber(), since, until);
+    String message = PluginManagerCore.isIncompatible(context.parentContext.result.productBuildNumber, since, until);
     if (message == null) {
       return true;
     }

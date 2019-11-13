@@ -156,7 +156,7 @@ final class PluginLoadingResult {
     }
 
     if (isCompatible(descriptor) && VersionComparatorUtil.compare(descriptor.getVersion(), prevDescriptor.getVersion()) > 0) {
-      context.getLogger().info(descriptor.getPath() + " overrides " + prevDescriptor.getPath());
+      context.getLogger().info(descriptor.getPluginPath() + " overrides " + prevDescriptor.getPluginPath());
       idMap.put(pluginId, descriptor);
       return true;
     }
