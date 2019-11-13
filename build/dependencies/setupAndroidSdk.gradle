@@ -155,8 +155,7 @@ class OfflineMavenRepository extends DefaultTask {
   @Input
   String configurationName = 'compile'
 
-  @OutputDirectory
-  File repoDir = new File(project.buildDir, 'offline-repo')
+  File repoDir
 
   @TaskAction
   void build() {
