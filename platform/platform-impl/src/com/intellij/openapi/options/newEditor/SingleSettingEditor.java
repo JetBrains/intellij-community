@@ -4,7 +4,6 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -28,7 +27,6 @@ public class SingleSettingEditor extends ConfigurableEditor {
     add(myBanner, BorderLayout.NORTH);
     myBanner.setVisible(false);
     init(configurable, false);
-    setPreferredSize(JBUI.size(800, 600));
   }
 
   @Override

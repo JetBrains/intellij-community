@@ -222,6 +222,7 @@ public class PluginManagerConfigurable
       }
     };
     myCardPanel.setMinimumSize(new JBDimension(580, 380));
+    myCardPanel.setPreferredSize(new JBDimension(800, 600));
 
     myTabHeaderComponent.setListener();
 
