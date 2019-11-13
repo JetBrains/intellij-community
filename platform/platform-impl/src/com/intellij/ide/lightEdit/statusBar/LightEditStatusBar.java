@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +26,7 @@ public class LightEditStatusBar extends LightEditStatusBarBase implements Dispos
   public LightEditStatusBar(LightEditorManager editorManager) {
     myEditorManager = editorManager;
     setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-    setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
+    setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     add(Box.createHorizontalGlue());
     myRightPanel = createRightPanel();
     add(myRightPanel);
