@@ -962,8 +962,8 @@ public class TypeConversionUtil {
 
   private static boolean isClassAssignable(@NotNull PsiClassType.ClassResolveResult leftResult,
                                            @NotNull PsiClassType.ClassResolveResult rightResult,
-                                           boolean allowUncheckedConversion, 
-                                           GlobalSearchScope resolveScope, 
+                                           boolean allowUncheckedConversion,
+                                           GlobalSearchScope resolveScope,
                                            boolean capture) {
     final PsiClass leftClass = leftResult.getElement();
     final PsiClass rightClass = rightResult.getElement();
@@ -1320,9 +1320,8 @@ public class TypeConversionUtil {
       if (primitiveType == null) return null;
       // identity cast, including (boolean)boolValue
       if (castType.equals(primitiveType)) return operand;
-      final int rankFrom = getTypeRank(primitiveType);
       final int rankTo = getTypeRank(castType);
-      value = cast(operand, rankFrom, rankTo);
+      value = cast(operand, rankTo);
     }
     return value;
   }
@@ -1447,7 +1446,7 @@ public class TypeConversionUtil {
   public static boolean isFreshVariable(PsiTypeParameter typeParameter) {
     return typeParameter.getUserData(ORIGINAL_CONTEXT) != null;
   }
-  
+
   public static void markAsFreshVariable(PsiTypeParameter parameter, PsiElement context) {
     parameter.putUserData(ORIGINAL_CONTEXT, context);
   }
@@ -1508,141 +1507,23 @@ public class TypeConversionUtil {
     return true;
   }
 
-  private static Object cast(Object operand, int from, int to) {
-    switch (from) {
+  private static Object cast(Object operand, int rankTo) {
+    Number number = operand instanceof Character ? Integer.valueOf((Character)operand) : (Number)operand;
+    switch (rankTo) {
       case BYTE_RANK:
-        switch (to) {
-          case BYTE_RANK:
-            return operand;
-          case SHORT_RANK:
-            return (short)((Number)operand).intValue();
-          case CHAR_RANK:
-            return (char)((Number)operand).intValue();
-          case INT_RANK:
-            return ((Number)operand).intValue();
-          case LONG_RANK:
-            return (long)((Number)operand).intValue();
-          case FLOAT_RANK:
-            return (float)((Number)operand).intValue();
-          case DOUBLE_RANK:
-            return (double)((Number)operand).intValue();
-          default:
-            return null;
-        }
+        return number.byteValue();
       case SHORT_RANK:
-        switch (to) {
-          case BYTE_RANK:
-            return (byte)((Short)operand).shortValue();
-          case SHORT_RANK:
-            return operand;
-          case CHAR_RANK:
-            return (char)((Short)operand).shortValue();
-          case INT_RANK:
-            return (int)(Short)operand;
-          case LONG_RANK:
-            return (long)(Short)operand;
-          case FLOAT_RANK:
-            return (float)(Short)operand;
-          case DOUBLE_RANK:
-            return (double)(Short)operand;
-          default:
-            return null;
-        }
+        return number.shortValue();
       case CHAR_RANK:
-        switch (to) {
-          case BYTE_RANK:
-            return (byte)((Character)operand).charValue();
-          case SHORT_RANK:
-            return (short)((Character)operand).charValue();
-          case CHAR_RANK:
-            return operand;
-          case INT_RANK:
-            return (int)(Character)operand;
-          case LONG_RANK:
-            return (long)(Character)operand;
-          case FLOAT_RANK:
-            return (float)(Character)operand;
-          case DOUBLE_RANK:
-            return (double)(Character)operand;
-          default:
-            return null;
-        }
+        return (char)number.intValue();
       case INT_RANK:
-        switch (to) {
-          case BYTE_RANK:
-            return (byte)((Integer)operand).intValue();
-          case SHORT_RANK:
-            return (short)((Integer)operand).intValue();
-          case CHAR_RANK:
-            return (char)((Integer)operand).intValue();
-          case INT_RANK:
-            return operand;
-          case LONG_RANK:
-            return (long)(Integer)operand;
-          case FLOAT_RANK:
-            return (float)(Integer)operand;
-          case DOUBLE_RANK:
-            return (double)(Integer)operand;
-          default:
-            return null;
-        }
+        return number.intValue();
       case LONG_RANK:
-        switch (to) {
-          case BYTE_RANK:
-            return (byte)((Long)operand).longValue();
-          case SHORT_RANK:
-            return (short)((Long)operand).longValue();
-          case CHAR_RANK:
-            return (char)((Long)operand).longValue();
-          case INT_RANK:
-            return (int)((Long)operand).longValue();
-          case LONG_RANK:
-            return operand;
-          case FLOAT_RANK:
-            return (float)(Long)operand;
-          case DOUBLE_RANK:
-            return (double)(Long)operand;
-          default:
-            return null;
-        }
+        return number.longValue();
       case FLOAT_RANK:
-        switch (to) {
-          case BYTE_RANK:
-            return (byte)((Float)operand).floatValue();
-          case SHORT_RANK:
-            return (short)((Float)operand).floatValue();
-          case CHAR_RANK:
-            return (char)((Float)operand).floatValue();
-          case INT_RANK:
-            return (int)((Float)operand).floatValue();
-          case LONG_RANK:
-            return (long)((Float)operand).floatValue();
-          case FLOAT_RANK:
-            return operand;
-          case DOUBLE_RANK:
-            return (double)(Float)operand;
-          default:
-            return null;
-        }
+        return number.floatValue();
       case DOUBLE_RANK:
-        switch (to) {
-          case BYTE_RANK:
-            return (byte)((Double)operand).doubleValue();
-          case SHORT_RANK:
-            return (short)((Double)operand).doubleValue();
-          case CHAR_RANK:
-            return (char)((Double)operand).doubleValue();
-          case INT_RANK:
-            return (int)((Double)operand).doubleValue();
-          case LONG_RANK:
-            return (long)((Double)operand).doubleValue();
-          case FLOAT_RANK:
-            return new Float((Double)operand);
-          case DOUBLE_RANK:
-            return operand;
-          default:
-            return null;
-        }
+        return number.doubleValue();
       default:
         return null;
     }
