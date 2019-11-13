@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated avoid analyzing PSI tree changes at all if possible (see {@link com.intellij.psi.PsiTreeChangeEvent} documentation for more details),
- * ue {@link com.intellij.pom.tree.TreeAspect} if you absolutely must.
+ * or {@link com.intellij.pom.tree.TreeAspect} if you absolutely must.
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
