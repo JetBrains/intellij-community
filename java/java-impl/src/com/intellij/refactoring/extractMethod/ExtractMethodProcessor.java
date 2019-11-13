@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -592,21 +591,12 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean showDialog(final boolean direct) {
     AbstractExtractDialog dialog = createExtractMethodDialog(direct);
-    Ref<Boolean> result = Ref.create(Boolean.FALSE);
-    Runnable showAndApply = () -> {
-      dialog.show();
-      if (dialog.isOK()) {
-        apply(dialog);
-        result.set(Boolean.TRUE);
-      }
-    };
-    if (dialog.showInTransaction()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(showAndApply);
+    dialog.show();
+    if (dialog.isOK()) {
+      apply(dialog);
+      return true;
     }
-    else {
-      showAndApply.run();
-    }
-    return result.get();
+    return false;
   }
 
   protected void apply(final AbstractExtractDialog dialog) {

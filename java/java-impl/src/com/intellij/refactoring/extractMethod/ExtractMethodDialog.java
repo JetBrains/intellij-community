@@ -687,9 +687,4 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   public PsiType getReturnType() {
     return mySelector != null ? mySelector.getSelectedType() : myReturnType;
   }
-
-  @Override
-  public boolean showInTransaction() {
-    return true;
-  }
 }
