@@ -598,7 +598,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public void showCustomDownloadUI(@NotNull SdkModel sdkModel,
                                    @NotNull JComponent parentComponent,
                                    @Nullable Sdk selectedSdk,
-                                   @NotNull Consumer<Sdk> sdkCreatedCallback) {
+                                   @NotNull Consumer<InstallableSdk> sdkCreatedCallback) {
     JdkDownloaderService instance = JdkDownloaderService.getInstanceIfEnabled();
     if (instance == null) return;
     instance.downloadCustomJdk(this, sdkModel, parentComponent, sdkCreatedCallback);

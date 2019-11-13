@@ -2,7 +2,7 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.InstallableSdk
 import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
@@ -16,7 +16,7 @@ abstract class JdkDownloaderService {
   abstract fun downloadCustomJdk(javaSdkType: JavaSdkImpl,
                                  sdkModel: SdkModel,
                                  parentComponent: JComponent,
-                                 callback: Consumer<Sdk>)
+                                 callback: Consumer<InstallableSdk>)
 
   companion object {
     @JvmStatic

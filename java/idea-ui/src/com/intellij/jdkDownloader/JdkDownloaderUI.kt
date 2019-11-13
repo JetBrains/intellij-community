@@ -11,9 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModel
-import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.JdkDownloaderService
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
@@ -28,6 +26,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.Consumer
 import java.awt.Component
 import java.awt.event.ItemEvent
+import java.lang.RuntimeException
 import javax.swing.Action
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -42,18 +41,38 @@ internal class JdkDownloaderUI : JdkDownloaderService() {
   override fun downloadCustomJdk(javaSdkType: JavaSdkImpl,
                                  sdkModel: SdkModel,
                                  parentComponent: JComponent,
-                                 callback: Consumer<Sdk>) {
+                                 callback: Consumer<InstallableSdk>) {
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
     if (project?.isDisposed == true) return
     val items = downloadModelWithProgress(project, parentComponent) ?: return
 
     if (project?.isDisposed == true) return
-    val jdkHome = JdkDownloadDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJdk() ?: return
+    val (jdkItem, jdkHome) = JdkDownloadDialog(project, parentComponent, javaSdkType, items).selectJdkAndPath() ?: return
 
-    val sdk = (sdkModel as ProjectSdksModel).createSdk(javaSdkType, jdkHome)
-    callback.consume(sdk)
+    callback.consume(object: InstallableSdk() {
+      override fun getSdkType() = javaSdkType
+
+      override fun getName() = jdkItem.fullPresentationText //TODO
+
+      override fun clone(): InstallableSdk = this
+
+      override fun getVersionString() = jdkItem.versionPresentationText
+
+      override fun prepareSdk(indicator: ProgressIndicator): Sdk {
+        //TODO: how exception is handled outside?
+        val actualHome = try {
+          JdkInstaller.installJdk(jdkItem, jdkHome, indicator)
+        } catch (t: ProcessCanceledException) {
+          throw t
+        } catch (e: Exception) {
+          LOG.warn("Failed to install JDK $jdkItem to $jdkHome. ${e.message}", e)
+          throw RuntimeException("Failed to install JDK. ${e.message}", e)
+        }
+        return (sdkModel as ProjectSdksModel).createSdk(javaSdkType, actualHome.absolutePath)
+      }
+    })
   }
-  
+
   private fun downloadModelWithProgress(project: Project?, parentComponent: JComponent): List<JdkItem>? {
     val task = object : Task.WithResult<List<JdkItem>?, Exception>(project, "Downloading the list of available JDKs...", true) {
       override fun compute(indicator: ProgressIndicator): List<JdkItem>? {
@@ -95,7 +114,6 @@ private class JdkDownloadDialog(
 
   private lateinit var selectedItem: JdkItem
   private lateinit var selectedPath: String
-  private lateinit var resultingJdkHome: String
 
   init {
     title = DIALOG_TITLE
@@ -175,39 +193,9 @@ private class JdkDownloadDialog(
 
   override fun createCenterPanel() = panel
 
-  override fun doOKAction() {
-    val installItem = selectedItem
-    val installPath = selectedPath
-
-    ProgressManager.getInstance().run(object : Task.Modal(project, "Installing JDK...", true) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          val targetDir = JdkInstaller.installJdk(installItem, installPath, indicator)
-          invokeLater {
-            resultingJdkHome = targetDir.absolutePath
-            superDoOKAction()
-          }
-        } catch (t: ProcessCanceledException) {
-          return
-        } catch (e: Exception) {
-          LOG.warn("Failed to install JDK $installItem to $installPath. ${e.message}", e)
-          invokeLater {
-            Messages.showMessageDialog(panel,
-                                       "Failed to install JDK. ${e.message}",
-                                       DIALOG_TITLE,
-                                       Messages.getErrorIcon()
-            )
-          }
-        }
-      }
-    })
-  }
-
-  private fun superDoOKAction() = super.doOKAction()
-
   // returns unpacked JDK location (if any) or null if cancelled
-  fun selectOrDownloadAndUnpackJdk(): String? = when {
-    showAndGet() -> resultingJdkHome
+  fun selectJdkAndPath() = when {
+    showAndGet() -> selectedItem to selectedPath //TODO: validate the path!
     else -> null
   }
 
@@ -225,4 +213,3 @@ private class JdkDownloadDialog(
     }
   }
 }
-

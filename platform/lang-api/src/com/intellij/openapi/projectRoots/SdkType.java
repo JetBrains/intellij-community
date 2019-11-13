@@ -296,7 +296,7 @@ public abstract class SdkType implements SdkTypeId {
   public void showCustomDownloadUI(@NotNull SdkModel sdkModel,
                                    @NotNull JComponent parentComponent,
                                    @Nullable Sdk selectedSdk,
-                                   @NotNull Consumer<Sdk> sdkCreatedCallback) { }
+                                   @NotNull Consumer<InstallableSdk> sdkCreatedCallback) { }
 
   /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
   @Deprecated
