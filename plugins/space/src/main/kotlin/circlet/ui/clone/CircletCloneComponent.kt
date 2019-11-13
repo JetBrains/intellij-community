@@ -27,6 +27,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
 import com.intellij.ui.layout.*
+import com.intellij.util.containers.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.cloneDialog.*
 import git4idea.*
@@ -147,10 +148,11 @@ internal class CircletCloneComponent(val project: Project,
         dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
     }
 
-    override fun doValidateAll(): List<ValidationInfo> = emptyList() // todo: add validation
+    override fun doValidateAll(): List<ValidationInfo> {
+        return cloneView.doValidteAll()
+    }
 
     override fun getView(): Wrapper = wrapper
-
 }
 
 private class CloneView(
@@ -309,4 +311,11 @@ private class CloneView(
     fun getUrl(): String? = selectedUrl
 
     fun getDirectory(): String = directoryField.text
+
+    fun doValidteAll(): List<ValidationInfo> {
+        val list = ArrayList<ValidationInfo>()
+        ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
+        ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.createDestination(directoryField.text))
+        return list
+    }
 }
