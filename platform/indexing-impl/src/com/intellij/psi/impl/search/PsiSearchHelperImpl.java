@@ -1057,10 +1057,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
 
     Boolean[] result = {null};
-    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
-      ReadAction.nonBlocking(() -> {
+    if (FileBasedIndex.indexAccessDuringDumbModeEnabled()) {
+      ReadAction.run(() -> {
         FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project);
-      }).executeSynchronously();
+      });
     }
     return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
   }
