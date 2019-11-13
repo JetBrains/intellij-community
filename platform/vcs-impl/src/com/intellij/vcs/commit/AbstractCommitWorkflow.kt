@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
@@ -184,34 +185,48 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   private fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
     var result: CheckinHandler.ReturnResult? = null
-    val checks = Runnable {
+
+    var checks = Runnable {
+      ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
       result = runBeforeCommitHandlersChecks(executor)
     }
 
-    doRunBeforeCommitChecks(wrapWithCommitMetaHandlers(checks))
+    commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
+      checks = wrapWithCommitMetaHandler(metaHandler, checks)
+    }
+
+    val task = Runnable {
+      try {
+        checks.run()
+      }
+      catch (ignore: ProcessCanceledException) {
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
+    doRunBeforeCommitChecks(task)
 
     return result ?: CheckinHandler.ReturnResult.CANCEL
   }
 
   protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
 
-  private fun wrapWithCommitMetaHandlers(block: Runnable): Runnable {
-    var result = block
-    commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
-      val previousResult = result
-      result = Runnable {
+  private fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable {
+    return Runnable {
+      try {
         LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
-        try {
-          metaHandler.runCheckinHandlers(previousResult)
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-          previousResult.run()
-        }
+        metaHandler.runCheckinHandlers(task)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        task.run()
       }
     }
-    return result
   }
 
   private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
