@@ -140,8 +140,8 @@ public class BranchFilterPopupComponent
       @NotNull private final Collection<? extends VcsRef> myReferences;
       private boolean myIsFavorite;
 
-      BranchFilterAction(@NotNull String value, @NotNull Collection<? extends VcsRef> references) {
-        super(value);
+      BranchFilterAction(@NotNull String name, @NotNull Collection<? extends VcsRef> references) {
+        super(name, new ArrayList<>(ContainerUtil.map2LinkedSet(references, ref -> ref.getName())), true);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
         myHoveredIcon = new LayeredIcon(AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
