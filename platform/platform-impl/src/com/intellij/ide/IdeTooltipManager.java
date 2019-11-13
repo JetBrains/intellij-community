@@ -43,7 +43,8 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
-public final class IdeTooltipManager implements Disposable, AWTEventListener {
+// Android team doesn't want to use new mockito for now, so, class cannot be final
+public class IdeTooltipManager implements Disposable, AWTEventListener {
   public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
 
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
