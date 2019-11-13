@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.DataKey
 
 interface FloatingToolbarComponent {
 
+  fun update()
+
   fun scheduleHide()
 
   fun scheduleShow()

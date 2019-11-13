@@ -26,6 +26,7 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
       val actionGroup = provider.actionGroup
       val autoHideable = provider.autoHideable
       val component = FloatingToolbarComponentImpl(this, targetComponent, actionGroup, autoHideable, parentDisposable)
+      provider.register(component, parentDisposable)
       toolbarComponents.add(provider to component)
     }
     toolbarComponents.sortBy { it.first.priority }

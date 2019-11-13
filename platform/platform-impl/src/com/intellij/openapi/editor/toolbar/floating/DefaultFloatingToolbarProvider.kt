@@ -5,6 +5,8 @@ class DefaultFloatingToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GR
 
   override val priority = 0
 
+  override val autoHideable = true
+
   companion object {
     const val ACTION_GROUP = "EditorContextBarMenu"
   }
