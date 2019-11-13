@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
 import org.assertj.core.api.Assertions.assertThat
+import java.util.jar.JarFile
 
 class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -13,6 +15,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
     addFile("pkg/other/MySvcImpl.groovy", "package pkg.other\nclass MySvcImpl extends pkg.main.MySvc { }")
     addFile("module-info.java", "module M2 { }", M2)
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
   }
 
   fun testFileHeader() = variants("<caret>", "module", "open")
@@ -34,7 +37,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testRequiresBare() =
     variants("module M { requires <caret>",
              "transitive", "static", "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws",
-             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed")
+             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
   fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")

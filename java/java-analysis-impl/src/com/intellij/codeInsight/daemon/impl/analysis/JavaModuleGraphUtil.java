@@ -30,6 +30,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,6 +90,19 @@ public class JavaModuleGraphUtil {
           return ((PsiJavaFile)psiFile).getModuleDeclaration();
         }
       }
+      else if (files.isEmpty()) {
+        files = ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream()
+          .map(root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME))
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+        if (files.size() == 1) {
+          VirtualFile manifest = files.get(0);
+          String name = LightJavaModule.claimedModuleName(manifest);
+          if (name != null) {
+            return LightJavaModule.getModule(PsiManager.getInstance(module.getProject()), manifest.getParent().getParent());
+          }
+        }
+      }
     }
 
     return null;
@@ -135,7 +149,7 @@ public class JavaModuleGraphUtil {
 
   /*
    * Looks for cycles between Java modules in the project sources.
-   * Library/JDK modules are excluded - in an assumption there can't be any lib -> src dependencies.
+   * Library/JDK modules are excluded — in an assumption there can't be any lib -> src dependencies.
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
   @NotNull
