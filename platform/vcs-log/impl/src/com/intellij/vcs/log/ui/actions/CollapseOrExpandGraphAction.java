@@ -16,10 +16,15 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.actions.ActionController;
+import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -77,4 +82,19 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
 
   @NotNull
   protected abstract String getPrefix();
+
+  protected void performLongAction(@NotNull VcsLogUiImpl logUi, @NotNull GraphAction graphAction, @NotNull String title) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ActionController<Integer> actionController = logUi.getDataPack().getVisibleGraph().getActionController();
+      GraphAnswer<Integer> answer = actionController.performAction(graphAction);
+      Runnable updater = answer.getGraphUpdater();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        assert updater != null : "Action:" + title +
+                                 "\nController: " + actionController +
+                                 "\nAnswer:" + answer;
+        updater.run();
+        logUi.getTable().handleAnswer(answer);
+      });
+    }, title, false, null, logUi.getMainComponent());
+  }
 }

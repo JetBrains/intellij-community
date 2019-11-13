@@ -3,8 +3,6 @@ package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -14,9 +12,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.graph.actions.GraphAction;
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
@@ -36,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -90,39 +84,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull
   public MainFrame getMainFrame() {
     return myMainFrame;
-  }
-
-  private void performLongAction(@NotNull final GraphAction graphAction, @NotNull final String title) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
-      final Runnable updater = answer.getGraphUpdater();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        assert updater != null : "Action:" +
-                                 title +
-                                 "\nController: " +
-                                 myVisiblePack.getVisibleGraph().getActionController() +
-                                 "\nAnswer:" +
-                                 answer;
-        updater.run();
-        getTable().handleAnswer(answer);
-      });
-    }, title, false, null, myMainFrame.getMainComponent());
-  }
-
-  public void expandAll() {
-    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND),
-                      "Expanding " +
-                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
-                       ? "merges..."
-                       : "linear branches..."));
-  }
-
-  public void collapseAll() {
-    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE),
-                      "Collapsing " +
-                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
-                       ? "merges..."
-                       : "linear branches..."));
   }
 
   @Override
@@ -187,7 +148,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
   @NotNull
   @Override
-  public Component getMainComponent() {
+  public JComponent getMainComponent() {
     return myMainFrame.getMainComponent();
   }
 
