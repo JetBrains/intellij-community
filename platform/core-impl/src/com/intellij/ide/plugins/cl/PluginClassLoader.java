@@ -85,7 +85,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader[] parents,
                            @NotNull IdeaPluginDescriptorImpl descriptor) {
-    this(build().urls(urls).allowLock().useCache().urlsInterned(), parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
+    this(build().urls(urls).allowLock().useCache(), parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
   }
 
   /**
