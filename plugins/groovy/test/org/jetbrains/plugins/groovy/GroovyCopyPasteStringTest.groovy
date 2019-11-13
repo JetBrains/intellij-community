@@ -16,6 +16,47 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.*
 class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
 
   @Test
+  void 'copy'() {
+    def data = [
+      $/<selection>'\\'</selection>/$    : $/'\\'/$,
+      $/<selection>'\\</selection>'/$    : $/'\\/$,
+      $/'<selection>\\'</selection>/$    : $/\\'/$,
+      $/'<selection>\\</selection>'/$    : $/\/$,
+
+      $/<selection>'''\\'''</selection>/$: $/'''\\'''/$,
+      $/'<selection>''\\'''</selection>/$: $/''\\'''/$,
+      $/''<selection>'\\'''</selection>/$: $/'\\'''/$,
+      $/'''<selection>\\'''</selection>/$: $/\\'''/$,
+      $/<selection>'''\\</selection>'''/$: $/'''\\/$,
+      $/<selection>'''\\'</selection>''/$: $/'''\\'/$,
+      $/<selection>'''\\''</selection>'/$: $/'''\\''/$,
+      $/'''<selection>\\</selection>'''/$: $/\/$,
+
+      $/<selection>"\\"</selection>/$    : $/"\\"/$,
+      $/<selection>"\\</selection>"/$    : $/"\\/$,
+      $/"<selection>\\"</selection>/$    : $/\\"/$,
+      $/"<selection>\\</selection>"/$    : $/\/$,
+
+      $/<selection>"""\\"""</selection>/$: $/"""\\"""/$,
+      $/"<selection>""\\"""</selection>/$: $/""\\"""/$,
+      $/""<selection>"\\"""</selection>/$: $/"\\"""/$,
+      $/"""<selection>\\"""</selection>/$: $/\\"""/$,
+      $/<selection>"""\\</selection>"""/$: $/"""\\/$,
+      $/<selection>"""\\"</selection>""/$: $/"""\\"/$,
+      $/<selection>"""\\""</selection>"/$: $/"""\\""/$,
+      $/"""<selection>\\</selection>"""/$: $/\/$,
+
+      $/<selection>/\//</selection>/$    : $//\///$,
+      $/<selection>/\/</selection>//$    : $//\//$,
+      $//<selection>\//</selection>/$    : $/\///$,
+      $//<selection>\/</selection>//$    : $///$,
+    ]
+    RunAll.runAll(data) { text, expectedCopy ->
+      doCopyTest(text, expectedCopy)
+    }.run()
+  }
+
+  @Test
   void 'find string kind for paste'() {
     def data = [
       // empty strings
@@ -156,6 +197,14 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
     RunAll.runAll(data) { List<String> entry ->
       doCopyPasteTest(entry[0], entry[1], entry[2])
     }.run()
+  }
+
+  private void doCopyTest(String text, String expectedCopy) {
+    fixture.configureByText 'from.groovy', text
+    fixture.performEditorAction IdeActions.ACTION_COPY
+    fixture.configureByText 'to.txt', ''
+    fixture.performEditorAction IdeActions.ACTION_PASTE
+    fixture.checkResult expectedCopy
   }
 
   private void doCopyPasteTest(String fromText, String toText, String expected) {
