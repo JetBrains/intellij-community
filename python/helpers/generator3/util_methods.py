@@ -844,8 +844,8 @@ _bytes_that_never_appears_in_text = set(range(7)) | {11} | set(range(14, 27)) | 
 
 
 # This wrapper is intentionally made top-level: local functions can't be pickled.
-def _multiprocessing_wrapper(q, func, *args, **kwargs):
-    q.put(func(*args, **kwargs))
+def _multiprocessing_wrapper(result_conn, func, *args, **kwargs):
+    result_conn.send(func(*args, **kwargs))
 
 
 def execute_in_subprocess_synchronously(name, func, args, kwargs, failure_result=None):
@@ -855,16 +855,24 @@ def execute_in_subprocess_synchronously(name, func, args, kwargs, failure_result
     if sys.version_info[0] >= 3:
         extra_process_kwargs['daemon'] = True
 
-    q = mp.Queue(1)
-    p = mp.Process(name=name, target=_multiprocessing_wrapper, args=(q, func) + args, kwargs=kwargs, **extra_process_kwargs)
+    # There is no need to use a full-blown queue for single producer/single consumer scenario.
+    # Also, Pipes don't suffer from issues such as https://bugs.python.org/issue35797.
+    # TODO experiment with a shared queue maintained by multiprocessing.Manager
+    #  (it will require an additional service process)
+    recv_conn, send_conn = mp.Pipe(duplex=False)
+    p = mp.Process(name=name,
+                   target=_multiprocessing_wrapper,
+                   args=(send_conn, func) + args,
+                   kwargs=kwargs,
+                   **extra_process_kwargs)
     p.start()
+    # This is actually against the multiprocessing guidelines
+    # https://docs.python.org/3/library/multiprocessing.html#programming-guidelines
+    # but allows us to fail-fast if the child process terminated abnormally with a segfault
+    # (otherwise we would have to wait by timeout on acquiring the result) and should work
+    # fine for small result values such as generation status.
     p.join()
-    try:
-        # This is actually against the multiprocessing guidelines
-        # https://docs.python.org/3/library/multiprocessing.html#programming-guidelines
-        # but allows us to fail-fast if the child process terminated abnormally with a segfault
-        # (otherwise we would have to wait by timeout on acquiring the result) and should work
-        # fine for small result values such as generation status.
-        return q.get_nowait()
-    except queue.Empty:
+    if recv_conn.poll():
+        return recv_conn.recv()
+    else:
         return failure_result
