@@ -3,7 +3,7 @@ package org.jetbrains.plugins.cucumber.java.run;
 import cucumber.api.event.*;
 import cucumber.api.formatter.Formatter;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "Convert2Lambda"})
 public class CucumberJvm3SMFormatter extends CucumberJvmSMConverter implements Formatter {
   public CucumberJvm3SMFormatter() {
     super();
