@@ -1051,7 +1051,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processFilesContainingAllKeys(@NotNull Project project,
                                                        @NotNull final GlobalSearchScope scope,
                                                        @Nullable final Condition<? super Integer> checker,
-                                                       @NotNull final Collection<? extends IdIndexEntry> keys,
+                                                       @NotNull final Collection<IdIndexEntry> keys,
                                                        @NotNull final Processor<? super VirtualFile> processor) {
     Computable<Boolean> query =
       () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
@@ -1059,9 +1059,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     Boolean[] result = {null};
     if (FileBasedIndex.indexAccessDuringDumbModeEnabled()) {
       ReadAction.run(() -> {
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-          result[0] = Boolean.valueOf(query.compute());
-        }, project);
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project);
       });
     }
     return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
