@@ -137,7 +137,10 @@ public abstract class FileTypeRegistry {
   public interface FileTypeDetector {
     ExtensionPointName<FileTypeDetector> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeDetector");
     /**
-     * Detects file type by its content
+     * Detects file type by its (may be binary) content on disk.
+     * Your detector must be as light as possible.
+     * In particular, it must not perform any heavy processing, e.g. PSI access, indices, Documents etc.
+     * The detector must refrain from throwing exceptions (including pervasive {@link com.intellij.openapi.progress.ProcessCanceledException})
      * @param file to analyze
      * @param firstBytes of the file for identifying its file type
      * @param firstCharsIfText - characters, converted from first bytes parameter if the file content was determined to be text, or null otherwise
