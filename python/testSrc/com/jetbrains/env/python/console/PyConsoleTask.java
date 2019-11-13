@@ -9,7 +9,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -429,7 +428,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
 
   public void addTextToEditor(final String text) {
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       getConsoleView().setInputText(text);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
