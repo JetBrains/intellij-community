@@ -558,10 +558,11 @@ class SkeletonGenerator(object):
             cached_skeleton_status = skeleton_status(mod_cache_dir, mod_name, mod_path, mod_state_json)
             if cached_skeleton_status == SkeletonStatus.OUTDATED:
                 return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
-                                                           func=self.generate_skeleton,
+                                                           func=generate_skeleton,
                                                            args=(mod_name,
                                                                  mod_path,
-                                                                 mod_cache_dir),
+                                                                 mod_cache_dir,
+                                                                 self.output_dir),
                                                            kwargs={},
                                                            failure_result=GenerationStatus.FAILED)
             elif cached_skeleton_status == SkeletonStatus.FAILING:
@@ -582,103 +583,105 @@ class SkeletonGenerator(object):
                 traceback.print_exc(file=sys.stderr)
             raise
 
-    def generate_skeleton(self, name, mod_file_name, mod_cache_dir):
-        # type: (str, str, str) -> GenerationStatusId
 
-        logging.info('Updating cache for %s at %r', name, mod_cache_dir)
-        doing_builtins = mod_file_name is None
-        # All builtin modules go into the same directory
-        if not doing_builtins:
-            delete(mod_cache_dir)
-        mkdir(mod_cache_dir)
+def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
+    # type: (str, str, str, str) -> GenerationStatusId
 
-        old_modules = list(sys.modules.keys())
-        imported_module_names = set()
+    logging.info('Updating cache for %s at %r', name, mod_cache_dir)
+    doing_builtins = mod_file_name is None
+    # All builtin modules go into the same directory
+    if not doing_builtins:
+        delete(mod_cache_dir)
+    mkdir(mod_cache_dir)
 
-        class MyFinder:
-            # noinspection PyMethodMayBeStatic
-            def find_module(self, fullname, path=None):
-                if fullname != name:
-                    imported_module_names.add(fullname)
-                return None
+    old_modules = list(sys.modules.keys())
+    imported_module_names = set()
 
-        my_finder = None
-        if hasattr(sys, 'meta_path'):
-            my_finder = MyFinder()
-            sys.meta_path.insert(0, my_finder)
-        else:
-            imported_module_names = None
+    class MyFinder:
+        # noinspection PyMethodMayBeStatic
+        def find_module(self, fullname, path=None):
+            if fullname != name:
+                imported_module_names.add(fullname)
+            return None
 
-        create_failed_version_stamp(mod_cache_dir, name)
+    my_finder = None
+    if hasattr(sys, 'meta_path'):
+        my_finder = MyFinder()
+        sys.meta_path.insert(0, my_finder)
+    else:
+        imported_module_names = None
 
-        action("importing")
-        __import__(name)  # sys.modules will fill up with what we want
+    create_failed_version_stamp(mod_cache_dir, name)
 
-        if my_finder:
-            sys.meta_path.remove(my_finder)
-        if imported_module_names is None:
-            imported_module_names = set(sys.modules.keys()) - set(old_modules)
+    action("importing")
+    __import__(name)  # sys.modules will fill up with what we want
 
-        self.redo_module(name, mod_file_name, mod_cache_dir)
-        # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
-        # restore all of them
-        path = name.split(".")
-        redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
-        if redo_imports:
-            initial_module_set = set(sys.modules)
-            for m in list(sys.modules):
-                if m.startswith("pycharm_generator_utils"): continue
-                action("looking at possible submodule %r", m)
-                if m == name or m in old_modules or m in sys.builtin_module_names:
-                    continue
-                # Synthetic module, not explicitly imported
-                if m not in imported_module_names and not hasattr(sys.modules[m], '__file__'):
-                    if not quiet:
-                        logging.info('Processing submodule %s of %s', m, name)
-                    action("opening %r", mod_cache_dir)
-                    try:
-                        self.redo_module(m, mod_file_name, cache_dir=mod_cache_dir)
-                        extra_modules = set(sys.modules) - initial_module_set
-                        if extra_modules:
-                            report('Introspecting submodule %r of %r led to extra content of sys.modules: %s',
-                                   m, name, ', '.join(extra_modules))
-                    finally:
-                        action("closing %r", mod_cache_dir)
-        return GenerationStatus.GENERATED
+    if my_finder:
+        sys.meta_path.remove(my_finder)
+    if imported_module_names is None:
+        imported_module_names = set(sys.modules.keys()) - set(old_modules)
 
-    def redo_module(self, module_name, module_file_name, cache_dir):
-        # type: (str, str, str) -> None
-        # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
-        # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
-        # sys.modules
-        mod = sys.modules.get(module_name)
-        mod_path = module_name.split('.')
-        if not mod and sys.platform == 'cli':
-            # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
-            # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
-            # accessed as its attribute
-            mod = sys.modules[mod_path[0]]
-            for component in mod_path[1:]:
+    redo_module(name, mod_file_name, mod_cache_dir, output_dir)
+    # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+    # restore all of them
+    path = name.split(".")
+    redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
+    if redo_imports:
+        initial_module_set = set(sys.modules)
+        for m in list(sys.modules):
+            if m.startswith("pycharm_generator_utils"): continue
+            action("looking at possible submodule %r", m)
+            if m == name or m in old_modules or m in sys.builtin_module_names:
+                continue
+            # Synthetic module, not explicitly imported
+            if m not in imported_module_names and not hasattr(sys.modules[m], '__file__'):
+                if not quiet:
+                    logging.info('Processing submodule %s of %s', m, name)
+                action("opening %r", mod_cache_dir)
                 try:
-                    mod = getattr(mod, component)
-                except AttributeError:
-                    mod = None
-                    report("Failed to find CLR module " + module_name)
-                    break
-        if mod:
-            action("restoring")
-            from generator3.module_redeclarator import ModuleRedeclarator
-            r = ModuleRedeclarator(mod, module_name, module_file_name, cache_dir=cache_dir,
-                                   doing_builtins=(module_file_name is None))
-            create_failed_version_stamp(cache_dir, module_name)
-            r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
-            action("flushing")
-            r.flush()
-            delete_failed_version_stamp(cache_dir, module_name)
-            # Incrementally copy whatever we managed to successfully generate so far
-            copy_skeletons(cache_dir, self.output_dir, get_module_origin(module_file_name, module_name))
-        else:
-            report("Failed to find imported module in sys.modules " + module_name)
+                    redo_module(m, mod_file_name, cache_dir=mod_cache_dir, output_dir=output_dir)
+                    extra_modules = set(sys.modules) - initial_module_set
+                    if extra_modules:
+                        report('Introspecting submodule %r of %r led to extra content of sys.modules: %s',
+                               m, name, ', '.join(extra_modules))
+                finally:
+                    action("closing %r", mod_cache_dir)
+    return GenerationStatus.GENERATED
+
+
+def redo_module(module_name, module_file_name, cache_dir, output_dir):
+    # type: (str, str, str, str) -> None
+    # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
+    # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
+    # sys.modules
+    mod = sys.modules.get(module_name)
+    mod_path = module_name.split('.')
+    if not mod and sys.platform == 'cli':
+        # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
+        # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
+        # accessed as its attribute
+        mod = sys.modules[mod_path[0]]
+        for component in mod_path[1:]:
+            try:
+                mod = getattr(mod, component)
+            except AttributeError:
+                mod = None
+                report("Failed to find CLR module " + module_name)
+                break
+    if mod:
+        action("restoring")
+        from generator3.module_redeclarator import ModuleRedeclarator
+        r = ModuleRedeclarator(mod, module_name, module_file_name, cache_dir=cache_dir,
+                               doing_builtins=(module_file_name is None))
+        create_failed_version_stamp(cache_dir, module_name)
+        r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
+        action("flushing")
+        r.flush()
+        delete_failed_version_stamp(cache_dir, module_name)
+        # Incrementally copy whatever we managed to successfully generate so far
+        copy_skeletons(cache_dir, output_dir, get_module_origin(module_file_name, module_name))
+    else:
+        report("Failed to find imported module in sys.modules " + module_name)
 
 
 
