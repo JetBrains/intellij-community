@@ -17,12 +17,12 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonTestUtil
-import com.jetbrains.python.fixture.CommonPythonCodeInsightTestFixture
+import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture
 import junit.framework.TestCase.assertNotNull
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 
-class PlatformPythonCodeInsightTestFixture : CommonPythonCodeInsightTestFixture {
+class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture {
   private val myDelegateTestCase = PyDelegateTestCase()
   private val myDelegateFixture: CodeInsightTestFixture
     get() = myDelegateTestCase.myFixture

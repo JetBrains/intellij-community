@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class PyResolveTestCase extends CommonPythonTestCase {
+public abstract class PyCommonResolveTestCase extends PythonCommonTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
   protected PsiReference configureByFile(final String filePath) {

@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.fixture.PyResolveTestCase;
+import com.jetbrains.python.fixture.PyCommonResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -19,7 +19,7 @@ import com.jetbrains.python.pyi.PyiUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CommonPyResolveTest extends PyResolveTestCase {
+public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
 
   @Override
   protected PsiElement doResolve() {
@@ -29,7 +29,7 @@ public abstract class CommonPyResolveTest extends PyResolveTestCase {
 
   private PsiReference findReferenceByMarker() {
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
-    return PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+    return PyCommonResolveTestCase.findReferenceByMarker(myFixture.getFile());
   }
 
   protected PsiElement resolve() {
@@ -53,7 +53,7 @@ public abstract class CommonPyResolveTest extends PyResolveTestCase {
       LanguageLevel.getLatest(),
       () -> {
         myFixture.configureByText(PythonFileType.INSTANCE, text);
-        result.set(assertResolveResult(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve(), cls, name));
+        result.set(assertResolveResult(PyCommonResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve(), cls, name));
       }
     );
 

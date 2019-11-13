@@ -2,13 +2,11 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.fixture.CommonPythonCodeInsightTestFixture;
-import com.jetbrains.python.fixtures.PlatformPythonCodeInsightTestFixture;
+import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture;
+import com.jetbrains.python.fixtures.PythonPlatformCodeInsightTestFixture;
 
-@TestDataPath("$CONTENT_ROOT/../testData/completion")
-public class PythonCompletionTest extends CommonPythonCompletionTest {
-  private final CommonPythonCodeInsightTestFixture myBackingFixture = new PlatformPythonCodeInsightTestFixture();
+public class PythonCompletionTest extends PythonCommonCompletionTest {
+  private final PythonCommonCodeInsightTestFixture myBackingFixture = new PythonPlatformCodeInsightTestFixture();
 
   @Override
   protected void doTest() {
@@ -17,7 +15,7 @@ public class PythonCompletionTest extends CommonPythonCompletionTest {
   }
 
   @Override
-  protected CommonPythonCodeInsightTestFixture getFixture() {
+  protected PythonCommonCodeInsightTestFixture getFixture() {
     return myBackingFixture;
   }
 }

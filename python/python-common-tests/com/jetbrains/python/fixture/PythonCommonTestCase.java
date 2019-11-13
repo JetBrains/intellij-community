@@ -1,7 +1,6 @@
 package com.jetbrains.python.fixture;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -29,10 +28,10 @@ import org.junit.Assert;
 import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class CommonPythonTestCase extends TestCase {
-  protected CommonPythonCodeInsightTestFixture myFixture;
+public abstract class PythonCommonTestCase extends TestCase {
+  protected PythonCommonCodeInsightTestFixture myFixture;
 
-  protected abstract CommonPythonCodeInsightTestFixture getFixture();
+  protected abstract PythonCommonCodeInsightTestFixture getFixture();
 
   @Override
   protected void setUp() throws Exception {

@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.fixture.CommonPythonTestCase;
+import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class CommonPythonCompletionTest extends CommonPythonTestCase {
+public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   @Override
   protected void setUp() throws Exception {

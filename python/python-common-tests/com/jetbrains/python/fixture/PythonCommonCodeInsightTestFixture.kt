@@ -11,7 +11,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
 
-interface CommonPythonCodeInsightTestFixture {
+interface PythonCommonCodeInsightTestFixture {
   val tempDirRoot: VirtualFile
 
   val project: Project
