@@ -131,14 +131,14 @@ final class PluginLoadingResult {
     if (!descriptor.isBundled()) {
       Set<String> set = brokenPluginVersions.get(pluginId);
       if (set != null && set.contains(descriptor.getVersion())) {
-        String message = "Version " + descriptor.getVersion() + " was marked as incompatible for " + descriptor;
+        String message = descriptor.formatErrorMessage("was marked as incompatible");
         context.getLogger().info(message);
         errors.put(pluginId, message);
         return true;
       }
 
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
-        String message = "Plugin " + descriptor + " defines no module dependencies (supported only in IntelliJ IDEA)";
+        String message = descriptor.formatErrorMessage("defines no module dependencies (supported only in IntelliJ IDEA)");
         context.getLogger().info(message);
         errors.put(pluginId, message);
         return false;

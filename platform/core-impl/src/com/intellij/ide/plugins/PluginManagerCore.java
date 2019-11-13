@@ -1406,7 +1406,7 @@ public final class PluginManagerCore {
     processAllDependencies(rootDescriptor, true, idMap, descriptor -> {
       ClassLoader loader = descriptor.getPluginClassLoader();
       if (loader == null) {
-        getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+        getLogger().error(rootDescriptor.formatErrorMessage("requires missing class loader for " + toPresentableName(descriptor)));
       }
       else {
         loaders.add(loader);
@@ -1675,7 +1675,7 @@ public final class PluginManagerCore {
         for (IdeaPluginDescriptorImpl descriptor : dependencies) {
           ClassLoader loader = descriptor.getPluginClassLoader();
           if (loader == null) {
-            getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+            getLogger().error(rootDescriptor.formatErrorMessage("requires missing class loader for " + toPresentableName(descriptor)));
           }
           else {
             loaders.add(loader);
@@ -1775,13 +1775,12 @@ public final class PluginManagerCore {
         disabledRequiredIds.add(dep.getPluginId());
       }
 
-      String name = descriptor.getName();
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
-        errors.add("Plugin " + toPresentableName(name) + " requires missing " + toPresentableName(depId.getIdString()));
+        errors.add(descriptor.formatErrorMessage("requires missing " + toPresentableName(depId.getIdString())));
       }
       else {
-        errors.add("Plugin " + toPresentableName(name) + " requires disabled " + toPresentableName(depName));
+        errors.add(descriptor.formatErrorMessage("requires disabled " + toPresentableName(depName)));
       }
     }
     return result;

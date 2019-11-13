@@ -17,6 +17,7 @@ import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -369,9 +370,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     if (until == null) {
       until = "*.*";
     }
-    context.parentContext.result.errors.put(getPluginId(), "Plugin " + myName + " (id=" + myId + ", path=" + myPath + ") is incompatible (target build " +
-                                            (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")");
+    context.parentContext.result.errors.put(getPluginId(), formatErrorMessage("is incompatible (target build " +
+                                            (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")"));
     return false;
+  }
+
+  @NotNull
+  String formatErrorMessage(@NotNull String message) {
+    String path = myPath.toString();
+    StringBuilder builder = new StringBuilder();
+    builder.append("Plugin ").append(myName).append(" (id=").append(myId).append(", path=");
+    builder.append(FileUtil.getLocationRelativeToUserHome(path, false));
+    if (myVersion != null && !isBundled() && !myVersion.equals(PluginManagerCore.getBuildNumber().asString())) {
+      builder.append(", version=").append(myVersion);
+    }
+    builder.append(") ").append(message);
+    return builder.toString();
   }
 
   private void markAsIncomplete(@NotNull DescriptorLoadingContext context) {
