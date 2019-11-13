@@ -25,7 +25,6 @@ import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
@@ -89,7 +88,11 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       if (expected == null || StringUtil.getOccurrenceCount(expected, "\\n") < 2) continue;
       expected = expected.replaceAll("\\\\040", " ");
 
-      Computable<PsiElement> replaceAction = () -> new CommentTracker().replace(concatenation, "(" + concatenation.getText() + ")");
+      Computable<PsiElement> replaceAction = () -> {
+        PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
+        PsiExpression newExpression = factory.createExpressionFromText("(" + concatenation.getText() + ")", null);
+        return concatenation.replace(newExpression);
+      };
       PsiExpression parent = (PsiExpression)WriteCommandAction.runWriteCommandAction(concatenation.getProject(), replaceAction);
       PsiPolyadicExpression replaced = (PsiPolyadicExpression)PsiUtil.skipParenthesizedExprDown(parent);
 
