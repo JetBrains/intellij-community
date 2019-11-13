@@ -33,12 +33,10 @@ import com.intellij.util.ui.cloneDialog.*
 import git4idea.*
 import git4idea.checkout.*
 import git4idea.commands.*
-import icons.*
 import libraries.coroutines.extra.*
 import runtime.*
 import runtime.reactive.*
 import java.awt.event.*
-import java.awt.image.*
 import java.nio.file.*
 import javax.swing.*
 import javax.swing.event.*
@@ -238,14 +236,8 @@ private class CloneView(
             }
         }
 
-        cloneViewModel.profileAvatar.forEach(uiLifetime) { image: BufferedImage? ->
-            if (image == null) {
-                accountLabel.icon = resizeIcon(CircletIcons.mainIcon, VcsCloneDialogUiSpec.Components.avatarSize)
-            }
-            else {
-                val icon = CircleImageIcon(image)
-                accountLabel.icon = resizeIcon(icon, VcsCloneDialogUiSpec.Components.avatarSize)
-            }
+        CircletUserAvatarProvider.getInstance().avatar.forEach(uiLifetime) { avatarIcon: Icon ->
+            accountLabel.icon = resizeIcon(avatarIcon, VcsCloneDialogUiSpec.Components.avatarSize)
         }
 
         cloneViewModel.isLoading.forEach(uiLifetime, list::setPaintBusy)

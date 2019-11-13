@@ -22,6 +22,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
+        <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
 
         <applicationConfigurable
             groupId="tools"
