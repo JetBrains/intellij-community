@@ -15,8 +15,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -233,22 +235,39 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     }
   }
 
-  @NotNull
-  public static LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
-    PsiFileSystemItem psiKey;
+  /** @deprecated method scope was extended, use {@link #findModule} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static @NotNull LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
+    LightJavaModule module = findModule(manager, root);
+    assert module != null : root;
+    return module;
+  }
+
+  /** The method is expected to be called on roots obtained from JavaAutoModuleNameIndex/JavaSourceModuleNameIndex */
+  public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
+    PsiElement directory = manager.findDirectory(root);
+    if (directory == null) return null;
     if (root.isInLocalFileSystem()) {
-      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      assert manifest != null : root;
-      psiKey = manager.findFile(manifest);
+      return CachedValuesManager.getCachedValue(directory, () -> {
+        VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+        if (manifest != null) {
+          PsiElement file = manager.findFile(manifest);
+          if (file != null) {
+            String name = claimedModuleName(manifest);
+            LightJavaModule module = name != null ? new LightJavaModule(manager, root, name) : null;
+            return CachedValueProvider.Result.create(module, file);
+          }
+        }
+        return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+      });
     }
     else {
-      psiKey = manager.findDirectory(root);
+      return CachedValuesManager.getCachedValue(directory, () -> {
+        LightJavaModule module = new LightJavaModule(manager, root, moduleName(root));
+        return CachedValueProvider.Result.create(module, directory);
+      });
     }
-    assert psiKey != null : root;
-    return CachedValuesManager.getCachedValue(psiKey, () -> {
-      LightJavaModule module = new LightJavaModule(manager, root, moduleName(root));
-      return CachedValueProvider.Result.create(module, psiKey);
-    });
   }
 
   @NotNull

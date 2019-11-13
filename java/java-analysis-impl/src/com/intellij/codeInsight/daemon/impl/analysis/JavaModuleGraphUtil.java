@@ -65,7 +65,7 @@ public class JavaModuleGraphUtil {
           }
         }
         else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
-          return LightJavaModule.getModule(PsiManager.getInstance(project), root);
+          return LightJavaModule.findModule(PsiManager.getInstance(project), root);
         }
       }
     }
@@ -99,7 +99,7 @@ public class JavaModuleGraphUtil {
           VirtualFile manifest = files.get(0);
           String name = LightJavaModule.claimedModuleName(manifest);
           if (name != null) {
-            return LightJavaModule.getModule(PsiManager.getInstance(module.getProject()), manifest.getParent().getParent());
+            return LightJavaModule.findModule(PsiManager.getInstance(module.getProject()), manifest.getParent().getParent());
           }
         }
       }

@@ -180,11 +180,11 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
 
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      results.add(LightJavaModule.getModule(myManager, manifest.getParent().getParent()));
+      ContainerUtil.addIfNotNull(results, LightJavaModule.findModule(myManager, manifest.getParent().getParent()));
     }
 
     for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      results.add(LightJavaModule.getModule(myManager, root));
+      ContainerUtil.addIfNotNull(results, LightJavaModule.findModule(myManager, root));
     }
 
     return upgradeModules(sortModules(results, scope), moduleName, scope);

@@ -120,6 +120,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires lib.claimed;
           requires all.fours;
         }""".trimIndent())
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\n", M4)
+    highlight("""module M1 { requires <error descr="Module not found: all.fours">all.fours</error>; }""")
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
+    highlight("""module M1 { requires all.fours; }""")
   }
 
   fun testExports() {
