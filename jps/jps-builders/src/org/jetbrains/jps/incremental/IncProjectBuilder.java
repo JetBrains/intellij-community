@@ -175,10 +175,11 @@ public class IncProjectBuilder {
     CompileContextImpl context = null;
     try {
       context = createContext(scope);
+      BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(context);
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
-      myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
-      myProjectDescriptor.getBuildTargetSourcesState().reportSourcesState(context);
+      //myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
+      sourcesState.reportSourcesState();
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
     }

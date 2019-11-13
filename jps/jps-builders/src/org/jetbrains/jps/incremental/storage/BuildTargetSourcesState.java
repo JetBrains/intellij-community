@@ -2,11 +2,13 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -14,18 +16,27 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.BuildListener;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompileContextImpl;
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jetbrains.jps.incremental.storage.MurmurHashingService.HASH_SIZE;
 import static org.jetbrains.jps.incremental.storage.MurmurHashingService.getStringHash;
@@ -45,42 +56,64 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
  * <b>This is class can be changed or removed in future</b>
  */
 @ApiStatus.Experimental
-public class BuildTargetSourcesState {
+public class BuildTargetSourcesState implements BuildListener {
   private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
   private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
+  private final Map<String, BuildTarget<?>> myChangedBuildTargets;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetIndex myBuildTargetIndex;
   private final BuildRootIndex myBuildRootIndex;
   private final ProjectStamps myProjectStamps;
+  private final CompileContextImpl myContext;
   private final String myOutputFolderPath;
   private final File myTargetStateStorage;
+  private final Type myTokenType;
   private final Gson gson;
 
-  public BuildTargetSourcesState(@NotNull JpsProject project, @NotNull BuildTargetIndex buildTargetIndex, @NotNull BuildRootIndex buildRootIndex,
-                                 ProjectStamps projectStamps, @NotNull BuildDataPaths dataPaths, @NotNull PathRelativizerService relativizer) {
+  public BuildTargetSourcesState(@NotNull CompileContextImpl context) {
     gson = new Gson();
-    myRelativizer = relativizer;
-    myProjectStamps = projectStamps;
-    myBuildRootIndex = buildRootIndex;
-    myOutputFolderPath = getOutputFolderPath(project);
-    myBuildTargetIndex = buildTargetIndex;
+    myContext = context;
+    myChangedBuildTargets = new ConcurrentHashMap<>();
+
+    ProjectDescriptor pd = myContext.getProjectDescriptor();
+    myProjectStamps = pd.getProjectStamps();
+    myBuildRootIndex = pd.getBuildRootIndex();
+    myBuildTargetIndex = pd.getBuildTargetIndex();
+    myRelativizer = pd.dataManager.getRelativizer();
+    myOutputFolderPath = getOutputFolderPath(pd.getProject());
+
+    BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
     myTargetStateStorage = new File(dataPaths.getDataStorageRoot(), TARGET_SOURCES_STATE_FILE_NAME);
+    myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType();
+
+    // Subscribe to events for reporting only changed build targets
+    myContext.addBuildListener(this);
   }
 
-  public void reportSourcesState(@NotNull CompileContext context) {
+  public void reportSourcesState() {
     if (!PORTABLE_CACHES || myProjectStamps == null) return;
 
     long start = System.currentTimeMillis();
-    Map<String, Map<String, BuildTargetState>> targetTypeHashMap = new HashMap<>();
-    myBuildTargetIndex.getAllTargets().forEach(target -> {
+    Map<String, Map<String, BuildTargetState>> targetTypeHashMap = loadCurrentTargetState();
+
+    List<BuildTarget<?>> buildTargets;
+    if (targetTypeHashMap.isEmpty()) {
+      buildTargets = myBuildTargetIndex.getAllTargets();
+    } else {
+      List<BuildTarget<?>> changedBuildTargets = new ArrayList<>(myChangedBuildTargets.values());
+      LOG.info("List of changed build targets: " + changedBuildTargets);
+      buildTargets = changedBuildTargets;
+    }
+
+    buildTargets.forEach(target -> {
       BuildTargetType<?> buildTargetType = target.getTargetType();
       String typeTypeId = buildTargetType.getTypeId();
 
-      getBuildTargetHash(target, context).ifPresent(buildTargetHash -> {
+      getBuildTargetHash(target, myContext).ifPresent(buildTargetHash -> {
         String hexString = StringUtil.toHexString(buildTargetHash);
 
         // Now in project each build target has single output root
-        String relativePath = target.getOutputRoots(context).stream().map(file -> myRelativizer.toRelative(file.getAbsolutePath())).findFirst().orElse("");
+        String relativePath = target.getOutputRoots(myContext).stream().map(file -> myRelativizer.toRelative(file.getAbsolutePath())).findFirst().orElse("");
         targetTypeHashMap.computeIfAbsent(typeTypeId, key -> new HashMap<>()).put(target.getId(), new BuildTargetState(hexString, relativePath));
       });
     });
@@ -92,6 +125,25 @@ public class BuildTargetSourcesState {
       LOG.warn("Unable to save sources state", e);
     }
     LOG.info("Build target sources report took: " + (System.currentTimeMillis() - start) + " ms");
+  }
+
+  @Override
+  public void filesGenerated(@NotNull FileGeneratedEvent event) {
+    BuildTarget<?> sourceTarget = event.getSourceTarget();
+    String key = sourceTarget.getTargetType().getTypeId() + " " +sourceTarget.getId();
+    myChangedBuildTargets.put(key, sourceTarget);
+  }
+
+  @Override
+  public void filesDeleted(@NotNull FileDeletedEvent event) {
+    event.getFilePaths().stream().map(path -> new File(FileUtil.toSystemDependentName(path)))
+      .map(file -> myBuildRootIndex.findAllParentDescriptors(file, myContext))
+      .flatMap(collection -> collection.stream())
+      .forEach(buildRootDesc -> {
+        BuildTarget<?> target = buildRootDesc.getTarget();
+        String key = target.getTargetType().getTypeId() + target.getId();
+        myChangedBuildTargets.put(key, target);
+      });
   }
 
   @NotNull
@@ -141,6 +193,19 @@ public class BuildTargetSourcesState {
 
     byte[] stringHash = getStringHash(toRelative(file, rootPath));
     return Optional.of(sum(stringHash, fileHash));
+  }
+
+  @NotNull
+  private Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
+    if (!myTargetStateStorage.exists()) return new HashMap<>();
+    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(myTargetStateStorage))) {
+      Map<String, Map<String, BuildTargetState>> result = gson.fromJson(bufferedReader, myTokenType);
+      if (result != null) return result;
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't parse current build target state", e);
+    }
+    return new HashMap<>();
   }
 
   @NotNull
