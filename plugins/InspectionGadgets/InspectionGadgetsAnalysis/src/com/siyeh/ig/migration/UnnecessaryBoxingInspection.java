@@ -255,7 +255,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final String canonicalText = aClass.getQualifiedName();
-      if (!TypeConversionUtil.isPrimitiveWrapper(canonicalText)) {
+      if (canonicalText == null || !TypeConversionUtil.isPrimitiveWrapper(canonicalText)) {
         return;
       }
       final PsiType boxedExpressionType = boxedExpression.getType();

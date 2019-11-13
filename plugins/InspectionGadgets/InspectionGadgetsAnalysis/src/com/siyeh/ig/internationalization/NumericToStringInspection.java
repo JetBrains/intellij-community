@@ -75,7 +75,7 @@ public class NumericToStringInspection extends BaseInspection {
         return;
       }
       final String className = aClass.getQualifiedName();
-      if (!TypeConversionUtil.isPrimitiveWrapper(className)) {
+      if (className == null || !TypeConversionUtil.isPrimitiveWrapper(className)) {
         return;
       }
       if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {

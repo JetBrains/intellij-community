@@ -119,9 +119,7 @@ public final class Annotation implements Segment {
 
   public void registerFix(@NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key,
                           @NotNull ProblemDescriptor problemDescriptor) {
-    if (range == null) {
-      range = new TextRange(myStartOffset, myEndOffset);
-    }
+    range = notNullize(range);
     if (myQuickFixes == null) {
       myQuickFixes = new ArrayList<>();
     }
@@ -136,9 +134,7 @@ public final class Annotation implements Segment {
    * @param range the text range (relative to the document) where the quick fix is available.
    */
   public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
-    if (range == null) {
-      range = new TextRange(myStartOffset, myEndOffset);
-    }
+    range = notNullize(range);
     List<QuickFixInfo> fixes = myQuickFixes;
     if (fixes == null) {
       myQuickFixes = fixes = new ArrayList<>();
@@ -146,14 +142,17 @@ public final class Annotation implements Segment {
     fixes.add(new QuickFixInfo(fix, range, key));
   }
 
+  @NotNull
+  private TextRange notNullize(@Nullable TextRange range) {
+    return range == null ? new TextRange(myStartOffset, myEndOffset) : range;
+  }
+
   /**
    * Registers a quickfix which would be available during batch mode only,
    * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run
    */
   public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
-    if (range == null) {
-      range = new TextRange(myStartOffset, myEndOffset);
-    }
+    range = notNullize(range);
 
     List<QuickFixInfo> fixes = myBatchFixes;
     if (fixes == null) {
