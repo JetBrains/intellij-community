@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
+import org.jetbrains.plugins.groovy.lang.psi.util.StringUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
@@ -68,6 +69,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       return text;
     }
 
+    if (rawText != null && canPasteRaw(text, rawText.rawText, stringKind)) {
+      return rawText.rawText;
+    }
+
     StringBuilder buffer = new StringBuilder(text.length());
     @NonNls String breaker = stringKind.getLineBreaker();
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
@@ -78,6 +83,21 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       }
     }
     return buffer.toString();
+  }
+
+  private static boolean canPasteRaw(String text, String rawText, StringKind kind) {
+    if (!text.equals(kind.unescape(rawText))) {
+      return false;
+    }
+    if (kind == StringKind.SINGLE_QUOTED) {
+      return StringUtilKt.isValidSingleQuotedStringContent(rawText);
+    }
+    else if (kind == StringKind.DOUBLE_QUOTED) {
+      return StringUtilKt.isValidDoubleQuotedStringContent(rawText);
+    }
+    else {
+      return true;
+    }
   }
 
   @NotNull
