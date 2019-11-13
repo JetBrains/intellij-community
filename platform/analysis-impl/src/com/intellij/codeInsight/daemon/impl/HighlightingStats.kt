@@ -30,9 +30,12 @@ import com.google.wireless.android.sdk.stats.EditorFileType.XML
 import com.google.wireless.android.sdk.stats.EditorHighlightingStats
 import com.intellij.codeInsight.daemon.impl.HighlightingStats.reportHighlightingStats
 import com.intellij.concurrency.JobScheduler
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.analytics.toProto
 import org.HdrHistogram.Recorder
@@ -47,8 +50,9 @@ object HighlightingStats : BaseComponent {
   private const val MAX_LATENCY_MS = 10 * 60 * 1000 // Limit latencies to 10 minutes to ensure reasonable histogram size.
 
   override fun initComponent() {
-    // Send reports hourly.
+    // Send reports hourly and on application close.
     JobScheduler.getScheduler().scheduleWithFixedDelay(this::reportHighlightingStats, 1, 1, TimeUnit.HOURS)
+    Disposer.register(ApplicationManager.getApplication(), Disposable(this::reportHighlightingStats))
   }
 
   /**
