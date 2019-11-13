@@ -1044,7 +1044,7 @@ public abstract class UsefulTestCase extends TestCase {
         final String errorMessage = exceptionCase.getAssertionErrorMessage();
         assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
         if (expectedErrorMsg != null) {
-          assertEquals("Compare error messages", expectedErrorMsg, cause.getMessage());
+          assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsg));
         }
       }
       else if (exceptionCase.getExpectedExceptionClass().equals(cause.getClass())) {
