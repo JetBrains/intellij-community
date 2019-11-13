@@ -761,7 +761,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
-      <category>Language Injection</category>
+      <category>Language injection</category>
     </intentionAction>
 
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.DoNotShowInspectionIntentionMenuContributor"/>
