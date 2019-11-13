@@ -178,6 +178,17 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
   }
 
   @Test
+  void 'paste raw'() {
+    def data = [
+      ['\'<selection>\\$ \\\' \\" \\\n \\u2318</selection>\'', '"<caret>"', '"\\$ \\\' \\" \\\n \\u2318"'],
+      ['"<selection>\\$ \\\' \\" \\\n \\u2318</selection>"', "'<caret>'", '\'\\$ \\\' \\" \\\n \\u2318\'']
+    ]
+    RunAll.runAll(data) { List<String> entry ->
+      doCopyPasteTest(entry[0], entry[1], entry[2])
+    }.run()
+  }
+
+  @Test
   void 'multiline paste'() {
     def from = '<selection>hi\nthere</selection>'
     def data = [
@@ -187,6 +198,22 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       /"""<caret>"""/: '"""hi\nthere"""',
       '/<caret>/'    : '/hi\nthere/',
       '$/<caret>/$'  : '$/hi\nthere/$',
+    ]
+    RunAll.runAll(data) { to, expected ->
+      doCopyPasteTest(from, to, expected)
+    }.run()
+  }
+
+  @Test
+  void 'multiline paste raw'() {
+    def from = '$/<selection>hi\nthere\\u2318</selection>/$'
+    def data = [
+      /'<caret>'/    : "'hi\\n' +\n        'there⌘'", // cannot paste raw
+      /'''<caret>'''/: "'''hi\nthere\\u2318'''",
+      /"<caret>"/    : '"hi\\n" +\n        "there⌘"', // cannot paste raw
+      /"""<caret>"""/: '"""hi\nthere\\u2318"""',
+      '/ <caret>/'   : '/ hi\nthere\\u2318/',
+      '$/<caret>/$'  : '$/hi\nthere\\u2318/$',
     ]
     RunAll.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
