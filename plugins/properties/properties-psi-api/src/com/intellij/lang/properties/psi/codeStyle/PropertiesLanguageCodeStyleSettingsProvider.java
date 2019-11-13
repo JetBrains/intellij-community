@@ -3,11 +3,15 @@ package com.intellij.lang.properties.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
 
 public class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
 
@@ -62,4 +66,19 @@ public class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeSty
            "last.key=some text here";
   }
 
+  @Nullable
+  @Override
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
+                                            @NotNull Field field) {
+    if (codeStyleObject instanceof PropertiesCodeStyleSettings) {
+      if ("KEY_VALUE_DELIMITER_CODE".equals(field.getName())) {
+        return new MagicIntegerConstAccessor(
+          codeStyleObject, field,
+          new int[] {0, 1, 2},
+          new String[] {"equals", "colon", "space"}
+        );
+      }
+    }
+    return super.getAccessor(codeStyleObject, field);
+  }
 }
