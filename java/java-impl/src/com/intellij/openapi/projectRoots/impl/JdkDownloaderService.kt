@@ -13,10 +13,10 @@ import javax.swing.JComponent
  * An extension point to provide a UI to select and download a JDK package
  */
 abstract class JdkDownloaderService {
-  abstract fun downloadOrSelectJdk(javaSdkType: JavaSdkImpl,
-                                   sdkModel: SdkModel,
-                                   parentComponent: JComponent,
-                                   callback: Consumer<Sdk>)
+  abstract fun downloadCustomJdk(javaSdkType: JavaSdkImpl,
+                                 sdkModel: SdkModel,
+                                 parentComponent: JComponent,
+                                 callback: Consumer<Sdk>)
 
   companion object {
     @JvmStatic

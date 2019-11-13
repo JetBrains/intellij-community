@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -144,6 +145,11 @@ public abstract class SdkType implements SdkTypeId {
     return IconUtil.getAddIcon();
   }
 
+  @NotNull
+  public Icon getIconForDownloadAction() {
+    return AllIcons.Actions.Download;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -262,6 +268,26 @@ public abstract class SdkType implements SdkTypeId {
     //noinspection deprecation
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
+
+  public boolean supportsCustomDownloadUI() {
+    return false;
+  }
+
+  /**
+   * Shows the custom SDK download UI based on selected SDK in parent component.
+   *
+   * @param sdkModel           the list of SDKs currently displayed in the configuration dialog.
+   * @param parentComponent    the parent component for showing the dialog.
+   * @param selectedSdk        current selected sdk in parentComponent
+   * @param sdkCreatedCallback the callback to which the created SDK is passed.
+   *
+   * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
+   * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
+   */
+  public void showCustomDownloadUI(@NotNull SdkModel sdkModel,
+                                   @NotNull JComponent parentComponent,
+                                   @Nullable Sdk selectedSdk,
+                                   @NotNull Consumer<Sdk> sdkCreatedCallback) { }
 
   /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
   @Deprecated

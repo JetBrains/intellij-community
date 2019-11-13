@@ -16,7 +16,6 @@ import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.JdkDownloaderService
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.SystemInfo
@@ -40,58 +39,47 @@ private const val DIALOG_TITLE = "Download JDK"
 internal class JdkDownloaderUI : JdkDownloaderService() {
   private val LOG = logger<JdkDownloaderService>()
 
-  override fun downloadOrSelectJdk(javaSdkType: JavaSdkImpl,
-                                   sdkModel: SdkModel,
-                                   parentComponent: JComponent,
-                                   callback: Consumer<Sdk>) {
+  override fun downloadCustomJdk(javaSdkType: JavaSdkImpl,
+                                 sdkModel: SdkModel,
+                                 parentComponent: JComponent,
+                                 callback: Consumer<Sdk>) {
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
+    if (project?.isDisposed == true) return
+    val items = downloadModelWithProgress(project, parentComponent) ?: return
 
-    fun addSdkIfNotNull(jdkHome: String?) {
-      if (jdkHome == null) return
-      val sdk = (sdkModel as ProjectSdksModel).createSdk(javaSdkType, jdkHome)
-      callback.consume(sdk)
-    }
+    if (project?.isDisposed == true) return
+    val jdkHome = JdkDownloadDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJdk() ?: return
 
-    ProgressManager.getInstance().run(object : Task.Modal(project, "Downloading JDK list...", true) {
-      override fun run(indicator: ProgressIndicator) {
-        val items = try {
-          JdkListDownloader.downloadModel(progress = indicator)
+    val sdk = (sdkModel as ProjectSdksModel).createSdk(javaSdkType, jdkHome)
+    callback.consume(sdk)
+  }
+  
+  private fun downloadModelWithProgress(project: Project?, parentComponent: JComponent): List<JdkItem>? {
+    val task = object : Task.WithResult<List<JdkItem>?, Exception>(project, "Downloading the list of available JDKs...", true) {
+      override fun compute(indicator: ProgressIndicator): List<JdkItem>? {
+        try {
+          return JdkListDownloader.downloadModel(progress = indicator)
         }
-        catch (t: ProcessCanceledException) {
-          return
+        catch (e: ProcessCanceledException) {
+          throw e
         }
         catch (t: Exception) {
           LOG.warn(t.message, t)
           invokeLater {
+            //TODO[jo]: add message from an exception here
             Messages.showMessageDialog(parentComponent,
-                                       "Failed to download the list of installable JDKs. You could still locate installed JDK on the disk",
+                                       "Failed to download the list of installable JDKs",
                                        DIALOG_TITLE,
                                        Messages.getErrorIcon()
             )
-
-            val jdkHome = showJdkSelectorFromDisk(javaSdkType, parentComponent)
-            addSdkIfNotNull(jdkHome)
           }
-          return
-        }
-
-        indicator.checkCanceled()
-        invokeLater {
-          if (project?.isDisposed == true) return@invokeLater
-          val jdkHome = JdkDownloadDialog(project, parentComponent, javaSdkType, items).selectOrDownloadAndUnpackJdk()
-          addSdkIfNotNull(jdkHome)
+          return null
         }
       }
-    })
-  }
-}
+    }
 
-private fun showJdkSelectorFromDisk(sdkType: SdkType, component: Component?): String? {
-  var jdkHome: String? = null
-  SdkConfigurationUtil.selectSdkHome(sdkType, component) {
-    jdkHome = it
+    return ProgressManager.getInstance().run(task)
   }
-  return jdkHome
 }
 
 private class JdkDownloadDialog(

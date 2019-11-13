@@ -590,17 +590,17 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public boolean supportsCustomCreateUI() {
+  public boolean supportsCustomDownloadUI() {
     return JdkDownloaderService.isEnabled();
   }
 
   @Override
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
-                                 @NotNull JComponent parentComponent,
-                                 @Nullable Sdk selectedSdk,
-                                 @NotNull Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomDownloadUI(@NotNull SdkModel sdkModel,
+                                   @NotNull JComponent parentComponent,
+                                   @Nullable Sdk selectedSdk,
+                                   @NotNull Consumer<Sdk> sdkCreatedCallback) {
     JdkDownloaderService instance = JdkDownloaderService.getInstanceIfEnabled();
     if (instance == null) return;
-    instance.downloadOrSelectJdk(this, sdkModel, parentComponent, sdkCreatedCallback);
+    instance.downloadCustomJdk(this, sdkModel, parentComponent, sdkCreatedCallback);
   }
 }
