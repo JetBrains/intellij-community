@@ -860,6 +860,11 @@ def execute_in_subprocess_synchronously(name, func, args, kwargs, failure_result
     p.start()
     p.join()
     try:
+        # This is actually against the multiprocessing guidelines
+        # https://docs.python.org/3/library/multiprocessing.html#programming-guidelines
+        # but allows us to fail-fast if the child process terminated abnormally with a segfault
+        # (otherwise we would have to wait by timeout on acquiring the result) and should work
+        # fine for small result values such as generation status.
         return q.get_nowait()
     except queue.Empty:
         return failure_result
