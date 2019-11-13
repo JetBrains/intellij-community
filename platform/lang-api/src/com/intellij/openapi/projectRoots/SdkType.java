@@ -260,6 +260,8 @@ public abstract class SdkType implements SdkTypeId {
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
+   *
+   * @see #supportsCustomCreateUI()
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
@@ -269,6 +271,11 @@ public abstract class SdkType implements SdkTypeId {
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
 
+  /**
+   * Specifies if there is a downloader UI provided for the SdkType.
+   *
+   * @see #showCustomDownloadUI(SdkModel, JComponent, Sdk, Consumer)
+   */
   public boolean supportsCustomDownloadUI() {
     return false;
   }
@@ -283,6 +290,8 @@ public abstract class SdkType implements SdkTypeId {
    *
    * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
+   *
+   * @see #supportsCustomDownloadUI()
    */
   public void showCustomDownloadUI(@NotNull SdkModel sdkModel,
                                    @NotNull JComponent parentComponent,
