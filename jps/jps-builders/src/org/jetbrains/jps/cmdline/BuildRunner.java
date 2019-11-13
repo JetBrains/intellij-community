@@ -113,7 +113,7 @@ public class BuildRunner {
       // second attempt succeeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
-    BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(targetIndex, buildRootIndex, projectStamps, dataPaths, relativizer);
+    BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(jpsModel.getProject(), targetIndex, buildRootIndex, projectStamps, dataPaths, relativizer);
 
     return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
                                  targetIndex, buildRootIndex, ignoredFileIndex, sourcesState);

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -15,6 +16,10 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,15 +52,17 @@ public class BuildTargetSourcesState {
   private final BuildTargetIndex myBuildTargetIndex;
   private final BuildRootIndex myBuildRootIndex;
   private final ProjectStamps myProjectStamps;
+  private final String myOutputFolderPath;
   private final File myTargetStateStorage;
   private final Gson gson;
 
-  public BuildTargetSourcesState(@NotNull BuildTargetIndex buildTargetIndex, @NotNull BuildRootIndex buildRootIndex,
+  public BuildTargetSourcesState(@NotNull JpsProject project, @NotNull BuildTargetIndex buildTargetIndex, @NotNull BuildRootIndex buildRootIndex,
                                  ProjectStamps projectStamps, @NotNull BuildDataPaths dataPaths, @NotNull PathRelativizerService relativizer) {
     gson = new Gson();
     myRelativizer = relativizer;
     myProjectStamps = projectStamps;
     myBuildRootIndex = buildRootIndex;
+    myOutputFolderPath = getOutputFolderPath(project);
     myBuildTargetIndex = buildTargetIndex;
     myTargetStateStorage = new File(dataPaths.getDataStorageRoot(), TARGET_SOURCES_STATE_FILE_NAME);
   }
@@ -65,20 +72,16 @@ public class BuildTargetSourcesState {
 
     long start = System.currentTimeMillis();
     Map<String, Map<String, BuildTargetState>> targetTypeHashMap = new HashMap<>();
-    myBuildTargetIndex.getAllTargets().stream().filter(target -> context.getScope().isAffected(target)).forEach(target -> {
+    myBuildTargetIndex.getAllTargets().forEach(target -> {
       BuildTargetType<?> buildTargetType = target.getTargetType();
       String typeTypeId = buildTargetType.getTypeId();
-      Map<String, BuildTargetState> buildTargetHashMap = targetTypeHashMap.get(typeTypeId);
-      if (buildTargetHashMap == null) {
-        buildTargetHashMap = new HashMap<>();
-        targetTypeHashMap.put(typeTypeId, buildTargetHashMap);
-      }
+
       getBuildTargetHash(target, context).ifPresent(buildTargetHash -> {
         String hexString = StringUtil.toHexString(buildTargetHash);
 
         // Now in project each build target has single output root
         String relativePath = target.getOutputRoots(context).stream().map(file -> myRelativizer.toRelative(file.getAbsolutePath())).findFirst().orElse("");
-        targetTypeHashMap.get(typeTypeId).put(target.getId(), new BuildTargetState(hexString, relativePath));
+        targetTypeHashMap.computeIfAbsent(typeTypeId, key -> new HashMap<>()).put(target.getId(), new BuildTargetState(hexString, relativePath));
       });
     });
 
@@ -96,7 +99,7 @@ public class BuildTargetSourcesState {
     return myBuildRootIndex.getTargetRoots(target, context).stream().map(rootDescriptor -> {
       try {
         File rootFile = rootDescriptor.getRootFile();
-        if (!rootFile.exists()) {
+        if (!rootFile.exists() || rootFile.getAbsolutePath().startsWith(myOutputFolderPath)) {
           return null;
         }
 
@@ -113,7 +116,7 @@ public class BuildTargetSourcesState {
           public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
             final File file = path.toFile();
             if (!myBuildRootIndex.isFileAccepted(file, rootDescriptor)) return FileVisitResult.CONTINUE;
-            targetRootHashes.add(getFileHash(target, file, rootFile));
+            getFileHash(target, file, rootFile).ifPresent(targetRootHashes::add);
             return FileVisitResult.CONTINUE;
           }
         });
@@ -123,25 +126,38 @@ public class BuildTargetSourcesState {
         LOG.warn("Couldn't calculate build target hash for : " + target.getPresentableName(), e);
         return null;
       }
-    }).filter(Objects::nonNull).flatMap(List::stream).reduce((acc, value) -> sum(acc, value));
+    }).filter(it -> !ContainerUtil.isEmpty(it)).flatMap(List::stream).reduce((acc, value) -> sum(acc, value));
   }
 
   @NotNull
-  private byte[] getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
+  private Optional<byte[]> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
     StampsStorage<? extends StampsStorage.Stamp> storage = myProjectStamps.getStampStorage();
     assert storage instanceof FileStampStorage;
     FileStampStorage fileStampStorage = (FileStampStorage)storage;
     byte[] fileHash = fileStampStorage.getStoredFileHash(file, target);
-    assert fileHash != null;
+    if (fileHash == null) {
+      return Optional.empty();
+    }
 
     byte[] stringHash = getStringHash(toRelative(file, rootPath));
-    return sum(stringHash, fileHash);
+    return Optional.of(sum(stringHash, fileHash));
   }
 
-  private static String toRelative(File target, File rootPath) {
+  @NotNull
+  private static String toRelative(@NotNull File target, @NotNull File rootPath) {
     return FileUtilRt.toSystemIndependentName(Paths.get(rootPath.getPath()).relativize(Paths.get(target.getPath())).toString());
   }
 
+  @NotNull
+  private static String getOutputFolderPath(JpsProject project) {
+    JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
+    if (projectExtension == null) return "";
+    String url = projectExtension.getOutputUrl();
+    if (StringUtil.isEmpty(url)) return "";
+    return JpsPathUtil.urlToFile(url).getAbsolutePath();
+  }
+
+  @NotNull
   private static byte[] sum(byte[] firstHash, byte[] secondHash) {
     byte[] result = firstHash != null ? firstHash : new byte[HASH_SIZE];
     for (int i = 0; i < result.length; i++) {
