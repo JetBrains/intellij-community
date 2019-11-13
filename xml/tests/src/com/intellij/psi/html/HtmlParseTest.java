@@ -591,6 +591,10 @@ public class HtmlParseTest extends LightIdeaTestCase {
     getTreeTextAndAssertResult();
   }
 
+  public void testCaptionTag() throws Throwable {
+    getTreeTextAndAssertResult();
+  }
+
   //public void testParseAllJDKJavadocs() throws Throwable {
   //  VirtualFile docRoot =
   //    VirtualFileManager.getInstance().findFileByUrl("jar:///System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home/docs.jar!/");
