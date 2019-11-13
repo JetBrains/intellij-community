@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -99,8 +100,8 @@ public class DfaAssist implements DebuggerContextListener {
     ApplicationManager.getApplication().invokeLater(
       () -> {
         doDisposeInlays();
-        EditorImpl editor = ObjectUtils.tryCast(sourcePosition.openEditor(true), EditorImpl.class);
-        if (editor == null) return;
+        EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
+        if (editor == null || !sourcePosition.getFile().getVirtualFile().equals(editor.getVirtualFile())) return;
         InlayModel model = editor.getInlayModel();
         List<Inlay<?>> newInlays = new ArrayList<>();
         AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
