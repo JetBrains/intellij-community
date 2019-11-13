@@ -10,9 +10,9 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 class TomlPsiFactoryTest : BasePlatformTestCase() {
     private val factory: TomlPsiFactory get() = TomlPsiFactory(project)
 
-    fun `test create value`() {
-        val value = factory.createValue("\"value\"")
-        assertEquals("\"value\"", value.text)
+    fun `test create literal`() {
+        val literal = factory.createLiteral("\"value\"")
+        assertEquals("\"value\"", literal.text)
     }
 
     fun `test create key`() {
