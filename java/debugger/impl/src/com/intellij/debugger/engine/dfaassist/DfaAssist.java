@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -76,7 +77,8 @@ public class DfaAssist implements DebuggerContextListener {
           return;
         }
         StackFrame frame = proxy.getStackFrame();
-        Map<PsiExpression, DfaHint> hints = ReadAction.compute(() -> computeHints(frame, element));
+        Map<PsiExpression, DfaHint> hints =
+          ReadAction.nonBlocking(() -> computeHints(frame, element)).withDocumentsCommitted(myProject).executeSynchronously();  
         displayInlays(hints, sourcePosition);
       }
     });
@@ -120,8 +122,8 @@ public class DfaAssist implements DebuggerContextListener {
 
   @NotNull
   static Map<PsiExpression, DfaHint> computeHints(@NotNull StackFrame frame, @NotNull PsiElement element) {
+    if (!element.isValid() || DumbService.isDumb(element.getProject())) return Collections.emptyMap();
     Method method = frame.location().method();
-    if (!element.isValid()) return Collections.emptyMap();
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     boolean methodMatches = false;
