@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -37,7 +38,7 @@ public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
     VirtualFile f = data.getFile();
     if (f.getParent().getParent().equals(ProjectFileIndex.getInstance(data.getProject()).getSourceRootForFile(f))) {
       try {
-        String name = new Manifest(new ByteArrayInputStream(data.getContent())).getMainAttributes().getValue("Automatic-Module-Name");
+        String name = new Manifest(new ByteArrayInputStream(data.getContent())).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
         if (name != null) return singletonMap(name, null);
       }
       catch (IOException ignored) { }

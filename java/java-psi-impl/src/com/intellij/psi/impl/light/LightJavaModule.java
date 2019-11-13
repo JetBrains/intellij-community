@@ -265,7 +265,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   @Nullable
   public static String claimedModuleName(@NotNull VirtualFile manifest) {
     try (InputStream stream = manifest.getInputStream()) {
-      return new Manifest(stream).getMainAttributes().getValue("Automatic-Module-Name");
+      return new Manifest(stream).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
     }
     catch (IOException e) {
       Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
