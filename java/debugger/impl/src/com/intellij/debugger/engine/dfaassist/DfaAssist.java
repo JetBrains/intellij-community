@@ -36,12 +36,14 @@ import com.sun.jdi.StackFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class DfaAssist implements DebuggerContextListener {
   private final Project myProject;
-  private final Queue<Inlay<?>> myInlays = new ConcurrentLinkedQueue<>();
+  private final List<Inlay<?>> myInlays = new ArrayList<>(); // modified from EDT only
 
   private DfaAssist(Project project) {
     myProject = project;
@@ -85,11 +87,9 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   private void doDisposeInlays() {
-    while (true) {
-      Inlay<?> inlay = myInlays.poll();
-      if (inlay == null) break;
-      Disposer.dispose(inlay);
-    }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myInlays.forEach(Disposer::dispose);
+    myInlays.clear();
   }
 
   private void displayInlays(Map<PsiExpression, DfaHint> hints, SourcePosition sourcePosition) {
