@@ -90,7 +90,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       val isCurrent = schemeManager.activeScheme?.name.equals(keymapName)
       schemeManager.removeScheme(keymapName)
       DefaultKeymap.instance.removeKeymap(keymapName)
-      if (isCurrent) {
+      if (isCurrent && !schemeManager.isEmpty) {
         schemeManager.setCurrent(activeKeymap, true, true)
       }
     }
