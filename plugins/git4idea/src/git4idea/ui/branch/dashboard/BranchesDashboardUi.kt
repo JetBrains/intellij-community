@@ -141,7 +141,9 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
   private fun initLogUiWhenLogIsReady() {
     VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
-      initLogUi(logManager)
+      if (!::logUi.isInitialized) { //logUi can be already initialized in ProjectLogListener
+        initLogUi(logManager)
+      }
       updateBranchesTree(true)
     } // schedule initialization: need the log for other actions
   }
