@@ -117,7 +117,7 @@ internal class InlineLinkGeneratingProvider(baseURI: URI?) : LinkGeneratingProvi
     return RenderInfo(
       label,
       node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)?.let {
-        LinkMap.normalizeDestination(it)
+        LinkMap.normalizeDestination(it, true)
       } ?: "",
       node.findChildOfType(MarkdownElementTypes.LINK_TITLE)?.getTextInNode(text)?.let {
         LinkMap.normalizeTitle(it)
