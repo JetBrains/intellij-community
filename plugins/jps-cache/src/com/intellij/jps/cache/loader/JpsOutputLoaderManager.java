@@ -71,8 +71,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
-        if (commitInfo == null) return;
-        startLoadingForCommit(commitInfo.first);
+        if (commitInfo != null) startLoadingForCommit(commitInfo.first);
         hasRunningTask.set(false);
       }
     };
