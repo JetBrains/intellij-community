@@ -349,27 +349,27 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   private boolean checkCompatibility(@NotNull DescriptorLoadingContext context) {
-    if (isBundled() || (mySinceBuild == null && myUntilBuild == null)) {
+    String since = mySinceBuild;
+    String until = myUntilBuild;
+    if (isBundled() || (since == null && until == null)) {
       return true;
     }
 
-    String message = PluginManagerCore.isIncompatible(PluginManagerCore.getBuildNumber(), mySinceBuild, myUntilBuild);
+    String message = PluginManagerCore.isIncompatible(PluginManagerCore.getBuildNumber(), since, until);
     if (message == null) {
       return true;
     }
 
     markAsIncomplete(context);
 
-    String since = mySinceBuild;
     if (since == null) {
       since = "0.0";
     }
 
-    String until = myUntilBuild;
     if (until == null) {
-      since = "*.*";
+      until = "*.*";
     }
-    context.parentContext.result.errors.add("Plugin " + myName + " (id=" + myId + ", path=" + myPath + ") is incompatible (target build " +
+    context.parentContext.result.errors.put(getPluginId(), "Plugin " + myName + " (id=" + myId + ", path=" + myPath + ") is incompatible (target build " +
                                             (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")");
     return false;
   }

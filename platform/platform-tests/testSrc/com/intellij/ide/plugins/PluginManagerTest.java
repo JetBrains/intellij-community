@@ -154,9 +154,8 @@ public class PluginManagerTest {
       String url = element.getAttributeValue("url");
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
       descriptor.readExternal(element, Paths.get(url), context.pathResolver, context, descriptor);
-      parentContext.result.add(descriptor);
+      parentContext.result.add(descriptor, parentContext);
     }
-    parentContext.result.finishLoading();
     PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
     return parentContext.result;
   }

@@ -20,9 +20,8 @@
 
 Plugin incompatible0 (id=incompatible0, path=file:/incompatible0.xml) is incompatible (target build range is 1.0 to 1.111111).
 Plugin incompatible0-alt (id=incompatible0-alt, path=file:/incompatible0-alt.xml) is incompatible (target build is 1.111).
-Plugin incompatible1 (id=incompatible1, path=file:/incompatible1.xml) is incompatible (target build range is *.* to null).
+Plugin incompatible1 (id=incompatible1, path=file:/incompatible1.xml) is incompatible (target build range is 2001.0 to *.*).
 Plugin incompatible2 (id=incompatible2, path=file:/incompatible2.xml) is incompatible (target build range is 0.0 to 1.111111).
-No id is provided by "missing0.xml".
 Plugin PluginDescriptor(name=missing4, id=missing4, path=file:/missing4.xml) defines no module dependencies (supported only in IntelliJ IDEA).
 Module com.intellij.modules.duplicate is declared by plugins:
   PluginDescriptor(name=duplicate0, id=duplicate0, path=file:/duplicate0.xml)

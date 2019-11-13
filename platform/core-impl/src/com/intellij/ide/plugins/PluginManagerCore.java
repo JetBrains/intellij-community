@@ -1058,7 +1058,7 @@ public final class PluginManagerCore {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
-        context.result.add(descriptor);
+        context.result.add(descriptor, context);
       }
     }
   }
@@ -1098,8 +1098,7 @@ public final class PluginManagerCore {
     try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true, new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL);
     }
-    context.result.finishLoading();
-    return context.result.plugins;
+    return Arrays.asList(context.result.finishLoading());
   }
 
   @TestOnly
@@ -1110,33 +1109,32 @@ public final class PluginManagerCore {
     context.usePluginClassLoader = true;
     PluginLoadingResult result = context.result;
     loadDescriptorsFromDir(dir, true, context);
-    context.result.finishLoading();
     initializePlugins(context, UrlClassLoader.build().get(), false);
     return result;
   }
 
   private static void loadDescriptorsFromClassPath(@NotNull Map<URL, String> urls,
-                                                   @NotNull DescriptorLoadingContext loadingContext,
+                                                   @NotNull DescriptorLoadingContext context,
                                                    @Nullable URL platformPluginURL) throws ExecutionException, InterruptedException {
     if (urls.isEmpty()) {
       return;
     }
 
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(urls.size());
-    ExecutorService executorService = loadingContext.parentContext.getExecutorService();
+    ExecutorService executorService = context.parentContext.getExecutorService();
     for (Map.Entry<URL, String> entry : urls.entrySet()) {
       URL url = entry.getKey();
       tasks.add(executorService.submit(() -> {
-        return loadDescriptorFromResource(url, entry.getValue(), loadingContext.copy(url.equals(platformPluginURL)));
+        return loadDescriptorFromResource(url, entry.getValue(), context.copy(url.equals(platformPluginURL)));
       }));
     }
 
-    PluginLoadingResult result = loadingContext.parentContext.result;
+    PluginLoadingResult result = context.parentContext.result;
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
         descriptor.setUseCoreClassLoader();
-        result.add(descriptor);
+        result.add(descriptor, context.parentContext);
       }
     }
   }
@@ -1251,7 +1249,7 @@ public final class PluginManagerCore {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl descriptor = loadDescriptor(Paths.get(s), false, context);
       if (descriptor != null) {
-        result.add(descriptor);
+        result.add(descriptor, context);
       }
     }
   }
@@ -1264,7 +1262,7 @@ public final class PluginManagerCore {
   @NotNull
   @ApiStatus.Internal
   public static List<? extends IdeaPluginDescriptor> loadUncachedDescriptors() {
-    return loadDescriptors(isRunningFromSources()).result.plugins;
+    return Arrays.asList(loadDescriptors(isRunningFromSources()).result.finishLoading());
   }
 
   @NotNull
@@ -1293,7 +1291,7 @@ public final class PluginManagerCore {
         loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
       }
 
-      if (isUnitTestMode && result.plugins.size() <= 1) {
+      if (isUnitTestMode && result.enabledPluginCount() <= 1) {
         // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         context.usePluginClassLoader = true;
         loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
@@ -1306,7 +1304,6 @@ public final class PluginManagerCore {
       context.close();
     }
 
-    result.finishLoading();
     return context;
   }
 
@@ -1571,8 +1568,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   static void initializePlugins(@NotNull DescriptorListLoadingContext context, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
     PluginLoadingResult loadingResult = context.result;
-    List<String> errors = new ArrayList<>(loadingResult.errors);
-    Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
+    List<String> errors = new ArrayList<>(loadingResult.getErrors());
 
     if (loadingResult.duplicateModuleMap != null) {
       loadingResult.duplicateModuleMap.forEach((id, values) -> {
@@ -1580,16 +1576,18 @@ public final class PluginManagerCore {
       });
     }
 
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
     if (checkEssentialPlugins && coreDescriptor == null) {
       throw new EssentialPluginMissingException(Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
-    disableIncompatiblePlugins(loadingResult.plugins, idMap, errors);
-    checkPluginCycles(loadingResult.plugins, idMap, errors);
+    List<IdeaPluginDescriptorImpl> descriptors = Arrays.asList(loadingResult.finishLoading());
+    disableIncompatiblePlugins(descriptors, idMap, errors);
+    checkPluginCycles(descriptors, idMap, errors);
 
     // topological sort based on required dependencies only
-    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(loadingResult.plugins, idMap, false));
+    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap, false));
 
     Set<PluginId> enabledIds = new LinkedHashSet<>();
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
@@ -1850,7 +1848,7 @@ public final class PluginManagerCore {
       }
 
       loadPluginsActivity.end();
-      loadPluginsActivity.setDescription("plugin count: " + result.plugins.size());
+      loadPluginsActivity.setDescription("plugin count: " + ourLoadedPlugins.size());
     }
     catch (ExtensionInstantiationException e) {
       throw new PluginException(e, e.getExtensionOwnerId());
