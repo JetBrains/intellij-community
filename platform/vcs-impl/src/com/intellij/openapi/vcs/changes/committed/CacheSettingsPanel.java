@@ -9,6 +9,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import static com.intellij.openapi.vcs.VcsBundle.message;
+
 /**
  * @author yole
  */
@@ -88,12 +90,7 @@ public class CacheSettingsPanel implements Configurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return "Cache";
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return "project.propVCSSupport.Cache";
+    return message("cache.settings.dialog.title");
   }
 
   @Override
