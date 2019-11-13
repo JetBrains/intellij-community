@@ -309,8 +309,8 @@
     <extensionPoint name="runAnything.helpGroup" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup"/>
     <extensionPoint name="runAnything.commandCustomizer" interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer"/>
 
-    <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
-    <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
     <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
     <extensionPoint name="orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory"/>
@@ -333,7 +333,7 @@
 
     <extensionPoint name="highlightUsagesHandlerFactory" interface="com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactory" dynamic="true"/>
 
-    <extensionPoint name="codeBlockSupportHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeBlockSupportHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.CodeBlockSupportHandler"/>
     </extensionPoint>
 
@@ -359,8 +359,7 @@
     <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory"/>
 
-    <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider"/>
-
+    <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>
     <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor" dynamic="true"/>
     <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor"/>
 
