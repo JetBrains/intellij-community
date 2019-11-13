@@ -76,7 +76,6 @@ elif IS_IRONPYTHON:
 
 IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
 
-IS_WINDOWS = sys.platform == 'win32'
 IS_LINUX = sys.platform in ('linux', 'linux2')
 IS_MACOS = sys.platform == 'darwin'
 
