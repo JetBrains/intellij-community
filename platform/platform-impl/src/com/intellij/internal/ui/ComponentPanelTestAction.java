@@ -820,8 +820,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     }
 
     private JComponent createJSliderTab() {
-      JPanel panel = new JPanel(new MigLayout("ins 0, gap 10, flowy"));
-      JSlider hSlider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 0){
+      JPanel panel = new JPanel(new MigLayout("fillx, ins 0, gap 10, flowy"));
+      JSlider hSlider = new JSlider(JSlider.HORIZONTAL){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -837,9 +837,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider hSliderBase = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 0);
+      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL);
 
-      JPanel pane1 = new JPanel(new MigLayout("debug, ins 0, gap 5"));
+      JPanel pane1 = new JPanel(new MigLayout("fillx, debug, ins 0, gap 5"));
       pane1.add(new JLabel("A color key and IntelliJ: "), "baseline");
       pane1.add(hSliderBase, "baseline");
 
@@ -847,17 +847,17 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       setupSlider(vSlider);
       setupSlider(hSliderBase);
 
-      panel.add(wrap((hSlider)));
-      panel.add(wrap(hSliderBase));
+      panel.add(wrap((hSlider)), "growx");
+      panel.add(wrap(hSliderBase), "growx");
       panel.add(wrap(vSlider));
 
       return panel;
     }
 
     private JComponent wrap(JComponent component) {
-      JPanel pane = new JPanel(new MigLayout("debug, ins 0, gap 5"));
+      JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5", "[min!][]"));
       pane.add(new JLabel("A color key and IntelliJ: "), "baseline");
-      pane.add(component, "baseline");
+      pane.add(component, "baseline, growx");
       return pane;
     }
 
