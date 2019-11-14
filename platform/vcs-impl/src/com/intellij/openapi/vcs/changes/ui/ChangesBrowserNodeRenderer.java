@@ -50,7 +50,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   }
 
   public void appendFileName(@Nullable VirtualFile vFile, @NotNull String fileName, Color color) {
-    ChangesFileNameDecorator decorator = myProject != null && !myProject.isDefault()
+    ChangesFileNameDecorator decorator = myProject != null && !myProject.isDefault() && !myProject.isDisposed()
                                          ? ChangesFileNameDecorator.getInstance(myProject) : null;
 
     if (decorator != null) {
