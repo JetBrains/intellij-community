@@ -342,8 +342,13 @@ private class CloneView(
                 }
             }
         }
-        scrollableList.verticalScrollBar.addAdjustmentListener {
+        val listener: (e: AdjustmentEvent) -> Unit = {
             scrollUpdater(false)
+        }
+
+        scrollableList.verticalScrollBar.addAdjustmentListener(listener)
+        lifetime.add {
+            scrollableList.verticalScrollBar.removeAdjustmentListener(listener)
         }
     }
 
