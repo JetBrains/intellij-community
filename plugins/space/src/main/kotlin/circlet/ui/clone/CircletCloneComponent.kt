@@ -207,6 +207,7 @@ private class CloneView(
         addListSelectionListener {
             if (it.valueIsAdjusting)
                 return@addListSelectionListener
+            // selection change is triggered when repo details update, so we can use value here.
             selectedUrl.value = selectedValue?.repoDetails?.value?.urls?.sshUrl
         }
     }
@@ -231,12 +232,6 @@ private class CloneView(
                 directoryField.trySetChildPath(path)
             }
         }
-
-        searchTextField.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) {
-                selectedUrl.value = e.document.getText(0, e.document.length)
-            }
-        })
 
         cloneViewModel.me.forEach(lifetime) { profile ->
             accountLabel.toolTipText = profile.englishFullName()
