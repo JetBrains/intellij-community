@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
@@ -79,11 +78,6 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @NotNull
   protected SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     return new SettingsTreeView(filter, groups);
-  }
-
-  @Override
-  public void show() {
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> super.show());
   }
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {
