@@ -271,33 +271,6 @@ public abstract class SdkType implements SdkTypeId {
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
 
-  /**
-   * Specifies if there is a downloader UI provided for the SdkType.
-   *
-   * @see #showCustomDownloadUI(SdkModel, JComponent, Sdk, Consumer)
-   */
-  public boolean supportsCustomDownloadUI() {
-    return false;
-  }
-
-  /**
-   * Shows the custom SDK download UI based on selected SDK in parent component.
-   *
-   * @param sdkModel           the list of SDKs currently displayed in the configuration dialog.
-   * @param parentComponent    the parent component for showing the dialog.
-   * @param selectedSdk        current selected sdk in parentComponent
-   * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   *
-   * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
-   * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
-   *
-   * @see #supportsCustomDownloadUI()
-   */
-  public void showCustomDownloadUI(@NotNull SdkModel sdkModel,
-                                   @NotNull JComponent parentComponent,
-                                   @Nullable Sdk selectedSdk,
-                                   @NotNull Consumer<InstallableSdk> sdkCreatedCallback) { }
-
   /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")

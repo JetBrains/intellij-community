@@ -8,7 +8,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.InstallableSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -109,49 +108,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   public boolean addJdkNode(final Sdk jdk, final boolean selectInTree) {
     if (!myUiDisposed) {
       myContext.getDaemonAnalyzer().queueUpdate(new SdkProjectStructureElement(myContext, jdk));
-
-      if (jdk instanceof ProjectJdkImpl) {
-        addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER, myHistory, myProject)), myRoot);
-      }
-
-      if (jdk instanceof InstallableSdk) {
-        addNode(new MyNode(new NamedConfigurable<Object>() {
-          @Override
-          public void setDisplayName(String name) {
-          }
-
-          @Override
-          public Object getEditableObject() {
-            return null;
-          }
-
-          @Override
-          public String getBannerSlogan() {
-            return null;
-          }
-
-          @Override
-          public JComponent createOptionsPanel() {
-            return new JBLabel("Installable JDK");
-          }
-
-          @Override
-          @Nls(capitalization = Nls.Capitalization.Title)
-          public String getDisplayName() {
-            return jdk.getName();
-          }
-
-          @Override
-          public boolean isModified() {
-            return false;
-          }
-
-          @Override
-          public void apply() throws ConfigurationException {
-
-          }
-        }), myRoot);
-      }
+      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER, myHistory, myProject)), myRoot);
 
       if (selectInTree) {
         selectNodeInTree(MasterDetailsComponent.findNodeByObject(myRoot, jdk));

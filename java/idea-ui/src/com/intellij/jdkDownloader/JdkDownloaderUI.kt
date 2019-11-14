@@ -6,15 +6,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
-import com.intellij.openapi.projectRoots.impl.JdkDownloaderService
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -23,10 +19,9 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
-import com.intellij.util.Consumer
 import java.awt.Component
 import java.awt.event.ItemEvent
-import java.lang.RuntimeException
+import java.util.function.Consumer
 import javax.swing.Action
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -35,42 +30,84 @@ import javax.swing.event.DocumentEvent
 
 private const val DIALOG_TITLE = "Download JDK"
 
-internal class JdkDownloaderUI : JdkDownloaderService() {
-  private val LOG = logger<JdkDownloaderService>()
+internal class JdkDownloaderUI: SdkDownload {
+  private val LOG = logger<JdkDownloaderUI>()
 
-  override fun downloadCustomJdk(javaSdkType: JavaSdkImpl,
-                                 sdkModel: SdkModel,
-                                 parentComponent: JComponent,
-                                 callback: Consumer<InstallableSdk>) {
+  override fun supportsDownload(sdkTypeId: SdkTypeId) = sdkTypeId is JavaSdkImpl
+
+  override fun showDownloadUI(sdkTypeId: SdkTypeId,
+                              sdkModel: SdkModel,
+                              parentComponent: JComponent,
+                              selectedSdk: Sdk?,
+                              sdkCreatedCallback: Consumer<Sdk>) {
+
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
     if (project?.isDisposed == true) return
     val items = downloadModelWithProgress(project, parentComponent) ?: return
 
     if (project?.isDisposed == true) return
-    val (jdkItem, jdkHome) = JdkDownloadDialog(project, parentComponent, javaSdkType, items).selectJdkAndPath() ?: return
+    val (jdkItem, jdkHome) = JdkDownloadDialog(project, parentComponent, sdkTypeId, items).selectJdkAndPath() ?: return
 
-    callback.consume(object: InstallableSdk() {
-      override fun getSdkType() = javaSdkType
+    /// prepare the JDK to be installed (e.g. create home dir, write marker file
+    val request = prepareJdkInstall(project, parentComponent, jdkItem, jdkHome) ?: return
+    sdkTypeId as JavaSdkImpl
+    val sdk = JdkInstaller.createSdk(sdkModel, sdkTypeId, request)
+    sdkCreatedCallback.accept(sdk)
+  }
 
-      override fun getName() = jdkItem.fullPresentationText //TODO
+  //
+  //  ProgressManager.getInstance().run(mkdirsTask)
+  //
+  //
+  //  callback.consume(object: InstallableSdk() {
+  //    override fun getSdkType() = javaSdkType
+  //
+  //    override fun getName() = jdkItem.fullPresentationText //TODO
+  //
+  //    override fun clone(): InstallableSdk = this
+  //
+  //    override fun getVersionString() = jdkItem.versionPresentationText
+  //
+  //    override fun prepareSdk(indicator: ProgressIndicator): Sdk {
+  //      //TODO: how exception is handled outside?
+  //      val actualHome = try {
+  //        JdkInstaller.installJdk(jdkItem, jdkHome, indicator)
+  //      } catch (t: ProcessCanceledException) {
+  //        throw t
+  //      } catch (e: Exception) {
+  //        LOG.warn("Failed to install JDK $jdkItem to $jdkHome. ${e.message}", e)
+  //        throw RuntimeException("Failed to install JDK. ${e.message}", e)
+  //      }
+  //      return (sdkModel as ProjectSdksModel).createSdk(javaSdkType, actualHome.absolutePath)
+  //    }
+  //  })
+  //}
 
-      override fun clone(): InstallableSdk = this
-
-      override fun getVersionString() = jdkItem.versionPresentationText
-
-      override fun prepareSdk(indicator: ProgressIndicator): Sdk {
-        //TODO: how exception is handled outside?
-        val actualHome = try {
-          JdkInstaller.installJdk(jdkItem, jdkHome, indicator)
-        } catch (t: ProcessCanceledException) {
-          throw t
+  private fun prepareJdkInstall(project: Project?, parentComponent: JComponent, jdkItem: JdkItem, jdkHome: String) : JdkInstallRequest? {
+    val task = object : Task.WithResult<JdkInstallRequest?, Exception>(project, "Preparing JDK target folder...", true) {
+      override fun compute(indicator: ProgressIndicator): JdkInstallRequest? {
+        try {
+          return JdkInstaller.prepareJdkInstallation(jdkItem, jdkHome)
+        } catch (e: ProcessCanceledException) {
+          throw e
         } catch (e: Exception) {
-          LOG.warn("Failed to install JDK $jdkItem to $jdkHome. ${e.message}", e)
-          throw RuntimeException("Failed to install JDK. ${e.message}", e)
+          //TODO[jo]: handle error to UI
+          val msg = "Failed to prepare JDK installation to $jdkHome for ${jdkItem.fullPresentationText}. ${e.message}"
+          LOG.warn(msg, e)
+          invokeLater {
+            //TODO[jo]: add message from an exception here
+            Messages.showMessageDialog(parentComponent,
+                                       msg,
+                                       DIALOG_TITLE,
+                                       Messages.getErrorIcon()
+            )
+          }
+          return null
         }
-        return (sdkModel as ProjectSdksModel).createSdk(javaSdkType, actualHome.absolutePath)
       }
-    })
+    }
+
+    return ProgressManager.getInstance().run(task)
   }
 
   private fun downloadModelWithProgress(project: Project?, parentComponent: JComponent): List<JdkItem>? {
@@ -104,7 +141,7 @@ internal class JdkDownloaderUI : JdkDownloaderService() {
 private class JdkDownloadDialog(
   val project: Project?,
   val parentComponent: Component?,
-  val sdkType: SdkType,
+  val sdkType: SdkTypeId,
   val items: List<JdkItem>
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
   private val LOG = logger<JdkDownloadDialog>()

@@ -226,8 +226,14 @@ public final class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
-    String suggestedName = JdkUtil.suggestJdkName(getVersionString(sdkHome));
+    String versionString = getVersionString(sdkHome);
+    String suggestedName = versionString != null ? suggestSdkNameFromVersion(versionString) : null;
     return suggestedName != null ? suggestedName : currentSdkName != null ? currentSdkName : "";
+  }
+
+  @Nullable
+  public String suggestSdkNameFromVersion(@NotNull String versionString) {
+    return JdkUtil.suggestJdkName(versionString);
   }
 
   @Override
@@ -587,20 +593,5 @@ public final class JavaSdkImpl extends JavaSdk {
            type == OrderRootType.SOURCES ||
            type == JavadocOrderRootType.getInstance() ||
            type == AnnotationOrderRootType.getInstance();
-  }
-
-  @Override
-  public boolean supportsCustomDownloadUI() {
-    return JdkDownloaderService.isEnabled();
-  }
-
-  @Override
-  public void showCustomDownloadUI(@NotNull SdkModel sdkModel,
-                                   @NotNull JComponent parentComponent,
-                                   @Nullable Sdk selectedSdk,
-                                   @NotNull Consumer<InstallableSdk> sdkCreatedCallback) {
-    JdkDownloaderService instance = JdkDownloaderService.getInstanceIfEnabled();
-    if (instance == null) return;
-    instance.downloadCustomJdk(this, sdkModel, parentComponent, sdkCreatedCallback);
   }
 }

@@ -288,8 +288,7 @@
 
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.projectRoots.impl.JdkDownloaderService"
-                        serviceImplementation="com.intellij.jdkDownloader.JdkDownloaderUI"/>
+    <sdkDownload implementation="com.intellij.jdkDownloader.JdkDownloaderUI" />
     <registryKey key="jdk.downloader.ui" defaultValue="true" description="Use the list of JDKs to download and install in one click"/>
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
 

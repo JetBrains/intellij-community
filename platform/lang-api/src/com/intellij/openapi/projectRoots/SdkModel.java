@@ -102,4 +102,23 @@ public interface SdkModel {
 
   @NotNull
   Listener getMulticaster();
+
+  /**
+   * Helper method to create an {@link Sdk} from a type and home directory,
+   * the Sdk name will be generated
+   * @return a new {@link Sdk} instance
+   */
+  @NotNull
+  Sdk createSdk(@NotNull SdkType type, @NotNull String home);
+
+  /**
+   * Helper method to create an {@link Sdk} from a type and home directory,
+   * and suggest the name of the new Sdk. The actual Sdk Name may be altered
+   * to ensure it's uniqueness
+   *
+   * @return a new {@link Sdk} instance
+   */
+  @NotNull
+  Sdk createSdk(@NotNull SdkType type, @NotNull String newSdkName, @NotNull String home);
+
 }

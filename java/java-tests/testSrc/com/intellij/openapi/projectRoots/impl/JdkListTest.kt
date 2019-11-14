@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.jdkDownloader.JdkItem
-import com.intellij.jdkDownloader.JdkListDownloader
+import com.intellij.jdkDownloader.JdkListParser
 import com.intellij.jdkDownloader.JdkPredicate
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.BuildNumber
@@ -121,7 +121,7 @@ class JdkListTest {
   private inline fun assertForEachOS(json: ObjectNode, assert: ListAssert<JdkItem>.() -> Unit) {
     for (osType in listOf("windows", "linux", "macOS")) {
       val predicate = JdkPredicate(BuildNumber.fromString("201.123"), osType)
-      val data = JdkListDownloader.parseJdkList(json, predicate)
+      val data = JdkListParser.parseJdkList(json, predicate)
       assertThat(data)
         .withFailMessage("should have items for $osType")
         .assert()

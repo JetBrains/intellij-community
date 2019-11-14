@@ -7,12 +7,15 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import java.io.File
 import java.io.IOException
 import java.lang.RuntimeException
+import java.util.*
 import kotlin.math.absoluteValue
 
 object JdkInstaller {
@@ -34,12 +37,11 @@ object JdkInstaller {
     return targetDir to null
   }
 
-  fun installJdk(item: JdkItem, selectedPath: String, indicator: ProgressIndicator?): File {
+  fun installJdk(request: JdkInstallRequest, indicator: ProgressIndicator?): File {
+    val item = request.item
     indicator?.text = "Installing ${item.fullPresentationText}..."
 
-    val (targetDir, error) = validateInstallDir(selectedPath)
-    if (targetDir == null || error != null) throw RuntimeException(error ?: "Invalid Target Directory")
-
+    val targetDir = request.targetDir
     val url = Urls.parse(item.url, false) ?: error("Cannot parse download URL: ${item.url}")
     if (!url.scheme.equals("https", ignoreCase = true)) error("URL must use https:// protocol, but was: $url")
 
@@ -91,4 +93,43 @@ object JdkInstaller {
     }
     return targetDir
   }
+
+  /**
+   * executed synchronously to prepare Jdk installation process, that would run in the future
+   */
+  fun prepareJdkInstallation(jdkItem: JdkItem, targetPath: String): JdkInstallRequest {
+    val (home, error) = validateInstallDir(targetPath)
+    if (home == null || error != null) throw RuntimeException(error ?: "Invalid Target Directory")
+
+    FileUtil.createDirectory(home)
+    if (!home.isDirectory) {
+      throw IOException("Failed to create home directory: $home")
+    }
+
+    val markerFile = File(home, "intellij-downloader-info.json")
+    //TODO[jo]: include original JSON here
+    markerFile.writeText("Download started on ${Date()}\n$jdkItem")
+
+    return JdkInstallRequest(jdkItem, home)
+  }
+
+  fun createSdk(sdkModel: SdkModel, javaSdkType: SdkTypeId, request: JdkInstallRequest): Sdk {
+    //TODO[jo]: inherit name from a missing JDK in the UI (e.g. I need JDK 11, I'd like new one be named as 11 too)
+    val sdk = sdkModel.createSdk(javaSdkType as SdkType, request.item.suggestedSdkName, request.targetDir.absolutePath)
+    sdk.putUserData(JdkInstallRequestKey, request)
+
+    sdk.sdkModificator.apply {
+      versionString = request.item.jdkVersion
+      commitChanges()
+    }
+    return sdk
+  }
 }
+
+private val JdkInstallRequestKey = Key.create<JdkInstallRequest>("jdk-install-request")
+
+data class JdkInstallRequest(
+  val item: JdkItem,
+  val targetDir: File
+)
+
