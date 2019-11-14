@@ -15,7 +15,7 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.NONE_NOTIFICATION_GROUP;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
 
-public class JpsOutputLoaderManager implements ProjectComponent {
+public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String PROGRESS_TITLE = "Updating Compilation Caches";
@@ -52,9 +52,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   @NotNull
   public static JpsOutputLoaderManager getInstance(@NotNull Project project) {
-    JpsOutputLoaderManager component = project.getComponent(JpsOutputLoaderManager.class);
-    assert component != null;
-    return component;
+    return ServiceManager.getService(project, JpsOutputLoaderManager.class);
   }
 
   public JpsOutputLoaderManager(@NotNull Project project) {
@@ -62,7 +60,8 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     hasRunningTask = new AtomicBoolean();
     myServerClient = ArtifactoryJpsServerClient.INSTANCE;
     myMetadataLoader = new JpsMetadataLoader(project, myServerClient);
-    ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool", ProcessIOExecutorService.INSTANCE,
+    ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool",
+                                                                         ProcessIOExecutorService.INSTANCE,
                                                                          getThreadPoolSize());
   }
 
