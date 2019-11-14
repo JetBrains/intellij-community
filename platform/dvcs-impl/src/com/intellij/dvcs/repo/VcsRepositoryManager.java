@@ -2,7 +2,6 @@
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -218,50 +217,47 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   // note: we are not calling this method during the project startup - it is called anyway by f.e the GitRootTracker
   private void checkAndUpdateRepositoriesCollection(@Nullable VirtualFile checkedRoot) {
-    // 'createRepositoryIfValid' can take read lock inside. To prevent deadlock with MODIFY_LOCK we should ensure it is already taken here.
-    ReadAction.run(() -> {
-      MODIFY_LOCK.lock();
+    MODIFY_LOCK.lock();
+    try {
+      Map<VirtualFile, Repository> repositories;
+
+      REPO_LOCK.readLock().lock();
       try {
-        Map<VirtualFile, Repository> repositories;
+        repositories = new HashMap<>(myRepositories);
+      }
+      finally {
+        REPO_LOCK.readLock().unlock();
+      }
 
-        REPO_LOCK.readLock().lock();
-        try {
-          repositories = new HashMap<>(myRepositories);
-        }
-        finally {
-          REPO_LOCK.readLock().unlock();
-        }
+      if (checkedRoot != null && repositories.containsKey(checkedRoot)) return;
 
-        if (checkedRoot != null && repositories.containsKey(checkedRoot)) return;
+      Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.values());
+      repositories.keySet().removeAll(invalidRoots);
+      Map<VirtualFile, Repository> newRoots = findNewRoots(repositories.keySet());
+      repositories.putAll(newRoots);
 
-        Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.values());
-        repositories.keySet().removeAll(invalidRoots);
-        Map<VirtualFile, Repository> newRoots = findNewRoots(repositories.keySet());
-        repositories.putAll(newRoots);
-
-        REPO_LOCK.writeLock().lock();
-        try {
-          if (!myDisposed) {
-            for (VirtualFile file : myRepositories.keySet()) {
-              Repository oldRepo = myRepositories.get(file);
-              Repository newRepo = repositories.get(file);
-              if (oldRepo != newRepo) {
-                Disposer.dispose(oldRepo);
-              }
+      REPO_LOCK.writeLock().lock();
+      try {
+        if (!myDisposed) {
+          for (VirtualFile file : myRepositories.keySet()) {
+            Repository oldRepo = myRepositories.get(file);
+            Repository newRepo = repositories.get(file);
+            if (oldRepo != newRepo) {
+              Disposer.dispose(oldRepo);
             }
-
-            myRepositories.clear();
-            myRepositories.putAll(repositories);
           }
-        }
-        finally {
-          REPO_LOCK.writeLock().unlock();
+
+          myRepositories.clear();
+          myRepositories.putAll(repositories);
         }
       }
       finally {
-        MODIFY_LOCK.unlock();
+        REPO_LOCK.writeLock().unlock();
       }
-    });
+    }
+    finally {
+      MODIFY_LOCK.unlock();
+    }
     BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
   }
 
