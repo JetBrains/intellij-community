@@ -894,6 +894,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     promise.onProcessed(m -> {
       completeMavenSyncOnImportCompletion(console);
     });
+    promise.onSuccess(m -> fireProjectImportCompleted());
+    promise.onError(m -> fireProjectImportFailed());
     fireImportAndResolveScheduled();
     return promise;
   }
@@ -1319,6 +1321,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myManagerListeners.add(listener);
   }
 
+  public void addManagerListener(Listener listener, Disposable parentDisposable) {
+    myManagerListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myManagerListeners.remove(listener));
+  }
+
   public void addProjectsTreeListener(MavenProjectsTree.Listener listener) {
     myProjectsTreeDispatcher.addListener(listener);
   }
@@ -1346,6 +1353,18 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
+  private void fireProjectImportCompleted() {
+    for (Listener each : myManagerListeners) {
+      each.projectImportCompleted();
+    }
+  }
+
+  private void fireProjectImportFailed() {
+    for (Listener each : myManagerListeners) {
+      each.projectImportFailed();
+    }
+  }
+
   public interface Listener {
     default void activated() {
     }
@@ -1354,6 +1373,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     default void importAndResolveScheduled() {
+    }
+
+    default void projectImportCompleted() {
+    }
+
+    default void projectImportFailed() {
     }
   }
 

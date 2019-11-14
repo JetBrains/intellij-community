@@ -5,15 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectRefreshListener
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.FAILURE
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import java.util.concurrent.CopyOnWriteArrayList
 
 class MavenProjectsAware(
   project: Project,
@@ -28,19 +27,17 @@ class MavenProjectsAware(
   override val settingsFiles: Set<String>
     get() = collectSettingsFiles()
 
-  private val listeners = CopyOnWriteArrayList<ExternalSystemProjectRefreshListener>()
-
   override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
-    listeners.add(listener)
-    Disposer.register(parentDisposable, Disposable { listeners.remove(listener) })
+    manager.addManagerListener(object : MavenProjectsManager.Listener {
+      override fun importAndResolveScheduled() = listener.beforeProjectRefresh()
+      override fun projectImportCompleted() = listener.afterProjectRefresh(SUCCESS)
+      override fun projectImportFailed() = listener.afterProjectRefresh(FAILURE)
+    }, parentDisposable)
   }
 
   override fun refreshProject() {
     readingProcessor.scheduleTask(MavenProjectsProcessorReadingTask(true, projectsTree, generalSettings) {
-      fireStartProjectRefresh()
       manager.scheduleImportAndResolve(true)
-        .onSuccess { fireFinishProjectRefresh(ExternalSystemRefreshStatus.SUCCESS) }
-        .onError { fireFinishProjectRefresh(ExternalSystemRefreshStatus.FAILURE) }
     })
   }
 
@@ -69,13 +66,5 @@ class MavenProjectsAware(
       settingsFiles.addAll(projectFiles.filter { isPomFile(it) || isProfilesFile(it) })
     }
     return settingsFiles.mapNotNull { FileUtil.toCanonicalPath(it) }.toSet()
-  }
-
-  private fun fireStartProjectRefresh() {
-    listeners.forEach { it.beforeProjectRefresh() }
-  }
-
-  private fun fireFinishProjectRefresh(status: ExternalSystemRefreshStatus) {
-    listeners.forEach { it.afterProjectRefresh(status) }
   }
 }
