@@ -6,10 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -134,6 +131,7 @@ public interface Configurable extends UnnamedConfigurable {
    * @return the visible name of the configurable component
    */
   @Nls(capitalization = Nls.Capitalization.Title)
+  @Contract(pure = true)
   String getDisplayName();
 
   /**
@@ -143,6 +141,7 @@ public interface Configurable extends UnnamedConfigurable {
    */
   @Nullable
   @NonNls
+  @Contract(pure = true)
   default String getHelpTopic() {
     return null;
   }
