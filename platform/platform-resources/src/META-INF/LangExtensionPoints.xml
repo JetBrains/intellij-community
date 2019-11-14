@@ -316,7 +316,7 @@
     <extensionPoint name="orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory"/>
     <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy" area="IDEA_PROJECT"/>
     <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"/>
-    <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider"/>
+    <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider" dynamic="true"/>
 
     <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider" dynamic="true"/>
     <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider" dynamic="true"/>
