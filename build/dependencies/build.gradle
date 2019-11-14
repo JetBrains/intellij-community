@@ -47,6 +47,7 @@ apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
 apply from: 'setupToolboxLiteGen.gradle'
 apply from: 'setupBundledMaven.gradle'
+apply from: 'setupCidr.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
