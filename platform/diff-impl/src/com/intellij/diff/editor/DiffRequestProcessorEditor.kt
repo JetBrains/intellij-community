@@ -40,7 +40,7 @@ class DiffRequestProcessorEditor(
   }
 
   override fun getComponent(): JComponent = processor.component
-  override fun getPreferredFocusedComponent(): JComponent? = processor.preferredFocusedComponent
+  override fun getPreferredFocusedComponent(): JComponent? = processor.component
 
   override fun dispose() {}
   override fun isValid(): Boolean = !processor.isDisposed
