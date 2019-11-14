@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.util.ui
+package com.intellij.observable
 
-import com.intellij.openapi.externalSystem.util.properties.GraphProperty
-import com.intellij.openapi.externalSystem.util.properties.GraphPropertyImpl
-import com.intellij.openapi.externalSystem.util.properties.PropertyGraph
+import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.GraphPropertyImpl
+import com.intellij.openapi.observable.properties.PropertyGraph
 import junit.framework.TestCase
 import org.junit.Assert
 
