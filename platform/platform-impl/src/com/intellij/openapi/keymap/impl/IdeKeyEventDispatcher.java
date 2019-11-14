@@ -549,6 +549,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static boolean hasMnemonic(@Nullable Container container, int keyCode) {
     Component component = UIUtil.uiTraverser(container)
       .traverse()
+      .filter(Component::isShowing)
       .find(c -> !(c instanceof ActionMenu) && MnemonicHelper.hasMnemonic(c, keyCode));
     return component != null;
   }
