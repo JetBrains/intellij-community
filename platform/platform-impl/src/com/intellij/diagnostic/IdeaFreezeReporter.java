@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IdeaFreezeReporter {
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
+  private static final int FREEZE_THRESHOLD = 25; // seconds
 
   public IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
