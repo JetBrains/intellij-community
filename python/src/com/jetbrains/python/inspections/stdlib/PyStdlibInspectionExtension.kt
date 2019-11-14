@@ -38,7 +38,7 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
            function.getParameters(context).let { it.size == 3 && !it.any { p -> p.isKeywordContainer || p.isPositionalContainer } } ||
            function.name == DUNDER_POST_INIT &&
            function.containingClass?.let { parseStdOrPydanticDataclassParameters(it, context) != null } == true ||
-           function.name == DUNDER_PYDATNIC_POST_INIT_POST_PARSE &&
+           function.name == DUNDER_PYDANTIC_POST_INIT_POST_PARSE &&
            function.containingClass?.let { parsePydanticDataclassParameters(it, context) != null } == true
   }
 }

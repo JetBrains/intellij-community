@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 const val DATACLASSES_INITVAR_TYPE: String = "dataclasses.InitVar"
 const val DUNDER_POST_INIT: String = "__post_init__"
 const val DUNDER_ATTRS_POST_INIT: String = "__attrs_post_init__"
-const val DUNDER_PYDATNIC_POST_INIT_POST_PARSE: String = "__post_init_post_parse__"
+const val DUNDER_PYDANTIC_POST_INIT_POST_PARSE: String = "__post_init_post_parse__"
 
 private val STD_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen")
 private val ATTRS_PARAMETERS = listOf("these", "repr_ns", "repr", "cmp", "hash", "init", "slots", "frozen", "str", "auto_attribs")

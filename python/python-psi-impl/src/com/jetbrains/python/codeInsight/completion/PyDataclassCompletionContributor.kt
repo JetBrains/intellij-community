@@ -61,7 +61,7 @@ class PyDataclassCompletionContributor : CompletionContributor() {
         addMethodToResult(result, cls, typeEvalContext, DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
 
         if (dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC) {
-          addMethodToResult(result, cls, typeEvalContext, DUNDER_PYDATNIC_POST_INIT_POST_PARSE, postInitParameters.joinToString(prefix = "(", postfix = ")"))
+          addMethodToResult(result, cls, typeEvalContext, DUNDER_PYDANTIC_POST_INIT_POST_PARSE, postInitParameters.joinToString(prefix = "(", postfix = ")"))
         }
       }
       else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {

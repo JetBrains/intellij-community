@@ -94,7 +94,7 @@ class PyDataclassInspection : PyInspection() {
               processPostInitDefinition(node, postInit, dataclassParameters, localInitVars)
             }
             if (dataclassParameters.type == PyDataclassParameters.Type.PYDANTIC) {
-              val postInitPostParse = node.findMethodByName(DUNDER_PYDATNIC_POST_INIT_POST_PARSE, false, myTypeEvalContext)
+              val postInitPostParse = node.findMethodByName(DUNDER_PYDANTIC_POST_INIT_POST_PARSE, false, myTypeEvalContext)
               if (postInitPostParse != null) {
                 processPostInitPostParseDefinition(node, postInitPostParse, dataclassParameters, localInitVars)
               }
@@ -642,7 +642,7 @@ class PyDataclassInspection : PyInspection() {
 
       val implicitParameters = postInitPostParse.getParameters(myTypeEvalContext)
       val parameters = if (implicitParameters.isEmpty()) emptyList<PyCallableParameter>() else ContainerUtil.subList(implicitParameters, 1)
-      val message = "'$DUNDER_PYDATNIC_POST_INIT_POST_PARSE' " +
+      val message = "'$DUNDER_PYDANTIC_POST_INIT_POST_PARSE' " +
                     "should take all init-only variables" +
                     "${if (allInitVars.size != localInitVars.size) " (incl. inherited)" else ""} " +
                     "in the same order as they are defined"

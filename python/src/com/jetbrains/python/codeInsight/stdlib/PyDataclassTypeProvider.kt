@@ -25,7 +25,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
     if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null
-        && (func.name == DUNDER_POST_INIT ||func.name == DUNDER_PYDATNIC_POST_INIT_POST_PARSE)) {
+        && (func.name == DUNDER_POST_INIT || func.name == DUNDER_PYDANTIC_POST_INIT_POST_PARSE)) {
       val cls = func.containingClass
       val name = param.name
 
