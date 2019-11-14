@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -27,6 +28,7 @@ private class JdkDownloadProgress(
 ) {
   private val myListeners = Sets.newIdentityHashSet<SdkDownload.DownloadProgressListener>()
   private val proxyProgress = ProgressIndicatorBase()
+  private val isCompleted = AtomicBoolean(false)
 
   fun bindProgressIndicator(indicator: ProgressIndicator, action: () -> Unit) {
     indicator as ProgressIndicatorBase
@@ -38,13 +40,20 @@ private class JdkDownloadProgress(
     }
   }
 
+  val completed
+    get() = isCompleted.get()
+
   fun onDownloadCompleted() {
     ApplicationManager.getApplication().assertIsDispatchThread()
+
+    if (!isCompleted.compareAndSet(false, true)) return
     myListeners.forEach { it.onDownloadCompleted() }
   }
 
   fun onDownloadFailed(message: String) {
     ApplicationManager.getApplication().assertIsDispatchThread()
+
+    if (!isCompleted.compareAndSet(false, true)) return
     myListeners.forEach { it.onDownloadFailed(message)}
   }
 
@@ -87,6 +96,15 @@ object JdkDownloader {
       override fun run(indicator: ProgressIndicator) = request.bindProgressIndicator(indicator) {
         try {
           JdkInstaller.installJdk(request.request, indicator)
+
+          require(sdk.homePath?.let(::File) == request.request.targetDir) {
+            "Sdk home is ${sdk.homePath} must be the same as in the request: ${request.request.targetDir}"
+          }
+
+          LOG.info("Jdk Download complete, updating $sdk for $request")
+          setupJdkAndCleanTheState(sdk)
+
+          invokeLater { request.onDownloadCompleted() }
         }
         catch (t: ProcessCanceledException) {
           throw t
@@ -101,27 +119,35 @@ object JdkDownloader {
           invokeLater { request.onDownloadFailed(msg) }
           return@bindProgressIndicator
         }
-
-        require(sdk.homePath?.let(::File) == request.request.targetDir) {
-          "Sdk home is ${sdk.homePath} must be the same as in the request: ${request.request.targetDir}"
-        }
-
-        WriteAction.runAndWait<Exception> {
-          LOG.info("Jdk Download complete, updating $sdk for $request")
-          (sdk.sdkType as SdkType).setupSdkPaths(sdk)
-          sdk.putUserData(JdkDownloadProgressKey, null)
-        }
-        invokeLater { request.onDownloadCompleted() }
       }
     }
 
     ProgressManager.getInstance().run(downloadSdkTask)
   }
 
+  private fun setupJdkAndCleanTheState(sdk: Sdk) {
+    WriteAction.runAndWait<Exception> {
+      //double checked
+      if (sdk.getUserData(JdkDownloadProgressKey) == null) return@runAndWait
+      try {
+        (sdk.sdkType as SdkType).setupSdkPaths(sdk)
+      } finally {
+        // we cannot set it earlier to avoid race condition
+        sdk.putUserData(JdkDownloadProgressKey, null)
+      }
+    }
+  }
+
   fun subscribeDownload(sdk: Sdk,
                         lifetime: Disposable,
                         listener: SdkDownload.DownloadProgressListener): Boolean {
     val progress = sdk.getUserData(JdkDownloadProgressKey) ?: return false
+    if (progress.completed) {
+      // Sdk instance could be copied, so we may need to clean-up our used-data for clones
+      // we do a sanity setup here, just in case older instance was leaked
+      setupJdkAndCleanTheState(sdk)
+      return false
+    }
     progress.subscribe(lifetime, listener)
     return true
   }
