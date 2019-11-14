@@ -16,6 +16,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -344,6 +345,10 @@ public class ChangesViewManager implements ChangesViewEx,
           @Override
           protected void doRefresh() {
             changeProcessor.refresh(false);
+            PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
+            if (changeProcessor.getCurrentChangeName() == null) {
+              FileEditorManager.getInstance(project).closeFile(vcsContentFile);
+            }
           }
         };
         mainPanel = contentPanel;
