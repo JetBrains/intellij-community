@@ -84,7 +84,10 @@ class LegacyBridgeLibraryModifiableModelImpl(
 
     val referrers = entity.referrers(LibraryPropertiesEntity::library).toList()
     if (referrers.isEmpty()) {
-      diff.addEntity(ModifiableLibraryPropertiesEntity::class.java, entity.entitySource, updater)
+      diff.addEntity(ModifiableLibraryPropertiesEntity::class.java, entity.entitySource) {
+        library = entity
+        updater()
+      }
     }
     else {
       diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, referrers.first(), updater)
