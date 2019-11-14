@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -16,7 +17,9 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -317,7 +320,7 @@ internal class LeakSearchContext(val project: Project) {
       return listOf(Leak("${text}: UVariable has no source PSI", null))
     }
     val leaks = mutableListOf<Leak>()
-    ReferencesSearch.search(sourcePsi).forEach(Processor<PsiReference> { psiReference ->
+    ReferencesSearch.search(sourcePsi, sourcePsi.useScope).forEach(Processor<PsiReference> { psiReference ->
       val ref = psiReference.element.toUElement()
       if (ref != null) {
         leaks.addAll(findObjectLeaks(ref, text))
@@ -364,23 +367,26 @@ class AnalyzeEPUsageAction : AnAction() {
     }
 
     val context = LeakSearchContext(file.project)
-    ProgressManager.getInstance().runProcessWithProgressSynchronously({
-                                                                        context.processEPFieldUsages(sourcePsi)
-                                                                      }, "Analyzing EP usages", true, file.project
-    )
-
-    if (context.unsafeUsages.isEmpty()) {
-      if (context.safeUsages.isEmpty()) {
-        HintManager.getInstance().showErrorHint(editor, "No usages found")
-      }
-      else {
-        HintManager.getInstance().showInformationHint(editor, "All usages are dynamic-safe")
+    val task = object : Task.Backgroundable(file.project, "Analyzing EP usages") {
+      override fun run(indicator: ProgressIndicator) {
+        context.processEPFieldUsages(sourcePsi)
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          if (context.unsafeUsages.isEmpty()) {
+            if (context.safeUsages.isEmpty()) {
+              HintManager.getInstance().showErrorHint(editor, "No usages found")
+            }
+            else {
+              HintManager.getInstance().showInformationHint(editor, "All usages are dynamic-safe")
+            }
+          }
+          else {
+            val usages = context.unsafeUsages.map { EPElementUsage(it.second.targetElement ?: it.first.element, it.second.reason) }
+            showEPElementUsages(file.project, EPUsageTarget(target.sourcePsi as PsiField), usages)
+          }
+        })
       }
     }
-    else {
-      val usages = context.unsafeUsages.map { EPElementUsage(it.second.targetElement ?: it.first.element, it.second.reason) }
-      showEPElementUsages(file.project, EPUsageTarget(target.sourcePsi as PsiField), usages)
-    }
+    ProgressManager.getInstance().run(task)
   }
 
   private fun showEPElementUsages(project: Project, usageTarget: UsageTarget, usages: List<EPElementUsage>) {
@@ -428,12 +434,12 @@ class AnalyzeEPUsageAction : AnAction() {
 
     val safeEPs = mutableListOf<ExtensionPoint>()
     val allUnsafeUsages = mutableListOf<EPElementUsage>()
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
+    val task = object : Task.Backgroundable(file.project, "Analyzing extension points") {
+      override fun run(indicator: ProgressIndicator) {
         for (extensionPoint in domElement.extensionPoints) {
           runReadAction {
             if (extensionPoint.dynamic.value != null) return@runReadAction
-            ProgressManager.getInstance().progressIndicator.text = extensionPoint.effectiveQualifiedName
+            indicator.text = extensionPoint.effectiveQualifiedName
 
             val epName = extensionPoint.name.xmlAttributeValue ?: return@runReadAction
             if (!ReferencesSearch.search(epName).anyMatch { isInPluginModule(it.element) }) {
@@ -458,10 +464,13 @@ class AnalyzeEPUsageAction : AnAction() {
             }
           }
         }
-      }, "Analyzing extension points", true, file.project)
-
-    showEPElementUsages(file.project, DummyUsageTarget("Safe EPs"), safeEPs.mapNotNull { it.xmlElement }.map { EPElementUsage(it) })
-    showEPElementUsages(file.project, DummyUsageTarget("Unsafe EP Usages"), allUnsafeUsages)
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          showEPElementUsages(file.project, DummyUsageTarget("Safe EPs"), safeEPs.mapNotNull { it.xmlElement }.map { EPElementUsage(it) })
+          showEPElementUsages(file.project, DummyUsageTarget("Unsafe EP Usages"), allUnsafeUsages)
+        })
+      }
+    }
+    ProgressManager.getInstance().run(task)
   }
 
   private fun isInPluginModule(element: PsiElement): Boolean {
