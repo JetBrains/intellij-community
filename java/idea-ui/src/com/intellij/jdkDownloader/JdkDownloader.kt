@@ -48,6 +48,7 @@ private class JdkDownloadProgress(
 
     if (!isCompleted.compareAndSet(false, true)) return
     myListeners.forEach { it.onDownloadCompleted() }
+    myListeners.clear()
   }
 
   fun onDownloadFailed(message: String) {
@@ -55,6 +56,7 @@ private class JdkDownloadProgress(
 
     if (!isCompleted.compareAndSet(false, true)) return
     myListeners.forEach { it.onDownloadFailed(message)}
+    myListeners.clear()
   }
 
   fun subscribe(disposable: Disposable, handler: SdkDownload.DownloadProgressListener) {
