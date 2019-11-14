@@ -145,11 +145,6 @@ public abstract class SdkType implements SdkTypeId {
     return IconUtil.getAddIcon();
   }
 
-  @NotNull
-  public Icon getIconForDownloadAction() {
-    return AllIcons.Actions.Download;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
