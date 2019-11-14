@@ -10,7 +10,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <backgroundPostStartupActivity implementation="com.intellij.jps.cache.JpsCachesProjectStateListener"/>
-    <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager" preload="true"/>
+    <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
   </extensions>
 
   <actions>
