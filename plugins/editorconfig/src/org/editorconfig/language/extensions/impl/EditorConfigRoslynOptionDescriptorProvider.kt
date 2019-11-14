@@ -5,6 +5,6 @@ import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.extensions.EditorConfigJsonFileOptionDescriptorProviderBase
 
 class EditorConfigRoslynOptionDescriptorProvider : EditorConfigJsonFileOptionDescriptorProviderBase() {
-  override val filePath = "/schemas/editorconfig/roslyn.json"
+  override val filePath = "schemas/editorconfig/roslyn.json"
   override fun requiresFullSupport() = EditorConfigRegistry.shouldSupportCSharp()
 }
