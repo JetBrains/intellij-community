@@ -68,7 +68,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = context.getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    final SearchScope searchScope = scope.toSearchScope();
+    final SearchScope searchScope = ReadAction.compute(() -> scope.toSearchScope());
     if (!(searchScope instanceof GlobalSearchScope)) {
       return;
     }

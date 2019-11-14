@@ -251,6 +251,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @Override
+  public boolean isReadActionNeeded() {
+    return false;
+  }
+
+  @Override
   public void runInspection(@NotNull final AnalysisScope scope,
                             @NotNull InspectionManager manager,
                             @NotNull final GlobalInspectionContext globalContext,
