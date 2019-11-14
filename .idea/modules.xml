@@ -455,6 +455,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/gradle-tooling/studio-gradle-tooling-impl/intellij.android.gradle-tooling.impl.iml" filepath="$PROJECT_DIR$/../adt/idea/gradle-tooling/studio-gradle-tooling-impl/intellij.android.gradle-tooling.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework/intellij.android.guiTestFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework/intellij.android.guiTestFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-uitests/intellij.android.guiTests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-uitests/intellij.android.guiTests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/ide-perf-tests/intellij.android.ide-perf-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/ide-perf-tests/intellij.android.ide-perf-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/jps-plugin/intellij.android.jps.iml" filepath="$PROJECT_DIR$/../adt/idea/jps-plugin/intellij.android.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" filepath="$PROJECT_DIR$/../adt/idea/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" filepath="$PROJECT_DIR$/../adt/idea/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" />

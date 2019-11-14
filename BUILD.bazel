@@ -129,6 +129,7 @@ iml_project(
         "//tools/adt/idea/game-tools-starter:intellij.android.gameToolsStarter",
         "//tools/adt/idea/gradle-tooling/studio-gradle-tooling-api:intellij.android.gradle-tooling.api",
         "//tools/adt/idea/gradle-tooling/studio-gradle-tooling-impl:intellij.android.gradle-tooling.impl",
+        "//tools/adt/idea/ide-perf-tests:intellij.android.ide-perf-tests",
         "//tools/adt/idea/jps-plugin:intellij.android.jps",
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
         "//tools/adt/idea/layout-inspector:intellij.android.layout-inspector",
