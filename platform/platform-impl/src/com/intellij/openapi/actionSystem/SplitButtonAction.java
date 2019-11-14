@@ -146,7 +146,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
       int x = baseRect.x + baseRect.width - JBUIScale.scale(3) - ARROW_DOWN.getIconWidth();
       int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUIScale.scale(1);
-      look.paintIconAt(g, ARROW_DOWN, x, y);
+      look.paintIcon(g, this, ARROW_DOWN, x, y);
 
       x -= JBUIScale.scale(4);
       if (getPopState() == POPPED || getPopState() == PUSHED) {
@@ -165,7 +165,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
       x = baseRect.x + (x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
-      look.paintIconAt(g, actionIcon, x, y);
+      look.paintIcon(g, this, actionIcon, x, y);
     }
 
     private boolean isToggleActionPushed() {

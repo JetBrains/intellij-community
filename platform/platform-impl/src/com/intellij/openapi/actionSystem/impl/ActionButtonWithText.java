@@ -176,7 +176,7 @@ public class ActionButtonWithText extends ActionButton {
     }
     ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
-    look.paintIconAt(g, icon, iconRect.x, iconRect.y);
+    look.paintIcon(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
     g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
