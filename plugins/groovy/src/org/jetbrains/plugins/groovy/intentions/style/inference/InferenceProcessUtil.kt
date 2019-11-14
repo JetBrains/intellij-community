@@ -172,7 +172,7 @@ fun findOverridableMethod(method: GrMethod): PsiMethod? {
 
 private fun methodsAgree(pattern: PsiMethod,
                          tested: GrMethod): Boolean {
-  if (tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
+  if (pattern.name != tested.name || tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
     return false
   }
   val parameterList = pattern.parameters.zip(tested.parameters)
