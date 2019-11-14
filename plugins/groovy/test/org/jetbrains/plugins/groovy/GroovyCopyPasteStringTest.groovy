@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor
 import org.jetbrains.plugins.groovy.util.BaseTest
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.Assert
 import org.junit.Test
 
@@ -58,7 +58,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       '<selection>$/\\u2318/</selection>$': '$/\\u2318/',
       '$/<selection>\\u2318</selection>/$': '⌘',
     ]
-    RunAll.runAll(data) { text, expectedCopy ->
+    TestUtils.runAll(data) { text, expectedCopy ->
       doCopyTest(text, expectedCopy)
     }.run()
   }
@@ -167,7 +167,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       '$/hi/<caret>$'               : null,
     ]
 
-    RunAll.runAll(data) { text, expectedKind ->
+    TestUtils.runAll(data) { text, expectedKind ->
       def file = fixture.configureByText('_.groovy', text)
       def selectionModel = fixture.editor.selectionModel
       def selectionStart = selectionModel.selectionStart
@@ -185,7 +185,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       ['"<selection>\\${foo}</selection>"', '"<caret>"', '"\\${foo}"'],
       ['"<selection>\\$bar</selection>"', '"<caret>"', '"\\$bar"']
     ]
-    RunAll.runAll(data) { List<String> entry ->
+    TestUtils.runAll(data) { List<String> entry ->
       doCopyPasteTest(entry[0], entry[1], entry[2])
     }.run()
   }
@@ -201,7 +201,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       '/ <caret>/'   : '/ \n/',
       '$/<caret>/$'  : '$/\n/$',
     ]
-    RunAll.runAll(data) { to, expected ->
+    TestUtils.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
     }.run()
   }
@@ -217,7 +217,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       '/ <caret>/'   : '/ hi\nthere\n/',
       '$/<caret>/$'  : '$/hi\nthere\n/$',
     ]
-    RunAll.runAll(data) { to, expected ->
+    TestUtils.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
     }.run()
   }
@@ -233,7 +233,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       '/ <caret>/'   : '/ hi\nthere\\u2318/',
       '$/<caret>/$'  : '$/hi\nthere\\u2318/$',
     ]
-    RunAll.runAll(data) { to, expected ->
+    TestUtils.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
     }.run()
   }
@@ -246,7 +246,7 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
       ['<selection>${a}</selection>', '"<caret>"', '"${a}"'],
       ['"<selection>${a}</selection>"', '"<caret>"', '"${a}"'],
     ]
-    RunAll.runAll(data) { List<String> entry ->
+    TestUtils.runAll(data) { List<String> entry ->
       doCopyPasteTest(entry[0], entry[1], entry[2])
     }.run()
   }
