@@ -350,10 +350,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         myProjectSdksModel.addSdk(sdk);
         try {
           myProjectSdksModel.apply(null, true);
-          if (myModule != null) {
-            // the event is required to be fired explicitly here because SDK for the module is updated above
-            PySdkExtKt.fireActivePythonSdkChanged(myModule, sdk);
-          }
         }
         catch (ConfigurationException e) {
           LOG.error(e);
