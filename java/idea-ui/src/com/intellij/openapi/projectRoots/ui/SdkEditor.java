@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.SdkEditorAdditionalOptionsProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
@@ -22,6 +24,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -34,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author MYakovlev
@@ -52,6 +56,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private final Map<SdkType, List<AdditionalDataConfigurable>> myAdditionalDataConfigurables = new HashMap<>();
   private final Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<>();
   private JPanel myAdditionalDataPanel;
+  private JPanel myDownloadingPanel;
+  private InlineProgressIndicator myDownloadProgressIndicator;
   private final SdkModificator myEditedSdkModificator = new EditedSdkModificator();
 
   // GUI components
@@ -64,9 +70,28 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private String myInitialName;
   private String myInitialPath;
+  private boolean myIsDownloading = false;
   private final History myHistory;
 
   private final Disposable myDisposable = Disposer.newDisposable();
+
+  private final SdkDownload.DownloadProgressListener myDownloadProgressListener = new SdkDownload.DownloadProgressListener() {
+    @NotNull
+    @Override
+    public ProgressIndicatorEx getProgressIndicator() {
+      return myDownloadProgressIndicator;
+    }
+
+    @Override
+    public void onDownloadCompleted() {
+      reset();
+    }
+
+    @Override
+    public void onDownloadFailed(@NotNull String message) {
+      reset();
+    }
+  };
 
   public SdkEditor(@NotNull Project project,
                    @NotNull SdkModel sdkModel,
@@ -131,6 +156,16 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
     myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(
       0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(2), 0, 0));
+
+    myDownloadingPanel = new JPanel(new BorderLayout());
+    //myDownloadingPanel.add(new JBLabel("Downloading JDK..."), BorderLayout.NORTH);
+    myDownloadProgressIndicator = new TwoLineProgressIndicator();
+    myDownloadProgressIndicator.setIndeterminate(true);
+    myDownloadingPanel.add(myDownloadProgressIndicator.getComponent(), BorderLayout.NORTH);
+
+    // a pressure at the bottom to make sure controls are shifter to the top
+    myMainPanel.add(myDownloadingPanel, new GridBagConstraints(
+      0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.SOUTH, GridBagConstraints.BOTH, JBUI.insets(2, 10, 0, 10), 0, 0));
   }
 
   protected TextFieldWithBrowseButton createHomeComponent() {
@@ -148,6 +183,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
   @Override
   public boolean isModified() {
     boolean isModified = !Comparing.equal(mySdk.getName(), myInitialName);
+    if (myIsDownloading) return isModified;
+
     isModified =
       isModified || !Comparing.equal(FileUtil.toSystemIndependentName(getHomeValue()), FileUtil.toSystemIndependentName(myInitialPath));
     for (PathEditor pathEditor : myPathEditors.values()) {
@@ -161,6 +198,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public void apply() throws ConfigurationException {
+    if (myIsDownloading) return;
+
     if (!Comparing.equal(myInitialName, mySdk.getName())) {
       if (mySdk.getName().isEmpty()) {
         throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
@@ -183,24 +222,34 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public void reset() {
-    final SdkModificator sdkModificator = mySdk.getSdkModificator();
-    for (OrderRootType type : myPathEditors.keySet()) {
-      myPathEditors.get(type).reset(sdkModificator);
+    myIsDownloading = SdkDownload.EP_NAME.findFirstSafe(it -> it.addChangesListener(mySdk, myDisposable, myDownloadProgressListener)) != null;
+    if (!myIsDownloading) {
+      final SdkModificator sdkModificator = mySdk.getSdkModificator();
+      for (OrderRootType type : myPathEditors.keySet()) {
+        myPathEditors.get(type).reset(sdkModificator);
+      }
+      sdkModificator.commitChanges();
     }
-    sdkModificator.commitChanges();
+
     setHomePathValue(FileUtil.toSystemDependentName(ObjectUtils.notNull(mySdk.getHomePath(), "")));
     myVersionString = null;
     myHomeFieldLabel.setText(getHomeFieldLabelValue());
-    updateAdditionalDataComponent();
 
-    for (final AdditionalDataConfigurable configurable : getAdditionalDataConfigurable()) {
-      configurable.reset();
-    }
+    myTabbedPane.getComponent().setVisible(!myIsDownloading);
+    myAdditionalDataPanel.setVisible(!myIsDownloading);
+    myDownloadingPanel.setVisible(myIsDownloading);
+    myHomeComponent.setEnabled(!myIsDownloading);
 
-    myHomeComponent.setEnabled(true);
+    if (!myIsDownloading) {
+      updateAdditionalDataComponent();
 
-    for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
-      myTabbedPane.setEnabledAt(i, true);
+      for (final AdditionalDataConfigurable configurable : getAdditionalDataConfigurable()) {
+        configurable.reset();
+      }
+
+      for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
+        myTabbedPane.setEnabledAt(i, true);
+      }
     }
   }
 
