@@ -91,6 +91,11 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
     myChangeProcessor.updateRequest(true);
   }
 
+  @NotNull
+  protected PreviewDiffVirtualFile getVcsContentFile() {
+    return myPreviewDiffVirtualFile;
+  }
+
   private static class MyDiffPreviewProvider implements DiffPreviewProvider {
     @NotNull
     private final DiffRequestProcessor myChangeProcessor;
