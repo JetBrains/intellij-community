@@ -3,10 +3,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl
 
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 
 enum class InvocationKind {
   EXACTLY_ONCE,
@@ -64,17 +66,22 @@ private val trustedMethodsForExecutingManyTimes: Set<String> = setOf(
   "upto"
 )
 
+private val knownMethods = trustedMethodsForExecutingManyTimes union trustedMethodsForExecutingOnce
+
 fun getInvocationKind(block: GrFunctionalExpression?): InvocationKind {
   block ?: return InvocationKind.UNKNOWN
-  when (val statement = ControlFlowUtils.getContainingNonTrivialStatement(block)) {
+  when (val statement = skipParentheses(block, true)?.parentOfType<GrStatement>()) {
     is GrMethodCall -> {
+      if (statement.invokedExpression.lastChild.text !in knownMethods) {
+        return InvocationKind.UNKNOWN
+      }
       val resolvedStatement = statement.multiResolve(false).firstOrNull()?.element as? GrGdkMethod
-      return when {
-        resolvedStatement == null -> InvocationKind.UNKNOWN
-        resolvedStatement.name in trustedMethodsForExecutingOnce -> InvocationKind.EXACTLY_ONCE
-        resolvedStatement.name in trustedMethodsForExecutingManyTimes -> InvocationKind.UNDETERMINED
+      return when (resolvedStatement?.name) {
+        in trustedMethodsForExecutingOnce -> InvocationKind.EXACTLY_ONCE
+        in trustedMethodsForExecutingManyTimes -> InvocationKind.UNDETERMINED
         else -> return InvocationKind.UNKNOWN
       }
+
     }
     else -> return InvocationKind.UNKNOWN
   }

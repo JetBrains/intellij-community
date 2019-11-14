@@ -1428,4 +1428,27 @@ def foo() {
 }
 ''', null
   }
+
+  void 'test other statements inside closure'() {
+    doTest '''
+def method() {
+    def list = []
+
+    [1].each { bar ->
+        bar
+        <caret>list
+    }
+}''', "java.util.List"
+  }
+
+  void 'test use dfa results from conditional branch'() {
+    doTest '''
+def foo(def bar) {
+    if (bar instanceof String) {
+        10.with {
+            <caret>bar
+        }
+    }
+}''', JAVA_LANG_STRING
+  }
 }

@@ -11,7 +11,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ClosureFlowUtil;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
@@ -20,10 +23,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -99,7 +100,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else {
       DFAType type = state.getVariableType(descriptor);
-      if (type == null) {
+      if (type == null && myInteresting.contains(instruction)) {
         PsiType initialType = myInitialTypeProvider.initialType(descriptor);
         if (initialType != null) {
           updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
@@ -168,48 +169,54 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
   }
 
-
   private void handleClosureBlock(@NotNull TypeDfaState state, @NotNull GrClosableBlock element) {
     InvocationKind kind = ClosureFlowUtil.getInvocationKind(element);
-    if (InvocationKind.EXACTLY_ONCE.equals(kind)) {
-      collectClosureBlockResults(state, element, (type, descriptor) -> {
-        return type == null ? null : DFAType.create(type);
-      });
-    }
-    else if (InvocationKind.UNDETERMINED.equals(kind)) {
-      collectClosureBlockResults(state, element, (type, descriptor) -> {
-        DFAType innerType = DFAType.create(type);
-        DFAType existingType = state.getVariableType(descriptor);
-        return existingType == null || type == null ? null : DFAType.create(innerType, existingType, element.getManager());
-      });
+    switch (kind) {
+      case EXACTLY_ONCE:
+        collectClosureBlockResults(state, element, (nestedState) -> {
+          for (Map.Entry<VariableDescriptor, DFAType> entry : nestedState.getVarTypes().entrySet()) {
+            VariableDescriptor descriptor = myCache.findDescriptor(entry.getKey().getName());
+            DFAType inferredType = entry.getValue();
+            state.putType(descriptor, inferredType);
+          }
+        });
+        break;
+      case UNDETERMINED:
+        collectClosureBlockResults(state, element, (nestedState) -> {
+          for (Map.Entry<VariableDescriptor, DFAType> entry : nestedState.getVarTypes().entrySet()) {
+            VariableDescriptor descriptor = myCache.findDescriptor(entry.getKey().getName());
+            DFAType inferredType = entry.getValue();
+            DFAType existingType = state.getVariableType(descriptor);
+            if (existingType != null) {
+              state.putType(descriptor, DFAType.create(inferredType, existingType, element.getManager()));
+            }
+          }
+        });
+        break;
+      case UNKNOWN:
+        break;
     }
   }
 
   private void collectClosureBlockResults(@NotNull TypeDfaState state,
                                           @NotNull GrClosableBlock block,
-                                          @NotNull BiFunction<? super PsiType, ? super VariableDescriptor, ? extends DFAType> typeProducer) {
+                                          @NotNull Consumer<? super TypeDfaState> typeProducer) {
+    InferenceCache nestedCache = TypeInferenceHelper.getInferenceCache(block);
+    VariableDescriptor targetDescriptor = myCache.getTargetDescriptor();
+    if (targetDescriptor == null) {
+      return;
+    }
+    VariableDescriptor nestedDescriptor = nestedCache.findDescriptor(targetDescriptor.getName());
+    if (nestedDescriptor == null) {
+      return;
+    }
     Instruction[] nestedFlow = block.getControlFlow();
     Instruction lastNestedInstruction = nestedFlow[nestedFlow.length - 1];
-    Set<VariableDescriptor> descriptors = myInteresting.stream()
-      .map((instruction) -> {
-        if (instruction instanceof ReadWriteVariableInstruction) {
-          return ((ReadWriteVariableInstruction)instruction).getDescriptor();
-        }
-        else {
-          return null;
-        }
-      })
-      .filter(Objects::nonNull)
-      .collect(Collectors.toSet());
-    for (VariableDescriptor descriptor : descriptors) {
-      PsiType inferredType = TypeInferenceHelper.getInferredType(descriptor, lastNestedInstruction, block);
-      if (inferredType == null) {
-        inferredType = TypeInferenceHelper.getInferredType(new VariableNameDescriptor(descriptor.getName()), lastNestedInstruction, block);
-      }
-      DFAType type = typeProducer.apply(inferredType, descriptor);
-      if (type != null) {
-        state.putType(descriptor, type);
-      }
+    myCache.saveCurrentState(block, state);
+    TypeInferenceHelper.getInferredType(nestedDescriptor, lastNestedInstruction, block);
+    TypeDfaState lastState = nestedCache.getCurrentState(block);
+    if (lastState != null) {
+      typeProducer.accept(lastState);
     }
   }
 }

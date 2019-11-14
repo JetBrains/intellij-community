@@ -446,6 +446,7 @@ class Cl {
   }
 
   void 'test constructor  parameter'() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     testHighlighting '''
 import groovy.transform.CompileStatic
 
