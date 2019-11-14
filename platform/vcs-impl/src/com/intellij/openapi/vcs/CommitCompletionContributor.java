@@ -23,7 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -65,32 +65,26 @@ public class CommitCompletionContributor extends CompletionContributor {
       ProgressManager.checkCanceled();
       for (Change change : list.getChanges()) {
         ProgressManager.checkCanceled();
-        if (change.getAfterRevision() == null) {
-          ContentRevision revision = change.getBeforeRevision();
-          if (revision != null) {
-            FilePath filePath = revision.getFile();
-            LookupElementBuilder element = LookupElementBuilder.create(filePath.getName())
-              .withStrikeoutness(true).withIcon(filePath.getFileType().getIcon());
+        FilePath beforePath = ChangesUtil.getBeforePath(change);
+        FilePath afterPath = ChangesUtil.getAfterPath(change);
+        if (afterPath == null) {
+          if (beforePath != null) {
+            LookupElementBuilder element = LookupElementBuilder.create(beforePath.getName())
+              .withStrikeoutness(true).withIcon(beforePath.getFileType().getIcon());
             insensitive.addElement(element);
           }
         }
         else {
-          ContentRevision revision = change.getAfterRevision();
-          if (revision != null) {
-            FilePath filePath = revision.getFile();
-            LookupElementBuilder element = LookupElementBuilder.create(filePath.getName())
-              .withIcon(filePath.getFileType().getIcon());
-            insensitive.addElement(element);
-            ContentRevision beforeRevision = change.getBeforeRevision();
-            if (beforeRevision != null) {
-              FilePath beforeFile = beforeRevision.getFile();
-              if (!beforeFile.getName().equals(filePath.getName())) {
-                insensitive.addElement(LookupElementBuilder.create(beforeFile.getName())
-                  .withStrikeoutness(true).withIcon(beforeFile.getFileType().getIcon()));
-              }
+          LookupElementBuilder element = LookupElementBuilder.create(afterPath.getName())
+            .withIcon(afterPath.getFileType().getIcon());
+          insensitive.addElement(element);
+          if (beforePath != null) {
+            if (!beforePath.getName().equals(afterPath.getName())) {
+              insensitive.addElement(LookupElementBuilder.create(beforePath.getName())
+                                       .withStrikeoutness(true).withIcon(beforePath.getFileType().getIcon()));
             }
-            addLanguageSpecificElements(project, count, prefixed, filePath);
           }
+          addLanguageSpecificElements(project, count, prefixed, afterPath);
         }
       }
 
