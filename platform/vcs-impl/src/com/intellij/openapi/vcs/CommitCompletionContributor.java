@@ -58,7 +58,7 @@ public class CommitCompletionContributor extends CompletionContributor {
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     if (count == 0 && prefix.length() < 5) return;
-    CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(
+    CompletionResultSet resultSet = result.caseInsensitive().withPrefixMatcher(
       count == 0 ? new PlainPrefixMatcher(prefix, true) : new CamelHumpMatcher(prefix));
     CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));
     for (ChangeList list : lists) {
@@ -67,24 +67,14 @@ public class CommitCompletionContributor extends CompletionContributor {
         ProgressManager.checkCanceled();
         FilePath beforePath = ChangesUtil.getBeforePath(change);
         FilePath afterPath = ChangesUtil.getAfterPath(change);
-        if (afterPath == null) {
-          if (beforePath != null) {
-            LookupElementBuilder element = LookupElementBuilder.create(beforePath.getName())
-              .withStrikeoutness(true).withIcon(beforePath.getFileType().getIcon());
-            insensitive.addElement(element);
-          }
-        }
-        else {
-          LookupElementBuilder element = LookupElementBuilder.create(afterPath.getName())
-            .withIcon(afterPath.getFileType().getIcon());
-          insensitive.addElement(element);
-          if (beforePath != null) {
-            if (!beforePath.getName().equals(afterPath.getName())) {
-              insensitive.addElement(LookupElementBuilder.create(beforePath.getName())
-                                       .withStrikeoutness(true).withIcon(beforePath.getFileType().getIcon()));
-            }
-          }
+        if (afterPath != null) {
+          addFilePathName(resultSet, afterPath, false);
           addLanguageSpecificElements(project, count, prefixed, afterPath);
+        }
+        if (beforePath != null) {
+          if (afterPath == null || !beforePath.getName().equals(afterPath.getName())) {
+            addFilePathName(resultSet, beforePath, true);
+          }
         }
       }
 
@@ -97,6 +87,12 @@ public class CommitCompletionContributor extends CompletionContributor {
               .map(lookupString -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(lookupString), Integer.MIN_VALUE)));
       }
     }
+  }
+
+  private static void addFilePathName(CompletionResultSet resultSet, FilePath filePath, boolean strikeout) {
+    resultSet.addElement(LookupElementBuilder.create(filePath.getName())
+                           .withIcon(filePath.getFileType().getIcon())
+                           .withStrikeoutness(strikeout));
   }
 
   private static void addLanguageSpecificElements(Project project, int count, CompletionResultSet prefixed, FilePath filePath) {
