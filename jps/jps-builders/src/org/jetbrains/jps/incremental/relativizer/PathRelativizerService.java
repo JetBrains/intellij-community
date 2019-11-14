@@ -69,7 +69,9 @@ public class PathRelativizerService {
       relativePath = relativizer.toRelativePath(systemIndependentPath);
       if (relativePath != null) return relativePath;
     }
-    myUnhandledPaths.add(path);
+    if (LOG.isDebugEnabled()) {
+      myUnhandledPaths.add(path);
+    }
     return systemIndependentPath;
   }
 
