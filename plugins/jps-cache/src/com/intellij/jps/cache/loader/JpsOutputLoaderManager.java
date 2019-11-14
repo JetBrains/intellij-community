@@ -76,9 +76,9 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       }
     };
 
+    if (!canRunNewLoading()) return;
     BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
     processIndicator.setIndeterminate(false);
-    if (!canRunNewLoading()) return;
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
   }
 
