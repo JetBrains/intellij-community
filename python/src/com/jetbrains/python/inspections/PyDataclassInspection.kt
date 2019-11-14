@@ -386,7 +386,7 @@ class PyDataclassInspection : PyInspection() {
       }
 
       if (dataclassParameters.order && cmpMethods.isNotEmpty()) {
-        cmpMethods.forEach { problems.add(it to "cmp") }
+        cmpMethods.forEach { problems.add(it to "cmp/order") }
       }
 
       if (dataclassParameters.frozen && mutatingMethods.isNotEmpty()) {
@@ -407,7 +407,7 @@ class PyDataclassInspection : PyInspection() {
 
       if (dataclassParameters.order && dataclassParameters.frozen && hashMethod != null) {
         registerProblem(hashMethod?.nameIdentifier,
-                        "'${PyNames.HASH}' is ignored if the class already defines 'cmp' and 'frozen' parameters",
+                        "'${PyNames.HASH}' is ignored if the class already defines 'cmp/order' and 'frozen' parameters",
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
     }

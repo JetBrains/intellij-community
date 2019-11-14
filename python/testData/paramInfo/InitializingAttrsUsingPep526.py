@@ -71,3 +71,10 @@ class F1:
     baz: str
 
 F1(<arg8>)
+
+
+@attr.dataclass(unknown=True)
+class G1:
+    bar: str
+
+G1(<arg9>)

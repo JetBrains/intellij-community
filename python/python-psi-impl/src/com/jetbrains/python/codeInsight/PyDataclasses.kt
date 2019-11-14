@@ -26,7 +26,8 @@ const val DUNDER_POST_INIT: String = "__post_init__"
 const val DUNDER_ATTRS_POST_INIT: String = "__attrs_post_init__"
 
 private val STD_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen")
-private val ATTRS_PARAMETERS = listOf("these", "repr_ns", "repr", "cmp", "hash", "init", "slots", "frozen", "str", "auto_attribs")
+private val ATTRS_PARAMETERS = listOf("these", "repr_ns", "repr", "cmp", "hash", "init", "slots", "frozen", "weakref_slot", "str",
+                                      "auto_attribs", "kw_only", "cache_hash", "auto_exc", "eq", "order")
 
 /**
  * It should be used only to map arguments to parameters and
@@ -65,16 +66,15 @@ fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclas
  * @see parseStdDataclassParameters
  * @see parseDataclassParameters
  */
-fun parseDataclassParametersForStub(cls: PyClass): PyDataclassParameters? = parseDataclassParametersFromAST(
-  cls, null)
+fun parseDataclassParametersForStub(cls: PyClass): PyDataclassParameters? = parseDataclassParametersFromAST(cls, null)
 
-fun resolvesToOmittedDefault(expression: PyExpression, type: PyDataclassParameters.Type): Boolean {
+fun resolvesToOmittedDefault(expression: PyExpression, type: Type): Boolean {
   if (expression is PyReferenceExpression) {
     val qNames = PyResolveUtil.resolveImportedElementQNameLocally(expression)
 
     return when (type) {
-      PyDataclassParameters.Type.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
-      PyDataclassParameters.Type.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
+      Type.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
+      Type.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
     }
   }
 
@@ -85,7 +85,7 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: PyDataclassParamete
  * It should be used only to map arguments to parameters and
  * determine what settings dataclass has.
  */
-private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<PyKnownDecoratorUtil.KnownDecorator, PyDataclassParameters.Type, List<PyCallableParameter>>> {
+private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<KnownDecorator, Type, List<PyCallableParameter>>> {
   val generator = PyElementGenerator.getInstance(project)
   val ellipsis = generator.createEllipsis()
 
@@ -118,19 +118,16 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         context ?: TypeEvalContext.codeInsightFallback(cls.project)
       )
 
-      if (mapping.unmappedArguments.isEmpty() && mapping.unmappedParameters.isEmpty()) {
-        val builder = PyDataclassParametersBuilder(decoratorAndTypeAndMarkedCallee.second,
-                                                                                    decoratorAndTypeAndMarkedCallee.first, cls)
+      val builder = PyDataclassParametersBuilder(decoratorAndTypeAndMarkedCallee.second, decoratorAndTypeAndMarkedCallee.first, cls)
 
-        mapping
-          .mappedParameters
-          .entries
-          .forEach {
-            builder.update(it.value.name, it.key)
-          }
+      mapping
+        .mappedParameters
+        .entries
+        .forEach {
+          builder.update(it.value.name, it.key)
+        }
 
-        return builder.build()
-      }
+      return builder.build()
     }
   }
 
@@ -181,7 +178,7 @@ data class PyDataclassParameters(val init: Boolean,
   }
 }
 
-private class PyDataclassParametersBuilder(private val type: PyDataclassParameters.Type,
+private class PyDataclassParametersBuilder(private val type: Type,
                                            decorator: KnownDecorator,
                                            anchor: PsiElement) {
 
@@ -197,7 +194,7 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
   private var init = DEFAULT_INIT
   private var repr = DEFAULT_REPR
   private var eq = DEFAULT_EQ
-  private var order = if (type == PyDataclassParameters.Type.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
+  private var order = if (type == Type.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
   private var unsafeHash = DEFAULT_UNSAFE_HASH
   private var frozen = DEFAULT_FROZEN
 
@@ -211,7 +208,7 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
   private val others = mutableMapOf<String, PyExpression>()
 
   init {
-    if (type == PyDataclassParameters.Type.ATTRS && decorator == KnownDecorator.ATTR_DATACLASS) {
+    if (type == Type.ATTRS && decorator == KnownDecorator.ATTR_DATACLASS) {
       PyElementGenerator.getInstance(anchor.project)
         .createExpressionFromText(LanguageLevel.forElement(anchor), PyNames.TRUE)
         .also { others["auto_attribs"] = it }
@@ -233,14 +230,13 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
         return
       }
       "frozen" -> {
-        frozen = PyEvaluator.evaluateAsBoolean(value,
-                                               DEFAULT_FROZEN)
+        frozen = PyEvaluator.evaluateAsBoolean(value, DEFAULT_FROZEN)
         frozenArgument = argument
         return
       }
     }
 
-    if (type == PyDataclassParameters.Type.STD) {
+    if (type == Type.STD) {
       when (name) {
         "eq" -> {
           eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
@@ -248,21 +244,34 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
           return
         }
         "order" -> {
-          order = PyEvaluator.evaluateAsBoolean(value,
-                                                DEFAULT_ORDER)
+          order = PyEvaluator.evaluateAsBoolean(value, DEFAULT_ORDER)
           orderArgument = argument
           return
         }
         "unsafe_hash" -> {
-          unsafeHash = PyEvaluator.evaluateAsBoolean(value,
-                                                     DEFAULT_UNSAFE_HASH)
+          unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
           unsafeHashArgument = argument
           return
         }
       }
     }
-    else if (type == PyDataclassParameters.Type.ATTRS) {
+    else if (type == Type.ATTRS) {
       when (name) {
+        "eq" -> {
+          eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+          eqArgument = argument
+
+          if (orderArgument == null) {
+            order = eq
+            orderArgument = eqArgument
+          }
+        }
+        "order" -> {
+          if (argument !is PyNoneLiteralExpression) {
+            order = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+            orderArgument = argument
+          }
+        }
         "cmp" -> {
           eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
           eqArgument = argument
@@ -272,8 +281,7 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
           return
         }
         "hash" -> {
-          unsafeHash = PyEvaluator.evaluateAsBoolean(value,
-                                                     DEFAULT_UNSAFE_HASH)
+          unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
           unsafeHashArgument = argument
           return
         }
@@ -286,7 +294,6 @@ private class PyDataclassParametersBuilder(private val type: PyDataclassParamete
   }
 
   fun build() = PyDataclassParameters(init, repr, eq, order, unsafeHash, frozen,
-                                                                       initArgument, reprArgument, eqArgument, orderArgument,
-                                                                       unsafeHashArgument, frozenArgument,
-                                                                       type, others)
+                                      initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument,
+                                      type, others)
 }
