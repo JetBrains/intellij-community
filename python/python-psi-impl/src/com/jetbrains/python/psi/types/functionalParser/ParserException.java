@@ -34,7 +34,7 @@ public final class ParserException extends Exception {
   }
 
   @Override
-  public synchronized Throwable fillInStackTrace() {
+  public Throwable fillInStackTrace() {
     return this;
   }
 }
