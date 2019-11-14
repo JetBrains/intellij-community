@@ -91,7 +91,6 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                     avatarLabel.icon = resizeIcon(icon, 50)
                 }
                 return JPanel(GridBagLayout()).apply {
-                    // TODO: load real user icon
                     var gbc = GridBag().nextLine().next().anchor(GridBag.LINE_START).insetRight(UIUtil.DEFAULT_HGAP)
                     add(avatarLabel, gbc)
                     gbc = gbc.next().weightx(1.0).anchor(GridBag.WEST)
