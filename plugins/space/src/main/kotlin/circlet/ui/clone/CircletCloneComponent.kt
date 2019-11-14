@@ -45,7 +45,8 @@ import kotlin.properties.*
 internal class CircletCloneComponent(val project: Project,
                                      private val git: Git) : VcsCloneDialogExtensionComponent() {
     // state
-    private val uiLifetime: LifetimeSource = LifetimeSource()
+    private val uiLifetime = LifetimeSource()
+
     private var loginState: MutableProperty<CircletLoginState> = mutableProperty(initialState())
 
     private fun initialState(): CircletLoginState {
@@ -69,20 +70,21 @@ internal class CircletCloneComponent(val project: Project,
             }
         }
 
-        loginState.forEach(uiLifetime) { st ->
-            val view = createView(st)
+        loginState.view(uiLifetime) { lt, st ->
+            val view = createView(lt, st)
             view.border = JBUI.Borders.empty(8, 12)
             wrapper.setContent(view)
             wrapper.repaint()
         }
     }
 
-    private fun createView(st: CircletLoginState): JComponent {
+
+    private fun createView(lifetime: Lifetime, st: CircletLoginState): JComponent {
         dialogStateListener.onOkActionEnabled(false)
         return when (st) {
             is CircletLoginState.Connected -> {
                 dialogStateListener.onListItemChanged()
-                cloneView = CloneView(uiLifetime.nested(), project, dialogStateListener, st)
+                cloneView = CloneView(lifetime, project, dialogStateListener, st)
                 cloneView.getView()
             }
 
@@ -184,6 +186,15 @@ private class CloneView(
                 list.selectedIndex = selectedIndex
             }
         }
+
+        override fun addAll(index: Int, elements: MutableList<out CircletCloneListItem>) {
+            super.addAll(index, elements)
+            elements.forEachIndexed() { i, element ->
+                element.repoDetails.forEach(uiLifetime) { details ->
+                    fireContentsChanged(this, index + i, index + i)
+                }
+            }
+        }
     }
     val client: KCircletClient = st.workspace.client
     val circletImageLoader = CircletImageLoader(uiLifetime, client)
@@ -206,7 +217,17 @@ private class CloneView(
 
     val accountLabel = JLabel()
 
+    val cloneViewModel = CircletCloneComponentViewModel(
+        uiLifetime,
+        st.workspace,
+        client.pr,
+        client.repoService,
+        client.star,
+        circletImageLoader
+    )
+
     init {
+
         searchTextField.addDocumentListener(object : DocumentAdapter() {
             override fun textChanged(e: DocumentEvent) {
                 onSelectedUrlChanged()
@@ -214,25 +235,14 @@ private class CloneView(
         })
 
 
-        val cloneViewModel = CircletCloneComponentViewModel(
-            uiLifetime,
-            st.workspace,
-            client.pr,
-            client.repoService,
-            client.star,
-            circletImageLoader
-        )
 
         cloneViewModel.me.forEach(uiLifetime) { profile ->
             accountLabel.toolTipText = profile.englishFullName()
         }
 
-        cloneViewModel.allProjectsWithReposAndDetails.forEach(uiLifetime) { allProjectsWithReposAndDetails ->
-            if (allProjectsWithReposAndDetails == null) {
-                return@forEach
-            }
+        cloneViewModel.repos.elements.forEach(uiLifetime) { allProjectsWithReposAndDetails ->
             launch(uiLifetime, ApplicationUiDispatch.coroutineContext) {
-                allProjectsWithReposAndDetails.forEach(listModel::add)
+                listModel.addAll(listModel.items.count(), allProjectsWithReposAndDetails.drop(listModel.items.count()))
             }
         }
 
@@ -289,9 +299,50 @@ private class CloneView(
                 }
             }
             row {
-                val scrollableList = ScrollPaneFactory.createScrollPane(list,
-                                                                        ScrollPaneFactory.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                        ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER)
+                val scrollableList = ScrollPaneFactory.createScrollPane(
+                    list,
+                    ScrollPaneFactory.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER)
+
+
+                var pro = false
+
+                val sl1 = SequentialLifetimes(uiLifetime)
+                val sl2 = SequentialLifetimes(uiLifetime)
+
+                lateinit var scrollUpdater: () -> Unit
+                scrollUpdater = {
+                    launch(sl1.next(), Ui) {
+                        delay(300)
+                        while (pro) {
+                            delay(300)
+                        }
+                        val first = list.firstVisibleIndex
+                        val last = list.lastVisibleIndex
+                        if (first >= 0 && last >= 0) {
+                            (first..last).forEach {
+                                val el = list.model.getElementAt(it)
+                                el.visible.value = true
+                            }
+                        }
+                    }
+                    launch(sl2.next(), Ui) {
+                        val last = list.lastVisibleIndex
+                        if (!pro) {
+                            if (list.model.size < last + 10 && cloneViewModel.repos.hasMore.value) {
+                                pro = true
+                                launch(uiLifetime, Ui) {
+                                    cloneViewModel.repos.more()
+                                    pro = false
+                                    scrollUpdater()
+                                }
+                            }
+                        }
+                    }
+                }
+                scrollableList.verticalScrollBar.addAdjustmentListener {
+                    scrollUpdater()
+                }
                 scrollableList(push, grow)
             }
             row("Directory:") {

@@ -1,18 +1,21 @@
 package circlet.ui.clone
 
 import circlet.client.api.*
+import circlet.platform.api.*
+import circlet.platform.client.*
 import circlet.ui.*
 import circlet.workspaces.*
 import com.intellij.util.concurrency.*
 import com.intellij.util.ui.cloneDialog.*
 import kotlinx.coroutines.*
 import libraries.coroutines.extra.*
+import runtime.*
 import runtime.reactive.*
 import java.awt.image.*
 
 class CircletCloneComponentViewModel(
     override val lifetime: Lifetime,
-    workspace: Workspace,
+    private val workspace: Workspace,
     private val projectService: Projects,
     private val repositoryService: RepositoryService,
     private val starService: Star,
@@ -37,12 +40,12 @@ class CircletCloneComponentViewModel(
         isLoading.value = true
     }
 
-    val allProjectsWithReposAndDetails: Property<List<CircletCloneListItem>?> = mapInit(null) {
-        startLoading()
-        val list = withContext(lifetime, appDispatcher) {
-            val allProjects = projectService.projects(null, null).asList()
+    val repos = xTransformedPagedListOnFlux<PR_Project, CircletCloneListItem>(
+        client = workspace.client,
+        batchSize = 10,
+        keyFn = { it.id },
+        result = { allProjects ->
             val projectsWithRepos = repositoryService.getRepositories(allProjects.map { project -> project.key })
-
             val starredProjectKeys = starService.starredProjects().map(PR_Project::key).toHashSet()
 
             val result = mutableListOf<CircletCloneListItem>()
@@ -52,18 +55,27 @@ class CircletCloneComponentViewModel(
                 val isStarred = starredProjectKeys.contains(project.key)
 
                 for (repo in prRepos.repos) {
-                    val detailsProperty: MutableProperty<RepoDetails?> = mapInit(null) {
-                        repositoryService.repositoryDetails(project.key, repo.name)
+                    val detailsProperty = mutableProperty<RepoDetails?>(null)
+                    val item = CircletCloneListItem(project, isStarred, repo, detailsProperty)
+                    item.visible.forEach(lifetime) {
+                        item.visible.forEach(lifetime) {
+                            launch(lifetime, Ui) {
+                                if (it) {
+                                    detailsProperty.value = repositoryService.repositoryDetails(project.key, repo.name)
+                                }
+                            }
+                        }
                     }
-                    result.add(CircletCloneListItem(project, isStarred, repo, detailsProperty))
+                    result.add(item)
+
                 }
             }
-            result.sort()
             result
         }
-        stopLoading()
-        list
+    ) { batch ->
+        projectService.projectsBatch(batch, "", "", false)
     }
+
 }
 
 data class CircletCloneListItem(
@@ -72,6 +84,8 @@ data class CircletCloneListItem(
     val repoInfo: PR_RepositoryInfo,
     val repoDetails: Property<RepoDetails?>
 ) : SearchableListItem, Comparable<CircletCloneListItem> {
+
+    val visible = mutableProperty(false)
 
     override val stringToSearch: String
         get() = repoInfo.name

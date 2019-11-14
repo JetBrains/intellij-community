@@ -30,7 +30,7 @@ internal fun buildConnectingPanel(st: CircletLoginState.Connecting, cancelAction
         val cancelButton = JButton("Cancel").apply {
             addActionListener { cancelAction() }
         }
-        row("Connection to ${st.server}\u2026") {
+        row("Connecting to ${st.server}\u2026") {
             cancelButton()
         }
     }
