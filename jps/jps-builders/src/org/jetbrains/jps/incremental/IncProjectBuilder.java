@@ -247,7 +247,7 @@ public class IncProjectBuilder {
     }
     final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
     final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
-    if (timeThreshold < 0) {
+    if (timeThreshold <= 0) {
       return; // no stats available
     }
     // check that this is a whole-project incremental build
