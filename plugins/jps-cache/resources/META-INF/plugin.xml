@@ -14,11 +14,8 @@
   </extensions>
 
   <actions>
-    <group id="JpsCacheLoaderActions" text="Jps Cache Loader" popup="true">
-      <separator/>
-      <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches"/>
+    <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches">
       <add-to-group group-id="BuildMenu" anchor="last"/>
-      <separator/>
-    </group>
+    </action>
   </actions>
 </idea-plugin>
