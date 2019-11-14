@@ -294,7 +294,6 @@
     <lang.ast.factory language="XHTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
     <lang.ast.factory language="JAVA_HOLDER_METHOD_TREE" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.XmlCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.HtmlCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettings"/>
 

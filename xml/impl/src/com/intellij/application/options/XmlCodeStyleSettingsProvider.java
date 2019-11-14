@@ -24,8 +24,9 @@ import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @deprecated Methods moved to {@link XmlLanguageCodeStyleSettingsProvider}
  */
+@Deprecated
 public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   public static final String CONFIGURABLE_DISPLAY_NAME = ApplicationBundle.message("title.xml");
