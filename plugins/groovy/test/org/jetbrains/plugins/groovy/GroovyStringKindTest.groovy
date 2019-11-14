@@ -22,8 +22,8 @@ class GroovyStringKindTest extends GroovyLatestTest {
   @Test
   void 'escape single quoted'() {
     doEscapeTests SINGLE_QUOTED, [
-//      '\n'  : /\n/,
-//      '\r'  : /\r/,
+      '\n'  : /\n/,
+      '\r'  : /\r/,
       '\b'  : /\b/,
       '\t'  : /\t/,
       '\f'  : /\f/,
@@ -114,7 +114,7 @@ class GroovyStringKindTest extends GroovyLatestTest {
   @Test
   void 'escape slashy'() {
     doEscapeTests SLASHY, [
-      '\n'  : '\\u000A',
+      '\n'  : '\n',
       '\r'  : '\\u000D',
       '\b'  : '\\u0008',
       '\t'  : '\\u0009',
@@ -130,7 +130,7 @@ class GroovyStringKindTest extends GroovyLatestTest {
   @Test
   void 'escape dollar slashy'() {
     doEscapeTests DOLLAR_SLASHY, [
-      '\n'            : '\\u000A',
+      '\n'            : '\n',
       '\r'            : '\\u000D',
       '\b'            : '\\u0008',
       '\t'            : '\\u0009',

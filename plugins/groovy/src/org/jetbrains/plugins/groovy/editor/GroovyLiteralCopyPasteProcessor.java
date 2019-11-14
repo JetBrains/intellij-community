@@ -77,9 +77,13 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     @NonNls String breaker = stringKind.getLineBreaker();
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
     for (int i = 0; i < lines.length; i++) {
-      buffer.append(escape(stringKind, lines[i]));
-      if (i != lines.length - 1 || "\n".equals(breaker) && text.endsWith("\n")) {
+      String line = lines[i];
+      buffer.append(escape(stringKind, line));
+      if (i != lines.length - 1) {
         buffer.append(breaker);
+      }
+      else if (text.endsWith("\n")) {
+        buffer.append(stringKind.escape("\n"));
       }
     }
     return buffer.toString();
@@ -102,6 +106,9 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
 
   @NotNull
   private static String escape(@NotNull StringKind kind, @NotNull String s) {
+    if (s.isEmpty()) {
+      return s;
+    }
     if (kind != StringKind.DOUBLE_QUOTED && kind != StringKind.TRIPLE_DOUBLE_QUOTED) {
       return kind.escape(s);
     }
