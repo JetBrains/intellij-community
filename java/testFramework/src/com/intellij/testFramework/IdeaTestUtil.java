@@ -3,10 +3,12 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -17,7 +19,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -27,6 +28,8 @@ import org.junit.Assume;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 @TestOnly
 public class IdeaTestUtil extends PlatformTestUtil {
@@ -144,27 +147,37 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
-  @NotNull
-  public static Sdk getWebMockJdk17() {
-    Sdk jdk = getMockJdk17();
-    jdk=addWebJarsTo(jdk);
-    return jdk;
+  public static void addWebJarsToModule(@NotNull Module module) {
+    ModuleRootModificationUtil.updateModel(module, model -> addWebJarsToModule(model));
   }
 
-  @NotNull
-  @Contract(pure=true)
-  public static Sdk addWebJarsTo(@NotNull Sdk jdk) {
-    try {
-      jdk = (Sdk)jdk.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-    SdkModificator sdkModificator = jdk.getSdkModificator();
-    sdkModificator.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
-    sdkModificator.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
-    sdkModificator.commitChanges();
-    return jdk;
+  public static void removeWebJarsFromModule(@NotNull Module module) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      boolean removed = false;
+      for (OrderEntry entry : model.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry) {
+          LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+          if (libraryOrderEntry.isModuleLevel() && IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME.equals(libraryOrderEntry.getLibraryName())) {
+            model.removeOrderEntry(entry);
+            removed = true;
+            // do not break here to remove all matched entries
+          }
+        }
+      }
+      assertTrue("Module library " + IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME + " was not found in module " + module, removed);
+    });
+  }
+
+  public static final String WEB_JARS_MODULE_LIBRARY_NAME = "webjars";
+
+  public static void addWebJarsToModule(@NotNull ModifiableRootModel model) {
+    LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(WEB_JARS_MODULE_LIBRARY_NAME);
+    LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
+
+    libraryModel.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
+    libraryModel.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
+
+    WriteAction.runAndWait(libraryModel::commit);
   }
 
   @NotNull
@@ -213,7 +226,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static void compileFile(@NotNull File source, @NotNull File out, @NotNull String... options) {
-    Assert.assertTrue("source does not exist: " + source.getPath(), source.isFile());
+    assertTrue("source does not exist: " + source.getPath(), source.isFile());
 
     List<String> args = new ArrayList<>();
     args.add("-d");
