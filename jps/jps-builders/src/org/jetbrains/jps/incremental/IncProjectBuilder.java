@@ -13,7 +13,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.io.MappingFailedException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -30,6 +29,7 @@ import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -63,6 +63,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
@@ -163,6 +164,7 @@ public class IncProjectBuilder {
 
 
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
+    checkRebuildRequired(scope);
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
@@ -238,10 +240,67 @@ public class IncProjectBuilder {
     }
   }
 
+  private void checkRebuildRequired(final CompileScope scope) throws RebuildRequestedException {
+    if (myIsTestMode) {
+      // do not use the heuristic in tests in order to properly test all cases
+      return;
+    }
+    final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
+    final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
+    if (timeThreshold < 0) {
+      return; // no stats available
+    }
+    // check that this is a whole-project incremental build
+    // checking only JavaModuleBuildTargetType because these target types directly correspond to project modules
+    for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
+      if (!scope.isBuildIncrementally(type) || !scope.isAllTargetsOfTypeAffected(type)) {
+        return;
+      }
+    }
+    // compute estimated times for dirty targets
+    long estimatedWorkTime = 0L;
+
+    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
+      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
+      @Override
+      public boolean test(BuildTarget<?> target) {
+        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
+        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
+      }
+    };
+    final BuildTargetIndex targetIndex = myProjectDescriptor.getBuildTargetIndex();
+    for (BuildTarget<?> target : targetIndex.getAllTargets()) {
+      if (!targetIndex.isDummy(target)) {
+        final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
+        if (avgTimeToBuild > 0) {
+          // 1. in general case this time should include dependency analysis and cache update times
+          // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
+          if (targetsState.getTargetConfiguration(target).isTargetDirty(myProjectDescriptor) && isAffected.test(target)) {
+            estimatedWorkTime += avgTimeToBuild;
+          }
+        }
+      }
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Rebuild heuristic: estimated build time / timeThreshold : " + estimatedWorkTime + " / " + timeThreshold);
+    }
+
+    if (estimatedWorkTime >= timeThreshold) {
+      final String message = "Too many modules require recompilation, forcing full project rebuild";
+      LOG.info(message);
+      LOG.info("Estimated build duration (linear): " + StringUtil.formatDuration(estimatedWorkTime));
+      LOG.info("Last successful rebuild duration (linear): " + StringUtil.formatDuration(targetsState.getLastSuccessfulRebuildDuration()));
+      LOG.info("Rebuild heuristic time threshold: " + StringUtil.formatDuration(timeThreshold));
+      myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message));
+      throw new RebuildRequestedException(null);
+    }
+  }
+
   private void requestRebuild(Exception e, Throwable cause) throws RebuildRequestedException {
-    myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO,
-                                                           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-                                                           e.getMessage()));
+    myMessageDispatcher.processMessage(new CompilerMessage(
+      "", BuildMessage.Kind.INFO, "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
+    );
     throw new RebuildRequestedException(cause);
   }
 
@@ -387,6 +446,9 @@ public class IncProjectBuilder {
     finally {
       if (buildProgress != null) {
         buildProgress.updateExpectedAverageTime();
+        if (context.isProjectRebuild() && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
+          myProjectDescriptor.getTargetsState().setLastSuccessfulRebuildDuration(buildProgress.getAbsoluteBuildTime());
+        }
       }
       for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
         builder.buildFinished(context);
@@ -626,7 +688,7 @@ public class IncProjectBuilder {
       int item = 0;
       for (T elem : collection) {
         item++;
-        if (p.apply(elem)) {
+        if (p.test(elem)) {
           count++;
           if (item > count) {
             return PARTIAL;

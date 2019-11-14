@@ -161,10 +161,10 @@ public class BuildMain {
               fsState.clearAll();
             }
 
-            // preloading target configurations
+            // preloading target configurations and pre-calculating target dirty state
             final BuildTargetsState targetsState = pd.getTargetsState();
             for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-              targetsState.getTargetConfiguration(target);
+              targetsState.getTargetConfiguration(target).isTargetDirty(pd);
             }
 
             //noinspection ResultOfMethodCallIgnored
