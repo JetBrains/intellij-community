@@ -189,15 +189,31 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
   }
 
   @Test
-  void 'multiline paste'() {
-    def from = '<selection>hi\nthere</selection>'
+  void 'paste new line'() {
+    def from = '<selection>\n</selection>'
     def data = [
-      /'<caret>'/    : "'hi\\n' +\n        'there'",
-      /'''<caret>'''/: "'''hi\nthere'''",
-      /"<caret>"/    : '"hi\\n" +\n        "there"',
-      /"""<caret>"""/: '"""hi\nthere"""',
-      '/<caret>/'    : '/hi\nthere/',
-      '$/<caret>/$'  : '$/hi\nthere/$',
+      /'<caret>'/    : "'\\n'",
+      /'''<caret>'''/: "'''\n'''",
+      /"<caret>"/    : '"\\n"',
+      /"""<caret>"""/: '"""\n"""',
+      '/ <caret>/'   : '/ \n/',
+      '$/<caret>/$'  : '$/\n/$',
+    ]
+    RunAll.runAll(data) { to, expected ->
+      doCopyPasteTest(from, to, expected)
+    }.run()
+  }
+
+  @Test
+  void 'multiline paste'() {
+    def from = '<selection>hi\nthere\n</selection>'
+    def data = [
+      /'<caret>'/    : "'hi\\n' +\n        'there\\n'",
+      /'''<caret>'''/: "'''hi\nthere\n'''",
+      /"<caret>"/    : '"hi\\n" +\n        "there\\n"',
+      /"""<caret>"""/: '"""hi\nthere\n"""',
+      '/ <caret>/'   : '/ hi\nthere\n/',
+      '$/<caret>/$'  : '$/hi\nthere\n/$',
     ]
     RunAll.runAll(data) { to, expected ->
       doCopyPasteTest(from, to, expected)
