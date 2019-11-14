@@ -7,6 +7,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.ILazyParseableElementType;
+import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
 import org.intellij.markdown.parser.MarkdownParser;
 import org.intellij.plugins.markdown.lang.lexer.MarkdownMergingLexer;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager;
@@ -25,7 +26,12 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
     final Lexer lexer = new MarkdownMergingLexer();
     final CharSequence chars = chameleon.getChars();
 
-    final org.intellij.markdown.ast.ASTNode node = new MarkdownParser(MarkdownParserManager.FLAVOUR)
+    MarkdownFlavourDescriptor flavour = psi.getContainingFile().getUserData(MarkdownParserManager.FLAVOUR_DESCRIPTION);
+    if (flavour == null) {
+      flavour = MarkdownParserManager.FLAVOUR;
+    }
+
+    final org.intellij.markdown.ast.ASTNode node = new MarkdownParser(flavour)
       .parseInline(MarkdownElementType.markdownType(chameleon.getElementType()), chars, 0, chars.length());
 
     final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
