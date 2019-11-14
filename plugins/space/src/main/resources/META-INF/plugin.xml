@@ -16,7 +16,7 @@
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="space-automation-kts.xml">org.jetbrains.kotlin</depends>
     <depends>com.intellij.modules.vcs</depends>
     <depends>Git4Idea</depends>
 
@@ -51,15 +51,6 @@
             implementation="circlet.ui.clone.CircletCloneExtension"/>
     </extensions>
 
-    <!--pipelines-->
-    <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <scriptDefinitionsProvider
-            id="circletScriptDefinitionsProvider"
-            implementation="circlet.plugins.pipelines.services.CircletScriptDefinitionsProvider"
-            order="first"
-        />
-    </extensions>
-
     <application-components>
         <component>
             <implementation-class>circlet.components.CircletApplicationComponent</implementation-class>
@@ -69,7 +60,6 @@
             <implementation-class>circlet.components.CircletWorkspaceComponent</implementation-class>
         </component>
     </application-components>
-
 
     <actions>
         <action class="circlet.actions.TestCircletAction" text="Test Space..." id="Circlet.TestCircletAction"/>
