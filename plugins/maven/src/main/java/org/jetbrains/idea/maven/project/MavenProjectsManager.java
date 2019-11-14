@@ -852,6 +852,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, true, true);
   }
 
+  public void markDirty(@NotNull MavenProject project) {
+    myWatcher.markDirty(Collections.singletonList(project));
+  }
+
   private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {

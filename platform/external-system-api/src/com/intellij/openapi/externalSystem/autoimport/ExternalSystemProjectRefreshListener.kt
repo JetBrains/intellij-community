@@ -6,7 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface ExternalSystemProjectRefreshListener {
 
+  @JvmDefault
   fun beforeProjectRefresh() {}
 
+  @JvmDefault
   fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {}
 }

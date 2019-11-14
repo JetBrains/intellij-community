@@ -30,6 +30,11 @@ interface ExternalSystemProjectTracker : Disposable {
    */
   fun scheduleProjectRefresh()
 
+  /**
+   * Schedules update of reload notification status
+   */
+  fun scheduleProjectNotificationUpdate()
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ExternalSystemProjectTracker {

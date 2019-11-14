@@ -5,6 +5,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,7 +29,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsManagerWatcher;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -158,22 +158,18 @@ public class MavenModuleBuilderHelper {
 
       if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.getFile().getName())) {
         pomFiles.add(myParentProject.getFile());
-        MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
+        MavenProjectsManager.getInstance(project).markDirty(myParentProject);
       }
 
       for (VirtualFile v : pomFiles) {
-        v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
-        try {
-          Document doc = FileDocumentManager.getInstance().getDocument(v);
-          if (doc != null) {
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-            FileDocumentManager.getInstance().saveDocument(doc);
-          }
-        }
-        finally {
-          v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
+        Document doc = FileDocumentManager.getInstance().getDocument(v);
+        if (doc != null) {
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+          FileDocumentManager.getInstance().saveDocument(doc);
         }
       }
+
+      ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh();
     });
   }
 
