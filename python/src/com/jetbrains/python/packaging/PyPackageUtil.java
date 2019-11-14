@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,12 +46,15 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -519,7 +523,7 @@ public class PyPackageUtil {
       @Nullable
       @Override
       public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-        final Set<VirtualFile> roots = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+        final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
         allEvents:
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent) continue;
@@ -542,5 +546,16 @@ public class PyPackageUtil {
         return null;
       }
     }, disposable);
+  }
+
+  @NotNull
+  private static Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
+    final Set<VirtualFile> result = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
+    final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
+    result.removeIf(vf -> vf.equals(skeletonsRoot) ||
+                          vf.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory()) ||
+                          PyTypeShed.INSTANCE.isInside(vf));
+    return result;
   }
 }
