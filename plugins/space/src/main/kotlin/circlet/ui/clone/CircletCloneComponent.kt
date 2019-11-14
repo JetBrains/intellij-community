@@ -5,7 +5,6 @@ import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.api.oauth.*
 import circlet.platform.client.*
-import circlet.runtime.*
 import circlet.settings.*
 import circlet.settings.log
 import circlet.ui.*
@@ -40,7 +39,6 @@ import java.awt.event.*
 import java.nio.file.*
 import javax.swing.*
 import javax.swing.event.*
-import kotlin.properties.*
 
 internal class CircletCloneComponent(val project: Project,
                                      private val git: Git) : VcsCloneDialogExtensionComponent() {
@@ -156,10 +154,37 @@ internal class CircletCloneComponent(val project: Project,
 }
 
 private class CloneView(
-    private val uiLifetime: Lifetime,
+    private val lifetime: Lifetime,
     private val project: Project,
     private val dialogStateListener: VcsCloneDialogComponentStateListener,
-    private val st: CircletLoginState.Connected) {
+    private val st: CircletLoginState.Connected
+) {
+
+    val selectedUrl = mutableProperty<String?>(null)
+
+    val listModel: CollectionListModel<CircletCloneListItem> = object : CollectionListModel<CircletCloneListItem>() {
+        init {
+            addListDataListener(object : ListDataListener {
+                override fun contentsChanged(e: ListDataEvent?) = Unit
+                override fun intervalRemoved(e: ListDataEvent?) = Unit
+
+                override fun intervalAdded(e: ListDataEvent?) {
+                    e?.let { event ->
+                        (event.index0..event.index1).forEach { item ->
+                            getElementAt(item).repoDetails.forEach(lifetime) { details ->
+                                if (details != null) {
+                                    val selection = circletProjectListWithSearch.list.selectedIndex
+                                    fireContentsChanged(this, item, item)
+                                    circletProjectListWithSearch.list.selectedIndex = selection
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        }
+    }
+
     private val directoryField: SelectChildTextFieldWithBrowseButton = SelectChildTextFieldWithBrowseButton(
         ClonePathProvider.defaultParentDirectoryPath(project, DvcsRememberedInputs())).apply {
         val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -171,54 +196,25 @@ private class CloneView(
                                 fcd)
     }
 
-    private var selectedUrl: String? by Delegates.observable<String?>(null) { _, _, _ ->
-        onSelectedUrlChanged()
-    }
-
-    private val listModel: CollectionListModel<CircletCloneListItem> = object : CollectionListModel<CircletCloneListItem>() {
-        override fun add(element: CircletCloneListItem) {
-            val index = size
-            super.add(element)
-            element.repoDetails.forEach(uiLifetime) { details ->
-                val selectedIndex = list.selectedIndex
-                details ?: return@forEach
-                fireContentsChanged(this, index, index)
-                list.selectedIndex = selectedIndex
-            }
-        }
-
-        override fun addAll(index: Int, elements: MutableList<out CircletCloneListItem>) {
-            super.addAll(index, elements)
-            elements.forEachIndexed() { i, element ->
-                element.repoDetails.forEach(uiLifetime) { details ->
-                    fireContentsChanged(this, index + i, index + i)
-                }
-            }
-        }
-    }
     val client: KCircletClient = st.workspace.client
-    val circletImageLoader = CircletImageLoader(uiLifetime, client)
+    val circletImageLoader = CircletImageLoader(lifetime, client)
 
-    private val circletProjectListWithSearch: ListWithSearchComponent<CircletCloneListItem> =
-        ListWithSearchComponent<CircletCloneListItem>(listModel, CircletCloneListItemRenderer())
+    private val circletProjectListWithSearch = ListWithSearchComponent<CircletCloneListItem>(listModel, CircletCloneListItemRenderer())
 
     private val searchTextField: SearchTextField = circletProjectListWithSearch.searchField
+
     private val list: JBList<CircletCloneListItem> = circletProjectListWithSearch.list.apply {
         addListSelectionListener {
-            if (it.valueIsAdjusting) return@addListSelectionListener
-            val selected = selectedValue
-            if (selected == null) {
-                selectedUrl = null
+            if (it.valueIsAdjusting)
                 return@addListSelectionListener
-            }
-            selectedUrl = selected.repoDetails.value?.urls?.sshUrl
+            selectedUrl.value = selectedValue?.repoDetails?.value?.urls?.sshUrl
         }
     }
 
     val accountLabel = JLabel()
 
     val cloneViewModel = CircletCloneComponentViewModel(
-        uiLifetime,
+        lifetime,
         st.workspace,
         client.pr,
         client.repoService,
@@ -228,29 +224,38 @@ private class CloneView(
 
     init {
 
+        selectedUrl.forEach(lifetime) { su ->
+            dialogStateListener.onOkActionEnabled(su != null)
+            if (su != null) {
+                val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, su), GitUtil.DOT_GIT)
+                directoryField.trySetChildPath(path)
+            }
+        }
+
         searchTextField.addDocumentListener(object : DocumentAdapter() {
             override fun textChanged(e: DocumentEvent) {
-                onSelectedUrlChanged()
+                selectedUrl.value = e.document.getText(0, e.document.length)
             }
         })
 
-
-
-        cloneViewModel.me.forEach(uiLifetime) { profile ->
+        cloneViewModel.me.forEach(lifetime) { profile ->
             accountLabel.toolTipText = profile.englishFullName()
         }
 
-        cloneViewModel.repos.elements.forEach(uiLifetime) { allProjectsWithReposAndDetails ->
-            launch(uiLifetime, ApplicationUiDispatch.coroutineContext) {
-                listModel.addAll(listModel.items.count(), allProjectsWithReposAndDetails.drop(listModel.items.count()))
+        cloneViewModel.repos.elements.forEach(lifetime) { allProjectsWithReposAndDetails ->
+            launch(lifetime, Ui) {
+                val toAdd = allProjectsWithReposAndDetails.drop(listModel.items.count())
+                val selection = circletProjectListWithSearch.list.selectedIndex
+                listModel.addAll(listModel.items.count(), toAdd)
+                circletProjectListWithSearch.list.selectedIndex = selection
             }
         }
 
-        CircletUserAvatarProvider.getInstance().avatar.forEach(uiLifetime) { avatarIcon: Icon ->
+        CircletUserAvatarProvider.getInstance().avatar.forEach(lifetime) { avatarIcon: Icon ->
             accountLabel.icon = resizeIcon(avatarIcon, VcsCloneDialogUiSpec.Components.avatarSize)
         }
 
-        cloneViewModel.isLoading.forEach(uiLifetime, list::setPaintBusy)
+        cloneViewModel.isLoading.forEach(lifetime, list::setPaintBusy)
 
         accountLabel.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent?) {
@@ -279,15 +284,6 @@ private class CloneView(
         })
     }
 
-    private fun onSelectedUrlChanged() {
-        val urlSelected = selectedUrl != null
-        dialogStateListener.onOkActionEnabled(urlSelected)
-        if (urlSelected) {
-            val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl!!), GitUtil.DOT_GIT)
-            directoryField.trySetChildPath(path)
-        }
-    }
-
     fun getView(): DialogPanel {
         return panel {
             val gapLeft = JBUI.scale(VcsCloneDialogUiSpec.Components.innerHorizontalGap)
@@ -304,45 +300,8 @@ private class CloneView(
                     ScrollPaneFactory.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER)
 
+                bindScroll(scrollableList)
 
-                var pro = false
-
-                val sl1 = SequentialLifetimes(uiLifetime)
-                val sl2 = SequentialLifetimes(uiLifetime)
-
-                lateinit var scrollUpdater: () -> Unit
-                scrollUpdater = {
-                    launch(sl1.next(), Ui) {
-                        delay(300)
-                        while (pro) {
-                            delay(300)
-                        }
-                        val first = list.firstVisibleIndex
-                        val last = list.lastVisibleIndex
-                        if (first >= 0 && last >= 0) {
-                            (first..last).forEach {
-                                val el = list.model.getElementAt(it)
-                                el.visible.value = true
-                            }
-                        }
-                    }
-                    launch(sl2.next(), Ui) {
-                        val last = list.lastVisibleIndex
-                        if (!pro) {
-                            if (list.model.size < last + 10 && cloneViewModel.repos.hasMore.value) {
-                                pro = true
-                                launch(uiLifetime, Ui) {
-                                    cloneViewModel.repos.more()
-                                    pro = false
-                                    scrollUpdater()
-                                }
-                            }
-                        }
-                    }
-                }
-                scrollableList.verticalScrollBar.addAdjustmentListener {
-                    scrollUpdater()
-                }
                 scrollableList(push, grow)
             }
             row("Directory:") {
@@ -351,7 +310,49 @@ private class CloneView(
         }
     }
 
-    fun getUrl(): String? = selectedUrl
+    private fun bindScroll(scrollableList: JScrollPane) {
+        val slVisibility = SequentialLifetimes(lifetime)
+
+        lateinit var scrollUpdater: (force : Boolean) -> Unit
+
+        scrollUpdater = { force ->
+
+            // run element visibility updater, tracks elements in a view port and set visible to true.
+            launch(slVisibility.next(), Ui) {
+                delay(300)
+                while (cloneViewModel.isLoading.value) {
+                    delay(300)
+                }
+                val first = list.firstVisibleIndex
+                val last = list.lastVisibleIndex
+                if (first >= 0 && last >= 0) {
+                    (first..last).forEach {
+                        val el = list.model.getElementAt(it)
+                        el.visible.value = true
+                    }
+                }
+            }
+
+            val last = list.lastVisibleIndex
+            if (force || !cloneViewModel.isLoading.value) {
+                if ((last == -1 || list.model.size < last + 10) && cloneViewModel.repos.hasMore.value) {
+                    cloneViewModel.isLoading.value = true
+                    launch(lifetime, Ui) {
+                        cloneViewModel.repos.more()
+                        scrollUpdater(true)
+                    }
+                }
+                else {
+                    cloneViewModel.isLoading.value = false
+                }
+            }
+        }
+        scrollableList.verticalScrollBar.addAdjustmentListener {
+            scrollUpdater(false)
+        }
+    }
+
+    fun getUrl(): String? = selectedUrl.value
 
     fun getDirectory(): String = directoryField.text
 

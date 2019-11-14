@@ -32,14 +32,6 @@ class CircletCloneComponentViewModel(
         circletImageLoader.loadImageAsync(avatarId).await()
     }
 
-    private fun stopLoading() {
-        isLoading.value = false
-    }
-
-    private fun startLoading() {
-        isLoading.value = true
-    }
-
     val repos = xTransformedPagedListOnFlux<PR_Project, CircletCloneListItem>(
         client = workspace.client,
         batchSize = 10,
