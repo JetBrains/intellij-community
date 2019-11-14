@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.TextBlockBackwardMigrationInspection;
 import com.intellij.codeInspection.TextBlockMigrationInspection;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -18,9 +20,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.propertyBased.IntentionPolicy;
-import com.intellij.testFramework.propertyBased.InvokeIntention;
 import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.ObjectUtils;
@@ -28,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.util.List;
@@ -69,15 +69,17 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
   public void testPreserveStringContent() {
     Supplier<MadTestingAction> fileAction =
       MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
-                                           file -> Generator.constant(env -> transformContent(env, file)));
+                                           file -> Generator.constant(env -> transformContent(file)));
     PropertyChecker.checkScenarios(fileAction);
   }
 
-  private static void transformContent(@NotNull ImperativeCommand.Environment env, @NotNull PsiFile file) {
+  private void transformContent(@NotNull PsiFile file) {
     List<PsiPolyadicExpression> concatenations =
       ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(file, PsiPolyadicExpression.class),
                            e -> e.getType() != null && e.getType().equalsToText(JAVA_LANG_STRING));
+    if (concatenations.isEmpty()) return;
 
+    myFixture.openFileInEditor(file.getVirtualFile());
     for (PsiPolyadicExpression concatenation : concatenations) {
       PsiExpression[] operands = concatenation.getOperands();
       if (operands.length < 2) continue;
@@ -96,13 +98,12 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       PsiExpression parent = (PsiExpression)WriteCommandAction.runWriteCommandAction(concatenation.getProject(), replaceAction);
       PsiPolyadicExpression replaced = (PsiPolyadicExpression)PsiUtil.skipParenthesizedExprDown(parent);
 
-      new InvokeIntentionAroundConcatenation(replaced).performCommand(env);
-
+      invokeIntention(replaced, myFixture, new MigrationInvoker());
       PsiLiteralExpression textBlock = (PsiLiteralExpression)PsiUtil.skipParenthesizedExprDown(parent);
-      new InvokeIntentionAroundTextBlock(textBlock).performCommand(env);
 
+      invokeIntention(textBlock, myFixture, new BackwardMigrationInvoker());
       PsiElement element = PsiUtil.skipParenthesizedExprDown(parent);
-      PsiPolyadicExpression after = (PsiPolyadicExpression) element;
+      PsiPolyadicExpression after = (PsiPolyadicExpression)element;
 
       String actual = Objects.requireNonNull(getConcatenationText(after.getOperands()));
       assertEquals("concatenation content", expected, actual);
@@ -132,49 +133,70 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     return StringUtil.join(lines);
   }
 
-  private static class InvokeIntentionAroundTextBlock extends InvokeIntention {
-
-    private final PsiLiteralExpression myTextBlock;
-
-    InvokeIntentionAroundTextBlock(@NotNull PsiLiteralExpression textBlock) {
-      super(textBlock.getContainingFile(), new IntentionPolicy() {
-        @Override
-        protected boolean shouldSkipIntention(@NotNull String actionText) {
-          return !"Replace with regular string literal".equals(actionText);
-        }
-      });
-      myTextBlock = textBlock;
-    }
-
-    @Override
-    protected int generateDocOffset(@NotNull Environment env, @Nullable String logMessage) {
-      return myTextBlock.getTextOffset();
-    }
+  private static <T extends PsiElement> void invokeIntention(@NotNull T element,
+                                                             @NotNull CodeInsightTestFixture fixture,
+                                                             @NotNull ActionInvoker<T> action) {
+    Editor editor = fixture.getEditor();
+    if (editor == null) return;
+    editor.getCaretModel().moveToOffset(action.generateOffset(element));
+    List<IntentionAction> actions = fixture.filterAvailableIntentions(action.getFixHint());
+    if (actions.size() == 1) fixture.launchAction(actions.get(0));
   }
 
-  private static class InvokeIntentionAroundConcatenation extends InvokeIntention {
+  private interface ActionInvoker<T extends PsiElement> {
 
-    private final PsiPolyadicExpression myConcatenation;
+    int generateOffset(@NotNull T e);
 
-    InvokeIntentionAroundConcatenation(@NotNull PsiPolyadicExpression concatenation) {
-      super(concatenation.getContainingFile(), new IntentionPolicy() {
-        @Override
-        protected boolean shouldSkipIntention(@NotNull String actionText) {
-          return !"Replace with text block".equals(actionText);
-        }
-      });
-      myConcatenation = concatenation;
-    }
+    @NotNull
+    String getFixHint();
+  }
 
+  private static class MigrationInvoker implements ActionInvoker<PsiPolyadicExpression> {
     @Override
-    protected int generateDocOffset(@NotNull ImperativeCommand.Environment env, @Nullable String logMessage) {
-      for (PsiExpression operand : myConcatenation.getOperands()) {
+    public int generateOffset(@NotNull PsiPolyadicExpression e) {
+      for (PsiExpression operand : e.getOperands()) {
         PsiExpression literal = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiLiteralExpression.class);
         if (literal == null) continue;
-        int idx = literal.getText().indexOf("\\n");
+        int idx = getNewLineIndex(literal.getText());
         if (idx != -1) return literal.getTextOffset() + idx;
       }
       return -1;
+    }
+
+    @NotNull
+    @Override
+    public String getFixHint() {
+      return "Replace with text block";
+    }
+
+    private static int getNewLineIndex(@NotNull String text) {
+      int slashes = 0;
+      for (int i = 0; i < text.length(); i++) {
+        char c = text.charAt(i);
+        if (c == '\\') {
+          slashes++;
+        }
+        else if (c == 'n' && slashes % 2 != 0) {
+          return i;
+        }
+        else {
+          slashes = 0;
+        }
+      }
+      return -1;
+    }
+  }
+
+  private static class BackwardMigrationInvoker implements ActionInvoker<PsiLiteralExpression> {
+    @Override
+    public int generateOffset(@NotNull PsiLiteralExpression e) {
+      return e.getTextOffset();
+    }
+
+    @NotNull
+    @Override
+    public String getFixHint() {
+      return "Replace with regular string literal";
     }
   }
 }
