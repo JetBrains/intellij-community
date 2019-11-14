@@ -43,9 +43,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -75,13 +75,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   private PsiDocumentManagerImpl getPsiDocumentManager() {
     return (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    DocumentCommitThread.getInstance();
-    UIUtil.dispatchAllInvocationEvents();
   }
 
   @Override
@@ -258,7 +251,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue(getPsiDocumentManager().isCommitted(document));
       semaphore.up();
     });
-    waitAndPump(semaphore, TIMEOUT);
+    waitAndPump(semaphore);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(0, "class X {}"));
@@ -268,7 +261,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue(getPsiDocumentManager().isCommitted(document));
       semaphore.up();
     });
-    waitAndPump(semaphore, TIMEOUT);
+    waitAndPump(semaphore);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     final AtomicInteger count = new AtomicInteger();
@@ -337,8 +330,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
-  private static void waitAndPump(Semaphore semaphore, int timeoutMs) {
-    TestTimeOut t = TestTimeOut.setTimeout(timeoutMs, TimeUnit.MILLISECONDS);
+  private static void waitAndPump(Semaphore semaphore) {
+    TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
     while (!t.timedOut()) {
       if (semaphore.waitFor(1)) return;
       UIUtil.dispatchAllInvocationEvents();
@@ -388,20 +381,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     finally {
       ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
     }
-  }
-
-  public void testCommitThreadGetSuspendedDuringWriteActions() {
-    final DocumentCommitThread commitThread = DocumentCommitThread.getInstance();
-    assertTrue(commitThread.isEnabled());
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      if (commitThread.isEnabled()) {
-        System.err.println("commitThread: " + commitThread + ";\n" + ThreadDumper.dumpThreadsToString());
-      }
-      assertFalse(commitThread.isEnabled());
-      WriteCommandAction.runWriteCommandAction(null, () -> assertFalse(commitThread.isEnabled()));
-      assertFalse(commitThread.isEnabled());
-    });
-    assertTrue(commitThread.isEnabled());
   }
 
   public void testFileChangesToText() throws IOException {
