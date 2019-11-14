@@ -119,9 +119,16 @@ public class VcsProjectLog implements Disposable {
   @CalledInAwt
   @Nullable
   public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters) {
+    return openLogTab(filters, VcsLogManager.LogWindowKind.TOOL_WINDOW);
+  }
+
+  @CalledInAwt
+  @Nullable
+  public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters,
+                                 @NotNull VcsLogManager.LogWindowKind kind) {
     VcsLogManager logManager = getLogManager();
     if (logManager == null) return null;
-    return myTabsManager.openAnotherLogTab(logManager, filters);
+    return myTabsManager.openAnotherLogTab(logManager, filters, kind);
   }
 
   @CalledInAny

@@ -79,7 +79,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
                            "column", new FeatureUsageData().addData("name", columnName));
         }
 
-        List<String> tabs = projectLog.getTabsManager().getTabs();
+        Collection<String> tabs = projectLog.getTabsManager().getTabs();
         metricEvents.add(MetricEventFactoryKt.newCounterMetric("additionalTabs", tabs.size()));
 
         return metricEvents;

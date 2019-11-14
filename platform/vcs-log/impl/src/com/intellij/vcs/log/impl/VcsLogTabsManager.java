@@ -17,7 +17,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 public class VcsLogTabsManager {
@@ -48,33 +48,41 @@ public class VcsLogTabsManager {
 
   @CalledInAwt
   private void createLogTabs(@NotNull VcsLogManager manager) {
-    List<String> tabIds = myUiProperties.getTabs();
-    for (String tabId : tabIds) {
-      openLogTab(manager, tabId, false, null);
-    }
+    myUiProperties.getTabs().forEach((id, kind) -> openLogTab(manager, id, kind, false, null));
   }
 
   // for statistics
   @NotNull
-  public List<String> getTabs() {
-    return myUiProperties.getTabs();
+  public Collection<String> getTabs() {
+    return myUiProperties.getTabs().keySet();
   }
 
   @NotNull
-  MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters) {
-    return openLogTab(manager, generateTabId(myProject), true, filters);
+  MainVcsLogUi openAnotherLogTab(@NotNull VcsLogManager manager, @Nullable VcsLogFilterCollection filters,
+                                 @NotNull VcsLogManager.LogWindowKind kind) {
+    return openLogTab(manager, generateTabId(myProject), kind, true, filters);
   }
 
   @NotNull
-  private MainVcsLogUi openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus,
-                                  @Nullable VcsLogFilterCollection filters) {
+  private MainVcsLogUi openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, @NotNull VcsLogManager.LogWindowKind kind,
+                                  boolean focus, @Nullable VcsLogFilterCollection filters) {
     if (filters != null) myUiProperties.resetState(tabId);
 
     VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory =
-      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters));
-    MainVcsLogUi ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
-    updateTabName(ui);
-    ui.addFilterListener(() -> updateTabName(ui));
+      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId, filters), kind);
+
+    MainVcsLogUi ui;
+    if (kind == VcsLogManager.LogWindowKind.EDITOR) {
+      ui = VcsLogEditorUtilKt.openLogTab(myProject, manager, getFullName(tabId), factory, focus);
+    }
+    else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
+      ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
+      updateTabName(ui);
+      ui.addFilterListener(() -> updateTabName(ui));
+    }
+    else {
+      throw new UnsupportedOperationException("Only log in editor or tool window is supported");
+    }
     return ui;
   }
 
@@ -112,17 +120,20 @@ public class VcsLogTabsManager {
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
-    private final VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> myFactory;
+    @NotNull private final VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> myFactory;
+    @NotNull private final VcsLogManager.LogWindowKind myLogWindowKind;
 
-    PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory) {
+    PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends MainVcsLogUi> factory,
+                              @NotNull VcsLogManager.LogWindowKind kind) {
       myFactory = factory;
+      myLogWindowKind = kind;
     }
 
     @Override
     public MainVcsLogUi createLogUi(@NotNull Project project,
                                     @NotNull VcsLogData logData) {
       MainVcsLogUi ui = myFactory.createLogUi(project, logData);
-      myUiProperties.addTab(ui.getId());
+      myUiProperties.addTab(ui.getId(), myLogWindowKind);
       Disposer.register(ui, () -> {
         if (Disposer.isDisposing(myProject) || myIsLogDisposing) return; // need to restore the tab after project/log is recreated
 
