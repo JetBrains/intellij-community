@@ -181,7 +181,9 @@ class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
   void 'paste raw'() {
     def data = [
       ['\'<selection>\\$ \\\' \\" \\\n \\u2318</selection>\'', '"<caret>"', '"\\$ \\\' \\" \\\n \\u2318"'],
-      ['"<selection>\\$ \\\' \\" \\\n \\u2318</selection>"', "'<caret>'", '\'\\$ \\\' \\" \\\n \\u2318\'']
+      ['"<selection>\\$ \\\' \\" \\\n \\u2318</selection>"', "'<caret>'", '\'\\$ \\\' \\" \\\n \\u2318\''],
+      ['"<selection>\\${foo}</selection>"', '"<caret>"', '"\\${foo}"'],
+      ['"<selection>\\$bar</selection>"', '"<caret>"', '"\\$bar"']
     ]
     RunAll.runAll(data) { List<String> entry ->
       doCopyPasteTest(entry[0], entry[1], entry[2])
