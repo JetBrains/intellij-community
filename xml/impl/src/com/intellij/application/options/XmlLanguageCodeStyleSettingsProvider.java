@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -22,6 +24,9 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
 
 /**
  * @author Rustam Vishnyakov
@@ -96,5 +101,26 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new SmartIndentOptionsEditor();
+  }
+
+  @Nullable
+  @Override
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
+                                            @NotNull Field field) {
+    if (codeStyleObject instanceof XmlCodeStyleSettings && "XML_WHITE_SPACE_AROUND_CDATA".equals(field.getName())) {
+      return new MagicIntegerConstAccessor(
+        codeStyleObject, field,
+        new int[]{
+          XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE,
+          XmlCodeStyleSettings.WS_AROUND_CDATA_NONE,
+          XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES
+        },
+        new String[]{
+          "preserve",
+          "none",
+          "new_lines"
+        });
+    }
+    return super.getAccessor(codeStyleObject, field);
   }
 }
