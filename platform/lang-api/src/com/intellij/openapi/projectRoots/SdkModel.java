@@ -113,12 +113,12 @@ public interface SdkModel {
 
   /**
    * Helper method to create an {@link Sdk} from a type and home directory,
-   * and suggest the name of the new Sdk. The actual Sdk Name may be altered
+   * and suggest the name of the new Sdk. The suggested Sdk Name may be altered
    * to ensure it's uniqueness
    *
    * @return a new {@link Sdk} instance
    */
   @NotNull
-  Sdk createSdk(@NotNull SdkType type, @NotNull String newSdkName, @NotNull String home);
+  Sdk createSdk(@NotNull SdkType type, @NotNull String suggestedName, @NotNull String home);
 
 }
