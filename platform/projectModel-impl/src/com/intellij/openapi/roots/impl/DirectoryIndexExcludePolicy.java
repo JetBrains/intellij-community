@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,16 +36,19 @@ public interface DirectoryIndexExcludePolicy {
    * Supply all file urls (existing as well as not yet created) that should be treated as 'excluded'
    */
   @NotNull
+  @Contract(pure = true)
   default String[] getExcludeUrlsForProject() {
     return ContainerUtil.map2Array(getExcludeRootsForProject(), String.class, VirtualFile::getUrl);
   }
 
   @Nullable
+  @Contract(pure = true)
   default Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
     return null;
   }
 
   @NotNull
+  @Contract(pure = true)
   VirtualFilePointer[] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel);
 
   @NotNull
