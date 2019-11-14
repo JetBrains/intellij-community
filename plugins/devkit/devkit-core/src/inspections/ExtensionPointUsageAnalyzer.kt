@@ -41,8 +41,11 @@ import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.DomManager
+import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoints
+import org.jetbrains.idea.devkit.util.ExtensionPointLocator
+import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.*
 import java.awt.Font
 import javax.swing.Icon
@@ -68,7 +71,7 @@ private fun findQualifiedCall(element: UElement?): QualifiedCall? {
   return null
 }
 
-internal class LeakSearchContext(val project: Project) {
+internal class LeakSearchContext(val project: Project, val epName: String?) {
   private val SAFE_CLASSES = setOf(CommonClassNames.JAVA_LANG_STRING, "javax.swing.Icon", "java.net.URL", "java.io.File", "java.net.URI")
   private val ANONYMOUS_PASS_THROUGH = mapOf("com.intellij.openapi.util.NotNullLazyValue" to "compute")
 
@@ -201,11 +204,22 @@ internal class LeakSearchContext(val project: Project) {
       SAFE_CLASSES.contains(psiClass.qualifiedName) -> true
       psiClass.isEnum -> true
       InheritanceUtil.isInheritor(psiClass, "com.intellij.psi.PsiElement") -> true
+      isConcreteExtension(psiClass) -> true
       psiClass.hasModifierProperty(PsiModifier.FINAL) -> {
         psiClass.allFields.any { f -> isSafeType(substitutor.substitute(f.type)) }
       }
       else -> false
     }
+  }
+  
+  private fun isConcreteExtension(psiClass: PsiClass): Boolean {
+    if (epName == null) return false
+    val extension = ContainerUtil.getOnlyItem(locateExtensionsByPsiClass(psiClass))?.pointer?.element ?: return false
+    val extensionTag = DomManager.getDomManager(project).getDomElement(extension) as? Extension
+    val extensionPoint = extensionTag?.extensionPoint ?: return false
+    if (extensionPoint.effectiveQualifiedName != epName) return false
+    val effectiveClass = extensionPoint.effectiveClass
+    return effectiveClass != null && psiClass.isInheritor(effectiveClass, true)
   }
   
   private fun findObjectLeaks(e: UElement, text: String): List<Leak> {
@@ -268,6 +282,9 @@ internal class LeakSearchContext(val project: Project) {
             return findObjectLeaks(target, text)
           }
           val psiMethod = jumpTarget.javaPsi
+          if (psiMethod.name == "getInstance") {
+            return listOf(Leak("Returned from 'getInstance' method (too expensive to search call sites)", parent.sourcePsi))
+          }
           val methodsToFind = mutableSetOf<PsiMethod>()
           methodsToFind.add(psiMethod)
           ContainerUtil.addAll(methodsToFind, *psiMethod.findDeepestSuperMethods())
@@ -338,7 +355,12 @@ class AnalyzeEPUsageAction : AnAction() {
     val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return
     val target = elementAtCaret.getUastParentOfType<UField>()
     if (target != null) {
-      analyzeEPFieldUsages(target, file, editor)
+      val psiClass = (target.javaPsi as? PsiField)?.containingClass
+      var epName : String? = null
+      if (psiClass != null) {
+        epName = ContainerUtil.getOnlyItem(ExtensionPointLocator(psiClass).findDirectCandidates())?.epName
+      }
+      analyzeEPFieldUsages(target, file, editor, epName)
     }
 
     val xmlTag = PsiTreeUtil.getParentOfType(elementAtCaret, XmlTag::class.java)
@@ -359,14 +381,14 @@ class AnalyzeEPUsageAction : AnAction() {
            fieldType.canonicalText == LanguageExtension::class.java.name
   }
 
-  private fun analyzeEPFieldUsages(target: UField, file: PsiFile, editor: Editor) {
+  private fun analyzeEPFieldUsages(target: UField, file: PsiFile, editor: Editor, epName: String?) {
     val sourcePsi = target.sourcePsi ?: return
     if (!isEPField(target.javaPsi as? PsiField)) {
       HintManager.getInstance().showErrorHint(editor, "Not an ExtensionPointName reference")
       return
     }
 
-    val context = LeakSearchContext(file.project)
+    val context = LeakSearchContext(file.project, epName)
     val task = object : Task.Backgroundable(file.project, "Analyzing EP usages") {
       override fun run(indicator: ProgressIndicator) {
         context.processEPFieldUsages(sourcePsi)
@@ -422,7 +444,7 @@ class AnalyzeEPUsageAction : AnAction() {
     }
 
     val epUField = epField.toUElementOfType<UField>() ?: return
-    analyzeEPFieldUsages(epUField, file, editor)
+    analyzeEPFieldUsages(epUField, file, editor, domElement.effectiveQualifiedName)
   }
 
   private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Editor) {
@@ -454,7 +476,7 @@ class AnalyzeEPUsageAction : AnAction() {
               return@runReadAction
             }
 
-            val context = LeakSearchContext(file.project)
+            val context = LeakSearchContext(file.project, extensionPoint.effectiveQualifiedName)
             context.processEPFieldUsages(epField)
             if (context.safeUsages.isNotEmpty() && context.unsafeUsages.isEmpty()) {
               safeEPs.add(extensionPoint)
