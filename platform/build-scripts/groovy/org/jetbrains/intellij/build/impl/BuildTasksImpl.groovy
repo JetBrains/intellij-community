@@ -395,7 +395,7 @@ idea.fatal.error.notification=disabled
                 "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
                 //NOTE[jo]: right now we assume all installer files are created under the same path
                 "-Pintellij.build.artifacts=${buildContext.paths.artifacts}",
-                "-Pintellij.build.productCode=${buildContext.productProperties.productCode}",
+                "-Pintellij.build.productCode=${buildContext.applicationInfo.productCode}",
                 "-Pintellij.build.isEAP=${buildContext.applicationInfo.isEAP}",
                 "-Pintellij.build.output=${buildContext.paths.buildOutputRoot}/toolbox-lite-gen",
               ]
