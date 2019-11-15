@@ -247,7 +247,8 @@ class BuildUtils {
                   });
                 }
               } else
-                out.getItemsContainer().remove(tbi -> tbi instanceof TBItemAnActionButton && prev.indexOf(((TBItemAnActionButton)tbi).getAnAction()) != -1);
+                out.getItemsContainer().remove(tbi -> tbi instanceof TBItemAnActionButton &&
+                                                      prev.contains(((TBItemAnActionButton)tbi).getAnAction()));
             } else {
               if (curr == null || curr.isEmpty()) // nothing to do
                 return;
