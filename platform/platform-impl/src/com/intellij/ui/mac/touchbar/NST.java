@@ -235,7 +235,8 @@ public class NST {
           byteCount += 6;
           continue;
         }
-        byteCount += 2 + (withText && id.getTextBytes() != null ? id.getTextBytes().length + 1 : 0);
+        final int textSize = 2 + (withText && id.getTextBytes() != null && id.getTextBytes().length > 0 ? id.getTextBytes().length + 1 : 0);
+        byteCount += textSize;
 
         id.darkIcon =
           withImages && id.getIcon() != null && !(id.getIcon() instanceof EmptyIcon) && id.getIcon().getIconWidth() > 0 && id.getIcon().getIconHeight() > 0 ?
