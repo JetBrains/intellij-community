@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Max Medvedev
@@ -202,23 +203,19 @@ public class StringPartInfo {
 
     try {
       if (prefixExists && suffixExists) {
-        return ((GrBinaryExpression)((GrBinaryExpression)replaced).getLeftOperand()).getRightOperand();
+        return Objects.requireNonNull(((GrBinaryExpression)((GrBinaryExpression)replaced).getLeftOperand()).getRightOperand());
       }
       if (!prefixExists && suffixExists) {
         return ((GrBinaryExpression)replaced).getLeftOperand();
       }
-      if (prefixExists && !suffixExists) {
-        return ((GrBinaryExpression)replaced).getRightOperand();
+      if (prefixExists) {
+        return Objects.requireNonNull(((GrBinaryExpression)replaced).getRightOperand());
       }
-      if (!prefixExists && !suffixExists) {
-        return replaced;
-      }
+      return replaced;
     }
     catch (ClassCastException c) {
       throw new IncorrectOperationException(buffer.toString());
     }
-
-    throw new IncorrectOperationException(buffer.toString());
   }
 
   private String prepareSelected() {
