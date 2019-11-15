@@ -2450,7 +2450,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       myDaemonCodeAnalyzer
         .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
-      fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + Arrays.toString(markupModel.getAllHighlighters())+"; called: "+called);
+      List<RangeHighlighter> h = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.getErrorStripeTooltip() instanceof HighlightInfo && ((HighlightInfo)highlighter.getErrorStripeTooltip()).getSeverity() == HighlightSeverity.ERROR);
+
+      fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + h + "; called: " + called);
     }
     catch (DebugException ignored) {
     }

@@ -855,7 +855,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private static String readableFlags(long flags) {
     String result = "";
-    if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += (result.isEmpty() ? "" :" | ") + "ATTRIBUTES_WERE_LOADED_MASK";
+    if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += "ATTRIBUTES_WERE_LOADED_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECT_WAS_RUN_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECTED_AS_BINARY_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECTED_AS_TEXT_MASK";
@@ -1146,6 +1146,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       // a file has unknown file type if none of file type detectors matched it
       // for plain text file type, we run file type detection based on content
 
+      //noinspection SSBasedInspection
       return file.getFileType().equals(type);
     }
 

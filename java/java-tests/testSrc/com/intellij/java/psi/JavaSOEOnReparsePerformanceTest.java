@@ -31,9 +31,10 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
   public void setUp() throws Exception {
     super.setUp();
     int N = 100_000;
-    myHugeExpr = new StringBuilder(N * 4 + 10);
+    String expr = "+\"b\"";
+    myHugeExpr = new StringBuilder(N * expr.length() + 10);
     myHugeExpr.append("\"-\"");
-    myHugeExpr.append(StringUtil.repeat("+\"b\"", N));
+    myHugeExpr.append(StringUtil.repeat(expr, N));
   }
 
   @Override
