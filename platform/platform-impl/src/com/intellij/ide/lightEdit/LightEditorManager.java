@@ -22,26 +22,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LightEditorManager implements Disposable {
-  private final List<Editor> myEditors = new ArrayList<>();
+  private final List<LightEditorInfo> myEditors = new ArrayList<>();
   private final EventDispatcher<LightEditorListener> myEventDispatcher = EventDispatcher.create(LightEditorListener.class);
 
   @NotNull
-  Editor createEditor(@NotNull Document document) {
+  private LightEditorInfo createEditor(@NotNull Document document, @NotNull VirtualFile file) {
     Editor editor = EditorFactory.getInstance().createEditor(
       document, ProjectManager.getInstance().getDefaultProject(), EditorKind.MAIN_EDITOR);
     ObjectUtils.consumeIfCast(editor, EditorImpl.class,
                               editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
-    myEditors.add(editor);
-    return editor;
+    final LightEditorInfo editorInfo = new LightEditorInfo(editor, file);
+    myEditors.add(editorInfo);
+    return editorInfo;
   }
 
   @Nullable
-  Editor createEditor(@NotNull VirtualFile file) {
+  LightEditorInfo createEditor(@NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      Editor editor = createEditor(document);
+      LightEditorInfo editorInfo = createEditor(document, file);
+      Editor editor = editorInfo.getEditor();
       if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
-      return editor;
+      return editorInfo;
     }
     return null;
   }
@@ -49,14 +51,14 @@ public class LightEditorManager implements Disposable {
   @Override
   public void dispose() {
     myEditors.stream()
-      .filter(editor -> !editor.isDisposed())
-      .forEach(editor -> EditorFactory.getInstance().releaseEditor(editor));
+      .filter(editorInfo -> !editorInfo.getEditor().isDisposed())
+      .forEach(editorInfo -> EditorFactory.getInstance().releaseEditor(editorInfo.getEditor()));
     myEditors.clear();
   }
 
   void closeEditor(@NotNull LightEditorInfo editorInfo) {
     Editor editor = editorInfo.getEditor();
-    myEditors.remove(editor);
+    myEditors.remove(editorInfo);
     if (!editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
     }
@@ -78,5 +80,12 @@ public class LightEditorManager implements Disposable {
 
   int getEditorCount() {
     return myEditors.size();
+  }
+
+  @Nullable
+  LightEditorInfo findOpen(@NotNull VirtualFile file) {
+    return myEditors.stream()
+      .filter(editorInfo -> file.getPath().equals(editorInfo.getFile().getPath()))
+      .findFirst().orElse(null);
   }
 }

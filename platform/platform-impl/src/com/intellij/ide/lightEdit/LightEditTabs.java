@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
@@ -36,12 +35,11 @@ class LightEditTabs extends JBEditorTabs {
     });
   }
 
-  void addEditorTab(@NotNull Editor editor, @NotNull VirtualFile file) {
-    TabInfo tabInfo = new TabInfo(createEditorContainer(editor))
-      .setText(file.getPresentableName())
+  void addEditorTab(@NotNull LightEditorInfo editorInfo) {
+    TabInfo tabInfo = new TabInfo(createEditorContainer(editorInfo.getEditor()))
+      .setText(editorInfo.getFile().getPresentableName())
       .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
-    final LightEditorInfo editorInfo = new LightEditorInfo(editor, file);
     tabInfo.setObject(editorInfo);
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -68,6 +66,12 @@ class LightEditTabs extends JBEditorTabs {
       }
     }
     myEditorManager.fireEditorSelected(selectedEditorInfo);
+  }
+
+  void selectTab(@NotNull LightEditorInfo info) {
+    getTabs().stream()
+      .filter(tabInfo -> tabInfo.getObject().equals(info))
+      .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
   private class CloseTabAction extends DumbAwareAction {
