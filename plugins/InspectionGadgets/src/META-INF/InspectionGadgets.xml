@@ -2311,7 +2311,7 @@
                      key="extends.object.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.style.ExtendsObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FieldMayBeFinal" bundle="com.siyeh.InspectionGadgetsBundle" key="field.may.be.final.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.FieldMayBeFinalInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ImplicitCallToSuper" bundle="com.siyeh.InspectionGadgetsBundle" key="implicit.call.to.super.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
