@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.Activity;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -14,7 +13,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Caret;
@@ -239,11 +241,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
 
-    Long start = ApplicationManager.getApplication().getUserData(EditorsSplitters.OPEN_FILES_START_TIMESTAMP);
-    if (start != null) {
-      StartUpMeasurer.addCompletedActivity(start, StartUpMeasurer.getCurrentTime(),
-                                           "allEditorsTillPaint", ActivityCategory.REOPENING_EDITOR, null);
-      ApplicationManager.getApplication().putUserData(EditorsSplitters.OPEN_FILES_START_TIMESTAMP, null);
+    Activity activity = ApplicationManager.getApplication().getUserData(EditorsSplitters.OPEN_FILES_ACTIVITY);
+    if (activity != null) {
+      activity.end();
+      ApplicationManager.getApplication().putUserData(EditorsSplitters.OPEN_FILES_ACTIVITY, null);
     }
   }
 

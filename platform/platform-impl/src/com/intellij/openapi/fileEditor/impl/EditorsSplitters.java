@@ -67,7 +67,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
-  public static final Key<Long> OPEN_FILES_START_TIMESTAMP = Key.create("open.files.start.timestamp");
+  public static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.start.timestamp");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
   private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
@@ -245,7 +245,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return;
     }
 
-    ApplicationManager.getApplication().putUserData(OPEN_FILES_START_TIMESTAMP, StartUpMeasurer.getCurrentTime());
+    ApplicationManager.getApplication().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity("restoreEditorsTillPaint"));
     Activity restoringEditors = StartUpMeasurer.startMainActivity("editor restoring");
     JPanel component = myUIBuilder.process(mySplittersElement, getTopPanel());
     if (component != null) {
