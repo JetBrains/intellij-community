@@ -72,6 +72,9 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
           textWasChanged = true;
           buffer.append(unescaped);
         }
+        else {
+          buffer.append(fragment);
+        }
       }
       int blockSelectionPadding = deducedBlockSelectionWidth - (fileEndOffset - fileStartOffset);
       for (int j = 0; j < blockSelectionPadding; j++) {
