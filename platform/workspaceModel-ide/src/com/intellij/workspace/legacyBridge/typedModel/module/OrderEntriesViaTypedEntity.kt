@@ -245,6 +245,8 @@ class LibraryOrderEntryViaTypedEntity(
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")
   }
+
+  override fun isSynthetic(): Boolean = isModuleLevel
 }
 
 class SdkOrderEntryViaTypedEntity(
@@ -278,6 +280,8 @@ class SdkOrderEntryViaTypedEntity(
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")
   }
+
+  override fun isSynthetic(): Boolean = true
 }
 
 class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.InheritedSdkDependency)
@@ -318,4 +322,6 @@ class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, i
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")
   }
+
+  override fun isSynthetic(): Boolean = true
 }
