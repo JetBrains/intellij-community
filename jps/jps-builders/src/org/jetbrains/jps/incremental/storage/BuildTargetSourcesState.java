@@ -91,7 +91,7 @@ public class BuildTargetSourcesState implements BuildListener {
   }
 
   public void reportSourcesState() {
-    if (!PORTABLE_CACHES || myProjectStamps == null) return;
+    if (reportStateUnavailable()) return;
 
     long start = System.currentTimeMillis();
     Map<String, Map<String, BuildTargetState>> targetTypeHashMap = loadCurrentTargetState();
@@ -129,6 +129,7 @@ public class BuildTargetSourcesState implements BuildListener {
 
   @Override
   public void filesGenerated(@NotNull FileGeneratedEvent event) {
+    if (reportStateUnavailable()) return;
     BuildTarget<?> sourceTarget = event.getSourceTarget();
     String key = sourceTarget.getTargetType().getTypeId() + " " +sourceTarget.getId();
     myChangedBuildTargets.put(key, sourceTarget);
@@ -136,6 +137,7 @@ public class BuildTargetSourcesState implements BuildListener {
 
   @Override
   public void filesDeleted(@NotNull FileDeletedEvent event) {
+    if (reportStateUnavailable()) return;
     event.getFilePaths().stream().map(path -> new File(FileUtil.toSystemDependentName(path)))
       .map(file -> myBuildRootIndex.findAllParentDescriptors(file, myContext))
       .flatMap(collection -> collection.stream())
@@ -206,6 +208,10 @@ public class BuildTargetSourcesState implements BuildListener {
       LOG.warn("Couldn't parse current build target state", e);
     }
     return new HashMap<>();
+  }
+
+  private boolean reportStateUnavailable() {
+    return !PORTABLE_CACHES || myProjectStamps == null;
   }
 
   @NotNull
