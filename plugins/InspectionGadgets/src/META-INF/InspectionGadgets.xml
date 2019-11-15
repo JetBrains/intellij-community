@@ -2531,7 +2531,7 @@
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.AwaitWithoutCorrespondingSignalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BusyWait" bundle="com.siyeh.InspectionGadgetsBundle" key="busy.wait.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.BusyWaitInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CallToNativeMethodWhileLocked" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="call.to.native.method.while.locked.display.name" groupBundle="messages.InspectionsBundle"
