@@ -19,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
@@ -166,23 +165,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (staticFactoryCandidateInfo == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
-    final Ref<String> refError = new Ref<>();
-    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, () -> {
-      PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
-      if (staticFactoryCandidateInfo instanceof MethodCandidateInfo) {
-        refError.set(((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessageAssumeAlreadyComputed());
-      }
-      return substitutor;
-    });
-    if (inferredSubstitutor == null) {
-      return DiamondInferenceResult.NULL_RESULT;
-    }
-
     if (!(staticFactoryCandidateInfo instanceof MethodCandidateInfo)) {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
     }
-
-    final String errorMessage = refError.get();
+    
+    PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
+    String errorMessage = ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessageAssumeAlreadyComputed();
 
     //15.9.3 Choosing the Constructor and its Arguments
     //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (p15.12.2.6)
@@ -208,7 +196,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       }
     };
 
-    if (errorMessage == null && PsiUtil.isRawSubstitutor(staticFactory, inferredSubstitutor)) {
+    if (errorMessage == null && PsiUtil.isRawSubstitutor(staticFactory, substitutor)) {
       //http://www.oracle.com/technetwork/java/javase/8-compatibility-guide-2156366.html#A999198 REF 7144506
       if (!PsiUtil.isLanguageLevel8OrHigher(newExpression) && PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionList) {
         for (PsiTypeParameter ignored : parameters) {
@@ -221,7 +209,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     for (PsiTypeParameter parameter : parameters) {
       for (PsiTypeParameter classParameter : classParameters) {
         if (Comparing.strEqual(classParameter.getName(), parameter.getName())) {
-          result.addInferredType(inferredSubstitutor.substitute(parameter));
+          result.addInferredType(substitutor.substitute(parameter));
           break;
         }
       }

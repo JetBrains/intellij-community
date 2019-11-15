@@ -301,7 +301,6 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testResolveDiamondBeforeOuterCall() {
     configure();
-    doHighlighting(); // remove this call, and test will fail
     PsiNewExpression newExpression = ContainerUtil.getOnlyItem(PsiTreeUtil.findChildrenOfType(getFile(), PsiNewExpression.class));
     assertNotNull(newExpression);
     PsiType type = newExpression.getType();
