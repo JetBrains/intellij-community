@@ -138,75 +138,25 @@ public class JpsOutputLoaderManager {
       return;
     }
     indicator.setFraction(0.01);
-    Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
-
-    List<JpsOutputLoader> loaders = getLoaders(myProject);
-    List<CompletableFuture<LoaderStatus>> completableFutures =
-      ContainerUtil.map(loaders, loader -> {
-        return CompletableFuture.supplyAsync(() -> {
-          SegmentedProgressIndicatorManager indicatorManager = new SegmentedProgressIndicatorManager(indicator, TOTAL_SEGMENT_SIZE / loaders.size());
-          return loader.load(JpsLoaderContext.createNewContext(commitId, indicatorManager, commitSourcesState, currentSourcesState));
-        }, ourThreadPool);
-      });
-
-    CompletableFuture<LoaderStatus> initialFuture = completableFutures.get(0);
-    if (completableFutures.size() > 1) {
-      for (int i = 1; i < completableFutures.size(); i++) {
-        initialFuture = initialFuture.thenCombine(completableFutures.get(i), JpsOutputLoaderManager::combine);
-      }
-    }
 
     try {
       // Computation with loaders results. If at least one of them failed rollback all job
-      initialFuture.thenAccept(loaderStatus -> {
+      initLoaders(commitId, indicator, commitSourcesState).thenAccept(loaderStatus -> {
         LOG.info("Loading finished with " + loaderStatus + " status");
-        CompletableFuture<Void> rollbackApplyFuture = CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
-          if (loaderStatus == LoaderStatus.FAILED) {
-            indicator.setText("Fetching cache failed, rolling back");
-            return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
-          }
-          indicator.setText("Fetching cache complete successfully, applying changes ");
-          return CompletableFuture.runAsync(() -> loader.apply(), ourThreadPool);
-        }).toArray(CompletableFuture[]::new))
-          .thenRun(() -> {
-            if (loaderStatus == LoaderStatus.COMPLETE) {
-              PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
-              BuildManager.getInstance().clearState(myProject);
-              long endTime = (System.currentTimeMillis() - startTime) / 1000;
-              ApplicationManager.getApplication().invokeLater(() -> {
-                String message = "Update compilation caches completed successfully in " + endTime + " s";
-                Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", message,
-                                                                                       NotificationType.INFORMATION, null);
-                Notifications.Bus.notify(notification);
-              });
-              LOG.info("Loading finished");
-            } else onFail();
-          });
-
         try {
-          rollbackApplyFuture.get();
+          CompletableFuture.allOf(getLoaders(myProject).stream()
+                                    .map(loader -> applyChanges(loaderStatus, loader, indicator))
+                                    .toArray(CompletableFuture[]::new))
+            .thenRun(() -> saveStateAndNotify(loaderStatus, commitId, startTime))
+            .get();
         }
         catch (InterruptedException | ExecutionException e) {
           LOG.warn("Unexpected exception rollback all progress", e);
           onFail();
-          loaders.forEach(loader -> loader.rollback());
+          getLoaders(myProject).forEach(loader -> loader.rollback());
           indicator.setText("Rolling back downloaded caches");
         }
-      }).handle((result, ex) -> {
-        if (ex != null) {
-          Throwable cause = ex.getCause();
-          if (cause instanceof ProcessCanceledException) {
-            LOG.info("Jps caches download canceled");
-          }
-          else {
-            LOG.warn("Couldn't fetch jps compilation caches", ex);
-            onFail();
-          }
-          loaders.forEach(loader -> loader.rollback());
-          indicator.setText("Rolling back downloaded caches");
-        }
-        return result;
-      }).get();
+      }).handle((result, ex) -> handleExceptions(result, ex, indicator)).get();
     }
     catch (InterruptedException | ExecutionException e) {
       LOG.warn("Couldn't fetch jps compilation caches", e);
@@ -221,6 +171,73 @@ public class JpsOutputLoaderManager {
     }
     hasRunningTask.set(true);
     return true;
+  }
+
+  private CompletableFuture<LoaderStatus> initLoaders(String commitId, ProgressIndicator indicator,
+                                                      Map<String, Map<String, BuildTargetState>> commitSourcesState) {
+    Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
+    List<JpsOutputLoader> loaders = getLoaders(myProject);
+
+    // Start loaders with own context
+    List<CompletableFuture<LoaderStatus>> completableFutures = ContainerUtil.map(loaders, loader -> {
+      return CompletableFuture.supplyAsync(() -> {
+        SegmentedProgressIndicatorManager indicatorManager =
+          new SegmentedProgressIndicatorManager(indicator, TOTAL_SEGMENT_SIZE / loaders.size());
+        return loader.load(JpsLoaderContext.createNewContext(commitId, indicatorManager, commitSourcesState, currentSourcesState));
+      }, ourThreadPool);
+    });
+
+    // Reduce loaders statuses into the one
+    CompletableFuture<LoaderStatus> initialFuture = completableFutures.get(0);
+    if (completableFutures.size() > 1) {
+      for (int i = 1; i < completableFutures.size(); i++) {
+        initialFuture = initialFuture.thenCombine(completableFutures.get(i), JpsOutputLoaderManager::combine);
+      }
+    }
+    return initialFuture;
+  }
+
+  private CompletableFuture<Void> applyChanges(LoaderStatus loaderStatus, JpsOutputLoader loader, ProgressIndicator indicator) {
+    if (loaderStatus == LoaderStatus.FAILED) {
+      indicator.setText("Fetching cache failed, rolling back");
+      return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
+    }
+    indicator.setText("Fetching cache complete successfully, applying changes ");
+    return CompletableFuture.runAsync(() -> loader.apply(), ourThreadPool);
+  }
+
+  private void saveStateAndNotify(LoaderStatus loaderStatus, String commitId, long startTime) {
+    if (loaderStatus == LoaderStatus.FAILED) {
+      onFail();
+      return;
+    }
+
+    PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
+    BuildManager.getInstance().clearState(myProject);
+    long endTime = (System.currentTimeMillis() - startTime) / 1000;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      String message = "Update compilation caches completed successfully in " + endTime + " s";
+      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", message,
+                                                                             NotificationType.INFORMATION, null);
+      Notifications.Bus.notify(notification);
+    });
+    LOG.info("Loading finished");
+  }
+
+  private Void handleExceptions(Void result, Throwable ex, ProgressIndicator indicator) {
+    if (ex != null) {
+      Throwable cause = ex.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        LOG.info("Jps caches download canceled");
+      }
+      else {
+        LOG.warn("Couldn't fetch jps compilation caches", ex);
+        onFail();
+      }
+      getLoaders(myProject).forEach(loader -> loader.rollback());
+      indicator.setText("Rolling back downloaded caches");
+    }
+    return result;
   }
 
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
