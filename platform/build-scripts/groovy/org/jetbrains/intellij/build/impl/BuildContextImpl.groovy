@@ -66,7 +66,10 @@ class BuildContextImpl extends BuildContext {
 
     def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
-    if (productProperties.productCode != null && applicationInfo.productCode == null) {
+    if (productProperties.customProductCode != null) {
+      applicationInfo.productCode = productProperties.customProductCode
+    }
+    else if (productProperties.productCode != null && applicationInfo.productCode == null) {
       applicationInfo.productCode = productProperties.productCode
     }
     else if (productProperties.productCode == null && applicationInfo.productCode != null) {
