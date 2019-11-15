@@ -462,7 +462,15 @@ public class TypeMigrationLabeler {
       return;
     }
 
-    if (expr instanceof PsiConditionalExpression) {
+    if (expr instanceof PsiParenthesizedExpression){
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expr;
+      PsiExpression inParenthesisExpression = parenthesizedExpression.getExpression();
+      if (inParenthesisExpression != null) {
+        migrateExpressionType(inParenthesisExpression, migrationType, place, alreadyProcessed, false);
+      }
+      getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
+      return;
+    } else if (expr instanceof PsiConditionalExpression) {
       final PsiConditionalExpression condExpr = (PsiConditionalExpression)expr;
       for (PsiExpression e : ContainerUtil.newArrayList(condExpr.getThenExpression(), condExpr.getElseExpression())) {
         if (e != null) {
