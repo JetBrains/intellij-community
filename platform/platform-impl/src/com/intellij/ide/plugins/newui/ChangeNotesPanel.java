@@ -27,7 +27,7 @@ public class ChangeNotesPanel {
       super.setBounds(x, y, Math.min(width, getPreferredSize().width), height);
     }
   };
-  private final JEditorPane myEditorPane = PluginDetailsPageComponent.createDescriptionComponent();
+  private final JEditorPane myEditorPane = PluginDetailsPageComponent.createDescriptionComponent(null);
   private final JEditorPane myDescriptionPane;
 
   public ChangeNotesPanel(@NotNull JPanel parent, @Nullable Object constraints, @NotNull JEditorPane descriptionPane) {
