@@ -252,6 +252,33 @@ public class ChangesViewManager implements ChangesViewEx,
     return myToolWindowPanel.isAllowExcludeFromCommit();
   }
 
+  public void closeEditorPreview() {
+    if (myToolWindowPanel == null) {
+      return;
+    }
+
+    ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
+    if (diffPreview instanceof EditorTabPreview) {
+      PreviewDiffVirtualFile vcsContentFile = ((EditorTabPreview) diffPreview).getVcsContentFile();
+      FileEditorManager.getInstance(myProject).closeFile(vcsContentFile);
+    }
+  }
+
+  public void openEditorPreview() {
+    if (myToolWindowPanel == null) {
+      return;
+    }
+
+    ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
+    if (diffPreview instanceof EditorTabPreview) {
+      EditorTabPreview editorTabPreview = (EditorTabPreview) diffPreview;
+      PreviewDiffVirtualFile vcsContentFile = editorTabPreview.getVcsContentFile();
+      if (editorTabPreview.getCurrentName() != null) {
+        FileEditorManager.getInstance(myProject).openFile(vcsContentFile, true, true);
+      }
+    }
+  }
+
   public static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
     @NotNull private static final RegistryValue isCommitSplitHorizontal =
