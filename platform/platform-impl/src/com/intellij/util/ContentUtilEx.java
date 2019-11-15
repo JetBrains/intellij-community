@@ -63,7 +63,7 @@ public class ContentUtilEx extends ContentsUtil {
     if (tabbedContent == null) {
       final Disposable disposable = Disposer.newDisposable();
       tabbedContent = new TabbedContentImpl(contentComponent, tabName, true, groupPrefix);
-      ContentsUtil.addOrReplaceContent(manager, tabbedContent, select);
+      ContentsUtil.addContent(manager, tabbedContent, select);
       Disposer.register(tabbedContent, disposable);
     }
     else {
