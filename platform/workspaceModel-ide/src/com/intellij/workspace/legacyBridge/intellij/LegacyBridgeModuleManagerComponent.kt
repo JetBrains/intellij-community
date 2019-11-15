@@ -397,8 +397,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? {
-    // TODO Optimize?
+    if (!unloadedModules.unloadedModuleNames.contains(moduleName)) return null
 
+    // TODO Optimize?
     val moduleEntity = entityStore.current.entities(ModuleEntity::class.java).filter { it.name == moduleName }.firstOrNull()
                        ?: return null
     return getUnloadedModuleDescription(moduleEntity)
