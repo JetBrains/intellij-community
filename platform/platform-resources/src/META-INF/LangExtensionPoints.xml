@@ -403,8 +403,8 @@
                     interface="com.intellij.execution.BeforeRunTaskProvider"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>
-    <extensionPoint name="consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider"/>
+    <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
+    <extensionPoint name="consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
     <extensionPoint name="consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor"/>
 
     <extensionPoint name="console.folding" interface="com.intellij.execution.ConsoleFolding"/>
@@ -440,7 +440,7 @@
 
     <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="psi.fileReferenceHelper"
-                    interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper"/>
+                    interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper" dynamic="true"/>
 
     <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP" dynamic="true">
       <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
@@ -453,7 +453,7 @@
       <with attribute="className" implements="java.lang.Object"/>
     </extensionPoint>
 
-    <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
+    <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher" dynamic="true"/>
 
     <extensionPoint name="statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP">
       <with attribute="implementationClass" implements="com.intellij.psi.statistics.Statistician"/>
