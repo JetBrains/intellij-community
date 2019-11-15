@@ -19,6 +19,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,9 +32,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.picocontainer.PicoContainer
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
@@ -655,6 +658,67 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   @Internal
   fun stopServicePreloading() {
     isServicePreloadingCancelled = true
+  }
+}
+
+@Internal
+fun <T : Any> processComponentInstancesOfType(container: PicoContainer, baseClass: Class<T>, processor: (T) -> Unit) {
+  // we must use instances only from our adapter (could be service or something else)
+  for (componentAdapter in container.componentAdapters) {
+    if (componentAdapter is MyComponentAdapter && baseClass.isAssignableFrom(componentAdapter.componentImplementation)) {
+      @Suppress("UNCHECKED_CAST")
+      processor((componentAdapter.getInitializedInstance() ?: continue) as T)
+    }
+  }
+}
+
+@Internal
+fun processAllImplementationClasses(container: PicoContainer, processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Boolean) {
+  val adapters = container.componentAdapters
+  if (adapters.isEmpty()) {
+    return
+  }
+
+  for (o in adapters) {
+    var aClass: Class<*>
+    if (o is ServiceComponentAdapter) {
+      val pluginDescriptor = o.pluginDescriptor
+      // avoid delegation creation & class initialization
+      aClass = try {
+        if (o.isImplementationClassResolved()) {
+          o.getImplementationClass()
+        }
+        else {
+          Class.forName(o.descriptor.implementation, false, pluginDescriptor.pluginClassLoader)
+        }
+      }
+      catch (e: Throwable) {
+        // well, component registered, but required jar is not added to classpath (community edition or junior IDE)
+        LOG.warn(e)
+        continue
+      }
+
+      if (!processor(aClass, pluginDescriptor)) {
+        break
+      }
+    }
+    else if (o !is ExtensionComponentAdapter) {
+      val pluginDescriptor = if (o is BaseComponentAdapter) o.pluginDescriptor else null
+      // allow InstanceComponentAdapter without pluginId to test
+      if (pluginDescriptor != null || o is DefaultPicoContainer.InstanceComponentAdapter) {
+        aClass = try {
+          o.componentImplementation
+        }
+        catch (e: Throwable) {
+          LOG.warn(e)
+          continue
+        }
+
+        if (!processor(aClass, pluginDescriptor)) {
+          break
+        }
+      }
+    }
   }
 }
 

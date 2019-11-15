@@ -21,7 +21,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
                                              private var implementationClass: Class<*>?) : ComponentAdapter {
   private var initializing = false
 
-  protected val pluginId: PluginId
+  val pluginId: PluginId
     get() = pluginDescriptor.pluginId
 
   protected abstract val implementationClassName: String
@@ -47,6 +47,8 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
     return result
   }
+
+  fun getInitializedInstance() = initializedInstance
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use")
