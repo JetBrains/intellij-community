@@ -21,6 +21,8 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -1218,5 +1220,54 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     } finally {
       index.dispose()
     }
+  }
+
+  void "test unsaved document is still indexed on dumb mode ignoring access"() {
+    def file = (PsiJavaFile)myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def nameIdentifier = file.getClasses()[0].getNameIdentifier()
+
+    def project = getProject()
+    def dumbService = (DumbServiceImpl)DumbService.getInstance(project)
+    def virtualFile = file.getVirtualFile()
+
+    assertTrue(findWordInDumbMode("Foo", virtualFile, false))
+    assertFalse(findWordInDumbMode("Bar", virtualFile, false))
+
+    dumbService.setDumb(true)
+    try {
+      assertTrue(findWordInDumbMode("Foo", virtualFile, true))
+      assertFalse(findWordInDumbMode("Bar", virtualFile, true))
+
+      nameIdentifier.replace(JavaPsiFacade.getElementFactory(project).createIdentifier("Bar"))
+      assertTrue(FileDocumentManager.instance.isDocumentUnsaved(PsiDocumentManager.getInstance(project).getDocument(file)))
+
+      assertTrue(findWordInDumbMode("Bar", virtualFile, true))
+      assertFalse(findWordInDumbMode("Foo", virtualFile, true))
+
+    } finally {
+      dumbService.setDumb(false)
+    }
+
+    assertTrue(findWordInDumbMode("Bar", virtualFile, false))
+    assertFalse(findWordInDumbMode("Foo", virtualFile, false))
+  }
+
+  private boolean findWordInDumbMode(String word, VirtualFile file, boolean inDumbMode) {
+    assertTrue(DumbService.isDumb(getProject()) == inDumbMode)
+    assertTrue(FileBasedIndex.isIndexAccessDuringDumbModeEnabled())
+
+    def wordHash = new IdIndexEntry(word, true)
+    def scope = GlobalSearchScope.allScope(project)
+    def fileBasedIndex = FileBasedIndex.instance
+    boolean found = false
+    def runnable = {
+      found = fileBasedIndex.getContainingFiles(IdIndex.NAME, wordHash, scope).contains(file)
+    }
+    if (inDumbMode) {
+      fileBasedIndex.ignoreDumbMode(runnable, project)
+    } else {
+      runnable.run()
+    }
+    return found
   }
 }
