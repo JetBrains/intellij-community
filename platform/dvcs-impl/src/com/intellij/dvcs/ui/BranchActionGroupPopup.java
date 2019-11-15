@@ -69,7 +69,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   public BranchActionGroupPopup(@NotNull String title,
                                 @NotNull Project project,
-                                @NotNull Condition<AnAction> preselectActionCondition,
+                                @NotNull Condition<? super AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey) {
     super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.getProjectContext(project),
