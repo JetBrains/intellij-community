@@ -31,6 +31,14 @@ def _enable_segfault_tracebacks():
         pass
 
 
+def _configure_multiprocessing():
+    required_start_method = os.environ.get('GENERATOR3_MULTIPROCESSING_START_METHOD')
+    if required_start_method:
+        import multiprocessing
+        # Available only since Python 3.4
+        multiprocessing.set_start_method(required_start_method)
+
+
 def parse_args(gen_version):
     parser = argparse.ArgumentParser(prog='generator3',
                                      description='Generates interface skeletons (binary stubs) for binary and '
@@ -155,4 +163,5 @@ if __name__ == "__main__":
     _bootstrap_sys_path()
     _setup_logging()
     _enable_segfault_tracebacks()
+    _configure_multiprocessing()
     main()
