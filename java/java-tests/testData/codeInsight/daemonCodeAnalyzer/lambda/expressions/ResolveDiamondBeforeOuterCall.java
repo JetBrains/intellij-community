@@ -4,9 +4,13 @@ import java.util.TreeSet;
 
 class Test {
   Test(final Set<? super String> set) {
-    System.out.println(join(new TreeSet<>(set), ""));
+    System.out.println(join(new TreeSet<>(set)));
   }
 
-  public static String join(Iterable<?> items, String separator) {return items+separator;}
-  public static String join(Collection<String> strings, String separator) {return strings + separator;}
+  public static String join(Iterable<?> items) {return "";}
+  public static String join(Collection<String> strings) {return "";}
+}
+
+class TreeSet<E> extends Set<E> {
+  TreeSet(Collection<? extends E> c) {}
 }

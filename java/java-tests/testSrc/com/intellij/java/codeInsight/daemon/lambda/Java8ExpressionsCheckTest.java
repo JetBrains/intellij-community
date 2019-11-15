@@ -305,7 +305,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     PsiNewExpression newExpression = ContainerUtil.getOnlyItem(PsiTreeUtil.findChildrenOfType(getFile(), PsiNewExpression.class));
     assertNotNull(newExpression);
     PsiType type = newExpression.getType();
-    assertEquals("java.util.TreeSet<? super java.lang.String>", type.getCanonicalText());
+    assertEquals("TreeSet<? super java.lang.String>", type.getCanonicalText());
   }
 
   private void doTestAllMethodCallExpressions() {
