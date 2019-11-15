@@ -7,7 +7,8 @@ import com.intellij.util.ui.*
 import javax.swing.*
 
 
-internal fun buildLoginPanel(st: CircletLoginState.Disconnected, loginAction: (String) -> Unit): DialogPanel {
+internal fun buildLoginPanel(st: CircletLoginState.Disconnected,
+                             loginAction: (String) -> Unit): DialogPanel {
     return panel {
         val serverField = JTextField(st.server)
 
@@ -18,6 +19,14 @@ internal fun buildLoginPanel(st: CircletLoginState.Disconnected, loginAction: (S
             }
         }
 
+        row {
+            cell(isFullWidth = true) {
+                val jbLabel = JBLabel("Log In to Space", UIUtil.ComponentStyle.LARGE).apply {
+                    font = JBFont.label().biggerOn(5.0f)
+                }
+                jbLabel()
+            }
+        }
         row("Organization URL:") {
             serverField()
         }
