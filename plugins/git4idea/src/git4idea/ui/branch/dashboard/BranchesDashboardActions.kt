@@ -19,6 +19,7 @@ import git4idea.isRemoteBranchProtected
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
+import git4idea.ui.branch.createOrCheckoutNewBranch
 import javax.swing.Icon
 
 internal object BranchesDashboardActions {
@@ -95,7 +96,8 @@ internal object BranchesDashboardActions {
       val branches = e.getData(GIT_BRANCHES)!!
       val project = e.project!!
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
-      GitBranchPopupActions.GitNewBranchAction(project, repositories).actionPerformed(e)
+      val branchName = branches.first().branchName
+      createOrCheckoutNewBranch(project, repositories, "$branchName^0", "Create New Branch From $branchName")
     }
   }
 
