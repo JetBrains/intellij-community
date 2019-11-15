@@ -30,7 +30,7 @@
     <orderEntry type="module" module-name="intellij.python.community.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" />
-    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.pycharm.community" scope="RUNTIME" />
   </component>
 </module>
