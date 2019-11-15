@@ -24,6 +24,16 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface CredentialsEditor<T> {
+  /**
+   * The user-visible name of the editor.
+   * <p>
+   * It will be used as the label of the option corresponding to this editor in
+   * the outer form.
+   *
+   * @return the name of the editor
+   */
+  @NotNull
+  String getName();
 
   JPanel getMainPanel();
 

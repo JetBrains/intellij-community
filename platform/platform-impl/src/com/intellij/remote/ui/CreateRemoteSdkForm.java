@@ -195,11 +195,11 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
         if (!contributions.isEmpty()) {
           for (CredentialsLanguageContribution contribution : contributions) {
             if (contribution.getType() == typeEx && editorProvider.isAvailable(contribution)) {
-              JBRadioButton typeButton = new JBRadioButton(typeEx.getName());
+              final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
+
+              JBRadioButton typeButton = new JBRadioButton(editor.getName());
               myTypeButtonGroup.add(typeButton);
               myRadioPanel.add(typeButton);
-
-              final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
 
               final JPanel editorMainPanel = editor.getMainPanel();
               myTypesPanel.add(editorMainPanel, typeEx.getName());
