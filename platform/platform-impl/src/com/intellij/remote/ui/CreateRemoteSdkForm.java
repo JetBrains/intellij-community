@@ -21,7 +21,6 @@ import com.intellij.remote.ext.*;
 import com.intellij.remote.ui.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.StatusPanel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -33,9 +32,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.*;
 
@@ -157,24 +160,6 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     myRadioPanel.setVisible(false);
   }
 
-  private void alignEditorFields(@NotNull CredentialsEditor<?> editor) {
-    myInterpreterPathLabel.setAnchor(null);
-    if (editor instanceof PanelWithAnchor && myInterpreterPathLabel.isVisible()) {
-      ((PanelWithAnchor)editor).setAnchor(myInterpreterPathLabel);
-    }
-    else if (editor instanceof FormWithAlignableLabelsColumn) {
-      JBLabel label = FormWithAlignableLabelsColumn.findLabelWithMaxPreferredWidth((FormWithAlignableLabelsColumn)editor);
-      if (label != null) {
-        if (myInterpreterPathLabel.getPreferredSize().width < label.getPreferredSize().getWidth()) {
-          myInterpreterPathLabel.setAnchor(label);
-        }
-        else {
-          label.setAnchor(myInterpreterPathLabel);
-        }
-      }
-    }
-  }
-
   private void installRadioListeners(@NotNull final Collection<TypeHandler> values) {
     ActionListener l = new ActionListener() {
       @Override
@@ -196,6 +181,8 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
           for (CredentialsLanguageContribution contribution : contributions) {
             if (contribution.getType() == typeEx && editorProvider.isAvailable(contribution)) {
               final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
+
+              trackEditorLabelsColumn(editor);
 
               JBRadioButton typeButton = new JBRadioButton(editor.getName());
               myTypeButtonGroup.add(typeButton);
@@ -588,12 +575,10 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     @Override
     public void onInit() {
-      alignEditorFields(myEditor);
     }
 
     @Override
     public void onSelected() {
-      alignEditorFields(myEditor);
       myConnectionType = myType;
       myEditor.onSelected();
     }
@@ -757,5 +742,92 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       }
     }
     radioSelected(true);
+  }
+
+  private void trackEditorLabelsColumn(@NotNull CredentialsEditor<?> editor) {
+    if (editor instanceof FormWithAlignableLabelsColumn) {
+      for (JBLabel label : ((FormWithAlignableLabelsColumn)editor).getLabelsColumn()) {
+        label.addAncestorListener(myLabelsColumnTracker);
+        label.addComponentListener(myLabelsColumnTracker);
+      }
+    }
+  }
+
+  @NotNull
+  private final CredentialsEditorLabelsColumnTracker myLabelsColumnTracker = new CredentialsEditorLabelsColumnTracker();
+
+  private class CredentialsEditorLabelsColumnTracker implements ComponentListener, AncestorListener {
+    @NotNull
+    private final Set<JBLabel> myVisibleLabelsColumn = new HashSet<>();
+
+    @Nullable
+    private JBLabel myAnchoredLabel;
+
+    @Override
+    public void componentResized(ComponentEvent e) { /* do nothing */ }
+
+    @Override
+    public void componentMoved(ComponentEvent e) { /* do nothing */ }
+
+    @Override
+    public void componentShown(ComponentEvent e) { onEvent(e.getComponent()); }
+
+    @Override
+    public void componentHidden(ComponentEvent e) { onEvent(e.getComponent()); }
+
+    @Override
+    public void ancestorAdded(AncestorEvent event) { onEvent(event.getComponent()); }
+
+    @Override
+    public void ancestorRemoved(AncestorEvent event) { onEvent(event.getComponent()); }
+
+    @Override
+    public void ancestorMoved(AncestorEvent event) { onEvent(event.getComponent()); }
+
+    private void onEvent(@Nullable Component component) {
+      if (component == null) return;
+
+      if (component instanceof JBLabel) {
+        if (component.isShowing()) {
+          onLabelShowing((JBLabel)component);
+        }
+        else {
+          onLabelHidden((JBLabel)component);
+        }
+      }
+    }
+
+    private void onLabelShowing(@NotNull JBLabel component) {
+      if (myVisibleLabelsColumn.add(component)) {
+        alignForm();
+      }
+    }
+
+    protected void onLabelHidden(@NotNull JBLabel component) {
+      if (myVisibleLabelsColumn.remove(component)) {
+        alignForm();
+      }
+    }
+
+    private void alignForm() {
+      myInterpreterPathLabel.setAnchor(null);
+      if (myAnchoredLabel != null) {
+        myAnchoredLabel.setAnchor(null);
+        myAnchoredLabel = null;
+      }
+      if (!myVisibleLabelsColumn.isEmpty()) {
+        JBLabel labelWithMaxWidth = Collections.max(myVisibleLabelsColumn, Comparator.comparingInt(o -> o.getPreferredSize().width));
+        if (myInterpreterPathLabel.getPreferredSize().width < labelWithMaxWidth.getPreferredSize().getWidth()) {
+          myInterpreterPathLabel.setAnchor(labelWithMaxWidth);
+        }
+        else {
+          for (JBLabel label : myVisibleLabelsColumn) {
+            label.setAnchor(myInterpreterPathLabel);
+            label.revalidate();
+          }
+          myAnchoredLabel = labelWithMaxWidth;
+        }
+      }
+    }
   }
 }
