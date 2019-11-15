@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore iteration method calls", this, "ignoreIterationMethods");
+    return new SingleCheckboxOptionsPanel("Ignore known methods with side-effects", this, "ignoreIterationMethods");
   }
 
   @Override
@@ -106,24 +106,45 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
     }
 
     private void checkForMethodCalls(PsiExpression condition) {
-      final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      condition.accept(new JavaRecursiveElementWalkingVisitor() {
 
           @Override
           public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (ignoreIterationMethods) {
-              final PsiMethod method = expression.resolveMethod();
-              if (MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext") ||
-                  MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiType.BOOLEAN, "hasPrevious") ||
-                  MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiType.BOOLEAN, "next") ||
-                  MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiType.BOOLEAN, "hasMoreElements")) {
+              if (isIterationMethod(expression) || isCallToCasMethod(expression)) {
                 return;
               }
             }
             registerMethodCallError(expression);
           }
-        };
-      condition.accept(visitor);
+
+        private boolean isIterationMethod(@NotNull PsiMethodCallExpression expression) {
+          return MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiType.BOOLEAN, "hasPrevious") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiType.BOOLEAN, "next") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiType.BOOLEAN, "hasMoreElements") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.util.Queue", null, "poll") ||
+                 MethodCallUtils.isCallToMethod(expression, "java.lang.ref.ReferenceQueue", null, "poll");
+        }
+
+        private boolean isCallToCasMethod(@NotNull PsiMethodCallExpression expression) {
+          final String methodName = MethodCallUtils.getMethodName(expression);
+          if (!"weakCompareAndSet".equals(methodName) && !"compareAndSet".equals(methodName)) {
+            return false;
+          }
+          final PsiMethod method = expression.resolveMethod();
+          if (method == null) {
+            return false;
+          }
+          final PsiClass containingClass = method.getContainingClass();
+          if (containingClass == null) {
+            return false;
+          }
+          final String qualifiedName = containingClass.getQualifiedName();
+          return qualifiedName != null && qualifiedName.startsWith("java.util.concurrent.atomic.");
+        }
+      });
     }
   }
 }
