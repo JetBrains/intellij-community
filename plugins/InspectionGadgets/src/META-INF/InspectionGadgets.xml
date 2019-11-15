@@ -264,7 +264,7 @@
                      implementationClass="com.siyeh.ig.bugs.InstanceofIncompatibleInterfaceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InstantiationOfUtilityClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instantiation.utility.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.InstantiationOfUtilityClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IteratorHasNextCallsIteratorNext" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="iterator.hasnext.which.calls.next.display.name" groupBundle="messages.InspectionsBundle"
