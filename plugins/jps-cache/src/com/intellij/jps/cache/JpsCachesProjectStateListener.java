@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class JpsCachesProjectStateListener implements StartupActivity, GitRepositoryChangeListener {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsCachesProjectStateListener");
+  private String previousCommitId = "";
 
   @Override
   public void runActivity(@NotNull Project project) {
@@ -20,7 +21,8 @@ public class JpsCachesProjectStateListener implements StartupActivity, GitReposi
   public void repositoryChanged(@NotNull GitRepository repository) {
     LOG.debug("Catch repository git event");
     String currentRevision = repository.getInfo().getCurrentRevision();
-    if (currentRevision == null) return;
+    if (currentRevision == null || previousCommitId.equals(currentRevision)) return;
+    previousCommitId = currentRevision;
     JpsOutputLoaderManager.getInstance(repository.getProject()).notifyAboutNearestCache();
   }
 }
