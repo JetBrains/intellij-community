@@ -37,6 +37,7 @@ import runtime.*
 import runtime.reactive.*
 import java.awt.event.*
 import java.nio.file.*
+import java.util.concurrent.*
 import javax.swing.*
 import javax.swing.event.*
 
@@ -111,8 +112,10 @@ internal class CircletCloneComponent(val project: Project,
                             loginState.value = CircletLoginState.Disconnected(serverName, response.description)
                         }
                     }
+                } catch (th: CancellationException) {
+                    throw th
                 } catch (th: Throwable) {
-                    log.error(th)
+                    log.warn(th)
                     loginState.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
                 }
             }
@@ -311,34 +314,34 @@ private class CloneView(
         lateinit var scrollUpdater: (force : Boolean) -> Unit
 
         scrollUpdater = { force ->
-
-            // run element visibility updater, tracks elements in a view port and set visible to true.
-            launch(slVisibility.next(), Ui) {
-                delay(300)
-                while (cloneViewModel.isLoading.value) {
+            if (!lifetime.isTerminated) {
+                // run element visibility updater, tracks elements in a view port and set visible to true.
+                launch(slVisibility.next(), Ui) {
                     delay(300)
+                    while (cloneViewModel.isLoading.value) {
+                        delay(300)
+                    }
+                    val first = list.firstVisibleIndex
+                    val last = list.lastVisibleIndex
+                    if (first >= 0 && last >= 0) {
+                        (first..last).forEach {
+                            val el = list.model.getElementAt(it)
+                            el.visible.value = true
+                        }
+                    }
                 }
-                val first = list.firstVisibleIndex
                 val last = list.lastVisibleIndex
-                if (first >= 0 && last >= 0) {
-                    (first..last).forEach {
-                        val el = list.model.getElementAt(it)
-                        el.visible.value = true
+                if (force || !cloneViewModel.isLoading.value) {
+                    if ((last == -1 || list.model.size < last + 10) && cloneViewModel.repos.hasMore.value) {
+                        cloneViewModel.isLoading.value = true
+                        launch(lifetime, Ui) {
+                            cloneViewModel.repos.more()
+                            scrollUpdater(true)
+                        }
                     }
-                }
-            }
-
-            val last = list.lastVisibleIndex
-            if (force || !cloneViewModel.isLoading.value) {
-                if ((last == -1 || list.model.size < last + 10) && cloneViewModel.repos.hasMore.value) {
-                    cloneViewModel.isLoading.value = true
-                    launch(lifetime, Ui) {
-                        cloneViewModel.repos.more()
-                        scrollUpdater(true)
+                    else {
+                        cloneViewModel.isLoading.value = false
                     }
-                }
-                else {
-                    cloneViewModel.isLoading.value = false
                 }
             }
         }
