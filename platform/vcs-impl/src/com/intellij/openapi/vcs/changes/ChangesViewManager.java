@@ -253,6 +253,10 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   public void closeEditorPreview() {
+    if (myToolWindowPanel == null) {
+      return;
+    }
+
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       PreviewDiffVirtualFile vcsContentFile = ((EditorTabPreview) diffPreview).getVcsContentFile();
@@ -261,6 +265,10 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   public void openEditorPreview() {
+    if (myToolWindowPanel == null) {
+      return;
+    }
+
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       EditorTabPreview editorTabPreview = (EditorTabPreview) diffPreview;
