@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
+import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBDimension
@@ -21,6 +22,7 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
 import javax.swing.JComponent
 import javax.swing.JTable
@@ -136,5 +138,24 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
     intercellSpacing = JBUI.emptySize()
     tableHeader = null
+    installSpeedSearch()
+    prepareSubjectColumn()
+  }
+
+  private fun installSpeedSearch() {
+    TableSpeedSearch(this) { o, cell -> o.toString().takeIf { cell.column == SUBJECT_COLUMN } }
+  }
+
+  private fun prepareSubjectColumn() {
+    val subjectColumn = columnModel.getColumn(SUBJECT_COLUMN)
+    subjectColumn.cellRenderer = object : ColoredTableCellRenderer() {
+      override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+        if (value != null) {
+          border = null
+          append(value.toString())
+          SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
+        }
+      }
+    }
   }
 }
