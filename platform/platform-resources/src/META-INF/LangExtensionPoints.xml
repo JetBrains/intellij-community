@@ -46,7 +46,7 @@
     <extensionPoint name="dynamicContextProvider"
                     interface="com.intellij.openapi.paths.DynamicContextProvider" dynamic="true"/>
 
-`    <extensionPoint name="intentionAction"
+    <extensionPoint name="intentionAction"
                     beanClass="com.intellij.codeInsight.intention.IntentionActionBean"
                     dynamic="true">
       <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
