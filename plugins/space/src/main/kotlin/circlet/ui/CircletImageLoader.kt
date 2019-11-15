@@ -9,6 +9,8 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import kotlinx.coroutines.*
 import libraries.coroutines.extra.*
+import runtime.*
+import runtime.async.*
 import java.awt.image.*
 import java.io.*
 import java.util.concurrent.*
@@ -31,15 +33,17 @@ class CircletImageLoader(
     suspend fun loadImageAsync(imageTID: TID): Deferred<BufferedImage?> {
         return imageCache.get(imageTID) {
             async(lifetime, coroutineDispatcher) {
-                load(imageTID)
+                backoff {
+                    load(imageTID)
+                }
             }
         }
     }
 
     private suspend fun load(imageTID: TID): BufferedImage? {
         val accessToken = tokenSource.token().accessToken
-        return HttpClient().use {
-            val bytes = HttpClient().get<ByteArray>("$imagesEndpoint/$imageTID") {
+        return HttpClient().use { client ->
+            val bytes = client.get<ByteArray>("$imagesEndpoint/$imageTID") {
                 header("Authorization", "Bearer $accessToken")
             }
             ImageIO.read(ByteArrayInputStream(bytes))
