@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="perfetto-proto">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../bazel-genfiles/tools/base/profiler/perfetto-protos.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../bazel-bin/tools/base/profiler/perfetto-protos.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

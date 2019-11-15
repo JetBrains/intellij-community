@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="studio-proto">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../bazel-genfiles/tools/base/bazel/studio-proto.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../bazel-bin/tools/base/bazel/studio-proto.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

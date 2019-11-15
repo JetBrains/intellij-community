@@ -299,13 +299,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     // Profiler prebuilt binaries:
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
-      fileset(file: "$root/bazel-genfiles/tools/base/profiler/transform/profilers-transform.jar")
+      fileset(file: "$root/bazel-bin/tools/base/profiler/transform/profilers-transform.jar")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
-      fileset(file: "$root/bazel-genfiles/tools/base/profiler/app/perfa.jar")
+      fileset(file: "$root/bazel-bin/tools/base/profiler/app/perfa.jar")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
-      fileset(file: "$root/bazel-genfiles/tools/base/profiler/app/perfa_okhttp.dex")
+      fileset(file: "$root/bazel-bin/tools/base/profiler/app/perfa_okhttp.dex")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/transport") {
       fileset(dir: "$root/bazel-bin/tools/base/transport/android")
@@ -328,7 +328,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     // Instant run
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/installer") {
-      fileset(dir: "$root/bazel-genfiles/tools/base/deploy/installer/android-installer")
+      fileset(dir: "$root/bazel-bin/tools/base/deploy/installer/android-installer")
     }
 
     // Native debugger.
