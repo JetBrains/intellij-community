@@ -4,6 +4,12 @@ else
   set -e XDG_CONFIG_HOME
 end
 
+if test -d ~/.config/fish/completions
+  for f in ~/.config/fish/completions/*.fish
+    source $f
+  end
+end
+
 if test -d ~/.config/fish/conf.d
   for f in ~/.config/fish/conf.d/*.fish
     source $f
