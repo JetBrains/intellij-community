@@ -2,8 +2,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
@@ -816,24 +814,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       builders = null;
     }
 
-    long start = StartUpMeasurer.getCurrentTime();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      long waitEnd = StartUpMeasurer.getCurrentTime();
       runBulkTabChange(window.getOwner(), splitters -> {
         openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders);
       });
-      long end = StartUpMeasurer.getCurrentTime();
-      reportFileOpeningTimes(start, waitEnd, end, "openFileImpl4Edt: " + file.getName());
     });
 
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
                        composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
-  }
-
-  static void reportFileOpeningTimes(long start, long waitEnd, long end, String name) {
-    StartUpMeasurer.addCompletedActivity(start, waitEnd, name, ActivityCategory.REOPENING_EDITOR_WAIT, null);
-    StartUpMeasurer.addCompletedActivity(waitEnd, end, name, ActivityCategory.REOPENING_EDITOR_EDT, null);
   }
 
   private void openFileImpl4Edt(@NotNull EditorWindow window,
