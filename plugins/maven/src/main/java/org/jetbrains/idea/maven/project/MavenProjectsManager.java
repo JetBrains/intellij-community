@@ -93,6 +93,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private MavenProjectsTree myProjectsTree;
+  private MavenProjectResolver myMavenProjectResolver;
   private MavenProjectsManagerWatcher myWatcher;
 
   private MavenProjectsProcessor myReadingProcessor;
@@ -320,6 +321,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
+    myMavenProjectResolver = new MavenProjectResolver(myProjectsTree);
     applyStateToTree();
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster());
   }
@@ -401,9 +403,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void registerSyncConsoleListener() {
-    myProjectsTree.addListener(new MavenProjectsTree.Listener() {
-    });
-    myProjectsTree.addListener(new MavenProjectsTree.Listener() {
+    myProjectsTreeDispatcher.addListener(new MavenProjectsTree.Listener() {
       @Override
       public void pluginsResolved(@NotNull MavenProject project) {
         getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).finish();
@@ -976,26 +976,27 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
         indicator.setText("Evaluating effective POM");
 
-        myProjectsTree.executeWithEmbedder(mavenProject,
-                                           getEmbeddersManager(),
-                                           MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
-                                           console,
-                                           indicator,
-                                           new MavenProjectsTree.EmbedderTask() {
-                                             @Override
-                                             public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-                                               try {
-                                                 MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
-                                                 String res =
-                                                   embedder.evaluateEffectivePom(mavenProject.getFile(), profiles.getEnabledProfiles(),
-                                                                                 profiles.getDisabledProfiles());
-                                                 consumer.consume(res);
-                                               }
-                                               catch (UnsupportedOperationException e) {
-                                                 consumer.consume(null); // null means UnsupportedOperationException
-                                               }
-                                             }
-                                           });
+        myMavenProjectResolver.executeWithEmbedder(mavenProject,
+                                                   getEmbeddersManager(),
+                                                   MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
+                                                   console,
+                                                   indicator,
+                                                   new MavenProjectResolver.EmbedderTask() {
+                                                     @Override
+                                                     public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
+                                                       try {
+                                                         MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
+                                                         String res =
+                                                           embedder
+                                                             .evaluateEffectivePom(mavenProject.getFile(), profiles.getEnabledProfiles(),
+                                                                                   profiles.getDisabledProfiles());
+                                                         consumer.consume(res);
+                                                       }
+                                                       catch (UnsupportedOperationException e) {
+                                                         consumer.consume(null); // null means UnsupportedOperationException
+                                                       }
+                                                     }
+                                                   });
       }
     }));
   }
@@ -1058,7 +1059,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!sources && !docs) return;
 
     runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
-      .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myProjectsTree, sources, docs, result)));
+      .scheduleTask(
+        new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myMavenProjectResolver, sources, docs, result)));
   }
 
   private void scheduleImportSettings() {
