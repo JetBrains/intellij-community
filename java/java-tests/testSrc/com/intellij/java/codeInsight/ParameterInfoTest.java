@@ -502,7 +502,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
   public void testCustomHandlerHighlighterWithEscaping() {
     myFixture.configureByText(PlainTextFileType.INSTANCE, " ");
-    LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new ParameterInfoHandler<Object, Object>() {
+    LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new ParameterInfoHandler<PsiElement, Object>() {
       @Override
       public boolean couldShowInLookup() {
         return false;
@@ -516,24 +516,24 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
       @NotNull
       @Override
-      public Object findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+      public PsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         context.setItemsToShow(new Object[]{this});
-        return this;
+        return context.getFile();
       }
 
       @Override
-      public void showParameterInfo(@NotNull Object element, @NotNull CreateParameterInfoContext context) {
+      public void showParameterInfo(@NotNull PsiElement element, @NotNull CreateParameterInfoContext context) {
         context.showHint(context.getFile(), context.getOffset(), this);
       }
 
       @NotNull
       @Override
-      public Object findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
-        return this;
+      public PsiElement findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
+        return context.getFile();
       }
 
       @Override
-      public void updateParameterInfo(@NotNull Object o, @NotNull UpdateParameterInfoContext context) {}
+      public void updateParameterInfo(@NotNull PsiElement o, @NotNull UpdateParameterInfoContext context) {}
 
       @Override
       public void updateUI(Object p, @NotNull ParameterInfoUIContext context) {

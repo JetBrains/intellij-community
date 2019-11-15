@@ -275,12 +275,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public void updateParameterInfo(@NotNull final PsiExpressionList o, @NotNull final UpdateParameterInfoContext context) {
-    PsiElement parameterOwner = context.getParameterOwner();
-    if (parameterOwner != o) {
-      context.removeHint();
-      return;
-    }
-
     int offset = context.getOffset();
     TextRange elRange = o.getTextRange();
     int index = offset <= elRange.getStartOffset() || offset >= elRange.getEndOffset()

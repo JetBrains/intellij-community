@@ -15,14 +15,21 @@
 package com.intellij.lang.parameterInfo;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
+import java.awt.*;
+
+public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
   boolean couldShowInLookup();
   @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context);
 
-  // Find element for parameter info should also set ItemsToShow in context and may set highlighted element
+  /**
+   * Find psiElement for parameter info should also set ItemsToShow in context and may set highlighted element
+   *
+   * Note: it is executed on non UI thread
+   */
   @Nullable
   ParameterOwner findElementForParameterInfo(@NotNull CreateParameterInfoContext context);
   // Usually context.showHint
@@ -31,9 +38,25 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   // Null returns leads to removing hint
   @Nullable
   ParameterOwner findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context);
+
+  /**
+   * <p>Updates parameter info context due to change of caret position.</p>
+   *
+   * <p>It could update context and state of {@link UpdateParameterInfoContext#getObjectsToView()}</p>
+   *
+   * <p>Note: <code>context.getParameterOwner()</code> equals to <code>parameterOwner</code> or <code>null</code></p>
+   *
+   * <p>Note: it is executed on non UI thread.</p>
+   */
   void updateParameterInfo(@NotNull final ParameterOwner parameterOwner, @NotNull UpdateParameterInfoContext context);
 
-  // context.setEnabled / context.setupUIComponentPresentation
+  /**
+   * <p>This method is executed on UI thread and supposed only to update UI representation using
+   * {@link ParameterInfoUIContext#setUIComponentEnabled(boolean)} or {@link ParameterInfoUIContext#setupUIComponentPresentation(String, int, int, boolean, boolean, boolean, Color)}.</p>
+   *
+   * <p>Don't perform any heavy calculations like resolve here: move it to {@link #findElementForParameterInfo(CreateParameterInfoContext)} or
+   * {@link #updateParameterInfo(Object, UpdateParameterInfoContext)}.</p>
+   */
   void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
 
   default boolean supportsOverloadSwitching() { return false; }

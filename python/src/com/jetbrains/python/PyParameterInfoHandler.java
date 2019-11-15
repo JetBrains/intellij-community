@@ -101,11 +101,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    */
   @Override
   public void updateParameterInfo(@NotNull PyArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() != argumentList) {
-      context.removeHint();
-      return;
-    }
-
     // align offset to nearest expression; context may point to a space, etc.
     final List<PyExpression> flattenedArguments = PyUtil.flattenedParensAndLists(argumentList.getArguments());
     final int allegedCursorOffset = context.getOffset(); // this is already shifted backwards to skip spaces
