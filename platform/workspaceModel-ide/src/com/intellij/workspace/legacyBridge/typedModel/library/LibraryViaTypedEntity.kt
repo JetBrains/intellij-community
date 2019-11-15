@@ -62,8 +62,8 @@ class LibraryViaTypedEntity(val libraryEntity: LibraryEntity,
                                                                          ?.files ?: VirtualFile.EMPTY_ARRAY
 
   override fun getUrls(rootType: OrderRootType): Array<String> = roots[LibraryRootTypeId(rootType.name())]
-                                                                   ?.getAndCacheVirtualFilePointerContainer(filePointerProvider)
-                                                                   ?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
+                                                                   ?.urls?.map { it.url }?.toTypedArray()
+                                                                 ?: ArrayUtil.EMPTY_STRING_ARRAY
 
   override fun getKind(): PersistentLibraryKind<*>? = libraryKind
 
