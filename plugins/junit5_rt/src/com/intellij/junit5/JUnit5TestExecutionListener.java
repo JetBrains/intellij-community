@@ -38,6 +38,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class JUnit5TestExecutionListener implements TestExecutionListener {
@@ -78,11 +79,29 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {
-    StringBuilder builder = new StringBuilder();
-    builder.append("timestamp = ").append(entry.getTimestamp());
-    entry.getKeyValuePairs().forEach((key, value) -> builder.append(", ").append(key).append(" = ").append(value));
-    myPrintStream.println(builder.toString());
+
+    Map<String, String> regularAttributes = entry.getKeyValuePairs().entrySet().stream()
+      .filter(e -> !(e.getKey().equals("stdout") || e.getKey().equals("stderr")))
+      .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+    if (!regularAttributes.isEmpty()) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("timestamp = ").append(entry.getTimestamp());
+      regularAttributes
+        .forEach((key, value) -> builder.append(", ").append(key).append(" = ").append(value));
+      myPrintStream.println(builder.toString());
+    }
+
+    if (entry.getKeyValuePairs().containsKey("stdout")) {
+      String stdout = entry.getKeyValuePairs().get("stdout");
+      myPrintStream.println("##teamcity[testStdOut" + idAndName(testIdentifier) + " out = '" + escapeName(stdout) + "']");
+    }
+    if (entry.getKeyValuePairs().containsKey("stderr")) {
+      String stderr = entry.getKeyValuePairs().get("stderr");
+      myPrintStream.println("##teamcity[testStdErr" + idAndName(testIdentifier) + " out = '" + escapeName(stderr) + "']");
+    }
   }
+
 
   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
