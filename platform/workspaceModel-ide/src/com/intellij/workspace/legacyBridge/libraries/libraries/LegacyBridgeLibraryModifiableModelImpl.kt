@@ -242,8 +242,8 @@ class LegacyBridgeLibraryModifiableModelImpl(
     }
   }
 
-  private fun isUnderRoots(url: VirtualFileUrl): Boolean {
-    return VfsUtilCore.isUnder(url.url, currentLibrary.libraryEntity.roots.map { it.url.url })
+  private fun isUnderRoots(url: VirtualFileUrl, roots: Collection<LibraryRoot>): Boolean {
+    return VfsUtilCore.isUnder(url.url, roots.map { it.url.url })
   }
 
   override fun removeRoot(url: String, rootType: OrderRootType): Boolean {
@@ -255,7 +255,7 @@ class LegacyBridgeLibraryModifiableModelImpl(
 
     update {
       roots = roots.filterNot { it.url == virtualFileUrl && it.type.name == rootType.name() }
-      excludedRoots = excludedRoots.filter { isUnderRoots(it) }
+      excludedRoots = excludedRoots.filter { isUnderRoots(it, roots) }
     }
 
     if (assertChangesApplied && currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) {
