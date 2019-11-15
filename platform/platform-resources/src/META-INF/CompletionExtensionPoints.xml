@@ -41,10 +41,10 @@
       <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
     </extensionPoint>
 
-    <extensionPoint name="templateParameterTraversalPolicy" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="templateParameterTraversalPolicy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
     </extensionPoint>
 
-    <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer"/>
+    <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
