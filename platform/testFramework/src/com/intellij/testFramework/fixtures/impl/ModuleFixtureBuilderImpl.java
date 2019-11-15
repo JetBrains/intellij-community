@@ -140,7 +140,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
           if (vf != null) {
             VirtualFile finalVf = vf;
 
-            if (!Arrays.stream(contentEntry.getSourceFolders()).anyMatch(folder -> finalVf.equals(folder.getFile()))) {
+            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> finalVf.equals(folder.getFile()))) {
               contentEntry.addSourceFolder(finalVf, false);
             }
           }
@@ -148,7 +148,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
             // files are not created yet
 
             String url = VfsUtilCore.pathToUrl(s);
-            if (!Arrays.stream(contentEntry.getSourceFolders()).anyMatch(folder -> url.equals(folder.getUrl()))) {
+            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> url.equals(folder.getUrl()))) {
               contentEntry.addSourceFolder(url, false);
             }
           }
