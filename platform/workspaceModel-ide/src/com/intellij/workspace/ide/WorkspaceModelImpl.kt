@@ -4,6 +4,7 @@ package com.intellij.workspace.ide
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.workspace.api.*
 
 class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
@@ -53,16 +54,16 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
   private class ProjectModelEntityStore(private val project: Project, initialStorage: TypedEntityStorage)
     : EntityStoreImpl(initialStorage) {
     override fun onBeforeChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
+      if (project.isDisposed || Disposer.isDisposing(project)) return
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(
-        EntityStoreChangedImpl(entityStore = this, storageBefore = before,
-                                                                             storageAfter = after, changes = changes)
+        EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
       )
     }
 
     override fun onChanged(before: TypedEntityStorage, after: TypedEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>) {
+      if (project.isDisposed || Disposer.isDisposing(project)) return
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(
-        EntityStoreChangedImpl(entityStore = this, storageBefore = before,
-                                                                             storageAfter = after, changes = changes)
+        EntityStoreChangedImpl(entityStore = this, storageBefore = before, storageAfter = after, changes = changes)
       )
     }
   }
