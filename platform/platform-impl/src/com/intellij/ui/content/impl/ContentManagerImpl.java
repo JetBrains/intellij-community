@@ -256,7 +256,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        if (!myDisposed) {
+        if (!myDisposed && myContents.isEmpty()) {
+          // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
+          // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
+          // at at the same time.
           myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
         }
       }
