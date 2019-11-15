@@ -19,9 +19,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import kotlin.Deprecated;
+import org.jetbrains.annotations.*;
 import org.junit.Assert;
 import org.junit.Assume;
 
@@ -145,6 +144,33 @@ public class IdeaTestUtil extends PlatformTestUtil {
   @NotNull
   private static File getPathForJdkNamed(@NotNull String name) {
     return new File(PathManager.getCommunityHomePath(), "java/" + name);
+  }
+
+  @NotNull
+  @Deprecated(message = "Use IdeaTestUtil.addWebJarsToModule instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static Sdk getWebMockJdk17() {
+    Sdk jdk = getMockJdk17();
+    jdk=addWebJarsTo(jdk);
+    return jdk;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  @Deprecated(message = "Use IdeaTestUtil.addWebJarsToModule instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static Sdk addWebJarsTo(@NotNull Sdk jdk) {
+    try {
+      jdk = (Sdk)jdk.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+    SdkModificator sdkModificator = jdk.getSdkModificator();
+    sdkModificator.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
+    sdkModificator.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
+    sdkModificator.commitChanges();
+    return jdk;
   }
 
   public static void addWebJarsToModule(@NotNull Module module) {
