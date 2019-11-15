@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -119,6 +120,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
 
   @Override
   public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
+    if (!HighlightUtil.Feature.TEXT_BLOCKS.isAvailable(file)) return;
     editor.getDocument().insertString(offset, "\n\"\"\"");
     Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
