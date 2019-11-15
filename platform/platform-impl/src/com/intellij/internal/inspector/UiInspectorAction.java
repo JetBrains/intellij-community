@@ -38,6 +38,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
@@ -131,18 +132,19 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private static class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
-    private Component myComponent;
+    @NotNull private final List<Component> myComponents = new ArrayList<>();
     private List<? extends PropertyBean> myInfo;
-    private final Component myInitialComponent;
-    private HighlightComponent myHighlightComponent;
-    private final HierarchyTree myHierarchyTree;
-    private final JPanel myWrapperPanel;
+    @NotNull private final Component myInitialComponent;
+    @NotNull private final List<HighlightComponent> myHighlightComponents = new ArrayList<>();
+    private boolean myIsHighlighted = true;
+    @NotNull private final HierarchyTree myHierarchyTree;
+    @NotNull private final Wrapper myWrapperPanel;
 
     private InspectorWindow(@NotNull Component component) throws HeadlessException {
       super(findWindow(component));
       Window window = findWindow(component);
       setModal(window instanceof JDialog && ((JDialog)window).isModal());
-      myComponent = component;
+      myComponents.add(component);
       myInitialComponent = component;
       getRootPane().setBorder(JBUI.Borders.empty(5));
 
@@ -159,12 +161,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       actions.addAction(new IconWithTextAction("Highlight") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          setHighlightingEnabled(myHighlightComponent == null);
+          myIsHighlighted = !myIsHighlighted;
+          updateHighlighting();
         }
 
         @Override
         public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabled(myInfo != null || (myComponent != null && myComponent.isVisible()));
+          e.getPresentation().setEnabled(myInfo != null || !myComponents.isEmpty());
         }
 
       });
@@ -180,35 +183,31 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
         @Override
         public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabled(myComponent != null && myComponent.isVisible());
+          e.getPresentation().setEnabled(!myComponents.isEmpty());
         }
       });
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
       add(toolbar.getComponent(), BorderLayout.NORTH);
 
-      myWrapperPanel = new JPanel(new BorderLayout());
+      myWrapperPanel = new Wrapper();
 
       myInspectorTable = new InspectorTable(component);
       myHierarchyTree = new HierarchyTree(component) {
         @Override
-        public void onComponentChanged(Component c) {
-          boolean wasHighlighted = myHighlightComponent != null;
-          setHighlightingEnabled(false);
-          switchInfo(c);
-          setHighlightingEnabled(wasHighlighted);
+        public void onComponentsChanged(List<Component> components) {
+          switchComponentsInfo(components);
+          updateHighlighting();
         }
 
         @Override
-        public void onComponentChanged(List<? extends PropertyBean> info) {
-          boolean wasHighlighted = myHighlightComponent != null;
-          setHighlightingEnabled(false);
-          switchInfo(info);
-          setHighlightingEnabled(wasHighlighted);
+        public void onClickInfoChanged(List<? extends PropertyBean> info) {
+          switchClickInfo(info);
+          updateHighlighting();
         }
       };
 
-      myWrapperPanel.add(myInspectorTable, BorderLayout.CENTER);
+      myWrapperPanel.setContent(myInspectorTable);
 
       Splitter splitPane = new JBSplitter(false, "UiInspector.splitter.proportion", 0.5f);
       splitPane.setSecondComponent(myWrapperPanel);
@@ -230,7 +229,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           close();
         }
       });
-      setHighlightingEnabled(true);
+      updateHighlighting();
       getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
     }
 
@@ -250,27 +249,22 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       return myInspectorTable;
     }
 
-    private void switchInfo(@Nullable Component c) {
-      if (c == null) return;
-      myComponent = c;
+    private void switchComponentsInfo(@NotNull List<Component> components) {
+      if (components.isEmpty()) return;
+      myComponents.clear();
+      myComponents.addAll(components);
       myInfo = null;
-      setTitle(myComponent.getClass().getName());
-      myWrapperPanel.removeAll();
-      myInspectorTable = new InspectorTable(c);
-      myWrapperPanel.add(myInspectorTable, BorderLayout.CENTER);
-      myWrapperPanel.revalidate();
-      myWrapperPanel.repaint();
+      setTitle(components.get(0).getClass().getName());
+      myInspectorTable = new InspectorTable(components.get(0));
+      myWrapperPanel.setContent(myInspectorTable);
     }
 
-    private void switchInfo(@NotNull List<? extends PropertyBean> clickInfo) {
-      myComponent = null;
+    private void switchClickInfo(@NotNull List<? extends PropertyBean> clickInfo) {
+      myComponents.clear();
       myInfo = clickInfo;
       setTitle("Click Info");
-      myWrapperPanel.removeAll();
       myInspectorTable = new InspectorTable(clickInfo);
-      myWrapperPanel.add(myInspectorTable, BorderLayout.CENTER);
-      myWrapperPanel.revalidate();
-      myWrapperPanel.repaint();
+      myWrapperPanel.setContent(myInspectorTable);
     }
 
     @Override
@@ -286,61 +280,63 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (myInitialComponent instanceof JComponent) {
         ((JComponent)myInitialComponent).putClientProperty(CLICK_INFO, null);
       }
+      myIsHighlighted = false;
       myInfo = null;
-      setHighlightingEnabled(false);
-      if (myComponent == null) return;
-      myComponent = null;
+      myComponents.clear();
+      updateHighlighting();
       setVisible(false);
       dispose();
     }
 
-    private void setHighlightingEnabled(boolean enable) {
-      if (myHighlightComponent != null) {
-        JComponent glassPane = getGlassPane(myHighlightComponent);
+    private void updateHighlighting() {
+      for (HighlightComponent component : myHighlightComponents) {
+        JComponent glassPane = getGlassPane(component);
         if (glassPane != null) {
-          glassPane.remove(myHighlightComponent);
-
-          glassPane.revalidate();
-          glassPane.repaint();
-        }
-        myHighlightComponent = null;
-      }
-
-      if (enable && myComponent != null) {
-        JComponent glassPane = getGlassPane(myComponent);
-        if (glassPane != null) {
-          myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
-
-          Point pt = SwingUtilities.convertPoint(myComponent, new Point(0, 0), glassPane);
-          myHighlightComponent.setBounds(pt.x, pt.y, myComponent.getWidth(), myComponent.getHeight());
-          glassPane.add(myHighlightComponent);
-
+          glassPane.remove(component);
           glassPane.revalidate();
           glassPane.repaint();
         }
       }
-      if (enable & myInfo != null && myInitialComponent != null) {
-        Rectangle bounds = null;
-        for (PropertyBean bean : myInfo) {
-          if (RENDERER_BOUNDS.equals(bean.propertyName)) {
-            bounds = (Rectangle)bean.propertyValue;
-            break;
-          }
+      myHighlightComponents.clear();
+
+      if (myIsHighlighted) {
+        for (Component component : myComponents) {
+          ContainerUtil.addIfNotNull(myHighlightComponents, createHighlighter(component, null));
         }
-        if (bounds != null) {
-          JComponent glassPane = getGlassPane(myInitialComponent);
-          if (glassPane != null) {
-            myHighlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
-
-            bounds = SwingUtilities.convertRectangle(myInitialComponent, bounds, glassPane);
-            myHighlightComponent.setBounds(bounds);
-            glassPane.add(myHighlightComponent);
-
-            glassPane.revalidate();
-            glassPane.repaint();
+        if (myInfo != null) {
+          Rectangle bounds = null;
+          for (PropertyBean bean : myInfo) {
+            if (RENDERER_BOUNDS.equals(bean.propertyName)) {
+              bounds = (Rectangle)bean.propertyValue;
+              break;
+            }
           }
+          ContainerUtil.addIfNotNull(myHighlightComponents, createHighlighter(myInitialComponent, bounds));
         }
       }
+    }
+
+    @Nullable
+    private static HighlightComponent createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
+      JComponent glassPane = getGlassPane(component);
+      if (glassPane == null) return null;
+
+      HighlightComponent highlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
+
+      if (bounds != null) {
+        bounds = SwingUtilities.convertRectangle(component, bounds, glassPane);
+      }
+      else {
+        Point pt = SwingUtilities.convertPoint(component, new Point(0, 0), glassPane);
+        bounds = new Rectangle(pt.x, pt.y, component.getWidth(), component.getHeight());
+      }
+      highlightComponent.setBounds(bounds);
+
+      glassPane.add(highlightComponent);
+      glassPane.revalidate();
+      glassPane.repaint();
+
+      return highlightComponent;
     }
 
     @Nullable
@@ -511,24 +507,33 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     @Override
     public void valueChanged(TreeSelectionEvent e) {
-      TreePath path = e.getNewLeadSelectionPath();
-      if (path == null) {
-        onComponentChanged((Component)null);
+      TreePath[] paths = getSelectionPaths();
+      if (paths == null) {
+        onComponentsChanged(Collections.emptyList());
         return;
       }
-      Object component = path.getLastPathComponent();
-      if (component instanceof ComponentNode) {
-        Component c = ((ComponentNode)component).getComponent();
-        onComponentChanged(c);
+
+      List<List<PropertyBean>> clickInfos = ContainerUtil.mapNotNull(paths, path -> {
+        Object node = path.getLastPathComponent();
+        if (node instanceof ClickInfoNode) return ((ClickInfoNode)node).getInfo();
+        return null;
+      });
+      if (!clickInfos.isEmpty()) {
+        onClickInfoChanged(clickInfos.get(0));
+        return;
       }
-      if (component instanceof ClickInfoNode) {
-        onComponentChanged(((ClickInfoNode)component).getInfo());
-      }
+
+      List<Component> components = ContainerUtil.mapNotNull(paths, path -> {
+        Object node = path.getLastPathComponent();
+        if (node instanceof ComponentNode) return ((ComponentNode)node).getComponent();
+        return null;
+      });
+      onComponentsChanged(components);
     }
 
-    public abstract void onComponentChanged(List<? extends PropertyBean> info);
+    public abstract void onClickInfoChanged(List<? extends PropertyBean> info);
 
-    public abstract void onComponentChanged(Component c);
+    public abstract void onComponentsChanged(List<Component> components);
 
     private static class ComponentNode extends DefaultMutableTreeNode  {
       private final Component myComponent;
