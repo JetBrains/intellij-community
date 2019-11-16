@@ -8,8 +8,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author db
@@ -878,6 +884,55 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testTypeParameterMigrationInInvalidCode() {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
+  }
+
+  public void testTypeCastExpression() {
+    final PsiClassType longType = myFactory.createTypeByFQClassName(Long.class.getCanonicalName());
+    
+    final TypeConversionDescriptorBase typeCastConversionDescriptor = new TypeConversionDescriptorBase() {
+      @Override
+      public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+        PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+        typeCastExpression.getCastType().replace(myFactory.createTypeElement(longType));
+        return expression;
+      }
+    };
+
+    final TypeConversionRule typeCastConversionRule = new TypeConversionRule() {
+      @Nullable
+      @Override
+      public TypeConversionDescriptorBase findConversion(PsiType from,
+                                                         PsiType to,
+                                                         PsiMember member,
+                                                         PsiExpression context,
+                                                         TypeMigrationLabeler labeler) {
+        if (!(context instanceof PsiTypeCastExpression)) {
+          return null;
+        }
+        return typeCastConversionDescriptor;
+      }
+    };
+
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public PsiType migrationType(PsiElement context) {
+        return longType;
+      }
+
+      @Override
+      public PsiElement[] victims(PsiClass aClass) {
+        PsiField field = aClass.findFieldByName("migrationField", false);
+        assertNotNull(field);
+        return new PsiElement[]{field};
+      }
+
+      @Override
+      public TypeConversionRule[] conversionDescriptors() {
+        return new TypeConversionRule[]{typeCastConversionRule};
+      }
+    };
+
+    start(provider, "Test");
   }
 
   private void doTestReturnType(final String methodName, final String migrationType) {

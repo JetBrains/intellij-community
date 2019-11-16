@@ -11,6 +11,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
  * @author anna
@@ -143,6 +145,7 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
     final PsiElement[] migrationElements = provider.victims(aClass);
     final PsiType migrationType = provider.migrationType(migrationElements[0]);
     final TypeMigrationRules rules = new TypeMigrationRules(getProject());
+    Stream.of(provider.conversionDescriptors()).forEach(rules::addConversionDescriptor);
     rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
     final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElements, migrationType, rules);
 
@@ -166,6 +169,10 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
 
     default PsiElement[] victims(PsiClass aClass) {
       return new PsiElement[] {victim(aClass)};
+    }
+    
+    default TypeConversionRule[] conversionDescriptors(){
+      return new TypeConversionRule[0];
     }
   }
 

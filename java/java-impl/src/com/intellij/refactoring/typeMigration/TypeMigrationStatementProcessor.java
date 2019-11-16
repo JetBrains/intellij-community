@@ -32,7 +32,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -167,9 +166,16 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     if (typeElement != null) {
       final PsiType fixedType = typeElement.getType();
       final PsiType migrationType = myTypeEvaluator.evaluateType(expression.getOperand());
-      if (migrationType != null && !TypeConversionUtil.areTypesConvertible(migrationType, fixedType)) {
-        myLabeler.markFailedConversion(Pair.create(fixedType, migrationType), expression);
+      if (migrationType == null || TypeConversionUtil.areTypesConvertible(migrationType, fixedType)) {
+        return;
       }
+      TypeConversionDescriptorBase conversion = myLabeler.getRules().findConversion(fixedType, migrationType, null, expression, myLabeler);
+      if (conversion == null) {
+        myLabeler.markFailedConversion(Pair.create(fixedType, migrationType), expression);
+        return;
+      }
+      myLabeler.setConversionMapping(expression, conversion);
+      myTypeEvaluator.setType(new TypeMigrationUsageInfo(expression), migrationType);
     }
   }
 
