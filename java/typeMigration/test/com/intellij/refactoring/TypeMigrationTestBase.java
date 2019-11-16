@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author anna
@@ -124,6 +125,41 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
       @Override
       public PsiElement victim(PsiClass aClass) {
         return aClass.findMethodsByName(methodName, false)[0].getParameterList().getParameters()[0];
+      }
+    };
+
+    start(provider, className);
+  }
+
+  protected void doTestFirstLocalVariableType(@NonNls final String localVariableName, final PsiType migrationType) {
+    doTestFirstLocalVariableType(localVariableName, "Test", migrationType);
+  }
+
+  protected void doTestFirstLocalVariableType(@NonNls final String localVariableName, String className, final PsiType migrationType) {
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public PsiType migrationType(PsiElement context) {
+        return migrationType;
+      }
+
+      @Override
+      public PsiElement victim(PsiClass aClass) {
+        AtomicReference<PsiLocalVariable> localVariable = new AtomicReference<>();
+        aClass.acceptChildren(new JavaRecursiveElementVisitor() {
+          @Override
+          public void visitLocalVariable(PsiLocalVariable variable) {
+            super.visitLocalVariable(variable);
+            if (localVariable.get() != null) {
+              return;
+            }
+            if (!localVariableName.equals(variable.getName())) {
+              return;
+            }
+            localVariable.set(variable);
+          }
+        });
+        assertNotNull(localVariable.get());
+        return localVariable.get();
       }
     };
 

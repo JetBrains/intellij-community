@@ -536,12 +536,15 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
       case TypeInfection.RIGHT_INFECTED:
         PsiType psiType = migrationType != null ? migrationType : right.getType();
+        PsiType initialType = left.getType();
+        if (initialType instanceof PsiEllipsisType && psiType instanceof PsiArrayType) {
+          psiType = new PsiEllipsisType(((PsiArrayType)psiType).getComponentType());
+        }
         if (psiType != null) {
           if (canBeVariableType(psiType)) {
             if (declarationType != null &&
                 !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true) &&
                 !TypeConversionUtil.isAssignable(left.getType(), psiType)) {
-              PsiType initialType = left.getType();
               if (initialType instanceof PsiEllipsisType) {
                 initialType = ((PsiEllipsisType)initialType).getComponentType();
               }

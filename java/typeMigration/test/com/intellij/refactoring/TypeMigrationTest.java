@@ -879,6 +879,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testTypeParameterMigrationInInvalidCode() {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
+  
+  public void testArrayTypeUsedInEllipsisParameter(){
+    doTestFirstLocalVariableType("migrationVariable", PsiType.LONG.createArrayType());
+  }
 
   private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {
