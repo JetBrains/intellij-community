@@ -8,25 +8,25 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.ml.contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="completion.ml.contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
     </extensionPoint>
 
     <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider"/>
 
-    <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP">
+    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.preselectionBehaviourProvider" interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider"/>
+    <extensionPoint name="completion.preselectionBehaviourProvider" interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider" dynamic="true"/>
 
-    <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>
+    <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper" dynamic="true"/>
     <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
-    <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>
+    <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider" dynamic="true"/>
 
     <extensionPoint name="createDirectoryCompletionContributor" beanClass="com.intellij.ide.actions.CreateDirectoryCompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.actions.CreateDirectoryCompletionContributor"/>
