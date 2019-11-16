@@ -27,7 +27,6 @@
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>
     <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>
-    <extensionPoint name="originInfoProvider" interface="com.intellij.codeInsight.completion.originInfo.OriginInfoProvider"/>
 
     <extensionPoint name="createDirectoryCompletionContributor" beanClass="com.intellij.ide.actions.CreateDirectoryCompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.actions.CreateDirectoryCompletionContributor"/>
