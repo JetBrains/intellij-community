@@ -7,13 +7,12 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.util.ui.tree.TreeUtil
-import java.util.*
 import java.util.stream.Stream
 
 private fun wrap(changes: Stream<Change>, unversioned: Stream<FilePath>): Stream<Wrapper> =
   Stream.concat(
     changes.map { ChangeWrapper(it) },
-    unversioned.map { it.virtualFile }.filter(Objects::nonNull).map { UnversionedFileWrapper(it!!) }
+    unversioned.map { UnversionedFileWrapper(it) }
   )
 
 private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesListView,

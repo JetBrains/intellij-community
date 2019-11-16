@@ -802,7 +802,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     private Stream<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
       return Stream.concat(
         changes.stream().map(ChangeWrapper::new),
-        unversioned.stream().map(FilePath::getVirtualFile).filter(Objects::nonNull).map(UnversionedFileWrapper::new)
+        unversioned.stream().map(UnversionedFileWrapper::new)
       );
     }
 
