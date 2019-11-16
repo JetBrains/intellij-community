@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -282,8 +281,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Nullable
   @Override
   protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object entry) {
-    if (entry instanceof VirtualFile) {
-      return UnversionedDiffRequestProducer.create(myProject, (VirtualFile)entry);
+    if (entry instanceof FilePath) {
+      return UnversionedDiffRequestProducer.create(myProject, (FilePath)entry);
     }
     return super.getDiffRequestProducer(entry);
   }
