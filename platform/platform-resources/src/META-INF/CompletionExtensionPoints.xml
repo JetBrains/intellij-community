@@ -29,7 +29,7 @@
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>
     <extensionPoint name="originInfoProvider" interface="com.intellij.codeInsight.completion.originInfo.OriginInfoProvider"/>
 
-    <extensionPoint name="createDirectoryCompletionContributor" beanClass="com.intellij.ide.actions.CreateDirectoryCompletionContributorEP">
+    <extensionPoint name="createDirectoryCompletionContributor" beanClass="com.intellij.ide.actions.CreateDirectoryCompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.actions.CreateDirectoryCompletionContributor"/>
     </extensionPoint>
 
@@ -37,7 +37,7 @@
       <with attribute="className" implements="com.intellij.codeInsight.completion.CompletionData"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
     </extensionPoint>
 
