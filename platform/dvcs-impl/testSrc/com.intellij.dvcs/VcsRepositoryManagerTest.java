@@ -78,6 +78,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
       myProjectLevelVcsManager
         .setDirectoryMappings(
           VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), projectRoot.getPath(), myVcs.getName()));
+      myGlobalRepositoryManager.waitForAsyncTaskCompletion();
       return !myGlobalRepositoryManager.getRepositories().isEmpty();
     });
     Future<?> modify = ApplicationManager.getApplication().executeOnPooledThread(modifyRepositoryMapping);

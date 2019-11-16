@@ -20,8 +20,10 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -314,5 +316,15 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @NotNull
   public String toString() {
     return "RepositoryManager{myRepositories: " + myRepositories + '}';
+  }
+
+  @TestOnly
+  public void waitForAsyncTaskCompletion() {
+    try {
+      myUpdateAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 }
