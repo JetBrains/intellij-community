@@ -48,17 +48,19 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
-  @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
-  @NotNull private final JBSplitter myDetailsSplitter;
-  @NotNull private final FileHistoryDiffPreview myDiffPreview;
-  @NotNull private final OnePixelSplitter myDiffPreviewSplitter;
-
   @NotNull private final VcsLogData myLogData;
   @NotNull private final FilePath myFilePath;
   @NotNull private final VirtualFile myRoot;
   @NotNull private final FileHistoryUi myUi;
   @NotNull private final FileHistoryUiProperties myProperties;
+
+  @NotNull private final VcsLogGraphTable myGraphTable;
+
+  @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
+  @NotNull private final JBSplitter myDetailsSplitter;
+
+  @NotNull private final FileHistoryDiffPreview myDiffPreview;
+  @NotNull private final OnePixelSplitter myDiffPreviewSplitter;
   @NotNull private final DiffPreviewProvider myDiffPreviewProvider;
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui,
