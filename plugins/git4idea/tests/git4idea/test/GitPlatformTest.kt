@@ -26,6 +26,7 @@ import git4idea.commands.GitHandler
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
+import git4idea.config.GitVcsSettings.SaveChangesPolicy
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -73,6 +74,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assumeSupportedGitVersion(vcs)
     addSilently()
     removeSilently()
+    setupStashAsDefaultSaver()
 
     credentialHelpers = if (hasRemoteGitOperation()) readAndResetCredentialHelpers() else emptyMap()
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
@@ -100,6 +102,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected open fun createRepository(rootDir: String): GitRepository {
     return createRepository(project, rootDir)
+  }
+
+  protected fun getDefaultSaveChangesPolicy() : SaveChangesPolicy = SaveChangesPolicy.STASH
+
+  private fun setupStashAsDefaultSaver() {
+    settings.saveChangesPolicy = getDefaultSaveChangesPolicy()
   }
 
   /**
