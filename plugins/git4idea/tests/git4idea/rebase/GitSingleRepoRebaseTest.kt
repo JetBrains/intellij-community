@@ -510,6 +510,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`diverge feature and master`()
 
     dialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
+
     assertNoErrorNotification()
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
@@ -525,6 +526,8 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
     dialogManager.onMessage { Messages.CANCEL }
+
+    rebaseInteractively()
 
     assertNoErrorNotification()
     assertNoRebaseInProgress(repo)
