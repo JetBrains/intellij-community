@@ -99,13 +99,6 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void processUnversionedFile(VirtualFile file) {
-    if (file != null) {
-      processUnversionedFile(VcsUtil.getFilePath(file));
-    }
-  }
-
-  @Override
   public void processUnversionedFile(FilePath filePath) {
     if (acceptFilePath(filePath, false)) {
       myComposite.getUnversionedFileHolder().addFile(filePath);
@@ -144,13 +137,6 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
         LOG.debug("processModifiedWithoutCheckout " + file);
       }
       myComposite.getModifiedWithoutEditingFileHolder().addFile(file);
-    }
-  }
-
-  @Override
-  public void processIgnoredFile(VirtualFile file) {
-    if (file != null) {
-      processIgnoredFile(VcsUtil.getFilePath(file));
     }
   }
 
