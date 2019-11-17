@@ -197,9 +197,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   private fun readAndDisableSslVerifyGlobally(): Boolean? {
     val value = git("config --global --get-all -z http.sslVerify", true)
-      .split("\u0000")
-      .singleOrNull { it.isNotBlank() }
-      ?.let { it.toBoolean() }
+        .split("\u0000")
+        .singleOrNull { it.isNotBlank() }
+        ?.toBoolean()
     git("config --global http.sslVerify false", true)
     return value
   }
