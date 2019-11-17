@@ -59,7 +59,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VirtualFile myRoot;
   @NotNull private final FileHistoryUi myUi;
   @NotNull private final FileHistoryUiProperties myProperties;
-  @NotNull private DiffPreviewProvider myDiffPreviewProvider;
+  @NotNull private final DiffPreviewProvider myDiffPreviewProvider;
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui,
                           @NotNull VcsLogData logData,
@@ -130,14 +130,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
 
-    installEditorPreview();
+    myDiffPreviewProvider = installEditorPreview();
 
     Disposer.register(myUi, this);
   }
 
   @NotNull
-  private void installEditorPreview() {
-    myDiffPreviewProvider = new DiffPreviewProvider() {
+  private DiffPreviewProvider installEditorPreview() {
+    DiffPreviewProvider previewProvider = new DiffPreviewProvider() {
       @NotNull
       @Override
       public DiffRequestProcessor createDiffRequestProcessor() {
@@ -162,7 +162,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       if (Registry.is("show.diff.preview.as.editor.tab") &&
           myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myGraphTable.getSelectionModel().isSelectionEmpty()) {
         FileEditorManager instance = FileEditorManager.getInstance(myLogData.getProject());
-        PreviewDiffVirtualFile file = new PreviewDiffVirtualFile(myDiffPreviewProvider);
+        PreviewDiffVirtualFile file = new PreviewDiffVirtualFile(previewProvider);
         ApplicationManager.getApplication().invokeLater(() -> {
           instance.openFile(file, false, true);
         }, ModalityState.NON_MODAL);
@@ -171,6 +171,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
     Disposer.register(this, () -> myGraphTable.getSelectionModel().removeListSelectionListener(selectionListener));
+    
+    return previewProvider;
   }
 
   private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {
