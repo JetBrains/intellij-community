@@ -288,7 +288,7 @@
 
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
 
-    <sdkDownload implementation="com.intellij.jdkDownloader.JdkDownloaderUI" />
+    <sdkDownload implementation="com.intellij.jdkDownloader.JdkDownloader" />
     <registryKey key="jdk.downloader.ui" defaultValue="true" description="Use the list of JDKs to download and install in one click"/>
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
 
@@ -743,6 +743,7 @@
     <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>
     <macro implementation="com.intellij.ide.macro.OutputPathMacro"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"

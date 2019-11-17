@@ -16,7 +16,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
@@ -74,24 +73,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private final History myHistory;
 
   private final Disposable myDisposable = Disposer.newDisposable();
-
-  private final SdkDownload.DownloadProgressListener myDownloadProgressListener = new SdkDownload.DownloadProgressListener() {
-    @NotNull
-    @Override
-    public ProgressIndicatorEx getProgressIndicator() {
-      return myDownloadProgressIndicator;
-    }
-
-    @Override
-    public void onDownloadCompleted() {
-      reset();
-    }
-
-    @Override
-    public void onDownloadFailed(@NotNull String message) {
-      reset();
-    }
-  };
 
   public SdkEditor(@NotNull Project project,
                    @NotNull SdkModel sdkModel,
@@ -220,9 +201,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
+  private final Runnable myResetCallback = () -> reset();
+
   @Override
   public void reset() {
-    myIsDownloading = SdkDownload.EP_NAME.findFirstSafe(it -> it.addChangesListener(mySdk, myDisposable, myDownloadProgressListener)) != null;
+    myIsDownloading = SdkDownloadTracker.getInstance().tryRegisterDownloadingListener(mySdk, myDisposable, myDownloadProgressIndicator, myResetCallback);
     if (!myIsDownloading) {
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
       for (OrderRootType type : myPathEditors.keySet()) {
