@@ -1,5 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensionPoints>
+    <!--@formatter:off-->
     <xi:include href="/META-INF/CompletionExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/RefactoringExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/FormatterExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
@@ -22,44 +23,28 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
 
-    <extensionPoint name="indexPatternProvider"
-                    interface="com.intellij.psi.search.IndexPatternProvider"/>
+    <extensionPoint name="indexPatternProvider" interface="com.intellij.psi.search.IndexPatternProvider"/>
 
-    <extensionPoint name="refGraphAnnotator"
-                    interface="com.intellij.codeInspection.reference.RefGraphAnnotator"/>
+    <extensionPoint name="refGraphAnnotator" interface="com.intellij.codeInspection.reference.RefGraphAnnotator"/>
 
     <!-- Code Insight -->
-    <extensionPoint name="highlightVisitor"
-                    interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor"
-                    area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="highlightErrorFilter"
-                    interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
-    <extensionPoint name="errorQuickFixProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider" dynamic="true"/>
+    <extensionPoint name="highlightVisitor" interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="errorQuickFixProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider" dynamic="true"/>
 
-    <extensionPoint name="pathReferenceProvider"
-                    interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
-    <extensionPoint name="anchorReferenceProvider"
-                    interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
-    <extensionPoint name="dynamicContextProvider"
-                    interface="com.intellij.openapi.paths.DynamicContextProvider" dynamic="true"/>
+    <extensionPoint name="pathReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
+    <extensionPoint name="anchorReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
+    <extensionPoint name="dynamicContextProvider" interface="com.intellij.openapi.paths.DynamicContextProvider" dynamic="true"/>
 
-    <extensionPoint name="intentionAction"
-                    beanClass="com.intellij.codeInsight.intention.IntentionActionBean"
-                    dynamic="true">
+    <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
       <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
-                    interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider" dynamic="true"/>
+    <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider" interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider" dynamic="true"/>
 
-    <extensionPoint name="intentionMenuContributor"
-                    interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor" dynamic="true"/>
+    <extensionPoint name="intentionMenuContributor" interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor" dynamic="true"/>
 
-    <extensionPoint name="wordBoundaryFilter"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="wordBoundaryFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
     </extensionPoint>
 
@@ -73,17 +58,12 @@
     <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
       <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
-    <extensionPoint name="extendWordSelectionHandler"
-                    interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
-    <extensionPoint name="basicWordSelectionFilter"
-                    interface="com.intellij.openapi.util.Condition" dynamic="true"/>
-    <extensionPoint name="typedHandler"
-                    interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
-    <extensionPoint name="selectionUnquotingFilter"
-                    interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
+    <extensionPoint name="extendWordSelectionHandler" interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
+    <extensionPoint name="basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+    <extensionPoint name="typedHandler" interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="selectionUnquotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
 
-    <extensionPoint name="joinLinesHandler"
-                    interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="joinLinesHandler" interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
     <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
     <extensionPoint name="enterBetweenBracesDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate"/>
@@ -99,105 +79,70 @@
     <extensionPoint name="daemon.externalAnnotatorsFilter" interface="com.intellij.lang.ExternalAnnotatorsFilter" dynamic="true"/>
     <extensionPoint name="daemon.changeLocalityDetector" interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector" dynamic="true"/>
 
-    <extensionPoint name="severitiesProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
+    <extensionPoint name="severitiesProvider" interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
 
-    <extensionPoint name="implicitUsageProvider"
-                    interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"
-                    dynamic="true"/>
+    <extensionPoint name="implicitUsageProvider" interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider" dynamic="true"/>
 
     <!-- com.intellij.psi.PsiElement -->
     <extensionPoint name="cantBeStatic" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
-    <extensionPoint name="languageInjector"
-                    interface="com.intellij.psi.LanguageInjector"
-                    dynamic="true"/>
-    <extensionPoint name="concatenationAwareInjector"
-                    interface="com.intellij.lang.injection.ConcatenationAwareInjector"
-                    area="IDEA_PROJECT"/>
-    <extensionPoint name="multiHostInjector"
-                    interface="com.intellij.lang.injection.MultiHostInjector"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
+    <extensionPoint name="languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
+    <extensionPoint name="concatenationAwareInjector" interface="com.intellij.lang.injection.ConcatenationAwareInjector" area="IDEA_PROJECT"/>
+    <extensionPoint name="multiHostInjector" interface="com.intellij.lang.injection.MultiHostInjector" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="referenceInjector" interface="com.intellij.psi.injection.ReferenceInjector"/>
 
-    <extensionPoint name="annotator"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="annotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.Annotator"/>
     </extensionPoint>
 
-    <extensionPoint name="externalAnnotator"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="externalAnnotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.ExternalAnnotator"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.syntaxHighlighter"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.syntaxHighlighter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.documentationProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.documentationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.findUsagesProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.findUsagesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.findUsages.FindUsagesProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.commenter"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.commenter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.inspectionSuppressor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.inspectionSuppressor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.InspectionSuppressor"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.braceMatcher"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.braceMatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PairedBraceMatcher"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.quoteHandler"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.quoteHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.foldingBuilder"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.foldingBuilder" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.folding.FoldingBuilder"/>
     </extensionPoint>
 
-    <extensionPoint name="customFoldingProvider"
-                    interface="com.intellij.lang.folding.CustomFoldingProvider"/>
-    <extensionPoint name="lang.psiStructureViewFactory"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="customFoldingProvider" interface="com.intellij.lang.folding.CustomFoldingProvider"/>
+    <extensionPoint name="lang.psiStructureViewFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PsiStructureViewFactory"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.psiElementExternalizer"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.psiElementExternalizer" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.PsiElementExternalizer"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.structureViewExtension"
-                    interface="com.intellij.ide.structureView.StructureViewExtension"/>
+    <extensionPoint name="lang.structureViewExtension" interface="com.intellij.ide.structureView.StructureViewExtension"/>
 
-    <extensionPoint name="lang.ast.factory"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
     </extensionPoint>
 
@@ -229,9 +174,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
     </extensionPoint>
 
-    <extensionPoint name="multiLangCommenter"
-                    interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider"
-                    dynamic="true"/>
+    <extensionPoint name="multiLangCommenter" interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider" dynamic="true"/>
 
     <extensionPoint name="cacheBuilder" beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP">
       <with attribute="wordsScannerClass" implements="com.intellij.lang.cacheBuilder.WordsScanner"/>
@@ -296,9 +239,7 @@
     <extensionPoint name="usageTargetProvider" interface="com.intellij.usages.UsageTargetProvider" dynamic="true"/>
     <extensionPoint name="usageToPsiElementProvider" interface="com.intellij.usages.UsageToPsiElementProvider" dynamic="true"/>
 
-    <extensionPoint name="customScopesProvider"
-                    interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider"
-                    area="IDEA_PROJECT"/>
+    <extensionPoint name="customScopesProvider" interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="customScopesFilter" interface="com.intellij.psi.search.scope.packageSet.CustomScopesFilter" dynamic="true"/>
 
@@ -328,28 +269,16 @@
     <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
 
-    <extensionPoint name="fileTemplateGroup"
-                    interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"
-                    dynamic="true"/>
-    <extensionPoint name="iconProvider"
-                    interface="com.intellij.ide.IconProvider"
-                    dynamic="true"/>
+    <extensionPoint name="fileTemplateGroup" interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory" dynamic="true"/>
+    <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
     <extensionPoint name="colorProvider" interface="com.intellij.openapi.editor.ElementColorProvider" dynamic="true"/>
     <extensionPoint name="createFromTemplateHandler" interface="com.intellij.ide.fileTemplates.CreateFromTemplateHandler" dynamic="true"/>
-    <extensionPoint name="defaultTemplatePropertiesProvider"
-                    interface="com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider"/>
-    <extensionPoint name="internalFileTemplate"
-                    beanClass="com.intellij.ide.fileTemplates.InternalTemplateBean"
-                    dynamic="true"/>
-    <extensionPoint name="saveFileAsTemplateHandler"
-                    interface="com.intellij.ide.actions.SaveFileAsTemplateHandler"/>
+    <extensionPoint name="defaultTemplatePropertiesProvider" interface="com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider"/>
+    <extensionPoint name="internalFileTemplate" beanClass="com.intellij.ide.fileTemplates.InternalTemplateBean" dynamic="true"/>
+    <extensionPoint name="saveFileAsTemplateHandler" interface="com.intellij.ide.actions.SaveFileAsTemplateHandler"/>
 
-    <extensionPoint name="favoriteNodeProvider"
-                    interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider"
-                    area="IDEA_PROJECT"/>
-    <extensionPoint name="favoritesListProvider"
-                    interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider"
-                    area="IDEA_PROJECT"/>
+    <extensionPoint name="favoriteNodeProvider" interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="favoritesListProvider" interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler"/>
@@ -383,55 +312,32 @@
 
     <extensionPoint name="configurationType" interface="com.intellij.execution.configurations.ConfigurationType" dynamic="true"/>
     <extensionPoint name="runConfigurationTemplateProvider" interface="com.intellij.execution.impl.RunConfigurationTemplateProvider" area="IDEA_PROJECT"/>
-
-    <extensionPoint name="runConfigurationsSettings"
-                    interface="com.intellij.execution.configurations.RunConfigurationsSettings"
-                    area="IDEA_PROJECT"/>
-
-    <extensionPoint name="programRunner"
-                    interface="com.intellij.execution.runners.ProgramRunner"
-                    dynamic="true"/>
-
+    <extensionPoint name="runConfigurationsSettings" interface="com.intellij.execution.configurations.RunConfigurationsSettings" area="IDEA_PROJECT"/>
+    <extensionPoint name="programRunner" interface="com.intellij.execution.runners.ProgramRunner" dynamic="true"/>
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
-
     <extensionPoint name="executor" interface="com.intellij.execution.Executor"/>
-
-    <extensionPoint name="executionTargetProvider"
-                    interface="com.intellij.execution.ExecutionTargetProvider"/>
-
-    <extensionPoint name="stepsBeforeRunProvider"
-                    interface="com.intellij.execution.BeforeRunTaskProvider"
-                    area="IDEA_PROJECT"/>
+    <extensionPoint name="executionTargetProvider" interface="com.intellij.execution.ExecutionTargetProvider"/>
+    <extensionPoint name="stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
     <extensionPoint name="consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
     <extensionPoint name="consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor"/>
-
     <extensionPoint name="console.folding" interface="com.intellij.execution.ConsoleFolding"/>
 
-    <extensionPoint name="configurationProducer"
-                    interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
-    <extensionPoint name="runConfigurationProducer"
-                    interface="com.intellij.execution.actions.RunConfigurationProducer"
-                    dynamic="true"/>
-
+    <extensionPoint name="configurationProducer" interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
+    <extensionPoint name="runConfigurationProducer" interface="com.intellij.execution.actions.RunConfigurationProducer" dynamic="true"/>
     <extensionPoint name="multipleRunLocationsProvider" interface="com.intellij.execution.actions.MultipleRunLocationsProvider"/>
 
     <extensionPoint name="runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="runDashboardCustomizer"
-                    interface="com.intellij.execution.dashboard.RunDashboardCustomizer"/>
-    <extensionPoint name="runDashboardDefaultTypesProvider"
-                    interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider"/>
-    <extensionPoint name="runDashboardGroupingRule"
-                    interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
-    <extensionPoint name="serviceViewContributor"
-                    interface="com.intellij.execution.services.ServiceViewContributor"/>
+    <extensionPoint name="runDashboardCustomizer" interface="com.intellij.execution.dashboard.RunDashboardCustomizer"/>
+    <extensionPoint name="runDashboardDefaultTypesProvider" interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider"/>
+    <extensionPoint name="runDashboardGroupingRule" interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
+    <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor"/>
 
-    <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
-                    area="IDEA_PROJECT"/>
+    <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
 
     <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
@@ -439,8 +345,7 @@
     </extensionPoint>
 
     <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
-    <extensionPoint name="psi.fileReferenceHelper"
-                    interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper" dynamic="true"/>
+    <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper" dynamic="true"/>
 
     <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP" dynamic="true">
       <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
@@ -464,46 +369,32 @@
     </extensionPoint>
 
     <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
-
     <extensionPoint name="elementsToHighlightFilter" interface="com.intellij.openapi.util.Condition"/>
 
     <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>
-
+    <extensionPoint name="sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder"/>
+    <extensionPoint name="projectSdkSetupValidator" interface="com.intellij.codeInsight.daemon.ProjectSdkSetupValidator"/>
     <extensionPoint name="library.presentationProvider" interface="com.intellij.openapi.roots.libraries.LibraryPresentationProvider"/>
     <extensionPoint name="library.type" interface="com.intellij.openapi.roots.libraries.LibraryType"/>
 
-    <extensionPoint name="sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder"/>
-
-    <extensionPoint name="projectSdkSetupValidator" interface="com.intellij.codeInsight.daemon.ProjectSdkSetupValidator"/>
-
-    <extensionPoint name="lang.implementationTextSelectioner"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.implementationTextSelectioner" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextSelectioner"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.implementationTextProcessor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.implementationTextProcessor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextProcessor"/>
     </extensionPoint>
 
-    <extensionPoint name="gotoDeclarationHandler" dynamic="true"
-                    interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
-    <extensionPoint name="typeDeclarationProvider" dynamic="true"
-                    interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
-    <extensionPoint name="gotoTargetRendererProvider"
-                    interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"
-                    dynamic="true"/>
+    <extensionPoint name="gotoDeclarationHandler" interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler" dynamic="true"/>
+    <extensionPoint name="typeDeclarationProvider" interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider" dynamic="true"/>
+    <extensionPoint name="gotoTargetRendererProvider" interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider" dynamic="true"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
-    <extensionPoint name="findUsagesHandlerFactory" area="IDEA_PROJECT" dynamic="true"
-                    interface="com.intellij.find.findUsages.FindUsagesHandlerFactory"/>
+    <extensionPoint name="findUsagesHandlerFactory" area="IDEA_PROJECT" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" dynamic="true"/>
     <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher"/>
 
-    <extensionPoint name="readWriteAccessDetector" dynamic="true"
-                    interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector"/>
-
+    <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector" dynamic="true"/>
     <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
 
     <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP">
@@ -529,8 +420,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayHintsProvider"/>
     </extensionPoint>
 
-    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory"
-                    interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory" interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"/>
 
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
@@ -549,35 +439,21 @@
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider" dynamic="true"/>
-    <extensionPoint name="virtualFileQualifiedNameProvider"
-                    interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
+    <extensionPoint name="virtualFileQualifiedNameProvider" interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
 
-    <extensionPoint name="usageFilteringRuleProvider"
-                    interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
-    <extensionPoint name="importFilteringRule"
-                    interface="com.intellij.usages.rules.ImportFilteringRule"/>
-    <extensionPoint name="usageGroupingRuleProvider"
-                    interface="com.intellij.usages.rules.UsageGroupingRuleProvider"/>
-    <extensionPoint name="usageTypeProvider" dynamic="true"
-                    interface="com.intellij.usages.impl.rules.UsageTypeProvider"/>
-    <extensionPoint name="fileStructureGroupRuleProvider"
-                    interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
-    <extensionPoint name="usageContextPanelProvider"
-                    interface="com.intellij.usages.UsageContextPanel$Provider"
-                    area="IDEA_PROJECT"/>
-    <extensionPoint name="usageViewFactory"
-                    interface="com.intellij.usages.impl.UsageViewFactory"/>
-    <extensionPoint name="usageViewElementsListener"
-                    interface="com.intellij.usages.impl.UsageViewElementsListener"/>
+    <extensionPoint name="usageFilteringRuleProvider" interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
+    <extensionPoint name="importFilteringRule" interface="com.intellij.usages.rules.ImportFilteringRule"/>
+    <extensionPoint name="usageGroupingRuleProvider" interface="com.intellij.usages.rules.UsageGroupingRuleProvider"/>
+    <extensionPoint name="usageTypeProvider" interface="com.intellij.usages.impl.rules.UsageTypeProvider" dynamic="true"/>
+    <extensionPoint name="fileStructureGroupRuleProvider" interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
+    <extensionPoint name="usageContextPanelProvider" interface="com.intellij.usages.UsageContextPanel$Provider" area="IDEA_PROJECT"/>
+    <extensionPoint name="usageViewFactory" interface="com.intellij.usages.impl.UsageViewFactory"/>
+    <extensionPoint name="usageViewElementsListener" interface="com.intellij.usages.impl.UsageViewElementsListener"/>
 
-    <extensionPoint name="treeStructureProvider"
-                    interface="com.intellij.ide.projectView.TreeStructureProvider"
-                    area="IDEA_PROJECT"/>
+    <extensionPoint name="treeStructureProvider" interface="com.intellij.ide.projectView.TreeStructureProvider" area="IDEA_PROJECT"/>
 
-    <extensionPoint name="defaultLiveTemplatesProvider"
-                    interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
-    <extensionPoint name="defaultLiveTemplates"
-                    beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP"/>
+    <extensionPoint name="defaultLiveTemplatesProvider" interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
+    <extensionPoint name="defaultLiveTemplates" beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP"/>
 
     <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
@@ -599,78 +475,57 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.LineMarkerProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.surroundWithRangeAdjuster"
-                    interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster"/>
+    <extensionPoint name="codeInsight.surroundWithRangeAdjuster" interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster"/>
 
     <extensionPoint name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
     </extensionPoint>
 
-    <extensionPoint name="createFromTemplateActionReplacer"
-                    interface="com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer"/>
+    <extensionPoint name="createFromTemplateActionReplacer" interface="com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer"/>
 
-    <extensionPoint name="filetype.stubBuilder"
-                    beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+    <extensionPoint name="filetype.stubBuilder" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
     <!--suppress PluginXmlValidity -->
-    <extensionPoint name="stubElementTypeHolder"
-                    beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP"/>
+    <extensionPoint name="stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP"/>
 
-    <extensionPoint name="moduleType"
-                    beanClass="com.intellij.openapi.module.ModuleTypeEP">
+    <extensionPoint name="moduleType" beanClass="com.intellij.openapi.module.ModuleTypeEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.module.ModuleType"/>
     </extensionPoint>
 
-    <extensionPoint name="moduleBuilder"
-                    beanClass="com.intellij.ide.util.projectWizard.ModuleBuilderFactory"
-                    dynamic="true">
+    <extensionPoint name="moduleBuilder" beanClass="com.intellij.ide.util.projectWizard.ModuleBuilderFactory" dynamic="true">
       <with attribute="builderClass" implements="com.intellij.ide.util.projectWizard.ModuleBuilder"/>
     </extensionPoint>
 
-    <extensionPoint name="projectTemplateParameterFactory"
-                    interface="com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory"/>
-    <extensionPoint name="projectTemplateFileProcessor"
-                    interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor"/>
+    <extensionPoint name="projectTemplateParameterFactory" interface="com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory"/>
+    <extensionPoint name="projectTemplateFileProcessor" interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor"/>
 
-    <extensionPoint name="facetType"
-                    interface="com.intellij.facet.FacetType"/>
+    <extensionPoint name="facetType" interface="com.intellij.facet.FacetType"/>
 
-    <extensionPoint name="facet.toolWindow"
-                    beanClass="com.intellij.facet.ui.FacetDependentToolWindow">
+    <extensionPoint name="facet.toolWindow" beanClass="com.intellij.facet.ui.FacetDependentToolWindow">
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
     </extensionPoint>
 
-    <extensionPoint name="framework.detector"
-                    interface="com.intellij.framework.detection.FrameworkDetector"/>
+    <extensionPoint name="framework.detector" interface="com.intellij.framework.detection.FrameworkDetector"/>
 
-    <extensionPoint name="methodNavigationOffsetProvider"
-                    interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
+    <extensionPoint name="methodNavigationOffsetProvider" interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
 
-    <extensionPoint name="filePasteProvider"
-                    interface="com.intellij.ide.PasteProvider"/>
+    <extensionPoint name="filePasteProvider" interface="com.intellij.ide.PasteProvider"/>
 
     <extensionPoint name="testFinder" interface="com.intellij.testIntegration.TestFinder" dynamic="true"/>
-    <extensionPoint name="testSrcLocator"
-                    interface="com.intellij.testIntegration.TestLocationProvider"/>
+    <extensionPoint name="testSrcLocator" interface="com.intellij.testIntegration.TestLocationProvider"/>
     <extensionPoint name="testSourcesFilter" interface="com.intellij.openapi.roots.TestSourcesFilter" dynamic="true"/>
-
-    <extensionPoint name="testCreator"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="testCreator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.testIntegration.TestCreator"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.smartEnterProcessor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
+    <extensionPoint name="lang.smartEnterProcessor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor"/>
     </extensionPoint>
 
-    <extensionPoint name="moduleConfigurationEditorProvider"
-                    interface="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider"
-                    area="IDEA_MODULE"/>
+    <extensionPoint name="moduleConfigurationEditorProvider" interface="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider" area="IDEA_MODULE"/>
 
     <extensionPoint name="callHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>
@@ -699,18 +554,16 @@
 
     <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
 
-    <extensionPoint name="documentationProvider"
-                    interface="com.intellij.lang.documentation.DocumentationProvider"/>
+    <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
 
     <extensionPoint name="lang.documentationFixer" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.documentation.DocCommentFixer"/>
     </extensionPoint>
 
-    <extensionPoint name="templateCompletionProcessor"
-                    interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
+    <extensionPoint name="templateCompletionProcessor" interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 
     <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender"/>
-    <extensionPoint name="targetElementEvaluator" dynamic="true" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
 
@@ -722,8 +575,7 @@
     </extensionPoint>
 
     <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass"
-            implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
     </extensionPoint>
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
@@ -739,15 +591,12 @@
     <extensionPoint name="todoExtraPlaces" interface="com.intellij.psi.impl.cache.impl.todo.TodoIndexers$ExtraPlaceChecker"/>
 
     <extensionPoint name="problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT" dynamic="true"/>
-
     <extensionPoint name="problemHighlightFilter" interface="com.intellij.codeInsight.daemon.ProblemHighlightFilter" dynamic="true"/>
 
     <extensionPoint name="uiDebuggerExtension" interface="com.intellij.ui.debugger.UiDebuggerExtension"/>
 
     <extensionPoint name="projectViewPane" interface="com.intellij.ide.projectView.impl.AbstractProjectViewPane" area="IDEA_PROJECT"/>
-
     <extensionPoint name="projectViewPaneSelectionHelper" interface="com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper"/>
-
     <extensionPoint name="projectViewNodeDecorator" interface="com.intellij.ide.projectView.ProjectViewNodeDecorator" area="IDEA_PROJECT"/>
 
     <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider" dynamic="true"/>
@@ -785,23 +634,16 @@
 
     <extensionPoint name="aliasingPsiTargetMapper" interface="com.intellij.psi.targets.AliasingPsiTargetMapper" dynamic="true"/>
 
-    <extensionPoint name="inspectionsReportConverter"
-                    interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
+    <extensionPoint name="inspectionsReportConverter" interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
 
-    <extensionPoint name="patternProvider"
-                    interface="com.intellij.codeInsight.generation.PatternProvider" dynamic="true"/>
+    <extensionPoint name="patternProvider" interface="com.intellij.codeInsight.generation.PatternProvider" dynamic="true"/>
 
-    <extensionPoint name="project.converterProvider"
-                    interface="com.intellij.conversion.ConverterProvider"/>
+    <extensionPoint name="project.converterProvider" interface="com.intellij.conversion.ConverterProvider"/>
 
-    <extensionPoint name="treeCopyHandler"
-                    interface="com.intellij.psi.impl.source.tree.TreeCopyHandler" dynamic="true"/>
-    <extensionPoint name="treeGenerator"
-                    interface="com.intellij.psi.impl.source.tree.TreeGenerator" dynamic="true"/>
+    <extensionPoint name="treeCopyHandler" interface="com.intellij.psi.impl.source.tree.TreeCopyHandler" dynamic="true"/>
+    <extensionPoint name="treeGenerator" interface="com.intellij.psi.impl.source.tree.TreeGenerator" dynamic="true"/>
 
-    <extensionPoint name="psi.treeChangePreprocessor"
-                    interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
-                    area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="psi.treeChangePreprocessor" interface="com.intellij.psi.impl.PsiTreeChangePreprocessor" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="codeBlockProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.CodeBlockProvider"/>
@@ -811,14 +653,12 @@
 
     <extensionPoint name="module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider" dynamic="true"/>
 
-    <extensionPoint name="projectStructure.sourceRootEditHandler"
-                    interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler" dynamic="true"/>
+    <extensionPoint name="projectStructure.sourceRootEditHandler" interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler" dynamic="true"/>
 
     <extensionPoint name="toolsProvider" interface="com.intellij.tools.ToolsProvider"/>
     <extensionPoint name="toolsCustomizer" interface="com.intellij.tools.ToolsCustomizer" dynamic="true"/>
 
-    <extensionPoint name="defaultHighlightingSettingProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider" dynamic="true"/>
+    <extensionPoint name="defaultHighlightingSettingProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider" dynamic="true"/>
 
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP" dynamic="true"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier" dynamic="true"/>
@@ -841,10 +681,8 @@
       <with attribute="implementationClass" implements="com.intellij.slicer.SliceLanguageSupportProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="projectViewNestingRulesProvider"
-                    interface="com.intellij.ide.projectView.ProjectViewNestingRulesProvider" dynamic="true"/>
-    <extensionPoint name="importTestOutput"
-                    interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
+    <extensionPoint name="projectViewNestingRulesProvider" interface="com.intellij.ide.projectView.ProjectViewNestingRulesProvider" dynamic="true"/>
+    <extensionPoint name="importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
 
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
 
