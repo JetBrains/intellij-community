@@ -36,8 +36,8 @@
     
     <extensionPoint name="renameHandler" interface="com.intellij.refactoring.rename.RenameHandler" dynamic="true"/>
     <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor" dynamic="true"/>
-    <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor"/>
-    <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler"/>
+    <extensionPoint name="updateAddedFileProcessor" interface="com.intellij.psi.impl.file.UpdateAddedFileProcessor" dynamic="true"/>
+    <extensionPoint name="moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
     <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory" dynamic="true"/>
     <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider" dynamic="true"/>
     <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
