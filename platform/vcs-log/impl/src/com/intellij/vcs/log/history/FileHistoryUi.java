@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -50,7 +48,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final VirtualFile myRoot;
   @Nullable private final Hash myRevision;
 
-  @NotNull private final VcsLogDiffHandler myDiffHandler;
+  @NotNull private final FileHistoryModel myFileHistoryModel;
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
@@ -73,10 +71,17 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myRevision = revision;
 
     myUiProperties = uiProperties;
-    myDiffHandler = notNull(logData.getLogProvider(root).getDiffHandler());
+
+    myFileHistoryModel = new FileHistoryModel(logData, notNull(logData.getLogProvider(root).getDiffHandler()), root) {
+      @NotNull
+      @Override
+      protected VisiblePack getVisiblePack() {
+        return myVisiblePack;
+      }
+    };
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, logData, path);
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path);
 
     myHighlighterIds = myRevision == null
                        ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
@@ -112,37 +117,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Nullable
   public VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
-    if (commit == null) return null;
-    if (isFileDeletedInCommit(commit.getId())) return VcsFileRevision.NULL;
-    FilePath path = getPathInCommit(commit.getId());
-    if (path == null) return null;
-    return new VcsLogFileRevision(commit, myDiffHandler.createContentRevision(path, commit.getId()), path, false);
+    return myFileHistoryModel.createRevision(commit);
   }
 
   @Nullable
   public FilePath getPathInCommit(@NotNull Hash hash) {
-    int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
-    return FileHistoryPaths.filePath(myVisiblePack, commitIndex);
-  }
-
-  private boolean isFileDeletedInCommit(@NotNull Hash hash) {
-    int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
-    return FileHistoryPaths.isDeletedInCommit(myVisiblePack, commitIndex);
-  }
-
-  @Nullable
-  public Change getSelectedChange() {
-    int[] rows = getTable().getSelectedRows();
-    if (rows.length == 0) return null;
-    int row = rows[0];
-    List<Integer> parentRows;
-    if (rows.length == 1) {
-      parentRows = myVisiblePack.getVisibleGraph().getRowInfo(row).getAdjacentRows(true);
-    }
-    else {
-      parentRows = Collections.singletonList(rows[rows.length - 1]);
-    }
-    return FileHistoryUtil.createChangeToParents(row, parentRows, myVisiblePack, myDiffHandler, myLogData);
+    return myFileHistoryModel.getPathInCommit(hash);
   }
 
   @Override
