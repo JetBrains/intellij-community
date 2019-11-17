@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
@@ -50,7 +51,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
-  @NotNull private final VcsLogData myLogData;
+  @NotNull private final Project myProject;
   @NotNull private final FilePath myFilePath;
   @NotNull private final VirtualFile myRoot;
 
@@ -68,15 +69,15 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel,
                           @NotNull VcsLogData logData, @NotNull FilePath filePath) {
-    myLogData = logData;
+    myProject = logData.getProject();
 
     myFilePath = filePath;
-    myRoot = notNull(VcsLogUtil.getActualRoot(myLogData.getProject(), myFilePath));
+    myRoot = notNull(VcsLogUtil.getActualRoot(myProject, myFilePath));
 
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
 
-    myGraphTable = new VcsLogGraphTable(logUi, myLogData, logUi::requestMore) {
+    myGraphTable = new VcsLogGraphTable(logUi, logData, logUi::requestMore) {
       @Override
       protected boolean isSpeedSearchEnabled() {
         return true;
@@ -99,10 +100,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myGraphTable.setLabelsLeftAligned(false);
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
 
-    myDetailsPanel = new VcsLogCommitDetailsListPanel(myLogData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
+    myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {
-        VcsLogContentUtil.runInMainLog(myLogData.getProject(), ui -> {
+        VcsLogContentUtil.runInMainLog(myProject, ui -> {
           ui.jumpToCommit(commit.getHash(), commit.getRoot());
         });
       }
@@ -111,12 +112,12 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
-                                                                myLogData, logUi.getId(), this);
+                                                                logData, logUi.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
+    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
 
     JBPanel tablePanel = new JBPanel(new BorderLayout());
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
@@ -165,7 +166,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     ListSelectionListener selectionListener = e -> {
       if (Registry.is("show.diff.preview.as.editor.tab") &&
           myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myGraphTable.getSelectionModel().isSelectionEmpty()) {
-        FileEditorManager instance = FileEditorManager.getInstance(myLogData.getProject());
+        FileEditorManager instance = FileEditorManager.getInstance(myProject);
         PreviewDiffVirtualFile file = new PreviewDiffVirtualFile(previewProvider);
         ApplicationManager.getApplication().invokeLater(() -> {
           instance.openFile(file, false, true);
@@ -220,10 +221,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   void showDiffPreview(boolean state) {
     if (Registry.is("show.diff.preview.as.editor.tab")) {
       if (!state) {
-        FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
+        FileEditorManager.getInstance(myProject).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
       }
       else {
-        FileEditorManager.getInstance(myLogData.getProject()).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
+        FileEditorManager.getInstance(myProject).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider),
+                                                          false, true);
       }
       return;
     }
@@ -234,8 +236,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   @NotNull
   private FileHistoryDiffPreview createDiffPreview(boolean isInEditor) {
-    FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myLogData.getProject(), () -> getSelectedChange(),
-                                                                    isInEditor, this);
+    FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myProject, () -> getSelectedChange(), isInEditor, this);
     ListSelectionListener selectionListener = e -> {
       if (!myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) {
         return;
