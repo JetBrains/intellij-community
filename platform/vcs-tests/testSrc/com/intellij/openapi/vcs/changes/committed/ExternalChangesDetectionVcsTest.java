@@ -8,13 +8,14 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.Processor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -101,8 +102,8 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     final Pattern pattern = Pattern.compile("f([0-9])+\\.txt");
     int cnt = 0;
     for (VirtualFile unversionedFile : unversionedFiles) {
-      if (VfsUtil.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
-        ++ cnt;
+      if (VfsUtilCore.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
+        ++cnt;
         Assert.assertTrue(pattern.matcher(unversionedFile.getName()).matches());
       }
     }
@@ -162,14 +163,14 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
                            @NotNull ProgressIndicator progress,
                            @NotNull ChangeListManagerGate addGate) {
       for (FilePath path : dirtyScope.getDirtyFiles()) {
-        builder.processUnversionedFile(path.getVirtualFile());
+        builder.processUnversionedFile(path);
       }
       final Processor<VirtualFile> processor = vf -> {
-        builder.processUnversionedFile(vf);
+        builder.processUnversionedFile(VcsUtil.getFilePath(vf));
         return true;
       };
       for (FilePath dir : dirtyScope.getRecursivelyDirtyDirectories()) {
-        VfsUtil.processFilesRecursively(dir.getVirtualFile(), processor);
+        VfsUtilCore.processFilesRecursively(dir.getVirtualFile(), processor);
       }
     }
 
