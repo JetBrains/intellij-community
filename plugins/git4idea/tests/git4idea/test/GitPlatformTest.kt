@@ -104,7 +104,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     return createRepository(project, rootDir)
   }
 
-  protected fun getDefaultSaveChangesPolicy() : SaveChangesPolicy = SaveChangesPolicy.SHELVE
+  protected open fun getDefaultSaveChangesPolicy() : SaveChangesPolicy = SaveChangesPolicy.SHELVE
 
   private fun setupStashAsDefaultSaver() {
     settings.saveChangesPolicy = getDefaultSaveChangesPolicy()

@@ -3,6 +3,7 @@ package git4idea.update
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
+import git4idea.config.GitVcsSettings
 import git4idea.test.GitPlatformTest
 import git4idea.test.git
 import git4idea.test.setupDefaultUsername
@@ -10,6 +11,8 @@ import git4idea.test.tac
 import java.io.File
 
 abstract class GitSubmoduleTestBase : GitPlatformTest() {
+
+  override fun getDefaultSaveChangesPolicy(): GitVcsSettings.SaveChangesPolicy = GitVcsSettings.SaveChangesPolicy.STASH
 
   protected fun createPlainRepo(repoName: String): RepositoryAndParent {
     LOG.info("----- creating plain repository $repoName -----")
