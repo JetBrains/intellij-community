@@ -488,14 +488,14 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }, null))
 
     var receivedMessage : String? = null
-    dialogManager.onDialog(GitUnstructuredEditor::class.java, { it ->
+    dialogManager.onDialog(GitUnstructuredEditor::class.java) {
       receivedMessage = it.text
       val field = GitUnstructuredEditor::class.java.getDeclaredField("myTextEditor")
       field.isAccessible = true
       val commitMessage = field.get (it) as CommitMessage
-      commitMessage.setText(newMessage)
+      commitMessage.text = newMessage
       0
-    })
+    }
 
     refresh()
     updateChangeListManager()
