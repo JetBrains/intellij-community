@@ -257,7 +257,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
   void copyTo(@NotNull ProjectJdkImpl dest) {
     final String name = getName();
-    copyUserDataTo(dest);
     dest.setName(name);
     dest.setHomePath(getHomePath());
     dest.myVersionDefined = myVersionDefined;
