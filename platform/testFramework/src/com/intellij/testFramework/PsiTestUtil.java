@@ -568,6 +568,7 @@ public class PsiTestUtil {
                                   @NotNull VirtualFile... roots) {
     return modifyJdkRoots(sdk, sdkModificator -> {
       for (VirtualFile root : roots) {
+        sdkModificator.setName(sdkModificator.getName() + "+" + root.getPath());
         sdkModificator.addRoot(root, rootType);
       }
     });
