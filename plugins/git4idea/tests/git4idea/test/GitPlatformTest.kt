@@ -74,7 +74,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assumeSupportedGitVersion(vcs)
     addSilently()
     removeSilently()
-    setupStashAsDefaultSaver()
+    overrideDefaultSaveChangesPolicy()
 
     credentialHelpers = if (hasRemoteGitOperation()) readAndResetCredentialHelpers() else emptyMap()
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
@@ -106,7 +106,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected open fun getDefaultSaveChangesPolicy() : SaveChangesPolicy = SaveChangesPolicy.SHELVE
 
-  private fun setupStashAsDefaultSaver() {
+  private fun overrideDefaultSaveChangesPolicy() {
     settings.saveChangesPolicy = getDefaultSaveChangesPolicy()
   }
 
