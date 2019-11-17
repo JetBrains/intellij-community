@@ -217,7 +217,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertErrorNotification("Rebase Failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
-        Local changes were stashed before rebase.
+        $LOCAL_CHANGES_WARNING
         """)
     assertNoRebaseInProgress(repo)
     repo.assertNoLocalChanges()
