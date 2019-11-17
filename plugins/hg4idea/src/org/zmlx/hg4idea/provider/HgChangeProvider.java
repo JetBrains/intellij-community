@@ -279,7 +279,7 @@ public class HgChangeProvider implements ChangeProvider {
       void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
         HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
         HgFile beforeFile, HgFile afterFile) {
-        builder.processUnversionedFile(VcsUtil.getVirtualFile(afterFile.getFile()));
+        builder.processUnversionedFile(afterFile.toFilePath());
       }
     };
 
