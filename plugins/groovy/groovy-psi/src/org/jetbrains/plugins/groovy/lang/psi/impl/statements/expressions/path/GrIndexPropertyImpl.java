@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrGetAtReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrPutAtReference;
@@ -39,7 +40,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Nullable
   @Override
-  public GroovyReference getRValueReference() {
+  public GroovyMethodCallReference getRValueReference() {
     return CachedValuesManager.getCachedValue(this, () -> {
       GrIndexPropertyReference reference = isRValue(this) && isIndexAccess() ? new GrGetAtReference(this) : null;
       return Result.create(reference, PsiModificationTracker.MODIFICATION_COUNT);
@@ -48,7 +49,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Nullable
   @Override
-  public GroovyReference getLValueReference() {
+  public GroovyMethodCallReference getLValueReference() {
     return CachedValuesManager.getCachedValue(this, () -> {
       Argument rValue = getRValue(this);
       GrIndexPropertyReference reference = rValue != null && isIndexAccess() ? new GrPutAtReference(this, rValue) : null;
