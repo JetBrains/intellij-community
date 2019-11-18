@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -45,7 +46,6 @@ import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -103,14 +103,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   // BasicTableUI.viewIndexForColumn uses reference equality, so we should not change TableColumn during DnD.
   private final List<TableColumn> myTableColumns = new ArrayList<>();
 
-  public VcsLogGraphTable(@NotNull VcsLogUiEx ui,
-                          @NotNull VcsLogData logData,
-                          @NotNull Consumer<Runnable> requestMore) {
-    super(new GraphTableModel(logData, requestMore, ui.getProperties()));
+  public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
+                          @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
+                          @NotNull Consumer<Runnable> requestMore, @NotNull Disposable disposable) {
+    super(new GraphTableModel(logData, requestMore, uiProperties));
     myLogData = logData;
-    myId = ui.getId();
-    myProperties = ui.getProperties();
-    myColorManager = ui.getColorManager();
+    myId = logId;
+    myProperties = uiProperties;
+    myColorManager = colorManager;
 
     GraphCellPainter graphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
       @Override
@@ -122,7 +122,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myStringCellRenderer = new StringCellRenderer();
 
     getEmptyText().setText(CHANGES_LOG_TEXT);
-    myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
+    myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), disposable);
 
     initColumns();
 
