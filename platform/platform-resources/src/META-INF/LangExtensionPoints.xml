@@ -142,7 +142,7 @@
 
     <extensionPoint name="lang.structureViewExtension" interface="com.intellij.ide.structureView.StructureViewExtension"/>
 
-    <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
     </extensionPoint>
 
