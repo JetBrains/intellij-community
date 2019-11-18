@@ -295,6 +295,9 @@
     <registryKey key="git.commit.completion.fixup.squash" defaultValue="false"
                  description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
 
+    <registryKey key="git.interactive.rebase.new.dialog" defaultValue="false"
+                 description="Show new Interactive Rebase Dialog" restartRequired="false"/>
+
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"

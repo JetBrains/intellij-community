@@ -132,7 +132,7 @@ internal class GitInteractiveRebaseDialog(
 
   override fun getStyle() = DialogStyle.COMPACT
 
-  fun getEntries(): List<GitRebaseEntry> = commitsTableModel.entries.map { it.entry }
+  fun getEntries(): List<GitRebaseEntryWithEditedMessage> = commitsTableModel.entries
 
   override fun getPreferredFocusedComponent(): JComponent = commitsTable
 }
