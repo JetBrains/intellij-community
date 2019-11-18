@@ -134,9 +134,9 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
           }
         }
         PsiElement adjusted = myQuickFixAdapter.adjustNewProperty(newElement);
-        hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesForward(newElement)));
+        hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesAndCommentsForward(newElement)));
         if (!hadComma.get()) {
-          hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesBackward(newElement), adjusted));
+          hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted));
         }
         processedElement = adjusted;
         if (isSingle) {
