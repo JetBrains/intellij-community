@@ -14,8 +14,15 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.graph.DefaultColorGenerator
+import com.intellij.vcs.log.graph.EdgePrintElement
+import com.intellij.vcs.log.graph.NodePrintElement
+import com.intellij.vcs.log.graph.PrintElement
+import com.intellij.vcs.log.paint.ColorGenerator
+import com.intellij.vcs.log.paint.SimpleGraphCellPainter
 import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
@@ -24,10 +31,13 @@ import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
+import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.table.AbstractTableModel
+import javax.swing.table.TableCellRenderer
 import kotlin.math.max
 import kotlin.math.min
 
@@ -101,7 +111,8 @@ internal class GitInteractiveRebaseDialog(
 
 private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithDetails>) : AbstractTableModel(), EditableModel {
   companion object {
-    const val SUBJECT_COLUMN = 0
+    const val COMMIT_ICON_COLUMN = 0
+    const val SUBJECT_COLUMN = 1
   }
 
   private val _entries: MutableList<GitRebaseEntryWithDetails> = initialEntries.toMutableList()
@@ -112,6 +123,7 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithDetails>)
   override fun getColumnCount() = SUBJECT_COLUMN + 1
 
   override fun getValueAt(rowIndex: Int, columnIndex: Int): Any = when (columnIndex) {
+    COMMIT_ICON_COLUMN -> _entries[rowIndex]
     SUBJECT_COLUMN -> _entries[rowIndex].subject
     else -> throw IllegalArgumentException("Unsupported column index: $columnIndex")
   }
@@ -139,11 +151,29 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
     intercellSpacing = JBUI.emptySize()
     tableHeader = null
     installSpeedSearch()
+    prepareCommitIconColumn()
     prepareSubjectColumn()
   }
 
   private fun installSpeedSearch() {
     TableSpeedSearch(this) { o, cell -> o.toString().takeIf { cell.column == SUBJECT_COLUMN } }
+  }
+
+  private fun prepareCommitIconColumn() {
+    val commitIconColumn = columnModel.getColumn(CommitsTableModel.COMMIT_ICON_COLUMN)
+    val renderer = CommitIconRenderer()
+    commitIconColumn.cellRenderer = TableCellRenderer { table, _, isSelected, hasFocus, row, column ->
+      renderer.update(table, isSelected, hasFocus, row, column, row == table.rowCount - 1)
+      renderer
+    }
+    adjustCommitIconColumnWidth()
+  }
+
+  private fun adjustCommitIconColumnWidth() {
+    val contentWidth = getExpandedColumnWidth(CommitsTableModel.COMMIT_ICON_COLUMN) + UIUtil.DEFAULT_HGAP
+    val column = columnModel.getColumn(CommitsTableModel.COMMIT_ICON_COLUMN)
+    column.maxWidth = contentWidth
+    column.preferredWidth = contentWidth
   }
 
   private fun prepareSubjectColumn() {
@@ -157,5 +187,56 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
         }
       }
     }
+  }
+}
+
+private class CommitIconRenderer : SimpleColoredRenderer() {
+  companion object {
+    private val UP_EDGE = getEdge(EdgePrintElement.Type.UP)
+    private val DOWN_EDGE = getEdge(EdgePrintElement.Type.DOWN)
+    private val NODE = object : NodePrintElement {
+      override fun getRowIndex(): Int = 0
+      override fun getPositionInCurrentRow(): Int = 0
+      override fun getColorId(): Int = 0
+      override fun isSelected(): Boolean = false
+    }
+
+    private fun getEdge(type: EdgePrintElement.Type) = object : EdgePrintElement {
+      override fun getPositionInOtherRow(): Int = 0
+      override fun getType(): EdgePrintElement.Type = type
+      override fun getLineStyle(): EdgePrintElement.LineStyle = EdgePrintElement.LineStyle.SOLID
+      override fun hasArrow(): Boolean = false
+      override fun getRowIndex(): Int = 0
+      override fun getPositionInCurrentRow(): Int = 0
+      override fun getColorId(): Int = 0
+      override fun isSelected(): Boolean = false
+    }
+  }
+
+  private val nodeColor = DefaultColorGenerator().getColor(1)
+  private val painter = SimpleGraphCellPainter(ColorGenerator { nodeColor })
+  private var isHead = false
+
+  override fun paintComponent(g: Graphics) {
+    super.paintComponent(g)
+    drawCommitIcon(g as Graphics2D)
+  }
+
+  fun update(table: JTable?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int, isHead: Boolean) {
+    clear()
+    setPaintFocusBorder(false)
+    acquireState(table, isSelected, hasFocus, row, column)
+    cellState.updateRenderer(this)
+    border = null
+    this.isHead = isHead
+  }
+
+  private fun drawCommitIcon(g2: Graphics2D) {
+    val elements = mutableListOf<PrintElement>(UP_EDGE)
+    elements.add(NODE)
+    if (!isHead) {
+      elements.add(DOWN_EDGE)
+    }
+    painter.draw(g2, elements)
   }
 }
