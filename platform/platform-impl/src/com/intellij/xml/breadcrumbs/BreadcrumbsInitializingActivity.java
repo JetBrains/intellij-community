@@ -87,7 +87,7 @@ final class BreadcrumbsInitializingActivity implements StartupActivity.DumbAware
       if (fileEditor instanceof TextEditor) {
         TextEditor textEditor = (TextEditor)fileEditor;
         Editor editor = textEditor.getEditor();
-        BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
+        BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsWrapper(editor);
         if (isSuitable(textEditor, file)) {
           if (wrapper != null) {
             if (wrapper.breadcrumbs.above != above) {
