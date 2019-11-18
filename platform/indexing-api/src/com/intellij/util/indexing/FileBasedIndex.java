@@ -170,7 +170,6 @@ public abstract class FileBasedIndex {
             if(!acceptsFile(canonicalFile)) return false;
           }
         }
-        if (indicator != null) indicator.checkCanceled();
 
         processor.processFile(file);
         return true;

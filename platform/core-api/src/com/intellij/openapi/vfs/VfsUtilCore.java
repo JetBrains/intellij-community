@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -284,6 +285,7 @@ public class VfsUtilCore {
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws
                                                                                                            VirtualFileVisitor.VisitorException {
+    ProgressManager.checkCanceled();
     boolean pushed = false;
     try {
       final boolean allowVisitFile = visitor.allowVisitFile(file);
