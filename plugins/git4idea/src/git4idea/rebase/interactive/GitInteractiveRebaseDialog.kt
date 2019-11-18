@@ -11,7 +11,10 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
@@ -26,6 +29,7 @@ import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.NodePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.paint.ColorGenerator
+import com.intellij.vcs.log.paint.PaintParameters
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter
 import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel
 import git4idea.history.GitCommitRequirements
@@ -35,12 +39,16 @@ import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
+import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
+import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 import kotlin.math.max
 import kotlin.math.min
@@ -184,6 +192,10 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
 }
 
 private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
+  companion object {
+    private const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
+  }
+
   init {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
     columnModel.selectionModel = object : DefaultListSelectionModel() {
@@ -218,6 +230,13 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
     val column = columnModel.getColumn(CommitsTableModel.COMMIT_ICON_COLUMN)
     column.maxWidth = contentWidth
     column.preferredWidth = contentWidth
+  }
+
+  override fun removeEditor() {
+    if (editingRow in 0 until rowCount) {
+      setRowHeight(editingRow, DEFAULT_CELL_HEIGHT)
+    }
+    super.removeEditor()
   }
 
   private fun prepareSubjectColumn() {
@@ -256,6 +275,37 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
 
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
         }
+      }
+    }
+
+    subjectColumn.cellEditor = object : AbstractCellEditor(), TableCellEditor {
+      private val textArea = JBTextArea()
+
+      override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
+        val model = table.model as CommitsTableModel
+        val entry = model.entries[row]
+        textArea.text = entry.newMessage
+        val height = DEFAULT_CELL_HEIGHT * entry.newMessage.lines().size.coerceIn(3, 10)
+        val dimension = JBDimension(textArea.width, height)
+        table.setRowHeight(row, height)
+        return object : JBScrollPane(textArea) {
+          init {
+            size = dimension
+          }
+
+          override fun requestFocus() {
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(textArea, true) }
+          }
+        }
+      }
+
+      override fun getCellEditorValue() = textArea.text
+
+      override fun isCellEditable(e: EventObject?): Boolean {
+        if (e is MouseEvent) {
+          return e.clickCount >= 2
+        }
+        return true
       }
     }
   }
