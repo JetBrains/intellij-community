@@ -16,10 +16,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.BinaryExpressionHighlighter;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrConstructorInvocationHighlighter;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrEnumConstantHighlighter;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrNewExpressionHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.*;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.CreateMethodFromUsageKt;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -31,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -237,58 +233,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       }
     }
     return true;
-  }
-
-  private void checkIndexProperty(@NotNull GrIndexPropertyInfo info) {
-    if (!checkCannotInferArgumentTypes(info)) return;
-
-    final PsiType[] types = info.getArgumentTypes();
-    if (types == null) return;
-
-    final GroovyResolveResult[] results = info.multiResolve();
-    final GroovyResolveResult resolveResult = info.advancedResolve();
-
-    if (resolveResult.getElement() != null) {
-      PsiElement resolved = resolveResult.getElement();
-
-      if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-        checkMethodApplicability(resolveResult, true, info);
-      }
-      else if (resolved instanceof GrField) {
-        checkCallApplicability(((GrField)resolved).getTypeGroovy(), true, info);
-      }
-      else if (resolved instanceof PsiField) {
-        checkCallApplicability(((PsiField)resolved).getType(), true, info);
-      }
-    }
-    else if (results.length > 0) {
-      for (GroovyResolveResult result : results) {
-        PsiElement resolved = result.getElement();
-        if (resolved instanceof PsiMethod && !result.isInvokedOnProperty()) {
-          if (!checkMethodApplicability(result, false, info)) return;
-        }
-        else if (resolved instanceof GrField) {
-          if (!checkCallApplicability(((GrField)resolved).getTypeGroovy(), false, info)) return;
-        }
-        else if (resolved instanceof PsiField) {
-          if (!checkCallApplicability(((PsiField)resolved).getType(), false, info)) return;
-        }
-      }
-
-      registerError(
-        info.getElementToHighlight(),
-        ProblemHighlightType.GENERIC_ERROR,
-        GroovyBundle.message("method.call.is.ambiguous")
-      );
-    }
-    else {
-      final String typesString = buildArgTypesList(types);
-      registerError(
-        info.getElementToHighlight(),
-        ProblemHighlightType.GENERIC_ERROR,
-        GroovyBundle.message("cannot.find.operator.overload.method", typesString)
-      );
-    }
   }
 
   private <T extends GroovyPsiElement> boolean checkMethodApplicability(@NotNull final GroovyResolveResult methodResolveResult,
@@ -821,11 +765,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (GroovyIndexPropertyUtil.isClassLiteral(expression)) return;
     if (GroovyIndexPropertyUtil.isSimpleArrayAccess(expression)) return;
 
-    if (expression.getRValueReference() != null) {
-      checkIndexProperty(new GrIndexPropertyInfo(expression, true));
+    GrArgumentList argumentList = expression.getArgumentList();
+    GroovyMethodCallReference rValueReference = expression.getRValueReference();
+    if (rValueReference != null) {
+      new GenericCallReferenceHighlighter(rValueReference, argumentList, myHighlightSink).highlightMethodApplicability();
     }
-    if (expression.getLValueReference() != null) {
-      checkIndexProperty(new GrIndexPropertyInfo(expression, false));
+    GroovyMethodCallReference lValueReference = expression.getLValueReference();
+    if (lValueReference != null) {
+      new GenericCallReferenceHighlighter(lValueReference, argumentList, myHighlightSink).highlightMethodApplicability();
     }
   }
 
