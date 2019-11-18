@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -168,7 +169,10 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (!(staticFactoryCandidateInfo instanceof MethodCandidateInfo)) {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
     }
-    
+
+    LOG.assertTrue(!PsiMethodCallExpressionImpl.doWePerformGenericMethodOverloadResolutionNow(newExpression, PsiUtil.getLanguageLevel(newExpression)), 
+                   "diamond evaluation during overload resolution");
+
     PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
     String errorMessage = ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessageAssumeAlreadyComputed();
 

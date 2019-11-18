@@ -307,6 +307,16 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     assertEquals("TreeSet<? super java.lang.String>", type.getCanonicalText());
   }
 
+  public void testResolveDiamondReplacementBeforeOuterCall() {
+    configure();
+    PsiMethodCallExpression innerCall =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+
+    assertNotNull(innerCall);
+    PsiType type = innerCall.getType();
+    assertEquals("TreeSet<? super java.lang.String>", type.getCanonicalText());
+  }
+
   private void doTestAllMethodCallExpressions() {
     configure();
     final Collection<PsiCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
