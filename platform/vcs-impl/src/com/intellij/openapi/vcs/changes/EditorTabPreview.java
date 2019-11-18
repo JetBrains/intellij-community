@@ -32,7 +32,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
                    @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
     myProject = changeProcessor.getProject();
 
-    mySelectInEditor = new MergingUpdateQueue("selectInEditorQueue", 300, true, MergingUpdateQueue.ANY_COMPONENT, changeProcessor.getProject(), null, true);
+    mySelectInEditor = new MergingUpdateQueue("selectInEditorQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, changeProcessor.getProject(), null, true);
     mySelectInEditor.setRestartTimerOnAdd(true);
 
     myChangeProcessor = changeProcessor;
