@@ -10,7 +10,7 @@ import javax.swing.*
 internal fun buildLoginPanel(st: CircletLoginState.Disconnected,
                              loginAction: (String) -> Unit): DialogPanel {
     return panel {
-        val serverField = JTextField(st.server)
+        val serverField = JTextField(st.server, 30)
 
         val loginButton = JButton("Log In").apply {
             addActionListener {

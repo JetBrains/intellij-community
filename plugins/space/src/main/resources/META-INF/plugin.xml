@@ -62,13 +62,16 @@
     </application-components>
 
     <actions>
-        <action class="circlet.actions.TestCircletAction" text="Test Space..." id="Circlet.TestCircletAction"/>
+        <action id="circlet.actions.CircletMainToolBarAction"
+                class="circlet.actions.CircletMainToolBarAction"
+                icon="CircletIcons.mainIcon"
+                text="Space Toolbar Menu">
+            <add-to-group group-id="NavBarToolBar" anchor="last"/>
+        </action>
 
         <group text="Space" id="CircletGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>
         </group>
-
     </actions>
 
 </idea-plugin>
