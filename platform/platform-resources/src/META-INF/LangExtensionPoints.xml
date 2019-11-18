@@ -552,7 +552,7 @@
 
     <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
-    <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
+    <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor" dynamic="true"/>
 
     <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
 
@@ -612,7 +612,7 @@
 
     <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher"/>
 
-    <extensionPoint name="semContributor" beanClass="com.intellij.semantic.SemContributorEP">
+    <extensionPoint name="semContributor" beanClass="com.intellij.semantic.SemContributorEP" dynamic="true">
       <with attribute="implementation" implements="com.intellij.semantic.SemContributor"/>
     </extensionPoint>
 
