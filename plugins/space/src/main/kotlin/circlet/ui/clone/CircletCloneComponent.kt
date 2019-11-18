@@ -203,7 +203,6 @@ private class CloneView(
     }
 
     val client: KCircletClient = st.workspace.client
-    val circletImageLoader = CircletImageLoader(lifetime, client)
 
     private val circletProjectListWithSearch = ListWithSearchComponent<CircletCloneListItem>(listModel, CircletCloneListItemRenderer())
 
@@ -225,8 +224,7 @@ private class CloneView(
         st.workspace,
         client.pr,
         client.repoService,
-        client.star,
-        circletImageLoader
+        client.star
     )
 
     init {
