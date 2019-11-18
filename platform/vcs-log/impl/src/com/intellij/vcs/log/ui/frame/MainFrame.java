@@ -328,6 +328,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myFilterUi;
   }
 
+  @NotNull
   private JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
