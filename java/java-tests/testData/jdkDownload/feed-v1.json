@@ -5,6 +5,7 @@
       "vendor": "OpenJDK",
       "jdk_version_major": 13,
       "jdk_version": "13.0.1",
+      "suggested_sdk_name" : "openjdk-13.0.1",
       "packages": [
         {
           "os": "linux",
