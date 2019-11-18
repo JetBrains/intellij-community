@@ -21,7 +21,11 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
 
   protected open val ambiguousMethodMessage: String get() = GroovyBundle.message("method.call.is.ambiguous")
 
-  protected abstract fun getInapplicableMethodMessage(result: GroovyMethodResult, containingType: PsiType, arguments: Arguments): String
+  protected open fun getInapplicableMethodMessage(result: GroovyMethodResult, containingType: PsiType, arguments: Arguments): String {
+    val typeText = containingType.internalCanonicalText
+    val argumentsString = argumentsString(arguments)
+    return GroovyBundle.message("cannot.apply.method1", result.element.name, typeText, argumentsString)
+  }
 
   protected abstract val highlightElement: PsiElement
 
