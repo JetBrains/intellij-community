@@ -73,9 +73,19 @@
                 class="circlet.ui.clone.CircletCloneAction"
                 text="Clone Repository..."/>
 
+        <action id="circlet.actions.CircletLoginAction"
+                class="circlet.actions.CircletLoginAction"
+                text="Log In to Space..."/>
+        <action id="circlet.actions.CircletLogoutAction"
+                class="circlet.actions.CircletLogoutAction"
+                text="Log Out..."/>
+
         <group text="Space" id="CircletGroup" popup="true" icon="CircletIcons.mainIcon">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <reference id="circlet.ui.clone.CircletCloneAction"/>
+            <separator/>
+            <reference id="circlet.actions.CircletLoginAction"/>
+            <reference id="circlet.actions.CircletLogoutAction"/>
         </group>
 
     </actions>
