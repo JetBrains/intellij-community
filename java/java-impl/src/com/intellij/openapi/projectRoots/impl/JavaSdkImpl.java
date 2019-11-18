@@ -226,14 +226,8 @@ public final class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
-    String versionString = getVersionString(sdkHome);
-    String suggestedName = versionString != null ? suggestSdkNameFromVersion(versionString) : null;
+    String suggestedName = JdkUtil.suggestJdkName(getVersionString(sdkHome));
     return suggestedName != null ? suggestedName : currentSdkName != null ? currentSdkName : "";
-  }
-
-  @Nullable
-  public String suggestSdkNameFromVersion(@NotNull String versionString) {
-    return JdkUtil.suggestJdkName(versionString);
   }
 
   @Override

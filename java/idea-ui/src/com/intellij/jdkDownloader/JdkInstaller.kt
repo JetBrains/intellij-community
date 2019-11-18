@@ -108,7 +108,6 @@ object JdkInstaller {
     }
 
     val markerFile = File(home, "intellij-downloader-info.json")
-    //TODO[jo]: include original JSON here
     markerFile.writeText("Download started on ${Date()}\n$jdkItem")
 
     return JdkInstallRequest(jdkItem, home)
