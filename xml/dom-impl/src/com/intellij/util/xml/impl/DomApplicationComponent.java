@@ -2,6 +2,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -56,6 +57,9 @@ public class DomApplicationComponent {
   }
 
   private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable runnable) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDisposed()) return;
+
     ep.addExtensionPointListener(new ExtensionPointListener<T>() {
       @Override
       public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -66,7 +70,7 @@ public class DomApplicationComponent {
       public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
         runnable.run();
       }
-    }, ApplicationManager.getApplication());
+    }, app);
   }
 
   private void registerDescriptions() {
