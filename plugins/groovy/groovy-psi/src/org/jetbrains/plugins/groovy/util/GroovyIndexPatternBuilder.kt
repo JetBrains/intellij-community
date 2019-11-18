@@ -6,9 +6,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.search.IndexPatternBuilder
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ML_COMMENT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SL_COMMENT
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 class GroovyIndexPatternBuilder : IndexPatternBuilder {
@@ -22,10 +25,14 @@ class GroovyIndexPatternBuilder : IndexPatternBuilder {
   }
 
   override fun getCommentStartDelta(tokenType: IElementType): Int {
-    return 0
+    return if (tokenType == SL_COMMENT) 2 else 0
   }
 
   override fun getCommentEndDelta(tokenType: IElementType): Int {
     return if (tokenType === GroovyTokenTypes.mML_COMMENT) 2 else 0
+  }
+
+  override fun getCharsAllowedInContinuationPrefix(tokenType: IElementType): String {
+    return if (tokenType == ML_COMMENT || tokenType == GROOVY_DOC_COMMENT) "*" else ""
   }
 }
