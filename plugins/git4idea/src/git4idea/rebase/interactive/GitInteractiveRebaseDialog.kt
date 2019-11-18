@@ -75,7 +75,8 @@ internal class GitInteractiveRebaseDialog(
   private val actions = listOf<AnAction>(
     ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Checked, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, AllIcons.Actions.Pause, commitsTable),
-    ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable)
+    ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable),
+    FixupAction(commitsTable)
   )
 
   init {
@@ -312,10 +313,10 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
   }
 }
 
-private class ChangeEntryStateAction(
-  private val action: GitRebaseEntry.Action,
+private open class ChangeEntryStateAction(
+  protected val action: GitRebaseEntry.Action,
   icon: Icon,
-  private val table: CommitsTable
+  protected val table: CommitsTable
 ) : DumbAwareAction(action.name.capitalize(), action.name.capitalize(), icon) {
   init {
     val keyStroke = KeyStroke.getKeyStroke(
@@ -336,6 +337,20 @@ private class ChangeEntryStateAction(
     super.update(e)
     if (table.selectedRowCount == 0) {
       e.presentation.isEnabled = false
+    }
+  }
+}
+
+private class FixupAction(table: CommitsTable) : ChangeEntryStateAction(GitRebaseEntry.Action.FIXUP, AllIcons.Vcs.Merge, table) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val selectedRows = table.selectedRows
+    if (selectedRows.size == 1) {
+      table.setValueAt(action, selectedRows.first(), CommitsTableModel.COMMIT_ICON_COLUMN)
+    }
+    else {
+      selectedRows.drop(1).forEach { row ->
+        table.setValueAt(action, row, CommitsTableModel.COMMIT_ICON_COLUMN)
+      }
     }
   }
 }
