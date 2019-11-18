@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -81,9 +83,9 @@ public class DfaAssist implements DebuggerContextListener {
           return;
         }
         StackFrame frame = proxy.getStackFrame();
-        Map<SmartPsiFileRange, DfaHint> hints =
-          ReadAction.nonBlocking(() -> computeHints(frame, pointer)).withDocumentsCommitted(myProject).executeSynchronously();  
-        displayInlays(hints);
+        ReadAction.nonBlocking(() -> computeHintRanges(frame, pointer)).withDocumentsCommitted(myProject)
+          .finishOnUiThread(ModalityState.defaultModalityState(), DfaAssist.this::displayInlays)
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
   }
@@ -99,35 +101,29 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   private void displayInlays(Map<SmartPsiFileRange, DfaHint> hints) {
-    if (hints.isEmpty()) {
-      disposeInlays();
-      return;
-    }
-    ApplicationManager.getApplication().invokeLater(
-      () -> {
-        doDisposeInlays();
-        EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
-        VirtualFile expectedFile = hints.keySet().iterator().next().getVirtualFile();
-        if (editor == null || !expectedFile.equals(editor.getVirtualFile())) return;
-        InlayModel model = editor.getInlayModel();
-        List<Inlay<?>> newInlays = new ArrayList<>();
-        AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
-        hints.forEach((smartRange, hint) -> {
-          Segment range = smartRange.getRange();
-          if (range == null) return;
-          PresentationFactory factory = new PresentationFactory(editor);
-          MenuOnClickPresentation presentation = new MenuOnClickPresentation(
-            factory.roundWithBackground(factory.smallText(hint.getTitle())), myProject,
-            () -> Collections.singletonList(turnOffDfaProcessor));
-          newInlays.add(model.addInlineElement(range.getEndOffset(), new PresentationRenderer(presentation)));
-        });
-        myInlays.addAll(newInlays);
-      }
-    );
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    doDisposeInlays();
+    if (hints.isEmpty()) return;
+    EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
+    VirtualFile expectedFile = hints.keySet().iterator().next().getVirtualFile();
+    if (editor == null || !expectedFile.equals(editor.getVirtualFile())) return;
+    InlayModel model = editor.getInlayModel();
+    List<Inlay<?>> newInlays = new ArrayList<>();
+    AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
+    hints.forEach((smartRange, hint) -> {
+      Segment range = smartRange.getRange();
+      if (range == null) return;
+      PresentationFactory factory = new PresentationFactory(editor);
+      MenuOnClickPresentation presentation = new MenuOnClickPresentation(
+        factory.roundWithBackground(factory.smallText(hint.getTitle())), myProject,
+        () -> Collections.singletonList(turnOffDfaProcessor));
+      newInlays.add(model.addInlineElement(range.getEndOffset(), new PresentationRenderer(presentation)));
+    });
+    myInlays.addAll(newInlays);
   }
 
   @NotNull
-  private static Map<SmartPsiFileRange, DfaHint> computeHints(@NotNull StackFrame frame, @NotNull SmartPsiElementPointer<PsiElement> ptr) {
+  private static Map<SmartPsiFileRange, DfaHint> computeHintRanges(@NotNull StackFrame frame, @NotNull SmartPsiElementPointer<PsiElement> ptr) {
     PsiElement element = ptr.getElement();
     if (element == null) return Collections.emptyMap();
     Map<PsiExpression, DfaHint> hintMap = computeHints(frame, element);
