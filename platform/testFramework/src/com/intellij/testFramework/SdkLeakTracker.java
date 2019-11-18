@@ -31,7 +31,7 @@ public class SdkLeakTracker {
 
         try {
           if (!leaked.isEmpty()) {
-            Assert.fail("Leaked SDKs: " + leaked);
+            Assert.fail("Leaked SDKs: " + leaked+". Please remove leaking SDKs by e.g. ProjectJdkTable.getInstance().removeJdk() or by disposing the ProjectJdkImpl");
           }
         }
         finally {
