@@ -14,6 +14,7 @@ class MPSProperties extends ProductProperties {
         platformPrefix = "Idea"
         applicationInfoModule = "intellij.idea.community.resources"
         toolsJarRequired = true
+        scrambleMainJar = false
 
         productLayout.mainJarName = "platform.jar"
         productLayout.mainModules = ["intellij.idea.community.main"]
@@ -46,6 +47,7 @@ class MPSProperties extends ProductProperties {
                 "intellij.vcs.changeReminder"
         ]
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
+        productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
         productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
                 JavaPluginLayout.javaPlugin(false)
