@@ -56,10 +56,10 @@ public class DataFlowRunner {
   private TimeStats myStats;
 
   public DataFlowRunner() {
-    this(false, null);
+    this(null, false);
   }
 
-  public DataFlowRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context) {
+  public DataFlowRunner(@Nullable PsiElement context, boolean unknownMembersAreNullable) {
     myValueFactory = new DfaValueFactory(context, unknownMembersAreNullable);
   }
 

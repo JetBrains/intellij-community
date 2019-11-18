@@ -242,7 +242,7 @@ public class CommonDataflow {
   @NotNull
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
-    DataFlowRunner runner = new DataFlowRunner(false, block);
+    DataFlowRunner runner = new DataFlowRunner(block, false);
     CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor, false);
     if (result != RunnerResult.OK) return new DataflowResult(result);

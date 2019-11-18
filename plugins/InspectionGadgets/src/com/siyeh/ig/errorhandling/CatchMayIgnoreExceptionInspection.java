@@ -155,7 +155,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         PsiClass exceptionClass = exception.resolve();
         if (exceptionClass == null) return false;
 
-        DataFlowRunner runner = new DataFlowRunner(false, block);
+        DataFlowRunner runner = new DataFlowRunner(block, false);
         DfaValueFactory factory = runner.getFactory();
         DfaVariableValue exceptionVar = factory.getVarFactory().createVariableValue(parameter);
         DfaVariableValue stableExceptionVar = factory.getVarFactory().createVariableValue(new LightParameter("tmp", exception, block));

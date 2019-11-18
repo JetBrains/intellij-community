@@ -51,7 +51,7 @@ public class TrackingRunner extends DataFlowRunner {
   private final List<TrackingDfaMemoryState> killedStates = new ArrayList<>();
 
   private TrackingRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context, PsiExpression expression) {
-    super(unknownMembersAreNullable, context);
+    super(context, unknownMembersAreNullable);
     myExpression = expression;
   }
 
