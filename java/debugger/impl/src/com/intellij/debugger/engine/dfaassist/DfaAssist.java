@@ -27,7 +27,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -35,6 +36,7 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +71,7 @@ public class DfaAssist implements DebuggerContextListener {
       disposeInlays();
       return;
     }
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
     debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
@@ -78,9 +81,9 @@ public class DfaAssist implements DebuggerContextListener {
           return;
         }
         StackFrame frame = proxy.getStackFrame();
-        Map<PsiExpression, DfaHint> hints =
-          ReadAction.nonBlocking(() -> computeHints(frame, element)).withDocumentsCommitted(myProject).executeSynchronously();  
-        displayInlays(hints, sourcePosition);
+        Map<SmartPsiFileRange, DfaHint> hints =
+          ReadAction.nonBlocking(() -> computeHints(frame, pointer)).withDocumentsCommitted(myProject).executeSynchronously();  
+        displayInlays(hints);
       }
     });
   }
@@ -95,7 +98,7 @@ public class DfaAssist implements DebuggerContextListener {
     myInlays.clear();
   }
 
-  private void displayInlays(Map<PsiExpression, DfaHint> hints, SourcePosition sourcePosition) {
+  private void displayInlays(Map<SmartPsiFileRange, DfaHint> hints) {
     if (hints.isEmpty()) {
       disposeInlays();
       return;
@@ -104,12 +107,14 @@ public class DfaAssist implements DebuggerContextListener {
       () -> {
         doDisposeInlays();
         EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
-        if (editor == null || !sourcePosition.getFile().getVirtualFile().equals(editor.getVirtualFile())) return;
+        VirtualFile expectedFile = hints.keySet().iterator().next().getVirtualFile();
+        if (editor == null || !expectedFile.equals(editor.getVirtualFile())) return;
         InlayModel model = editor.getInlayModel();
         List<Inlay<?>> newInlays = new ArrayList<>();
         AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
-        hints.forEach((expression, hint) -> {
-          TextRange range = expression.getTextRange();
+        hints.forEach((smartRange, hint) -> {
+          Segment range = smartRange.getRange();
+          if (range == null) return;
           PresentationFactory factory = new PresentationFactory(editor);
           MenuOnClickPresentation presentation = new MenuOnClickPresentation(
             factory.roundWithBackground(factory.smallText(hint.getTitle())), myProject,
@@ -119,6 +124,18 @@ public class DfaAssist implements DebuggerContextListener {
         myInlays.addAll(newInlays);
       }
     );
+  }
+
+  @NotNull
+  private static Map<SmartPsiFileRange, DfaHint> computeHints(@NotNull StackFrame frame, @NotNull SmartPsiElementPointer<PsiElement> ptr) {
+    PsiElement element = ptr.getElement();
+    if (element == null) return Collections.emptyMap();
+    Map<PsiExpression, DfaHint> hintMap = computeHints(frame, element);
+    if (hintMap.isEmpty()) return Collections.emptyMap();
+    Project project = element.getProject();
+    PsiFile file = element.getContainingFile();
+    return EntryStream.of(hintMap).mapKeys(expr -> SmartPointerManager.getInstance(project)
+      .createSmartPsiFileRangePointer(file, expr.getTextRange())).toMap();
   }
 
   @NotNull
