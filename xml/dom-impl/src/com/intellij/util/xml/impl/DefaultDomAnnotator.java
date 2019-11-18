@@ -48,7 +48,7 @@ public class DefaultDomAnnotator implements Annotator {
   public <T extends DomElement> void runInspection(@Nullable final DomElementsInspection<T> inspection, final DomFileElement<T> fileElement, List<? super Annotation> toFill) {
     if (inspection == null) return;
     DomElementAnnotationsManagerImpl annotationsManager = getAnnotationsManager(fileElement);
-    if (DomElementAnnotationsManagerImpl.isHolderUpToDate(fileElement) && annotationsManager.getProblemHolder(fileElement).isInspectionCompleted(inspection)) return;
+    if (annotationsManager.isHolderUpToDate(fileElement) && annotationsManager.getProblemHolder(fileElement).isInspectionCompleted(inspection)) return;
 
     DomElementAnnotationHolderImpl annotationHolder = new DomElementAnnotationHolderImpl(true, fileElement);
     inspection.checkFileElement(fileElement, annotationHolder);
