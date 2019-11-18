@@ -47,6 +47,7 @@ class SciPyDocumentationLinkProvider : PythonDocumentationLinkProvider {
       }
     }
     else null
+    
   }
-
+  
 }
