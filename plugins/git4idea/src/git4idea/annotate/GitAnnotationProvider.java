@@ -270,10 +270,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
         if (commitHash.equals(GitRevisionNumber.NOT_COMMITTED_HASH)) {
           commitHash = null;
         }
-        int originalLineNumber = Integer.parseInt(s.spaceToken());
-        int lineNumber = Integer.parseInt(s.spaceToken());
+        s.spaceToken(); // skip revision line number
+        String s1 = s.spaceToken();
+        int lineNum = Integer.parseInt(s1);
         s.nextLine(); // skip number of lines in this group (if present)
-
         // parse commit information
         LineInfo commit = commits.get(commitHash);
         if (commit != null || commitHash == null) {
@@ -325,7 +325,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           }
 
           if (authorDate == null || committerDate == null || filePath == null || authorName == null || authorEmail == null || subject == null) {
-            throw new VcsException("Output for line " + lineNumber + " lacks necessary data");
+            throw new VcsException("Output for line " + lineNum + " lacks necessary data");
           }
 
           GitRevisionNumber revisionNumber = new GitRevisionNumber(commitHash);
@@ -337,14 +337,14 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           if (previousFilePath != null) previousFilePath = pathInterner.intern(previousFilePath);
 
           commit = new LineInfo(myProject, revisionNumber, filePath, committerDate, authorDate, author, subject,
-                                previousRevisionNumber, previousFilePath, lineNumber, originalLineNumber);
+                                previousRevisionNumber, previousFilePath);
           commits.put(commitHash, commit);
         }
         s.nextLine();
 
         int expectedLineNum = lines.size() + 1;
-        if (lineNumber != expectedLineNum) {
-          throw new VcsException("Adding for info for line " + lineNumber + " but we are expecting it to be for " + expectedLineNum);
+        if (lineNum != expectedLineNum) {
+          throw new VcsException("Adding for info for line " + lineNum + " but we are expecting it to be for " + expectedLineNum);
         }
 
         lines.add(commit);
