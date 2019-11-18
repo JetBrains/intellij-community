@@ -17,6 +17,7 @@ import javax.swing.*;
  * @see ConfigurationType#getConfigurationFactories()
  */
 public abstract class ConfigurationFactory {
+  public static final ConfigurationFactory[] EMPTY_ARRAY = new ConfigurationFactory[0];
   private final ConfigurationType myType;
 
   protected ConfigurationFactory(@NotNull ConfigurationType type) {
