@@ -71,7 +71,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
             }
 
             is CircletLoginState.Connected -> {
-                val serverComponent = JLabel(st.server.removePrefix("https://").removePrefix("http://")).apply {
+                val serverComponent = JLabel(cleanupUrl(st.server)).apply {
                     foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
                 }
                 val logoutButton = JButton("Log Out").apply {
