@@ -56,7 +56,7 @@ public class NonBlockingReadActionImpl<T>
   private final @Nullable ProgressIndicator myProgressIndicator;
   private final Callable<T> myComputation;
 
-  private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
+  private static final Set<NonBlockingReadActionImpl<?>.Submission> ourTasks = ContainerUtil.newConcurrentSet();
   private static final Map<List<Object>, NonBlockingReadActionImpl<?>.Submission> ourTasksByEquality = new HashMap<>();
   private static final AtomicInteger ourUnboundedSubmissionCount = new AtomicInteger();
 
@@ -492,13 +492,13 @@ public class NonBlockingReadActionImpl<T>
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    for (CancellablePromise<?> task : ourTasks) {
+    for (NonBlockingReadActionImpl<?>.Submission task : ourTasks) {
       waitForTask(task);
     }
   }
 
   @TestOnly
-  private static void waitForTask(@NotNull CancellablePromise<?> task) {
+  private static void waitForTask(@NotNull NonBlockingReadActionImpl<?>.Submission task) {
     int iteration = 0;
     while (!task.isDone() && iteration++ < 60_000) {
       UIUtil.dispatchAllInvocationEvents();
@@ -515,7 +515,7 @@ public class NonBlockingReadActionImpl<T>
     if (!task.isDone()) {
       //noinspection UseOfSystemOutOrSystemErr
       System.err.println(ThreadDumper.dumpThreadsToString());
-      throw new AssertionError("Too long async task");
+      throw new AssertionError("Too long async task " + task.getComputationOrigin());
     }
   }
 
