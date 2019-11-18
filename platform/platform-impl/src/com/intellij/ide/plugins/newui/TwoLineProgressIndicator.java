@@ -11,6 +11,14 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class TwoLineProgressIndicator extends OneLineProgressIndicator {
+  public TwoLineProgressIndicator() {
+    this(true);
+  }
+
+  public TwoLineProgressIndicator(boolean canBeCancelled) {
+    super(true, canBeCancelled);
+  }
+
   @Override
   protected void createCompactTextAndProgress() {
     JPanel textWrapper = new NonOpaquePanel(new BorderLayout());

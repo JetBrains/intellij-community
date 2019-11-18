@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.plugins.newui.OneLineProgressIndicator;
 import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.SdkEditorAdditionalOptionsProvider;
@@ -134,24 +135,24 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(
       0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(2, 10, 2, 2), 0, 0));
     myMainPanel.add(myHomeComponent, new GridBagConstraints(
-      1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, JBUI.insets(2, 2, 2, 10), 0, 0));
+      1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, JBUI.insets(2, 2, 2, 10), 0, 0));
 
     myAdditionalDataPanel = new JPanel(new BorderLayout());
     myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(
-      0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(2, 10, 0, 10), 0, 0));
+      0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(2, 10, 0, 10), 0, 0));
 
     myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(
-      0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(2), 0, 0));
+      0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(2), 0, 0));
 
     myDownloadingPanel = new JPanel(new BorderLayout());
     //myDownloadingPanel.add(new JBLabel("Downloading JDK..."), BorderLayout.NORTH);
-    myDownloadProgressIndicator = new TwoLineProgressIndicator();
+    myDownloadProgressIndicator = new TwoLineProgressIndicator(false);
     myDownloadProgressIndicator.setIndeterminate(true);
     myDownloadingPanel.add(myDownloadProgressIndicator.getComponent(), BorderLayout.NORTH);
+    myDownloadProgressIndicator.getComponent().setMaximumSize(JBUI.size(200, 200));
 
-    // a pressure at the bottom to make sure controls are shifter to the top
     myMainPanel.add(myDownloadingPanel, new GridBagConstraints(
-      0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.SOUTH, GridBagConstraints.BOTH, JBUI.insets(2, 10, 0, 10), 0, 0));
+      0, GridBagConstraints.RELATIVE, 2, 1, 0, 1.0, GridBagConstraints.SOUTH, GridBagConstraints.BOTH, JBUI.insets(8, 10, 0, 10), 0, 0));
   }
 
   protected TextFieldWithBrowseButton createHomeComponent() {
