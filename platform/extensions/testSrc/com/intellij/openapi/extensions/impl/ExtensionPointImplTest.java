@@ -141,7 +141,7 @@ public class ExtensionPointImplTest {
   public void testIncompatibleAdapter() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
 
-    extensionPoint.addExtensionAdapter(stringAdapter());
+    extensionPoint.addExtensionAdapter(newStringAdapter());
 
     try {
       assertThat(extensionPoint.getExtensionList()).isEmpty();
@@ -194,7 +194,7 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("first", disposable);
 
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
     extensionPoint.addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw ExtensionNotApplicableException.INSTANCE;
@@ -212,7 +212,7 @@ public class ExtensionPointImplTest {
 
   private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @NotNull BiConsumer<ExtensionPointImpl<String>, MyShootingComponentAdapter> test) {
     ExtensionPointImpl<String> extensionPoint = buildExtensionPoint(String.class);
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
 
     extensionPoint.registerExtension("first", disposable);
     assertThat(extensionPoint.getExtensionList()).hasSize(1);
@@ -242,7 +242,7 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
 
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
     ((ExtensionPointImpl<?>)extensionPoint).addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw new ProcessCanceledException();
@@ -295,7 +295,7 @@ public class ExtensionPointImplTest {
     return point;
   }
 
-  private static MyShootingComponentAdapter stringAdapter() {
+  private static MyShootingComponentAdapter newStringAdapter() {
     return new MyShootingComponentAdapter(String.class.getName());
   }
 
