@@ -89,19 +89,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogColorManager myColorManager;
+  
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
   @NotNull private final StringCellRenderer myStringCellRenderer;
-  @NotNull private final Set<VcsLogColumn> myInitializedColumns = EnumSet.noneOf(VcsLogColumn.class);
-
-  @Nullable private Selection mySelection = null;
-
-  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new ArrayList<>();
 
   // BasicTableUI.viewIndexForColumn uses reference equality, so we should not change TableColumn during DnD.
-  private final List<TableColumn> myTableColumns = new ArrayList<>();
+  @NotNull private final List<TableColumn> myTableColumns = new ArrayList<>();
+  @NotNull private final Set<VcsLogColumn> myInitializedColumns = EnumSet.noneOf(VcsLogColumn.class);
+
+  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new ArrayList<>();
+  
+  @Nullable private Selection mySelection = null;
 
   public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
