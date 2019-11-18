@@ -125,11 +125,18 @@ public class DfaAssist implements DebuggerContextListener {
     if (!element.isValid() || DumbService.isDumb(element.getProject())) return Collections.emptyMap();
     Method method = frame.location().method();
 
-    PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    PsiParameterListOwner context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
     boolean methodMatches = false;
     try {
-      methodMatches = psiMethod != null && psiMethod.getName().equals(method.name()) &&
-                      psiMethod.getParameterList().getParametersCount() == method.arguments().size(); 
+      if (context instanceof PsiMethod) {
+        PsiMethod psiMethod = (PsiMethod)context;
+        methodMatches =
+          psiMethod.getName().equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.arguments().size();
+      }
+      else if (context instanceof PsiLambdaExpression) {
+        methodMatches = method.name().startsWith("lambda$") && 
+                        method.arguments().size() >= context.getParameterList().getParametersCount();
+      }
     }
     catch (AbsentInformationException ignored) {
     }
@@ -165,8 +172,11 @@ public class DfaAssist implements DebuggerContextListener {
     while (e != null && !(e instanceof PsiClass) && !(e instanceof PsiFileSystemItem)) {
       e = e.getParent();
       if (e instanceof PsiCodeBlock) {
-        if (e.getParent() instanceof PsiMethod ||
-            e.getParent() instanceof PsiBlockStatement && e.getParent().getParent() instanceof PsiLoopStatement) {
+        PsiElement parent = e.getParent();
+        if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression ||
+            // We cannot properly restore context if we started from finally, so let's analyze just finally block
+            parent instanceof PsiTryStatement && ((PsiTryStatement)parent).getFinallyBlock() == e ||
+            parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiLoopStatement) {
           return (PsiCodeBlock)e;
         }
       }
