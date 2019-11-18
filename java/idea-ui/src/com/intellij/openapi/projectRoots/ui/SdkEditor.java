@@ -74,6 +74,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private final Disposable myDisposable = Disposer.newDisposable();
 
+  private boolean myIsDisposed = false;
+  private final Runnable myResetCallback = () -> {
+    if (!myIsDisposed) reset();
+  };
+
   public SdkEditor(@NotNull Project project,
                    @NotNull SdkModel sdkModel,
                    @NotNull History history,
@@ -201,8 +206,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
-  private final Runnable myResetCallback = () -> reset();
-
   @Override
   public void reset() {
     myIsDownloading = SdkDownloadTracker.getInstance().tryRegisterDownloadingListener(mySdk, myDisposable, myDownloadProgressIndicator, myResetCallback);
@@ -238,6 +241,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public void disposeUIResources() {
+    myIsDisposed = true;
     for (final SdkType sdkType : myAdditionalDataConfigurables.keySet()) {
       for (final AdditionalDataConfigurable configurable : myAdditionalDataConfigurables.get(sdkType)) {
         configurable.disposeUIResources();
