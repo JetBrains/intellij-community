@@ -377,11 +377,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return toolbar;
   }
 
-  @NotNull
-  public JComponent getMainComponent() {
-    return this;
-  }
-
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {

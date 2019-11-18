@@ -149,7 +149,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NotNull
   @Override
   public JComponent getMainComponent() {
-    return myMainFrame.getMainComponent();
+    return myMainFrame;
   }
 
   @NotNull
