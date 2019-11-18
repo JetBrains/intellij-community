@@ -85,9 +85,10 @@ public class _LastInSuiteTest extends TestCase {
         System.out.flush();
         failed.set(true);
       }
-    
-      System.out.printf("##teamcity[testFinished name='%s']%n", testName);
-      System.out.flush();
+      else {
+        System.out.printf("##teamcity[testFinished name='%s']%n", testName);
+        System.out.flush();
+      }
     });
 
     if (failed.get()) {
