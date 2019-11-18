@@ -109,7 +109,10 @@ class PyDataclassInspection : PyInspection() {
 
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
-            { parseDataclassParameters(it, myTypeEvalContext) != null },
+            {
+              val parameters = parseDataclassParameters(it, myTypeEvalContext)
+              parameters != null && !parameters.kwOnly
+            },
             dataclassParameters.type == PyDataclassParameters.Type.STD,
             myTypeEvalContext,
             this::registerProblem,
@@ -525,8 +528,7 @@ class PyDataclassInspection : PyInspection() {
                 val default = call.getKeywordArgument("default")
                 val factory = call.getKeywordArgument("factory")
 
-                if (default != null && factory != null && !resolvesToOmittedDefault(default,
-                                                                                    PyDataclassParameters.Type.ATTRS)) {
+                if (default != null && factory != null && !resolvesToOmittedDefault(default, PyDataclassParameters.Type.ATTRS)) {
                   registerProblem(call.argumentList, "Cannot specify both 'default' and 'factory'", ProblemHighlightType.GENERIC_ERROR)
                 }
               }

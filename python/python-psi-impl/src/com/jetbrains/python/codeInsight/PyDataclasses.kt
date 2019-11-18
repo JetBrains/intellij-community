@@ -137,8 +137,8 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
 private fun parseDataclassParametersFromStub(stub: PyDataclassStub?): PyDataclassParameters? {
   return stub?.let {
     PyDataclassParameters(
-      it.initValue(), it.reprValue(), it.eqValue(), it.orderValue(), it.unsafeHashValue(), it.frozenValue(),
-      null, null, null, null, null, null,
+      it.initValue(), it.reprValue(), it.eqValue(), it.orderValue(), it.unsafeHashValue(), it.frozenValue(), it.kwOnly(),
+      null, null, null, null, null, null, null,
       Type.valueOf(it.type), emptyMap()
     )
   }
@@ -164,12 +164,14 @@ data class PyDataclassParameters(val init: Boolean,
                                  val order: Boolean,
                                  val unsafeHash: Boolean,
                                  val frozen: Boolean,
+                                 val kwOnly: Boolean,
                                  val initArgument: PyExpression?,
                                  val reprArgument: PyExpression?,
                                  val eqArgument: PyExpression?,
                                  val orderArgument: PyExpression?,
                                  val unsafeHashArgument: PyExpression?,
                                  val frozenArgument: PyExpression?,
+                                 val kwOnlyArgument: PyExpression?,
                                  val type: Type,
                                  val others: Map<String, PyExpression>) {
 
@@ -189,6 +191,7 @@ private class PyDataclassParametersBuilder(private val type: Type,
     private const val DEFAULT_ORDER = false
     private const val DEFAULT_UNSAFE_HASH = false
     private const val DEFAULT_FROZEN = false
+    private const val DEFAULT_KW_ONLY = false
   }
 
   private var init = DEFAULT_INIT
@@ -197,6 +200,7 @@ private class PyDataclassParametersBuilder(private val type: Type,
   private var order = if (type == Type.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
   private var unsafeHash = DEFAULT_UNSAFE_HASH
   private var frozen = DEFAULT_FROZEN
+  private var kwOnly = DEFAULT_KW_ONLY
 
   private var initArgument: PyExpression? = null
   private var reprArgument: PyExpression? = null
@@ -204,6 +208,7 @@ private class PyDataclassParametersBuilder(private val type: Type,
   private var orderArgument: PyExpression? = null
   private var unsafeHashArgument: PyExpression? = null
   private var frozenArgument: PyExpression? = null
+  private var kwOnlyArgument: PyExpression? = null
 
   private val others = mutableMapOf<String, PyExpression>()
 
@@ -285,6 +290,11 @@ private class PyDataclassParametersBuilder(private val type: Type,
           unsafeHashArgument = argument
           return
         }
+        "kw_only" -> {
+          kwOnly = PyEvaluator.evaluateAsBoolean(value, DEFAULT_KW_ONLY)
+          kwOnlyArgument = argument
+          return
+        }
       }
     }
 
@@ -293,7 +303,9 @@ private class PyDataclassParametersBuilder(private val type: Type,
     }
   }
 
-  fun build() = PyDataclassParameters(init, repr, eq, order, unsafeHash, frozen,
-                                      initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument,
-                                      type, others)
+  fun build() = PyDataclassParameters(
+    init, repr, eq, order, unsafeHash, frozen, kwOnly,
+    initArgument, reprArgument, eqArgument, orderArgument, unsafeHashArgument, frozenArgument, kwOnlyArgument,
+    type, others
+  )
 }

@@ -966,6 +966,17 @@ public class PyStubsTest extends PyTestCase {
     );
   }
 
+  // PY-34374
+  public void testAttrsKwOnlyOnClass() {
+    final PyFile file = getTestFile();
+
+    assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+
+    assertNotParsed(file);
+  }
+
   // PY-27398
   public void testTypingNewType() {
     runWithLanguageLevel(

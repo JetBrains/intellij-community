@@ -26,14 +26,14 @@ class PyDataclassStubImpl private constructor(private val type: String,
                                               private val eq: Boolean,
                                               private val order: Boolean,
                                               private val unsafeHash: Boolean,
-                                              private val frozen: Boolean) : PyDataclassStub {
+                                              private val frozen: Boolean,
+                                              private val kwOnly: Boolean) : PyDataclassStub {
 
   companion object {
 
     fun create(cls: PyClass): PyDataclassStub? {
       return parseDataclassParametersForStub(cls)?.let {
-        PyDataclassStubImpl(it.type.toString(), it.init, it.repr, it.eq, it.order, it.unsafeHash,
-                                                                it.frozen)
+        PyDataclassStubImpl(it.type.toString(), it.init, it.repr, it.eq, it.order, it.unsafeHash, it.frozen, it.kwOnly)
       }
     }
 
@@ -47,8 +47,9 @@ class PyDataclassStubImpl private constructor(private val type: String,
       val order = stream.readBoolean()
       val unsafeHash = stream.readBoolean()
       val frozen = stream.readBoolean()
+      val kwOnly = stream.readBoolean()
 
-      return PyDataclassStubImpl(type, init, repr, eq, order, unsafeHash, frozen)
+      return PyDataclassStubImpl(type, init, repr, eq, order, unsafeHash, frozen, kwOnly)
     }
   }
 
@@ -62,13 +63,15 @@ class PyDataclassStubImpl private constructor(private val type: String,
     stream.writeBoolean(order)
     stream.writeBoolean(unsafeHash)
     stream.writeBoolean(frozen)
+    stream.writeBoolean(kwOnly)
   }
 
-  override fun getType() = type
-  override fun initValue() = init
-  override fun reprValue() = repr
-  override fun eqValue() = eq
-  override fun orderValue() = order
-  override fun unsafeHashValue() = unsafeHash
-  override fun frozenValue() = frozen
+  override fun getType(): String = type
+  override fun initValue(): Boolean = init
+  override fun reprValue(): Boolean = repr
+  override fun eqValue(): Boolean = eq
+  override fun orderValue(): Boolean = order
+  override fun unsafeHashValue(): Boolean = unsafeHash
+  override fun frozenValue(): Boolean = frozen
+  override fun kwOnly(): Boolean = kwOnly
 }

@@ -110,10 +110,13 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     val clsType = (context.getType(cls) as? PyClassLikeType) ?: return null
 
     val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
-    val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
+    val elementGenerator = PyElementGenerator.getInstance(cls.project)
+    val ellipsis = elementGenerator.createEllipsis()
 
     val collected = linkedMapOf<String, PyCallableParameter>()
     var seenInit = false
+    val keywordOnly = linkedSetOf<String>()
+    var seenKeywordOnlyClass = false
 
     for (currentType in StreamEx.of(clsType).append(cls.getAncestorTypes(context))) {
       if (currentType == null ||
@@ -128,6 +131,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
       val parameters = parseDataclassParameters(current, context) ?: continue
       seenInit = seenInit || parameters.init
+      seenKeywordOnlyClass = seenKeywordOnlyClass || parameters.kwOnly
 
       if (seenInit) {
         current
@@ -139,6 +143,10 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           .forEach { parameter ->
             parameter.name?.let {
               // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
+
+              if (seenKeywordOnlyClass && it !in collected) {
+                keywordOnly += it
+              }
 
               if (parameters.type == PyDataclassParameters.Type.STD) {
                 // std: attribute that overrides ancestor's attribute does not change the order but updates type
@@ -153,7 +161,28 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       }
     }
 
-    return if (seenInit) PyCallableTypeImpl(collected.values.reversed(), clsType.toInstance()) else null
+    return if (seenInit) PyCallableTypeImpl(buildParameters(elementGenerator, collected, keywordOnly), clsType.toInstance()) else null
+  }
+
+  private fun buildParameters(elementGenerator: PyElementGenerator,
+                              fields: Map<String, PyCallableParameter>,
+                              keywordOnly: Set<String>): List<PyCallableParameter> {
+    if (keywordOnly.isEmpty()) return fields.values.reversed()
+
+    val positionalOrKeyword = mutableListOf<PyCallableParameter>()
+    val keyword = mutableListOf<PyCallableParameter>()
+
+    for ((name, value) in fields.entries.reversed()) {
+      if (name !in keywordOnly) {
+        positionalOrKeyword += value
+      }
+      else {
+        keyword += value
+      }
+    }
+
+    val singleStarParameter = elementGenerator.createSingleStarParameter()
+    return positionalOrKeyword + listOf(PyCallableParameterImpl.psi(singleStarParameter)) + keyword
   }
 
   private fun fieldToParameter(cls: PyClass,
