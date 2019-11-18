@@ -270,7 +270,7 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   }
 
-  static class LineInfo {
+  public static class LineInfo {
     @NotNull private final Project myProject;
     @NotNull private final GitRevisionNumber myRevision;
     @NotNull private final FilePath myFilePath;
@@ -280,16 +280,20 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull private final Date myAuthorDate;
     @NotNull private final VcsUser myAuthor;
     @NotNull private final String mySubject;
+    private final int myLineNumber;
+    private final int myOriginalLineNumber;
 
     LineInfo(@NotNull Project project,
-                    @NotNull GitRevisionNumber revision,
-                    @NotNull FilePath path,
-                    @NotNull Date committerDate,
-                    @NotNull Date authorDate,
-                    @NotNull VcsUser author,
-                    @NotNull String subject,
-                    @Nullable GitRevisionNumber previousRevision,
-                    @Nullable FilePath previousPath) {
+             @NotNull GitRevisionNumber revision,
+             @NotNull FilePath path,
+             @NotNull Date committerDate,
+             @NotNull Date authorDate,
+             @NotNull VcsUser author,
+             @NotNull String subject,
+             @Nullable GitRevisionNumber previousRevision,
+             @Nullable FilePath previousPath,
+             int lineNumber,
+             int originalLineNumber) {
       myProject = project;
       myRevision = revision;
       myFilePath = path;
@@ -299,6 +303,8 @@ public class GitFileAnnotation extends FileAnnotation {
       myAuthorDate = authorDate;
       myAuthor = author;
       mySubject = subject;
+      myLineNumber = lineNumber;
+      myOriginalLineNumber = originalLineNumber;
     }
 
     @NotNull
@@ -340,6 +346,14 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull
     public String getSubject() {
       return mySubject;
+    }
+
+    public int getLineNumber() {
+      return myLineNumber;
+    }
+
+    public int getOriginalLineNumber() {
+      return myOriginalLineNumber;
     }
   }
 
