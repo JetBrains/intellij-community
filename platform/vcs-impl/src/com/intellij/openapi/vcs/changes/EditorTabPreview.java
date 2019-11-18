@@ -2,7 +2,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -11,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +26,14 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   private final VcsConfiguration myVcsConfiguration;
   private final DiffRequestProcessor myChangeProcessor;
 
+  private MergingUpdateQueue mySelectInEditor;
+
   public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor,
                    @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
     myProject = changeProcessor.getProject();
+
+    mySelectInEditor = new MergingUpdateQueue("selectInEditorQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, changeProcessor.getProject(), null, true);
+    mySelectInEditor.setRestartTimerOnAdd(true);
 
     myChangeProcessor = changeProcessor;
     MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor, this::getCurrentName);
@@ -39,9 +45,11 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
       if (myProject.isDisposed()) return;
 
       changesTree.addSelectionListener(() -> {
-        if (shouldSkip()) return;
+        mySelectInEditor.queue(Update.create(this, () -> {
+          if (skipPreviewUpdate()) return;
 
-        setDiffPreviewVisible(true);
+          setDiffPreviewVisible(true);
+        }));
       });
     });
 
@@ -62,7 +70,11 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   protected abstract void doRefresh();
 
-  protected boolean shouldSkip() {
+  protected boolean skipPreviewUpdate() {
+    return false;
+  }
+
+  protected boolean isContentEmpty() {
     return false;
   }
 
@@ -77,7 +89,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   public void setDiffPreviewVisible(boolean isVisible) {
     updatePreview(false);
 
-    if (!isVisible) {
+    if (!isVisible || isContentEmpty()) {
       FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
     }
     else {
