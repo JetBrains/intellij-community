@@ -77,14 +77,14 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   private static boolean useNativeWinChooser(FileChooserDescriptor descriptor) {
     return SystemInfo.isWindows &&
            !descriptor.isForcedToUseIdeaFileChooser() &&
-           Registry.is("ide.win.file.chooser.native");
+           Registry.is("ide.win.file.chooser.native", false);
   }
 
   private static boolean useNativeMacChooser(FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
            SystemInfo.isJetBrainsJvm &&
            !descriptor.isForcedToUseIdeaFileChooser() &&
-           Registry.is("ide.mac.file.chooser.native");
+           Registry.is("ide.mac.file.chooser.native", true);
   }
 
   @NotNull
@@ -117,14 +117,14 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
-    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
+    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog", true)
            ? new MacFileSaverDialog(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
   }
 
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")
+    return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog", true)
            ? new MacFileSaverDialog (descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
   }
 }
