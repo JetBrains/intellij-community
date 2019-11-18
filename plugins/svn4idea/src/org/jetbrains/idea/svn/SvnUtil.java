@@ -5,9 +5,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -161,9 +161,7 @@ public class SvnUtil {
   }
 
   private static void checkCanceled(@Nullable ProgressIndicator progress) {
-    if (progress != null && progress.isCanceled()) {
-      throw new ProcessCanceledException();
-    }
+    ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
   }
 
   @NotNull

@@ -17,9 +17,9 @@ package com.intellij.cyclicDependencies;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -136,9 +136,7 @@ public class CyclicDependenciesBuilder{
     });
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      if (indicator.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
       indicator.setText(AnalysisScopeBundle.message("cyclic.dependencies.progress.text"));
       indicator.setText2("");
       indicator.setIndeterminate(true);

@@ -157,14 +157,6 @@ public class NonBlockingReadActionImpl<T>
     return new Submission(dummyExecutor, outerIndicator).executeSynchronously();
   }
 
-  private static void waitForSemaphore(@Nullable ProgressIndicator indicator, @NotNull Semaphore semaphore) {
-    while (!semaphore.waitFor(10)) {
-      if (indicator != null && indicator.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
-    }
-  }
-
   @Override
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
     Submission submission = new Submission(backgroundThreadExecutor, myProgressIndicator);
@@ -370,7 +362,7 @@ public class NonBlockingReadActionImpl<T>
             scheduleWithinConstraints(semaphore::up, null);
           }
         });
-        waitForSemaphore(myProgressIndicator, semaphore);
+        ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
         if (isCancelled()) {
           throw new ProcessCanceledException();
         }

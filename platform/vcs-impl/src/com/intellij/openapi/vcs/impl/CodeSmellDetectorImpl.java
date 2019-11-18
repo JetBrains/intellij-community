@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -128,7 +129,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
                                              @NotNull ProgressIndicator progress) {
     final List<CodeSmellInfo> result = new ArrayList<>();
     for (int i = 0; i < files.size(); i++) {
-      if (progress.isCanceled()) throw new ProcessCanceledException();
+      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
 
       final VirtualFile file = files.get(i);
 
