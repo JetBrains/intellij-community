@@ -28,6 +28,7 @@ class JdkDownloaderTest {
     "123.123",
     null,
     null,
+    "suggested",
     "jetbrains-hardware",
     packageType,
     url,

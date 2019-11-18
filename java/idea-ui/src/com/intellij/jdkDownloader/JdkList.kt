@@ -70,6 +70,7 @@ data class JdkItem(
   val jdkVersion: String,
   private val jdkVendorVersion: String?,
   private val vendorVersion: String?,
+  val suggestedSdkName: String,
 
   val arch: String,
   val packageType: JdkPackageType,
@@ -95,9 +96,6 @@ data class JdkItem(
     if (cmp != 0) return cmp
     return VersionComparatorUtil.compare(this.vendorVersion, other.vendorVersion)
   }
-
-  val suggestedSdkName: String
-    get() = installFolderName // TODO[jo]: generate explicit field in JSON data for that
 
   val versionPresentationText: String
     get() = jdkVersion
@@ -240,6 +238,7 @@ object JdkListParser {
                         jdkVersion = item["jdk_version"]?.asText() ?: continue,
                         jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
                         vendorVersion = item["vendor_version"]?.asText(),
+                        suggestedSdkName = item["suggested_sdk_name"]?.asText() ?: continue,
 
                         arch = pkg["arch"]?.asText() ?: continue,
                         packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: continue,
