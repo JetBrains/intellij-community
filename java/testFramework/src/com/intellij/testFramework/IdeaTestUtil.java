@@ -19,7 +19,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import kotlin.Deprecated;
 import org.jetbrains.annotations.*;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -146,8 +145,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
-  @NotNull
-  @Deprecated(message = "Use IdeaTestUtil.addWebJarsToModule instead")
+  /**
+   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
+   */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static Sdk getWebMockJdk17() {
     Sdk jdk = getMockJdk17();
@@ -155,9 +156,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return jdk;
   }
 
+  /**
+   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
+   */
   @NotNull
   @Contract(pure=true)
-  @Deprecated(message = "Use IdeaTestUtil.addWebJarsToModule instead")
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static Sdk addWebJarsTo(@NotNull Sdk jdk) {
     try {
