@@ -33,6 +33,7 @@ import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.Graphics
 import java.awt.Graphics2D
+import javax.swing.DefaultListSelectionModel
 import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
@@ -148,6 +149,12 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithDetails>)
 private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
   init {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
+    columnModel.selectionModel = object : DefaultListSelectionModel() {
+      override fun setSelectionInterval(index0: Int, index1: Int) {
+        val indexToForce = this@CommitsTable.convertColumnIndexToView(SUBJECT_COLUMN)
+        super.setSelectionInterval(indexToForce, indexToForce)
+      }
+    }
     intercellSpacing = JBUI.emptySize()
     tableHeader = null
     installSpeedSearch()
