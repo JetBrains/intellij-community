@@ -170,7 +170,7 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
     val commitIconColumn = columnModel.getColumn(CommitsTableModel.COMMIT_ICON_COLUMN)
     val renderer = CommitIconRenderer()
     commitIconColumn.cellRenderer = TableCellRenderer { table, _, isSelected, hasFocus, row, column ->
-      renderer.update(table, isSelected, hasFocus, row, column, row == table.rowCount - 1)
+      renderer.update(table, isSelected, hasFocus, row, column, row == table.rowCount - 1, shouldDrawNode(row))
       renderer
     }
     adjustCommitIconColumnWidth()
@@ -194,6 +194,11 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
         }
       }
     }
+  }
+
+  private fun shouldDrawNode(row: Int): Boolean {
+    val entry = model.getValueAt(row, CommitsTableModel.COMMIT_ICON_COLUMN) as GitRebaseEntryWithDetails
+    return entry.action != GitRebaseEntry.Action.FIXUP && entry.action != GitRebaseEntry.Action.DROP
   }
 }
 
@@ -223,24 +228,28 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
   private val nodeColor = DefaultColorGenerator().getColor(1)
   private val painter = SimpleGraphCellPainter(ColorGenerator { nodeColor })
   private var isHead = false
+  private var withNode = true
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
     drawCommitIcon(g as Graphics2D)
   }
 
-  fun update(table: JTable?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int, isHead: Boolean) {
+  fun update(table: JTable?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int, isHead: Boolean, withNode: Boolean) {
     clear()
     setPaintFocusBorder(false)
     acquireState(table, isSelected, hasFocus, row, column)
     cellState.updateRenderer(this)
     border = null
     this.isHead = isHead
+    this.withNode = withNode
   }
 
   private fun drawCommitIcon(g2: Graphics2D) {
     val elements = mutableListOf<PrintElement>(UP_EDGE)
-    elements.add(NODE)
+    if (withNode) {
+      elements.add(NODE)
+    }
     if (!isHead) {
       elements.add(DOWN_EDGE)
     }
