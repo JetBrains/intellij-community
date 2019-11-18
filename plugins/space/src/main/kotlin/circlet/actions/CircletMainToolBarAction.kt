@@ -3,6 +3,7 @@ package circlet.actions
 import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.api.oauth.*
+import circlet.platform.client.*
 import circlet.settings.*
 import circlet.ui.*
 import circlet.ui.clone.*
@@ -10,31 +11,56 @@ import circlet.workspaces.*
 import com.intellij.icons.*
 import com.intellij.ide.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
+import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.cloneDialog.*
+import icons.*
 import libraries.coroutines.extra.*
 import runtime.*
 import runtime.reactive.*
 import java.awt.*
+import java.awt.event.*
 import java.util.concurrent.*
 import javax.swing.*
 
-class CircletMainToolBarAction : DumbAwareAction() {
+class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
 
     override fun update(e: AnActionEvent) {
         val isOnNavBar = e.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR
         e.presentation.isEnabledAndVisible = isOnNavBar
         if (!isOnNavBar) return
 
-        val avatar = CircletUserAvatarProvider.getInstance().avatar.value
-        e.presentation.icon = resizeIcon(avatar, 16)
+        val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
+        if (component is JBLabel) {
+            val avatar = CircletUserAvatarProvider.getInstance().avatar.value
+            val statusIcon = if (circletWorkspace.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected)
+            CircletIcons.statusOnline else CircletIcons.statusOffline
+            val layeredIcon = LayeredIcon(2).apply {
+                setIcon(resizeIcon(avatar, 16), 0)
+                setIcon(statusIcon, 1, SwingConstants.SOUTH_EAST)
+            }
+            component.icon = layeredIcon
+        }
     }
 
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+        return JBLabel(CircletUserAvatarProvider.getInstance().avatar.value).apply {
+            text = " "
+            addMouseListener(object :MouseAdapter(){
+                override fun mouseClicked(e: MouseEvent?) {
+                    val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, this@apply)
+                    val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(this@apply)
+                    actionPerformed(AnActionEvent.createFromInputEvent(e, place, presentation, dataContext, true, true))
+                }
+            })
+        }
+    }
 
     override fun actionPerformed(e: AnActionEvent) {
         val component = e.inputEvent.component
