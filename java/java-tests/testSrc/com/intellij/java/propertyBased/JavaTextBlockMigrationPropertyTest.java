@@ -87,7 +87,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       // IDEA-224671
       if (injected != null && !injected.isEmpty()) continue;
       String expected = getConcatenationText(operands);
-      if (expected == null || StringUtil.getOccurrenceCount(expected, "\\n") < 2) continue;
+      if (expected == null || countNewLines(expected) < 2) continue;
       expected = expected.replaceAll("\\\\040", " ");
 
       Computable<PsiElement> replaceAction = () -> {
@@ -143,6 +143,33 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     if (actions.size() == 1) fixture.launchAction(actions.get(0));
   }
 
+  private static int countNewLines(@NotNull String text) {
+    int cnt = 0;
+    int i = getNewLineIndex(text, 0);
+    while (i != -1) {
+      cnt++;
+      i = getNewLineIndex(text, i);
+    }
+    return cnt;
+  }
+
+  private static int getNewLineIndex(@NotNull String text, int start) {
+    int slashes = 0;
+    for (int i = start; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c == '\\') {
+        slashes++;
+      }
+      else if (c == 'n' && slashes % 2 != 0) {
+        return i;
+      }
+      else {
+        slashes = 0;
+      }
+    }
+    return -1;
+  }
+
   private interface ActionInvoker<T extends PsiElement> {
 
     int generateOffset(@NotNull T e);
@@ -157,7 +184,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       for (PsiExpression operand : e.getOperands()) {
         PsiExpression literal = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiLiteralExpression.class);
         if (literal == null) continue;
-        int idx = getNewLineIndex(literal.getText());
+        int idx = getNewLineIndex(literal.getText(), 0);
         if (idx != -1) return literal.getTextOffset() + idx;
       }
       return -1;
@@ -167,23 +194,6 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     @Override
     public String getFixHint() {
       return "Replace with text block";
-    }
-
-    private static int getNewLineIndex(@NotNull String text) {
-      int slashes = 0;
-      for (int i = 0; i < text.length(); i++) {
-        char c = text.charAt(i);
-        if (c == '\\') {
-          slashes++;
-        }
-        else if (c == 'n' && slashes % 2 != 0) {
-          return i;
-        }
-        else {
-          slashes = 0;
-        }
-      }
-      return -1;
     }
   }
 
