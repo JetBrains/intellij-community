@@ -42,17 +42,18 @@ import java.util.function.Consumer;
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
   private static final int MERGING_BACK_BRANCHES_THRESHOLD = 50;
+  static final int MAX_STATES_PER_BRANCH = 300;
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
+  private final boolean myIgnoreAssertions;
   private boolean myInlining = true;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
-  static final int MAX_STATES_PER_BRANCH = 300;
   private TimeStats myStats;
 
   public DataFlowRunner() {
@@ -60,11 +61,18 @@ public class DataFlowRunner {
   }
 
   public DataFlowRunner(@Nullable PsiElement context) {
-    this(context, false);
+    this(context, false, false);
   }
 
-  public DataFlowRunner(@Nullable PsiElement context, boolean unknownMembersAreNullable) {
+  /**
+   * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust 
+   *                field initializers (e.g. we usually cannot if context is a constructor) 
+   * @param unknownMembersAreNullable if true every parameter or method return value without nullity annotation is assumed to be nullable
+   * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
+   */
+  public DataFlowRunner(@Nullable PsiElement context, boolean unknownMembersAreNullable, boolean ignoreAssertions) {
     myValueFactory = new DfaValueFactory(context, unknownMembersAreNullable);
+    myIgnoreAssertions = ignoreAssertions;
   }
 
   @NotNull
@@ -121,7 +129,7 @@ public class DataFlowRunner {
   @NotNull
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, false);
-    return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, false, initialStates);
+    return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, initialStates);
   }
 
   /**
@@ -141,7 +149,7 @@ public class DataFlowRunner {
     if (initialStates.isEmpty()) {
       return RunnerResult.OK;
     }
-    return analyzeMethod(psiBlock, visitor, false, initialStates);
+    return analyzeMethod(psiBlock, visitor, initialStates);
   }
 
   public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
@@ -149,18 +157,17 @@ public class DataFlowRunner {
                                              Consumer<? super DfaMemoryState> initialStateAdjuster) {
     final DfaMemoryState state = createMemoryState();
     initialStateAdjuster.accept(state);
-    return analyzeMethod(block, visitor, false, Collections.singleton(state));
+    return analyzeMethod(block, visitor, Collections.singleton(state));
   }
 
   @NotNull
   final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
                                    @NotNull InstructionVisitor visitor,
-                                   boolean ignoreAssertions,
                                    @NotNull Collection<? extends DfaMemoryState> initialStates) {
     ControlFlow flow = null;
     try {
       myStats = new TimeStats();
-      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
+      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, myIgnoreAssertions, myInlining).buildControlFlow();
       myStats.endFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
 
@@ -395,22 +402,23 @@ public class DataFlowRunner {
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
-  public RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, StandardInstructionVisitor visitor, boolean ignoreAssertions) {
+  @NotNull
+  public RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull StandardInstructionVisitor visitor) {
     Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
-    return analyzeBlockRecursively(block, states, visitor, ignoreAssertions);
+    return analyzeBlockRecursively(block, states, visitor);
   }
 
+  @NotNull
   public RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
-                                              Collection<? extends DfaMemoryState> states,
-                                              StandardInstructionVisitor visitor,
-                                              boolean ignoreAssertions) {
-    RunnerResult result = analyzeMethod(block, visitor, ignoreAssertions, states);
+                                              @NotNull Collection<? extends DfaMemoryState> states,
+                                              @NotNull StandardInstructionVisitor visitor) {
+    RunnerResult result = analyzeMethod(block, visitor, states);
     if (result != RunnerResult.OK) return result;
 
     Ref<RunnerResult> ref = Ref.create(RunnerResult.OK);
     forNestedClosures((closure, nestedStates) -> {
-      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor, ignoreAssertions);
+      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor);
       if (res != RunnerResult.OK) {
         ref.set(res);
       }
@@ -420,7 +428,7 @@ public class DataFlowRunner {
 
   private void initializeVariables(@NotNull PsiElement psiBlock,
                                    @NotNull Collection<? extends DfaMemoryState> initialStates,
-                                   ControlFlow flow) {
+                                   @NotNull ControlFlow flow) {
     if (psiBlock instanceof PsiClass) {
       DfaVariableValue thisValue = getFactory().getVarFactory().createThisValue((PsiClass)psiBlock);
       // In class initializer this variable is local until escaped

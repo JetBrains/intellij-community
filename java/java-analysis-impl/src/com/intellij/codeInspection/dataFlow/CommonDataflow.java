@@ -244,7 +244,7 @@ public class CommonDataflow {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
     DataFlowRunner runner = new DataFlowRunner(block);
     CommonDataflowVisitor visitor = new CommonDataflowVisitor();
-    RunnerResult result = runner.analyzeMethodRecursively(block, visitor, false);
+    RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     if (result != RunnerResult.OK) return new DataflowResult(result);
     if (!(block instanceof PsiClass)) return visitor.myResult;
     DataflowResult dfr = visitor.myResult.copy();
@@ -259,7 +259,7 @@ public class CommonDataflow {
       } else {
         initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
       }
-      if(runner.analyzeBlockRecursively(body, initialStates, visitor, false) == RunnerResult.OK) {
+      if(runner.analyzeBlockRecursively(body, initialStates, visitor) == RunnerResult.OK) {
         dfr = visitor.myResult.copy();
       } else {
         visitor.myResult = dfr;

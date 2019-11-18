@@ -50,8 +50,11 @@ public class TrackingRunner extends DataFlowRunner {
   private final List<DfaInstructionState> afterStates = new ArrayList<>();
   private final List<TrackingDfaMemoryState> killedStates = new ArrayList<>();
 
-  private TrackingRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context, PsiExpression expression) {
-    super(context, unknownMembersAreNullable);
+  private TrackingRunner(@Nullable PsiElement context,
+                         PsiExpression expression,
+                         boolean unknownMembersAreNullable,
+                         boolean ignoreAssertions) {
+    super(context, unknownMembersAreNullable, ignoreAssertions);
     myExpression = expression;
   }
 
@@ -117,12 +120,12 @@ public class TrackingRunner extends DataFlowRunner {
                                            DfaProblemType type) {
     PsiElement body = DfaUtil.getDataflowContext(expression);
     if (body == null) return null;
-    TrackingRunner runner = new TrackingRunner(unknownAreNullables, body, expression);
-    if (!runner.analyze(ignoreAssertions, expression, body)) return null;
+    TrackingRunner runner = new TrackingRunner(body, expression, unknownAreNullables, ignoreAssertions);
+    if (!runner.analyze(expression, body)) return null;
     return runner.findProblemCause(expression, type);
   }
 
-  private boolean analyze(boolean ignoreAssertions, PsiExpression expression, PsiElement body) {
+  private boolean analyze(PsiExpression expression, PsiElement body) {
     List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor(true) {
       @Override
@@ -135,7 +138,7 @@ public class TrackingRunner extends DataFlowRunner {
         return super.visitEndOfInitializer(instruction, runner, state);
       }
     };
-    RunnerResult result = analyzeMethodRecursively(body, visitor, ignoreAssertions);
+    RunnerResult result = analyzeMethodRecursively(body, visitor);
     if (result != RunnerResult.OK) return false;
     if (body instanceof PsiClass) {
       PsiMethod ctor = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -151,7 +154,7 @@ public class TrackingRunner extends DataFlowRunner {
           else {
             initialStates = StreamEx.of(endOfInitializerStates).map(DfaMemoryState::createCopy).toList();
           }
-          return analyzeBlockRecursively(ctorBody, initialStates, visitor, false) == RunnerResult.OK;
+          return analyzeBlockRecursively(ctorBody, initialStates, visitor) == RunnerResult.OK;
         }
       }
     }

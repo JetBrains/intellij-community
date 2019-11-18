@@ -138,7 +138,7 @@ class ContractChecker {
     }
 
     ContractCheckerVisitor visitor = new ContractCheckerVisitor(method, contract, ownContract);
-    runner.analyzeMethod(body, visitor, false, Collections.singletonList(initialState));
+    runner.analyzeMethod(body, visitor, Collections.singletonList(initialState));
     return visitor.getErrors();
   }
 }
