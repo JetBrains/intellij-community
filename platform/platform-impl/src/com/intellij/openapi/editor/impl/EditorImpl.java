@@ -1880,7 +1880,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
     }
-    if (myUpdateCursor) {
+    if (myUpdateCursor && !myPurePaintingMode) {
       setCursorPosition();
       myUpdateCursor = false;
     }
