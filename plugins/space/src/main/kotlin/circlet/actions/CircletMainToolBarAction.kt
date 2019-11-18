@@ -44,7 +44,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
                 .showUnderneathOf(component)
         }
         else {
-            val disconnected = CircletLoginState.Disconnected(CircletServerSettingsComponent.getInstance().settings.value.server, null)
+            val disconnected = CircletLoginState.Disconnected(CircletServerSettingsComponent.getInstance().settings.value.server)
 
             val loginState: MutableProperty<CircletLoginState> = mutableProperty(disconnected)
 
@@ -76,7 +76,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
             is CircletLoginState.Connecting -> {
                 buildConnectingPanel(st) {
                     st.lt.terminate()
-                    loginState.value = CircletLoginState.Disconnected(st.server, null)
+                    loginState.value = CircletLoginState.Disconnected(st.server)
                 }
             }
 

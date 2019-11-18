@@ -36,7 +36,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
     private val panel = JPanel(BorderLayout())
 
     private fun initialState(): CircletLoginState {
-        val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("", null)
+        val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("")
         return CircletLoginState.Connected(workspace.client.server, workspace)
     }
 
@@ -44,7 +44,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
         val settings = CircletServerSettingsComponent.getInstance().settings
         circletWorkspace.workspace.forEach(uiLifetime) { ws ->
             if (ws == null) {
-                state.value = CircletLoginState.Disconnected(settings.value.server, "")
+                state.value = CircletLoginState.Disconnected(settings.value.server)
             }
             else {
                 state.value = CircletLoginState.Connected(ws.client.server, ws)
@@ -67,7 +67,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
 
             is CircletLoginState.Connecting -> return buildConnectingPanel(st) {
                 st.lt.terminate()
-                state.value = CircletLoginState.Disconnected(st.server, null)
+                state.value = CircletLoginState.Disconnected(st.server)
             }
 
             is CircletLoginState.Connected -> {
@@ -77,7 +77,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                 val logoutButton = JButton("Log Out").apply {
                     addActionListener {
                         circletWorkspace.signOut()
-                        state.value = CircletLoginState.Disconnected(st.server, null)
+                        state.value = CircletLoginState.Disconnected(st.server)
                     }
                 }
 
