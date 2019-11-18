@@ -58,23 +58,15 @@ public class BusyWaitInspection extends BaseInspection {
       }
       PsiElement context = expression;
       while (true) {
-        PsiLoopStatement loopStatement = PsiTreeUtil.getParentOfType(context, PsiLoopStatement.class, true,
-                                                                     PsiClass.class, PsiLambdaExpression.class);
+        PsiConditionalLoopStatement loopStatement = PsiTreeUtil.getParentOfType(context, PsiConditionalLoopStatement.class, true,
+                                                                                PsiClass.class, PsiLambdaExpression.class);
         if (loopStatement == null) return;
         context = loopStatement;
         PsiStatement body = loopStatement.getBody();
         if (!PsiTreeUtil.isAncestor(body, expression, true)) continue;
-        PsiExpression loopCondition;
-        if (loopStatement instanceof PsiWhileStatement) {
-          loopCondition = ((PsiWhileStatement)loopStatement).getCondition();
-        }
-        else if (loopStatement instanceof PsiDoWhileStatement) {
-          loopCondition = ((PsiDoWhileStatement)loopStatement).getCondition();
-        }
-        else if (loopStatement instanceof PsiForStatement) {
-          loopCondition = ((PsiForStatement)loopStatement).getCondition();
-        } else continue;
-        if (ExpressionUtils.computeConstantExpression(loopCondition) == null && ExpressionUtils.isLocallyDefinedExpression(loopCondition)) {
+        PsiExpression loopCondition = loopStatement.getCondition();
+        if (loopCondition != null && 
+            ExpressionUtils.computeConstantExpression(loopCondition) == null && ExpressionUtils.isLocallyDefinedExpression(loopCondition)) {
           // Condition depends on locals only: likely they are changed in the loop (or another inspection should fire)
           // so this is not a classic busy wait.
           continue;

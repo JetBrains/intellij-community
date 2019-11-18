@@ -78,30 +78,24 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      if (condition == null) {
-        return;
-      }
-      checkForMethodCalls(condition);
+      checkLoop(statement);
     }
 
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      if (condition == null) {
-        return;
-      }
-      checkForMethodCalls(condition);
+      checkLoop(statement);
     }
 
     @Override
     public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
+      checkLoop(statement);
+    }
+
+    public void checkLoop(@NotNull PsiConditionalLoopStatement statement) {
       final PsiExpression condition = statement.getCondition();
-      if (condition == null) {
-        return;
-      }
+      if (condition == null) return;
       checkForMethodCalls(condition);
     }
 

@@ -1237,9 +1237,8 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkMustBeBoolean(@NotNull PsiExpression expr, @Nullable PsiType type) {
     PsiElement parent = expr.getParent();
-    if (parent instanceof PsiIfStatement || parent instanceof PsiWhileStatement ||
-        parent instanceof PsiForStatement && expr.equals(((PsiForStatement)parent).getCondition()) ||
-        parent instanceof PsiDoWhileStatement && expr.equals(((PsiDoWhileStatement)parent).getCondition())) {
+    if (parent instanceof PsiIfStatement || 
+        parent instanceof PsiConditionalLoopStatement && expr.equals(((PsiConditionalLoopStatement)parent).getCondition())) {
       if (expr.getNextSibling() instanceof PsiErrorElement) return null;
 
       if (!TypeConversionUtil.isBooleanType(type)) {
