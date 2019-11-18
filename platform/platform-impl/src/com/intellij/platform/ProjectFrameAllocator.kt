@@ -9,7 +9,6 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -59,7 +58,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun run(task: Runnable): Boolean {
     var completed = false
-    TransactionGuard.getInstance().submitTransactionAndWait {
+    ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
       completed = ProgressManager.getInstance().runProcessWithProgressSynchronously({
         if (frameHelper == null) {

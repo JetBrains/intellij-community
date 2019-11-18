@@ -10,7 +10,6 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -23,7 +22,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
@@ -80,9 +78,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
 
   public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
     try {
-      Ref<List<Module>> result = Ref.create();
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> result.set(doCreateFromWizard(project, wizard)));
-      return result.get();
+      return doCreateFromWizard(project, wizard);
     }
     finally {
       wizard.disposeIfNeeded();

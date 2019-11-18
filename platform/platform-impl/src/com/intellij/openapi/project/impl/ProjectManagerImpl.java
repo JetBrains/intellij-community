@@ -67,7 +67,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
@@ -319,7 +318,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     finally {
       if (!succeed) {
-        TransactionGuard.submitTransaction(project, () -> WriteAction.run(() -> Disposer.dispose(project)));
+        ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> Disposer.dispose(project)));
       }
     }
   }
@@ -407,16 +406,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      AtomicBoolean success = new AtomicBoolean(true);
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        success.set(loadProjectUnderProgress(project));
-      });
-      if (success.get()) {
-        return true;
-      }
-    }
-    else if (loadProjectUnderProgress(project)) {
+    if (loadProjectUnderProgress(project)) {
       return true;
     }
 
@@ -449,7 +439,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static void doLoadProject(@NotNull Project project) {
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> fireProjectOpened(project));
+    ApplicationManager.getApplication().invokeAndWait(() -> fireProjectOpened(project));
 
     StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
     startupManager.runStartupActivities();
@@ -543,29 +533,26 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     else {
       project = doCreateProject(null, file);
-      //noinspection CodeBlock2Expr
       ConversionResult finalConversionResult = conversionResult;
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            try {
-              initProject(file, project, /* isRefreshVfsNeeded = */ true, null, indicator);
-            }
-            catch (ProcessCanceledException e) {
-              return;
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-              return;
-            }
-
-            if (!finalConversionResult.conversionNotNeeded()) {
-              StartupManager.getInstance(project).registerPostStartupActivity(() -> finalConversionResult.postStartupActivity(project));
-            }
-            openProject(project);
+      ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            initProject(file, project, /* isRefreshVfsNeeded = */ true, null, indicator);
           }
-        });
+          catch (ProcessCanceledException e) {
+            return;
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+            return;
+          }
+
+          if (!finalConversionResult.conversionNotNeeded()) {
+            StartupManager.getInstance(project).registerPostStartupActivity(() -> finalConversionResult.postStartupActivity(project));
+          }
+          openProject(project);
+        }
       });
     }
 
