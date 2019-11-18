@@ -36,21 +36,21 @@ class ImplementationClassCache {
 
   ImplementationClassCache(ExtensionPointName<DomImplementationClassEP> epName) {
     Application app = ApplicationManager.getApplication();
-    if (app.isDisposed()) return;
+    if (!app.isDisposed()) {
+      epName.getPoint(null).addExtensionPointListener(new ExtensionPointListener<DomImplementationClassEP>() {
+        @Override
+        public void extensionAdded(@NotNull DomImplementationClassEP ep, @NotNull PluginDescriptor pluginDescriptor) {
+          myImplementationClasses.putValue(ep.interfaceName, ep);
+          clearCache();
+        }
 
-    epName.getPoint(null).addExtensionPointListener(new ExtensionPointListener<DomImplementationClassEP>() {
-      @Override
-      public void extensionAdded(@NotNull DomImplementationClassEP ep, @NotNull PluginDescriptor pluginDescriptor) {
-        myImplementationClasses.putValue(ep.interfaceName, ep);
-        clearCache();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull DomImplementationClassEP ep, @NotNull PluginDescriptor pluginDescriptor) {
-        myImplementationClasses.remove(ep.interfaceName, ep);
-        clearCache();
-      }
-    }, true, app);
+        @Override
+        public void extensionRemoved(@NotNull DomImplementationClassEP ep, @NotNull PluginDescriptor pluginDescriptor) {
+          myImplementationClasses.remove(ep.interfaceName, ep);
+          clearCache();
+        }
+      }, true, app);
+    }
   }
 
   private Class<?> calcImplementationClass(Class<?> concreteInterface) {
