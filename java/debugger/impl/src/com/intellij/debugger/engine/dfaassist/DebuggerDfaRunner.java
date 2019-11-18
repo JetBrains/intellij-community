@@ -47,7 +47,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
   private final StackFrame myFrame;
 
   DebuggerDfaRunner(@NotNull PsiCodeBlock body, @NotNull PsiStatement statement, @NotNull StackFrame frame) {
-    super(body, false);
+    super(body);
     myBody = body;
     myStatement = statement;
     myProject = body.getProject();

@@ -369,7 +369,7 @@ public class DfaUtil {
     Object computed = ExpressionUtils.computeConstantExpression(expression);
     if (computed != null) return computed;
 
-    DataFlowRunner runner = new DataFlowRunner(expression, false);
+    DataFlowRunner runner = new DataFlowRunner(expression);
     class Visitor extends StandardInstructionVisitor {
       Object exprValue;
 

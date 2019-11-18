@@ -39,7 +39,6 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   private final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
 
   private NullParameterConstraintChecker(Collection<PsiParameter> parameters) {
-    super(null, false);
     myPossiblyViolatedParameters = new THashSet<>(parameters);
     myParametersWithSuccessfulExecutionInNotNullState = new THashSet<>();
     myUsedParameters = new THashSet<>();

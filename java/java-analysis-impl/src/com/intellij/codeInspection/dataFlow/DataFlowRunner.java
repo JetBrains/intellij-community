@@ -56,7 +56,11 @@ public class DataFlowRunner {
   private TimeStats myStats;
 
   public DataFlowRunner() {
-    this(null, false);
+    this(null);
+  }
+
+  public DataFlowRunner(@Nullable PsiElement context) {
+    this(context, false);
   }
 
   public DataFlowRunner(@Nullable PsiElement context, boolean unknownMembersAreNullable) {

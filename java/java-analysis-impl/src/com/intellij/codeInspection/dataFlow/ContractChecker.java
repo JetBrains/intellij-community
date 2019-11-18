@@ -122,7 +122,7 @@ class ContractChecker {
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    DataFlowRunner runner = new DataFlowRunner(null, false);
+    DataFlowRunner runner = new DataFlowRunner(null);
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = runner.createMemoryState();
