@@ -33,18 +33,20 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 class LegacyBridgeModifiableRootModel(
+  diff: TypedEntityStorageBuilder,
   private val legacyBridgeModule: LegacyBridgeModule,
   private val moduleId: ModuleId,
   private val initialStorage: TypedEntityStorage,
   private val accessor: RootConfigurationAccessor
-) : LegacyBridgeModifiableBase(initialStorage), ModifiableRootModel, ModificationTracker {
+) : LegacyBridgeModifiableBase(diff), ModifiableRootModel, ModificationTracker {
 
   override fun getModificationCount(): Long = diff.modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
 
   private val extensionsDelegate = lazy {
-    RootModelViaTypedEntityImpl.loadExtensions(storage = initialStorage, module = module, writable = true, parentDisposable = extensionsDisposable)
+    RootModelViaTypedEntityImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
+                                               parentDisposable = extensionsDisposable)
       .filterNot { compilerModuleExtensionClass.isAssignableFrom(it.javaClass) }
   }
   private val extensions by extensionsDelegate
@@ -546,10 +548,11 @@ class LegacyBridgeModifiableRootModel(
         initialEntityStore = modifiableModel.entityStoreOnDiff,
         parent = moduleRootComponent
       )
-      libraryImpl.modifiableModelFactory = { librarySnapshot ->
+      libraryImpl.modifiableModelFactory = { librarySnapshot , diff->
         LegacyBridgeLibraryModifiableModelImpl(
           originalLibrary = libraryImpl,
           originalLibrarySnapshot = librarySnapshot,
+          diff = diff,
           committer = { _, diffBuilder ->
             modifiableModel.diff.addDiff(diffBuilder)
           }

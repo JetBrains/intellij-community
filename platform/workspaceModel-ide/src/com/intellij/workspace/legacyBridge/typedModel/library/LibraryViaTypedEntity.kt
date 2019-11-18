@@ -23,7 +23,7 @@ class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
                             internal val filePointerProvider: LegacyBridgeFilePointerProvider,
                             val storage: TypedEntityStorage,
                             val libraryTable: LibraryTable,
-                            private val modifiableModelFactory: (LibraryViaTypedEntity) -> LibraryEx.ModifiableModelEx) : LegacyBridgeLibrary, RootProvider {
+                            private val modifiableModelFactory: (LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LibraryEx.ModifiableModelEx) : LegacyBridgeLibrary, RootProvider {
 
   override fun getModule(): Module? = (libraryTable as? LegacyBridgeModuleLibraryTable)?.module
 
@@ -98,7 +98,8 @@ class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
   // TODO Implement
   override fun getExternalSource(): ProjectModelExternalSource? = null
 
-  override fun getModifiableModel(): LibraryEx.ModifiableModelEx = modifiableModelFactory(this)
+  override fun getModifiableModel(): LibraryEx.ModifiableModelEx = modifiableModelFactory(this, TypedEntityStorageBuilder.from(storage))
+  fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = modifiableModelFactory(this, builder)
   override fun getSource(): Library = libraryImpl
 
   override fun readExternal(element: Element) = throw NotImplementedError()

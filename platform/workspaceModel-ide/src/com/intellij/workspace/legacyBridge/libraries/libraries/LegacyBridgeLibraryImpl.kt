@@ -101,7 +101,7 @@ class LegacyBridgeLibraryImpl(
   private var disposed = false
 
   // null to update project model via ProjectModelUpdater
-  var modifiableModelFactory: ((LibraryViaTypedEntity) -> LegacyBridgeLibraryModifiableModelImpl)? = null
+  var modifiableModelFactory: ((LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LegacyBridgeLibraryModifiableModelImpl)? = null
 
   private val libraryEntityValue = CachedValueWithParameter { storage, id: LibraryId ->
     storage.resolve(id)
@@ -129,18 +129,20 @@ class LegacyBridgeLibraryImpl(
           get() = emptyList()
         override val excludedRoots: List<VirtualFileUrl>
           get() = emptyList()
+
         override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String) = emptySequence<R>()
       },
       storage = storage,
       libraryTable = libraryTable,
       filePointerProvider = filePointerProvider,
-      modifiableModelFactory = modifiableModelFactory ?: { librarySnapshot ->
+      modifiableModelFactory = modifiableModelFactory ?: { librarySnapshot, diff ->
         LegacyBridgeLibraryModifiableModelImpl(
           originalLibrary = this,
           originalLibrarySnapshot = librarySnapshot,
-          committer = { _, diff ->
+          diff = diff,
+          committer = { _, diffBuilder ->
           WorkspaceModel.getInstance(project).updateProjectModel {
-            it.addDiff(diff)
+            it.addDiff(diffBuilder)
           }
         })
       }
@@ -159,9 +161,8 @@ class LegacyBridgeLibraryImpl(
   override fun getRootProvider(): RootProvider = this
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx = snapshot.modifiableModel
-
+  fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = snapshot.getModifiableModel(builder)
   override fun getSource(): Library? = null
-
   override fun getExternalSource(): ProjectModelExternalSource? = snapshot.externalSource
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = snapshot.getInvalidRootUrls(type)
   override fun getKind(): PersistentLibraryKind<*>? = snapshot.kind

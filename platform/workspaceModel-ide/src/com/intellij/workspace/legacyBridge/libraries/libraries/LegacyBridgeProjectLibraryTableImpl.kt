@@ -219,6 +219,14 @@ class LegacyBridgeProjectLibraryTableImpl(
       originalStorage = entityStore.current
     )
 
+  fun getModifiableModel(diff: TypedEntityStorageBuilder): LibraryTable.ModifiableModel =
+    LegacyBridgeProjectModifiableLibraryTableImpl(
+      libraryTable = this,
+      project = project,
+      originalStorage = entityStore.current,
+      diff = diff
+    )
+
   override fun addListener(listener: LibraryTable.Listener) = dispatcher.addListener(listener)
   override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) =
     dispatcher.addListener(listener, parentDisposable)

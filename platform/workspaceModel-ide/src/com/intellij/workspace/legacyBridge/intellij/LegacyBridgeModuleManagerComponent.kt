@@ -235,7 +235,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       error("Module ${moduleEntity.name} (id:'${moduleEntity.persistentId()}') is already added")
     }
 
-    val module = createModuleInstance(project, moduleEntity, entityStore, diff = null, isNew = false)
+    val module = createModuleInstance(moduleEntity, entityStore, diff = null, isNew = false)
     addModule(module)
     return module
   }
@@ -342,7 +342,10 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   override fun getModifiableModel(): ModifiableModuleModel =
-    LegacyBridgeModifiableModuleModel(entityStore.current, project, this)
+    LegacyBridgeModifiableModuleModel(project, this, TypedEntityStorageBuilder.from(entityStore.current))
+
+  fun getModifiableModel(diff: TypedEntityStorageBuilder): ModifiableModuleModel =
+    LegacyBridgeModifiableModuleModel(project, this, diff)
 
   override fun newModule(filePath: String, moduleTypeId: String): Module {
     incModificationCount()
@@ -501,11 +504,10 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     return "$directoryPath/${moduleEntity.name}.iml"
   }
 
-  internal fun createModuleInstance(project: Project,
-                                    moduleEntity: ModuleEntity,
-                                    entityStore: TypedEntityStore,
-                                    diff: TypedEntityStorageDiffBuilder?,
-                                    isNew: Boolean): LegacyBridgeModule {
+  fun createModuleInstance(moduleEntity: ModuleEntity,
+                           entityStore: TypedEntityStore,
+                           diff: TypedEntityStorageDiffBuilder?,
+                           isNew: Boolean): LegacyBridgeModule {
 
     val modulePath = getModuleFilePath(moduleEntity)
 
@@ -538,6 +540,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   )
 
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): LegacyBridgeModuleManagerComponent =
       ModuleManagerComponent.getInstance(project) as LegacyBridgeModuleManagerComponent
 

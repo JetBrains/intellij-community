@@ -19,10 +19,10 @@ import com.intellij.workspace.ide.storagePlace
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 
 class LegacyBridgeModifiableModuleModel(
-  initialStorage: TypedEntityStorage,
   private val project: Project,
-  private val moduleManager: LegacyBridgeModuleManagerComponent
-): LegacyBridgeModifiableBase(initialStorage), ModifiableModuleModel {
+  private val moduleManager: LegacyBridgeModuleManagerComponent,
+  diff: TypedEntityStorageBuilder
+) : LegacyBridgeModifiableBase(diff), ModifiableModuleModel {
 
   override fun getProject(): Project = project
 
@@ -67,7 +67,7 @@ class LegacyBridgeModifiableModuleModel(
       source = entitySource
     )
 
-    val moduleInstance = moduleManager.createModuleInstance(project, moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
+    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
     myModulesToAdd[moduleName] = moduleInstance
 
     moduleInstance.setModuleType(moduleTypeId)

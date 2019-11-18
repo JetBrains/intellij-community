@@ -79,6 +79,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.core" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
   </component>
   <component name="copyright">
     <Base>

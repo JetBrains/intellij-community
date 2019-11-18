@@ -23,8 +23,9 @@ import org.jdom.Element
 class LegacyBridgeLibraryModifiableModelImpl(
   private val originalLibrary: LegacyBridgeLibraryImpl,
   private val originalLibrarySnapshot: LibraryViaTypedEntity,
+  diff: TypedEntityStorageBuilder,
   private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
-) : LegacyBridgeModifiableBase(originalLibrarySnapshot.storage), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
+) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
   private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
 
@@ -35,7 +36,7 @@ class LegacyBridgeLibraryModifiableModelImpl(
       storage = storage,
       filePointerProvider = originalLibrarySnapshot.filePointerProvider,
       libraryTable = originalLibrarySnapshot.libraryTable,
-      modifiableModelFactory = { throw UnsupportedOperationException() }
+      modifiableModelFactory = { _,_ -> throw UnsupportedOperationException() }
     )
 
     newLibrary

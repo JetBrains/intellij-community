@@ -68,7 +68,7 @@ sealed class JpsFileEntitySource : EntitySource {
   }
 }
 
-data class ExternalEntitySource(val source: ProjectModelExternalSource) : EntitySource
+data class ExternalEntitySource(val displayName: String, val id: String) : EntitySource
 
 /**
  * Represents entities added by user in IDE (either via Project Structure or Settings dialog, or by invoking an action like 'Create Library from Files').

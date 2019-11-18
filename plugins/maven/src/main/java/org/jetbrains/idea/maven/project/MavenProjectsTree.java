@@ -1339,10 +1339,6 @@ public class MavenProjectsTree {
     }
   }
 
-  public interface EmbedderTask {
-    void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException;
-  }
-
   public abstract static class Visitor<Result> {
     private Result result;
 

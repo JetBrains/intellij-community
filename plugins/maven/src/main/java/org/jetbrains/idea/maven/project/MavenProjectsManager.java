@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -45,6 +46,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
+import com.intellij.workspace.api.TypedEntityStorageBuilder;
+import com.intellij.workspace.ide.WorkspaceModel;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -57,6 +61,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.worktree.LegacyBrigdeIdeModifiableModelsProvider;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -1231,8 +1236,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public List<Module> importProjects() {
-    return importProjects(new IdeModifiableModelsProviderImpl(myProject));
+    if(LegacyBridgeProjectLifecycleListener.Companion.enabled(myProject)) {
+      TypedEntityStorageBuilder builder = TypedEntityStorageBuilder.Companion.create();
+      return importProjects(new LegacyBrigdeIdeModifiableModelsProvider(myProject, builder));
+    }
+    else {
+      return importProjects(new IdeModifiableModelsProviderImpl(myProject));
+    }
   }
+
 
   public List<Module> importProjects(final IdeModifiableModelsProvider modelsProvider) {
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;

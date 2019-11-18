@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.impl.ModuleLibraryTable
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
@@ -46,21 +47,24 @@ class LegacyBridgeModuleRootComponent(
       )
     }).also { Disposer.register(this, it) }
 
-  internal val moduleLibraryTable = object : LegacyBridgeModuleLibraryTable {
-    override val module: Module = legacyBridgeModule
-    override fun getLibraries(): Array<Library> = moduleLibraries.toTypedArray()
-    override fun createLibrary(): Library = throw UnsupportedOperationException()
-    override fun createLibrary(name: String?): Library = throw UnsupportedOperationException()
-    override fun removeLibrary(library: Library): Nothing = throw UnsupportedOperationException()
-    override fun getLibraryIterator(): Iterator<Library> = libraries.iterator()
-    override fun getLibraryByName(name: String): Library? = moduleLibraries.firstOrNull { it.name == name }
-    override fun getTableLevel(): String = JpsLibraryTableSerializer.MODULE_LEVEL
-    override fun getPresentation(): LibraryTablePresentation = com.intellij.openapi.roots.impl.ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION
-    override fun getModifiableModel(): LibraryTable.ModifiableModel = throw UnsupportedOperationException()
-    override fun addListener(listener: LibraryTable.Listener): Nothing = throw UnsupportedOperationException()
-    override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable)
-      = throw UnsupportedOperationException()
-    override fun removeListener(listener: LibraryTable.Listener): Nothing = throw UnsupportedOperationException()
+  internal val moduleLibraryTable = legacyBridgeModuleLibraryTable()
+
+  fun legacyBridgeModuleLibraryTable(): LegacyBridgeModuleLibraryTable {
+    return object : LegacyBridgeModuleLibraryTable {
+      override val module: Module = legacyBridgeModule
+      override fun getLibraries(): Array<Library> = moduleLibraries.toTypedArray()
+      override fun createLibrary(): Library = throw UnsupportedOperationException()
+      override fun createLibrary(name: String?): Library = throw UnsupportedOperationException()
+      override fun removeLibrary(library: Library): Nothing = throw UnsupportedOperationException()
+      override fun getLibraryIterator(): Iterator<Library> = libraries.iterator()
+      override fun getLibraryByName(name: String): Library? = moduleLibraries.firstOrNull { it.name == name }
+      override fun getTableLevel(): String = JpsLibraryTableSerializer.MODULE_LEVEL
+      override fun getPresentation(): LibraryTablePresentation = ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION
+      override fun getModifiableModel(): LibraryTable.ModifiableModel = throw UnsupportedOperationException()
+      override fun addListener(listener: LibraryTable.Listener): Nothing = throw UnsupportedOperationException()
+      override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) = throw UnsupportedOperationException()
+      override fun removeListener(listener: LibraryTable.Listener): Nothing = throw UnsupportedOperationException()
+    }
   }
 
   init {
@@ -83,7 +87,7 @@ class LegacyBridgeModuleRootComponent(
     parent = this
   )
 
-  private val model
+  val model
     get() = modelValue.value
 
   override fun dispose() = Unit
@@ -102,8 +106,17 @@ class LegacyBridgeModuleRootComponent(
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor())
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(
+    TypedEntityStorageBuilder.from(legacyBridgeModule.entityStore.current),
     legacyBridgeModule, legacyBridgeModule.moduleEntityId,
     legacyBridgeModule.entityStore.current, accessor)
+
+  fun getModifiableModel(diff: TypedEntityStorageBuilder,
+                         accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(diff,
+                                                                                                                     legacyBridgeModule,
+                                                                                                                     legacyBridgeModule.moduleEntityId,
+                                                                                                                     legacyBridgeModule.entityStore.current,
+                                                                                                                     accessor)
+
 
   override fun getDependencies(): Array<Module> = moduleDependencies
   override fun getDependencies(includeTests: Boolean): Array<Module> = getModuleDependencies(includeTests = includeTests)
@@ -150,6 +163,7 @@ class LegacyBridgeModuleRootComponent(
   override fun getModuleDependencies(includeTests: Boolean): Array<Module> = model.getModuleDependencies(includeTests)
 
   companion object {
+    @JvmStatic
     fun getInstance(module: Module): LegacyBridgeModuleRootComponent = ModuleRootManager.getInstance(module) as LegacyBridgeModuleRootComponent
   }
 }

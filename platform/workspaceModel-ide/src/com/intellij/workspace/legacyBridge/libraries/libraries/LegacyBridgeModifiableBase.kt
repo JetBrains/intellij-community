@@ -4,8 +4,7 @@ import com.intellij.workspace.api.EntityStoreOnBuilder
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 
-abstract class LegacyBridgeModifiableBase(initialStorage: TypedEntityStorage) {
-  protected val diff = TypedEntityStorageBuilder.from(initialStorage)
+abstract class LegacyBridgeModifiableBase(protected val diff: TypedEntityStorageBuilder) {
   protected val entityStoreOnDiff = EntityStoreOnBuilder(diff)
 
   private var committedOrDisposed = false

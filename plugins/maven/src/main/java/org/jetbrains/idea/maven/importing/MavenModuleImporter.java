@@ -97,9 +97,8 @@ public class MavenModuleImporter {
     return myRootModelAdapter.getRootModel();
   }
 
-  public void config(boolean isNewlyCreatedModule) {
-    myRootModelAdapter = new MavenRootModelAdapter(myMavenProject, myModule, myModifiableModelsProvider);
-    myRootModelAdapter.init(isNewlyCreatedModule);
+  public void config(MavenRootModelAdapter mavenRootModelAdapter) {
+    myRootModelAdapter = mavenRootModelAdapter;
 
     configFolders();
     configDependencies();

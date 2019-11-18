@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,9 +201,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
     }
 
     boolean isFromUI = model != null;
-    return manager.importProjects(isFromUI
-                                  ? new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel)
-                                  : new IdeModifiableModelsProviderImpl(project));
+    if (isFromUI && LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
+      throw new UnsupportedOperationException();
+      //return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
+    }
+    return manager.importProjects();
   }
 
   private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {

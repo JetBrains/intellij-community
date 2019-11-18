@@ -16,8 +16,9 @@ import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEnt
 class LegacyBridgeProjectModifiableLibraryTableImpl(
   originalStorage: TypedEntityStorage,
   private val libraryTable: LegacyBridgeProjectLibraryTableImpl,
-  private val project: Project
-) : LegacyBridgeModifiableBase(originalStorage), LibraryTable.ModifiableModel {
+  private val project: Project,
+  diff: TypedEntityStorageBuilder = TypedEntityStorageBuilder.from(originalStorage)
+) : LegacyBridgeModifiableBase(diff), LibraryTable.ModifiableModel {
 
   private val myLibrariesToAdd = mutableListOf<LegacyBridgeLibraryImpl>()
   private val myLibrariesToRemove = mutableListOf<Library>()
@@ -31,6 +32,17 @@ class LegacyBridgeProjectModifiableLibraryTableImpl(
 
   private val libraries
     get() = WorkspaceModel.getInstance(project).entityStore.cachedValue(librariesValue, myLibrariesToAdd to myLibrariesToRemove)
+
+/*  private fun getLibraryModifiableModel(library: LibraryViaTypedEntity,
+                                        diff: TypedEntityStorageBuilder): LegacyBridgeLibraryModifiableModelImpl {
+
+    return LegacyBridgeLibraryModifiableModelImpl(
+      originalLibrary = library,
+      diff = diff,
+      committer = { _, diffBuilder ->
+        diff.addDiff(diffBuilder)
+      })
+  }*/
 
   override fun createLibrary(name: String?): Library = createLibrary(name = name, type = null)
 
@@ -52,7 +64,7 @@ class LegacyBridgeProjectModifiableLibraryTableImpl(
       tableId = LibraryTableId.ProjectLibraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = if (externalSource != null) ExternalEntitySource(externalSource) else IdeUiEntitySource
+      source = if (externalSource != null) ExternalEntitySource(externalSource.displayName, externalSource.id) else IdeUiEntitySource
     )
 
     if (type != null) {
@@ -71,10 +83,11 @@ class LegacyBridgeProjectModifiableLibraryTableImpl(
       initialEntityStore = entityStoreOnDiff,
       parent = libraryTable
     ).also { libraryImpl ->
-      libraryImpl.modifiableModelFactory = { librarySnapshot ->
+      libraryImpl.modifiableModelFactory = { librarySnapshot, diff ->
         LegacyBridgeLibraryModifiableModelImpl(
           originalLibrary = libraryImpl,
           originalLibrarySnapshot = librarySnapshot,
+          diff = diff,
           committer = { _, diffBuilder ->
             this.diff.addDiff(diffBuilder)
           }
