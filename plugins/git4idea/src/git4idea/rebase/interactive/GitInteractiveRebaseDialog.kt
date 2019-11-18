@@ -2,7 +2,9 @@
 package git4idea.rebase.interactive
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.VcsException
@@ -35,10 +37,9 @@ import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.Graphics
 import java.awt.Graphics2D
-import javax.swing.DefaultListSelectionModel
-import javax.swing.JComponent
-import javax.swing.JTable
-import javax.swing.ListSelectionModel
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.TableCellRenderer
 import kotlin.math.max
@@ -71,6 +72,11 @@ internal class GitInteractiveRebaseDialog(
       return CommittedChangesTreeBrowser.zipChanges(changes)
     }
   }
+  private val actions = listOf<AnAction>(
+    ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Checked, commitsTable),
+    ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, AllIcons.Actions.Pause, commitsTable),
+    ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable)
+  )
 
   init {
     commitsTable.selectionModel.addListSelectionListener { e ->
@@ -78,6 +84,12 @@ internal class GitInteractiveRebaseDialog(
         fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.entries[it].commitDetails })
       }
     }
+    PopupHandler.installRowSelectionTablePopup(
+      commitsTable,
+      DefaultActionGroup(actions),
+      "Git.Interactive.Rebase.Dialog",
+      ActionManager.getInstance()
+    )
 
     title = GitBundle.getString("rebase.editor.title")
     setOKButtonText(GitBundle.getString("rebase.editor.button"))
@@ -87,15 +99,18 @@ internal class GitInteractiveRebaseDialog(
   override fun getDimensionServiceKey() = DIMENSION_KEY
 
   override fun createCenterPanel() = BorderLayoutPanel().apply {
-    val tablePanel = ToolbarDecorator.createDecorator(commitsTable)
+    val decorator = ToolbarDecorator.createDecorator(commitsTable)
       .setAsUsualTopToolbar()
       .setPanelBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
       .disableAddAction()
       .disableRemoveAction()
-      .createPanel()
-      .apply {
-        border = JBUI.Borders.emptyTop(4)
-      }
+    actions.forEach {
+      decorator.addExtraAction(AnActionButton.fromAction(it))
+    }
+
+    val tablePanel = decorator.createPanel().apply {
+      border = JBUI.Borders.emptyTop(4)
+    }
 
     val detailsSplitter = OnePixelSplitter(DETAILS_PROPORTION, 0.5f).apply {
       firstComponent = tablePanel
@@ -146,6 +161,18 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithDetails>)
   override fun addRow() {
     throw UnsupportedOperationException()
   }
+
+  override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
+    when (aValue) {
+      is GitRebaseEntry.Action -> {
+        _entries[rowIndex].action = aValue
+      }
+      else -> throw IllegalArgumentException()
+    }
+    fireTableRowsUpdated(rowIndex, rowIndex)
+  }
+
+  override fun isCellEditable(rowIndex: Int, columnIndex: Int) = true
 }
 
 private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
@@ -282,5 +309,33 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
       elements.add(DOWN_EDGE)
     }
     painter.draw(g2, elements)
+  }
+}
+
+private class ChangeEntryStateAction(
+  private val action: GitRebaseEntry.Action,
+  icon: Icon,
+  private val table: CommitsTable
+) : DumbAwareAction(action.name.capitalize(), action.name.capitalize(), icon) {
+  init {
+    val keyStroke = KeyStroke.getKeyStroke(
+      KeyEvent.getExtendedKeyCodeForChar(action.mnemonic.toInt()),
+      InputEvent.ALT_MASK
+    )
+    shortcutSet = CustomShortcutSet(KeyboardShortcut(keyStroke, null))
+    this.registerCustomShortcutSet(table, null)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    table.selectedRows.forEach { row ->
+      table.setValueAt(action, row, CommitsTableModel.COMMIT_ICON_COLUMN)
+    }
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (table.selectedRowCount == 0) {
+      e.presentation.isEnabled = false
+    }
   }
 }
