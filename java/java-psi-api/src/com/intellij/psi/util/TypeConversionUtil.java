@@ -706,13 +706,17 @@ public class TypeConversionUtil {
   }
 
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right, boolean allowUncheckedConversion) {
-    return isAssignable(left, right, allowUncheckedConversion, true);
+    return isAssignable(left, right, allowUncheckedConversion, true, false);
+  }
+
+  public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right, boolean allowUncheckedConversion, boolean checkErasure) {
+    return isAssignable(left, right, allowUncheckedConversion, true, checkErasure);
   }
 
   private static boolean isAssignable(@NotNull PsiType left,
                                       @NotNull PsiType right,
                                       boolean allowUncheckedConversion,
-                                      boolean capture) {
+                                      boolean capture, boolean checkErasure) {
     if (left == right) return true;
     if (left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
       if (right instanceof PsiMethodReferenceType || right instanceof PsiLambdaExpressionType) return false;
@@ -751,24 +755,25 @@ public class TypeConversionUtil {
     if (left instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)left).getConjuncts();
       for (PsiType conjunct : conjuncts) {
-        if (!isAssignable(conjunct, right, allowUncheckedConversion, capture)) return false;
+        if (!isAssignable(conjunct, right, allowUncheckedConversion, capture, checkErasure)) return false;
       }
       return true;
     }
     if (right instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)right).getConjuncts();
       for (PsiType conjunct : conjuncts) {
-        if (isAssignable(left, conjunct, allowUncheckedConversion, capture)) return true;
+        if (isAssignable(left, conjunct, allowUncheckedConversion, capture, checkErasure)) return true;
       }
       return false;
     }
 
     if (right instanceof PsiCapturedWildcardType) {
-      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(capture), allowUncheckedConversion, capture);
+      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(capture), allowUncheckedConversion, capture, checkErasure);
     }
 
     if (left instanceof PsiCapturedWildcardType) {
-      return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion, capture);
+      return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion, capture,
+                                                checkErasure);
     }
 
     if (left instanceof PsiWildcardType) {
@@ -795,17 +800,17 @@ public class TypeConversionUtil {
       if (lCompType instanceof PsiPrimitiveType) {
         return lCompType.equals(rCompType);
       }
-      return !(rCompType instanceof PsiPrimitiveType) && isAssignable(lCompType, rCompType, allowUncheckedConversion, capture);
+      return !(rCompType instanceof PsiPrimitiveType) && isAssignable(lCompType, rCompType, allowUncheckedConversion, capture, checkErasure);
     }
 
     if (left instanceof PsiDisjunctionType) {
       for (PsiType type : ((PsiDisjunctionType)left).getDisjunctions()) {
-        if (isAssignable(type, right, allowUncheckedConversion, capture)) return true;
+        if (isAssignable(type, right, allowUncheckedConversion, capture, checkErasure)) return true;
       }
       return false;
     }
     if (right instanceof PsiDisjunctionType) {
-      return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion, capture);
+      return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion, capture, checkErasure);
     }
 
     if (left instanceof PsiArrayType) {
@@ -813,7 +818,7 @@ public class TypeConversionUtil {
         PsiClass aClass = ((PsiClassType)right).resolve();
         if (aClass instanceof PsiTypeParameter) {
           PsiType upperBound = getInferredUpperBoundForSynthetic((PsiTypeParameter)aClass);
-          return upperBound != null && isAssignable(left, upperBound, allowUncheckedConversion, capture);
+          return upperBound != null && isAssignable(left, upperBound, allowUncheckedConversion, capture, checkErasure);
         }
       }
       return false;
@@ -853,7 +858,7 @@ public class TypeConversionUtil {
              && rText.endsWith(lText)
              && rText.charAt(rText.length() - lText.length() - 1) == '.';
     }
-    return isClassAssignable(leftResult, rightResult, allowUncheckedConversion, left.getResolveScope(), capture);
+    return isClassAssignable(leftResult, rightResult, allowUncheckedConversion, left.getResolveScope(), capture, checkErasure);
   }
 
   private static boolean isAssignableFromWildcard(@NotNull PsiType left, @NotNull PsiWildcardType rightWildcardType) {
@@ -956,20 +961,22 @@ public class TypeConversionUtil {
                                            @NotNull PsiClassType.ClassResolveResult rightResult,
                                            boolean allowUncheckedConversion,
                                            GlobalSearchScope resolveScope,
-                                           boolean capture) {
+                                           boolean capture, boolean checkErasure) {
     final PsiClass leftClass = leftResult.getElement();
     final PsiClass rightClass = rightResult.getElement();
     if (leftClass == null || rightClass == null) return false;
 
     PsiSubstitutor superSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(leftClass, rightClass, resolveScope,
                                                                                              rightResult.getSubstitutor());
-    return superSubstitutor != null && typeParametersAgree(leftResult, rightResult, allowUncheckedConversion, superSubstitutor, capture);
+    return superSubstitutor != null && typeParametersAgree(leftResult, rightResult, allowUncheckedConversion, superSubstitutor, capture,
+                                                           checkErasure);
   }
 
   private static boolean typeParametersAgree(@NotNull PsiClassType.ClassResolveResult leftResult,
                                              @NotNull PsiClassType.ClassResolveResult rightResult,
                                              boolean allowUncheckedConversion, PsiSubstitutor superSubstitutor,
-                                             boolean capture) {
+                                             boolean capture, 
+                                             boolean checkErasure) {
     PsiSubstitutor rightSubstitutor = rightResult.getSubstitutor();
     PsiClass leftClass = leftResult.getElement();
     PsiClass rightClass = rightResult.getElement();
@@ -999,6 +1006,12 @@ public class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
+      if (checkErasure) {
+        final PsiType rightParameterErasure = typeParameterErasure(rp);
+        if (rightParameterErasure != null && typeLeft.isAssignableFrom(rightParameterErasure)) {
+          continue;
+        }
+      }
       if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) {
         return false;
       }
@@ -1010,7 +1023,14 @@ public class TypeConversionUtil {
 
   public static boolean typesAgree(@NotNull final PsiType typeLeft,
                                    @NotNull final PsiType typeRight,
-                                   final boolean allowUncheckedConversion) {
+                                   final boolean allowUncheckedConversion){
+    return typesAgree(typeLeft, typeRight, allowUncheckedConversion, false);
+  }
+
+  public static boolean typesAgree(@NotNull final PsiType typeLeft,
+                                   @NotNull final PsiType typeRight,
+                                   final boolean allowUncheckedConversion,
+                                   final boolean checkErasure) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();
@@ -1024,11 +1044,11 @@ public class TypeConversionUtil {
         final PsiWildcardType rightWildcard = (PsiWildcardType)typeRight;
         PsiType bound = rightWildcard.getBound();
         if (leftWildcard.isExtends() && bound != null) {
-          return rightWildcard.isExtends() && isAssignable(leftBound, bound, allowUncheckedConversion, false);
+          return rightWildcard.isExtends() && isAssignable(leftBound, bound, allowUncheckedConversion, false, checkErasure);
         }
         else { //isSuper
           if (rightWildcard.isSuper() && bound != null) {
-            NotNullComputable<Boolean> checkAssignable = () -> isAssignable(bound, leftBound, allowUncheckedConversion, false);
+            NotNullComputable<Boolean> checkAssignable = () -> isAssignable(bound, leftBound, allowUncheckedConversion, false, checkErasure);
             final Boolean assignable = ourGuard.doPreventingRecursion(rightWildcard, true, checkAssignable);
             return assignable != null && assignable;
           }
@@ -1037,10 +1057,10 @@ public class TypeConversionUtil {
       }
       else {
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, false, false);
+          return isAssignable(leftBound, typeRight, false, false, checkErasure);
         }
         else { // isSuper
-          NotNullComputable<Boolean> checkAssignable = () -> isAssignable(typeRight, leftBound, false, false);
+          NotNullComputable<Boolean> checkAssignable = () -> isAssignable(typeRight, leftBound, false, false, checkErasure);
           final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true, checkAssignable);
           return assignable == null || assignable.booleanValue();
         }

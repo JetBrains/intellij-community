@@ -464,7 +464,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                      myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
-   public void testT87() {
+  public void testT87() {
     doTestMethodType("getArray",
                      myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
@@ -558,7 +558,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
   }
 
-   //raw list type now should not be changed
+  //raw list type now should not be changed
   public void testT104() {
     doTestFirstParamType("method",
                          myFactory.createTypeFromText("java.lang.String", null).createArrayType());
@@ -615,9 +615,9 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT114() {
-      doTestFirstParamType("method",
-                           new PsiEllipsisType(myFactory.createTypeFromText("java.lang.String", null)));
-    }
+    doTestFirstParamType("method",
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.String", null)));
+  }
 
   //varargs && ArrayList
   public void testT118() {
@@ -878,6 +878,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testTypeParameterMigrationInInvalidCode() {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
+  }
+
+  public void testMapStringStringInMapStringObject() {
+    doTestMethodType("migrationMethod", PsiType.LONG);
   }
 
   private void doTestReturnType(final String methodName, final String migrationType) {

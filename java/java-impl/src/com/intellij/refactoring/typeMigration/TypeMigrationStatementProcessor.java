@@ -539,8 +539,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         if (psiType != null) {
           if (canBeVariableType(psiType)) {
             if (declarationType != null &&
-                !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true) &&
-                !TypeConversionUtil.isAssignable(left.getType(), psiType)) {
+                !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType, true, true), true) &&
+                !TypeConversionUtil.isAssignable(left.getType(), psiType, true, true)) {
               PsiType initialType = left.getType();
               if (initialType instanceof PsiEllipsisType) {
                 initialType = ((PsiEllipsisType)initialType).getComponentType();
