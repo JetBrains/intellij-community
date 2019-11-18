@@ -10,11 +10,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType.EQ;
 
@@ -34,13 +36,6 @@ class DebuggerDfaRunner extends DataFlowRunner {
                                "java.util.LinkedList",
                                CommonClassNames.JAVA_UTIL_HASH_MAP,
                                "java.util.TreeMap");
-  private static final Map<String, Integer> COLLECTIONS_WITH_KNOWN_SIZE =
-    EntryStream.of("java.util.Collections$EmptyList", 0,
-                   "java.util.Collections$EmptySet", 0,
-                   "java.util.Collections$EmptyMap", 0,
-                   "java.util.Collections$Singleton", 1,
-                   "java.util.Collections$SingletonList", 1,
-                   "java.util.Collections$SingletonMap", 1).toImmutableMap();
   private final PsiCodeBlock myBody;
   private final PsiStatement myStatement;
   private final Project myProject;
