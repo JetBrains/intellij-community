@@ -23,6 +23,7 @@ import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -100,11 +101,11 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
                                                    RefModule refModule,
                                                    Module module) {
     VirtualFile[] givenRoots =
-      OrderEnumerator.orderEntries(module).withoutSdk()
+      ReadAction.compute(() -> OrderEnumerator.orderEntries(module).withoutSdk()
         .withoutModuleSourceEntries()
         .withoutDepModules()
         .classes()
-        .getRoots();
+        .getRoots());
 
     if (givenRoots.length == 0) return null;
 
@@ -115,31 +116,33 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
       appendUsedRootDependencies(usedRoots, givenRoots);
     }
 
-    final List<CommonProblemDescriptor> result = new ArrayList<>();
-    for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry &&
-          !((LibraryOrderEntry)entry).isExported() &&
-          ((LibraryOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
-        final Set<VirtualFile> files = ContainerUtil.set(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
-        boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
-        if (allRootsUnused) {
-          String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
-          result.add(manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), null)));
-        }
-        else if (!files.isEmpty() && !IGNORE_LIBRARY_PARTS) {
-          final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
-          String message =
-            InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
-          CommonProblemDescriptor descriptor =
-            ((LibraryOrderEntry)entry).isModuleLevel() 
-            ? manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), files))
-            : manager.createProblemDescriptor(message);
-          result.add(descriptor);
+    return ReadAction.compute(() -> {
+      final List<CommonProblemDescriptor> result = new ArrayList<>();
+      for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry &&
+            !((LibraryOrderEntry)entry).isExported() &&
+            ((LibraryOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
+          final Set<VirtualFile> files = ContainerUtil.set(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
+          boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
+          if (allRootsUnused) {
+            String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
+            result.add(manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), null)));
+          }
+          else if (!files.isEmpty() && !IGNORE_LIBRARY_PARTS) {
+            final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
+            String message =
+              InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
+            CommonProblemDescriptor descriptor =
+              ((LibraryOrderEntry)entry).isModuleLevel()
+              ? manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), files))
+              : manager.createProblemDescriptor(message);
+            result.add(descriptor);
+          }
         }
       }
-    }
 
-    return result.isEmpty() ? null : result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
+      return result.isEmpty() ? null : result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
+    });
   }
 
   private static void appendUsedRootDependencies(@NotNull Set<VirtualFile> usedRoots,

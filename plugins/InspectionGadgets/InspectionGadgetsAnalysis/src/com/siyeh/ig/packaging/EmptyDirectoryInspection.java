@@ -74,9 +74,9 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     }
     final GlobalSearchScope globalSearchScope = (GlobalSearchScope)searchScope;
     final PsiManager psiManager = PsiManager.getInstance(project);
-    index.iterateContent(fileOrDir -> {
-      if (!fileOrDir.isDirectory()) {
-        return true;
+    index.iterateContent(fileOrDir -> ReadAction.compute(() -> {
+      if (project.isDisposed()) {
+        return false;
       }
       if (!globalSearchScope.contains(fileOrDir)) {
         return true;
@@ -88,7 +88,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
       if (children.length != 0) {
         return true;
       }
-      final PsiDirectory directory = ReadAction.compute(() -> psiManager.findDirectory(fileOrDir));
+      final PsiDirectory directory = psiManager.findDirectory(fileOrDir);
       final RefElement refDirectory = context.getRefManager().getReference(directory);
       if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
         return true;
@@ -101,13 +101,13 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
         InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
         new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
       return true;
-    });
+    }));
   }
 
   @Nullable
   private static String getPathRelativeToModule(VirtualFile file, Project project) {
     final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-    final VirtualFile[] contentRoots = ReadAction.compute(() -> rootManager.getContentRootsFromAllModules());
+    final VirtualFile[] contentRoots = rootManager.getContentRootsFromAllModules();
     for (VirtualFile otherRoot : contentRoots) {
       if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
         return VfsUtilCore.getRelativePath(file, otherRoot, '/');
