@@ -44,7 +44,7 @@
 
     <extensionPoint name="intentionMenuContributor" interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor" dynamic="true"/>
 
-    <extensionPoint name="wordBoundaryFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="wordBoundaryFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
     </extensionPoint>
 
@@ -136,7 +136,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.PsiStructureViewFactory"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.psiElementExternalizer" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.psiElementExternalizer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PsiElementExternalizer"/>
     </extensionPoint>
 
