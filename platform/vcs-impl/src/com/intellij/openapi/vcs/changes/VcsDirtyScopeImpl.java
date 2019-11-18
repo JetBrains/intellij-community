@@ -426,7 +426,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
     final VirtualFile vcsRoot = rootObject.getPath();
     boolean pathIsRoot = vcsRoot.equals(path.getVirtualFile());
-    for (VirtualFile contentRoot : myAffectedContentRoots) {
+    for (VirtualFile contentRoot : myDirtyDirectoriesRecursively.keySet()) {
       // since we don't know exact dirty mechanics, maybe we have 3 nested mappings like:
       // /root -> vcs1, /root/child -> vcs2, /root/child/inner -> vcs1, and we have file /root/child/inner/file,
       // mapping is detected as vcs1 with root /root/child/inner, but we could possibly have in scope
@@ -434,7 +434,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       boolean strict = pathIsRoot && !myVcs.areDirectoriesVersionedItems();
       if (VfsUtilCore.isAncestor(contentRoot, vcsRoot, strict)) {
         THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(contentRoot);
-        if (dirsByRoot != null && hasAncestor(dirsByRoot, path)) {
+        if (hasAncestor(dirsByRoot, path)) {
           return true;
         }
       }
