@@ -413,7 +413,7 @@ public class JarRepositoryManager {
   private static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
-    JobExecutor.INSTANCE.submit(() -> {
+    JobExecutor.INSTANCE.execute(() -> {
       try {
         ourTasksInProgress.incrementAndGet();
         final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
