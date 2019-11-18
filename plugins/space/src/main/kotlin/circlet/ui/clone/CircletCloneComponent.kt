@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.*
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ui.cloneDialog.*
 import com.intellij.openapi.vfs.*
+import com.intellij.openapi.wm.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
@@ -118,6 +119,8 @@ internal class CircletCloneComponent(val project: Project,
                     log.warn(th)
                     loginState.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
                 }
+                val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, getView())
+                AppIcon.getInstance().requestFocus(frame as IdeFrame?)
             }
         }
     }
@@ -311,7 +314,7 @@ private class CloneView(
     private fun bindScroll(scrollableList: JScrollPane) {
         val slVisibility = SequentialLifetimes(lifetime)
 
-        lateinit var scrollUpdater: (force : Boolean) -> Unit
+        lateinit var scrollUpdater: (force: Boolean) -> Unit
 
         scrollUpdater = { force ->
             if (!lifetime.isTerminated) {

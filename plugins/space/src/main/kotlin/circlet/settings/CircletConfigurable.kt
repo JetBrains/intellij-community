@@ -16,6 +16,7 @@ import platform.common.*
 import runtime.*
 import runtime.reactive.*
 import java.awt.*
+import java.util.concurrent.*
 import javax.swing.*
 
 val log = logger<CircletConfigurable>()
@@ -112,8 +113,9 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                             state.value = CircletLoginState.Disconnected(serverName, response.description)
                         }
                     }
-                }
-                catch (th: Throwable) {
+                } catch (th: CancellationException) {
+                    throw th
+                } catch (th: Throwable) {
                     log.error(th)
                     state.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
                 }
