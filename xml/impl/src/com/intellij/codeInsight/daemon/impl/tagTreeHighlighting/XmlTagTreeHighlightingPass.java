@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx;
 import com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector;
 import org.jetbrains.annotations.NotNull;
@@ -289,7 +290,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       final Color color = baseColors[i];
 
       final Color color1 = color != null
-                           ? XmlTagTreeHighlightingUtil.makeTransparent(color, tagBackground, transparency)
+                           ? UIUtil.makeTransparent(color, tagBackground, transparency)
                            : null;
       resultColors[i] = color1;
     }

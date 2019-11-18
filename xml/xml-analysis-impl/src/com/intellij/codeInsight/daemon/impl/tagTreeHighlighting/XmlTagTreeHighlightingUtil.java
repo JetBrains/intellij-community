@@ -77,25 +77,6 @@ public class XmlTagTreeHighlightingUtil {
     return false;
   }
 
-  public static Color makeTransparent(@NotNull Color color, @NotNull Color backgroundColor, double transparency) {
-    int r = makeTransparent(transparency, color.getRed(), backgroundColor.getRed());
-    int g = makeTransparent(transparency, color.getGreen(), backgroundColor.getGreen());
-    int b = makeTransparent(transparency, color.getBlue(), backgroundColor.getBlue());
-
-    return new Color(r, g, b);
-  }
-
-  private static int makeTransparent(double transparency, int channel, int backgroundChannel) {
-    final int result = (int)(backgroundChannel * (1 - transparency) + channel * transparency);
-    if (result < 0) {
-      return 0;
-    }
-    if (result > 255) {
-      return 255;
-    }
-    return result;
-  }
-
   static Color[] getBaseColors() {
     final ColorKey[] colorKeys = XmlTagTreeHighlightingColors.getColorKeys();
     final Color[] colors = new Color[colorKeys.length];
