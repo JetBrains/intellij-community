@@ -55,16 +55,13 @@ public class JavaModuleRenameListener implements StartupActivity, ModuleListener
             .findFirst().orElse(null);
         if (javaModule != null && javaModule.getName().equals(LightJavaModule.moduleName(oldNameProvider.fun(module)))) {
           suggestions.add(pair(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaModule),
-                           LightJavaModule.moduleName(module.getName())));
+                               LightJavaModule.moduleName(module.getName())));
         }
       }
     }
 
     if (!suggestions.isEmpty()) {
-      AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-          .later()
-          .inSmartMode(project)
-          .execute(() -> renameModules(project, suggestions));
+      AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().inSmartMode(project).execute(() -> renameModules(project, suggestions));
     }
   }
 
