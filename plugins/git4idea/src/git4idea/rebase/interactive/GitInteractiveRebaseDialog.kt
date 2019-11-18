@@ -58,7 +58,7 @@ internal class GitInteractiveRebaseDialog(
     private const val DIALOG_WIDTH = 800
   }
 
-  private val commitsTableModel = CommitsTableModel(entries)
+  private val commitsTableModel = CommitsTableModel(entries.map { GitRebaseEntryWithEditedMessage(it) })
   private val commitsTable = CommitsTable(commitsTableModel)
   private val modalityState = ModalityState.stateForComponent(window)
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
@@ -76,13 +76,14 @@ internal class GitInteractiveRebaseDialog(
     ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Checked, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, AllIcons.Actions.Pause, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable),
-    FixupAction(commitsTable)
+    FixupAction(commitsTable),
+    RewordAction(commitsTable)
   )
 
   init {
     commitsTable.selectionModel.addListSelectionListener { e ->
       if (!e.valueIsAdjusting) {
-        fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.entries[it].commitDetails })
+        fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.entries[it].entry.commitDetails })
       }
     }
     PopupHandler.installRowSelectionTablePopup(
@@ -123,19 +124,19 @@ internal class GitInteractiveRebaseDialog(
 
   override fun getStyle() = DialogStyle.COMPACT
 
-  fun getEntries(): List<GitRebaseEntry> = commitsTableModel.entries
+  fun getEntries(): List<GitRebaseEntry> = commitsTableModel.entries.map { it.entry }
 
   override fun getPreferredFocusedComponent(): JComponent = commitsTable
 }
 
-private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithDetails>) : AbstractTableModel(), EditableModel {
+private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMessage>) : AbstractTableModel(), EditableModel {
   companion object {
     const val COMMIT_ICON_COLUMN = 0
     const val SUBJECT_COLUMN = 1
   }
 
-  private val _entries: MutableList<GitRebaseEntryWithDetails> = initialEntries.toMutableList()
-  val entries: List<GitRebaseEntryWithDetails> = _entries
+  private val _entries: MutableList<GitRebaseEntryWithEditedMessage> = initialEntries.toMutableList()
+  val entries: List<GitRebaseEntryWithEditedMessage> = _entries
 
   override fun getRowCount() = _entries.size
 
@@ -143,12 +144,12 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithDetails>)
 
   override fun getValueAt(rowIndex: Int, columnIndex: Int): Any = when (columnIndex) {
     COMMIT_ICON_COLUMN -> _entries[rowIndex]
-    SUBJECT_COLUMN -> _entries[rowIndex].subject
+    SUBJECT_COLUMN -> _entries[rowIndex].newMessage
     else -> throw IllegalArgumentException("Unsupported column index: $columnIndex")
   }
 
   override fun exchangeRows(oldIndex: Int, newIndex: Int) {
-    val movingElement: GitRebaseEntryWithDetails = _entries.removeAt(oldIndex)
+    val movingElement = _entries.removeAt(oldIndex)
     _entries.add(newIndex, movingElement)
     fireTableRowsUpdated(min(oldIndex, newIndex), max(oldIndex, newIndex))
   }
@@ -166,7 +167,13 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithDetails>)
   override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
     when (aValue) {
       is GitRebaseEntry.Action -> {
-        _entries[rowIndex].action = aValue
+        _entries[rowIndex].entry.action = aValue
+      }
+      is String -> {
+        if (_entries[rowIndex].newMessage != aValue) {
+          _entries[rowIndex].entry.action = GitRebaseEntry.Action.REWORD
+          _entries[rowIndex].newMessage = aValue
+        }
       }
       else -> throw IllegalArgumentException()
     }
@@ -220,9 +227,10 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
         if (value != null) {
           border = null
           isOpaque = false
-          val entry = this@CommitsTable.model.getValueAt(row, CommitsTableModel.COMMIT_ICON_COLUMN) as GitRebaseEntryWithDetails
+          val entryWithEditedMessage =
+            this@CommitsTable.model.getValueAt(row, CommitsTableModel.COMMIT_ICON_COLUMN) as GitRebaseEntryWithEditedMessage
           var attributes: SimpleTextAttributes? = null
-          when (entry.action) {
+          when (entryWithEditedMessage.entry.action) {
             GitRebaseEntry.Action.EDIT -> {
               icon = AllIcons.Actions.Pause
             }
@@ -240,10 +248,10 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
           }
 
           if (attributes != null) {
-            append(entry.subject, attributes)
+            append(getSubject(entryWithEditedMessage.newMessage), attributes)
           }
           else {
-            append(entry.subject)
+            append(getSubject(entryWithEditedMessage.newMessage))
           }
 
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
@@ -253,8 +261,9 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
   }
 
   private fun shouldDrawNode(row: Int): Boolean {
-    val entry = model.getValueAt(row, CommitsTableModel.COMMIT_ICON_COLUMN) as GitRebaseEntryWithDetails
-    return entry.action != GitRebaseEntry.Action.FIXUP && entry.action != GitRebaseEntry.Action.DROP
+    val entryWithEditedMessage = model.getValueAt(row, CommitsTableModel.COMMIT_ICON_COLUMN) as GitRebaseEntryWithEditedMessage
+    return entryWithEditedMessage.entry.action != GitRebaseEntry.Action.FIXUP &&
+           entryWithEditedMessage.entry.action != GitRebaseEntry.Action.DROP
   }
 }
 
@@ -354,3 +363,21 @@ private class FixupAction(table: CommitsTable) : ChangeEntryStateAction(GitRebas
     }
   }
 }
+
+private class RewordAction(table: CommitsTable) : ChangeEntryStateAction(GitRebaseEntry.Action.REWORD, AllIcons.Actions.Edit, table) {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (table.selectedRowCount != 1) {
+      e.presentation.isEnabled = false
+    }
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    TableUtil.editCellAt(table, table.selectedRows.single(), SUBJECT_COLUMN)
+  }
+}
+
+internal class GitRebaseEntryWithEditedMessage(
+  val entry: GitRebaseEntryWithDetails,
+  var newMessage: String = entry.commitDetails.fullMessage
+)
