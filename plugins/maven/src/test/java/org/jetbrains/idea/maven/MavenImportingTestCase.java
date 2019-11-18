@@ -381,7 +381,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Arrays.asList(files), false);
   }
 
-  private void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
+  protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
     initProjectsManager(false);
 
     readProjects(files, profiles);
@@ -412,7 +412,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
     myProjectsTree = myProjectsManager.getProjectsTreeForTests();
-    if (enableEventHandling) myProjectsManager.listenForExternalChanges();
+    if (enableEventHandling) myProjectsManager.enableAutoImportInTests();
   }
 
   protected void scheduleResolveAll() {

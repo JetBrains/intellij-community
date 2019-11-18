@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.properties
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -37,5 +39,20 @@ class AtomicBooleanProperty(initial: Boolean) : BooleanProperty {
 
   override fun afterReset(listener: () -> Unit) {
     resetListeners.add(listener)
+  }
+
+  fun afterSet(listener: () -> Unit, parentDisposable: Disposable) {
+    setListeners.add(listener)
+    Disposer.register(parentDisposable, Disposable { setListeners.remove(listener) })
+  }
+
+  fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
+    resetListeners.add(listener)
+    Disposer.register(parentDisposable, Disposable { resetListeners.remove(listener) })
+  }
+
+  fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) {
+    changeListeners.add(listener)
+    Disposer.register(parentDisposable, Disposable { changeListeners.remove(listener) })
   }
 }

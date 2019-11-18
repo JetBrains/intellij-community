@@ -5,7 +5,6 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -119,6 +118,8 @@ public class MavenModuleBuilderHelper {
       }
     }
 
+    MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+
     // execute when current dialog is closed (e.g. Project Structure)
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
       if (!pom.isValid()) {
@@ -158,7 +159,7 @@ public class MavenModuleBuilderHelper {
 
       if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.getFile().getName())) {
         pomFiles.add(myParentProject.getFile());
-        MavenProjectsManager.getInstance(project).markDirty(myParentProject);
+        MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
       }
 
       for (VirtualFile v : pomFiles) {
@@ -168,8 +169,6 @@ public class MavenModuleBuilderHelper {
           FileDocumentManager.getInstance().saveDocument(doc);
         }
       }
-
-      ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh();
     });
   }
 

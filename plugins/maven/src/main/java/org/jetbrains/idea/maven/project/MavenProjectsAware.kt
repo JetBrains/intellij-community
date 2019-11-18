@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectRefreshListener
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.FAILURE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
@@ -17,28 +17,23 @@ import java.io.File
 class MavenProjectsAware(
   project: Project,
   private val manager: MavenProjectsManager,
-  private val projectsTree: MavenProjectsTree,
-  private val generalSettings: MavenGeneralSettings,
-  private val readingProcessor: MavenProjectsProcessor
+  private val projectsTree: MavenProjectsTree
 ) : ExternalSystemProjectAware {
+
+  private val isImportCompleted = AtomicBooleanProperty(true)
 
   override val projectId = ExternalSystemProjectId(MavenUtil.SYSTEM_ID, project.name)
 
   override val settingsFiles: Set<String>
-    get() = collectSettingsFiles()
+    get() = collectAllSettingsFiles()
 
   override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
-    manager.addManagerListener(object : MavenProjectsManager.Listener {
-      override fun importAndResolveScheduled() = listener.beforeProjectRefresh()
-      override fun projectImportCompleted() = listener.afterProjectRefresh(SUCCESS)
-      override fun projectImportFailed() = listener.afterProjectRefresh(FAILURE)
-    }, parentDisposable)
+    isImportCompleted.afterReset({ listener.beforeProjectRefresh() }, parentDisposable)
+    isImportCompleted.afterSet({ listener.afterProjectRefresh(SUCCESS) }, parentDisposable)
   }
 
   override fun refreshProject() {
-    readingProcessor.scheduleTask(MavenProjectsProcessorReadingTask(true, projectsTree, generalSettings) {
-      manager.scheduleImportAndResolve(true)
-    })
+    manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
   }
 
   private fun isPomFile(path: String): Boolean {
@@ -52,19 +47,35 @@ class MavenProjectsAware(
     return possiblePoms.any { projectsTree.isPotentialProject(it) }
   }
 
-  private fun collectSettingsFiles(): Set<String> {
+  private fun collectAllSettingsFiles(): Set<String> {
     val settingsFiles = ArrayList<String?>()
-    settingsFiles.add(generalSettings.effectiveUserSettingsIoFile?.path)
-    settingsFiles.add(generalSettings.effectiveGlobalSettingsIoFile?.path)
-    for (mavenProject in projectsTree.projects) {
-      val rootDirectory = File(mavenProject.directory)
-      val jvmConfig = File(rootDirectory, MavenConstants.JVM_CONFIG_RELATIVE_PATH)
-      val mavenConfig = File(rootDirectory, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
-      if (jvmConfig.isFile && jvmConfig.exists()) settingsFiles.add(jvmConfig.path)
-      if (mavenConfig.isFile && mavenConfig.exists()) settingsFiles.add(mavenConfig.path)
-      val projectFiles = rootDirectory.listFiles()?.map { it.path } ?: emptyList()
-      settingsFiles.addAll(projectFiles.filter { isPomFile(it) || isProfilesFile(it) })
-    }
+    settingsFiles.add(manager.generalSettings.effectiveUserSettingsIoFile?.path)
+    settingsFiles.add(manager.generalSettings.effectiveGlobalSettingsIoFile?.path)
+    settingsFiles.addAll(projectsTree.managedFilesPaths)
+    settingsFiles.addAll(projectsTree.projectsFiles.map { it.path })
+    settingsFiles.addAll(collectAllProjectSettings())
     return settingsFiles.mapNotNull { FileUtil.toCanonicalPath(it) }.toSet()
+  }
+
+  private fun collectAllProjectSettings(): List<String> {
+    val settingsFiles = ArrayList<String>()
+    for (mavenProject in projectsTree.projects) {
+      val rootDirectory = mavenProject.directory
+      settingsFiles.addAll(mavenProject.modulePaths)
+      settingsFiles.add(File(rootDirectory, MavenConstants.JVM_CONFIG_RELATIVE_PATH).path)
+      settingsFiles.add(File(rootDirectory, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH).path)
+      settingsFiles.addAll(File(rootDirectory).children.filter { isPomFile(it) || isProfilesFile(it) })
+    }
+    return settingsFiles
+  }
+
+  private val File.children: List<String>
+    get() = listFiles()?.map { it.path } ?: emptyList()
+
+  init {
+    manager.addManagerListener(object : MavenProjectsManager.Listener {
+      override fun importAndResolveScheduled() = isImportCompleted.set(false)
+      override fun projectImportCompleted() = isImportCompleted.set(true)
+    })
   }
 }

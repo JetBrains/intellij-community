@@ -3,10 +3,10 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectRefreshListener;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -22,9 +22,10 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.idea.maven.project.MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher;
 
 public class MavenProjectsManagerWatcher {
 
@@ -52,20 +53,23 @@ public class MavenProjectsManagerWatcher {
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
     myEmbeddersManager = embeddersManager;
-    myProjectsAware = new MavenProjectsAware(project, manager, projectsTree, generalSettings, readingProcessor);
+    myProjectsAware = new MavenProjectsAware(project, manager, projectsTree);
     myProjectTracker = ExternalSystemProjectTracker.getInstance(project);
     myDisposable = Disposer.newDisposable(MavenProjectsManagerWatcher.class.toString());
-    myProjectTracker.register(myProjectsAware);
   }
 
   public synchronized void start() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
-    MavenGeneralSettings.Listener generalSettingsWatcher = () -> onSettingsChange();
-    myGeneralSettings.addListener(generalSettingsWatcher);
-    Disposer.register(myDisposable, () -> myGeneralSettings.removeListener(generalSettingsWatcher));
     myManager.addManagerListener(new MavenProjectWatcher());
+    registerGeneralSettingsWatcher(myManager, this, myDisposable);
+    myProjectTracker.register(myProjectsAware);
+  }
+
+  @TestOnly
+  public synchronized void enableAutoImportInTests() {
+    myProjectTracker.enableAutoImportInTests();
   }
 
   public synchronized void stop() {
@@ -93,15 +97,6 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(false, false);
   }
 
-  public void markDirtyAllMavenProjects() {
-    myProjectTracker.markDirty(myProjectsAware.getProjectId());
-  }
-
-  public void markDirty(@NotNull Collection<MavenProject> projects) {
-    // Todo use projects argument
-    markDirtyAllMavenProjects();
-  }
-
   void scheduleReloadNotificationUpdate() {
     myProjectTracker.scheduleProjectNotificationUpdate();
   }
@@ -113,7 +108,7 @@ public class MavenProjectsManagerWatcher {
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+    scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
     return promise;
   }
 
@@ -129,13 +124,14 @@ public class MavenProjectsManagerWatcher {
                 ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
     }
 
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
-                                                                          filesToDelete,
-                                                                          force,
-                                                                          myProjectsTree,
-                                                                          myGeneralSettings,
-                                                                          onCompletion));
+    scheduleReadingTask(new MavenProjectsProcessorReadingTask(
+      filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
     return promise;
+  }
+
+  private void scheduleReadingTask(@NotNull MavenProjectsProcessorReadingTask readingTask) {
+    WriteAction.runAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+    myReadingProcessor.scheduleTask(readingTask);
   }
 
   @NotNull
@@ -153,11 +149,6 @@ public class MavenProjectsManagerWatcher {
         promise.setResult(null);
       }
     };
-  }
-
-  private void onSettingsChange() {
-    myEmbeddersManager.reset();
-    scheduleUpdateAll(true, false);
   }
 
   private class MyRootChangesListener implements ModuleRootListener {

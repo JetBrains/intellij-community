@@ -8,7 +8,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
@@ -161,7 +160,8 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>module</module>" +
                      "</modules>");
-    waitForReadingCompletion();
+
+    importProject();
 
     assertEmptyKeymap();
     assignShortcut(m, goal, "alt shift X");
@@ -189,7 +189,9 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
 
     WriteCommandAction.writeCommandAction(myProject).run(() -> p1.delete(this));
 
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    importProjects(p1, p2);
+
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);
   }

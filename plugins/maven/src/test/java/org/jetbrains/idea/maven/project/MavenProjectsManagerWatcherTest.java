@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
-import com.intellij.openapi.externalSystem.autoimport.ProjectTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +24,8 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     super.setUp();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
     myNotificationAware = ProjectNotificationAware.getInstance(myProject);
-    ((ProjectTracker)ExternalSystemProjectTracker.getInstance(myProject)).enableAutoImportInTests();
+    myProjectsManager.initForTests();
+    myProjectsManager.enableAutoImportInTests();
 
     createProjectPom(createPomContent("test", "project"));
     addManagedFiles(myProjectPom);
@@ -52,6 +52,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     VirtualFile mavenConfig = createProjectSubFile("../another/.mvn/maven.config");
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     addManagedFiles(anotherPom);
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
     assertNotEmpty(myNotificationAware.getProjectsWithNotification());
   }
