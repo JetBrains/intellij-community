@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;
 import org.jetbrains.annotations.NotNull;
@@ -123,43 +124,51 @@ public class DfaAssist implements DebuggerContextListener {
   @NotNull
   static Map<PsiExpression, DfaHint> computeHints(@NotNull StackFrame frame, @NotNull PsiElement element) {
     if (!element.isValid() || DumbService.isDumb(element.getProject())) return Collections.emptyMap();
-    Method method = frame.location().method();
 
-    PsiParameterListOwner context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
-    boolean methodMatches = false;
-    try {
-      if (context instanceof PsiMethod) {
-        PsiMethod psiMethod = (PsiMethod)context;
-        methodMatches =
-          psiMethod.getName().equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.arguments().size();
-      }
-      else if (context instanceof PsiLambdaExpression) {
-        methodMatches = method.name().startsWith("lambda$") && 
-                        method.arguments().size() >= context.getParameterList().getParametersCount();
-      }
-    }
-    catch (AbsentInformationException ignored) {
-    }
-    if (!methodMatches) {
-      return Collections.emptyMap();
-    }
+    if (!locationMatches(element, frame.location())) return Collections.emptyMap();
     PsiStatement statement = getAnchorStatement(element);
     if (statement == null) return Collections.emptyMap();
     // TODO: support class initializers
-    // TODO: check/improve lambdas support
     PsiCodeBlock body = getCodeBlock(statement);
     if (body == null) return Collections.emptyMap();
     DebuggerInstructionVisitor visitor = new DebuggerInstructionVisitor();
     // TODO: read assertion status
-    RunnerResult result = new DebuggerDfaRunner(body, statement, frame).analyzeMethod(body, visitor);
+    RunnerResult result = new DebuggerDfaRunner(body, statement, frame).analyzeCodeBlock(body, visitor);
     if (result != RunnerResult.OK) return Collections.emptyMap();
     visitor.cleanup();
     return visitor.getHints();
   }
 
+  /**
+   * Quick check whether code location matches the source code in the editor
+   * @param element
+   * @param location
+   * @return
+   */
+  private static boolean locationMatches(@NotNull PsiElement element, Location location) {
+    Method method = location.method();
+    PsiParameterListOwner context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+    try {
+      if (context instanceof PsiMethod) {
+        PsiMethod psiMethod = (PsiMethod)context;
+        return psiMethod.getName().equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.arguments().size();
+      }
+      if (context instanceof PsiLambdaExpression) {
+        return method.name().startsWith("lambda$") && 
+                            method.arguments().size() >= context.getParameterList().getParametersCount();
+      }
+    }
+    catch (AbsentInformationException ignored) {
+    }
+    return false;
+  }
+
   @Nullable
   private static PsiStatement getAnchorStatement(@NotNull PsiElement element) {
-    PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false, PsiMethod.class);
+    while (element != null && (element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+      element = element.getNextSibling();
+    }
+    PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false, PsiLambdaExpression.class, PsiMethod.class);
     if (statement instanceof PsiBlockStatement && ((PsiBlockStatement)statement).getCodeBlock().getRBrace() == element) {
       statement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
     }
