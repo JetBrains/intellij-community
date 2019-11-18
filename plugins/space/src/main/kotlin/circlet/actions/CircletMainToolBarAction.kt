@@ -5,6 +5,7 @@ import circlet.components.*
 import circlet.platform.api.oauth.*
 import circlet.settings.*
 import circlet.ui.*
+import circlet.ui.clone.*
 import circlet.workspaces.*
 import com.intellij.icons.*
 import com.intellij.ide.*
@@ -39,7 +40,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
         val component = e.inputEvent.component
         val workspace = circletWorkspace.workspace.value
         if (workspace != null) {
-            buildMenu(workspace, CircletUserAvatarProvider.getInstance().avatar.value)
+            buildMenu(workspace, CircletUserAvatarProvider.getInstance().avatar.value, e.project!!)
                 .showUnderneathOf(component)
         }
         else {
@@ -109,7 +110,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
         }
     }
 
-    private fun buildMenu(workspace: Workspace, icon: Icon): AccountsMenuListPopup {
+    private fun buildMenu(workspace: Workspace, icon: Icon, project: Project): AccountsMenuListPopup {
         val url = CircletServerSettingsComponent.getInstance().settings.value.server
         val serverUrl = cleanupUrl(url)
         val menuItems: MutableList<AccountMenuItem> = mutableListOf()
@@ -117,6 +118,9 @@ class CircletMainToolBarAction : DumbAwareAction() {
             workspace.me.value.englishFullName(),
             serverUrl,
             resizeIcon(icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize))
+        menuItems += AccountMenuItem.Action("Clone Repository...",
+                                             { CircletCloneAction.runClone(project) },
+                                             showSeparatorAbove = true)
         menuItems += AccountMenuItem.Action("Open $serverUrl",
                                             { BrowserUtil.browse(url) },
                                             AllIcons.Ide.External_link_arrow,
@@ -128,6 +132,6 @@ class CircletMainToolBarAction : DumbAwareAction() {
                                             { circletWorkspace.signOut() },
                                             showSeparatorAbove = true)
 
-        return AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
+        return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
     }
 }

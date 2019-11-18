@@ -69,9 +69,15 @@
             <add-to-group group-id="NavBarToolBar" anchor="last"/>
         </action>
 
-        <group text="Space" id="CircletGroup" popup="true">
+        <action id="circlet.ui.clone.CircletCloneAction"
+                class="circlet.ui.clone.CircletCloneAction"
+                text="Clone Repository..."/>
+
+        <group text="Space" id="CircletGroup" popup="true" icon="CircletIcons.mainIcon">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <reference id="circlet.ui.clone.CircletCloneAction"/>
         </group>
+
     </actions>
 
 </idea-plugin>
