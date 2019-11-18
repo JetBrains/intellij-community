@@ -1229,7 +1229,7 @@ public class ExpressionUtils {
    */
   public static boolean isLocallyDefinedExpression(PsiExpression expression) {
     return PsiTreeUtil.processElements(expression, e -> {
-      if (e instanceof PsiMethodCallExpression) return false;
+      if (e instanceof PsiCallExpression) return false;
       if (e instanceof PsiReferenceExpression) {
         PsiElement target = ((PsiReferenceExpression)e).resolve();
         if (target instanceof PsiField) {

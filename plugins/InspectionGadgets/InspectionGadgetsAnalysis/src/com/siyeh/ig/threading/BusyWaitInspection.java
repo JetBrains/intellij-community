@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,10 +56,32 @@ public class BusyWaitInspection extends BaseInspection {
                                           PsiType.LONG, PsiType.INT)) {
         return;
       }
-      if (!ControlFlowUtils.isInLoop(expression)) {
+      PsiElement context = expression;
+      while (true) {
+        PsiLoopStatement loopStatement = PsiTreeUtil.getParentOfType(context, PsiLoopStatement.class, true,
+                                                                     PsiClass.class, PsiLambdaExpression.class);
+        if (loopStatement == null) return;
+        context = loopStatement;
+        PsiStatement body = loopStatement.getBody();
+        if (!PsiTreeUtil.isAncestor(body, expression, true)) continue;
+        PsiExpression loopCondition;
+        if (loopStatement instanceof PsiWhileStatement) {
+          loopCondition = ((PsiWhileStatement)loopStatement).getCondition();
+        }
+        else if (loopStatement instanceof PsiDoWhileStatement) {
+          loopCondition = ((PsiDoWhileStatement)loopStatement).getCondition();
+        }
+        else if (loopStatement instanceof PsiForStatement) {
+          loopCondition = ((PsiForStatement)loopStatement).getCondition();
+        } else continue;
+        if (ExpressionUtils.computeConstantExpression(loopCondition) == null && ExpressionUtils.isLocallyDefinedExpression(loopCondition)) {
+          // Condition depends on locals only: likely they are changed in the loop (or another inspection should fire)
+          // so this is not a classic busy wait.
+          continue;
+        }
+        registerMethodCallError(expression);
         return;
       }
-      registerMethodCallError(expression);
     }
   }
 }
