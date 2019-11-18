@@ -37,7 +37,6 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
@@ -84,7 +83,7 @@ public class DataFlowRunner {
    * Call this method from the visitor to cancel analysis (e.g. if wanted fact is already established and subsequent analysis
    * is useless). In this case {@link RunnerResult#CANCELLED} will be returned.
    */
-  public void cancel() {
+  public final void cancel() {
     myCancelled = true;
   }
 
@@ -152,12 +151,14 @@ public class DataFlowRunner {
     return analyzeMethod(psiBlock, visitor, initialStates);
   }
 
-  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
-                                             @NotNull InstructionVisitor visitor,
-                                             Consumer<? super DfaMemoryState> initialStateAdjuster) {
-    final DfaMemoryState state = createMemoryState();
-    initialStateAdjuster.accept(state);
-    return analyzeMethod(block, visitor, Collections.singleton(state));
+  /**
+   * Analyze given code-block without analyzing any parent and children context
+   * @param block block to analyze
+   * @param visitor visitor to use
+   * @return result status
+   */
+  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull InstructionVisitor visitor) {
+    return analyzeMethod(block, visitor, Collections.singleton(createMemoryState()));
   }
 
   @NotNull
