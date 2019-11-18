@@ -160,7 +160,7 @@ public class DfaUtil {
     PsiElement body = owner.getBody();
     if (body == null) return Nullability.UNKNOWN;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner();
     class BlockNullabilityVisitor extends StandardInstructionVisitor {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
@@ -369,7 +369,7 @@ public class DfaUtil {
     Object computed = ExpressionUtils.computeConstantExpression(expression);
     if (computed != null) return computed;
 
-    DataFlowRunner runner = new StandardDataFlowRunner(false, expression);
+    DataFlowRunner runner = new DataFlowRunner(false, expression);
     class Visitor extends StandardInstructionVisitor {
       Object exprValue;
 

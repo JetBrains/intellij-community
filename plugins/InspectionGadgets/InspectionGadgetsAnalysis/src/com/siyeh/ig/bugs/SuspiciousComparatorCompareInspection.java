@@ -33,7 +33,10 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SuspiciousComparatorCompareInspection extends BaseInspection {
 
@@ -118,7 +121,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameterListOwner owner, PsiParameter[] parameters, PsiElement body) {
-      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, body) {
+      DataFlowRunner runner = new DataFlowRunner(false, body) {
         @NotNull
         @Override
         protected DfaMemoryState createMemoryState() {

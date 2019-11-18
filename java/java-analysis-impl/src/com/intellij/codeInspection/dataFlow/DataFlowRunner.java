@@ -55,11 +55,11 @@ public class DataFlowRunner {
   static final int MAX_STATES_PER_BRANCH = 300;
   private TimeStats myStats;
 
-  protected DataFlowRunner() {
+  public DataFlowRunner() {
     this(false, null);
   }
 
-  protected DataFlowRunner(boolean unknownMembersAreNullable, PsiElement context) {
+  public DataFlowRunner(boolean unknownMembersAreNullable, @Nullable PsiElement context) {
     myValueFactory = new DfaValueFactory(context, unknownMembersAreNullable);
   }
 

@@ -44,7 +44,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
 @SuppressWarnings("SuspiciousNameCombination")
-public class TrackingRunner extends StandardDataFlowRunner {
+public class TrackingRunner extends DataFlowRunner {
   private MemoryStateChange myHistoryForContext = null;
   private final PsiExpression myExpression;
   private final List<DfaInstructionState> afterStates = new ArrayList<>();
