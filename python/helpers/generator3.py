@@ -304,6 +304,11 @@ def zip_sources(zip_path):
                             continue
                         split_items = match_two_files.group(1, 2)
                     (path, arcpath) = split_items
+
+                    # An attempt to recursively pack an archive leads to unlimited explosion of its size
+                    if os.path.samefile(path, zip_filename):
+                        continue
+
                     zip.write(path, arcpath)
             say('OK: ' + zip_filename)
             sys.stdout.flush()
