@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -17,6 +18,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.data.index.IndexedDetails.Companion.getSubject
 import com.intellij.vcs.log.graph.DefaultColorGenerator
 import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.NodePrintElement
@@ -189,7 +191,33 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
       override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
         if (value != null) {
           border = null
-          append(value.toString())
+          isOpaque = false
+          val entry = this@CommitsTable.model.getValueAt(row, CommitsTableModel.COMMIT_ICON_COLUMN) as GitRebaseEntryWithDetails
+          var attributes: SimpleTextAttributes? = null
+          when (entry.action) {
+            GitRebaseEntry.Action.EDIT -> {
+              icon = AllIcons.Actions.Pause
+            }
+            GitRebaseEntry.Action.DROP -> {
+              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null)
+            }
+            GitRebaseEntry.Action.REWORD -> {
+              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLUE)
+            }
+            GitRebaseEntry.Action.FIXUP -> {
+              icon = AllIcons.Vcs.Merge
+            }
+            else -> {
+            }
+          }
+
+          if (attributes != null) {
+            append(entry.subject, attributes)
+          }
+          else {
+            append(entry.subject)
+          }
+
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
         }
       }
