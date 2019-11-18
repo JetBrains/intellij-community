@@ -2,6 +2,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,6 +35,9 @@ class ImplementationClassCache {
   private final SofterCache<Class<?>, Class<?>> myCache = SofterCache.create(dom -> calcImplementationClass(dom));
 
   ImplementationClassCache(ExtensionPointName<DomImplementationClassEP> epName) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDisposed()) return;
+
     epName.getPoint(null).addExtensionPointListener(new ExtensionPointListener<DomImplementationClassEP>() {
       @Override
       public void extensionAdded(@NotNull DomImplementationClassEP ep, @NotNull PluginDescriptor pluginDescriptor) {
@@ -46,7 +50,7 @@ class ImplementationClassCache {
         myImplementationClasses.remove(ep.interfaceName, ep);
         clearCache();
       }
-    }, true, ApplicationManager.getApplication());
+    }, true, app);
   }
 
   private Class<?> calcImplementationClass(Class<?> concreteInterface) {
