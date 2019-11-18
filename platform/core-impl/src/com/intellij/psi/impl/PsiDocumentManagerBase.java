@@ -912,7 +912,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                                    ModalityState.defaultModalityState());
   }
 
-  class PriorityEventCollector implements PrioritizedInternalDocumentListener {
+  public class PriorityEventCollector implements PrioritizedInternalDocumentListener {
     @Override
     public int getPriority() {
       return EditorDocumentPriorities.RANGE_MARKER;
