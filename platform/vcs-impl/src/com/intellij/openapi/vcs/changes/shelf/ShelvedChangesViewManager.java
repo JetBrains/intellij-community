@@ -680,7 +680,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree){
 
           @Override
-          protected boolean shouldSkip() {
+          protected boolean skipPreviewUpdate() {
             return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
           }
 

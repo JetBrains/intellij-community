@@ -365,15 +365,21 @@ public class ChangesViewManager implements ChangesViewEx,
           }
 
           @Override
-          protected boolean shouldSkip() {
+          protected boolean skipPreviewUpdate() {
             return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
+          }
+
+          @Override
+          protected boolean isContentEmpty() {
+            return changeProcessor.getCurrentChangeName() == null;
           }
 
           @Override
           protected void doRefresh() {
             changeProcessor.refresh(false);
+
             PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
-            if (changeProcessor.getCurrentChangeName() == null) {
+            if (isContentEmpty()) {
               FileEditorManager.getInstance(project).closeFile(vcsContentFile);
             }
           }
