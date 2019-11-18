@@ -49,7 +49,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
    * @deprecated use CallHierarchyBrowser#CallHierarchyBrowser(Project, PsiMember)
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public CallHierarchyBrowser(@NotNull Project project, @NotNull PsiMethod method) {
     super(project, method);
   }

@@ -32,7 +32,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
    * @deprecated use CalleeMethodsTreeStructure#CalleeMethodsTreeStructure(Project, PsiMember, String)
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public CalleeMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
     this(project, ((PsiMember)method), scopeType);
   }
