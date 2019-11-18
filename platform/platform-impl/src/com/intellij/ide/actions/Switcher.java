@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,10 +28,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -197,16 +195,7 @@ public class Switcher extends AnAction implements DumbAware {
     Project project = e.getProject();
     if (SWITCHER != null) {
       final boolean sameShortcut = Comparing.equal(SWITCHER.myTitle, title);
-      if (SWITCHER.isCheckboxMode()) {
-        if (sameShortcut) {
-          SWITCHER.toggleShowEditedFiles();
-        }
-        else {
-          SWITCHER.setShowOnlyEditedFiles(onlyEdited);
-        }
-        return null;
-      }
-      else if (sameShortcut) {
+      if (sameShortcut) {
         SWITCHER.goForward();
         return null;
       }
@@ -225,6 +214,7 @@ public class Switcher extends AnAction implements DumbAware {
         SWITCHER.cancel();
       }
       SWITCHER = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
+      project.putUserData(SWITCHER_KEY, SWITCHER);
       return SWITCHER;
     }
   }
@@ -251,7 +241,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
-                                                              QuickSearchComponent {
+                                                              QuickSearchComponent, Disposable {
     static final Object RECENT_LOCATIONS = new Object();
     final JBPopup myPopup;
     final JBList<Object> toolWindows;
@@ -608,6 +598,7 @@ public class Switcher extends AnAction implements DumbAware {
           SWITCHER = null;
           return true;
         }).createPopup();
+      Disposer.register(myPopup, this);
 
       if (isPinnedMode()) {
         new DumbAwareAction(null, null, null) {
@@ -652,6 +643,14 @@ public class Switcher extends AnAction implements DumbAware {
 
       fromListToList(toolWindows, files);
       fromListToList(files, toolWindows);
+    }
+
+    @Override
+    public void dispose() {
+      synchronized (Switcher.class) {
+        SWITCHER = null;
+        project.putUserData(SWITCHER_KEY, null);
+      }
     }
 
     @NotNull
