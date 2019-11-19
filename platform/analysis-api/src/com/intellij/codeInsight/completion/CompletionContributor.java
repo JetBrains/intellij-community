@@ -113,7 +113,7 @@ import java.util.List;
  * A common solution is to start another thread, without read action, for such blocking requests,
  * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.<p>
  *
- * Q: How can I trigger showing completion popup programmatically?
+ * Q: How can I trigger showing completion popup programmatically?<br>
  * A: See {@link com.intellij.codeInsight.AutoPopupController}.
  *
  * @author peter
