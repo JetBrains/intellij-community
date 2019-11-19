@@ -38,6 +38,21 @@ class JpsProjectSaveAllEntitiesTest {
     assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
   }
 
+  @Test
+  fun `escape special symbols in library name`() {
+    val projectDir = FileUtil.createTempDirectory("jpsSaveTest", null)
+    val serializers = createSerializationData(projectDir)
+    val builder = TypedEntityStorageBuilder.create()
+    for (libName in listOf("a lib", "my-lib", "group-id:artifact-id")) {
+      builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), IdeUiEntitySource)
+    }
+    val storage = builder.toStorage()
+    serializers.saveAllEntities(storage, projectDir)
+    val expectedDir = File(PathManagerEx.getCommunityHomePath(),
+                           "platform/workspaceModel-ide-tests/testData/serialization/specialSymbolsInLibraryName")
+    assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
+  }
+
   private fun checkLoadSave(originalProjectFile: File) {
     val projectData = copyAndLoadProject(originalProjectFile)
     FileUtil.delete(projectData.projectDir)
