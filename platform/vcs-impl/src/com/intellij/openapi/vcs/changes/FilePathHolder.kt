@@ -4,21 +4,14 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import java.util.*
 
 class FilePathHolder(private val project: Project) : FileHolder {
-  private val files = HashSet<FilePath>()
+  private val files = hashSetOf<FilePath>()
 
-  // todo track number of copies made
-  fun getFiles() = files.toList()
+  fun getFiles(): List<FilePath> = files.toList()
 
-  override fun cleanAll() {
-    files.clear()
-  }
-
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) {
-    cleanScope(files, scope)
-  }
+  override fun cleanAll() = files.clear()
+  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(files, scope)
 
   fun addFile(file: FilePath) {
     files.add(file)
@@ -28,27 +21,25 @@ class FilePathHolder(private val project: Project) : FileHolder {
     files.remove(file)
   }
 
-  override fun copy(): FilePathHolder {
-    val copyHolder = FilePathHolder(project)
-    copyHolder.files.addAll(files)
-    return copyHolder
+  override fun copy(): FilePathHolder =
+    FilePathHolder(project).also {
+      it.files.addAll(files)
+    }
+
+  fun containsFile(file: FilePath) = file in files
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as FilePathHolder
+
+    return files == other.files
   }
 
-  fun containsFile(file: FilePath) = files.contains(file)
-
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o == null || javaClass != o.javaClass) return false
-
-    val that = (o as? FilePathHolder?) ?: return false
-
-    return files == that.files
-  }
-
-  override fun hashCode() = files.hashCode()
+  override fun hashCode(): Int = files.hashCode()
 
   companion object {
-
     internal fun cleanScope(files: MutableCollection<FilePath>, scope: VcsModifiableDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
