@@ -42,4 +42,11 @@
                     serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
     <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+  </project-components>
 </idea-plugin>
