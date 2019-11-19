@@ -1,6 +1,5 @@
 package com.intellij.workspace.api
 
-import com.intellij.openapi.util.ModificationTracker
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -147,7 +146,7 @@ sealed class EntityChange<T : TypedEntity> {
   data class Replaced<T : TypedEntity>(val oldEntity: T, val newEntity: T) : EntityChange<T>()
 }
 
-interface TypedEntityStorageDiffBuilder : ModificationTracker {
+interface TypedEntityStorageDiffBuilder {
   fun isEmpty(): Boolean
 
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> addEntity(clazz: Class<M>, source: EntitySource, initializer: M.() -> Unit): T
@@ -155,6 +154,8 @@ interface TypedEntityStorageDiffBuilder : ModificationTracker {
   fun removeEntity(e: TypedEntity)
 
   fun addDiff(diff: TypedEntityStorageDiffBuilder)
+
+  val modificationCount: Long
 
   companion object {
     fun create(underlyingStorage: TypedEntityStorage): TypedEntityStorageDiffBuilder = TypedEntityStorageBuilder.from(underlyingStorage)

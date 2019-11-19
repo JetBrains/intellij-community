@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
@@ -37,7 +38,9 @@ class LegacyBridgeModifiableRootModel(
   private val moduleId: ModuleId,
   private val initialStorage: TypedEntityStorage,
   private val accessor: RootConfigurationAccessor
-) : LegacyBridgeModifiableBase(initialStorage), ModifiableRootModel {
+) : LegacyBridgeModifiableBase(initialStorage), ModifiableRootModel, ModificationTracker {
+
+  override fun getModificationCount(): Long = diff.modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
 

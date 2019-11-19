@@ -13,6 +13,7 @@ import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootMo
 import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.ExcludeFolderViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.SourceFolderViaTypedEntity
+import com.intellij.workspace.virtualFileUrl
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -30,7 +31,7 @@ class LegacyBridgeModifiableContentEntryImpl(
   private val currentContentEntry = CachedValueImpl<ContentEntryViaTypedEntity> {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryViaTypedEntity
       ?: error("Unable to find content entry in parent modifiable root model by url: $contentEntryUrl")
-    CachedValueProvider.Result.createSingleDependency<ContentEntryViaTypedEntity>(contentEntry, diff)
+    CachedValueProvider.Result.createSingleDependency<ContentEntryViaTypedEntity>(contentEntry, modifiableRootModel)
   }
 
   private fun <P : JpsElement?> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {

@@ -1,9 +1,7 @@
 package com.intellij.workspace.api
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -38,11 +36,6 @@ object VirtualFileUrlManager {
     }()
   }
 
-  fun fromVirtualFile(virtualFile: VirtualFile): VirtualFileUrl {
-    // TODO: use segment names from virtualFiles?
-    return fromUrl(virtualFile.url)
-  }
-
   internal fun getUrlById(id: Int): String = if (id <= 0) "" else buildString {
     // capture maps into stack for performance
     buildUrlById(id, id2parent, id2segment)
@@ -70,8 +63,6 @@ object VirtualFileUrlManager {
     }
   }
 
-  // TODO In the future it may be optimised by caching virtualFile in every trie node
-  internal fun getVirtualFileById(id: Int): VirtualFile? = VirtualFileManager.getInstance().findFileByUrl(getUrlById(id))
 /*
     TODO It may look like this + caching + invalidating
     val segmentName = getSegmentName(id).toString()
@@ -100,18 +91,15 @@ data class VirtualFileUrl(internal val id: Int)
   val filePath: String?
     get() {
       val calculatedUrl = url
-      val path = VfsUtilCore.urlToPath(calculatedUrl)
+      val path = JpsPathUtil.urlToPath(calculatedUrl)
       if (path == calculatedUrl || path.isEmpty()) return null
       return path
     }
 
-  val virtualFile
-    get() = VirtualFileUrlManager.getVirtualFileById(id)
-
   // TODO: Rewrite
   fun isEqualOrParentOf(other: VirtualFileUrl): Boolean {
-    val path = VfsUtilCore.urlToPath(other.url)
-    val rootPath = VfsUtilCore.urlToPath(url)
+    val path = JpsPathUtil.urlToPath(other.url)
+    val rootPath = JpsPathUtil.urlToPath(url)
     return FileUtil.isAncestor(rootPath, path, false)
   }
 
@@ -125,6 +113,3 @@ fun File.toVirtualFileUrl(): VirtualFileUrl =
   VirtualFileUrlManager.fromUrl("file://${absolutePath.replace('\\', '/')}")
 
 fun Path.toVirtualFileUrl(): VirtualFileUrl = toFile().toVirtualFileUrl()
-
-val VirtualFile.virtualFileUrl
-  get() = VirtualFileUrlManager.fromVirtualFile(this)
