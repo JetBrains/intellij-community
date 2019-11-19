@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class GroupByNullnessActionBase extends AnAction {
   protected final SliceTreeBuilder myTreeBuilder;
-  private static final String TEXT = "Group by leaf expression nullness";
+  private static final String TEXT = "Group by Leaf Expression Nullness";
 
   protected GroupByNullnessActionBase(@NotNull SliceTreeBuilder treeBuilder) {
     super(TEXT, "Determine whether null can flow into this expression", AllIcons.Debugger.Db_disabled_breakpoint_process);
