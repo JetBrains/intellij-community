@@ -94,6 +94,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return array.toArray(PsiDocTag.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return getElementType();

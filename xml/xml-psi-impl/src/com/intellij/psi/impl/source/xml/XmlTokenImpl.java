@@ -60,6 +60,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
 // Implementation specific
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return getElementType();
