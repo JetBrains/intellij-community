@@ -210,7 +210,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
         //a.onExceptionalCompletion(throwable, child);
         child = a;
         //noinspection unchecked
-        a = (ApplierCompleter)a.getCompleter();
+        a = (ApplierCompleter<T>)a.getCompleter();
         if (a == null) {
           // currently avoid using completeExceptionally since it leaks exceptions via ForkJoinTask.exceptionTable
           child.quietlyComplete();

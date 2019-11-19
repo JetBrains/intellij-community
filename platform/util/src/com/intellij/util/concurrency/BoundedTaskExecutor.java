@@ -32,7 +32,8 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutor.class);
 
   private volatile boolean myShutdown;
-  private final @NotNull String myName;
+  @NotNull
+  private final String myName;
   private final Executor myBackendExecutor;
   private final int myMaxThreads;
   // low  32 bits: number of tasks running (or trying to run)

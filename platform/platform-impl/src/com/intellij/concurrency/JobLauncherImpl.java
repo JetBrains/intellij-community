@@ -194,7 +194,6 @@ public class JobLauncherImpl extends JobLauncher {
     private void submit() {
       ForkJoinPool.commonPool().execute(myForkJoinTask);
     }
-    //////////////// Job
 
     // when canceled in the middle of the execution returns false until finished
     @Override
