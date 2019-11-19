@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -25,16 +26,11 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.openapi.wm.impl.IdePanePanel;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -43,6 +39,8 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -971,6 +969,63 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         catch (NumberFormatException ignored) {}
       }
+    }
+  }
+
+  @Nullable
+  private static EditorsSplitters getSplittersToFocus() {
+    Window activeWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+
+    if (activeWindow instanceof FloatingDecorator) {
+      IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
+      IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
+      JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
+      Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
+      activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
+      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(lastFocusedFrame.getProject()));
+      EditorsSplitters splitters = fem.getSplittersFor(activeWindow);
+      return splitters != null ? splitters : fem.getSplitters();
+    }
+
+    if (activeWindow instanceof IdeFrame.Child) {
+      Project project = ((IdeFrame.Child)activeWindow).getProject();
+      activeWindow = WindowManager.getInstance().getFrame(project);
+      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(project));
+      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
+      return splitters != null ? splitters : fem.getSplitters();
+    }
+
+    final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
+    if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
+      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(frame.getProject()));
+      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
+      return splitters != null ? splitters : fem.getSplitters();
+    }
+
+    return null;
+  }
+
+  public static JComponent findDefaultComponentInSplitters()  {
+    EditorsSplitters splittersToFocus = getSplittersToFocus();
+    if (splittersToFocus != null) {
+      final EditorWindow window = splittersToFocus.getCurrentWindow();
+      if (window != null) {
+        final EditorWithProviderComposite editor = window.getSelectedEditor();
+        if (editor != null) {
+          JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+          if (defaultFocusedComponentInEditor != null) {
+            return defaultFocusedComponentInEditor;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static void findDefaultComponentInSplittersIfPresent(Consumer<? super JComponent> componentConsumer) {
+    JComponent defaultFocusedComponentInEditor = findDefaultComponentInSplitters();
+    if (defaultFocusedComponentInEditor != null) {
+      componentConsumer.consume(defaultFocusedComponentInEditor);
     }
   }
 }

@@ -21,8 +21,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -66,6 +64,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import static com.intellij.openapi.fileEditor.impl.EditorsSplitters.findDefaultComponentInSplittersIfPresent;
 
 @State(name = "ToolWindowManager", defaultStateAsResource = true, storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
@@ -231,19 +231,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private static void focusDefaultElementInSelectedEditor() {
-    EditorsSplitters splittersToFocus = getSplittersToFocus();
-    if (splittersToFocus != null) {
-    final EditorWindow window = splittersToFocus.getCurrentWindow();
-      if (window != null) {
-        final EditorWithProviderComposite editor = window.getSelectedEditor();
-        if (editor != null) {
-          JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-          if (defaultFocusedComponentInEditor != null) {
-            defaultFocusedComponentInEditor.requestFocus();
-          }
-        }
-      }
-    }
+    findDefaultComponentInSplittersIfPresent(Component::requestFocus);
   }
 
   private void updateToolWindowHeaders() {
@@ -1738,39 +1726,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (rootPane != null) {
       commandsList.add(new UpdateRootPaneCmd(rootPane, myCommandProcessor));
     }
-  }
-
-  @Nullable
-  private static EditorsSplitters getSplittersToFocus() {
-    Window activeWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-
-    if (activeWindow instanceof FloatingDecorator) {
-      IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
-      IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
-      JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
-      Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
-      activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(lastFocusedFrame.getProject()));
-      EditorsSplitters splitters = fem.getSplittersFor(activeWindow);
-      return splitters != null ? splitters : fem.getSplitters();
-    }
-
-    if (activeWindow instanceof IdeFrame.Child) {
-      Project project = ((IdeFrame.Child)activeWindow).getProject();
-      activeWindow = WindowManager.getInstance().getFrame(project);
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(project));
-      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-      return splitters != null ? splitters : fem.getSplitters();
-    }
-
-    final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
-    if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(frame.getProject()));
-      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-      return splitters != null ? splitters : fem.getSplitters();
-    }
-
-    return null;
   }
 
   @Override
