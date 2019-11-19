@@ -14,4 +14,16 @@ class X {
       y--;
     }
   }
+  
+  public boolean waitTillFileRemoval(File file) throws Exception {
+    int attempts = 5;
+    while (file.exists() && attempts-- > 0) {
+      Thread.sleep(100);
+    }
+    return file.exists();
+  }
+  
+  interface File {
+    boolean exists();
+  }
 }

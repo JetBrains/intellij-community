@@ -17,12 +17,16 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class BusyWaitInspection extends BaseInspection {
 
@@ -65,8 +69,7 @@ public class BusyWaitInspection extends BaseInspection {
         PsiStatement body = loopStatement.getBody();
         if (!PsiTreeUtil.isAncestor(body, expression, true)) continue;
         PsiExpression loopCondition = loopStatement.getCondition();
-        if (loopCondition != null && 
-            ExpressionUtils.computeConstantExpression(loopCondition) == null && ExpressionUtils.isLocallyDefinedExpression(loopCondition)) {
+        if (isLocallyBoundLoop(loopCondition)) {
           // Condition depends on locals only: likely they are changed in the loop (or another inspection should fire)
           // so this is not a classic busy wait.
           continue;
@@ -74,6 +77,46 @@ public class BusyWaitInspection extends BaseInspection {
         registerMethodCallError(expression);
         return;
       }
+    }
+
+    public static boolean isLocallyBoundLoop(PsiExpression loopCondition) {
+      loopCondition = PsiUtil.skipParenthesizedExprDown(loopCondition);
+      if (loopCondition == null) return false;
+      if (ExpressionUtils.computeConstantExpression(loopCondition) == null && ExpressionUtils.isLocallyDefinedExpression(loopCondition)) {
+        return true;
+      }
+      if (loopCondition instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)loopCondition).getOperationTokenType().equals(
+        JavaTokenType.ANDAND)) {
+        for (PsiExpression operand : ((PsiPolyadicExpression)loopCondition).getOperands()) {
+          if (isCounterCondition(operand)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private static boolean isCounterCondition(PsiExpression expr) {
+      PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiBinaryExpression.class);
+      if (binOp == null) return false;
+      if (!ComparisonUtils.isComparisonOperation(binOp.getOperationTokenType())) return false;
+      PsiExpression compared = null;
+      if (PsiUtil.isConstantExpression(binOp.getLOperand())) {
+        compared = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
+      }
+      else if (PsiUtil.isConstantExpression(binOp.getROperand())) {
+        compared = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+      }
+      if (compared == null) return false;
+      if (compared instanceof PsiUnaryExpression) {
+        PsiReferenceExpression operand =
+          tryCast(PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)compared).getOperand()), PsiReferenceExpression.class);
+        if (operand != null && PsiUtil.isAccessedForWriting(operand) && operand.getQualifierExpression() == null) {
+          PsiElement target = operand.resolve();
+          if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
+        }
+      }
+      return false;
     }
   }
 }
