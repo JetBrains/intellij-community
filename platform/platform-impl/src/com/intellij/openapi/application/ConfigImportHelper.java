@@ -364,10 +364,7 @@ public final class ConfigImportHelper {
     return FileUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
   }
 
-  public static void doImport(@NotNull Path oldConfigDir,
-                              @NotNull Path newConfigDir,
-                              @Nullable Path oldIdeHome,
-                              @NotNull Logger log) {
+  private static void doImport(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
     if (oldConfigDir.equals(newConfigDir)) {
       return;
     }
@@ -390,8 +387,8 @@ public final class ConfigImportHelper {
   public static void doImport(@NotNull Path oldConfigDir,
                               @NotNull Path newConfigDir,
                               @Nullable Path oldIdeHome,
-                              Path oldPluginsPath,
-                              Path newPluginsPath,
+                              @NotNull Path oldPluginsDir,
+                              @NotNull Path newPluginsDir,
                               @NotNull Logger log) {
     try {
       if (Files.isRegularFile(oldConfigDir)) {
@@ -399,16 +396,13 @@ public final class ConfigImportHelper {
         return;
       }
 
-      // copy everything WITHOUT plugins. Plugins will be copies a bit later
+      // copy everything except plugins
       // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
-      FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), path -> !blockImport(path.toPath(), oldConfigDir, newConfigDir, oldPluginsPath));
-
-      // Plugin migration
-      File[] pluginDirContent = newPluginsPath.toFile().listFiles(pathname -> !pathname.isHidden());
+      FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), file -> !blockImport(file.toPath(), oldConfigDir, newConfigDir, oldPluginsDir));
+      // copy plugins, unless new plugin directory is not empty (the plugin manager will sort out incompatible ones)
+      File[] pluginDirContent = newPluginsDir.toFile().listFiles(file -> !file.isHidden());
       if (pluginDirContent == null || pluginDirContent.length == 0) {
-        // The plugins folder may already contain plugins in case if idea.plugins.path is set to some location
-        // It could happen if update is performed via the Toolbox
-        FileUtil.copyDir(oldPluginsPath.toFile(), newPluginsPath.toFile());
+        FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
       }
 
       if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
@@ -416,7 +410,7 @@ public final class ConfigImportHelper {
       }
 
       // apply stale plugin updates
-      if (Files.isDirectory(oldPluginsPath)) {
+      if (Files.isDirectory(oldPluginsDir)) {
         Path oldSystemDir = null;
         if (oldIdeHome != null) {
           oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
@@ -427,8 +421,7 @@ public final class ConfigImportHelper {
         }
         Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
         if (Files.isRegularFile(script)) {
-          File newPluginsDir = new File(PathManager.getPluginsPath());
-          StartupActionScriptManager.executeActionScript(script.toFile(), oldPluginsPath.toFile(), newPluginsDir);
+          StartupActionScriptManager.executeActionScript(script.toFile(), oldPluginsDir.toFile(), new File(PathManager.getPluginsPath()));
         }
       }
 
@@ -467,7 +460,7 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Fix VM options in the custom *.vmoptions file which don't work with the current IDE version.
+   * Fix VM options in the custom *.vmoptions file that won't work with the current IDE version.
    */
   private static void updateVMOptions(@NotNull Path newConfigDir, @NotNull Logger log) {
     Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
@@ -493,7 +486,10 @@ public final class ConfigImportHelper {
   private static boolean blockImport(@NotNull Path path, @NotNull Path oldConfig, @NotNull Path newConfig, @NotNull Path oldPluginsDir) {
     if (oldConfig.equals(path.getParent())) {
       String name = path.getFileName().toString();
-      return "user.web.token".equals(name) || name.startsWith("chrome-user-data") || Files.exists(newConfig.resolve(path.getFileName())) || path.startsWith(oldPluginsDir);
+      return "user.web.token".equals(name) ||
+             name.startsWith("chrome-user-data") ||
+             Files.exists(newConfig.resolve(path.getFileName())) ||
+             path.startsWith(oldPluginsDir);
     }
     return false;
   }
