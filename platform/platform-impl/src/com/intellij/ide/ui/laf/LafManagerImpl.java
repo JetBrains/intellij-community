@@ -63,6 +63,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 @State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
@@ -780,16 +781,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
-      uiDefaults.put("Menu.invertedArrowIcon", AllIcons.Mac.Tree_white_right_arrow);
-      uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
 
-    if (UIUtil.isUnderWin10LookAndFeel()) {
-      uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
-    }
-    else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
-      uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
-    }
+    uiDefaults.put("Menu.arrowIcon", UIUtil.isUnderWin10LookAndFeel() ?
+      new Win10MenuArrowIcon() :
+      new DefaultMenuArrowIcon());
 
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
   }
@@ -1103,7 +1099,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       if (!model.isEnabled()) {
         disabledIcon.paintIcon(c, g, x, y);
-      } else if (model.isArmed() || ( c instanceof JMenu && model.isSelected())) {
+      } else if (model.isArmed() || (c instanceof JMenu && model.isSelected())) {
         selectedIcon.paintIcon(c, g, x, y);
       } else {
         icon.paintIcon(c, g, x, y);
@@ -1120,12 +1116,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
-    private static final boolean invert = StartupUiUtil.isUnderDarcula();
-
-    private DefaultMenuArrowIcon(@NotNull Icon icon) {
-      super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
-            IconUtil.brighter(icon, 8),
-            invert ? IconUtil.darker(icon, 2) : IconUtil.brighter(icon, 2));
+    private static final BooleanSupplier dark = () -> ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground"));
+    private DefaultMenuArrowIcon() {
+      super(AllIcons.Icons.Ide.NextStep,
+            dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
+            IconUtil.brighter(AllIcons.Icons.Ide.NextStep, 3));
     }
   }
 
