@@ -296,7 +296,7 @@ public class ReorderingUtils {
           ContractValue cond = conditions.get(0);
           DfaCondition value = cond.fromCall(myFactory, call);
           if (value instanceof DfaRelation) {
-            if (myConditions.contains(retValue == negated ? value : ((DfaRelation)value).createNegated())) {
+            if (myConditions.contains(retValue == negated ? value : ((DfaRelation)value).negate())) {
               return true;
             }
           }
@@ -315,12 +315,12 @@ public class ReorderingUtils {
           DfaCondition value1 = leftVal.cond(relationType, rightVal);
           DfaCondition value2 = rightVal.cond(Objects.requireNonNull(relationType.getFlipped()), leftVal);
           if (value1 instanceof DfaRelation) {
-            if (myConditions.contains(negated ? value1 : ((DfaRelation)value1).createNegated())) {
+            if (myConditions.contains(negated ? value1 : ((DfaRelation)value1).negate())) {
               return true;
             }
           }
           if (value2 instanceof DfaRelation) {
-            if (myConditions.contains(negated ? value2 : ((DfaRelation)value2).createNegated())) {
+            if (myConditions.contains(negated ? value2 : ((DfaRelation)value2).negate())) {
               return true;
             }
           }

@@ -464,7 +464,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       for (ContractValue contractValue : contract.getConditions()) {
         DfaCondition condition = contractValue.makeCondition(factory, callState.myCallArguments);
         DfaMemoryState falseState = state.createCopy();
-        DfaCondition falseCondition = condition.createNegated();
+        DfaCondition falseCondition = condition.negate();
         if (contract.getReturnValue().isFail() ?
             falseState.applyCondition(falseCondition) :
             falseState.applyContractCondition(falseCondition)) {
@@ -797,7 +797,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (equality.applyCondition(condition)) {
         states.add(makeBooleanResult(instruction, runner, equality, ThreeState.UNSURE));
       }
-      if (memState.applyCondition(condition.createNegated())) {
+      if (memState.applyCondition(condition.negate())) {
         states.add(makeBooleanResult(instruction, runner, memState, ThreeState.fromBoolean(relationType == RelationType.NE)));
       }
       return states.toArray(DfaInstructionState.EMPTY_ARRAY);
@@ -890,7 +890,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (trueState.applyCondition(condition)) {
         states.add(makeBooleanResult(instruction, runner, trueState, unknownTargetType ? ThreeState.UNSURE : ThreeState.YES));
       }
-      DfaCondition negated = condition.createNegated();
+      DfaCondition negated = condition.negate();
       if (unknownTargetType ? memState.applyContractCondition(negated) : memState.applyCondition(negated)) {
         states.add(makeBooleanResult(instruction, runner, memState, ThreeState.NO));
         useful |= !memState.isNull(dfaLeft);

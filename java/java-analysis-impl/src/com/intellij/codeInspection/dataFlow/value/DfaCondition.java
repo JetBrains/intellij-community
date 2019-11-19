@@ -18,10 +18,13 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DfaCondition {
   // To prevent inheritors outside of the package
   DfaCondition() {}
-  
+
+  /**
+   * @return a condition which is the opposite to this condition
+   */
   @NotNull
   @Contract(pure = true)
-  public abstract DfaCondition createNegated();
+  public abstract DfaCondition negate();
 
   /**
    * @return always true condition; singleton object
@@ -77,7 +80,7 @@ public abstract class DfaCondition {
   
     @NotNull
     @Override
-    public DfaCondition createNegated() {
+    public DfaCondition negate() {
       if (this == TRUE) return FALSE;
       if (this == FALSE) return TRUE;
       return UNKNOWN;

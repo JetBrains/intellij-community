@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public final class DfaRelation extends DfaCondition {
   @NotNull
   @Override
-  public DfaRelation createNegated() {
-    return createCanonicalRelation(myLeftOperand, myRelation.getNegated(), myRightOperand);
+  public DfaRelation negate() {
+    return new DfaRelation(myLeftOperand, myRightOperand, myRelation.getNegated());
   }
 
   private @NotNull final DfaValue myLeftOperand;
@@ -54,16 +54,16 @@ public final class DfaRelation extends DfaCondition {
   public static DfaRelation createRelation(@NotNull DfaValue dfaLeft, @NotNull RelationType relationType, @NotNull DfaValue dfaRight) {
     if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) &&
         dfaRight instanceof DfaFactMapValue && !(dfaLeft instanceof DfaFactMapValue)) {
-      return createCanonicalRelation(dfaLeft, relationType, dfaRight);
+      return new DfaRelation(dfaLeft, dfaRight, relationType);
     }
     if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaBinOpValue
         || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaBinOpValue) {
       if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaBinOpValue) ||
           (dfaRight instanceof DfaBinOpValue && !(dfaLeft instanceof DfaBinOpValue))) {
         RelationType flipped = relationType.getFlipped();
-        return flipped == null ? null : createCanonicalRelation(dfaRight, flipped, dfaLeft);
+        return flipped == null ? null : new DfaRelation(dfaRight, dfaLeft, flipped);
       }
-      return createCanonicalRelation(dfaLeft, relationType, dfaRight);
+      return new DfaRelation(dfaLeft, dfaRight, relationType);
     }
     if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaConstValue) {
       return createConstBasedRelation((DfaFactMapValue)dfaLeft, relationType, (DfaConstValue)dfaRight);
@@ -72,10 +72,10 @@ public final class DfaRelation extends DfaCondition {
       return createConstBasedRelation((DfaFactMapValue)dfaRight, relationType, (DfaConstValue)dfaLeft);
     }
     if (dfaLeft instanceof DfaInstanceofValue && dfaRight instanceof DfaConstValue) {
-      return createCanonicalRelation(dfaLeft, relationType, dfaRight);
+      return new DfaRelation(dfaLeft, dfaRight, relationType);
     }
     if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaInstanceofValue) {
-      return createCanonicalRelation(dfaRight, relationType, dfaLeft);
+      return new DfaRelation(dfaRight, dfaLeft, relationType);
     }
     return null;
   }
@@ -83,17 +83,9 @@ public final class DfaRelation extends DfaCondition {
   @NotNull
   private static DfaRelation createConstBasedRelation(DfaFactMapValue dfaLeft, RelationType relationType, DfaConstValue dfaRight) {
     if (dfaRight.getValue() == null && DfaNullability.isNullable(dfaLeft.getFacts())) {
-      return createCanonicalRelation(dfaLeft.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NULLABLE), relationType,
-                                     dfaRight);
+      return new DfaRelation(dfaLeft.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NULLABLE), dfaRight, relationType);
     }
-    return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
-  }
-
-  @NotNull
-  private static DfaRelation createCanonicalRelation(@NotNull final DfaValue dfaLeft,
-                                                     @NotNull RelationType relationType,
-                                                     @NotNull final DfaValue dfaRight) {
-    return new DfaRelation(dfaLeft, dfaRight, relationType);
+    return new DfaRelation(DfaUnknownValue.getInstance(), dfaRight, relationType);
   }
 
   public boolean isEquality() {
