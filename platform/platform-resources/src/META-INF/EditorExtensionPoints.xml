@@ -39,7 +39,7 @@
     <extensionPoint name="commentCompleteHandler" interface="com.intellij.codeInsight.editorActions.CommentCompleteHandler" dynamic="true"/>
     <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover" dynamic="true"/>
 
-    <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler"/>
     </extensionPoint>
     <extensionPoint name="codeInsight.fillParagraph" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
