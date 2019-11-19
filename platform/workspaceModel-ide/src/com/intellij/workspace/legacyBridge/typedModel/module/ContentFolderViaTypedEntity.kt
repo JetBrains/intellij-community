@@ -41,13 +41,13 @@ class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, 
     val javaExtensionService = JpsJavaExtensionService.getInstance()
 
     val rootProperties = when (sourceRootEntity.rootType) {
-      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID -> {
+      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> {
         val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
         javaExtensionService.createSourceRootProperties(
           javaSourceRoot?.packagePrefix ?: "", javaSourceRoot?.generated ?: false)
       }
 
-      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID -> {
+      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> {
         val javaResourceRoot = sourceRootEntity.asJavaResourceRoot()
         javaExtensionService.createResourceRootProperties(
           javaResourceRoot?.relativeOutputPath ?: "", false)
