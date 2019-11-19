@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   protected abstract void doRefresh();
 
   protected boolean skipPreviewUpdate() {
-    return false;
+    return ToolWindowManager.getInstance(myProject).isEditorComponentActive();
   }
 
   protected boolean isContentEmpty() {

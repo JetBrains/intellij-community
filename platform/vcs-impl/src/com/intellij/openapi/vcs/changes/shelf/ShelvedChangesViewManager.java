@@ -681,6 +681,9 @@ public class ShelvedChangesViewManager implements Disposable {
 
           @Override
           protected boolean skipPreviewUpdate() {
+            if (super.skipPreviewUpdate())
+              return true;
+
             return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
           }
 
