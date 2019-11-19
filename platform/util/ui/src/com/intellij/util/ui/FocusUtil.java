@@ -31,7 +31,6 @@ public final class FocusUtil {
   @Nullable
   public static Component getMostRecentComponent(Component component, Window ancestor) {
     if (ancestor != null) {
-      //KeyboardFocusManager.getMostRecentFocusOwner(this)
       try {
         final Component mostRecentFocusOwner;
 
