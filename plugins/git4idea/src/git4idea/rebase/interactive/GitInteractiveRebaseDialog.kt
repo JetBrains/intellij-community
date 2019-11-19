@@ -66,7 +66,15 @@ internal class GitInteractiveRebaseDialog(
   }
 
   private val commitsTableModel = CommitsTableModel(entries.map { GitRebaseEntryWithEditedMessage(it) })
-  private val commitsTable = CommitsTable(project, commitsTableModel)
+  private val commitsTable = object : CommitsTable(project, commitsTableModel) {
+    override fun onEditorCreate() {
+      isOKActionEnabled = false
+    }
+
+    override fun onEditorRemove() {
+      isOKActionEnabled = true
+    }
+  }
   private val modalityState = ModalityState.stateForComponent(window)
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
     @CalledInBackground
@@ -190,7 +198,7 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
   override fun isCellEditable(rowIndex: Int, columnIndex: Int) = true
 }
 
-private class CommitsTable(val project: Project, val model: CommitsTableModel) : JBTable(model) {
+private open class CommitsTable(val project: Project, val model: CommitsTableModel) : JBTable(model) {
   companion object {
     private const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
   }
@@ -208,6 +216,10 @@ private class CommitsTable(val project: Project, val model: CommitsTableModel) :
     installSpeedSearch()
     prepareCommitIconColumn()
     prepareSubjectColumn()
+  }
+
+  final override fun setSelectionMode(selectionMode: Int) {
+    super.setSelectionMode(selectionMode)
   }
 
   private fun installSpeedSearch() {
@@ -231,12 +243,22 @@ private class CommitsTable(val project: Project, val model: CommitsTableModel) :
     column.preferredWidth = contentWidth
   }
 
+  override fun prepareEditor(editor: TableCellEditor?, row: Int, column: Int): Component {
+    onEditorCreate()
+    return super.prepareEditor(editor, row, column)
+  }
+
+  protected open fun onEditorCreate() {}
+
   override fun removeEditor() {
+    onEditorRemove()
     if (editingRow in 0 until rowCount) {
       setRowHeight(editingRow, DEFAULT_CELL_HEIGHT)
     }
     super.removeEditor()
   }
+
+  protected open fun onEditorRemove() {}
 
   private fun prepareSubjectColumn() {
     val subjectColumn = columnModel.getColumn(SUBJECT_COLUMN)
@@ -287,11 +309,22 @@ private class CommitsTable(val project: Project, val model: CommitsTableModel) :
   }
 
   private class CommitMessageCellEditor(project: Project) : AbstractCellEditor(), TableCellEditor {
+    private val closeEditorAction = object : AnAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        stopCellEditing()
+      }
+    }
     private val commitMessageField = object : CommitMessage(project, false, false, true) {
       override fun requestFocus() {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(editorField, true) }
       }
     }.apply {
+      editorField.addSettingsProvider { editor ->
+        closeEditorAction.registerCustomShortcutSet(
+          CustomShortcutSet(KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null)),
+          editor.contentComponent
+        )
+      }
       editorField.setCaretPosition(0)
     }
 
