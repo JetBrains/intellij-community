@@ -50,6 +50,7 @@ public class NonBlockingReadActionImpl<T>
   extends ExpirableConstrainedExecution<NonBlockingReadActionImpl<T>>
   implements NonBlockingReadAction<T> {
   private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
+  private static final Executor SYNC_DUMMY_EXECUTOR = __ -> { throw new UnsupportedOperationException(); };
 
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
   private final @Nullable List<Object> myCoalesceEquality;
@@ -153,8 +154,7 @@ public class NonBlockingReadActionImpl<T>
 
     ProgressIndicator outerIndicator = myProgressIndicator != null ? myProgressIndicator
                                                                    : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    Executor dummyExecutor = __ -> { throw new UnsupportedOperationException(); };
-    return new Submission(dummyExecutor, outerIndicator).executeSynchronously();
+    return new Submission(SYNC_DUMMY_EXECUTOR, outerIndicator).executeSynchronously();
   }
 
   @Override
@@ -193,11 +193,15 @@ public class NonBlockingReadActionImpl<T>
       if (hasUnboundedExecutor()) {
         preventTooManySubmissions();
       }
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (shouldTrackInTests()) {
         ourTasks.add(this);
       }
       Expiration expiration = composeExpiration();
       myExpirationHandle = expiration == null ? null : expiration.invokeOnExpiration(this::cancel);
+    }
+
+    private boolean shouldTrackInTests() {
+      return backendExecutor != SYNC_DUMMY_EXECUTOR && ApplicationManager.getApplication().isUnitTestMode();
     }
 
     private boolean hasUnboundedExecutor() {
@@ -251,7 +255,7 @@ public class NonBlockingReadActionImpl<T>
       if (hasUnboundedExecutor()) {
         ourUnboundedSubmissionCount.decrementAndGet();
       }
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (shouldTrackInTests()) {
         ourTasks.remove(this);
       }
     }
