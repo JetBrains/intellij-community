@@ -836,12 +836,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-31762
   public void testInitializingAttrsHierarchy() {
-    // same as for std dataclasses except overridding
+    // same as for std dataclasses + overriding
 
     runWithLanguageLevel(
-      LanguageLevel.PYTHON37,
+      LanguageLevel.getLatest(),
       () -> {
-        final Map<String, PsiElement> marks = loadTest(5);
+        final Map<String, PsiElement> marks = loadTest(6);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
@@ -852,6 +852,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
 
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("y: int=0, z: int=10, x: int=15", new String[]{"y: int=0, "});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("type: int=..., locations: str=...", new String[]{"type: int=..., "});
       }
     );
   }

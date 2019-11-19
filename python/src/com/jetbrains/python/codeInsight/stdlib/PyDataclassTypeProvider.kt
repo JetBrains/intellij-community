@@ -139,7 +139,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           .asReversed()
           .asSequence()
           .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
-          .mapNotNull { fieldToParameter(cls, it, parameters.type, ellipsis, context) }
+          .mapNotNull { fieldToParameter(current, it, parameters.type, ellipsis, context) }
           .forEach { parameter ->
             parameter.name?.let {
               // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
