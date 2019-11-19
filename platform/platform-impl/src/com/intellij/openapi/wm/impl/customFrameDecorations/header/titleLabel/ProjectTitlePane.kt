@@ -37,7 +37,7 @@ class ProjectTitlePane : ShrinkingTitlePart {
       val (before, open, path, close, after) = match.destructured
 
       val project = before.trim()
-      if (project == short && path.isNotEmpty() && File(path).exists()) {
+      if (project == short && path.isNotEmpty()) {
         projectTitle.project = project
         projectTitle.openChar = " $open"
         projectTitle.closeChar = close
