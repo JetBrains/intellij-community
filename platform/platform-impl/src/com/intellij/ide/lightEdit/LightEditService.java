@@ -43,8 +43,10 @@ public class LightEditService implements Disposable, LightEditorListener {
 
   public void showEditorWindow() {
     init();
-    myWrapper.show();
-    myWrapper.setTitle(getAppName());
+    if (!myWrapper.getWindow().isShowing()) {
+      myWrapper.show();
+      myWrapper.setTitle(getAppName());
+    }
   }
 
   private static String getAppName() {
