@@ -16,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.value.RelationType.EQ;
-
 class DebuggerDfaRunner extends DataFlowRunner {
   private static final Value NullConst = new Value() {
     @Override
@@ -157,7 +155,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
                           Value jdiValue) {
     DfaConstValue val = getConstantValue(psiFactory, factory, jdiValue);
     if (val != null) {
-      state.applyCondition(factory.createCondition(var, EQ, val));
+      state.applyCondition(var.eq(val));
     }
     if (jdiValue instanceof ObjectReference) {
       ObjectReference ref = (ObjectReference)jdiValue;
@@ -171,7 +169,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       if (jdiValue instanceof ArrayReference) {
         DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, var);
         int jdiLength = ((ArrayReference)jdiValue).length();
-        state.applyCondition(factory.createCondition(dfaLength, EQ, factory.getInt(jdiLength)));
+        state.applyCondition(dfaLength.eq(factory.getInt(jdiLength)));
       }
       else if (TypeConversionUtil.isPrimitiveWrapper(name)) {
         setSpecialField(psiFactory, factory, state, var, ref, type, "value", SpecialField.UNBOX);
@@ -180,12 +178,10 @@ class DebuggerDfaRunner extends DataFlowRunner {
         setSpecialField(psiFactory, factory, state, var, ref, type, "size", SpecialField.COLLECTION_SIZE);
       }
       else if (name.startsWith("java.util.Collections$Empty")) {
-        state.applyCondition(factory.createCondition(
-          SpecialField.COLLECTION_SIZE.createValue(factory, var), EQ, factory.getInt(0)));
+        state.applyCondition(SpecialField.COLLECTION_SIZE.createValue(factory, var).eq(factory.getInt(0)));
       }
       else if (name.startsWith("java.util.Collections$Singleton")) {
-        state.applyCondition(factory.createCondition(
-          SpecialField.COLLECTION_SIZE.createValue(factory, var), EQ, factory.getInt(1)));
+        state.applyCondition(SpecialField.COLLECTION_SIZE.createValue(factory, var).eq(factory.getInt(1)));
       }
       else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof SpecialField)) {
         setSpecialField(psiFactory, factory, state, var, ref, type, "value", SpecialField.OPTIONAL_VALUE);

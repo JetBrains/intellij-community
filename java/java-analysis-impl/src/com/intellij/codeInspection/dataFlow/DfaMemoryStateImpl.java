@@ -232,7 +232,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else {
       setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULL) : state);
-      DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, RelationType.EQ, value);
+      DfaRelation dfaEqual = DfaRelation.createRelation(var, RelationType.EQ, value);
       if (dfaEqual == null) return;
       applyCondition(dfaEqual);
 
@@ -765,11 +765,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean applyContractCondition(DfaValue condition) {
-    if (condition instanceof DfaRelationValue) {
-      DfaRelationValue relation = (DfaRelationValue)condition;
+  public boolean applyContractCondition(DfaCondition condition) {
+    if (condition instanceof DfaRelation) {
+      DfaRelation relation = (DfaRelation)condition;
       if (relation.isEquality() &&
-          relation.getRightOperand() == myFactory.getConstFactory().getNull() &&
+          DfaConstValue.isConstant(relation.getRightOperand(), null) &&
           (relation.getLeftOperand() instanceof DfaUnknownValue ||
            (relation.getLeftOperand() instanceof DfaVariableValue &&
             getVariableState((DfaVariableValue)relation.getLeftOperand()).getNullability() == Nullability.UNKNOWN))) {
@@ -809,23 +809,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean applyCondition(DfaValue dfaCond) {
-    if (dfaCond instanceof DfaUnknownValue) return true;
-    if (dfaCond instanceof DfaVariableValue) {
-      DfaValue dfaTrue = myFactory.getConstFactory().getTrue();
-      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaCond, RelationType.EQ, dfaTrue));
+  public boolean applyCondition(DfaCondition dfaCond) {
+    if (!(dfaCond instanceof DfaRelation)) {
+      return dfaCond != DfaCondition.getFalse();
     }
-
-    if (dfaCond instanceof DfaConstValue) {
-      return dfaCond == myFactory.getConstFactory().getTrue() || dfaCond != myFactory.getConstFactory().getFalse();
-    }
-
-    if (!(dfaCond instanceof DfaRelationValue)) return true;
-
-    return applyRelationCondition((DfaRelationValue)dfaCond);
+    return applyRelationCondition((DfaRelation)dfaCond);
   }
 
-  private boolean applyRelationCondition(@NotNull DfaRelationValue dfaRelation) {
+  private boolean applyRelationCondition(@NotNull DfaRelation dfaRelation) {
     DfaValue dfaLeft = dfaRelation.getLeftOperand();
     DfaValue dfaRight = dfaRelation.getRightOperand();
     RelationType relationType = dfaRelation.getRelation();
@@ -928,15 +919,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           long max = resultRange.max();
           if (min == 0 && max == 0) {
             // a-b (rel) 0 => a (rel) b
-            if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedRelation, sum.getRight()))) return false;
+            if (!applyCondition(sum.getLeft().cond(correctedRelation, sum.getRight()))) return false;
           }
           else if (min >= 0 && RelationType.GE.isSubRelation(type)) {
             RelationType correctedGt = correctRelation(RelationType.GT, leftRange, rightCorrected, resultRange, isLong);
-            if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedGt, sum.getRight()))) return false;
+            if (!applyCondition(sum.getLeft().cond(correctedGt, sum.getRight()))) return false;
           }
           else if (max <= 0 && RelationType.LE.isSubRelation(type)) {
             RelationType correctedLt = correctRelation(RelationType.LT, leftRange, rightCorrected, resultRange, isLong);
-            if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedLt, sum.getRight()))) return false;
+            if (!applyCondition(sum.getLeft().cond(correctedLt, sum.getRight()))) return false;
           }
           if (RelationType.EQ.equals(type) && !resultRange.contains(0)) {
             // a-b == non-zero => a != b
@@ -954,11 +945,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         if (areEqual(sum.getLeft(), right)) {
           RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ?
                                        Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
-          if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
+          if (!applyCondition(sum.getRight().cond(finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0
         if (op == DfaBinOpValue.BinOp.PLUS && areEqual(sum.getRight(), right)) {
-          if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedRelation, myFactory.getInt(0)))) return false;
+          if (!applyCondition(sum.getLeft().cond(correctedRelation, myFactory.getInt(0)))) return false;
         }
 
         if (!leftRange.subtractionMayOverflow(op == DfaBinOpValue.BinOp.MINUS ? rightRange : rightNegated, isLong)) {
@@ -1201,7 +1192,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean applySpecialFieldEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
     Couple<DfaValue> pair = left instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)left, right) :
                             right instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)right, left) : null;
-    return pair == null || applyCondition(myFactory.createCondition(pair.getFirst(), RelationType.EQ, pair.getSecond()));
+    return pair == null || applyCondition(pair.getFirst().eq(pair.getSecond()));
   }
 
   private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {

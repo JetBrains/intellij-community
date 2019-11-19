@@ -20,12 +20,10 @@ import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
-import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -114,13 +112,24 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   }
 
   @Override
-  public boolean applyCondition(DfaValue dfaCond) {
-    if (dfaCond instanceof DfaInstanceofValue) {
-      final DfaInstanceofValue value = (DfaInstanceofValue)dfaCond;
-      if (!value.isNegated()) {
-        setExpressionType(value.getExpression(), value.getCastType());
+  public boolean applyCondition(DfaCondition dfaCond) {
+    if (dfaCond instanceof DfaRelation) {
+      DfaRelation rel = (DfaRelation)dfaCond;
+      DfaValue leftOperand = rel.getLeftOperand();
+      DfaValue rightOperand = rel.getRightOperand();
+      RelationType relation = rel.getRelation();
+      if (leftOperand instanceof DfaInstanceofValue && rightOperand instanceof DfaConstValue &&
+          (relation == RelationType.EQ || relation == RelationType.NE)) {
+        DfaInstanceofValue value = (DfaInstanceofValue)leftOperand;
+        Boolean val = ObjectUtils.tryCast(((DfaConstValue)rightOperand).getValue(), Boolean.class);
+        if (val != null) {
+          boolean negated = (relation == RelationType.EQ) != val; 
+          if (!negated) {
+            setExpressionType(value.getExpression(), value.getCastType());
+          }
+          return super.applyCondition(negated ? value.getRelation().createNegated() : value.getRelation());
+        }
       }
-      return super.applyCondition(((DfaInstanceofValue)dfaCond).getRelation());
     }
 
     return super.applyCondition(dfaCond);

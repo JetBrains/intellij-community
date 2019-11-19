@@ -870,9 +870,9 @@ public class TrackingRunner extends DataFlowRunner {
     }
     PsiExpression expression = change.getExpression();
     if (expression != null) {
-      Collection<DfaRelationValue> relations = Collections.emptyList();
+      Collection<DfaRelation> relations = Collections.emptyList();
       if (expression instanceof PsiBinaryExpression) {
-        DfaRelationValue rel = getBinaryExpressionRelation(change, (PsiBinaryExpression)expression);
+        DfaRelation rel = getBinaryExpressionRelation(change, (PsiBinaryExpression)expression);
         if (rel != null) {
           if (isSameRelation(rel, value, relation)) {
             return new CauseItem(new CustomDfaProblemType("condition '" + condition + "' was checked before"), expression);
@@ -883,10 +883,10 @@ public class TrackingRunner extends DataFlowRunner {
       if (expression instanceof PsiCallExpression) {
         relations = getCallRelations((PsiCallExpression)expression);
       }
-      List<DfaRelationValue> chain = findDeductionChain(change, relations, value, relation);
+      List<DfaRelation> chain = findDeductionChain(change, relations, value, relation);
       if (!chain.isEmpty()) {
         CauseItem[] result = new CauseItem[0];
-        for (DfaRelationValue deduced : chain) {
+        for (DfaRelation deduced : chain) {
           CauseItem[] cause =
             findRelationCause(deduced.getRelation(), change, deduced.getLeftOperand(), change, deduced.getRightOperand());
           result = ArrayUtil.mergeArrays(result, cause);
@@ -902,11 +902,11 @@ public class TrackingRunner extends DataFlowRunner {
     return null;
   }
 
-  private List<DfaRelationValue> findDeductionChain(MemoryStateChange change,
-                                                    Collection<DfaRelationValue> knownRelations,
-                                                    DfaVariableValue value,
-                                                    Relation relation) {
-    for (DfaRelationValue rel : knownRelations) {
+  private static List<DfaRelation> findDeductionChain(MemoryStateChange change,
+                                                      Collection<DfaRelation> knownRelations,
+                                                      DfaVariableValue value,
+                                                      Relation relation) {
+    for (DfaRelation rel : knownRelations) {
       if (isSameRelation(rel, value, relation)) {
         continue;
       }
@@ -946,9 +946,8 @@ public class TrackingRunner extends DataFlowRunner {
             else {
               continue;
             }
-            DfaRelationValue.Factory factory = getFactory().getRelationFactory();
-            DfaRelationValue rel1 = factory.createRelation(left, type, right);
-            DfaRelationValue rel2 = factory.createRelation(actualVar, actualRelation.myRelationType, actualRelation.myCounterpart);
+            DfaRelation rel1 = DfaRelation.createRelation(left, type, right);
+            DfaRelation rel2 = DfaRelation.createRelation(actualVar, actualRelation.myRelationType, actualRelation.myCounterpart);
             return StreamEx.of(rel1, rel2).nonNull().toImmutableList();
           }
         }
@@ -957,7 +956,7 @@ public class TrackingRunner extends DataFlowRunner {
     return Collections.emptyList();
   }
 
-  private static boolean isSameRelation(DfaRelationValue dfaRel, DfaVariableValue var, Relation relation) {
+  private static boolean isSameRelation(DfaRelation dfaRel, DfaVariableValue var, Relation relation) {
     DfaValue counterpart;
     RelationType type;
     if (dfaRel.getLeftOperand() == var) {
@@ -975,7 +974,7 @@ public class TrackingRunner extends DataFlowRunner {
   }
 
   @Nullable
-  private DfaRelationValue getBinaryExpressionRelation(MemoryStateChange change, PsiBinaryExpression binOp) {
+  private static DfaRelation getBinaryExpressionRelation(MemoryStateChange change, PsiBinaryExpression binOp) {
     PsiExpression lOperand = binOp.getLOperand();
     PsiExpression rOperand = binOp.getROperand();
     MemoryStateChange leftPos = change.findExpressionPush(lOperand);
@@ -985,19 +984,19 @@ public class TrackingRunner extends DataFlowRunner {
       DfaValue rightValue = rightPos.myTopOfStack;
       RelationType type = RelationType.fromElementType(binOp.getOperationTokenType());
       if (type != null) {
-        return getFactory().getRelationFactory().createRelation(leftValue, type, rightValue);
+        return DfaRelation.createRelation(leftValue, type, rightValue);
       }
     }
     return null;
   }
 
-  private Collection<DfaRelationValue> getCallRelations(PsiCallExpression callExpression) {
+  private Collection<DfaRelation> getCallRelations(PsiCallExpression callExpression) {
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(callExpression);
-    Set<DfaRelationValue> results = new LinkedHashSet<>();
+    Set<DfaRelation> results = new LinkedHashSet<>();
     for (MethodContract contract : contracts) {
       for (ContractValue condition : contract.getConditions()) {
-        DfaValue rel = condition.fromCall(getFactory(), callExpression);
-        ContainerUtil.addIfNotNull(results, ObjectUtils.tryCast(rel, DfaRelationValue.class));
+        DfaCondition rel = condition.fromCall(getFactory(), callExpression);
+        ContainerUtil.addIfNotNull(results, ObjectUtils.tryCast(rel, DfaRelation.class));
       }
     }
     return results;
@@ -1223,13 +1222,9 @@ public class TrackingRunner extends DataFlowRunner {
   private ThreeState contractApplies(@NotNull PsiMethodCallExpression call, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
     for (ContractValue condition : conditions) {
-      DfaConstValue evaluated = ObjectUtils.tryCast(condition.fromCall(getFactory(), call), DfaConstValue.class);
-      if (evaluated != null) {
-        Object value = evaluated.getValue();
-        if (value instanceof Boolean) {
-          return ThreeState.fromBoolean((Boolean)value);
-        }
-      }
+      DfaCondition cond = condition.fromCall(getFactory(), call);
+      if (cond == DfaCondition.getTrue()) return ThreeState.YES;
+      if (cond == DfaCondition.getFalse()) return ThreeState.NO;
     }
     return ThreeState.UNSURE;
   }
@@ -1243,7 +1238,7 @@ public class TrackingRunner extends DataFlowRunner {
     CauseItem causeItem = new CauseItem(prefix + " " + returnValueText + " when " + conditionsText,
       call.getMethodExpression().getReferenceNameElement());
     for (ContractValue condition : conditions) {
-      DfaRelationValue relation = ObjectUtils.tryCast(condition.fromCall(getFactory(), call), DfaRelationValue.class);
+      DfaRelation relation = ObjectUtils.tryCast(condition.fromCall(getFactory(), call), DfaRelation.class);
       PsiExpression leftPlace = condition.findLeftPlace(call);
       MemoryStateChange leftPush = history.findExpressionPush(leftPlace);
       PsiExpression rightPlace = condition.findRightPlace(call);

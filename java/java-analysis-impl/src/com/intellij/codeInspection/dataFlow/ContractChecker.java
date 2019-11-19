@@ -129,7 +129,7 @@ class ContractChecker {
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
         DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i]);
-        initialState.applyCondition(factory.createCondition(dfaParam, RelationType.equivalence(!negated), comparisonValue));
+        initialState.applyCondition(dfaParam.cond(RelationType.equivalence(!negated), comparisonValue));
       }
     }
 

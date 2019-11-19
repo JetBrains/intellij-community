@@ -32,11 +32,6 @@ public class DfaUnknownValue extends DfaValue {
     super(null);
   }
 
-  @Override
-  public DfaValue createNegated() {
-    return this;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "<unknown>";

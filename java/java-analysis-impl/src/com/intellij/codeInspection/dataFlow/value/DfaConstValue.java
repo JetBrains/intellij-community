@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class DfaConstValue extends DfaValue {
   private static final Throwable ourThrowable = new Throwable();
@@ -177,13 +178,6 @@ public class DfaConstValue extends DfaValue {
     return myValue;
   }
 
-  @Override
-  public DfaValue createNegated() {
-    if (this == myFactory.getConstFactory().getTrue()) return myFactory.getConstFactory().getFalse();
-    if (this == myFactory.getConstFactory().getFalse()) return myFactory.getConstFactory() .getTrue();
-    return DfaUnknownValue.getInstance();
-  }
-
   /**
    * Checks whether given value is a special value representing method failure, according to its contract
    *
@@ -192,6 +186,16 @@ public class DfaConstValue extends DfaValue {
    */
   @Contract("null -> false")
   public static boolean isContractFail(DfaValue value) {
-    return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == ourThrowable;
+    return isConstant(value, ourThrowable);
+  }
+
+  @Contract("null -> false")
+  static boolean isSentinel(DfaValue value) {
+    return isConstant(value, SENTINEL);
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isConstant(DfaValue value, Object constVal) {
+    return value instanceof DfaConstValue && Objects.equals(((DfaConstValue)value).getValue(), constVal);
   }
 }

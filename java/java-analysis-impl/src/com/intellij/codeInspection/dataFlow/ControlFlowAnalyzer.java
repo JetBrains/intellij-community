@@ -2014,7 +2014,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     DfaValue dfaValue = myFactory.createLiteralValue(expression);
     addInstruction(new PushInstruction(dfaValue, expression));
-    if (dfaValue == myFactory.getConstFactory().getNull()) {
+    if (DfaConstValue.isConstant(dfaValue, null)) {
       addNullCheck(expression);
     }
 

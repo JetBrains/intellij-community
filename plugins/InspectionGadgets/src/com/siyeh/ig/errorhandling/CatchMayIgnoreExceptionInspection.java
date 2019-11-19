@@ -174,9 +174,9 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
             DfaValueFactory factory = getFactory();
 
             for (DfaMemoryState memState : memStates) {
-              memState.applyCondition(factory.createCondition(myExceptionVar, RelationType.EQ, myStableExceptionVar));
+              memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
               memState.applyCondition(
-                factory.createCondition(myExceptionVar, RelationType.IS, factory.createTypeValue(exception, Nullability.NOT_NULL)));
+                myExceptionVar.cond(RelationType.IS, factory.createTypeValue(exception, Nullability.NOT_NULL)));
             }
             return super.createInitialInstructionStates(psiBlock, memStates, flow);
           }
