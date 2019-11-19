@@ -1121,7 +1121,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
 
-  private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, String message) {
+  private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, @NotNull String message) {
     if (element == null || !(element.getType() instanceof PsiPrimitiveType)) return;
 
     final Annotation annotation = myHolder.createErrorAnnotation(element, message);
@@ -1390,7 +1390,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
     GrAnnotation parent = (GrAnnotation)annotationArgumentList.getParent();
     Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder, parent.getClassReference());
-    if (r != null && r.getFirst() != null) {
+    if (r != null && r.getFirst() != null && r.getSecond() != null) {
       myHolder.createErrorAnnotation(r.getFirst(), r.getSecond());
     }
   }
@@ -1409,7 +1409,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiType type = annotationMethod.getReturnType();
 
-    Pair<PsiElement, String> result = CustomAnnotationChecker.checkAnnotationValueByType(value, type, false);
+    Pair.NonNull<PsiElement, String> result = CustomAnnotationChecker.checkAnnotationValueByType(value, type, false);
     if (result != null) {
       myHolder.createErrorAnnotation(result.getFirst(), result.getSecond());
     }
@@ -1646,7 +1646,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkAnnotationList(AnnotationHolder holder, @NotNull GrModifierList modifierList, String message) {
+  private static void checkAnnotationList(AnnotationHolder holder, @NotNull GrModifierList modifierList, @NotNull String message) {
     final PsiElement[] modifiers = modifierList.getModifiers();
     for (PsiElement modifier : modifiers) {
       if (!(modifier instanceof PsiAnnotation)) {
