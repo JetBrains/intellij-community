@@ -146,6 +146,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     configureJava("class C { void m() { Character.to<caret> } }");
     complete("toChars(int codePoint)");
     checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>) } }");
+    waitForAutoPopup();
     showParameterInfo();
     methodOverloadDown();
     checkResultWithInlays(
@@ -159,6 +160,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("toChars(int codePoint)");
     type("123");
     checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/>123<caret>) } }");
+    waitForAutoPopup();
     showParameterInfo();
     methodOverloadDown();
     checkResultWithInlays("class C { void m() { Character.toChars(<Hint text=\"codePoint:\"/>123, <HINT text=\"dst:\"/><caret>, <Hint text=\"dstIndex:\"/>) } }");
@@ -178,6 +180,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "  int some(int from, int to, int other) { return 0; }\n" +
                           "  void m() { some(<HINT text=\"from:\"/><caret>, <Hint text=\"to:\"/>, <Hint text=\"other:\"/>) }\n" +
                           "}");
+    waitForAutoPopup();
     showParameterInfo();
     checkHintContents("<html><b>int from</b>, int to</html>\n" +
                       "-\n" +
@@ -758,6 +761,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
+    waitForAutoPopup();
     showParameterInfo();
     type(' ');
     checkHintContents(null);
@@ -1600,6 +1604,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   public void testOverloadSwitchToLessParametersWithVirtualComma() {
     configureJava("class C { void m() { Character.to<caret> } }");
     complete("toChars(int codePoint, char[] dst, int dstIndex)");
+    waitForAutoPopup();
     showParameterInfo();
     methodOverloadUp();
     checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>) } }");
@@ -1646,6 +1651,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     configureJava("class C { void some(int a) {} void some(int a, int b) {} void m() { s<caret> } }");
     complete("some(int a)");
     type('1');
+    waitForAutoPopup();
     showParameterInfo();
     methodOverloadDown();
     checkResultWithInlays("class C { void some(int a) {} void some(int a, int b) {} void m() { some(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret>); } }");
@@ -1676,6 +1682,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     type('2');
     next();
     type('3');
+    waitForAutoPopup();
     showParameterInfo();
     methodOverloadUp();
     checkResultWithInlays("class C { void some(int a) {} void some(int a, int... b) {} void m() { some(<HINT text=\"a:\"/>1<caret>); } }");
