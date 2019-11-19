@@ -363,7 +363,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     if (myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.match(clazz.getBaseClassReference(), other.getBaseClassReference())) &&
                                     myMatchingVisitor.matchSons(clazz.getArgumentList(), other.getArgumentList()) &&
-                                    compareClasses(clazz, other)) && isTypedVar) {
+                                    matchClasses(clazz, other)) && isTypedVar) {
       myMatchingVisitor.setResult(matchType(classReference, other.getBaseClassReference()));
     }
   }
@@ -413,7 +413,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     );
   }
 
-  private boolean compareClasses(PsiClass patternClass, PsiClass matchClass) {
+  private boolean matchClasses(PsiClass patternClass, PsiClass matchClass) {
     final PsiClass saveClazz = this.myClazz;
     this.myClazz = matchClass;
     final MatchContext context = myMatchingVisitor.getMatchContext();
@@ -1660,7 +1660,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiIdentifier identifier2 = other.getNameIdentifier();
     if (myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.matchText(identifier1, identifier2)) &&
-                                    compareClasses(clazz, other)) && isTypedVar) {
+                                    matchClasses(clazz, other)) && isTypedVar) {
       final PsiElement matchElement = identifier2 == null ? other : identifier2;
       final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(identifier1);
       final PsiElement result = other instanceof PsiAnonymousClass
