@@ -163,11 +163,6 @@ abstract class ProductProperties {
   boolean buildSourcesArchive = false
 
   /**
-   * add product version to root installation folder
-   */
-  boolean includeVersionToInstallDir = true
-
-  /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
    */
   MavenArtifactsProperties mavenArtifacts = new MavenArtifactsProperties()

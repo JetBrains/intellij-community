@@ -305,8 +305,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   static String getZipRoot(BuildContext buildContext, MacDistributionCustomizer customizer) {
-    !buildContext.productProperties.includeVersionToInstallDir ?
-    "${buildContext.applicationInfo.productName}.app/Contents" :
     "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
   }
 
