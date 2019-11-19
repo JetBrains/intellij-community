@@ -103,7 +103,9 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testBadReference() { doTest(); }
   public void testMissingReturnDescription() { doTest(); }
   public void testDoubleParenthesesInCode() { doTest(); }
-  public void testDuplicateParam() { doTest(); }
+  public void testDuplicateParam0() { doTest(); }
+  public void testDuplicateParam1() { doTest(); }
+  public void testDuplicateParam2() { doTest(); }
   public void testDuplicateReturn() { doTest(); }
   public void testDuplicateDeprecated() { myInspection.IGNORE_DEPRECATED = false; doTest(); }
   public void testDuplicateSerial() { doTest(); }
