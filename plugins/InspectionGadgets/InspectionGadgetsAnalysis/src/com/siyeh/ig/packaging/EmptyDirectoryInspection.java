@@ -37,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EmptyDirectoryInspection extends BaseGlobalInspection {
 
@@ -74,7 +76,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     }
     final GlobalSearchScope globalSearchScope = (GlobalSearchScope)searchScope;
     final PsiManager psiManager = PsiManager.getInstance(project);
-    index.iterateContent(fileOrDir -> ReadAction.compute(() -> {
+    ReadAction.nonBlocking(() -> index.iterateContent(fileOrDir -> {
       if (project.isDisposed()) {
         return false;
       }
@@ -101,7 +103,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
         InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
         new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
       return true;
-    }));
+    })).executeSynchronously();
   }
 
   @Nullable
