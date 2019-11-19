@@ -54,26 +54,13 @@ class FilePathHolder(private val project: Project) : FileHolder {
       if (files.isEmpty()) return
 
       if (scope.recursivelyDirtyDirectories.size == 0) {
-        val dirtyFiles = scope.dirtyFiles
-        for (dirtyFile in dirtyFiles) {
-          files.remove(dirtyFile)
-        }
-        val iterator = files.iterator()
-        while (iterator.hasNext()) {
-          val filePath = iterator.next()
-          iterator.remove()
-          scope.addDirtyFile(filePath)
-        }
+        // `files` set is case-sensitive depending on OS, `scope.dirtyFiles` set is always case-sensitive
+        // `AbstractSet.removeAll()` chooses collection to iterate through depending on its size
+        // so we explicitly iterate through `scope.dirtyFiles` here
+        scope.dirtyFiles.forEach { files.remove(it) }
       }
       else {
-        val iterator = files.iterator()
-        while (iterator.hasNext()) {
-          val filePath = iterator.next()
-          scope.addDirtyFile(filePath)
-          if (scope.belongsTo(filePath)) {
-            iterator.remove()
-          }
-        }
+        files.removeIf { scope.belongsTo(it) }
       }
     }
   }
