@@ -43,17 +43,21 @@ internal abstract class SaveItem {
   protected abstract val groupPathString: String?
 
   fun writeExternal(parentElement: Element) {
-    val moduleElement = Element(ELEMENT_MODULE)
     val moduleFilePath = moduleFilePath
-    val url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath)
-    moduleElement.setAttribute(ATTRIBUTE_FILEURL, url)
-    // support for older builds
-    moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath)
+    // moduleFilePath is empty for non-persistent modules. Such modules should disappear when IDE exits,
+    // hence they should not be mentioned in `modules.xml`.
+    if (moduleFilePath.isNotEmpty()) {
+      val moduleElement = Element(ELEMENT_MODULE)
+      val url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath)
+      moduleElement.setAttribute(ATTRIBUTE_FILEURL, url)
+      // support for older builds
+      moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath)
 
-    groupPathString?.let {
-      moduleElement.setAttribute(ATTRIBUTE_GROUP, it)
+      groupPathString?.let {
+        moduleElement.setAttribute(ATTRIBUTE_GROUP, it)
+      }
+      parentElement.addContent(moduleElement)
     }
-    parentElement.addContent(moduleElement)
   }
 }
 

@@ -50,7 +50,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   VirtualFile getModuleFile();
 
   /**
-   * System-independent path to the .iml file.
+   * System-independent path to the .iml file or empty string if module is not persistent.
    */
   @NotNull
   @SystemIndependent

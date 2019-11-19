@@ -520,6 +520,16 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
   @Override
   @NotNull
+  public Module newNonPersistentModule(@NotNull String moduleName, @NotNull String id) {
+    incModificationCount();
+    final ModifiableModuleModel modifiableModel = getModifiableModel();
+    final Module module = modifiableModel.newNonPersistentModule(moduleName, id);
+    modifiableModel.commit();
+    return module;
+  }
+
+  @Override
+  @NotNull
   public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
     incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
@@ -654,6 +664,10 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   @NotNull
   protected abstract ModuleEx createModule(@NotNull String filePath);
 
+  protected ModuleEx createNonPersistentModule(@NotNull String name) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
@@ -754,6 +768,18 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {
       return newModule(filePath, moduleTypeId, null);
+    }
+
+    @Override
+    @NotNull
+    public Module newNonPersistentModule(@NotNull String moduleName, @NotNull final String moduleTypeId) {
+      assertWritable();
+
+      ModuleEx module = myManager.createNonPersistentModule(moduleName);
+      initModule(module, () -> {
+        module.setModuleType(moduleTypeId);
+      });
+      return module;
     }
 
     @Override

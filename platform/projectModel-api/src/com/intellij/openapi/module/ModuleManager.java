@@ -57,6 +57,21 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull String moduleTypeId);
 
   /**
+   * Creates a non-persistent module of the specified type and adds it to the project
+   * to which the module manager is related. {@link #commit()} must be called to
+   * bring the changes in effect.
+   *
+   * In contrast with modules created by {@link #newModule(String, String)},
+   * non-persistent modules aren't stored on a filesystem and aren't being written
+   * in a project XML file. When IDE closes, all non-persistent modules vanishes out.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public Module newNonPersistentModule(@NotNull String moduleName, @NotNull String id) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
    *
    * @param filePath the path to load the module from.
