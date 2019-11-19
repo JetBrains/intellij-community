@@ -70,6 +70,10 @@
     </component>
   </project-components>
 
+  <projectListeners>
+    <listener class="com.intellij.lang.java.JavaModuleRenameListener" topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.methodImplementor" interface="com.intellij.codeInsight.MethodImplementor"/>
     <extensionPoint qualifiedName="com.intellij.javaExpressionSurrounder" interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
@@ -518,7 +522,6 @@
                                        order="first"/>
 
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
-    <postStartupActivity implementation="com.intellij.lang.java.JavaModuleRenameListener"/>
 
     <bundledKeymap file="Visual Studio.xml"/>
     <bundledKeymap file="Eclipse.xml"/>
