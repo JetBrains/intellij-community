@@ -34,6 +34,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 
 import javax.swing.*;
 import java.util.*;
@@ -590,32 +591,42 @@ public class JobUtilTest extends LightPlatformTestCase {
   }
 
   public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlow() {
-    int N = JobSchedulerImpl.getJobPoolParallelism();
+    int parallelism = JobSchedulerImpl.getJobPoolParallelism();
+    Assume.assumeTrue("Too low parallelism: " + parallelism + ", I give up", parallelism > 1);
+    // values higher than this can lead to too coarse tasks in FJP queue which means some of them may contain more than one element which means long-delay task and some shot-delay tasks can be scheduled to one chunk which means some of the tasks will not be stolen for a (relatively)long time.
+    // so it's a TODO for ApplierCompleter
+    int N = 1 << parallelism;
     Integer[] times = new Integer[N];
-    for (int i=0; i<N; i++) {
-      Arrays.fill(times, 0);
-      times[i] = 1_000_000;
+    Arrays.fill(times, 0);
+    class MyException extends RuntimeException { }
+    int longDelay = (int)TimeUnit.MINUTES.toMillis(2);
+    for (int i=0; i<100; i++) {
+      times[(i + N - 1) % N] = 0;
+      times[i % N] = longDelay;
 
       AtomicInteger executed = new AtomicInteger();
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
-      String enough = "enough is enough";
       try {
+        TestTimeOut deadline = setTimeout(2, TimeUnit.SECONDS);
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(times.clone()), progress, time -> {
           while ((time -= 100) >= 0) {
             ProgressManager.checkCanceled();
             TimeoutUtil.sleep(100);
+            if (deadline.isTimedOut()) {
+              String s = ThreadDumper.dumpThreadsToString();
+              throw new AssertionError("Timed out at " + time + "; threads:\n" + s);
+            }
           }
 
-          if (executed.incrementAndGet() == times.length - 1) {
+          if (executed.incrementAndGet() >= times.length - 1) {
             // executed all but the slowest one
-            throw new RuntimeException(enough);
+            throw new MyException();
           }
           return true;
         });
         fail();
       }
-      catch (RuntimeException e) {
-        assertEquals(enough, e.getMessage());
+      catch (MyException ignored) {
       }
     }
   }
