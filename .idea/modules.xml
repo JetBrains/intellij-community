@@ -387,7 +387,7 @@
       <module fileurl="file://$PROJECT_DIR$/../base/sdklib/android.sdktools.sdklib.iml" filepath="$PROJECT_DIR$/../base/sdklib/android.sdktools.sdklib.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/testutils/android.sdktools.testutils.iml" filepath="$PROJECT_DIR$/../base/testutils/android.sdktools.testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/tracer/android.sdktools.tracer.iml" filepath="$PROJECT_DIR$/../base/tracer/android.sdktools.tracer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/zipflinger/android.sdktools.zipflinger.iml" filepath="$PROJECT_DIR$/../base/zipflinger/android.sdktools.zipflinger.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/../base/zipflinger/android.sdktools.zipflinger.iml" filepath="$PROJECT_DIR$/../base/zipflinger/android.sdktools.zipflinger.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" filepath="$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/assistant/assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/assistant/assistant.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/assistant/assistant-test.iml" filepath="$PROJECT_DIR$/../adt/idea/assistant/assistant-test.iml" />
@@ -429,9 +429,9 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/apkanalyzer/intellij.android.apkanalyzer.iml" filepath="$PROJECT_DIR$/../adt/idea/apkanalyzer/intellij.android.apkanalyzer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/app-inspection/api/intellij.android.app-inspection.api.iml" filepath="$PROJECT_DIR$/../adt/idea/app-inspection/api/intellij.android.app-inspection.api.iml" group="intellij/android/app-inspection" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/app-inspection/api/intellij.android.app-inspection.api.iml" filepath="$PROJECT_DIR$/../adt/idea/app-inspection/api/intellij.android.app-inspection.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/app-inspection/api/intellij.android.app-inspection.api.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/app-inspection/api/intellij.android.app-inspection.api.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/app-inspection/ide/intellij.android.app-inspection.ide.iml" filepath="$PROJECT_DIR$/../adt/idea/app-inspection/ide/intellij.android.app-inspection.ide.iml" group="intellij/android/app-inspection" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/app-inspection/ide/intellij.android.app-inspection.ide.iml" filepath="$PROJECT_DIR$/../adt/idea/app-inspection/ide/intellij.android.app-inspection.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" filepath="$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.iml" filepath="$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/build-attribution/intellij.android.build-attribution.tests.iml" />
@@ -493,7 +493,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/intellij.android.sdkUpdates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/../adt/idea/smali/intellij.android.smali.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/sync-perf-tests/intellij.android.sync-perf-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sync-perf-tests/intellij.android.sync-perf-tests.iml" group="intellij/android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/sync-perf-tests/intellij.android.sync-perf-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sync-perf-tests/intellij.android.sync-perf-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-templates/intellij.android.templates.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-templates/intellij.android.templates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" filepath="$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" />
