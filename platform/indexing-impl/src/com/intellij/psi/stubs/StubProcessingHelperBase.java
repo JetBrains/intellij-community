@@ -28,17 +28,20 @@ import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Author: dmitrylomov
  */
 public abstract class StubProcessingHelperBase {
-  private static final Logger LOG = Logger.getInstance(StubProcessingHelperBase.class);
+  protected static final Logger LOG = Logger.getInstance(StubProcessingHelperBase.class);
 
   public <Psi extends PsiElement> boolean processStubsInFile(@NotNull Project project,
                                                              @NotNull VirtualFile file,

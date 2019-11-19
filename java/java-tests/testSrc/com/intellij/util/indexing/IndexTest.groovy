@@ -683,6 +683,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       // stub mismatch
     }
 
+    assertTrue(((StubIndexImpl)StubIndex.instance).areAllProblemsProcessedInTheCurrentThread())
+
     try {
       StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
 
