@@ -13,9 +13,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType.EQ;
@@ -36,58 +34,80 @@ class DebuggerDfaRunner extends DataFlowRunner {
                                "java.util.LinkedList",
                                CommonClassNames.JAVA_UTIL_HASH_MAP,
                                "java.util.TreeMap");
-  private final PsiCodeBlock myBody;
-  private final PsiStatement myStatement;
-  private final Project myProject;
-  private final StackFrame myFrame;
+  private final @NotNull PsiCodeBlock myBody;
+  private final @NotNull PsiStatement myStatement;
+  private final @NotNull Project myProject;
+  private final @Nullable ControlFlow myFlow;
+  private final @Nullable DfaInstructionState myStartingState;
+  private final long myModificationStamp;
 
   DebuggerDfaRunner(@NotNull PsiCodeBlock body, @NotNull PsiStatement statement, @NotNull StackFrame frame) {
     super(body);
     myBody = body;
     myStatement = statement;
     myProject = body.getProject();
-    myFrame = frame;
+    myFlow = buildFlow(myBody);
+    myStartingState = getStartingState(frame);
+    myModificationStamp = getFile().getModificationStamp();
+  }
+  
+  boolean isValid() {
+    return myStartingState != null;
+  }
+  
+  PsiFile getFile() {
+    return myBody.getContainingFile();
+  }
+
+  RunnerResult interpret(InstructionVisitor visitor) {
+    if (myFlow == null || myStartingState == null || getFile().getModificationStamp() != myModificationStamp) {
+      return RunnerResult.ABORTED;
+    }
+    return interpret(myBody, visitor, myFlow, Collections.singletonList(myStartingState));
+  }
+
+  @Nullable
+  private DfaInstructionState getStartingState(StackFrame frame) {
+    if (myFlow == null) return null;
+    int offset = myFlow.getStartOffset(myStatement).getInstructionOffset();
+    if (offset >= 0) {
+      boolean changed = false;
+      DfaMemoryState state = super.createMemoryState();
+      PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(myProject);
+      DfaValueFactory factory = getFactory();
+      for (DfaValue dfaValue : factory.getValues().toArray(new DfaValue[0])) {
+        if (dfaValue instanceof DfaVariableValue) {
+          DfaVariableValue var = (DfaVariableValue)dfaValue;
+          Value jdiValue = findJdiValue(frame, var);
+          if (jdiValue != null) {
+            addToState(psiFactory, factory, state, var, jdiValue);
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        return new DfaInstructionState(myFlow.getInstruction(offset), state);
+      }
+    }
+    return null;
   }
 
   @NotNull
   @Override
-  protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                     @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                     @NotNull ControlFlow flow) {
-    if (psiBlock == myBody) {
-      int offset = flow.getStartOffset(myStatement).getInstructionOffset();
-      if (offset >= 0) {
-        boolean changed = false;
-        DfaMemoryState state = super.createMemoryState();
-        PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(myProject);
-        DfaValueFactory factory = getFactory();
-        for (DfaValue dfaValue : factory.getValues().toArray(new DfaValue[0])) {
-          if (dfaValue instanceof DfaVariableValue) {
-            DfaVariableValue var = (DfaVariableValue)dfaValue;
-            Value jdiValue = findJdiValue(var);
-            if (jdiValue != null) {
-              addToState(psiFactory, factory, state, var, jdiValue);
-              changed = true;
-            }
-          }
-        }
-        if (changed) {
-          return Collections.singletonList(new DfaInstructionState(flow.getInstruction(offset), state));
-        }
-      }
-    }
-    return Collections.emptyList(); // Cancel analysis: no reason to continue
+  protected DataFlowRunner.TimeStats createStatistics() {
+    // Do not track time for DFA assist
+    return new TimeStats(false);
   }
 
   @Nullable
-  private Value findJdiValue(@NotNull DfaVariableValue var) {
+  private Value findJdiValue(StackFrame frame, @NotNull DfaVariableValue var) {
     if (var.getQualifier() != null) {
       VariableDescriptor descriptor = var.getDescriptor();
       if (descriptor instanceof SpecialField) {
         // Special fields facts are applied from qualifiers
         return null;
       }
-      Value qualifierValue = findJdiValue(var.getQualifier());
+      Value qualifierValue = findJdiValue(frame, var.getQualifier());
       if (qualifierValue == null) return null;
       PsiModifierListOwner element = descriptor.getPsiElement();
       if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
@@ -113,16 +133,16 @@ class DebuggerDfaRunner extends DataFlowRunner {
     if (psi instanceof PsiClass) {
       // this
       if (PsiTreeUtil.getParentOfType(myBody, PsiClass.class) == psi) {
-        return myFrame.thisObject();
+        return frame.thisObject();
       }
       // TODO: support references to outer classes
     }
     if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
       // TODO: support captured locals
       try {
-        LocalVariable variable = myFrame.visibleVariableByName(((PsiVariable)psi).getName());
+        LocalVariable variable = frame.visibleVariableByName(((PsiVariable)psi).getName());
         if (variable != null) {
-          return wrap(myFrame.getValue(variable));
+          return wrap(frame.getValue(variable));
         }
       }
       catch (AbsentInformationException ignore) {

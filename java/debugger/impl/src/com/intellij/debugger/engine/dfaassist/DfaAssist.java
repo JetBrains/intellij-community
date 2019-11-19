@@ -38,9 +38,9 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +50,7 @@ import java.util.Map;
 public class DfaAssist implements DebuggerContextListener {
   private final Project myProject;
   private final List<Inlay<?>> myInlays = new ArrayList<>(); // modified from EDT only
+  private CancellablePromise<?> myDfaTask; // modified from debugger manager thread only
 
   private DfaAssist(Project project) {
     myProject = project;
@@ -77,15 +78,25 @@ public class DfaAssist implements DebuggerContextListener {
     debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+        if (myDfaTask != null) {
+          myDfaTask.cancel();
+          myDfaTask = null;
+        }
         StackFrameProxyImpl proxy = suspendContext.getFrameProxy();
         if (proxy == null) {
           disposeInlays();
           return;
         }
         StackFrame frame = proxy.getStackFrame();
-        ReadAction.nonBlocking(() -> computeHintRanges(frame, pointer)).withDocumentsCommitted(myProject)
-          .finishOnUiThread(ModalityState.defaultModalityState(), DfaAssist.this::displayInlays)
-          .submit(AppExecutorUtil.getAppExecutorService());
+        DebuggerDfaRunner runner = ReadAction.compute(() -> createDfaRunner(frame, pointer.getElement()));
+        if (runner == null) {
+          disposeInlays();
+          return;
+        }
+        myDfaTask =
+          ReadAction.nonBlocking(() -> computeHintRanges(runner)).withDocumentsCommitted(myProject)
+            .finishOnUiThread(ModalityState.NON_MODAL, DfaAssist.this::displayInlays)
+            .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
   }
@@ -100,18 +111,18 @@ public class DfaAssist implements DebuggerContextListener {
     myInlays.clear();
   }
 
-  private void displayInlays(Map<SmartPsiFileRange, DfaHint> hints) {
+  private void displayInlays(Map<PsiExpression, DfaHint> hints) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     doDisposeInlays();
     if (hints.isEmpty()) return;
     EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
-    VirtualFile expectedFile = hints.keySet().iterator().next().getVirtualFile();
+    VirtualFile expectedFile = hints.keySet().iterator().next().getContainingFile().getVirtualFile();
     if (editor == null || !expectedFile.equals(editor.getVirtualFile())) return;
     InlayModel model = editor.getInlayModel();
     List<Inlay<?>> newInlays = new ArrayList<>();
     AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
-    hints.forEach((smartRange, hint) -> {
-      Segment range = smartRange.getRange();
+    hints.forEach((expr, hint) -> {
+      Segment range = expr.getTextRange();
       if (range == null) return;
       PresentationFactory factory = new PresentationFactory(editor);
       MenuOnClickPresentation presentation = new MenuOnClickPresentation(
@@ -123,33 +134,27 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   @NotNull
-  private static Map<SmartPsiFileRange, DfaHint> computeHintRanges(@NotNull StackFrame frame, @NotNull SmartPsiElementPointer<PsiElement> ptr) {
-    PsiElement element = ptr.getElement();
-    if (element == null) return Collections.emptyMap();
-    Map<PsiExpression, DfaHint> hintMap = computeHints(frame, element);
-    if (hintMap.isEmpty()) return Collections.emptyMap();
-    Project project = element.getProject();
-    PsiFile file = element.getContainingFile();
-    return EntryStream.of(hintMap).mapKeys(expr -> SmartPointerManager.getInstance(project)
-      .createSmartPsiFileRangePointer(file, expr.getTextRange())).toMap();
-  }
-
-  @NotNull
-  static Map<PsiExpression, DfaHint> computeHints(@NotNull StackFrame frame, @NotNull PsiElement element) {
-    if (!element.isValid() || DumbService.isDumb(element.getProject())) return Collections.emptyMap();
-
-    if (!locationMatches(element, frame.location())) return Collections.emptyMap();
-    PsiStatement statement = getAnchorStatement(element);
-    if (statement == null) return Collections.emptyMap();
-    // TODO: support class initializers
-    PsiCodeBlock body = getCodeBlock(statement);
-    if (body == null) return Collections.emptyMap();
+  private static Map<PsiExpression, DfaHint> computeHintRanges(@NotNull DebuggerDfaRunner runner) {
     DebuggerInstructionVisitor visitor = new DebuggerInstructionVisitor();
-    // TODO: read assertion status
-    RunnerResult result = new DebuggerDfaRunner(body, statement, frame).analyzeCodeBlock(body, visitor);
+    RunnerResult result = runner.interpret(visitor);
     if (result != RunnerResult.OK) return Collections.emptyMap();
     visitor.cleanup();
     return visitor.getHints();
+  }
+
+  @Nullable
+  static DebuggerDfaRunner createDfaRunner(@NotNull StackFrame frame, @Nullable PsiElement element) {
+    if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
+
+    if (!locationMatches(element, frame.location())) return null;
+    PsiStatement statement = getAnchorStatement(element);
+    if (statement == null) return null;
+    // TODO: support class initializers
+    PsiCodeBlock body = getCodeBlock(statement);
+    if (body == null) return null;
+    // TODO: read assertion status
+    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, statement, frame);
+    return runner.isValid() ? runner : null;
   }
 
   /**
