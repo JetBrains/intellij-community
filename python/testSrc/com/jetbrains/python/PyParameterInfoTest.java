@@ -755,7 +755,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadMultiFileTest(5);
+        final Map<String, PsiElement> marks = loadMultiFileTest(4);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
@@ -764,8 +764,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
                                                               Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY),
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
-
-        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int=15, y: int=0, z: int=10", new String[]{"x: int=15, "});
       }
     );
   }
@@ -786,6 +784,19 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
 
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, z: str", new String[]{"x: int, "});
+      }
+    );
+  }
+
+  // PY-28506, PY-31762, PY-35548
+  public void testInitializingDataclassOverridingField() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(2);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int=15, y: int=0, z: int=10", new String[]{"x: int=15, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int", new String[]{"a: int"});
       }
     );
   }

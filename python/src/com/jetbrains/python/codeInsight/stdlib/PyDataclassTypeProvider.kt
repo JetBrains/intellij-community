@@ -117,6 +117,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     var seenInit = false
     val keywordOnly = linkedSetOf<String>()
     var seenKeywordOnlyClass = false
+    val seenNames = mutableSetOf<String>()
 
     for (currentType in StreamEx.of(clsType).append(cls.getAncestorTypes(context))) {
       if (currentType == null ||
@@ -140,22 +141,24 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           .asSequence()
           .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
           .mapNotNull { fieldToParameter(current, it, parameters.type, ellipsis, context) }
-          .forEach { parameter ->
-            parameter.name?.let {
-              // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
+          .filterNot { it.first in seenNames }
+          .forEach { (name, parameter) ->
+            // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
-              if (seenKeywordOnlyClass && it !in collected) {
-                keywordOnly += it
-              }
+            if (seenKeywordOnlyClass && name !in collected) {
+              keywordOnly += name
+            }
 
-              if (parameters.type == PyDataclassParameters.Type.STD) {
-                // std: attribute that overrides ancestor's attribute does not change the order but updates type
-                collected[it] = collected.remove(it) ?: parameter
-              }
-              else if (!collected.containsKey(it)) {
-                // attrs: attribute that overrides ancestor's attribute changes the order
-                collected[it] = parameter
-              }
+            if (parameter == null) {
+              seenNames.add(name)
+            }
+            else if (parameters.type == PyDataclassParameters.Type.STD) {
+              // std: attribute that overrides ancestor's attribute does not change the order but updates type
+              collected[name] = collected.remove(name) ?: parameter
+            }
+            else if (!collected.containsKey(name)) {
+              // attrs: attribute that overrides ancestor's attribute changes the order
+              collected[name] = parameter
             }
           }
       }
@@ -189,20 +192,24 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
                                field: PyTargetExpression,
                                dataclassType: PyDataclassParameters.Type,
                                ellipsis: PyNoneLiteralExpression,
-                               context: TypeEvalContext): PyCallableParameter? {
+                               context: TypeEvalContext): Pair<String, PyCallableParameter?>? {
+    val fieldName = field.name ?: return null
+
     val stub = field.stub
     val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(field) else stub.getCustomStub(PyDataclassFieldStub::class.java)
-    if (fieldStub != null && !fieldStub.initValue()) return null
+    if (fieldStub != null && !fieldStub.initValue()) return fieldName to null
     if (fieldStub == null && field.annotationValue == null) return null // skip fields that are not annotated
 
-    val name =
-      field.name?.let {
+    val parameterName =
+      fieldName.let {
         if (dataclassType == PyDataclassParameters.Type.ATTRS && PyUtil.getInitialUnderscores(it) == 1) it.substring(1) else it
       }
 
-    return PyCallableParameterImpl.nonPsi(name,
-                                          getTypeForParameter(cls, field, dataclassType, context),
-                                          getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context))
+    val parameter = PyCallableParameterImpl.nonPsi(parameterName,
+                                                   getTypeForParameter(cls, field, dataclassType, context),
+                                                   getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context))
+
+    return parameterName to parameter
   }
 
   private fun getTypeForParameter(cls: PyClass,
