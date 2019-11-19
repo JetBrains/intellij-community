@@ -23,7 +23,8 @@ val log = KLoggers.logger()
 private val ports = lazy {
     val regex = "[^\\d]*(?<port>\\d+)[^\\d]*".toRegex()
     val ports = IdeaOAuthConfig.redirectURIs.mapNotNull { it ->
-        regex.find(it)?.groups?.get("port")?.value?.toIntOrNull() }
+        regex.find(it)?.groups?.get("port")?.value?.toIntOrNull()
+    }
     Pair(ports.min() ?: 1000, ports.max() ?: 65535)
 }
 
@@ -43,8 +44,7 @@ suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfigur
                     }
                 }
             }.start(wait = false)
-        }
-        catch (th: Throwable) {
+        } catch (th: Throwable) {
             log.error(th, "Can't start server at: ${codeFlow.redirectUri}")
             throw th
         }
@@ -52,9 +52,14 @@ suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfigur
         lifetime.add {
             server.stop(100, 5000, TimeUnit.MILLISECONDS)
         }
-
-        val uri = URI(codeFlow.codeFlowURL())
-        Desktop.getDesktop().browse(uri)
+        try {
+            val uri = URI(codeFlow.codeFlowURL())
+            Desktop.getDesktop().browse(uri)
+        } catch (th: Throwable) {
+            val message = "Can't open '${config.server}' in system browser"
+            log.warn(th, message)
+            cnt.resume(OAuthTokenResponse.Error(config.server, "", "Can't open '${config.server}' in system browser."))
+        }
     }
 }
 

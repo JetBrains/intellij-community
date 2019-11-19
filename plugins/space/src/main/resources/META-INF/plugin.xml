@@ -11,17 +11,18 @@
     </change-notes>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="183.2153.8"/>
+    <idea-version since-build="193.5233.12"/>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="space-automation-kts.xml">org.jetbrains.kotlin</depends>
     <depends>com.intellij.modules.vcs</depends>
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
+        <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
 
         <applicationConfigurable
             groupId="tools"
@@ -31,7 +32,7 @@
         />
 
         <toolWindow id="Space"
-                    icon="CircletIcons.mainIcon"
+                    icon="CircletIcons.mainToolWindowIcon"
                     anchor="right"
                     canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
@@ -50,15 +51,6 @@
             implementation="circlet.ui.clone.CircletCloneExtension"/>
     </extensions>
 
-    <!--pipelines-->
-    <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <scriptDefinitionsProvider
-            id="circletScriptDefinitionsProvider"
-            implementation="circlet.plugins.pipelines.services.CircletScriptDefinitionsProvider"
-            order="first"
-        />
-    </extensions>
-
     <application-components>
         <component>
             <implementation-class>circlet.components.CircletApplicationComponent</implementation-class>
@@ -69,16 +61,11 @@
         </component>
     </application-components>
 
-
     <actions>
-
-        <action class="circlet.actions.ReEnterCredentialsAction" text="Re-enter credentials..."
-                id="Circlet.ReEnterCredentialsAction"/>
         <action class="circlet.actions.TestCircletAction" text="Test Space..." id="Circlet.TestCircletAction"/>
 
         <group text="Space" id="CircletGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <reference id="Circlet.ReEnterCredentialsActionRef" ref="Circlet.ReEnterCredentialsAction"/>
             <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>
         </group>
 
