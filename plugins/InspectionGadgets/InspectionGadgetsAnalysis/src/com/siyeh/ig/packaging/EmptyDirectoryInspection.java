@@ -76,34 +76,33 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     }
     final GlobalSearchScope globalSearchScope = (GlobalSearchScope)searchScope;
     final PsiManager psiManager = PsiManager.getInstance(project);
-    ReadAction.nonBlocking(() -> index.iterateContent(fileOrDir -> {
-      if (project.isDisposed()) {
-        return false;
-      }
-      if (!globalSearchScope.contains(fileOrDir)) {
+    ReadAction.nonBlocking(() -> {
+      Map<RefElement, CommonProblemDescriptor> results = new HashMap<>();
+      index.iterateContent(fileOrDir -> {
+        if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(fileOrDir)) {
+          return true;
+        }
+        final VirtualFile[] children = fileOrDir.getChildren();
+        if (children.length != 0) {
+          return true;
+        }
+        final PsiDirectory directory = psiManager.findDirectory(fileOrDir);
+        final RefElement refDirectory = context.getRefManager().getReference(directory);
+        if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
+          return true;
+        }
+        final String relativePath = getPathRelativeToModule(fileOrDir, project);
+        if (relativePath == null) {
+          return true;
+        }
+        results.put(refDirectory, manager.createProblemDescriptor(
+          InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
+          new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
         return true;
-      }
-      if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(fileOrDir)) {
-        return true;
-      }
-      final VirtualFile[] children = fileOrDir.getChildren();
-      if (children.length != 0) {
-        return true;
-      }
-      final PsiDirectory directory = psiManager.findDirectory(fileOrDir);
-      final RefElement refDirectory = context.getRefManager().getReference(directory);
-      if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
-        return true;
-      }
-      final String relativePath = getPathRelativeToModule(fileOrDir, project);
-      if (relativePath == null) {
-        return true;
-      }
-      processor.addProblemElement(refDirectory, manager.createProblemDescriptor(
-        InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
-        new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
-      return true;
-    })).executeSynchronously();
+      }, globalSearchScope);
+      return results;
+    }).executeSynchronously()
+      .forEach((element, descriptor) -> processor.addProblemElement(element, descriptor));
   }
 
   @Nullable
