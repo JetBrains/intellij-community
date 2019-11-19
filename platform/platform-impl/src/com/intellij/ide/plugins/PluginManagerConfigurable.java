@@ -849,6 +849,9 @@ public class PluginManagerConfigurable
               for (ListPluginComponent plugin : downloaded.ui.plugins) {
                 plugin.updatePlugin();
               }
+              for (ListPluginComponent plugin : bundled.ui.plugins) {
+                plugin.updatePlugin();
+              }
             }
           }, null);
           downloaded.addRightAction(myUpdateAll);

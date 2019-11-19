@@ -547,6 +547,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       myPluginUpdatesService.finishUpdate(info.updateDescriptor);
     }
+    else {
+      myPluginUpdatesService.finishUpdate();
+    }
 
     info.indicator.cancel();
 
