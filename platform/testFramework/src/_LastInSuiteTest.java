@@ -73,7 +73,7 @@ public class _LastInSuiteTest extends TestCase {
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensions.forEach((ep, references) -> {
-      String testName = escape(getTestName("Dynamic EP unloading " + ep.getName()));
+      String testName = escape("Dynamic EP unloading " + ep.getName());
       System.out.printf("##teamcity[testStarted name='%s']%n", testName);
       System.out.flush();
 
