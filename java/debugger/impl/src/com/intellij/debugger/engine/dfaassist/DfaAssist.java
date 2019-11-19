@@ -82,7 +82,8 @@ public class DfaAssist implements DebuggerContextListener {
           return;
         }
         StackFrame frame = proxy.getStackFrame();
-        DebuggerDfaRunner runner = ReadAction.compute(() -> createDfaRunner(frame, pointer.getElement()));
+        DebuggerDfaRunner runner = ReadAction.nonBlocking(() -> createDfaRunner(frame, pointer.getElement()))
+          .withDocumentsCommitted(myProject).executeSynchronously();
         if (runner == null) {
           disposeInlays();
           return;

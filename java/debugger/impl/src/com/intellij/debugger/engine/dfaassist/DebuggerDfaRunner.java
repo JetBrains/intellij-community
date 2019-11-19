@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
@@ -46,19 +47,16 @@ class DebuggerDfaRunner extends DataFlowRunner {
     myProject = body.getProject();
     myFlow = buildFlow(myBody);
     myStartingState = getStartingState(frame);
-    myModificationStamp = getFile().getModificationStamp();
+    myModificationStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
   }
   
   boolean isValid() {
     return myStartingState != null;
   }
-  
-  PsiFile getFile() {
-    return myBody.getContainingFile();
-  }
 
   RunnerResult interpret(InstructionVisitor visitor) {
-    if (myFlow == null || myStartingState == null || getFile().getModificationStamp() != myModificationStamp) {
+    if (myFlow == null || myStartingState == null || 
+        PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return RunnerResult.ABORTED;
     }
     return interpret(myBody, visitor, myFlow, Collections.singletonList(myStartingState));
