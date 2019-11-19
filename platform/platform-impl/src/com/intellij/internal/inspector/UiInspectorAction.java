@@ -29,8 +29,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.StripeTable;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
@@ -41,9 +39,9 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -325,7 +323,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       JComponent glassPane = getGlassPane(component);
       if (glassPane == null) return null;
 
-      HighlightComponent highlightComponent = new HighlightComponent(new JBColor(JBColor.GREEN, JBColor.RED));
+      JBColor color = new JBColor(JBColor.GREEN, JBColor.RED);
+      Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBUI.emptyInsets();
+      HighlightComponent highlightComponent = new HighlightComponent(color, insets);
 
       if (bounds != null) {
         bounds = SwingUtilities.convertRectangle(component, bounds, glassPane);
@@ -618,10 +618,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class HighlightComponent extends JComponent {
-    Color myColor;
+    @NotNull private final Color myColor;
+    @NotNull private final Insets myInsets;
 
-    private HighlightComponent(@NotNull final Color c) {
+    private HighlightComponent(@NotNull Color c, @NotNull Insets insets) {
       myColor = c;
+      myInsets = insets;
     }
 
     @Override
@@ -633,7 +635,21 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f));
 
       Rectangle r = getBounds();
-      RectanglePainter.paint(g2d, 0, 0, r.width, r.height, 0, myColor, myColor.darker());
+      RectanglePainter.paint(g2d, 0, 0, r.width, r.height, 0, myColor, null);
+
+      ((Graphics2D)g).setPaint(myColor.darker());
+      for (int i = 0; i < myInsets.left; i++) {
+        LinePainter2D.paint(g2d, i, myInsets.top, i, r.height - myInsets.bottom - 1);
+      }
+      for (int i = 0; i < myInsets.right; i++) {
+        LinePainter2D.paint(g2d, r.width - i - 1, myInsets.top, r.width - i - 1, r.height - myInsets.bottom - 1);
+      }
+      for (int i = 0; i < myInsets.top; i++) {
+        LinePainter2D.paint(g2d, 0, i, r.width, i);
+      }
+      for (int i = 0; i < myInsets.bottom; i++) {
+        LinePainter2D.paint(g2d, 0, r.height - i - 1, r.width, r.height - i - 1);
+      }
 
       g2d.setComposite(old);
       g2d.setColor(oldColor);
