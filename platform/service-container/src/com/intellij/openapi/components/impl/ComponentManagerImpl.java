@@ -8,7 +8,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.serviceContainer.MyComponentAdapter;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.PlatformComponentManagerImplKt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
-
   protected final DefaultPicoContainer myPicoContainer;
 
   protected enum ContainerState {
@@ -104,8 +103,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       try {
         components.get(i).disposeComponent();
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable e) {
-        LOG.error(e);
+        PlatformComponentManagerImplKt.getLOG().error(e);
       }
     }
     myBaseComponents.clear();
@@ -235,7 +237,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       if (!instance.equals(loadedComponent)) {
         String errorMessage = "Component name collision: " + componentName + ' ' +
                               (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
-        PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
+        PluginException.logPluginError(PlatformComponentManagerImplKt.getLOG(), errorMessage, null, instance.getClass());
       }
     }
     else {
