@@ -185,10 +185,14 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
         _entries[rowIndex].entry.action = aValue
       }
       is String -> {
-        if (_entries[rowIndex].newMessage != aValue) {
-          _entries[rowIndex].entry.action = GitRebaseEntry.Action.REWORD
-          _entries[rowIndex].newMessage = aValue
-        }
+        _entries[rowIndex].entry.action =
+          if (_entries[rowIndex].entry.commitDetails.fullMessage != aValue) {
+            GitRebaseEntry.Action.REWORD
+          }
+          else {
+            GitRebaseEntry.Action.PICK
+          }
+        _entries[rowIndex].newMessage = aValue
       }
       else -> throw IllegalArgumentException()
     }
