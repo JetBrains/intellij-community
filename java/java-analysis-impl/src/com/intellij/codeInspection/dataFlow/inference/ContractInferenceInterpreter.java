@@ -355,8 +355,8 @@ class ContractInferenceInterpreter {
   }
 
   private static class CodeBlockContracts {
-    List<PreContract> accumulated = new ArrayList<>();
-    List<ExpressionRange> varInitializers = new ArrayList<>();
+    final List<PreContract> accumulated = new ArrayList<>();
+    final List<ExpressionRange> varInitializers = new ArrayList<>();
 
     void addAll(List<PreContract> contracts) {
       if (contracts.isEmpty()) return;

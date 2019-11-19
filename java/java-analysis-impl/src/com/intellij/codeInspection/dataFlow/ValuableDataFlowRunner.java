@@ -24,6 +24,8 @@ import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author Gregory.Shrago
  */
@@ -105,15 +107,11 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ValuableDfaVariableState)) return false;
-      if (!super.equals(o)) return false;
+      if (!(o instanceof ValuableDfaVariableState) || !super.equals(o)) return false;
 
       ValuableDfaVariableState state = (ValuableDfaVariableState)o;
 
-      if (!myConcatenation.equals(state.myConcatenation)) return false;
-      if (myValue != null ? !myValue.equals(state.myValue) : state.myValue != null) return false;
-
-      return true;
+      return myConcatenation.equals(state.myConcatenation) && Objects.equals(myValue, state.myValue);
     }
 
     @Override
