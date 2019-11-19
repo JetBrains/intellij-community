@@ -137,9 +137,9 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
 
   private fun writeContractArguments(out: DataOutput, arguments: List<ValueConstraint>) =
       writeSeq(out, arguments) { out.writeByte(it.ordinal) }
-  private fun readContractArguments(input: DataInput) = readSeq(input, {
+  private fun readContractArguments(input: DataInput) = readSeq(input) {
     readValueConstraint(input)
-  })
+  }
 
   private fun readValueConstraint(input: DataInput) = ValueConstraint.values()[input.readByte().toInt()]
 

@@ -35,13 +35,6 @@ public class BinopInstruction extends BranchingInstruction implements Expression
     TokenSet.create(EQ, EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, OR, XOR, PERC, DIV, ASTERISK, GTGT, GTGTGT, LTLT);
 
   /**
-   * A placeholder operation to model string concatenation inside loop:
-   * currently we cannot properly widen states and precise handling of concatenation
-   * inside loop (including length tracking) may lead to state divergence,
-   * so we use special operation for this case.
-   */
-  public static final IElementType STRING_CONCAT_IN_LOOP = ASTERISK;
-  /**
    * A special operation to express string comparison by content (like equals() method does).
    * Used to desugar switch statements
    */
