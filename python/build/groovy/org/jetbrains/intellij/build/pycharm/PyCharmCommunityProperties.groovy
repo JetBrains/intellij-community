@@ -50,6 +50,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
         withModule("intellij.pycharm.community.customization.impl", mainJarName)
       }
     ]
+    productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]
   }
 
   @Override
