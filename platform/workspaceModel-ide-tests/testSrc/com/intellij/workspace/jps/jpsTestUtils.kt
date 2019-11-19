@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
@@ -42,6 +43,12 @@ internal fun copyAndLoadProject(originalProjectFile: File): LoadedProjectData {
   val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), data, projectDir, originalProjectDir)
   data.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage)
   return loadedProjectData
+}
+
+internal fun JpsEntitiesSerializationData.saveAllEntities(storage: TypedEntityStorage, projectDir: File) {
+  val writer = JpsFileContentWriterImpl()
+  saveAllEntities(storage, writer)
+  writer.writeFiles(projectDir)
 }
 
 internal fun JpsFileContentWriterImpl.writeFiles(baseProjectDir: File) {
@@ -117,6 +124,11 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
   }
   UsefulTestCase.assertEmpty(actualFiles.keys - expectedFiles.keys)
   UsefulTestCase.assertEmpty(expectedFiles.keys - actualFiles.keys)
+}
+
+internal fun createSerializationData(projectDir: File): JpsEntitiesSerializationData {
+  val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
+  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader)
 }
 
 fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {

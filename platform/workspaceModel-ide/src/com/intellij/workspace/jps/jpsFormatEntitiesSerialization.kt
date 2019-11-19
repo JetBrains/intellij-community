@@ -191,7 +191,9 @@ class JpsEntitiesSerializationData(fileSerializers: List<JpsFileEntitiesSerializ
       saveEntitiesList(it, storage, writer)
     }
 
-    saveEntities(storage, fileSerializersByUrl.values().mapTo(HashSet()) { it.entitySource }, writer)
+    val allSources = fileSerializersByUrl.values().mapTo(HashSet<EntitySource>()) { it.entitySource }
+    allSources += IdeUiEntitySource
+    saveEntities(storage, allSources, writer)
   }
 
   fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter): List<Pair<TypedEntity, JpsFileEntitySource>> {
