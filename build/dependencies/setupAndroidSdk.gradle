@@ -39,7 +39,11 @@ def currentOs = org.gradle.internal.os.OperatingSystem.current()
 def osFamily = currentOs.familyName
 
 // infer kotlin_version from kotlin-plugin (e.g. "1.3.60-eap-143" in "1.3.60-eap-143-IJ2019.3-1:EAP")
-def kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ20")
+def kotlinVersionLen = kotlinPluginBuild.indexOf("-release")
+if (kotlinVersionLen == -1) {
+  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ20")
+}
+
 ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
 ext.android_m2_version = "26.5.0.1"
 ext.android_sdk_version = "${osFamily}.3.3.3"
