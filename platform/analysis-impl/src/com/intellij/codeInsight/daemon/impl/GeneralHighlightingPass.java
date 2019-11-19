@@ -488,6 +488,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
         queued = size();
       }
+
+      @Override
+      public void clear() {
+        super.clear();
+        queued = 0;
+      }
     };
   }
 

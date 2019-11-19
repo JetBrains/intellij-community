@@ -2139,7 +2139,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {
     Annotator annotator = new MyIncorrectlyRecursiveAnnotator();
-    useAnnotatorIn(annotator, () -> {
+    useAnnotatorsIn(new Annotator[]{annotator}, () -> {
       @Language("JAVA")
       String text1 = "class X {\n" +
                      "  int foo(Object param) {\n" +
@@ -2162,20 +2162,27 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private static void useAnnotatorIn(@NotNull Annotator annotator, @NotNull Runnable runnable) {
+  private static void useAnnotatorsIn(@NotNull Annotator[] annotators, @NotNull Runnable runnable) {
     com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    for (Annotator annotator : annotators) {
+      LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    }
     try {
       List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-      assertTrue(list.toString(), list.contains(annotator));
+      assertTrue(list.toString(), list.containsAll(Arrays.asList(annotators)));
       runnable.run();
     }
     finally {
-      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+      for (int i = annotators.length - 1; i >= 0; i--) {
+        Annotator annotator = annotators[i];
+        LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+      }
     }
 
     List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-    assertFalse(list.toString(), list.contains(annotator));
+    for (Annotator annotator : annotators) {
+      assertFalse(list.toString(), list.contains(annotator));
+    }
   }
 
   public static class MyIncorrectlyRecursiveAnnotator implements Annotator {
@@ -2402,22 +2409,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  public static class MyInfoAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiComment && ((PsiComment)element).getTokenType().equals(JavaTokenType.C_STYLE_COMMENT)) {
+        holder.createInfoAnnotation(element.getTextRange(), "comment");
+      }
+    }
+  }
+
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
     if (ForkJoinPool.commonPool().getParallelism()<=2) {
       System.err.println("Too low parallelism, I will not even bother, it's hopeless: " + ForkJoinPool.commonPool().getParallelism());
       return;
     }
-    useAnnotatorIn(new MySleepyAnnotator(), () -> useAnnotatorIn(new MyFastAnnotator(), () -> checkSwearingAnnotationIsVisibleImmediately()));
+    useAnnotatorsIn(new Annotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
+    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
+    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
     // also check in the opposite order in case the order of annotators is important
-    useAnnotatorIn(new MyFastAnnotator(), () -> useAnnotatorIn(new MySleepyAnnotator(), () -> checkSwearingAnnotationIsVisibleImmediately()));
+    useAnnotatorsIn(new Annotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
   }
 
   private void checkSwearingAnnotationIsVisibleImmediately() {
     @Language("JAVA")
-    String text = "class X {\n" +
+    String text = "class X /* */ {\n" +
                   "  int foo(Object param) {//XXX\n" +
                   "    return 0;\n" +
-                  "  }\n" +
+                  "  }/* */\n" +
+                  "//XXX\n" +
                   "}\n";
     configureByText(StdFileTypes.JAVA, text);
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
@@ -2431,11 +2450,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Runnable checkHighlighted = () -> {
       called.incrementAndGet();
       UIUtil.dispatchAllInvocationEvents();
-      boolean highlighted = Arrays.stream(markupModel.getAllHighlighters())
+      long highlighted = Arrays.stream(markupModel.getAllHighlighters())
         .map(highlighter -> highlighter.getErrorStripeTooltip())
-        .anyMatch(tooltip -> tooltip instanceof HighlightInfo
-                             && MyFastAnnotator.SWEARING.equals(((HighlightInfo)tooltip).getDescription()));
-      if (highlighted) {
+        .filter(tooltip -> tooltip instanceof HighlightInfo
+                             && MyFastAnnotator.SWEARING.equals(((HighlightInfo)tooltip).getDescription()))
+        .count();
+      if (highlighted == 2) {
         toSleepMs.set(0);
         throw new DebugException(); // sorry for that, had to differentiate from failure
       }
