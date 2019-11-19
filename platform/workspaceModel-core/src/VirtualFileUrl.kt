@@ -1,6 +1,5 @@
 package com.intellij.workspace.api
 
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Path
@@ -63,20 +62,31 @@ object VirtualFileUrlManager {
     }
   }
 
-/*
-    TODO It may look like this + caching + invalidating
-    val segmentName = getSegmentName(id).toString()
+  internal fun isEqualOrParentOf(parent: VirtualFileUrl, child: VirtualFileUrl): Boolean {
+    if (parent.id == 0 && child.id == 0) return true
 
-    val parent = id2parent.getValue(id)
-    val parentParent = id2parent.getValue(parent)
-    return if (parentParent <= 0) {
-      val fileSystem = VirtualFileManager.getInstance().getFileSystem(getSegmentName(parent).toString())
-      fileSystem?.findFileByPath(segmentName)
-    } else {
-      getVirtualFileById(parent)?.findChild(segmentName)
+    var current = child.id
+    while (current > 0) {
+      if (parent.id == current) return true
+      current = id2parent[current] ?: return false
     }
+    return false
   }
-*/
+
+    /*
+        TODO It may look like this + caching + invalidating
+        val segmentName = getSegmentName(id).toString()
+
+        val parent = id2parent.getValue(id)
+        val parentParent = id2parent.getValue(parent)
+        return if (parentParent <= 0) {
+          val fileSystem = VirtualFileManager.getInstance().getFileSystem(getSegmentName(parent).toString())
+          fileSystem?.findFileByPath(segmentName)
+        } else {
+          getVirtualFileById(parent)?.findChild(segmentName)
+        }
+      }
+    */
 }
 
 // TODO Do we want to make it inline?
@@ -96,12 +106,7 @@ data class VirtualFileUrl(internal val id: Int)
       return path
     }
 
-  // TODO: Rewrite
-  fun isEqualOrParentOf(other: VirtualFileUrl): Boolean {
-    val path = JpsPathUtil.urlToPath(other.url)
-    val rootPath = JpsPathUtil.urlToPath(url)
-    return FileUtil.isAncestor(rootPath, path, false)
-  }
+  fun isEqualOrParentOf(other: VirtualFileUrl): Boolean = VirtualFileUrlManager.isEqualOrParentOf(this, other)
 
   //override fun equals(other: Any?): Boolean = id == (other as? VirtualFileUrl)?.id
   //override fun hashCode(): Int = id

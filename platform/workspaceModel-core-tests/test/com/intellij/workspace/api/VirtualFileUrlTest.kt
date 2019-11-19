@@ -20,8 +20,32 @@ class VirtualFileUrlTest {
   }
 
   @Test
+  fun testIsEqualOrParentOf() {
+    assertIsEqualOrParentOf(true, "temp:///src", "temp:///src/my")
+    assertIsEqualOrParentOf(true, "temp:///src", "temp:///src/my/")
+    assertIsEqualOrParentOf(false, "temp:///src", "temp:///srC/my")
+    assertIsEqualOrParentOf(false, "temp:///src/x", "temp:///src/y")
+    assertIsEqualOrParentOf(false, "file:///src/my", "temp:///src/my")
+    assertIsEqualOrParentOf(false, "file:///src/my", "temp:///src/my")
+    assertIsEqualOrParentOf(false, "", "temp:///src/my")
+    assertIsEqualOrParentOf(false, "temp:///src/my", "")
+    assertIsEqualOrParentOf(true, "temp://", "temp:///src/my")
+  }
+
+  @Test
   fun normalizeSlashes() {
     Assert.assertEquals("jar://C:/Users/X/a.txt", VirtualFileUrlManager.fromUrl("jar://C:/Users\\X\\a.txt").url)
+  }
+
+  private fun assertIsEqualOrParentOf(expectedResult: Boolean, parentString: String, childString: String) {
+    val parent = VirtualFileUrlManager.fromUrl(parentString)
+    val child = VirtualFileUrlManager.fromUrl(childString)
+    Assert.assertTrue("'$parent'.isEqualOrParentOf('$parent')", parent.isEqualOrParentOf(parent))
+    Assert.assertTrue("'$child'.isEqualOrParentOf('$child')", child.isEqualOrParentOf(child))
+    Assert.assertEquals(
+      "'$parent'.isEqualOrParentOf('$child') should be ${if (expectedResult) "true" else "false"}",
+      expectedResult,
+      parent.isEqualOrParentOf(child))
   }
 
   private fun roundTrip(url: String) {
