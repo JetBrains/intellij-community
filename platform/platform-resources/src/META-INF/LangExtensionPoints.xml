@@ -4,9 +4,11 @@
     <xi:include href="/META-INF/CompletionExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/RefactoringExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/FormatterExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/EditorExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
 
     <extensionPoint name="highlightingPassFactory" interface="com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar"/>
 
+    <!--configurables?-->
     <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
     </extensionPoint>
@@ -20,6 +22,17 @@
     <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
+    <extensionPoint name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP">
+      <with attribute="instance" implements="com.intellij.application.options.editor.EditorOptionsProvider"/>
+    </extensionPoint>
+    <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
+      <with attribute="instance" implements="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+    </extensionPoint>
+
+    <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP">
+      <with attribute="instance" implements="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
+    </extensionPoint>
+    
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
 
@@ -44,33 +57,8 @@
 
     <extensionPoint name="intentionMenuContributor" interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor" dynamic="true"/>
 
-    <extensionPoint name="wordBoundaryFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
-    </extensionPoint>
-
-    <extensionPoint name="bidiRegionsSeparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
-    </extensionPoint>
-
     <extensionPoint name="braceMatcher" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BraceMatcher"/>
-    </extensionPoint>
-    <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
-      <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
-    </extensionPoint>
-    <extensionPoint name="extendWordSelectionHandler" interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
-    <extensionPoint name="basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
-    <extensionPoint name="typedHandler" interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
-    <extensionPoint name="selectionUnquotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
-
-    <extensionPoint name="joinLinesHandler" interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
-    <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
-    <extensionPoint name="enterBetweenBracesDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate"/>
-    </extensionPoint>
-    <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate" dynamic="true"/>
-    <extensionPoint name="editor.backspaceModeOverride" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.BackspaceModeOverride"/>
     </extensionPoint>
 
     <extensionPoint name="daemon.highlightInfoFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter" dynamic="true"/>
@@ -121,10 +109,6 @@
 
     <extensionPoint name="lang.braceMatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PairedBraceMatcher"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.quoteHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
 
     <extensionPoint name="lang.foldingBuilder" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -256,12 +240,6 @@
     <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory"/>
 
-    <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>
-    <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor" dynamic="true"/>
-    <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor"/>
-
-    <extensionPoint name="commentCompleteHandler" interface="com.intellij.codeInsight.editorActions.CommentCompleteHandler" dynamic="true"/>
-
     <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType"/>
     <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
     <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
@@ -279,10 +257,6 @@
 
     <extensionPoint name="favoriteNodeProvider" interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="favoritesListProvider" interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider" area="IDEA_PROJECT"/>
-
-    <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler"/>
-    </extensionPoint>
 
     <!-- File-Based Index-->
     <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
@@ -426,14 +400,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.fillParagraph" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler"/>
-    </extensionPoint>
-
-    <extensionPoint name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP">
-      <with attribute="instance" implements="com.intellij.application.options.editor.EditorOptionsProvider"/>
-    </extensionPoint>
-
     <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter"/>
 
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
@@ -521,10 +487,6 @@
       <with attribute="implementationClass" implements="com.intellij.testIntegration.TestCreator"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.smartEnterProcessor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor"/>
-    </extensionPoint>
-
     <extensionPoint name="moduleConfigurationEditorProvider" interface="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider" area="IDEA_MODULE"/>
 
     <extensionPoint name="callHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -536,14 +498,6 @@
 
     <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>
-    </extensionPoint>
-
-    <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
-      <with attribute="instance" implements="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
-    </extensionPoint>
-
-    <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP">
-      <with attribute="instance" implements="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
     </extensionPoint>
 
     <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
@@ -565,17 +519,6 @@
     <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender"/>
     <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
-    </extensionPoint>
-
-    <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover" dynamic="true"/>
-
-    <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass"
-            implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
-    </extensionPoint>
-
-    <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
     </extensionPoint>
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
@@ -632,8 +575,6 @@
 
     <extensionPoint name="stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean"/>
     
-    <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean" dynamic="true"/>
-
     <extensionPoint name="aliasingPsiTargetMapper" interface="com.intellij.psi.targets.AliasingPsiTargetMapper" dynamic="true"/>
 
     <extensionPoint name="inspectionsReportConverter" interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
@@ -646,10 +587,6 @@
     <extensionPoint name="treeGenerator" interface="com.intellij.psi.impl.source.tree.TreeGenerator" dynamic="true"/>
 
     <extensionPoint name="psi.treeChangePreprocessor" interface="com.intellij.psi.impl.PsiTreeChangePreprocessor" area="IDEA_PROJECT" dynamic="true"/>
-
-    <extensionPoint name="codeBlockProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.CodeBlockProvider"/>
-    </extensionPoint>
 
     <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory" dynamic="true"/>
 
