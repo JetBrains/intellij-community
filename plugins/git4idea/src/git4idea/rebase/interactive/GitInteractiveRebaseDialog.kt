@@ -10,11 +10,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
+import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
@@ -67,7 +66,7 @@ internal class GitInteractiveRebaseDialog(
   }
 
   private val commitsTableModel = CommitsTableModel(entries.map { GitRebaseEntryWithEditedMessage(it) })
-  private val commitsTable = CommitsTable(commitsTableModel)
+  private val commitsTable = CommitsTable(project, commitsTableModel)
   private val modalityState = ModalityState.stateForComponent(window)
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
     @CalledInBackground
@@ -191,7 +190,7 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
   override fun isCellEditable(rowIndex: Int, columnIndex: Int) = true
 }
 
-private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
+private class CommitsTable(val project: Project, val model: CommitsTableModel) : JBTable(model) {
   companion object {
     private const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
   }
@@ -278,42 +277,40 @@ private class CommitsTable(val model: CommitsTableModel) : JBTable(model) {
       }
     }
 
-    subjectColumn.cellEditor = object : AbstractCellEditor(), TableCellEditor {
-      private val textArea = JBTextArea()
-
-      override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
-        val model = table.model as CommitsTableModel
-        val entry = model.entries[row]
-        textArea.text = entry.newMessage
-        val height = DEFAULT_CELL_HEIGHT * entry.newMessage.lines().size.coerceIn(3, 10)
-        val dimension = JBDimension(textArea.width, height)
-        table.setRowHeight(row, height)
-        return object : JBScrollPane(textArea) {
-          init {
-            size = dimension
-          }
-
-          override fun requestFocus() {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(textArea, true) }
-          }
-        }
-      }
-
-      override fun getCellEditorValue() = textArea.text
-
-      override fun isCellEditable(e: EventObject?): Boolean {
-        if (e is MouseEvent) {
-          return e.clickCount >= 2
-        }
-        return true
-      }
-    }
+    subjectColumn.cellEditor = CommitMessageCellEditor(project)
   }
 
   private fun shouldDrawNode(row: Int): Boolean {
     val entryWithEditedMessage = model.getValueAt(row, CommitsTableModel.COMMIT_ICON_COLUMN) as GitRebaseEntryWithEditedMessage
     return entryWithEditedMessage.entry.action != GitRebaseEntry.Action.FIXUP &&
            entryWithEditedMessage.entry.action != GitRebaseEntry.Action.DROP
+  }
+
+  private class CommitMessageCellEditor(project: Project) : AbstractCellEditor(), TableCellEditor {
+    private val commitMessageField = object : CommitMessage(project, false, false, true) {
+      override fun requestFocus() {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(editorField, true) }
+      }
+    }.apply {
+      editorField.setCaretPosition(0)
+    }
+
+    override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
+      val model = table.model as CommitsTableModel
+      val entry = model.entries[row]
+      commitMessageField.text = entry.newMessage
+      table.setRowHeight(row, DEFAULT_CELL_HEIGHT * 5)
+      return commitMessageField
+    }
+
+    override fun getCellEditorValue() = commitMessageField.text
+
+    override fun isCellEditable(e: EventObject?): Boolean {
+      if (e is MouseEvent) {
+        return e.clickCount >= 2
+      }
+      return true
+    }
   }
 }
 
