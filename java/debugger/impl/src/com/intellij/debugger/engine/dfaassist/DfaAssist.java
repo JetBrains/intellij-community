@@ -40,7 +40,6 @@ import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,7 +49,6 @@ import java.util.Map;
 public class DfaAssist implements DebuggerContextListener {
   private final Project myProject;
   private final List<Inlay<?>> myInlays = new ArrayList<>(); // modified from EDT only
-  private CancellablePromise<?> myDfaTask; // modified from debugger manager thread only
 
   private DfaAssist(Project project) {
     myProject = project;
@@ -78,10 +76,6 @@ public class DfaAssist implements DebuggerContextListener {
     debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-        if (myDfaTask != null) {
-          myDfaTask.cancel();
-          myDfaTask = null;
-        }
         StackFrameProxyImpl proxy = suspendContext.getFrameProxy();
         if (proxy == null) {
           disposeInlays();
@@ -93,10 +87,10 @@ public class DfaAssist implements DebuggerContextListener {
           disposeInlays();
           return;
         }
-        myDfaTask =
-          ReadAction.nonBlocking(() -> computeHintRanges(runner)).withDocumentsCommitted(myProject)
-            .finishOnUiThread(ModalityState.NON_MODAL, DfaAssist.this::displayInlays)
-            .submit(AppExecutorUtil.getAppExecutorService());
+        ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
+          .coalesceBy(DfaAssist.this)
+          .finishOnUiThread(ModalityState.NON_MODAL, DfaAssist.this::displayInlays)
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
   }
@@ -134,7 +128,7 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   @NotNull
-  private static Map<PsiExpression, DfaHint> computeHintRanges(@NotNull DebuggerDfaRunner runner) {
+  private static Map<PsiExpression, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
     DebuggerInstructionVisitor visitor = new DebuggerInstructionVisitor();
     RunnerResult result = runner.interpret(visitor);
     if (result != RunnerResult.OK) return Collections.emptyMap();
