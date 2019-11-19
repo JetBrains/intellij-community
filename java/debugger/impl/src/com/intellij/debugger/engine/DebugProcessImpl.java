@@ -456,7 +456,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         throw new IOException(DebuggerBundle.message("error.debugger.already.listening"));
       }
 
-      final String port = myConnection.getDebuggerPort();
+      final String port = myConnection.getDebuggerAddress();
 
       if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
         PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
@@ -555,7 +555,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (port != null) {
         listeningAddress = port;
       }
-      myConnection.setApplicationPort(listeningAddress);
+      myConnection.setApplicationAddress(listeningAddress);
 
       myDebugProcessDispatcher.getMulticaster().connectorIsReady();
 
