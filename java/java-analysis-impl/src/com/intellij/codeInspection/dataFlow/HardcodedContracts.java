@@ -16,8 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
@@ -152,7 +151,7 @@ public class HardcodedContracts {
       staticCall(JAVA_UTIL_OBJECTS, "equals").parameterCount(2),
       staticCall("com.google.common.base.Objects", "equal").parameterCount(2)),
               ContractProvider.of(
-                singleConditionContract(ContractValue.argument(0), DfaRelationValue.RelationType.EQ, ContractValue.argument(1),
+                singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.argument(1),
                                         returnTrue()),
                 StandardMethodContract.fromText("null,!null->false"),
                 StandardMethodContract.fromText("!null,null->false")
@@ -290,7 +289,7 @@ public class HardcodedContracts {
       );
     }
     return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
-                         singleConditionContract(ContractValue.qualifier(), DfaRelationValue.RelationType.EQ,
+                         singleConditionContract(ContractValue.qualifier(), RelationType.EQ,
                                                  ContractValue.argument(0), returnTrue()));
   }
 

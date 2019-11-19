@@ -417,13 +417,13 @@ public class DfaUtil {
       LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
       if (fromAnnotation.min() > fromType.min()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), DfaRelationValue.RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }
       if (fromAnnotation.max() < fromType.max()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), DfaRelationValue.RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }

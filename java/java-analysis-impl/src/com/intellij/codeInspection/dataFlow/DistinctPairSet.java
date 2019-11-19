@@ -3,7 +3,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
 import gnu.trove.TLongIterator;
@@ -171,15 +171,15 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
   }
 
   @Nullable
-  DfaRelationValue.RelationType getRelation(int c1Index, int c2Index) {
+  RelationType getRelation(int c1Index, int c2Index) {
     if (areDistinctUnordered(c1Index, c2Index)) {
-      return DfaRelationValue.RelationType.NE;
+      return RelationType.NE;
     }
     if (myData.contains(createPair(c1Index, c2Index, true))) {
-      return DfaRelationValue.RelationType.LT;
+      return RelationType.LT;
     }
     if (myData.contains(createPair(c2Index, c1Index, true))) {
-      return DfaRelationValue.RelationType.GT;
+      return RelationType.GT;
     }
     return null;
   }

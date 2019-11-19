@@ -135,7 +135,7 @@ public abstract class LongRangeSet {
    * @param relation relation to be applied to current set (JavaTokenType.EQEQ/NE/GT/GE/LT/LE)
    * @return new set or null if relation is unsupported
    */
-  public LongRangeSet fromRelation(@Nullable DfaRelationValue.RelationType relation) {
+  public LongRangeSet fromRelation(@Nullable RelationType relation) {
     if (isEmpty() || relation == null) return null;
     switch (relation) {
       case EQ:

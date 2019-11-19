@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType.EQ;
+import static com.intellij.codeInspection.dataFlow.value.RelationType.EQ;
 
 class DebuggerDfaRunner extends DataFlowRunner {
   private static final Value NullConst = new Value() {

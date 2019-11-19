@@ -17,7 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -992,8 +992,8 @@ public class EquivalenceChecker {
     }
     if (!tokenType1.equals(tokenType2)) {
       // process matches like "a < b" and "b > a"
-      final DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(tokenType1);
-      final DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(tokenType2);
+      final RelationType rel1 = RelationType.fromElementType(tokenType1);
+      final RelationType rel2 = RelationType.fromElementType(tokenType2);
       if(rel1 != null && rel2 != null && rel1.getFlipped() == rel2) {
         return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {right2, left2}, false);
       }

@@ -20,7 +20,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -102,7 +102,7 @@ public class BinopInstruction extends BranchingInstruction implements Expression
           anchor instanceof PsiExpressionList && anchor.getParent() instanceof PsiCallExpression ||
           anchor instanceof PsiArrayInitializerExpression || anchor instanceof PsiArrayAccessExpression ||
           anchor instanceof PsiBinaryExpression &&
-          DfaRelationValue.RelationType.fromElementType(((PsiBinaryExpression)anchor).getOperationTokenType()) != null) {
+          RelationType.fromElementType(((PsiBinaryExpression)anchor).getOperationTokenType()) != null) {
         return false;
       }
       anchor = anchor.getParent();

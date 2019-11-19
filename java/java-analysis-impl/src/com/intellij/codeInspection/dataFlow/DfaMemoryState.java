@@ -75,7 +75,7 @@ public interface DfaMemoryState {
    * @return a relation (EQ, NE, GT, LT), or null if not known.
    */
   @Nullable
-  DfaRelationValue.RelationType getRelation(DfaValue left, DfaValue right);
+  RelationType getRelation(DfaValue left, DfaValue right);
 
   boolean applyCondition(DfaValue dfaCond);
 

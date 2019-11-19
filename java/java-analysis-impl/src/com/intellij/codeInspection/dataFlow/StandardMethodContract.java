@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -312,7 +312,7 @@ public final class StandardMethodContract extends MethodContract {
       else {
         return ContractValue.booleanValue(true);
       }
-      return ContractValue.condition(left, DfaRelationValue.RelationType.equivalence(!shouldUseNonEqComparison()), ContractValue.argument(argumentIndex));
+      return ContractValue.condition(left, RelationType.equivalence(!shouldUseNonEqComparison()), ContractValue.argument(argumentIndex));
     }
 
     /**

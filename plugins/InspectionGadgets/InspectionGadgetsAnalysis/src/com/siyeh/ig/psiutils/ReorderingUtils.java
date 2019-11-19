@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnVal
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -307,7 +308,7 @@ public class ReorderingUtils {
       }
       if (condition instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-        DfaRelationValue.RelationType relationType = DfaRelationValue.RelationType.fromElementType(binOp.getOperationTokenType());
+        RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
         if (relationType != null) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();

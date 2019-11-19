@@ -19,9 +19,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,125 +36,6 @@ public class DfaRelationValue extends DfaValue {
   private @NotNull final DfaValue myLeftOperand;
   private @NotNull final DfaValue myRightOperand;
   private @NotNull final RelationType myRelation;
-
-  public enum RelationType {
-    LE("<="), LT("<"), GE(">="), GT(">"), EQ("=="), NE("!="),
-    /**
-     * Value on the left belongs to the class of values defined on the right.
-     * Currently used to represent:
-     * - instanceof (DfaValue IS DfaTypeValue)
-     * - optional presense (DfaValue IS DfaOptionalValue)
-     */
-    IS("is"),
-    /**
-     * Value on the left does not belong to the class of values defined on the right (opposite to IS).
-     */
-    IS_NOT("isn't");
-
-    private final String myName;
-
-    RelationType(String name) {
-      myName = name;
-    }
-
-    public boolean isSubRelation(RelationType other) {
-      if (other == this) return true;
-      switch (this) {
-        case LE:
-          return other == LT || other == EQ;
-        case GE:
-          return other == GT || other == EQ;
-        case NE:
-          return other == LT || other == GT;
-        default:
-          return false;
-      }
-    }
-
-    @NotNull
-    public RelationType getNegated() {
-      switch (this) {
-        case LE:
-          return GT;
-        case LT:
-          return GE;
-        case GE:
-          return LT;
-        case GT:
-          return LE;
-        case EQ:
-          return NE;
-        case NE:
-          return EQ;
-        case IS:
-          return IS_NOT;
-        case IS_NOT:
-          return IS;
-      }
-      throw new InternalError("Unexpected enum value: " + this);
-    }
-
-    @Nullable
-    public RelationType getFlipped() {
-      switch (this) {
-        case LE:
-          return GE;
-        case LT:
-          return GT;
-        case GE:
-          return LE;
-        case GT:
-          return LT;
-        case EQ:
-        case NE:
-          return this;
-        default:
-          return null;
-      }
-    }
-
-    /**
-     * @return true if this relation is >, >=, <, != or <=
-     */
-    public boolean isInequality() {
-      return this == LE || this == GE || this == LT || this == GT || this == NE;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
-
-    @Nullable
-    public static RelationType fromElementType(IElementType type) {
-      if(JavaTokenType.EQEQ.equals(type)) {
-        return EQ;
-      }
-      if(JavaTokenType.NE.equals(type)) {
-        return NE;
-      }
-      if(JavaTokenType.LT.equals(type)) {
-        return LT;
-      }
-      if(JavaTokenType.GT.equals(type)) {
-        return GT;
-      }
-      if(JavaTokenType.LE.equals(type)) {
-        return LE;
-      }
-      if(JavaTokenType.GE.equals(type)) {
-        return GE;
-      }
-      if(JavaTokenType.INSTANCEOF_KEYWORD.equals(type)) {
-        return IS;
-      }
-      return null;
-    }
-
-    public static RelationType equivalence(boolean equal) {
-      return equal ? EQ : NE;
-    }
-  }
 
   private DfaRelationValue(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType,
                            DfaValueFactory factory) {

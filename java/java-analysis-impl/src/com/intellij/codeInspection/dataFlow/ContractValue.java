@@ -132,7 +132,7 @@ public abstract class ContractValue {
     return IndependentValue.ZERO;
   }
 
-  public static ContractValue condition(ContractValue left, DfaRelationValue.RelationType relation, ContractValue right) {
+  public static ContractValue condition(ContractValue left, RelationType relation, ContractValue right) {
     return new Condition(left, relation, right);
   }
 
@@ -258,9 +258,9 @@ public abstract class ContractValue {
 
   private static class Condition extends ContractValue {
     private final ContractValue myLeft, myRight;
-    private final DfaRelationValue.RelationType myRelationType;
+    private final RelationType myRelationType;
 
-    Condition(ContractValue left, DfaRelationValue.RelationType type, ContractValue right) {
+    Condition(ContractValue left, RelationType type, ContractValue right) {
       myLeft = left;
       myRight = right;
       myRelationType = type;
@@ -320,7 +320,7 @@ public abstract class ContractValue {
 
     @Override
     public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
-      if (myRelationType == DfaRelationValue.RelationType.equivalence(equal)) {
+      if (myRelationType == RelationType.equivalence(equal)) {
         ContractValue other;
         if (myLeft == value) {
           other = myRight;

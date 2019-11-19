@@ -257,9 +257,9 @@ class CustomMethodHandlers {
     LongRangeSet toPos = arguments.length == 1 ? length : state.getValueFact(arguments[1], DfaFactType.RANGE);
     if (toPos == null) return null;
     LongRangeSet resultLen = toPos.minus(fromPos, false)
-      .intersect(LongRangeSet.point(0).fromRelation(DfaRelationValue.RelationType.GE));
+      .intersect(LongRangeSet.point(0).fromRelation(RelationType.GE));
     if (length != null) {
-      resultLen = resultLen.intersect(length.fromRelation(DfaRelationValue.RelationType.LE));
+      resultLen = resultLen.intersect(length.fromRelation(RelationType.LE));
     }
     return getStringValue(factory, stringType, resultLen);
   }

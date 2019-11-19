@@ -113,7 +113,7 @@ public final class DfaVariableValue extends DfaValue {
 
   @Override
   public DfaValue createNegated() {
-    return myFactory.createCondition(this, DfaRelationValue.RelationType.EQ, myFactory.getBoolean(false));
+    return myFactory.createCondition(this, RelationType.EQ, myFactory.getBoolean(false));
   }
 
   @Override
