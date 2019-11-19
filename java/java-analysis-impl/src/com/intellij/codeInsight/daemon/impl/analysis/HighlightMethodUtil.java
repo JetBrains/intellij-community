@@ -626,7 +626,6 @@ public class HighlightMethodUtil {
   }
 
   /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
-  @Nullable
   private static String checkStaticInterfaceMethodCallQualifier(@NotNull PsiReferenceExpression ref,
                                                                 @Nullable PsiElement scope,
                                                                 @NotNull PsiClass containingClass) {
@@ -717,7 +716,6 @@ public class HighlightMethodUtil {
     return isDummy;
   }
 
-  @Nullable
   static HighlightInfo checkAmbiguousMethodCallIdentifier(@NotNull PsiReferenceExpression referenceToMethod,
                                                           @NotNull JavaResolveResult[] resolveResults,
                                                           @NotNull PsiExpressionList list,
@@ -783,7 +781,6 @@ public class HighlightMethodUtil {
     return info;
   }
 
-  @Nullable
   static HighlightInfo checkAmbiguousMethodCallArguments(@NotNull PsiReferenceExpression referenceToMethod,
                                                          @NotNull JavaResolveResult[] resolveResults,
                                                          @NotNull PsiExpressionList list,
@@ -1180,7 +1177,6 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkDuplicateMethod(@NotNull PsiClass aClass,
                                             @NotNull PsiMethod method,
                                             @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
@@ -1208,7 +1204,6 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkMethodCanHaveBody(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
     PsiClass aClass = method.getContainingClass();
     boolean hasNoBody = method.getBody() == null;
@@ -1276,7 +1271,6 @@ public class HighlightMethodUtil {
     return info;
   }
 
-  @Nullable
   static HighlightInfo checkConstructorCallMustBeFirstStatement(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
@@ -1875,7 +1869,6 @@ public class HighlightMethodUtil {
     }
   }
 
-  @Nullable
   static PsiType determineReturnType(@NotNull PsiMethod method) {
     PsiManager manager = method.getManager();
     PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);

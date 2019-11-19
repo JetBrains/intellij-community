@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -33,12 +32,10 @@ import java.util.Set;
 public class LambdaHighlightingUtil {
   private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
 
-  @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
     return checkInterfaceFunctional(psiClass, "Target type of a lambda conversion must be an interface");
   }
 
-  @Nullable
   static String checkInterfaceFunctional(@NotNull PsiClass psiClass, String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
     final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
@@ -50,7 +47,6 @@ public class LambdaHighlightingUtil {
     return "Multiple non-overriding abstract methods found in interface " + HighlightUtil.formatClass(psiClass);
   }
 
-  @Nullable
   static HighlightInfo checkParametersCompatible(PsiLambdaExpression expression,
                                                  PsiParameter[] methodParameters,
                                                  PsiSubstitutor substitutor) {
@@ -89,7 +85,6 @@ public class LambdaHighlightingUtil {
     return parent instanceof PsiExpressionList || parent instanceof PsiExpression;
   }
 
-  @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
       final Set<MethodSignature> signatures = new HashSet<>();

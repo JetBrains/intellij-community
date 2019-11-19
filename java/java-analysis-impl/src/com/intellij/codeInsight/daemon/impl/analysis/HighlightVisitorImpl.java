@@ -1845,7 +1845,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Nullable
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull Feature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }

@@ -207,7 +207,7 @@ class PostHighlightingVisitor {
       if (declarationScope instanceof PsiMethod ? compareVisibilities((PsiModifierListOwner)declarationScope, myUnusedSymbolInspection.getParameterVisibility())
                                                 : myUnusedSymbolInspection.LOCAL_VARIABLE) {
         if (SuppressionUtil.isSuppressed(identifier, UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME)) return null;
-        return processParameter(myProject, (PsiParameter)parent, identifier, progress);
+        return processParameter(myProject, (PsiParameter)parent, identifier);
       }
     }
     if (parent instanceof PsiMethod) {
@@ -366,8 +366,7 @@ class PostHighlightingVisitor {
   @Nullable
   private HighlightInfo processParameter(@NotNull Project project,
                                          @NotNull PsiParameter parameter,
-                                         @NotNull PsiIdentifier identifier,
-                                         @NotNull ProgressIndicator progress) {
+                                         @NotNull PsiIdentifier identifier) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
@@ -399,7 +398,6 @@ class PostHighlightingVisitor {
     return null;
   }
 
-  @Nullable
   private HighlightInfo checkUnusedParameter(@NotNull PsiParameter parameter,
                                              @NotNull PsiIdentifier identifier) {
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter)) {
