@@ -11,7 +11,6 @@ import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -45,7 +44,6 @@ class InferenceCache {
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
-  private final ThreadLocal<DfaComputationState> myComputationState;
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
@@ -53,7 +51,6 @@ class InferenceCache {
     myVarIndexes = lazyPub(() -> getVarIndexes(myScope));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
-    myComputationState = ThreadLocal.withInitial(() -> new DfaComputationState());
     List<TypeDfaState> noTypes = new ArrayList<>();
     for (int i = 0; i < myFlow.length; i++) {
       noTypes.add(new TypeDfaState());
@@ -66,30 +63,36 @@ class InferenceCache {
   }
 
   @Nullable
-  PsiType getInferredType(@NotNull VariableDescriptor descriptor, @NotNull Instruction instruction, boolean mixinOnly) {
-    if (myTooComplexInstructions.contains(instruction)) return null;
-    myComputationState.get().initializeDfaPhase(descriptor);
-    final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
-    if (definitionMaps == null) {
-      return null;
-    }
+  PsiType getInferredType(@NotNull VariableDescriptor descriptor,
+                          @NotNull Instruction instruction,
+                          boolean mixinOnly) {
+    DfaComputationState state = new DfaComputationState(descriptor);
+    return getInferredType(descriptor, instruction, mixinOnly, state);
+  }
 
+  @Nullable
+  PsiType getInferredType(@NotNull VariableDescriptor descriptor,
+                          @NotNull Instruction instruction,
+                          boolean mixinOnly,
+                          @NotNull DfaComputationState state) {
+    if (myTooComplexInstructions.contains(instruction)) return null;
+    state.markOwnerAsVisited(myScope);
+    final List<DefinitionMap> definitionMaps = myDefinitionMaps.getValue();
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       Couple<Set<Instruction>> interesting = collectRequiredInstructions(definitionMaps, instruction, descriptor, mixinPredicate);
-      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting, state);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(interesting.first);
       }
       else {
-        myComputationState.get().setState(myScope, dfaResult.get(dfaResult.size() - 1));
+        state.putExitState(myScope, dfaResult.get(dfaResult.size() - 1));
         Set<Instruction> stored = interesting.first;
         stored.add(instruction);
         cacheDfaResult(dfaResult, stored);
       }
     }
-    myComputationState.get().terminateDfaPhase();
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
     return dfaType == null ? null : dfaType.getResultType();
   }
@@ -97,8 +100,9 @@ class InferenceCache {
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
-                                            @NotNull Couple<Set<Instruction>> interesting) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner));
+                                            @NotNull Couple<Set<Instruction>> interesting,
+                                            @NotNull DfaComputationState state) {
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner), owner, state);
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
@@ -169,27 +173,15 @@ class InferenceCache {
         result = descriptor;
       }
     }
+    if (result == null) {
+      result = Arrays.stream(myFlow)
+        .map(Instruction::getElement)
+        .filter(element -> element instanceof GrControlFlowOwner)
+        .map(element -> TypeInferenceHelper.getInferenceCache((GrControlFlowOwner)element).findDescriptor(name))
+        .filter(Objects::nonNull)
+        .findFirst().orElse(null);
+    }
     return result;
-  }
-
-  @Nullable
-  public PsiType getLastVariableType(@NotNull GrControlFlowOwner owner, @NotNull VariableDescriptor targetDescriptor) {
-    return myComputationState.get().getLastVariableType(owner, targetDescriptor);
-  }
-
-  @Nullable
-  public VariableDescriptor getTargetDescriptor() {
-    return myComputationState.get().getVariableDescriptor();
-  }
-
-  public void saveCurrentState(GrClosableBlock block,
-                               @NotNull TypeDfaState state) {
-    myComputationState.get().setState(block, state);
-  }
-
-  @Nullable
-  public TypeDfaState getCurrentState(GrClosableBlock block) {
-    return myComputationState.get().getState(block);
   }
 
   @NotNull

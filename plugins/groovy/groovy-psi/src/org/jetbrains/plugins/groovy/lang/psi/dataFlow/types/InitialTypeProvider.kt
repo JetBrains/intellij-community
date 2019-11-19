@@ -32,9 +32,9 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
     InvocationKind.UNKNOWN
   }
 
-  fun initialType(descriptor: VariableDescriptor): PsiType? {
+  fun initialType(descriptor: VariableDescriptor, state: DfaComputationState): PsiType? {
     if (invocationKind != InvocationKind.UNKNOWN) {
-      val type = getTypeFromParentContext(descriptor)
+      val type = getTypeFromParentContext(descriptor, state)
       if (type != null) return type
     }
     val resolvedDescriptor = descriptor as? ResolvedVariableDescriptor ?: return null
@@ -42,19 +42,27 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
     return field.typeGroovy
   }
 
-  private fun getTypeFromParentContext(descriptor: VariableDescriptor): PsiType? {
+  private fun getTypeFromParentContext(descriptor: VariableDescriptor,
+                                       state: DfaComputationState): PsiType? {
     val parentFlowOwner = this.parentFlowOwner ?: return null
-    val ownerCache = TypeInferenceHelper.getInferenceCache(parentFlowOwner)
-    if (ownerCache.targetDescriptor == null) {
-      val currentTargetDescriptor = TypeInferenceHelper.getInferenceCache(start).targetDescriptor ?: descriptor
-      val resolvedDescriptor = currentTargetDescriptor.run {
-        if (this is ResolvedVariableDescriptor) this
-        else ownerCache.findDescriptor(getName())
-      }
-      TypeInferenceHelper.getInferredType(resolvedDescriptor, parentInstruction, this.parentFlowOwner)
+    val parentCache = TypeInferenceHelper.getInferenceCache(parentFlowOwner)
+    if (!state.isVisited(parentFlowOwner)) {
+      runParentDfa(state, parentCache, descriptor)
     }
-    val resolvedDescriptor = ownerCache.findDescriptor(descriptor.getName()) ?: descriptor
-    return ownerCache.getLastVariableType(start, resolvedDescriptor)
+    val resolvedDescriptor = parentCache.findDescriptor(descriptor.getName()) ?: descriptor
+    return state.getEntranceType(resolvedDescriptor, start)
+  }
+
+  private fun runParentDfa(computationState: DfaComputationState,
+                           parentCache: InferenceCache,
+                           defaultDescriptor: VariableDescriptor) {
+    val currentTargetDescriptor = computationState.targetDescriptor
+    val resolvedDescriptor = currentTargetDescriptor.run {
+      if (this is ResolvedVariableDescriptor) this
+      else parentCache.findDescriptor(getName())
+    } ?: defaultDescriptor
+    val instruction = parentInstruction ?: return
+    parentCache.getInferredType(resolvedDescriptor, instruction, false, computationState)
   }
 
 }

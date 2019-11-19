@@ -3,12 +3,14 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.junit.Test
 
 import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
 
@@ -712,5 +714,16 @@ def m2() {
 }
 
 ''',  true, false, false
+  }
+
+  void 'test resolve calls inside closure with CompileStatic'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def test() {
+    def x = 1
+    1.with { x.byteValue() }
+}''', true, false, false
   }
 }

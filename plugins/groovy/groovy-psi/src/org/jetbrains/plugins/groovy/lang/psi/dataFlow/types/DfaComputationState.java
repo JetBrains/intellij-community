@@ -9,49 +9,59 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-class DfaComputationState {
-  private VariableDescriptor myVariableDescriptor = null;
+public class DfaComputationState {
+  private final VariableDescriptor descriptor;
+  private final Set<GrControlFlowOwner> visitedFlowOwners = new HashSet<>();
   private final Map<GrControlFlowOwner, TypeDfaState> entranceStates = new HashMap<>();
-  private int computationDepth = 0;
+  private final Map<GrControlFlowOwner, TypeDfaState> exitStates = new HashMap<>();
 
-  @Nullable
-  TypeDfaState getState(GrControlFlowOwner block) {
-    return entranceStates.get(block);
+  DfaComputationState(VariableDescriptor descriptor) {
+    this.descriptor = descriptor;
+  }
+
+  public void markOwnerAsVisited(@NotNull GrControlFlowOwner owner) {
+    visitedFlowOwners.add(owner);
+  }
+
+
+  public void putEntranceState(@NotNull GrControlFlowOwner owner, @NotNull TypeDfaState entranceState) {
+    entranceStates.put(owner, entranceState);
+  }
+
+  public void putExitState(@NotNull GrControlFlowOwner owner, @NotNull TypeDfaState exitState) {
+    exitStates.put(owner, exitState);
+  }
+
+  @NotNull
+  public VariableDescriptor getTargetDescriptor() {
+    return descriptor;
   }
 
   @Nullable
-  VariableDescriptor getVariableDescriptor() {
-    return myVariableDescriptor;
-  }
-
-  void initializeDfaPhase(@NotNull VariableDescriptor variableDescriptor) {
-    computationDepth++;
-    this.myVariableDescriptor = variableDescriptor;
-  }
-
-  void setState(GrControlFlowOwner block, @NotNull TypeDfaState state) {
-    this.entranceStates.put(block, state);
+  public TypeDfaState getEntranceState(@NotNull GrControlFlowOwner owner) {
+    return entranceStates.get(owner);
   }
 
   @Nullable
-  PsiType getLastVariableType(GrControlFlowOwner owner, @NotNull VariableDescriptor descriptor) {
-    TypeDfaState ownerState = entranceStates.get(owner);
-    if (ownerState == null) {
+  public TypeDfaState getExitState(@NotNull GrControlFlowOwner owner) {
+    return exitStates.get(owner);
+  }
+
+  @Nullable
+  PsiType getEntranceType(@NotNull VariableDescriptor descriptor, @NotNull GrControlFlowOwner scope) {
+    TypeDfaState entranceState = this.entranceStates.get(scope);
+    if (entranceState == null) {
       return null;
     }
-    DFAType dfaType = ownerState.getVariableType(descriptor);
-    if (dfaType == null) {
-      return null;
-    }
-    return dfaType.getResultType();
+    DFAType type = entranceState.getVariableType(descriptor);
+    return type == null ? null : type.getResultType();
   }
 
-  void terminateDfaPhase() {
-    computationDepth--;
-    if (computationDepth == 0) {
-      myVariableDescriptor = null;
-    }
+  public boolean isVisited(@Nullable GrControlFlowOwner block) {
+    return visitedFlowOwners.contains(block);
   }
 }

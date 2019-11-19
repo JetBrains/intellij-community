@@ -26,6 +26,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContext
 @CompileStatic
 class TypeInferenceTest extends TypeInferenceTestBase {
 
+
   void testTryFinallyFlow() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").element
     final PsiType type = ref.type
@@ -1450,5 +1451,111 @@ def foo(def bar) {
         }
     }
 }''', JAVA_LANG_STRING
+  }
+
+  void 'test use method calls inside closure block'() {
+    doTest '''
+def test(def x, y) {
+    y = new A()
+    1.with {
+      y.cast(x)
+      <caret>x
+    }
+}
+
+class A {
+    void cast(Integer p) {}
+}
+''', JAVA_LANG_INTEGER
+  }
+
+
+  void 'test use method calls inside closure block 2'() {
+    doTest '''
+def test(def x, y) {
+    y = new A()
+    1.with {
+      2.with {
+        y.cast(x)
+        <caret>x
+      }
+    }
+}
+
+class A {
+    void cast(Integer p) {}
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test use method calls inside closure block 3'() {
+    doTest '''
+static def foo(x) {
+    1.with {
+        cast(x)
+        cast(x)
+        <caret>x
+    }
+}
+
+static def cast(Integer x) {}
+
+''', JAVA_LANG_INTEGER
+  }
+
+
+  void 'test deep nested interconnected variables'() {
+    doTest '''
+
+static def foo(x, y, z) {
+    1.with {
+        y = new A()
+        2.with {
+            y.foo(z)
+            3.with {
+                z.cast(x)
+                4.with {
+                    <caret>x
+                }
+            }
+        }
+    }
+}
+
+class A {
+    def foo(B x) {}
+}
+
+class B {
+    def cast(Integer x) {}
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test instanceof influence on nested closures'() {
+    doTest '''
+def test(def x) {
+    1.with {
+        if (x instanceof Integer) {
+            2.with {
+                <caret>x
+            }
+        }
+    }
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test assignment in nested closure'() {
+    doTest '''
+def foo() {
+    def y
+    1.with {
+        2.with {
+            y = 2
+        }
+    }
+    <caret>y
+}
+''', JAVA_LANG_INTEGER
   }
 }
