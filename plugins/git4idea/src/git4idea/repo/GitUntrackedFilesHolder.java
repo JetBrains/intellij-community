@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAffectedFilePaths;
+import static com.intellij.vcsUtil.VcsFileUtilKt.isUnder;
 
 /**
  * <p>
