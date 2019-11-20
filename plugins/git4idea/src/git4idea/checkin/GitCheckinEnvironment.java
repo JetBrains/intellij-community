@@ -387,14 +387,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         if (change.changelistId != null && change.virtualFile != null &&
             change.beforePath != null && change.afterPath != null) {
           PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change.virtualFile);
+          if (tracker != null && tracker.hasPartialChangesToCommit()) {
+            if (!tracker.isOperational()) {
+              LOG.warn("Tracker is not operational for " + tracker.getVirtualFile().getPresentableUrl());
+              return null; // commit failure
+            }
 
-          if (tracker == null) continue;
-          if (!tracker.isOperational()) {
-            LOG.warn("Tracker is not operational for " + tracker.getVirtualFile().getPresentableUrl());
-            return null; // commit failure
-          }
-
-          if (tracker.hasPartialChangesToCommit()) {
             helpers.add(tracker.handlePartialCommit(Side.LEFT, Collections.singletonList(changelistId), true));
             partialChanges.add(change);
           }
