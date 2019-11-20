@@ -34,7 +34,7 @@ class PyCharmBuildOptions {
   /**
    * Build PyCharm with Anaconda plugin distributions together with regular PyCharm
    */
-  static final String buildWithAnacondaEdition = SystemProperties.getBooleanProperty("intellij.build.pycharm.anaconda.edition", false)
+  static final boolean buildWithAnacondaEdition = SystemProperties.getBooleanProperty("intellij.build.pycharm.anaconda.edition", false)
 
   /**
    * Miniconda installer folder name
