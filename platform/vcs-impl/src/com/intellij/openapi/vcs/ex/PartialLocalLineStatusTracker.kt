@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -69,7 +70,9 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   fun hasPartialChangesToCommit(): Boolean
 
+  @CalledInAwt
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
+  fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent?
   fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean)
 
 
@@ -88,6 +91,8 @@ abstract class PartialCommitHelper(val content: String) {
   @CalledInAwt
   abstract fun applyChanges()
 }
+
+class PartialCommitContent(val vcsContent: CharSequence, val currentContent: CharSequence, val rangesToCommit: List<LocalRange>)
 
 enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
 
@@ -503,6 +508,19 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
     val toCommitCondition = createToCommitCondition(changelistsIds, honorExcludedFromCommit)
     runBulkRollback(toCommitCondition)
+  }
+
+  override fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent? {
+    return documentTracker.readLock {
+      if (!isValid()) return@readLock null
+
+      val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
+      val vcsContent = documentTracker.getContent(Side.LEFT)
+      val currentContent = documentTracker.getContent(Side.RIGHT)
+      val ranges = blocks.filter { !it.range.isEmpty }.filter(toCommitCondition).map { toRange(it) }
+
+      PartialCommitContent(vcsContent, currentContent, ranges)
+    }
   }
 
   private fun createToCommitCondition(changelistsIds: List<String>, honorExcludedFromCommit: Boolean): (Block) -> Boolean {

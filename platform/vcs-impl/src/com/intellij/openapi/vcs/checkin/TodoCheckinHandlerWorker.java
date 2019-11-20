@@ -2,9 +2,15 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.diff.comparison.ComparisonManager;
+import com.intellij.diff.comparison.ComparisonManagerImpl;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.LineOffsetsUtil;
+import com.intellij.diff.util.Range;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
@@ -23,7 +29,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.ex.PartialCommitContent;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -72,7 +82,7 @@ public class TodoCheckinHandlerWorker {
       FilePath afterFilePath = change.getAfterRevision().getFile();
       VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
 
-      MyEditedFileProcessor fileProcessor = ReadAction.compute(() -> {
+      EditedFileProcessorBase fileProcessor = ReadAction.compute(() -> {
         if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
           return null; // skip detection
         }
@@ -93,22 +103,42 @@ public class TodoCheckinHandlerWorker {
           return null;
         }
 
-        String rawBeforeContent = getRevisionContent(change.getBeforeRevision());
-        if (rawBeforeContent == null) {
-          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
-          return null;
+        PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
+        if (tracker != null && tracker.hasPartialChangesToCommit() && change instanceof ChangeListChange) {
+          String changeListId = ((ChangeListChange)change).getChangeListId();
+          List<String> affectedChangelistIds = Collections.singletonList(changeListId);
+          PartialCommitContent partialCommitContent = tracker.getPartialCommitContent(affectedChangelistIds, true);
+          if (partialCommitContent == null) {
+            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
+            return null;
+          }
+
+          String beforeContent = partialCommitContent.getCurrentContent().toString();
+          String afterContent = partialCommitContent.getVcsContent().toString();
+          List<Range> ranges = ContainerUtil.map(partialCommitContent.getRangesToCommit(), it -> {
+            return new Range(it.getVcsLine1(), it.getVcsLine2(), it.getLine1(), it.getLine2());
+          });
+
+          return new PartialEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter, ranges);
         }
+        else {
+          String rawBeforeContent = getRevisionContent(change.getBeforeRevision());
+          if (rawBeforeContent == null) {
+            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
+            return null;
+          }
 
-        Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
-        if (afterDocument == null) {
-          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
-          return null;
+          Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
+          if (afterDocument == null) {
+            mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
+            return null;
+          }
+
+          String beforeContent = StringUtil.convertLineSeparators(rawBeforeContent);
+          String afterContent = afterDocument.getText();
+
+          return new SimpleEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter);
         }
-
-        String beforeContent = StringUtil.convertLineSeparators(rawBeforeContent);
-        String afterContent = afterDocument.getText();
-
-        return new MyEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter);
       });
 
       try {
@@ -138,20 +168,61 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private final class MyEditedFileProcessor {
-    @NotNull private final Project myProject;
-    @NotNull private final String myBeforeContent;
-    @NotNull private final String myAfterContent;
+  private final class SimpleEditedFileProcessor extends EditedFileProcessorBase {
+    private SimpleEditedFileProcessor(@NotNull Project project,
+                                      @NotNull FilePath afterFilePath,
+                                      @NotNull String beforeContent,
+                                      @NotNull String afterContent,
+                                      @NotNull List<TodoItem> newTodoItems,
+                                      @Nullable TodoFilter todoFilter) {
+      super(project, afterFilePath, beforeContent, afterContent, newTodoItems, todoFilter);
+    }
+
+    @Override
+    protected List<LineFragment> computeFragments() {
+      ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
+      return ComparisonManager.getInstance().compareLines(myBeforeContent, myAfterContent, ComparisonPolicy.DEFAULT, indicator);
+    }
+  }
+
+  private class PartialEditedFileProcessor extends EditedFileProcessorBase {
+    @NotNull private final List<Range> myRanges;
+
+    private PartialEditedFileProcessor(@NotNull Project project,
+                                       @NotNull FilePath afterFilePath,
+                                       @NotNull String beforeContent,
+                                       @NotNull String afterContent,
+                                       @NotNull List<TodoItem> newTodoItems,
+                                       @Nullable TodoFilter todoFilter,
+                                       @NotNull List<Range> ranges) {
+      super(project, afterFilePath, beforeContent, afterContent, newTodoItems, todoFilter);
+      myRanges = ranges;
+    }
+
+    @Override
+    protected List<LineFragment> computeFragments() {
+      LineOffsets afterLineOffsets = LineOffsetsUtil.create(myAfterContent);
+      LineOffsets beforeLineOffsets = LineOffsetsUtil.create(myBeforeContent);
+
+      DiffIterable iterable = DiffIterableUtil.create(myRanges, beforeLineOffsets.getLineCount(), afterLineOffsets.getLineCount());
+      return ComparisonManagerImpl.convertIntoLineFragments(beforeLineOffsets, afterLineOffsets, iterable);
+    }
+  }
+
+  private abstract class EditedFileProcessorBase {
+    @NotNull protected final Project myProject;
+    @NotNull protected final String myBeforeContent;
+    @NotNull protected final String myAfterContent;
     @NotNull private final FilePath myAfterFile;
     @NotNull private final List<? extends TodoItem> myNewTodoItems;
-    private final TodoFilter myTodoFilter;
+    @Nullable private final TodoFilter myTodoFilter;
 
-    private MyEditedFileProcessor(@NotNull Project project,
-                                  @NotNull FilePath afterFilePath,
-                                  @NotNull String beforeContent,
-                                  @NotNull String afterContent,
-                                  @NotNull List<? extends TodoItem> newTodoItems,
-                                  @Nullable TodoFilter todoFilter) {
+    private EditedFileProcessorBase(@NotNull Project project,
+                                    @NotNull FilePath afterFilePath,
+                                    @NotNull String beforeContent,
+                                    @NotNull String afterContent,
+                                    @NotNull List<? extends TodoItem> newTodoItems,
+                                    @Nullable TodoFilter todoFilter) {
       myProject = project;
       myAfterFile = afterFilePath;
       myBeforeContent = beforeContent;
@@ -160,8 +231,10 @@ public class TodoCheckinHandlerWorker {
       myTodoFilter = todoFilter;
     }
 
+    protected abstract List<LineFragment> computeFragments();
+
     public void process() throws DiffTooBigException {
-      List<LineFragment> lineFragments = getLineFragments(myBeforeContent, myAfterContent);
+      List<LineFragment> lineFragments = computeFragments();
 
       List<Pair<TodoItem, LineFragment>> changedTodoItems = new ArrayList<>();
       StepIntersection.processIntersections(
@@ -244,12 +317,6 @@ public class TodoCheckinHandlerWorker {
   private static String getTodoPartText(String content, TextRange textRange) {
     final String fragment = textRange.substring(content);
     return StringUtil.join(fragment.split("\\s"), " "); //NON-NLS
-  }
-
-  private static List<LineFragment> getLineFragments(@NotNull String beforeContent, @NotNull String afterContent)
-    throws DiffTooBigException {
-    ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
-    return ComparisonManager.getInstance().compareLines(beforeContent, afterContent, ComparisonPolicy.DEFAULT, indicator);
   }
 
   @Nullable
