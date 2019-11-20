@@ -353,6 +353,10 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (originalModifierList == null || queryModifierList == null || replacementModifierList == null) {
       return;
     }
+    if (queryModifierList.getTextLength() == 0 && replacementModifierList.getTextLength() == 0) {
+      replacementModifierList.replace(originalModifierList);
+      return;
+    }
     final List<? extends PsiElement> unmatchedAnnotations = originalModifierList.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
     final PsiElement anchor = replacementModifierList.getFirstChild();
     boolean append = (anchor == null);
