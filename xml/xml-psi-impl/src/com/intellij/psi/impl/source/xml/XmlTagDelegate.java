@@ -340,6 +340,10 @@ public abstract class XmlTagDelegate {
         return new Result<>(null, tag, file[0] == null ? tag : file[0],
                             ExternalResourceManager.getInstance());
       }
+      XmlExtension extension = XmlExtension.getExtensionByElement(tag);
+      if (extension != null) {
+        descriptor = extension.wrapNSDescriptor(tag, descriptor);
+      }
       return new Result<>(descriptor, descriptor.getDependencies(), tag);
     }, false));
 
@@ -844,8 +848,8 @@ public abstract class XmlTagDelegate {
     processChildren(element -> {
       if (element instanceof XmlAttribute
           && ((XmlAttribute)element).isNamespaceDeclaration()) {
-          result.set(Boolean.TRUE);
-          return false;
+        result.set(Boolean.TRUE);
+        return false;
       }
       return !(element instanceof XmlToken)
              || ((XmlToken)element).getTokenType() != XmlTokenType.XML_TAG_END;
@@ -1076,5 +1080,4 @@ public abstract class XmlTagDelegate {
   protected TreeElement genericInsert(TreeElement child, ASTNode anchor, boolean before) {
     return addInternalSuper(child, child, anchor, before);
   }
-
 }
