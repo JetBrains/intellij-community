@@ -75,6 +75,9 @@ class VariableExtractor {
   private SmartPsiElementPointer<PsiVariable> extractVariable() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
+    if (myAnchor == myExpression) {
+      myAnchor = newExpr;
+    }
     PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
     final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
       mySettings.getSelectedType());
