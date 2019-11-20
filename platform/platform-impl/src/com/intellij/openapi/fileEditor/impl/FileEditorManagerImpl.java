@@ -1183,8 +1183,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    * do not check for injected editor because it can be ridiculously expensive thing to in EDT in e.g. CLion.
    */
   @Override
-  public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    doOpenTextEditor(descriptor, focusEditor);
+  public boolean navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    return doOpenTextEditor(descriptor, focusEditor) != null;
   }
 
   @Nullable
