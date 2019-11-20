@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.codeInspection.type;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,8 +70,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
-  private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
-
   private final HighlightSink myHighlightSink = new HighlightSink() {
     @Override
     public void registerProblem(@NotNull PsiElement highlightElement,
@@ -136,64 +133,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       highlightUnknownArgs(info);
       return false;
     }
-  }
-
-  private <T extends GroovyPsiElement> boolean checkConstructorApplicability(@NotNull GroovyResolveResult constructorResolveResult,
-                                                                             @NotNull CallInfo<T> info,
-                                                                             boolean checkUnknownArgs) {
-    final PsiElement element = constructorResolveResult.getElement();
-    LOG.assertTrue(element instanceof PsiMethod && ((PsiMethod)element).isConstructor(), element);
-    final PsiMethod constructor = (PsiMethod)element;
-
-    final GrArgumentList argList = info.getArgumentList();
-    if (argList != null) {
-      final GrExpression[] exprArgs = argList.getExpressionArguments();
-      if (exprArgs.length == 0 && !PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
-    }
-
-    PsiType[] types = info.getArgumentTypes();
-    PsiClass containingClass = constructor.getContainingClass();
-    if (types != null && containingClass != null) {
-      final PsiType[] newTypes = GrInnerClassConstructorUtil.addEnclosingArgIfNeeded(types, info.getCall(), containingClass);
-      if (newTypes.length != types.length) {
-        return checkMethodApplicability(constructorResolveResult, checkUnknownArgs, new DelegatingCallInfo<T>(info) {
-          @NotNull
-          @Override
-          public PsiType[] getArgumentTypes() {
-            return newTypes;
-          }
-        });
-      }
-    }
-
-    return checkMethodApplicability(constructorResolveResult, checkUnknownArgs, info);
-  }
-
-  private void processConstructorCall(@NotNull GrListOrMapInfo info) {
-    if (hasErrorElements(info.getArgumentList())) return;
-
-    if (!checkCannotInferArgumentTypes(info)) return;
-
-    GroovyResolveResult[] results = info.multiResolve();
-    boolean checkUnknowkArgs = results.length == 1;
-
-    for (GroovyResolveResult result : results) {
-      PsiElement resolved = result.getElement();
-      if (resolved instanceof PsiMethod) {
-        if (!checkConstructorApplicability(result, info, checkUnknowkArgs)) return;
-      }
-    }
-
-    if (results.length > 1) {
-      registerError(
-        info.getElementToHighlight(),
-        GroovyBundle.message("constructor.call.is.ambiguous"),
-        null,
-        ProblemHighlightType.GENERIC_ERROR
-      );
-    }
-
-    checkNamedArgumentsType(info);
   }
 
   private boolean checkForImplicitEnumAssigning(@Nullable PsiType expectedType,
@@ -457,7 +396,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     { // check if  current assignment is constructor call
       final GrListOrMap initializer = getTupleInitializer(expression);
       if (initializer != null) {
-        processConstructorCall(new GrListOrMapInfo(initializer));
+
         return;
       }
     }
