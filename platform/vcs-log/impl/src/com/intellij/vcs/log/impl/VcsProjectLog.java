@@ -208,7 +208,7 @@ public class VcsProjectLog implements Disposable {
       if (logManager.isLogVisible()) {
         logManager.scheduleInitialization();
       }
-    }, ModalityState.any());
+    }, getModality());
   }
 
   @NotNull
@@ -226,8 +226,13 @@ public class VcsProjectLog implements Disposable {
 
   private static <T> T invokeAndWait(@NotNull Computable<T> computable) {
     Ref<T> result = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), getModality());
     return result.get();
+  }
+
+  @NotNull
+  private static ModalityState getModality() {
+    return ModalityState.any();
   }
 
   /**
@@ -301,7 +306,7 @@ public class VcsProjectLog implements Disposable {
         myValue = value;
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
-        }, ModalityState.any());
+        }, getModality());
       }
       return myValue;
     }
