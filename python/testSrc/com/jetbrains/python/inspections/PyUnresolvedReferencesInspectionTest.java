@@ -822,6 +822,12 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-39078
+  public void testNoneAttribute() {
+    doTestByText("a = None\n" +
+                 "a.<warning descr=\"Cannot find reference 'append' in 'None'\">append</warning>(10)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
