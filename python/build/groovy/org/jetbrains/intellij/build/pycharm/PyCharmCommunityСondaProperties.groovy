@@ -25,22 +25,11 @@ class PyCharmCommunityСondaProperties extends PyCharmCommunityProperties {
 
   @Override
   WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
-    return new PyCharmWindowsDistributionCustomizer() {
-      {
-        icoPath = "$projectHome/python/resources/PyCharmCore.ico"
-        icoPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.ico"
-        include32BitLauncher = false
-        installerImagesPath = "$projectHome/python/build/resources"
-        fileAssociations = ["py"]
-      }
-
+    return new PyCharmCommunityWindowsDistributionCustomizer() {
       @Override
       String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
         "PyCharm Community Edition with Anaconda plugin"
       }
-
-      @Override
-      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/python" }
 
       @Override
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
@@ -52,12 +41,7 @@ class PyCharmCommunityСondaProperties extends PyCharmCommunityProperties {
 
   @Override
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
-    return new LinuxDistributionCustomizer() {
-      {
-        iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
-        iconPngPathForEAP = "$projectHome/python/resources/PyCharmCore128_EAP.png"
-      }
-
+    return new PyCharmCommunityLinuxDistributionCustomizer(projectHome) {
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         "pycharm-community-anaconda-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
@@ -66,6 +50,7 @@ class PyCharmCommunityСondaProperties extends PyCharmCommunityProperties {
 
       @Override
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        super.copyAdditionalFiles(context, targetDirectory)
         downloadMiniconda(context, targetDirectory, "Linux")
       }
     }
@@ -73,14 +58,7 @@ class PyCharmCommunityСondaProperties extends PyCharmCommunityProperties {
 
   @Override
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
-    return new PyCharmMacDistributionCustomizer() {
-      {
-        icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
-        icnsPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.icns"
-        bundleIdentifier = "com.jetbrains.pycharm"
-        dmgImagePath = "$projectHome/python/build/dmg_background.tiff"
-      }
-
+    return new PyCharmCommunityMacDistributionCustomizer(projectHome) {
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
