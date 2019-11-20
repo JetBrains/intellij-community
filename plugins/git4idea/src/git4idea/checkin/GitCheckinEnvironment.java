@@ -13,6 +13,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -70,7 +72,6 @@ import javax.swing.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
@@ -500,9 +501,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       }
     });
     try {
-      return ref.get();
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(ref);
     }
-    catch (InterruptedException | ExecutionException e) {
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
       return null;
     }
   }
