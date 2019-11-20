@@ -676,7 +676,15 @@ public class ShelvedChangesViewManager implements Disposable {
       myRootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        myDiffPreview = new EditorTabPreview(changeProcessor, project, pane, myTree){
+        myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree){
+
+          @Override
+          protected boolean skipPreviewUpdate() {
+            if (super.skipPreviewUpdate())
+              return true;
+
+            return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
+          }
 
           @Override
           protected String getCurrentName() {

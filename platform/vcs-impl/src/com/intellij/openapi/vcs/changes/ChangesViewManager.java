@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
@@ -356,7 +357,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       JComponent mainPanel;
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        myDiffPreview = new EditorTabPreview(changeProcessor, myProject,
+        myDiffPreview = new EditorTabPreview(changeProcessor,
           contentPanel, myView){
 
           @Override
@@ -365,7 +366,10 @@ public class ChangesViewManager implements ChangesViewEx,
           }
 
           @Override
-          protected boolean shouldSkip() {
+          protected boolean skipPreviewUpdate() {
+            if (super.skipPreviewUpdate())
+              return true;
+
             return myModelUpdateInProgress;
           }
 

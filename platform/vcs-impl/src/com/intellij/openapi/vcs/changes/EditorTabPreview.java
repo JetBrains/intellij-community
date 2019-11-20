@@ -11,6 +11,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,23 +26,23 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   private final VcsConfiguration myVcsConfiguration;
   private final DiffRequestProcessor myChangeProcessor;
 
-  public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor, @NotNull Project project,
+  public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor,
                    @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
-    myProject = project;
+    myProject = changesTree.getProject();
 
     myChangeProcessor = changeProcessor;
     MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor, this::getCurrentName);
     myPreviewDiffVirtualFile = new PreviewDiffVirtualFile(previewProvider);
-    myVcsConfiguration = VcsConfiguration.getInstance(project);
+    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
 
     //do not open file aggressively on start up, do it later
-    DumbService.getInstance(project).smartInvokeLater(() -> {
-      if (project.isDisposed()) return;
+    DumbService.getInstance(myProject).smartInvokeLater(() -> {
+      if (myProject.isDisposed()) return;
 
       changesTree.addSelectionListener(() -> {
         if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
 
-        if (shouldSkip()) return;
+        if (skipPreviewUpdate()) return;
 
         setDiffPreviewVisible(true);
       });
@@ -52,7 +55,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        FileEditorManager.getInstance(project).openFile(myPreviewDiffVirtualFile, true, true);
+        FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, true, true);
       }
     }.registerCustomShortcutSet(contentPanel, null);
   }
@@ -62,7 +65,11 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   protected abstract void doRefresh();
 
-  protected boolean shouldSkip() {
+  protected boolean skipPreviewUpdate() {
+    return ToolWindowManager.getInstance(myProject).isEditorComponentActive();
+  }
+
+  protected boolean isContentEmpty() {
     return false;
   }
 
