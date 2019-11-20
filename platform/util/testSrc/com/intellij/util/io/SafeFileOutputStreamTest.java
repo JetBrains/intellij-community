@@ -135,6 +135,26 @@ public class SafeFileOutputStreamTest {
     assertThat(backup).doesNotExist();
   }
 
+  @Test public void preemptiveStreamNew() throws IOException {
+    File target = new File(tempDir.getRoot(), "new-file.txt");
+    try (OutputStream out = new PreemptiveSafeFileOutputStream(target.toPath())) {
+      out.write(TEST_DATA[0]);
+      out.write(TEST_DATA, 1, TEST_DATA.length - 1);
+    }
+    assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+    assertThat(target.getParentFile().list()).containsExactly(target.getName());
+  }
+
+  @Test public void preemptiveStreamExisting() throws IOException {
+    File target = tempDir.newFile("test.txt");
+    try (OutputStream out = new PreemptiveSafeFileOutputStream(target.toPath())) {
+      out.write(TEST_DATA[0]);
+      out.write(TEST_DATA, 1, TEST_DATA.length - 1);
+    }
+    assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+    assertThat(target.getParentFile().list()).containsExactly(target.getName());
+  }
+
   private static void checkWriteSucceed(File target) throws IOException {
     try (OutputStream out = openStream(target)) {
       out.write(TEST_DATA[0]);
