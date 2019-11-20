@@ -62,6 +62,9 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
   @Nullable
   @Override
   public String getToolTip(final int line, final Editor editor) {
+    if (myAspect.getTooltipText(line) != null) {
+      return myAspect.getTooltipText(line);
+    }
     return isAvailable() ? myAnnotation.getHtmlToolTip(line) : null;
   }
 
