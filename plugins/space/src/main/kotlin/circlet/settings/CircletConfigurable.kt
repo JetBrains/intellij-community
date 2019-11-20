@@ -3,20 +3,20 @@ package circlet.settings
 import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.api.oauth.*
+import circlet.ui.*
 import com.intellij.openapi.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.*
-import com.intellij.util.*
 import com.intellij.util.ui.*
-import icons.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import platform.common.*
 import runtime.*
 import runtime.reactive.*
 import java.awt.*
+import java.util.concurrent.*
 import javax.swing.*
 
 val log = logger<CircletConfigurable>()
@@ -86,10 +86,14 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                     add(serverComponent)
                 }
 
+                val avatarLabel = JLabel()
+                CircletUserAvatarProvider.getInstance().avatar.forEach(uiLifetime) { icon ->
+                    avatarLabel.icon = resizeIcon(icon, 50)
+                }
                 return JPanel(GridBagLayout()).apply {
                     // TODO: load real user icon
                     var gbc = GridBag().nextLine().next().anchor(GridBag.LINE_START).insetRight(UIUtil.DEFAULT_HGAP)
-                    add(JLabel(IconUtil.scale(CircletIcons.mainIcon, null, 3.5f)), gbc)
+                    add(avatarLabel, gbc)
                     gbc = gbc.next().weightx(1.0).anchor(GridBag.WEST)
                     add(namePanel, gbc)
                     gbc = gbc.nextLine().next().next().anchor(GridBag.WEST)
@@ -109,8 +113,9 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                             state.value = CircletLoginState.Disconnected(serverName, response.description)
                         }
                     }
-                }
-                catch (th: Throwable) {
+                } catch (th: CancellationException) {
+                    throw th
+                } catch (th: Throwable) {
                     log.error(th)
                     state.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
                 }

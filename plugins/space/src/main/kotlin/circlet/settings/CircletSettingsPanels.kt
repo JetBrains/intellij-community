@@ -1,7 +1,9 @@
 package circlet.settings
 
 import com.intellij.openapi.ui.*
+import com.intellij.ui.components.*
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.*
 import javax.swing.*
 
 
@@ -22,6 +24,12 @@ internal fun buildLoginPanel(st: CircletLoginState.Disconnected, loginAction: (S
         row("") {
             loginButton()
         }
+        if (st.error != null) {
+            val errorText = JBLabel(st.error, UIUtil.ComponentStyle.REGULAR, UIUtil.FontColor.BRIGHTER)
+            row("Error") {
+                errorText()
+            }
+        }
     }
 }
 
@@ -30,7 +38,7 @@ internal fun buildConnectingPanel(st: CircletLoginState.Connecting, cancelAction
         val cancelButton = JButton("Cancel").apply {
             addActionListener { cancelAction() }
         }
-        row("Connection to ${st.server}\u2026") {
+        row("Connecting to ${st.server}\u2026") {
             cancelButton()
         }
     }
