@@ -27,6 +27,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 /**
  * @author Dmitry Avdeev
@@ -127,8 +128,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
-    File directory = convertToIOFile(file);
-    String[] names = directory.list(DirectoryAccessChecker.getFileFilter(directory));
+    String[] names = accessDiskWithCheckCanceled(ourListTasks, convertToIOFile(file), dir -> dir.list(DirectoryAccessChecker.getFileFilter(dir)));
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
 
@@ -720,25 +720,30 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
-    String localPath = FileUtil.toSystemDependentName(path);
-    return ProgressIndicatorProvider.getGlobalProgressIndicator() == null ? FileSystemUtil.getAttributes(localPath)
-                                                                          : getAttributesWithCheckCanceled(localPath);
+    return accessDiskWithCheckCanceled(ourAttrTasks, FileUtil.toSystemDependentName(path), FileSystemUtil::getAttributes);
   }
 
   private static final Map<String, Future<FileAttributes>> ourAttrTasks = ContainerUtil.newConcurrentMap();
+  private static final Map<File, Future<String[]>> ourListTasks = ContainerUtil.newConcurrentMap();
 
-  private static FileAttributes getAttributesWithCheckCanceled(String localPath) {
-    Future<FileAttributes> future = ourAttrTasks.computeIfAbsent(localPath, __ -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+  private static <T, V> V accessDiskWithCheckCanceled(Map<T, Future<V>> store, T arg, Function<T, V> fun) {
+    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+      return fun.apply(arg);
+    }
+
+    // We remember the submitted tasks in "store" map until they're finished, to avoid creating many-many similar threads
+    // in case the callee is interrupted by "checkCanceled", restarted, comes again with the same query, is interrupted again, and so on.
+    Future<V> future = store.computeIfAbsent(arg, path -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        return FileSystemUtil.getAttributes(localPath);
+        return fun.apply(path);
       }
       finally {
-        ourAttrTasks.remove(localPath);
+        store.remove(path);
       }
     }));
     if (future.isDone()) {
       // maybe it was very fast and completed before being put into a map
-      ourAttrTasks.remove(localPath, future);
+      store.remove(arg, future);
     }
     return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
   }
