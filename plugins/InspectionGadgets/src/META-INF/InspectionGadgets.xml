@@ -1265,6 +1265,10 @@
                      key="package.dot.html.may.be.package.info.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.PackageDotHtmlMayBePackageInfoInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnexpectedParamTagOrder" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.unexpected.param.tag.order.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.javadoc.UnexpectedParamTagOrderInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryJavaDocLink" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.javadoc.link.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
