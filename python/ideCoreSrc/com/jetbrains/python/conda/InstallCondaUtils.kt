@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.actions
+package com.jetbrains.python.conda
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -12,14 +12,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.conda.PythonMinicondaLocator
 import java.io.File
 
 /**
  * @author Aleksey.Rostovskiy
  */
-object InstallCondaActionImpl {
-  private val LOG = Logger.getInstance(InstallCondaActionImpl::class.java)
+object InstallCondaUtils {
+  private val LOG = Logger.getInstance(InstallCondaUtils::class.java)
 
   /**
    * @return `miniconda3` folder at home directory
