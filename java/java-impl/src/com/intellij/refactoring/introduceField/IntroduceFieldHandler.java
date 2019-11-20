@@ -216,7 +216,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   private static class MyOccurrenceFilter implements OccurrenceFilter {
     @Override
-    public boolean isOK(PsiExpression occurrence) {
+    public boolean isOK(@NotNull PsiExpression occurrence) {
       return !isInSuperOrThis(occurrence);
     }
   }
