@@ -33,8 +33,22 @@ class VirtualFileUrlTest {
   }
 
   @Test
+  fun testFilePath() {
+    assertFilePath(null, "jar:///main/a.jar!/my/class.class")
+    assertFilePath("/main/a.jar", "jar:///main/a.jar!/")
+    assertFilePath("/main/a.jar", "jar:///main/a.jar!")
+    assertFilePath("/main/a.jar", "jar:///main/a.jar")
+    assertFilePath("/main/a.jar", "file:///main/a.jar")
+    assertFilePath(null, "")
+  }
+
+  @Test
   fun normalizeSlashes() {
     Assert.assertEquals("jar://C:/Users/X/a.txt", VirtualFileUrlManager.fromUrl("jar://C:/Users\\X\\a.txt").url)
+  }
+
+  private fun assertFilePath(expectedResult: String?, url: String) {
+    Assert.assertEquals(expectedResult, VirtualFileUrlManager.fromUrl(url).filePath)
   }
 
   private fun assertIsEqualOrParentOf(expectedResult: Boolean, parentString: String, childString: String) {

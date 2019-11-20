@@ -1,6 +1,5 @@
 package com.intellij.workspace.api
 
-import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -101,9 +100,20 @@ data class VirtualFileUrl(internal val id: Int)
   val filePath: String?
     get() {
       val calculatedUrl = url
-      val path = JpsPathUtil.urlToPath(calculatedUrl)
-      if (path == calculatedUrl || path.isEmpty()) return null
-      return path
+
+      if (calculatedUrl.isEmpty()) return null
+
+      if (calculatedUrl.startsWith("file://")) {
+        return calculatedUrl.substring("file://".length)
+      }
+      else if (calculatedUrl.startsWith("jar://")) {
+        val removedSuffix = calculatedUrl.removeSuffix("!/").removeSuffix("!")
+        if (removedSuffix.contains('!')) return null
+
+        return removedSuffix.substring("jar://".length)
+      }
+
+      return null
     }
 
   fun isEqualOrParentOf(other: VirtualFileUrl): Boolean = VirtualFileUrlManager.isEqualOrParentOf(this, other)
