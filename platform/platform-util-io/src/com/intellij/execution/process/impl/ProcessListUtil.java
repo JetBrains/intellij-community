@@ -267,6 +267,46 @@ public final class ProcessListUtil {
   }
 
   @Nullable
+  private static String unescapeString(String str, boolean quoted) {
+    StringBuilder builder = new StringBuilder();
+    if (quoted) {
+      str = str.substring(1, str.length() - 1);
+    }
+    for (int index = 0; index < str.length(); index++) {
+      if (str.charAt(index) == '\\') {
+        if (index == str.length() - 1) {
+          LOG.info("Invalid escaped string: backslash at the last position");
+          LOG.debug(str);
+          return null;
+        }
+        switch (str.charAt(index + 1)) {
+          case '\\': {
+            builder.append('\\');
+            break;
+          }
+          case 'n': {
+            builder.append('\n');
+            break;
+          }
+          case 'r': {
+            builder.append('\r');
+            break;
+          }
+          default: {
+            LOG.info("Invalid character after an escape symbol: " + str.charAt(index + 1));
+            LOG.debug(str);
+            return null;
+          }
+        }
+        index++;
+        continue;
+      }
+      builder.append(str.charAt(index));
+    }
+    return builder.toString();
+  }
+
+  @Nullable
   static List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
@@ -286,10 +326,20 @@ public final class ProcessListUtil {
       }
       if (id == 0) continue;
 
-      String name = lines[offset + 1];
+      String name = unescapeString(lines[offset + 1], false);
+      if (name == null) {
+        LOG.info("Invalid escaped name: " + lines[offset + 1]);
+        LOG.debug(output);
+        return null;
+      }
       if (StringUtil.isEmpty(name)) continue;
 
-      String commandLine = lines[offset + 2];
+      String commandLine = unescapeString(lines[offset + 2], true);
+      if (commandLine == null) {
+        LOG.info("Invalid escaped command line: " + lines[offset + 2]);
+        LOG.debug(output);
+        return null;
+      }
       String args;
       if (commandLine.isEmpty()) {
         commandLine = name;
