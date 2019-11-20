@@ -49,7 +49,13 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(isPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
-    myModality = ModalityState.defaultModalityState();
+    myModality = getDefaultModality();
+  }
+
+  @NotNull
+  private static ModalityState getDefaultModality() {
+    Application app = ApplicationManager.getApplication();
+    return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} (or any other constructor) */
@@ -75,7 +81,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(isPtyProcess(process));
     myFilesToDelete = null;
     myHasErrorStream = true;
-    myModality = ModalityState.defaultModalityState();
+    myModality = getDefaultModality();
   }
 
   @NotNull
@@ -183,7 +189,11 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @Override
   protected void onOSProcessTerminated(int exitCode) {
-    ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
+    if (myModality != ModalityState.NON_MODAL) {
+      ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
+    } else {
+      super.onOSProcessTerminated(exitCode);
+    }
     deleteTempFiles(myFilesToDelete);
   }
 
