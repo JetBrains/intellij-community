@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -35,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -46,10 +34,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
@@ -389,23 +376,25 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
 
   private void resolveSuggestionsIfNeeded() {
     collectNewSdkActions();
-    JdksDetector.getInstance().getDetectedSdksWithUpdate(this, new JdksDetector.DetectedSdksListener() {
-      @Override
-      public void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home) {
-        myModel.addSuggestedItem(new SuggestedJdkItem(type, version, home));
-      }
-
-      @Override
-      public void setSearchIsRunning(boolean running) {
-        myModel.onSuggestedItemsProgress(running);
-      }
-
-      @Override
-      public void onSearchRestarted() {
-        myModel.removeAllSuggestedItems();
-      }
-    });
+    JdksDetector.getInstance().getDetectedSdksWithUpdate(myProject, this, myDetectedSdksListener);
   }
+
+  private final JdksDetector.DetectedSdksListener myDetectedSdksListener = new JdksDetector.DetectedSdksListener() {
+    @Override
+    public void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home) {
+      myModel.addSuggestedItem(new SuggestedJdkItem(type, version, home));
+    }
+
+    @Override
+    public void onSearchStarted() {
+      myModel.removeAllSuggestedItemsAndEnableProgress();
+    }
+
+    @Override
+    public void onSearchCompleted() {
+      myModel.onSuggestedItemsProgressCompleted();
+    }
+  };
 
   @Override
   public void setSelectedItem(Object anObject) {
@@ -461,15 +450,6 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
 
     void addSuggestedItem(@NotNull SuggestedJdkItem item) {
-      if (!mySdkTypeFilter.value(item.getSdkType())) return;
-
-      for (Sdk sdk : mySdkModel.getSdks()) {
-        String sdkPath = sdk.getHomePath();
-        if (sdkPath == null) continue;
-        if (FileUtil.filesEqual(new File(sdkPath), new File(item.getPath()))) return;
-      }
-
-      //TODO[jo] sort found items
       mySuggestions = ImmutableList.<SuggestedJdkItem>builder()
         .addAll(mySuggestions)
         .add(item)
@@ -477,15 +457,26 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       syncModel();
     }
 
-    public void removeAllSuggestedItems() {
-      if (mySuggestions.isEmpty()) return;
+    private boolean isApplicableSuggestedItem(@NotNull SuggestedJdkItem item) {
+      if (!mySdkTypeFilter.value(item.getSdkType())) return false;
+      for (Sdk sdk : mySdkModel.getSdks()) {
+        String sdkPath = sdk.getHomePath();
+        if (sdkPath == null) continue;
+        if (FileUtil.filesEqual(new File(sdkPath), new File(item.getPath()))) return false;
+      }
+      return true;
+    }
+
+    public void removeAllSuggestedItemsAndEnableProgress() {
+      if (mySuggestions.isEmpty() && myIsSdkDetectorInProgress) return;
       mySuggestions = ImmutableList.of();
+      myIsSdkDetectorInProgress = true;
       syncModel();
     }
 
-    void onSuggestedItemsProgress(boolean running) {
-      if (myIsSdkDetectorInProgress == running) return;
-      myIsSdkDetectorInProgress = running;
+    void onSuggestedItemsProgressCompleted() {
+      if (!myIsSdkDetectorInProgress) return;
+      myIsSdkDetectorInProgress = false;
       syncModel();
     }
 
@@ -512,7 +503,10 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       if (myIsSdkDetectorInProgress) {
         newModel.addElement(new LoadingJdkComboBoxItem());
       }
-      mySuggestions.forEach(newModel::addElement);
+      for (SuggestedJdkItem item : mySuggestions) {
+        if (!isApplicableSuggestedItem(item)) continue;
+        newModel.addElement(item);
+      }
       newModel.setSelectedItem(previousSelection);
       setModel(newModel);
     }

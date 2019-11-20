@@ -1,125 +1,135 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class JdksDetector {
   private static final Logger LOG = Logger.getInstance(JdksDetector.class);
 
-  private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
-  private final AtomicBoolean myIsCompleted = new AtomicBoolean(false);
-
-  private final Queue<Consumer<DetectedSdksListener>> myDetectedResults = new LinkedBlockingQueue<>();
-
   @NotNull
   public static JdksDetector getInstance() {
     return ApplicationManager.getApplication().getService(JdksDetector.class);
   }
 
+  private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
+  private final Object myPublicationLock = new Object();
+  private final Set<DetectedSdksListener> myListeners = new HashSet<>();
+  private final List<Consumer<DetectedSdksListener>> myDetectedResults = new ArrayList<>();
+
+  /**
+   * The callback interface to deliver Sdk search results
+   * back to the callee in EDT thread
+   */
   public interface DetectedSdksListener {
     void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home);
-    void setSearchIsRunning(boolean running);
-    void onSearchRestarted();
-  }
-
-  // events are published in the background thread,
-  // we use the dispatchToComponent adapter to deliver messages
-  // in EDT
-  private static final Topic<DetectedSdksListener> ON_SDK_RESOLVED
-    = Topic.create("on-sdk-detected", DetectedSdksListener.class);
-
-  private void onNewSdkDetected(@NotNull SdkType type,
-                                @Nullable String version,
-                                @NotNull String home) {
-
-    Consumer<DetectedSdksListener> e = listener -> listener.onSdkDetected(type, version, home);
-    myDetectedResults.add(e);
-    e.accept(ApplicationManager.getApplication().getMessageBus().syncPublisher(ON_SDK_RESOLVED));
-  }
-
-
-  private void onSdkSearchCompleted() {
-    myIsCompleted.set(true);
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ON_SDK_RESOLVED).setSearchIsRunning(false);
+    void onSearchStarted();
+    void onSearchCompleted();
   }
 
   /**
+   * Checks and registers the {@param listener} of only is not
+   * yet registered. It is assumed the {@param component} is
+   * included in the {@link DialogWrapper} so we could implement
+   * the correct disposal logic (no SDKs are detected otherwise)
+   *
    * The {@param listener} is populated immediately with all know-by-now
-   * detected SDK infos, next the listener will be called in the EDT
-   * thread to deliver more detected SDKs. See {@link DetectedSdksListener}
-   * for more info
+   * detected Sdk infos, the listener will be called in the EDT
+   * thread to deliver more detected SDKs
    *
    * @param component the requestor component
    * @param listener  the callback interface
    */
-  public void getDetectedSdksWithUpdate(@NotNull Component component,
+  public void getDetectedSdksWithUpdate(@Nullable Project project,
+                                        @NotNull Component component,
                                         @NotNull DetectedSdksListener listener) {
-    detectOrUpdateSdks();
-    Disposable lifetime = findLifetime(component);
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-    //TODO[jo]: track per-component re-registration!
-    //TODO[jo]: add refresh action?
-
-    listener.onSearchRestarted();
-
-    //TODO[jo]: sync publication of new elements with that?
-    for (Consumer<DetectedSdksListener> result : myDetectedResults) {
-      result.accept(listener);
+    DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
+    if (dialogWrapper == null) {
+      LOG.warn("Cannot find disposable component parent for the subscription for " + component, new RuntimeException());
+      return;
     }
 
-    listener.setSearchIsRunning(myIsRunning.get() && !myIsCompleted.get());
-    ApplicationManager.getApplication().getMessageBus()
-      .connect(lifetime)
-      .subscribe(
-        ON_SDK_RESOLVED,
-        dispatchToComponent(ModalityState.stateForComponent(component), listener));
-  }
+    EdtDetectedSdksListener actualListener = new EdtDetectedSdksListener(ModalityState.stateForComponent(component), listener);
+    synchronized (myPublicationLock) {
+      //skip multiple registrations
+      if (!myListeners.add(actualListener)) return;
 
-  @NotNull
-  private static Disposable findLifetime(@NotNull Component component) {
-    DialogWrapper wrapper = DialogWrapper.findInstance(component);
-    if (wrapper == null) {
-      LOG.warn("JdkComboBox is running without DialogWrapper!", new RuntimeException());
-      return Disposer.newDisposable();
-    } else {
-      return wrapper.getDisposable();
+      //it there is no other listeners, let's refresh
+      if (myListeners.size() <= 1 && myIsRunning.compareAndSet(false, true)) {
+        startSdkDetection(project, myMulticaster);
+        myDetectedResults.clear();
+      }
+
+      //deliver everything we have
+      myDetectedResults.forEach(result -> result.accept(actualListener));
     }
+
+    Disposer.register(dialogWrapper.getDisposable(), () -> {
+      myListeners.remove(actualListener);
+    });
   }
 
-  private void detectOrUpdateSdks() {
-    //TODO[jo]: recheck it once needed, do we need FS events for that?
+  private final DetectedSdksListener myMulticaster = new DetectedSdksListener() {
+    void logEvent(@NotNull Consumer<DetectedSdksListener> e) {
+      myDetectedResults.add(e);
+      for (DetectedSdksListener listener : myListeners) {
+        e.accept(listener);
+      }
+    }
 
-    if (myIsCompleted.get()) return;
-    if (!myIsRunning.compareAndSet(false, true)) return;
+    @Override
+    public void onSearchStarted() {
+      synchronized (myPublicationLock) {
+        myDetectedResults.clear();
+        logEvent(listener -> listener.onSearchStarted());
+      }
+    }
 
+    @Override
+    public void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home) {
+      synchronized (myPublicationLock) {
+        logEvent(listener -> listener.onSdkDetected(type, version, home));
+      }
+    }
+
+    @Override
+    public void onSearchCompleted() {
+      synchronized (myPublicationLock) {
+        myIsRunning.set(false);
+        logEvent(e -> e.onSearchCompleted());
+      }
+    }
+  };
+
+  private static void startSdkDetection(@Nullable Project project, @NotNull DetectedSdksListener callback) {
     Task.Backgroundable task = new Task.Backgroundable(
-      /*TODO[jo]*/null,
-                  "Detecting SDKs",
-                  true,
-                  PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+      project,
+      "Detecting SDKs",
+      true,
+      PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 
       private void detect(SdkType type, @NotNull ProgressIndicator indicator) {
         try {
-          //TODO[jo]: add EP here to suggest more home paths (one from the JdkDownloader)
           for (String path : new HashSet<>(type.suggestHomePaths())) {
             indicator.checkCanceled();
+            if (project != null && project.isDisposed()) indicator.cancel();
+
             if (path == null) continue;
 
             try {
@@ -139,7 +149,7 @@ public class JdksDetector {
               continue;
             }
 
-            onNewSdkDetected(type, version, path);
+            callback.onSdkDetected(type, version, path);
           }
         }
         catch (ProcessCanceledException e) {
@@ -152,43 +162,61 @@ public class JdksDetector {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(false);
-        int item = 0;
-        for (SdkType type : SdkType.getAllTypes()) {
-          indicator.setFraction((float)item++ / SdkType.getAllTypes().length);
-          indicator.checkCanceled();
-          detect(type, indicator);
+        try {
+          callback.onSearchStarted();
+          indicator.setIndeterminate(false);
+          int item = 0;
+          for (SdkType type : SdkType.getAllTypes()) {
+            indicator.setFraction((float)item++ / SdkType.getAllTypes().length);
+            indicator.checkCanceled();
+            detect(type, indicator);
+          }
+        } finally {
+          callback.onSearchCompleted();
         }
-
-        onSdkSearchCompleted();
       }
     };
 
     ProgressManager.getInstance().run(task);
   }
 
-  @NotNull
-  private static DetectedSdksListener dispatchToComponent(@NotNull ModalityState state,
-                                                          @NotNull DetectedSdksListener target) {
-    return new DetectedSdksListener() {
-      private void dispatch(Runnable r) {
-        ApplicationManager.getApplication().invokeLater(r, state);
-      }
+  private static class EdtDetectedSdksListener implements DetectedSdksListener {
+    private final ModalityState myState;
+    private final DetectedSdksListener myTarget;
 
-      @Override
-      public void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home) {
-        dispatch(() -> target.onSdkDetected(type, version, home));
-      }
+    EdtDetectedSdksListener(@NotNull ModalityState state,
+                            @NotNull DetectedSdksListener target) {
+      myState = state;
+      myTarget = target;
+    }
 
-      @Override
-      public void setSearchIsRunning(boolean running) {
-        dispatch(() -> target.setSearchIsRunning(running));
-      }
+    void dispatch(@NotNull Runnable r) {
+      ApplicationManager.getApplication().invokeLater(r, myState);
+    }
 
-      @Override
-      public void onSearchRestarted() {
-        dispatch(() -> target.onSearchRestarted());
-      }
-    };
+    @Override
+    public void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home) {
+      dispatch(() -> myTarget.onSdkDetected(type, version, home));
+    }
+
+    @Override
+    public void onSearchStarted() {
+      dispatch(() -> myTarget.onSearchStarted());
+    }
+
+    @Override
+    public void onSearchCompleted() {
+      dispatch(() -> myTarget.onSearchCompleted());
+    }
+
+    @Override
+    public int hashCode() {
+      return myTarget.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof EdtDetectedSdksListener && Objects.equals(((EdtDetectedSdksListener)obj).myTarget, myTarget);
+    }
   }
 }
