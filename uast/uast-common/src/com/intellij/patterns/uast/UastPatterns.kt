@@ -83,8 +83,8 @@ private fun isCallExpressionParameter(argumentExpression: UExpression,
                                       callPattern: ElementPattern<UCallExpression>): Boolean {
   val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) ?: return false
   if (call.kind !in constructorOrMethodCall) return false
-  return call.getArgumentForParameter(parameterIndex)?.let(::wrapULiteral) == wrapULiteral(argumentExpression)
-         && callPattern.accepts(call)
+  return callPattern.accepts(call)
+         && call.getArgumentForParameter(parameterIndex)?.let(::wrapULiteral) == wrapULiteral(argumentExpression)
 }
 
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>): Boolean {
