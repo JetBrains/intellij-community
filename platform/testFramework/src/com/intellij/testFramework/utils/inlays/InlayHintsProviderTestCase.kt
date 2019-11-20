@@ -20,7 +20,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     val sink = InlayHintsSinkImpl(provider.key)
     val collector = provider.getCollectorFor(file, editor, settings, sink) ?: error("Collector is expected")
     val collectorWithSettings = CollectorWithSettings(collector, provider.key, file.language, sink)
-    collectorWithSettings.collectTraversingAndApply(editor, file)
+    collectorWithSettings.collectTraversingAndApply(editor, file, true)
     val model = editor.inlayModel
     val range = file.textRange
     val inlineElements = model.getInlineElementsInRange(range.startOffset, range.endOffset)
