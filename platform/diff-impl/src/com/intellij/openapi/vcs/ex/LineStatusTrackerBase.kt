@@ -421,4 +421,8 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   @TestOnly
   fun getDocumentTrackerInTestMode(): DocumentTracker = documentTracker
+
+  override fun toString(): String {
+    return "${javaClass.name}(file=${virtualFile?.path}, isReleased=$isReleased)@${Integer.toHexString(hashCode())}"
+  }
 }
