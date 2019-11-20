@@ -4,8 +4,28 @@
 using namespace std;
 #include <comdef.h>
 #include <Wbemidl.h>
+#include <string>
 
 #pragma comment(lib, "wbemuuid.lib")
+
+void stringReplaceAll(wstring& str, const wstring& oldStr, const wstring& newStr)
+{
+    int pos = 0;
+    while ((pos = str.find(oldStr, pos)) != string::npos)
+    {
+        str.replace(pos, oldStr.length(), newStr);
+        pos += newStr.length();
+    }
+}
+
+wstring escapeLineBreaks(const wstring& str)
+{
+    wstring result = str;
+    stringReplaceAll(result, L"\\", L"\\\\");
+    stringReplaceAll(result, L"\n", L"\\n");
+    stringReplaceAll(result, L"\r", L"\\r");
+    return result;
+}
 
 int main(int argc, char **argv)
 {
@@ -163,19 +183,19 @@ int main(int argc, char **argv)
 
         VARIANT vtId;
         pclsObj->Get(L"ProcessId", 0, &vtId, nullptr, nullptr);
-        wprintf_s(L"%d\n", vtId.intVal);
+        wcout << vtId.intVal << "\n";
         VARIANT vtName;
         pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
         if (vtName.bstrVal != nullptr)
-            wprintf_s(L"%ls\n", vtName.bstrVal);
+            wcout << escapeLineBreaks(vtName.bstrVal) << L"\n";
         else
-            wprintf_s(L"\n");
+            wcout << L"\n";
         VARIANT vtCmd;
         pclsObj->Get(L"CommandLine", 0, &vtCmd, nullptr, nullptr);
         if (vtCmd.bstrVal != nullptr)
-            wprintf_s(L"%ls\n", vtCmd.bstrVal);
+            wcout << L"\"" << escapeLineBreaks(vtCmd.bstrVal) << L"\"\n";
         else
-            wprintf_s(L"\n");
+            wcout << L"\"\"\n";
         VariantClear(&vtId);
         VariantClear(&vtName);
         VariantClear(&vtCmd);
