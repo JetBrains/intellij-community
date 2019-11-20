@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.util.ExceptionUtil
+import com.jetbrains.python.conda.InstallCondaUtils
 import icons.PythonIcons.Python.Anaconda
 
 /**
@@ -40,7 +41,7 @@ class InstallCondaAction : AnAction(ActionsBundle.message("action.SetupMiniconda
     object : Task.Backgroundable(project, title) {
       override fun run(indicator: ProgressIndicator) {
         try {
-          val handler = InstallCondaActionImpl.installationHandler(path) { line ->
+          val handler = InstallCondaUtils.installationHandler(path) { line ->
             indicator.text2 = line
           }
 

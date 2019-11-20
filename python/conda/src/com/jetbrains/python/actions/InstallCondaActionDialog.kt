@@ -10,13 +10,14 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.layout.*
+import com.jetbrains.python.conda.InstallCondaUtils
 import javax.swing.JTextField
 
 /**
  * @author Aleksey.Rostovskiy
  */
 class InstallCondaActionDialog(private val project: Project?) : DialogWrapper(project) {
-  private val installationPath = JTextField(InstallCondaActionImpl.defaultDirectoryFile.absolutePath)
+  private val installationPath = JTextField(InstallCondaUtils.defaultDirectoryFile.absolutePath)
 
   private val fileChooser = TextFieldWithBrowseButton(installationPath) {
     val virtualFile = LocalFileSystem.getInstance().findFileByPath(getPathInstallation())
@@ -25,7 +26,7 @@ class InstallCondaActionDialog(private val project: Project?) : DialogWrapper(pr
       .choose(project, virtualFile)
       .firstOrNull()
       ?.path
-    installationPath.text = path ?: InstallCondaActionImpl.defaultDirectoryFile.absolutePath
+    installationPath.text = path ?: InstallCondaUtils.defaultDirectoryFile.absolutePath
   }
 
   init {
@@ -34,7 +35,7 @@ class InstallCondaActionDialog(private val project: Project?) : DialogWrapper(pr
   }
 
   override fun doOKAction() {
-    val errorMessage = InstallCondaActionImpl.checkPath(getPathInstallation())
+    val errorMessage = InstallCondaUtils.checkPath(getPathInstallation())
 
     if (errorMessage != null) {
       Messages.showErrorDialog(project,

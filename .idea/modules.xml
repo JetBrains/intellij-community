@@ -702,6 +702,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" filepath="$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.tests.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/testSrc/intellij.python.community.tests.iml" filepath="$PROJECT_DIR$/python/testSrc/intellij.python.community.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/conda/intellij.python.conda.iml" filepath="$PROJECT_DIR$/python/conda/intellij.python.conda.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" filepath="$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.helpers.iml" filepath="$PROJECT_DIR$/python/intellij.python.helpers.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/helpers/tests/intellij.python.helpers.tests.iml" filepath="$PROJECT_DIR$/python/helpers/tests/intellij.python.helpers.tests.iml" />
