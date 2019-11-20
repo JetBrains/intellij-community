@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -28,7 +29,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.util.List;
@@ -68,22 +69,26 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
 
   public void testPreserveStringContent() {
     Supplier<MadTestingAction> fileAction =
-      MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
-                                           file -> Generator.constant(env -> transformContent(file)));
-    PropertyChecker.checkScenarios(fileAction);
+      MadTestingUtil.performOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
+                                           this::transformContent);
+    PropertyChecker.
+      checkScenarios(fileAction);
   }
 
-  private void transformContent(@NotNull PsiFile file) {
+  private void transformContent(@NotNull ImperativeCommand.Environment env, @NotNull VirtualFile file) {
     List<PsiPolyadicExpression> concatenations =
-      ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(file, PsiPolyadicExpression.class),
+      ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(getPsiManager().findFile(file), PsiPolyadicExpression.class),
                            e -> e.getType() != null && e.getType().equalsToText(JAVA_LANG_STRING));
     if (concatenations.isEmpty()) return;
 
-    myFixture.openFileInEditor(file.getVirtualFile());
+    myFixture.openFileInEditor(file);
     for (PsiPolyadicExpression concatenation : concatenations) {
       PsiExpression[] operands = concatenation.getOperands();
       if (operands.length < 2) continue;
-      List<Pair<PsiElement, TextRange>> injected = InjectedLanguageManager.getInstance(file.getProject()).getInjectedPsiFiles(operands[0]);
+
+      env.logMessage("Tweaking concatenation at " + concatenation.getTextRange());
+
+      List<Pair<PsiElement, TextRange>> injected = InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(operands[0]);
       // IDEA-224671
       if (injected != null && !injected.isEmpty()) continue;
       String expected = getConcatenationText(operands);
@@ -91,7 +96,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       expected = expected.replaceAll("\\\\040", " ");
 
       Computable<PsiElement> replaceAction = () -> {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         PsiExpression newExpression = factory.createExpressionFromText("(" + concatenation.getText() + ")", null);
         return concatenation.replace(newExpression);
       };
