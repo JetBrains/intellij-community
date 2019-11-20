@@ -60,6 +60,9 @@ public class JpsOutputLoaderManager {
     hasRunningTask = new AtomicBoolean();
     myServerClient = ArtifactoryJpsServerClient.INSTANCE;
     myMetadataLoader = new JpsMetadataLoader(project, myServerClient);
+    // Configure build manager
+    BuildManager buildManager = BuildManager.getInstance();
+    if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
     ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool",
                                                                          ProcessIOExecutorService.INSTANCE,
                                                                          getThreadPoolSize());

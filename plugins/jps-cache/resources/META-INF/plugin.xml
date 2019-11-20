@@ -9,9 +9,12 @@
 ]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <backgroundPostStartupActivity implementation="com.intellij.jps.cache.JpsCachesProjectStateListener"/>
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.jps.cache.JpsCachesProjectStateListener" topic="git4idea.repo.GitRepositoryChangeListener"/>
+  </projectListeners>
 
   <actions>
     <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches">
