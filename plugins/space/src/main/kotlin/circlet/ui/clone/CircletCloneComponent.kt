@@ -50,7 +50,7 @@ internal class CircletCloneComponent(val project: Project,
     private var loginState: MutableProperty<CircletLoginState> = mutableProperty(initialState())
 
     private fun initialState(): CircletLoginState {
-        val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("", null)
+        val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("")
         return CircletLoginState.Connected(workspace.client.server, workspace)
     }
 
@@ -63,7 +63,7 @@ internal class CircletCloneComponent(val project: Project,
         circletWorkspace.workspace.forEach(uiLifetime) { workspace ->
             if (workspace == null) {
                 val settings = CircletServerSettingsComponent.getInstance().settings
-                loginState.value = CircletLoginState.Disconnected(settings.value.server, "")
+                loginState.value = CircletLoginState.Disconnected(settings.value.server)
             }
             else {
                 loginState.value = CircletLoginState.Connected(workspace.client.server, workspace)
@@ -91,7 +91,7 @@ internal class CircletCloneComponent(val project: Project,
             is CircletLoginState.Connecting -> {
                 buildConnectingPanel(st) {
                     st.lt.terminate()
-                    loginState.value = CircletLoginState.Disconnected(st.server, null)
+                    loginState.value = CircletLoginState.Disconnected(st.server)
                 }
             }
 
@@ -203,7 +203,6 @@ private class CloneView(
     }
 
     val client: KCircletClient = st.workspace.client
-    val circletImageLoader = CircletImageLoader(lifetime, client)
 
     private val circletProjectListWithSearch = ListWithSearchComponent<CircletCloneListItem>(listModel, CircletCloneListItemRenderer())
 
@@ -225,8 +224,7 @@ private class CloneView(
         st.workspace,
         client.pr,
         client.repoService,
-        client.star,
-        circletImageLoader
+        client.star
     )
 
     init {

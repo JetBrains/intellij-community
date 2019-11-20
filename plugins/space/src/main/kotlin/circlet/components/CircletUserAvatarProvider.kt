@@ -20,7 +20,7 @@ class CircletUserAvatarProvider {
     val avatar: Property<Icon> = lifetime.mapInit(circletWorkspace.workspace, avatarPlaceholder) { ws ->
 
         ws ?: return@mapInit avatarPlaceholder
-        val avatarTID = ws.me.value.avatar ?: return@mapInit avatarPlaceholder
+        val avatarTID = ws.me.value.smallAvatar ?: return@mapInit avatarPlaceholder
         val imageLoader = CircletImageLoader(ws.lifetime, ws.client)
 
         // await connected state before trying to load image.

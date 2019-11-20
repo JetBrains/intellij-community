@@ -2,7 +2,6 @@ package circlet.ui.clone
 
 import circlet.client.api.*
 import circlet.platform.client.*
-import circlet.ui.*
 import circlet.workspaces.*
 import com.intellij.util.ui.cloneDialog.*
 import libraries.coroutines.extra.*
@@ -14,8 +13,7 @@ class CircletCloneComponentViewModel(
     private val workspace: Workspace,
     private val projectService: Projects,
     private val repositoryService: RepositoryService,
-    private val starService: Star,
-    private val circletImageLoader: CircletImageLoader
+    private val starService: Star
 ) : Lifetimed {
 
     val isLoading: MutableProperty<Boolean> = Property.createMutable(false)
