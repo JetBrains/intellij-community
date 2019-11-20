@@ -137,7 +137,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
           return;
         }
-        if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
+        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node)) {
           return;
         }
         if (owner instanceof PyFile) {

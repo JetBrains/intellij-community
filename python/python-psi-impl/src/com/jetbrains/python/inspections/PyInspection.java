@@ -19,7 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.intellij.lang.annotations.Pattern;
@@ -40,7 +40,7 @@ public abstract class PyInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return PyPsiBundle.message("INSP.GROUP.python");
   }
 
   @NotNull
