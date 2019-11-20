@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
@@ -85,6 +86,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<>();
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new THashSet<>();
   private final Map<PsiMethod, PsiType> myExpectedReturnTypes = new HashMap<>();
+  private final Function<? super PsiElement, ? extends PsiClass> myInsideConstructorOfClass = this::findInsideConstructorClass;
+  private final Map<PsiElement, PsiClass> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
 
   private static class Holder {
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
@@ -96,6 +99,40 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   protected HighlightVisitorImpl() {
+  }
+
+  // element -> class inside which there is a constructor inside which this element is contained
+  private PsiClass findInsideConstructorClass(@NotNull PsiElement entry) {
+    PsiClass result = null;
+    PsiElement parent;
+    PsiElement element;
+    for (element = entry; element != null && !(element instanceof PsiFile); element = parent) {
+      result = myInsideConstructorOfClassCache.get(entry);
+      if (result != null || myInsideConstructorOfClassCache.containsKey(entry)) {
+        return result;
+      }
+      parent = element.getParent();
+      if (parent instanceof PsiExpressionStatement) {
+        PsiElement p2 = parent.getParent();
+        if (p2 instanceof PsiCodeBlock) {
+          PsiElement p3 = p2.getParent();
+          if (p3 instanceof PsiMethod && ((PsiMethod)p3).isConstructor()) {
+            PsiElement p4 = p3.getParent();
+            if (p4 instanceof PsiClass) {
+              result = (PsiClass)p4;
+            }
+          }
+        }
+      }
+      if (result != null) {
+        break;
+      }
+    }
+    for (PsiElement e = entry; e != null && !(e instanceof PsiFile); e = e.getParent()) {
+      myInsideConstructorOfClassCache.put(e, result);
+      if (e == element) break;
+    }
+    return result;
   }
 
   /**
@@ -185,7 +222,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       mySingleImportedClasses.clear();
       mySingleImportedFields.clear();
       myReassignedParameters.clear();
-
       myRefCountHolder = null;
       myJavaModule = null;
       myFile = null;
@@ -193,6 +229,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myDuplicateMethods.clear();
       myOverrideEquivalentMethodsVisitedClasses.clear();
       myExpectedReturnTypes.clear();
+      myInsideConstructorOfClassCache.clear();
     }
 
     return success;
@@ -1209,7 +1246,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
     if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) myHolder.add(HighlightUtil.checkLegalVarReference(ref, (PsiClass)resolved));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile, myInsideConstructorOfClass));
 
 
     return result;
@@ -1657,7 +1694,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitThisExpression(PsiThisExpression expr) {
     if (!(expr.getParent() instanceof PsiReceiverParameter)) {
       myHolder.add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier(), myLanguageLevel));
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, myFile));
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, myFile, myInsideConstructorOfClass));
       if (!myHolder.hasErrorResults()) visitExpression(expr);
     }
   }

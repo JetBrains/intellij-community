@@ -64,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -2162,7 +2163,13 @@ public class HighlightUtil extends HighlightUtilBase {
 
   static HighlightInfo checkMemberReferencedBeforeConstructorCalled(@NotNull PsiElement expression,
                                                                     @Nullable PsiElement resolved,
-                                                                    @NotNull PsiFile containingFile) {
+                                                                    @NotNull PsiFile containingFile,
+                                                                    @NotNull Function<? super PsiElement, ? extends PsiClass> insideConstructorOfClass) {
+    if (insideConstructorOfClass.apply(expression) == null) {
+      // not inside expression inside constructor
+      return null;
+    }
+
     PsiClass referencedClass;
     String resolvedName;
     PsiType type;
@@ -2268,31 +2275,25 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement element = expression.getParent();
     while (element != null) {
       // check if expression inside super()/this() call
+
       if (JavaPsiConstructorUtil.isConstructorCall(element)) {
-        PsiElement parentClass = new PsiMatcherImpl(element)
-          .parent(PsiMatchers.hasClass(PsiExpressionStatement.class))
-          .parent(PsiMatchers.hasClass(PsiCodeBlock.class))
-          .parent(PsiMatchers.hasClass(PsiMethod.class))
-          .dot(JavaMatchers.isConstructor(true))
-          .parent(PsiMatchers.hasClass(PsiClass.class))
-          .getElement();
+        PsiClass parentClass = insideConstructorOfClass.apply(element);
         if (parentClass == null) {
           return null;
         }
 
         // only this class/superclasses instance methods are not allowed to call
-        PsiClass aClass = (PsiClass)parentClass;
-        if (PsiUtil.isInnerClass(aClass) && referencedClass == aClass.getContainingClass()) return null;
+        if (PsiUtil.isInnerClass(parentClass) && referencedClass == parentClass.getContainingClass()) return null;
         // field or method should be declared in this class or super
-        if (!InheritanceUtil.isInheritorOrSelf(aClass, referencedClass, true)) return null;
+        if (!InheritanceUtil.isInheritorOrSelf(parentClass, referencedClass, true)) return null;
         // and point to our instance
         if (expression instanceof PsiReferenceExpression &&
-            !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
+            !isThisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), parentClass)) {
           return null;
         }
 
         if (expression instanceof PsiJavaCodeReferenceElement &&
-            !aClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
+            !parentClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
             PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
           return null;
         }
@@ -2303,9 +2304,9 @@ public class HighlightUtil extends HighlightUtilBase {
         }
 
         final HighlightInfo highlightInfo = createMemberReferencedError(resolvedName, expression.getTextRange());
-        if (expression instanceof PsiReferenceExpression && PsiUtil.isInnerClass(aClass)) {
+        if (expression instanceof PsiReferenceExpression && PsiUtil.isInnerClass(parentClass)) {
           final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
-          final PsiClass containingClass = aClass.getContainingClass();
+          final PsiClass containingClass = parentClass.getContainingClass();
           LOG.assertTrue(containingClass != null);
           final PsiField fieldInContainingClass = containingClass.findFieldByName(referenceName, true);
           if (fieldInContainingClass != null && ((PsiReferenceExpression)expression).getQualifierExpression() == null) {
@@ -2367,7 +2368,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  private static boolean thisOrSuperReference(@Nullable PsiExpression qualifierExpression, @NotNull PsiClass aClass) {
+  private static boolean isThisOrSuperReference(@Nullable PsiExpression qualifierExpression, @NotNull PsiClass aClass) {
     if (qualifierExpression == null) return true;
     PsiJavaCodeReferenceElement qualifier;
     if (qualifierExpression instanceof PsiThisExpression) {
