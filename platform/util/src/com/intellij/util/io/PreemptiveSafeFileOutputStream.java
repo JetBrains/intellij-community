@@ -17,8 +17,6 @@ import java.nio.file.*;
  * <p><b>The class is not thread-safe</b>; expected to be used within try-with-resources or an equivalent statement.</p>
  */
 public class PreemptiveSafeFileOutputStream extends OutputStream {
-  public static final boolean PREFER = Boolean.getBoolean("ide.io.preemptive.safe.stream");
-
   private static final String TEMP_EXT = ".tmp";
   private static final String BACKUP_EXT = "~";
   private static final OpenOption[] TEMP_WRITE = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.DSYNC};
