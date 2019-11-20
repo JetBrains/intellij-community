@@ -221,7 +221,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return result;
   }
 
-  private static JavaResolveResult getStaticFactoryCandidateInfo(final PsiNewExpression newExpression,
+  private static JavaResolveResult getStaticFactoryCandidateInfo(@NotNull PsiNewExpression newExpression,
                                                                  final PsiElement context) {
     return ourDiamondGuard.doPreventingRecursion(context, false, () -> {
 
@@ -231,7 +231,13 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
         return null;
       }
 
-      final JavaMethodsConflictResolver resolver = new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(newExpression));
+      PsiFile containingFile = argumentList.getContainingFile();
+      if (containingFile == null) {
+        return null;
+      }
+      JavaMethodsConflictResolver resolver = new JavaMethodsConflictResolver(argumentList, null,
+                                                                             PsiUtil.getLanguageLevel(containingFile),
+                                                                             containingFile);
       final List<CandidateInfo> results = collectStaticFactories(newExpression);
       CandidateInfo result = results != null ? resolver.resolveConflict(new ArrayList<>(results)) : null;
       final PsiMethod staticFactory = result != null ? (PsiMethod)result.getElement() : null;
@@ -278,8 +284,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       constructors = new PsiMethod[] {null};
     }
 
+    PsiFile containingFile = argumentList.getContainingFile();
     final MethodCandidatesProcessor
-      processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), new PsiConflictResolver[0], candidates) {
+      processor = new MethodCandidatesProcessor(argumentList, containingFile, new PsiConflictResolver[0], candidates) {
       @Override
       protected boolean isAccepted(@NotNull PsiMethod candidate) {
         return true;
