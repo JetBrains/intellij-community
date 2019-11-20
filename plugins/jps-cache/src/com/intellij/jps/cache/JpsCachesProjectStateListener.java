@@ -13,7 +13,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import org.jetbrains.annotations.NotNull;
 
-public class JpsCachesProjectStateListener implements StartupActivity, GitRepositoryChangeListener, RegistryValueListener {
+public class JpsCachesProjectStateListener implements StartupActivity.Background, GitRepositoryChangeListener, RegistryValueListener {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsCachesProjectStateListener");
   private static final String PORTABLE_CACHES_KEY = "compiler.build.portable.caches";
   private String previousCommitId = "";
