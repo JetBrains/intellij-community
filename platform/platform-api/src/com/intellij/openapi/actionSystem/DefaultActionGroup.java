@@ -143,6 +143,7 @@ public class DefaultActionGroup extends ActionGroup {
 
     // check that action isn't already registered
     if (!(action instanceof Separator) && containsAction(action)) {
+      LOG.error(CANT_ADD_ACTION_TWICE + action);
       remove(action, actionManager.getId(action));
     }
 
