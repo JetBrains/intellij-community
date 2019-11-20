@@ -213,7 +213,6 @@ class LegacyBridgeModulesTest {
       ModuleRootModificationUtil.updateModel(module) { model ->
         val orderEntry = model.orderEntries.filterIsInstance<LibraryOrderEntry>().single()
         model.removeOrderEntry(orderEntry)
-        model.removeOrderEntry(orderEntry)
       }
 
       assertEmpty(projectModel.entityStore.current.entities(LibraryEntity::class.java).toList())
