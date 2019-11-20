@@ -46,9 +46,9 @@ public class JdksDetector {
    * yet registered. It is assumed the {@param component} is
    * included in the {@link DialogWrapper} so we could implement
    * the correct disposal logic (no SDKs are detected otherwise)
-   *
+   * <br/>
    * The {@param listener} is populated immediately with all know-by-now
-   * detected Sdk infos, the listener will be called in the EDT
+   * detected SDK infos, the listener will be called on the EDT
    * thread to deliver more detected SDKs
    *
    * @param component the requestor component
@@ -61,7 +61,7 @@ public class JdksDetector {
 
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
     if (dialogWrapper == null) {
-      LOG.warn("Cannot find disposable component parent for the subscription for " + component, new RuntimeException());
+      LOG.warn("Cannot find DialogWrapper parent for the component " + component + ", SDK search is disabled", new RuntimeException());
       return;
     }
 
@@ -72,12 +72,12 @@ public class JdksDetector {
 
       //it there is no other listeners, let's refresh
       if (myListeners.size() <= 1 && myIsRunning.compareAndSet(false, true)) {
-        startSdkDetection(project, myMulticaster);
         myDetectedResults.clear();
+        startSdkDetection(project, myMulticaster);
       }
 
       //deliver everything we have
-      myDetectedResults.forEach(result -> result.accept(actualListener));
+      myDetectedResults.forEach(result -> result.accept(listener));
     }
 
     Disposer.register(dialogWrapper.getDisposable(), () -> {

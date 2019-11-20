@@ -85,7 +85,6 @@ public class SdkSettingsStep extends ModuleWizardStep {
     }
 
     myJdkComboBox = new JdkComboBox(myWizardContext.getProject(), myModel, sdkTypeIdFilter, sdkFilter, sdkTypeIdFilter, null);
-    myJdkComboBox.showNoneSdkItem();
     myJdkPanel = new JPanel(new GridBagLayout());
 
     final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
@@ -162,9 +161,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     JdkComboBox.JdkComboBoxItem item = myJdkComboBox.getSelectedItem();
-    if (myJdkComboBox.getSelectedJdk() == null &&
-        !(item instanceof JdkComboBox.ProjectJdkComboBoxItem) &&
-        !(item instanceof JdkComboBox.SuggestedJdkItem)) {
+    if (myJdkComboBox.getSelectedJdk() == null && !(item instanceof JdkComboBox.ProjectJdkComboBoxItem)) {
       if (Messages.showDialog(getNoSdkMessage(),
                                        IdeBundle.message("title.no.jdk.specified"),
                                        new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -36,7 +35,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
@@ -80,6 +78,11 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   /**
    * @deprecated since {@link #setSetupButton} methods are deprecated, use the
    * more specific constructor to pass all parameters
+   *
+   * The {@param addSuggestedItems} is ignored (it was not actively used) and
+   * it is no longer possible to have {@link SuggestedJdkItem} as a selected
+   * item of that ComboBox. The implementation will take care about turning a
+   * suggested SDKs into {@link Sdk}s
    */
   @Deprecated
   @SuppressWarnings("unused")
@@ -126,6 +129,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
 
         //allow AnimationIcon for loader to show progress
         UIUtil.putClientProperty(list, ANIMATION_IN_RENDERER_ALLOWED, true);
+        UIUtil.putClientProperty(JdkComboBox.this, ANIMATION_IN_RENDERER_ALLOWED, true);
 
         SimpleColoredComponent component = (SimpleColoredComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
 
@@ -169,7 +173,6 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
           }
           else if (value instanceof LoadingJdkComboBoxItem) {
             setIcon(new AnimatedIcon.Default());
-            //TODO[jo] add an item per provider here?
             append(ProjectBundle.message("jdk.combo.box.search.of.sdks") );
           }
           else if (value instanceof ProjectJdkComboBoxItem) {
@@ -247,7 +250,6 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   }
 
   private void collectNewSdkActions() {
-    //TODO: move actions computation to the dialog popup open!
     DefaultActionGroup group = new DefaultActionGroup();
     mySdkModel.createAddActions(group, this, getSelectedJdk(), jdk -> {
       if (myProject != null) {
@@ -720,7 +722,10 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
   }
 
-  ///TODO: an option to track this class either as exportable or as internal
+  /**
+   * Note, this type is never visible from the {@link #getSelectedItem()} method,
+   * it is kept here for binary compatibility
+   */
   public static class SuggestedJdkItem extends JdkComboBoxItem {
     private final SdkType mySdkType;
     private final String myPath;
