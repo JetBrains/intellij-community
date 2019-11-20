@@ -21,6 +21,7 @@
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <registryKey key="space.automation.enabled" defaultValue="false" restartRequired="true" description="Enable Space Automation"/>
         <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
         <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
 
