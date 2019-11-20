@@ -88,7 +88,6 @@ public abstract class ModuleJdkConfigurable implements Disposable {
   private void init() {
     myJdkPanel = new JPanel(new GridBagLayout());
     myCbModuleJdk = new JdkComboBox(myJdksModel);
-    myCbModuleJdk.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
     myCbModuleJdk.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

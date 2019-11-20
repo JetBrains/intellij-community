@@ -88,7 +88,6 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     if (myJdkPanel == null) {
       myJdkPanel = new JPanel(new GridBagLayout());
       myCbProjectJdk = new JdkComboBox(myJdksModel);
-      myCbProjectJdk.insertItemAt(new JdkComboBox.NoneJdkComboBoxItem(), 0);
       myCbProjectJdk.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {

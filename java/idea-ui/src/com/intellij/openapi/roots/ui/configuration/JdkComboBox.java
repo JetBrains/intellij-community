@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.google.common.collect.ImmutableList;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -55,7 +56,7 @@ import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
  * @author Eugene Zhuravlev
  */
 public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
-
+  private static final Logger LOG = Logger.getInstance(JdkComboBox.class);
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 
   @Nullable
@@ -143,7 +144,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
           else if (value instanceof LoadingJdkComboBoxItem) {
             setIcon(new AnimatedIcon.Default());
             //TODO[jo] add an item per provider here?
-            append("Looking for JDKs...");
+            append(ProjectBundle.message("jdk.combo.box.search.of.sdks") );
           }
           else if (value instanceof ProjectJdkComboBoxItem) {
             final Sdk jdk = jdkModel.getProjectSdk();
@@ -192,7 +193,9 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   }
 
   /**
-   * TODO[jo]
+   * @deprecated Use the overloaded constructor to pass these parameters directly to
+   * that class. The {@param setUpButton} is no longer used, the JdkComboBox shows
+   * all the needed actions in the popup. The button will be be made invisible.
    */
   @Deprecated
   public void setSetupButton(final JButton setUpButton,
@@ -206,7 +209,9 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   }
 
   /**
-   * TODO[jo]
+   * @deprecated Use the overloaded constructor to pass these parameters directly to
+   * that class. The {@param setUpButton} is no longer used, the JdkComboBox shows
+   * all the needed actions in the popup. The button will be be made invisible.
    */
   @Deprecated
   public void setSetupButton(final JButton setUpButton,
@@ -270,7 +275,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
 
   /**
    *
-   * @deprecated the pupup shown by the SetUp button is now included
+   * @deprecated the popup shown by the SetUp button is now included
    * directly into the popup, you may remove the button from your UI,
    * see {@link #setSetupButton(JButton, Project, ProjectSdksModel, JdkComboBoxItem, Condition, boolean)}
    * for more details
@@ -281,6 +286,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     return mySetUpButton;
   }
 
+  @Nullable
   @Override
   public JdkComboBoxItem getSelectedItem() {
     return (JdkComboBoxItem)super.getSelectedItem();
@@ -292,51 +298,16 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     return selectedItem != null? selectedItem.getJdk() : null;
   }
 
-  public void setSelectedJdk(Sdk jdk) {
-    final int index = indexOf(jdk);
-    if (index >= 0) {
-      setSelectedIndex(index);
-    }
+  public void setSelectedJdk(@Nullable Sdk jdk) {
+    myModel.selectSdk(jdk);
   }
 
   public void setInvalidJdk(String name) {
-    removeInvalidElement();
-    addItem(new InvalidJdkComboBoxItem(name));
-    setSelectedIndex(getModel().getSize() - 1);
+    myModel.setAndSelectInvalidJdk(name);
   }
 
-  private int indexOf(@Nullable Sdk jdk) {
-    //TODO[jo]: reuse code!
-    final JdkComboBoxModel model = (JdkComboBoxModel)getModel();
-    final int count = model.getSize();
-    for (int idx = 0; idx < count; idx++) {
-      final JdkComboBoxItem elementAt = model.getElementAt(idx);
-      if (jdk == null) {
-        if (elementAt instanceof NoneJdkComboBoxItem || elementAt instanceof ProjectJdkComboBoxItem) {
-          return idx;
-        }
-      }
-      else {
-        Sdk elementAtJdk = elementAt.getJdk();
-        if (elementAtJdk != null && jdk.getName().equals(elementAtJdk.getName())) {
-          return idx;
-        }
-      }
-    }
-    return -1;
-  }
-
-  private void removeInvalidElement() {
-    //TODO[jo] review
-    final JdkComboBoxModel model = (JdkComboBoxModel)getModel();
-    final int count = model.getSize();
-    for (int idx = 0; idx < count; idx++) {
-      final JdkComboBoxItem elementAt = model.getElementAt(idx);
-      if (elementAt instanceof InvalidJdkComboBoxItem) {
-        removeItemAt(idx);
-        break;
-      }
-    }
+  public void showProjectSdkItem() {
+    myModel.setFirstItem(new ProjectJdkComboBoxItem());
   }
 
   public void reloadModel(JdkComboBoxItem firstItem, @Nullable Project project) {
@@ -380,40 +351,63 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
    * This model is used implicitly by the clients of the JdkComboBox class, be careful!
    */
   private static class JdkComboBoxModel extends DefaultComboBoxModel<JdkComboBoxItem> {
+    private JdkComboBoxItem myFirstItem = null;
     private ImmutableList<JdkComboBoxItem> myHead = ImmutableList.of();
     private ImmutableList<ActionJdkItem> myActions = ImmutableList.of();
     private boolean myIsSdkDetectorInProgress = true;
     private ImmutableList<SuggestedJdkItem> mySuggestions = ImmutableList.of();
+    private InvalidJdkComboBoxItem myInvalidJdkItem = null;
+
+    void selectSdk(@Nullable Sdk sdk) {
+      if (sdk == null) return;
+      int idx = firstIndexOf(it -> Objects.equals(it.getJdk(), sdk));
+      if (idx >= 0) {
+        setSelectedItem(getElementAt(idx));
+      }
+    }
+
+    void setFirstItem(@Nullable JdkComboBoxItem firstItem) {
+      myFirstItem = firstItem;
+      reload();
+    }
 
     void addSuggestedItem(@NotNull SuggestedJdkItem item) {
       //TODO[jo] sort found items
       mySuggestions = ImmutableList.<SuggestedJdkItem>builder()
-        .addAll(mySuggestions).add(item).build();
-      reload(false);
+        .addAll(mySuggestions)
+        .add(item)
+        .build();
+      reload();
     }
 
     public void removeAllSuggestedItems() {
       mySuggestions = ImmutableList.of();
-      reload(false);
+      reload();
     }
 
     void onSuggestedItemsProgress(boolean running) {
       myIsSdkDetectorInProgress = running;
-      reload(false);
+      reload();
     }
 
-    public void reload(boolean recoverHead) {
-      //the model is patched from outside of the JdkComboBox, an attempt to preserve the first element
-      JdkComboBoxItem hackElement = recoverHead && getSize() > 0 ? getElementAt(0) : null;
-      //do we have the head element at the beginning of the list?
-      if (hackElement != null && !myHead.isEmpty() && Objects.equals(hackElement, myHead.get(0))) hackElement = null;
-      removeAllElements();
+    public void setAndSelectInvalidJdk(String name) {
+      myInvalidJdkItem = new InvalidJdkComboBoxItem(name);
+      reload();
+      setSelectedItem(myInvalidJdkItem);
+    }
 
-      if (hackElement != null) {
-        addElement(hackElement);
+    public void reload() {
+      removeAllSuggestedItems();
+      if (myFirstItem != null) {
+        addElement(myFirstItem);
       }
 
       myHead.forEach(this::addElement);
+
+      if (myInvalidJdkItem != null) {
+        addElement(myInvalidJdkItem);
+      }
+
       myActions.forEach(this::addElement);
       if (myIsSdkDetectorInProgress) {
         addElement(new LoadingJdkComboBoxItem());
@@ -430,8 +424,8 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
                 @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
                 @Nullable Condition<? super Sdk> sdkFilter,
                 boolean addSuggested) {
+      myFirstItem = firstItem;
       List<JdkComboBoxItem> newHead = new ArrayList<>();
-      if (firstItem != null) newHead.add(firstItem);
 
       Sdk[] jdks = sortSdks(jdksModel.getSdks());
       for (Sdk jdk : jdks) {
@@ -441,7 +435,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       }
 
       myHead = ImmutableList.copyOf(newHead);
-      reload(true);
+      reload();
     }
 
     private int firstIndexOf(@NotNull Predicate<JdkComboBoxItem> predicate) {
@@ -474,11 +468,11 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       int loadingItemIndex = lastIndexOf(LoadingJdkComboBoxItem.class::isInstance);
       if (loadingItemIndex >= 0) {
         if (value == getElementAt(loadingItemIndex)) {
-          return "Autodetected";
+          return ProjectBundle.message("jdk.combo.box.autodetected");
         }
       } else {
         if (value instanceof SuggestedJdkItem && valueIndex > 0 && !(getElementAt(valueIndex-1) instanceof SuggestedJdkItem)) {
-          return "Autodetected";
+          return ProjectBundle.message("jdk.combo.box.autodetected");
         }
       }
 
@@ -486,7 +480,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
 
     @Override
-    public void setSelectedItem(Object anObject) {
+    public void setSelectedItem(@Nullable Object anObject) {
       if (!(anObject instanceof JdkComboBoxItem)) return;
       if (anObject instanceof LoadingJdkComboBoxItem) return;
 
@@ -651,5 +645,58 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
 
     protected abstract void executeAction();
+  }
+
+  /**
+   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
+   * this call is ignored
+   */
+  @Override
+  @Deprecated
+  public void addItem(JdkComboBoxItem item) {
+    LOG.warn("JdkComboBox#addItem() is deprecated!" + item, new RuntimeException());
+  }
+
+  /**
+   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
+   * this call is ignored
+   */
+  @Override
+  @Deprecated
+  public void insertItemAt(JdkComboBoxItem item, int index) {
+    LOG.warn("JdkComboBox#insertItemAt() is deprecated!" + item + " at " + index, new RuntimeException());
+    if (item instanceof ProjectJdkComboBoxItem) {
+      this.showProjectSdkItem();
+    }
+  }
+
+  /**
+   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
+   * this call is ignored
+   */
+  @Override
+  @Deprecated
+  public void removeItem(Object anObject) {
+    LOG.warn("JdkComboBox#removeItem() is deprecated!", new RuntimeException());
+  }
+
+  /**
+   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
+   * this call is ignored
+   */
+  @Override
+  @Deprecated
+  public void removeItemAt(int anIndex) {
+    LOG.warn("JdkComboBox#removeItemAt() is deprecated!", new RuntimeException());
+  }
+
+  /**
+   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
+   * this call is ignored
+   */
+  @Override
+  @Deprecated
+  public void removeAllItems() {
+    LOG.warn("JdkComboBox#removeAllItems() is deprecated!", new RuntimeException());
   }
 }

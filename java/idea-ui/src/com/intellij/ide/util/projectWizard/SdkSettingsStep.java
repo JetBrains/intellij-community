@@ -127,7 +127,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && myModuleBuilder.isSuitableSdkType(sdk.getSdkType())) {
         // use project SDK
-        myJdkComboBox.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
+        myJdkComboBox.showProjectSdkItem();
         return null;
       }
     }
