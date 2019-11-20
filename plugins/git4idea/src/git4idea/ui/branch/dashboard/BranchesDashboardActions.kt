@@ -13,8 +13,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitUtil
+import git4idea.actions.GitFetch
 import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
+import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
 import git4idea.isRemoteBranchProtected
 import git4idea.repo.GitRepository
@@ -227,6 +229,31 @@ internal object BranchesDashboardActions {
       else {
         "A branch is 'My' if all exclusive commits of this branch are made by 'me', i.e. by current Git author."
       }
+    }
+  }
+
+  class FetchAction(private val ui: BranchesDashboardUi) : GitFetch() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      with(e.presentation) {
+        text = "Fetch All Remotes"
+        icon = AllIcons.Actions.Refresh
+        description = ""
+        val project = e.project!!
+        if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
+          isEnabled = false
+          description = "Fetch in progress..."
+        }
+      }
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      ui.startLoadingBranches()
+      super.actionPerformed(e)
+    }
+
+    override fun onFetchFinished(result: GitFetchResult) {
+      ui.stopLoadingBranches()
     }
   }
 
