@@ -84,7 +84,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
       sdkFilter = JdkComboBox.getSdkFilter(sdkTypeIdFilter);
     }
 
-    myJdkComboBox = new JdkComboBox(myModel, sdkTypeIdFilter, sdkFilter, sdkTypeIdFilter, true);
+    myJdkComboBox = new JdkComboBox(myWizardContext.getProject(), myModel, sdkTypeIdFilter, sdkFilter, sdkTypeIdFilter, null);
+    myJdkComboBox.showNoneSdkItem();
     myJdkPanel = new JPanel(new GridBagLayout());
 
     final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
@@ -103,23 +104,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
     Sdk sdk = getPreselectedSdk(project, component.getValue(selectedJdkProperty), sdkTypeIdFilter);
     myJdkComboBox.setSelectedJdk(sdk);
-
-    JButton button = new JButton("Ne\u001Bw...");
-    myJdkComboBox.setSetupButton(button, project, myModel,
-                                 project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(),
-                                 null,
-                                 false);
-
     myJdkPanel.add(myJdkComboBox, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    myJdkPanel.add(myJdkComboBox.getSetUpButton(), new GridBagConstraints(1, 0, 1, 1, 0, 0, WEST, NONE, JBUI.insetsLeft(4), 0, 0));
-    if (myJdkComboBox.getItemCount() == 0) {
-      SdkType type = ContainerUtil.find(SdkType.getAllTypes(), sdkTypeIdFilter);
-      if (type != null && type.getDownloadSdkUrl() != null) {
-        HyperlinkLabel label = new HyperlinkLabel("Download " + type.getPresentableName());
-        label.setHyperlinkTarget(type.getDownloadSdkUrl());
-        myJdkPanel.add(label, new GridBagConstraints(0, 1, 1, 1, 0, 0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
-      }
-    }
   }
 
   private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<? super SdkTypeId> sdkFilter) {
@@ -187,14 +172,6 @@ public class SdkSettingsStep extends ModuleWizardStep {
       }
     }
     try {
-      if (item instanceof JdkComboBox.SuggestedJdkItem) {
-        SdkType type = ((JdkComboBox.SuggestedJdkItem)item).getSdkType();
-        String path = ((JdkComboBox.SuggestedJdkItem)item).getPath();
-        myModel.addSdk(type, path, sdk -> {
-          myJdkComboBox.reloadModel(new JdkComboBox.ActualJdkComboBoxItem(sdk), myWizardContext.getProject());
-          myJdkComboBox.setSelectedJdk(sdk);
-        });
-      }
       myModel.apply(null, true);
     } catch (ConfigurationException e) {
       //IDEA-98382 We should allow Next step if user has wrong SDK

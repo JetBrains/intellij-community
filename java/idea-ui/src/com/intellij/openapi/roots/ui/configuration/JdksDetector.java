@@ -7,6 +7,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,15 +66,15 @@ public class JdksDetector {
    * thread to deliver more detected SDKs. See {@link DetectedSdksListener}
    * for more info
    *
-   * @param lifetime  the subscription lifetime
    * @param component the requestor component
    * @param listener  the callback interface
    */
-  public void getDetectedSdksWithUpdate(@NotNull Disposable lifetime,
-                                        @NotNull Component component,
+  public void getDetectedSdksWithUpdate(@NotNull Component component,
                                         @NotNull DetectedSdksListener listener) {
     detectOrUpdateSdks();
+    Disposable lifetime = findLifetime(component);
 
+    //TODO[jo]: track per-component re-registration!
     //TODO[jo]: add refresh action?
 
     listener.onSearchRestarted();
@@ -88,6 +90,17 @@ public class JdksDetector {
       .subscribe(
         ON_SDK_RESOLVED,
         dispatchToComponent(ModalityState.stateForComponent(component), listener));
+  }
+
+  @NotNull
+  private static Disposable findLifetime(@NotNull Component component) {
+    DialogWrapper wrapper = DialogWrapper.findInstance(component);
+    if (wrapper == null) {
+      LOG.warn("JdkComboBox is running without DialogWrapper!", new RuntimeException());
+      return Disposer.newDisposable();
+    } else {
+      return wrapper.getDisposable();
+    }
   }
 
   private void detectOrUpdateSdks() {
