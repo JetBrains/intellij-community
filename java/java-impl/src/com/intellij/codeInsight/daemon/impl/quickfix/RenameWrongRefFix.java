@@ -198,7 +198,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
 
     @Override
     public boolean execute() {
-      if (myItems.length == 1) {
+      if (myItems.length == 1 && myRefExpr.getTextRange().contains(myEditor.getCaretModel().getOffset())) {
         doFix(myItems[0]);
         return true;
       }
