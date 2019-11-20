@@ -25,7 +25,6 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.actions.InstallCondaActionImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +73,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
     myProgressPanel.setEnabled(true);
     myProgressPanel.setVisible(false);
 
-    final File installationPath = InstallCondaActionImpl.getDefaultDirectoryFile();
+    final File installationPath = InstallCondaUtils.getDefaultDirectoryFile();
     myLastSelection = new CoreLocalFileSystem().findFileByIoFile(installationPath);
 
     myInstallButton = new JButton(ActionsBundle.message("action.SetupMiniconda.actionName"));
@@ -130,8 +129,8 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
   }
 
   private void installButtonActionListener() {
-    String path = InstallCondaActionImpl.beatifyPath(mySetupCondaFileChooser.getText());
-    String errorMessage = InstallCondaActionImpl.checkPath(path);
+    String path = InstallCondaUtils.beatifyPath(mySetupCondaFileChooser.getText());
+    String errorMessage = InstallCondaUtils.checkPath(path);
 
     if (errorMessage != null) {
       showErrorDialog(errorMessage, false);
@@ -144,7 +143,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
     //noinspection SSBasedInspection
     AppExecutorUtil.getAppExecutorService().submit(() -> {
       try {
-        CapturingProcessHandler handler = InstallCondaActionImpl.installationHandler(path, (line) -> {
+        CapturingProcessHandler handler = InstallCondaUtils.installationHandler(path, (line) -> {
           myProgressBar.setString(line);
           return Unit.INSTANCE;
         });
