@@ -25,7 +25,7 @@ class PyCharmCommunityСondaProperties extends PyCharmCommunityProperties {
 
   @Override
   WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
-    return new PyCharmCommunityWindowsDistributionCustomizer() {
+    return new PyCharmCommunityWindowsDistributionCustomizer(projectHome) {
       @Override
       String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
         "PyCharm Community Edition with Anaconda plugin"
