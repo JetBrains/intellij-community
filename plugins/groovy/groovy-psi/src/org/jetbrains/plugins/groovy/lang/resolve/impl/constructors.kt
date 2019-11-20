@@ -6,12 +6,18 @@ import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.util.SmartList
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
 import org.jetbrains.plugins.groovy.lang.resolve.getDefaultConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
-import java.util.*
+
+fun getAllConstructorResults(type: PsiClassType, place: PsiElement): Collection<GroovyResolveResult> {
+  val clazz = type.resolve() ?: return emptyList()
+  return getAllConstructors(clazz, place).map(::ElementResolveResult)
+}
 
 fun getAllConstructors(clazz: PsiClass, place: PsiElement): List<PsiMethod> {
   return classConstructors(clazz) +
@@ -24,7 +30,7 @@ private fun classConstructors(clazz: PsiClass): List<PsiMethod> {
     return listOf(getDefaultConstructor(clazz))
   }
   else {
-    return Arrays.asList(*constructors)
+    return listOf(*constructors)
   }
 }
 
