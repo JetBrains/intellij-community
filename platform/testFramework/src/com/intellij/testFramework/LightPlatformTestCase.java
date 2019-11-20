@@ -94,6 +94,7 @@ import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl;
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher;
@@ -536,6 +537,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                 }
               }
             }
+
+            ((LegacyBridgeModuleRootComponent)ModuleRootManager.getInstance(module)).dropCaches();
           }
 
           ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(project)).disposeAndClearCaches();
