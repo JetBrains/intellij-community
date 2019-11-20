@@ -889,7 +889,9 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("pkg/subpkg1/a.py");
     myFixture.completeBasic();
-    assertSameElements(myFixture.getLookupElementStrings(), "import", "subpkg1", "subpkg2", "m");
+    final List<String> variants = myFixture.getLookupElementStrings();
+    assertNotNull(variants);
+    assertSameElements(variants, "import", "subpkg1", "subpkg2", "m");
   }
 
   // PY-15197
