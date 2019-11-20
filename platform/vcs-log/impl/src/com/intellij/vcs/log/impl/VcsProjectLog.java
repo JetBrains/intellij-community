@@ -244,12 +244,10 @@ public class VcsProjectLog implements Disposable {
     else { // schedule showing the log, wait its initialization, and then open the tab
       Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
       new Task.Backgroundable(project, "Loading Commits") {
-        @Nullable private VcsLogManager myLogManager;
-
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            myLogManager = futureLogManager.get(5, TimeUnit.SECONDS);
+            futureLogManager.get(5, TimeUnit.SECONDS);
           }
           catch (InterruptedException ignored) {
           }
@@ -263,8 +261,9 @@ public class VcsProjectLog implements Disposable {
 
         @Override
         public void onSuccess() {
-          if (myLogManager != null) {
-            action.accept(log, myLogManager);
+          VcsLogManager manager = log.getLogManager();
+          if (manager != null) {
+            action.accept(log, manager);
           }
         }
       }.queue();
