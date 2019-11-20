@@ -83,17 +83,17 @@ object ScriptModelBuilder : KLogging() {
 
             val outputFolder = createTempDir().absolutePath + "/"
             val targetJar = outputFolder + "compiledJar.jar"
-            val metadataPath = outputFolder + "compilationMetadata"
+            val resolveResultPath = outputFolder + "compilationResolveResult"
             DslJarCompiler(eventLogger).compile(
                 DslSourceFileDelegatingFileProvider(dslFile.path),
                 targetJar,
-                metadataPath,
+                resolveResultPath,
                 kotlinCompilerPath,
                 scriptDefFile.absolutePath,
                 allowNotReadyDsl = false)
 
-            val metadata = ScriptResolveResultMetadataUtil.tryReadFromFile(metadataPath) ?: ScriptResolveResultMetadataUtil.empty()
-            val config = DslScriptExecutor().evaluateModel(targetJar, metadata.classpath,"", "")
+            val scriptResolveResult = ScriptResolveResult.readFromFileOrEmpty(resolveResultPath)
+            val config = DslScriptExecutor().evaluateModel(targetJar, scriptResolveResult.classpath,"", "")
 
             return ScriptViewModelFactory.create(lifetime, config)
         }
