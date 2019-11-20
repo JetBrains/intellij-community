@@ -160,7 +160,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (location != null) setLocation(location);
 
       DefaultActionGroup actions = new DefaultActionGroup();
-      actions.addAction(new IconWithTextAction("Highlight") {
+      actions.addAction(new MyTextAction("Highlight") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myIsHighlighted = !myIsHighlighted;
@@ -176,7 +176,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       actions.addSeparator();
 
-      actions.add(new IconWithTextAction("Refresh") {
+      actions.add(new MyTextAction("Refresh") {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -347,6 +347,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private static JComponent getGlassPane(@NotNull Component component) {
       JRootPane rootPane = SwingUtilities.getRootPane(component);
       return rootPane == null ? null : (JComponent)rootPane.getGlassPane();
+    }
+
+    private abstract static class MyTextAction extends IconWithTextAction implements DumbAware {
+      private MyTextAction(String text) {
+        super(text);
+      }
     }
   }
 
