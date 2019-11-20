@@ -34,11 +34,9 @@ import java.util.Map;
 class GitBrancherImpl implements GitBrancher {
 
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
 
-  GitBrancherImpl(@NotNull Project project, @NotNull Git git) {
+  GitBrancherImpl(@NotNull Project project) {
     myProject = project;
-    myGit = git;
   }
 
   @Override
@@ -53,7 +51,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @NotNull
   private GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
-    return new GitBranchWorker(myProject, myGit, new GitBranchUiHandlerImpl(myProject, myGit, indicator));
+    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, Git.getInstance(), indicator));
   }
 
   @Override

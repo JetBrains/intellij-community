@@ -33,7 +33,10 @@ import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -42,7 +45,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.commands.GitAuthenticationMode.*;
-import static git4idea.config.GitIncomingCheckStrategy.*;
+import static git4idea.config.GitIncomingCheckStrategy.Auto;
+import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
 import static java.util.stream.Collectors.toSet;
@@ -67,21 +71,12 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPush = newConcurrentMap();
   @NotNull private final MultiMap<GitRepository, GitRemote> myErrorMap = MultiMap.createConcurrentSet();
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final GitVcsSettings myGitSettings;
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
   @Nullable private MessageBusConnection myConnection;
   @NotNull private final MultiMap<GitRepository, GitRemote> myAuthSuccessMap = MultiMap.createConcurrentSet();
 
-  GitBranchIncomingOutgoingManager(@NotNull Project project,
-                                   @NotNull Git git,
-                                   @NotNull GitVcsSettings gitProjectSettings,
-                                   @NotNull GitRepositoryManager repositoryManager) {
+  GitBranchIncomingOutgoingManager(@NotNull Project project) {
     myProject = project;
-    myGit = git;
-    myGitSettings = gitProjectSettings;
-    myRepositoryManager = repositoryManager;
 
     myQueue = new MergingUpdateQueue("GitBranchIncomingOutgoingManager", 1000, true, null,
                                      myProject, null, Alarm.ThreadToUse.POOLED_THREAD);
@@ -108,7 +103,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   public boolean shouldCheckIncoming() {
-    return Registry.is("git.update.incoming.outgoing.info") && myGitSettings.getIncomingCheckStrategy() != Never;
+    return Registry.is("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
   }
 
   @NotNull
@@ -223,14 +218,14 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     if (!shouldCheckIncoming()) return;
     synchronized (LOCK) {
       if (useForceAuthentication) myUseForceAuthentication = true;
-      myDirtyReposPull.addAll(myRepositoryManager.getRepositories());
+      myDirtyReposPull.addAll(GitRepositoryManager.getInstance(myProject).getRepositories());
     }
     scheduleUpdate();
   }
 
   private void updateBranchesToPush() {
     synchronized (LOCK) {
-      myDirtyReposPush.addAll(myRepositoryManager.getRepositories());
+      myDirtyReposPush.addAll(GitRepositoryManager.getInstance(myProject).getRepositories());
     }
     scheduleUpdate();
   }
@@ -287,7 +282,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private boolean shouldAvoidUserInteraction(@NotNull GitRemote remote) {
-    return myGitSettings.getIncomingCheckStrategy() == Auto && HAS_EXTERNAL_SSH_AGENT && containsSSHUrl(remote);
+    return GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() == Auto && HAS_EXTERNAL_SSH_AGENT && containsSSHUrl(remote);
   }
 
   private static boolean containsSSHUrl(@NotNull GitRemote remote) {
@@ -310,7 +305,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = newArrayList("--heads", remote.getName());
       params.addAll(refs);
-      GitCommandResult lsRemoteResult = myGit.runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
+      GitCommandResult lsRemoteResult = Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
@@ -377,7 +372,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                      ? branchName + ".." + branchName + "@{u}"
                                      : localHashForRemoteBranch.asString() + ".." + branchName);
     try {
-      String output = myGit.runCommand(handler).getOutputOrThrow().trim();
+      String output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim();
       return !StringUtil.startsWithChar(output, '0');
     }
     catch (VcsException e) {
