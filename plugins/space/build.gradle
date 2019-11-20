@@ -77,3 +77,8 @@ buildPlugin {
         }
     }
 }
+
+publishPlugin {
+    channels 'super-early-bird'
+    token System.getenv('IDEA_PLUGIN_DEPLOY_TOKEN')
+}
