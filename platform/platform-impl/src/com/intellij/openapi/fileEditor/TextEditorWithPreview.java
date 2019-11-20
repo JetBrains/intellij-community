@@ -105,7 +105,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
       splitter.setDividerWidth(3);
 
       myToolbarWrapper = createMarkdownToolbarWrapper(splitter);
-      Disposer.register(this, myToolbarWrapper);
 
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
