@@ -5,18 +5,19 @@ import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +39,6 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private final Project myProject;
   private final CheckboxTree mySuitesTree;
   private final CoverageDataManager myCoverageManager;
-  private static final Logger LOG = Logger.getInstance(CoverageSuiteChooserDialog.class);
   private final CheckedTreeNode myRootNode;
   private CoverageEngine myEngine;
 
@@ -96,10 +96,25 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    myCoverageManager
-      .chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0])));
+    myCoverageManager.chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0])));
     ((CoverageDataManagerImpl)myCoverageManager).addRootsToWatch(suites);
     super.doOKAction();
+  }
+
+  @NotNull
+  @Override
+  protected List<ValidationInfo> doValidateAll() {
+    CoverageEngine engine = null;
+    for (CoverageSuite suite : collectSelectedSuites()) {
+      if (engine == null) {
+        engine = suite.getCoverageEngine();
+        continue;
+      }
+      if (!Comparing.equal(engine, suite.getCoverageEngine())) {
+        return Collections.singletonList(new ValidationInfo("Cannot show coverage reports from different engines.", mySuitesTree));
+      }
+    }
+    return super.doValidateAll();
   }
 
   @NotNull
@@ -132,7 +147,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private List<CoverageSuite> collectSelectedSuites() {
     final List<CoverageSuite> suites = new ArrayList<>();
-    TreeUtil.traverse(myRootNode, treeNode -> {
+    TreeUtil.treeNodeTraverser(myRootNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(treeNode -> {
       if (treeNode instanceof CheckedTreeNode && ((CheckedTreeNode)treeNode).isChecked()) {
         final Object userObject = ((CheckedTreeNode)treeNode).getUserObject();
         if (userObject instanceof CoverageSuite) {
