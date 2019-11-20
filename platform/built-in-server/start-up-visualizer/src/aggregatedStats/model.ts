@@ -22,3 +22,31 @@ export interface GroupedMetricResponse {
   readonly groupNames: Array<string>
   readonly data: Array<{ [key: string]: Array<string | number>; }>
 }
+
+export interface DataQuery {
+  fields: Array<string | DataQueryDimension>
+
+  filters?: Array<DataQueryFilter>
+  order?: Array<string>
+
+  // used only for grouped query
+  aggregator?: string
+  // cube.js term (group by)
+  dimensions?: Array<DataQueryDimension>
+}
+
+export interface DataQueryFilter {
+  field: string
+  value: number | string | Array<string>,
+}
+
+export interface DataQueryDimension {
+  name: string
+  sql: string
+}
+
+export interface MetricDescriptor {
+  readonly key: string
+  readonly name: string
+  readonly hiddenByDefault: boolean
+}

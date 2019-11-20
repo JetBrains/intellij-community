@@ -34,15 +34,17 @@ export default class AggregatedStatsPage extends Vue {
   products: Array<string> = []
   machines: Array<MachineGroup> = []
 
-  aggregationOperators: Array<string> = ["median", "min", "max", "quantile"]
-
   isFetching: boolean = false
 
   private loadDataAfterDelay = debounce(() => {
     this.loadData()
   }, 1000)
 
-  isShowScrollbarXPreviewChanged(_value: boolean) {
+  private reloadClusteredDataIfPossibleAfterDelay = debounce(() => {
+    this.reloadClusteredDataIfPossible()
+  }, 100)
+
+  showScrollbarXPreviewChanged(_value: boolean) {
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
@@ -171,14 +173,14 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   @Watch("chartSettings.aggregationOperator")
-  aggregationOperatorChanged(newV: string | null, _oldV: string) {
+  aggregationOperatorChanged(_newV: string | null, _oldV: string) {
+    this.reloadClusteredDataIfPossibleAfterDelay()
     this.dataModule.updateChartSettings(this.chartSettings)
+  }
 
-    if (isEmpty(newV)) {
-      return
-    }
-
-    this.reloadClusteredDataIfPossible()
+  @Watch("chartSettings.granularity")
+  granularityChanged(_newV: string | null, _oldV: string) {
+    this.dataModule.updateChartSettings(this.chartSettings)
   }
 
   private reloadClusteredDataIfPossible() {
@@ -189,15 +191,9 @@ export default class AggregatedStatsPage extends Vue {
     this.loadClusteredChartsData(product)
   }
 
-  private reloadClusteredDataIfPossibleAfterDelay = debounce(() => {
-    this.reloadClusteredDataIfPossible()
-  }, 300)
-
   @Watch("chartSettings.quantile")
   quantileChanged(_newV: number, _oldV: number) {
-    console.log("quantile changed", _newV)
     this.reloadClusteredDataIfPossibleAfterDelay()
-
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 

@@ -29,6 +29,8 @@ export function addExportMenu(chart: am4charts.XYChart) {
     }
   }
   chart.exporting.menu = exportMenu
+  chart.exporting.menu.align = "right"
+  chart.exporting.menu.verticalAlign = "bottom"
 }
 
 export function configureCommonChartSettings(chart: am4charts.XYChart) {

@@ -15,7 +15,7 @@ export class SortedByCategory implements ChartConfigurator {
     chart.xAxes.push(axis)
 
     // https://www.amcharts.com/docs/v4/tutorials/handling-repeating-categories-on-category-axis/
-    axis.renderer.labels.template.adapter.add("textOutput", (text) => {
+    axis.renderer.labels.template.adapter.add("textOutput", text => {
       return text == null ? text : stripSuffix(text)
     })
 

@@ -25,8 +25,6 @@ export class ClusteredChartManager {
     cursor.behavior = "zoomXY"
     cursor.lineX.disabled = true
     cursor.lineY.disabled = true
-    // cursor.xAxis = dateAxis
-    // cursor.snapToSeries = series
     chart.cursor = cursor
   }
 
@@ -84,7 +82,6 @@ export class ClusteredChartManager {
     let valueLabel = series.bullets.push(new am4charts.LabelBullet())
     valueLabel.label.text = "{valueY.formatDuration('S')}"
     valueLabel.label.verticalCenter = "bottom"
-    // valueLabel.label.dx = 10
     valueLabel.label.hideOversized = false
     valueLabel.label.truncate = false
   }

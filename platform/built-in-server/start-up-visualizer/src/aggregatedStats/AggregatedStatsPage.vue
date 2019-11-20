@@ -40,11 +40,7 @@
       </el-col>
       <el-col :span="8">
         <div style="float: right">
-          <el-checkbox
-              size="small"
-              v-model="chartSettings.showScrollbarXPreview"
-              @change="isShowScrollbarXPreviewChanged"
-          >Show horizontal scrollbar preview</el-checkbox>
+          <el-checkbox size="small" v-model="chartSettings.showScrollbarXPreview" @change="showScrollbarXPreviewChanged">Show horizontal scrollbar preview</el-checkbox>
         </div>
       </el-col>
     </el-row>
@@ -54,12 +50,7 @@
     <el-form :inline="true" size="small">
       <el-form-item label="Operator">
         <el-select v-model="chartSettings.aggregationOperator" data-lpignore="true" filterable>
-          <el-option
-              v-for="name in aggregationOperators"
-              :key="name"
-              :label="name"
-              :value="name">
-          </el-option>
+          <el-option v-for='name in ["median", "min", "max", "quantile"]' :key="name" :label="name" :value="name"/>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -69,32 +60,53 @@
       </el-form-item>
     </el-form>
 
-    <el-row>
+    <el-row :gutter="5">
       <!-- more space for duration events (because number of duration metrics more than instant) -->
       <el-col :span="16">
-        <div class="aggregatedChart" ref="clusteredDurationChartContainer"></div>
+        <el-card shadow="never" :body-style="{ padding: '0px' }">
+          <div class="aggregatedChart" ref="clusteredDurationChartContainer"></div>
+        </el-card>
       </el-col>
       <el-col :span="8">
-        <div class="aggregatedChart" ref="clusteredInstantChartContainer"></div>
+        <el-card shadow="never" :body-style="{ padding: '0px' }">
+          <div class="aggregatedChart" ref="clusteredInstantChartContainer"></div>
+        </el-card>
       </el-col>
     </el-row>
 
-    <h3>Duration Events</h3>
     <el-tabs value="date" size="small">
-      <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
-                   :key="item.order" :label="item.name" :name="item.order" lazy>
-        <keep-alive>
-          <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"/>
-        </keep-alive>
-      </el-tab-pane>
-    </el-tabs>
+      <el-form :inline="true" size="small">
+        <el-form-item label="Granularity">
+          <el-select v-model="chartSettings.granularity" data-lpignore="true" filterable>
+            <el-option v-for='name in ["as is", "hour", "day", "week", "month"]' :key="name" :label="name" :value="name"/>
+          </el-select>
+        </el-form-item>
+      </el-form>
 
-    <h3>Instant Events</h3>
-    <el-tabs value="date" size="small">
       <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
                    :key="item.order" :label="item.name" :name="item.order" lazy>
         <keep-alive>
-          <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest"/>
+          <div>
+            <el-row :gutter="5">
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["appComponentCreation_d", "projectComponentCreation_d", "moduleLoading_d", "editorRestoring_d"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+            </el-row>
+            <el-row :gutter="5" style="margin-top: 5px;">
+              <el-col :span="24">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+            </el-row>
+          </div>
         </keep-alive>
       </el-tab-pane>
     </el-tabs>

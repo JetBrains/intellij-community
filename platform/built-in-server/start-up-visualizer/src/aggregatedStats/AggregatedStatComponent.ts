@@ -4,7 +4,7 @@
 // initial value must be undefined, otherwise it will be reactive
 // so, let's extract this code from bloody Vue component
 import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
-import {InfoResponse} from "@/aggregatedStats/model"
+import {DataQuery, InfoResponse} from "@/aggregatedStats/model"
 import {loadJson} from "@/httpUtil"
 import {ElNotification} from "element-ui/types/notification"
 import {ChartSettings, DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
@@ -51,26 +51,51 @@ export class AggregatedStatComponent {
     return groupName
   }
 
-  private createGroupedMetricUrl(product: string, machine: Array<string>, chartSettings: ChartSettings, isInstant: boolean): string {
-    let operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
-    let operatorArg = 0
-    if (operator === "median") {
-      operator = "quantile"
-      operatorArg = 50
-    }
-    else if (operator === "quantile") {
-      operatorArg = chartSettings.quantile
+  public static expandMachineAsFilterValue(request: DataRequest): string | Array<string> {
+    if (request.machine.length > 1) {
+      return request.machine
     }
 
-    let result = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` +
-      `product=${encodeURIComponent(product)}` +
-      `&machine=${encodeURIComponent(AggregatedStatComponent.expandMachine({product, machine, infoResponse: this.lastInfoResponse!!, chartSettings}))}` +
-      `&operator=${operator}`
-    if (operatorArg !== 0) {
-      result += `&operatorArg=${operatorArg}`
+    const groupName = request.machine[0]
+    const infoResponse = request.infoResponse
+    for (const machineGroup of infoResponse.productToMachine[request.product]) {
+      if (machineGroup.name === groupName) {
+        return machineGroup.children.map(it => it.name)
+      }
     }
-    result += `&eventType=${isInstant ? "i" : "d"}`
-    return result
+    return groupName
+  }
+
+  private createGroupedMetricUrl(product: string, machine: Array<string>, chartSettings: ChartSettings, isInstant: boolean): string {
+    let aggregator: string = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
+    if (aggregator === "median") {
+      aggregator = "quantileTDigest(0.5)"
+    }
+    else if (aggregator === "quantile") {
+      aggregator = `quantileTDigest(${chartSettings.quantile / 100})`
+    }
+
+    const dataQuery: DataQuery = {
+      fields: isInstant ? ["splash_i", "startUpCompleted_i"] : ["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d", "appComponentCreation_d", "projectComponentCreation_d"],
+      aggregator,
+      dimensions: [
+        {name: "yearAndMonth", sql: "toStartOfMonth(generated_time)"}
+      ],
+      filters: [
+        {field: "product", value: product},
+        {
+          field: "machine",
+          value: AggregatedStatComponent.expandMachineAsFilterValue({
+            product,
+            machine,
+            infoResponse: this.lastInfoResponse!!,
+            chartSettings
+          })
+        },
+      ],
+      order: ["yearAndMonth"]
+    }
+    return `${chartSettings.serverUrl}/api/v1/groupedMetrics/` + encodeURIComponent(JSON.stringify(dataQuery))
   }
 
   dispose() {
