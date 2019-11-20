@@ -767,11 +767,11 @@
                   icon="AllIcons.Actions.SplitHorizontally"/>
           <action id="MoveTabRight" class="com.intellij.ide.actions.MoveTabRightAction"/>
           <action id="MoveTabDown" class="com.intellij.ide.actions.MoveTabDownAction"/>
-          <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
-          <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
-          <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
-          <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
-          <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
+          <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.SplitterAction$ChangeOrientation"/>
+          <action id="Unsplit" class="com.intellij.ide.actions.SplitterAction$Unsplit"/>
+          <action id="UnsplitAll" class="com.intellij.ide.actions.SplitterAction$UnsplitAll"/>
+          <action id="NextSplitter" class="com.intellij.ide.actions.SplitterAction$Goto$Next"/>
+          <action id="PrevSplitter" class="com.intellij.ide.actions.SplitterAction$Goto$Previous"/>
           <action id="ConfigureEditorTabs" class="com.intellij.ide.actions.ConfigureEditorTabsAction"/>
         </group>
 
