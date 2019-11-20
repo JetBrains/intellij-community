@@ -51,7 +51,7 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
         }
       }
       else {
-        if (!FileEditorManager.getInstance(project).navigateToTextEditor(it, true)) {
+        if (!FileEditorManager.getInstance(project).navigateToTextEditorEx(it, true)) {
           BrowserHyperlinkInfo(it.file.url).navigate(project)
         }
       }
