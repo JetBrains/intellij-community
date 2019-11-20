@@ -623,7 +623,7 @@ public class ExpectedHighlightingData {
   }
 
   /**
-   * @deprecated This is temporary wrapper to provide time to fix failing tests
+   * @deprecated Consider to rework your architecture and fix double registration of same highlighting information
    */
   @Deprecated
   public static void expectedDuplicatedHighlighting(@NotNull Runnable check) {
