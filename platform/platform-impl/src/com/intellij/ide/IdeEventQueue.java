@@ -373,7 +373,9 @@ public final class IdeEventQueue extends EventQueue {
       fixNestedSequenceEvent(e);
       // Add code below if you need
 
-      if (e.getID() == WindowEvent.WINDOW_ACTIVATED || e.getID() == WindowEvent.WINDOW_DEICONIFIED || e.getID() == WindowEvent.WINDOW_OPENED) {
+      if (e.getID() == WindowEvent.WINDOW_ACTIVATED
+          || e.getID() == WindowEvent.WINDOW_DEICONIFIED
+          || e.getID() == WindowEvent.WINDOW_OPENED) {
         ActiveWindowsWatcher.addActiveWindow((Window)e.getSource());
       }
 
