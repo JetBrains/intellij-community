@@ -15,12 +15,16 @@ import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.junit.Assert.*
@@ -28,6 +32,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
 
 class LegacyBridgeModulesTest {
   @Rule
@@ -342,6 +347,125 @@ class LegacyBridgeModulesTest {
       assertSame(libraryOrderEntry.library, libraries[0])
       assertEquals(JpsLibraryTableSerializer.MODULE_LEVEL, libraryOrderEntry.libraryLevel)
       assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl().url)
+    }
+  }
+
+  @Test
+  @RunsInEdt
+  fun `test custom source root loading`() {
+    val tempDir = temporaryDirectoryRule.newPath().toFile()
+    val moduleImlFile = File(tempDir, "my.iml")
+    Files.createDirectories(moduleImlFile.parentFile.toPath())
+    val url = VfsUtilCore.pathToUrl(moduleImlFile.parentFile.path)
+    moduleImlFile.writeText("""
+      <module type="JAVA_MODULE" version="4">
+        <component name="NewModuleRootManager">
+          <content url="file://${'$'}MODULE_DIR${'$'}">
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root1" type="custom-source-root-type" testString="x y z" />
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root2" type="custom-source-root-type" />
+          </content>
+        </component>
+      </module>
+    """.trimIndent())
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleManager = ModuleManager.getInstance(project)
+      val module = moduleManager.loadModule(moduleImlFile.path)
+      val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
+
+      assertEquals(2, contentEntry.sourceFolders.size)
+
+      assertTrue(contentEntry.sourceFolders[0].rootType is TestCustomSourceRootType)
+      assertEquals("x y z", (contentEntry.sourceFolders[0].jpsElement.properties as TestCustomSourceRootProperties).testString)
+
+      assertTrue(contentEntry.sourceFolders[1].rootType is TestCustomSourceRootType)
+      assertEquals(null, (contentEntry.sourceFolders[1].jpsElement.properties as TestCustomSourceRootProperties).testString)
+
+      val customRoots = WorkspaceModel.getInstance(project).entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java)
+        .toList()
+        .sortedBy { it.sourceRoot.url.url }
+      assertEquals(2, customRoots.size)
+
+      assertEquals("<sourceFolder testString=\"x y z\" />", customRoots[0].propertiesXmlTag)
+      assertEquals("$url/root1", customRoots[0].sourceRoot.url.url)
+      assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[0].sourceRoot.rootType)
+
+      assertEquals("<sourceFolder />", customRoots[1].propertiesXmlTag)
+      assertEquals("$url/root2", customRoots[1].sourceRoot.url.url)
+      assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[1].sourceRoot.rootType)
+    }
+  }
+
+  @Test
+  @RunsInEdt
+  fun `test unknown custom source root type`() {
+    val tempDir = temporaryDirectoryRule.newPath().toFile()
+    val moduleImlFile = File(tempDir, "my.iml")
+    Files.createDirectories(moduleImlFile.parentFile.toPath())
+    moduleImlFile.writeText("""
+      <module type="JAVA_MODULE" version="4">
+        <component name="NewModuleRootManager">
+          <content url="file://${'$'}MODULE_DIR${'$'}">
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root1" type="unsupported-custom-source-root-type" param1="x y z" />
+          </content>
+        </component>
+      </module>
+    """.trimIndent())
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleManager = ModuleManager.getInstance(project)
+      val module = moduleManager.loadModule(moduleImlFile.path)
+      val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
+      val sourceFolder = contentEntry.sourceFolders.single()
+
+      assertSame(JavaSourceRootType.SOURCE, sourceFolder.rootType)
+      assertTrue(sourceFolder.jpsElement.properties is JavaSourceRootProperties)
+
+      val customRoot = WorkspaceModel.getInstance(project).entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java)
+        .toList().single()
+
+      assertEquals("<sourceFolder param1=\"x y z\" />", customRoot.propertiesXmlTag)
+      assertEquals("unsupported-custom-source-root-type", customRoot.sourceRoot.rootType)
+    }
+  }
+
+  @Test
+  @RunsInEdt
+  fun `test custom source root saving`() {
+    val tempDir = temporaryDirectoryRule.newPath().toFile()
+
+    val moduleImlFile = File(tempDir, "my.iml")
+    Files.createDirectories(moduleImlFile.parentFile.toPath())
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleManager = ModuleManager.getInstance(project)
+
+      val module = moduleManager.newModule(moduleImlFile.path, ModuleTypeId.WEB_MODULE)
+      ModuleRootModificationUtil.updateModel(module) { model ->
+        val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
+        val contentEntry = model.addContentEntry(url)
+        contentEntry.addSourceFolder("$url/root1", TestCustomSourceRootType.INSTANCE)
+        contentEntry.addSourceFolder("$url/root2", TestCustomSourceRootType.INSTANCE, TestCustomSourceRootProperties(""))
+        contentEntry.addSourceFolder("$url/root3", TestCustomSourceRootType.INSTANCE, TestCustomSourceRootProperties("some data"))
+        contentEntry.addSourceFolder("$url/root4", TestCustomSourceRootType.INSTANCE, TestCustomSourceRootProperties(null))
+      }
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+
+      assertEquals("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="WEB_MODULE" version="4">
+          <component name="NewModuleRootManager">
+            <content url="file://${'$'}MODULE_DIR${'$'}">
+              <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root1" type="custom-source-root-type" testString="default properties" />
+              <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root2" type="custom-source-root-type" testString="" />
+              <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root3" type="custom-source-root-type" testString="some data" />
+              <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root4" type="custom-source-root-type" />
+            </content>
+            <orderEntry type="sourceFolder" forTests="false" />
+          </component>
+        </module>
+      """.trimIndent().replace("\r", ""), moduleImlFile.readText().replace("\r", ""))
     }
   }
 }

@@ -185,9 +185,8 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val storage = loadProject(projectDir)
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
-    val url = sourceRoot.url.url
     assertEquals("erlang-include", sourceRoot.rootType)
-    assertEquals("<sourceFolder url=\"$url\" type=\"erlang-include\" />", sourceRoot.asCustomSourceRoot()?.propertiesXmlTag)
+    assertEquals("<sourceFolder />", sourceRoot.asCustomSourceRoot()?.propertiesXmlTag)
   }
 
   private fun loadProject(projectFile: File): TypedEntityStorage {

@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
@@ -14,6 +15,7 @@ import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaType
 import com.intellij.workspace.legacyBridge.typedModel.module.ExcludeFolderViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.SourceFolderViaTypedEntity
 import com.intellij.workspace.virtualFileUrl
+import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -21,6 +23,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 
 class LegacyBridgeModifiableContentEntryImpl(
   private val diff: TypedEntityStorageDiffBuilder,
@@ -39,17 +43,18 @@ class LegacyBridgeModifiableContentEntryImpl(
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
     }
 
-    val typeId = JpsModelSerializerExtension.getExtensions()
-                   .flatMap { it.moduleSourceRootPropertiesSerializers }
-                   .firstOrNull { it.type == type }
-                   ?.typeId ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
+    @Suppress("UNCHECKED_CAST")
+    val serializer: JpsModuleSourceRootPropertiesSerializer<P> = (JpsModelSerializerExtension.getExtensions()
+      .flatMap { it.moduleSourceRootPropertiesSerializers }
+      .firstOrNull { it.type == type }) as? JpsModuleSourceRootPropertiesSerializer<P>
+      ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val entitySource = currentContentEntry.value.entity.entitySource
     val sourceRootEntity = diff.addSourceRootEntity(
       module = currentContentEntry.value.entity.module,
       url = sourceFolderUrl,
       tests = type.isForTests,
-      rootType = typeId,
+      rootType = serializer.typeId,
       source = entitySource
     )
 
@@ -72,7 +77,15 @@ class LegacyBridgeModifiableContentEntryImpl(
 
       null -> Unit
 
-      else -> error("Unsupported source root properties: $properties")
+      else -> {
+        val sourceElement = Element(JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG)
+        serializer.saveProperties(properties, sourceElement)
+        diff.addCustomSourceRootPropertiesEntity(
+          sourceRoot = sourceRootEntity,
+          propertiesXmlTag = JDOMUtil.writeElement(sourceElement),
+          source = entitySource
+        )
+      }
     }
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
