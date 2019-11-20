@@ -4,6 +4,8 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,10 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Future;
 
 /**
  * @author Dmitry Avdeev
@@ -720,7 +720,27 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));
+    String localPath = FileUtil.toSystemDependentName(path);
+    return ProgressIndicatorProvider.getGlobalProgressIndicator() == null ? FileSystemUtil.getAttributes(localPath)
+                                                                          : getAttributesWithCheckCanceled(localPath);
+  }
+
+  private static final Map<String, Future<FileAttributes>> ourAttrTasks = ContainerUtil.newConcurrentMap();
+
+  private static FileAttributes getAttributesWithCheckCanceled(String localPath) {
+    Future<FileAttributes> future = ourAttrTasks.computeIfAbsent(localPath, __ -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        return FileSystemUtil.getAttributes(localPath);
+      }
+      finally {
+        ourAttrTasks.remove(localPath);
+      }
+    }));
+    if (future.isDone()) {
+      // maybe it was very fast and completed before being put into a map
+      ourAttrTasks.remove(localPath, future);
+    }
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
   }
 
   @Override
