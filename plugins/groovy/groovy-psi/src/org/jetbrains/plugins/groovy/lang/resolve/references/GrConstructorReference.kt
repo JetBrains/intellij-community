@@ -19,7 +19,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructors
 abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element), GroovyCallReference {
 
   // TODO consider introducing GroovyConstructorCallReference and putting it there
-  protected abstract fun resolveClass(): GroovyResolveResult?
+  private fun resolveClass(): GroovyResolveResult? = myConstructedClassReference.resolve(false).singleOrNull()
+
+  private val myConstructedClassReference = object : GroovyCachingReference<T>(element) {
+    override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+      return doResolveClass()?.let(::listOf) ?: emptyList()
+    }
+  }
+
+  protected abstract fun doResolveClass(): GroovyResolveResult?
 
   protected open val supportsMapInvocation: Boolean get() = true
 
