@@ -41,7 +41,7 @@ import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATI
 public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
-  private static final String PROGRESS_TITLE = "Updating Compilation Caches";
+  private static final String PROGRESS_TITLE = "Updating Compiler Caches";
   private static final double TOTAL_SEGMENT_SIZE = 0.9;
   private final AtomicBoolean hasRunningTask;
   private final ExecutorService ourThreadPool;
@@ -87,13 +87,13 @@ public class JpsOutputLoaderManager {
       if (commitInfo == null) return;
 
       String notificationContent = commitInfo.second == 1
-                                   ? "Compile server contains caches for the current commit. Do you want to update your data?"
-                                   : "Compile server contains caches for the " + (commitInfo.second - 1) + "th commit behind of yours. Do you want to update your data?";
+                                   ? "Caches are for the current commit."
+                                   : "Caches are for the commit " + (commitInfo.second - 1) + " commits prior to yours.";
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compile Output Loader", notificationContent,
+        Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
                                                                                  NotificationType.INFORMATION, null);
-        notification.addAction(NotificationAction.createSimple("Update Compile Caches", () -> {
+        notification.addAction(NotificationAction.createSimple("Update caches", () -> {
           notification.expire();
           load(false);
         }));
@@ -216,8 +216,8 @@ public class JpsOutputLoaderManager {
     BuildManager.getInstance().clearState(myProject);
     long endTime = (System.currentTimeMillis() - startTime) / 1000;
     ApplicationManager.getApplication().invokeLater(() -> {
-      String message = "Update compilation caches completed successfully in " + endTime + " s";
-      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", message,
+      String message = "Update compiler caches completed successfully in " + endTime + " s";
+      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compiler Caches Loader", message,
                                                                              NotificationType.INFORMATION, null);
       Notifications.Bus.notify(notification);
     });
@@ -258,7 +258,7 @@ public class JpsOutputLoaderManager {
 
   private static void onFail() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compile Output Loader", "Update compilation caches failed",
+      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compiler Caches Loader", "Update compiler caches failed",
                                                                              NotificationType.WARNING, null);
       Notifications.Bus.notify(notification);
     });
