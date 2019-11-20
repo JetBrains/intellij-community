@@ -35,7 +35,7 @@ public class FileUrlLocationTest extends BasePlatformTestCase {
     ModuleRootModificationUtil.updateExcludedFolders(
       getModule(), ModuleRootManager.getInstance(getModule()).getContentRoots()[0],
       Collections.emptyList(),
-      Collections.singletonList(ModuleRootManager.getInstance(getModule()).getContentRoots()[0].getUrl() + "/src"));
+      Collections.singletonList(ModuleRootManager.getInstance(getModule()).getContentRoots()[0].getUrl()));
      VirtualFile file = myFixture.configureByText(
       "my_example_spec.xml",
       "\n" +
