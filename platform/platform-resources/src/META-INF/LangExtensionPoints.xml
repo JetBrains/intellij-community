@@ -303,10 +303,6 @@
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
 
-    <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.ElementManipulator"/>
-    </extensionPoint>
-
     <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper" dynamic="true"/>
 

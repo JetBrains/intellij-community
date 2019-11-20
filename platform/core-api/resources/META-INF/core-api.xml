@@ -19,6 +19,9 @@
     <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>
     </extensionPoint>
+    <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.ElementManipulator"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"
