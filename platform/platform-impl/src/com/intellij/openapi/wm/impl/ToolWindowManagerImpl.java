@@ -76,7 +76,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private final Project myProject;
   private final EventDispatcher<ToolWindowManagerListener> myDispatcher = EventDispatcher.create(ToolWindowManagerListener.class);
-  private final DesktopLayout myLayout = new DesktopLayout();
+  private DesktopLayout myLayout = new DesktopLayout();
   private final Map<String, InternalDecorator> myId2InternalDecorator = new HashMap<>();
   private final Map<String, FloatingDecorator> myId2FloatingDecorator = new HashMap<>();
   private final Map<String, WindowedDecorator> myId2WindowedDecorator = new HashMap<>();
@@ -1286,6 +1286,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     execute(commandList);
     checkInvariants("");
+
+    myLayout = layout;
   }
 
   @Override
