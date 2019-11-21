@@ -9,11 +9,15 @@ import com.intellij.psi.PsiClassType.ClassResolveResult
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getExpressionArguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.getAssignmentOrReturnExpectedType
+import org.jetbrains.plugins.groovy.lang.typing.getWritePropertyType
 
 class GrLiteralConstructorReference(element: GrListOrMap) : GrConstructorReference<GrListOrMap>(element) {
 
@@ -41,6 +45,14 @@ class GrLiteralConstructorReference(element: GrListOrMap) : GrConstructorReferen
 
 private fun getExpectedType(literal: GrListOrMap): PsiType? {
   return getAssignmentOrReturnExpectedType(literal)
+         ?: getExpectedTypeFromNamedArgument(literal)
+}
+
+private fun getExpectedTypeFromNamedArgument(literal: GrListOrMap): PsiType? {
+  val namedArgument: GrNamedArgument = literal.parent as? GrNamedArgument ?: return null
+  val label: GrArgumentLabel = namedArgument.label ?: return null
+  val propertyReference: GroovyPropertyWriteReference = label.constructorPropertyReference ?: return null
+  return getWritePropertyType(propertyReference.advancedResolve())
 }
 
 /**

@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult
 import org.jetbrains.plugins.groovy.util.HighlightingTest
@@ -145,9 +146,49 @@ class M {
       'Person p = [<caret>]'          : true,
       'Person p = [<caret>:]'         : true,
     ]
+    constructorReferenceTest(data)
+  }
+
+  @Test
+  void 'constructor reference from named argument'() {
+    def data = [
+      'Person p = [parent: [<caret>]]'           : true,
+      'Person p = [parent: [<caret>:]]'          : true,
+      'Person p = new Person(parent: [<caret>]])': true,
+      'Person p = new Person(parent: [<caret>:])': true,
+      'M m = [abc:[<caret>:]]'                   : false,
+    ]
+    constructorReferenceTest(data)
+  }
+
+  private void constructorReferenceTest(LinkedHashMap<String, Boolean> data) {
     TestUtils.runAll(data) { text, expected ->
       def listOrMap = elementUnderCaret(text, GrListOrMap)
       def reference = listOrMap.constructorReference
+      if (expected) {
+        Assert.assertNotNull(text, reference)
+      }
+      else {
+        Assert.assertNull(text, reference)
+      }
+    }.run()
+  }
+
+  @Test
+  void 'property reference'() {
+    def data = [
+      'Person p = [<caret>parent: [parent: []]]'          : true,
+      'Person p = [parent: [<caret>parent: []]]'          : true,
+      'Person p = new Person(<caret>parent: [parent: []])': true,
+      'Person p = new Person(parent: [<caret>parent: []])': true,
+      'C c = [<caret>a: [a: []]]'                         : true,
+      'C c = [a: [<caret>a: []]]'                         : false,
+      'M m = [<caret>abc: []]'                            : false,
+      'foo(<caret>abc: 1)'                                : false,
+    ]
+    TestUtils.runAll(data) { text, expected ->
+      def label = elementUnderCaret(text, GrArgumentLabel)
+      def reference = label.constructorPropertyReference
       if (expected) {
         Assert.assertNotNull(text, reference)
       }
