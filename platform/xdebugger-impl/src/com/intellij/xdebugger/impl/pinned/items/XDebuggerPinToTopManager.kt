@@ -51,20 +51,21 @@ open class XDebuggerPinToTopManager {
         if (!pinnedValue.canBePinned() || isItemPinned(node)) {
             return
         }
-        val valuePresentation = valueNode.valuePresentation ?: return
-        val hasChildren = !valueNode.isLeaf
-        val oldIcon = valueNode.icon
+        var oldIcon = valueNode.icon
 
         val changeIconLifetime = Disposable {
-            if (node.icon != oldIcon) {
-                node.setPresentation(oldIcon, valuePresentation, hasChildren)
+            val xValuePresentation = node.valuePresentation
+            if (node.icon == PlatformDebuggerImplIcons.PinToTop.UnpinnedItem && xValuePresentation != null) {
+                node.setPresentation(oldIcon, xValuePresentation, !node.isLeaf)
             }
             myActiveNode = null
         }
         myActiveNode = node
 
         myPinToTopIconAlarm.addRequest({
-            node.setPresentation(PlatformDebuggerImplIcons.PinToTop.UnpinnedItem, valuePresentation, hasChildren)
+            val xValuePresentation = node.valuePresentation ?: return@addRequest
+            oldIcon = node.icon //update icon with actual value
+            node.setPresentation(PlatformDebuggerImplIcons.PinToTop.UnpinnedItem, xValuePresentation, !node.isLeaf)
         }, DEFAULT_ICON_DELAY)
         myNodeHoverLifetime = changeIconLifetime
         Disposer.register(lifetimeHolder, changeIconLifetime)
