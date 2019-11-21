@@ -5,19 +5,23 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.SmartList
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
-import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
-import org.jetbrains.plugins.groovy.lang.resolve.getDefaultConstructor
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
-import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 fun getAllConstructorResults(type: PsiClassType, place: PsiElement): Collection<GroovyResolveResult> {
   val clazz = type.resolve() ?: return emptyList()
-  return getAllConstructors(clazz, place).map(::ElementResolveResult)
+  return getAllConstructors(clazz, place).toResolveResults()
 }
+
+fun Collection<PsiMethod>.toResolveResults(): Collection<GroovyResolveResult> = map(::ElementResolveResult)
 
 fun getAllConstructors(clazz: PsiClass, place: PsiElement): List<PsiMethod> {
   return classConstructors(clazz) +
@@ -75,4 +79,116 @@ private class ConstructorProcessor(private val name: String) : ProcessorWithHint
   }
 
   val candidates: List<PsiMethod> get() = myCandidates
+}
+
+typealias WithArguments = (arguments: Arguments) -> (constructor: PsiMethod) -> GroovyMethodResult
+
+fun withArguments(place: PsiElement, substitutor: PsiSubstitutor, needsInference: Boolean): WithArguments {
+  return withArguments(place, substitutor, resultProducer(needsInference))
+}
+
+private typealias ResultProducer = (
+  constructor: PsiMethod,
+  place: PsiElement,
+  state: ResolveState,
+  arguments: Arguments
+) -> GroovyMethodResult
+
+private fun resultProducer(needsInference: Boolean): ResultProducer {
+  return if (needsInference) {
+    INFERENCE_RESULT_PRODUCER
+  }
+  else {
+    DEFAULT_RESULT_PRODUCER
+  }
+}
+
+/**
+ * Creates resolve result which always runs inference.
+ * Used when the constructor result was obtained from class with diamond type.
+ */
+private val INFERENCE_RESULT_PRODUCER: ResultProducer = ::MethodResolveResult
+
+/**
+ * Checks if the constructor has type parameters to infer.
+ */
+private val DEFAULT_RESULT_PRODUCER: ResultProducer = { constructor: PsiMethod, place: PsiElement, state: ResolveState, arguments: Arguments ->
+  if (constructor.typeParameters.isNotEmpty()) {
+    MethodResolveResult(constructor, place, state, arguments)
+  }
+  else {
+    BaseMethodResolveResult(constructor, place, state, arguments)
+  }
+}
+
+/**
+ * Curries [producer] with [place] and [ResolveState] with [substitutor]
+ */
+private fun withArguments(place: PsiElement, substitutor: PsiSubstitutor, producer: ResultProducer): WithArguments {
+  val state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)
+  return { arguments: Arguments ->
+    { constructor: PsiMethod ->
+      producer(constructor, place, state, arguments)
+    }
+  }
+}
+
+/**
+ * Main algorithm.
+ */
+fun chooseConstructors(constructors: List<PsiMethod>,
+                       arguments: Arguments,
+                       allowMapConstructor: Boolean,
+                       withArguments: WithArguments): List<GroovyMethodResult> {
+  if (constructors.isEmpty()) {
+    return emptyList()
+  }
+  val (applicable: Boolean, results: List<GroovyMethodResult>) = chooseConstructors(
+    constructors,
+    withArguments(arguments)
+  )
+  if (!allowMapConstructor) {
+    return results
+  }
+  if (applicable) {
+    return results
+  }
+  val singleArgument: Argument? = arguments.singleOrNull()
+  if (singleArgument == null) {
+    return results
+  }
+  if (!InheritanceUtil.isInheritor(singleArgument.runtimeType, CommonClassNames.JAVA_UTIL_MAP)) {
+    return results
+  }
+  val (noArgApplicable: Boolean, noArgResults: List<GroovyMethodResult>) = chooseConstructors(
+    constructors,
+    withArguments(emptyList())
+  )
+  if (noArgApplicable) {
+    return noArgResults
+  }
+  return results
+}
+
+private data class ApplicabilityResult(val applicable: Boolean, val results: List<GroovyMethodResult>)
+
+private fun chooseConstructors(constructors: List<PsiMethod>, result: (constructor: PsiMethod) -> GroovyMethodResult): ApplicabilityResult {
+  val results: List<GroovyMethodResult> = constructors.map(result)
+  val applicableResults: List<GroovyMethodResult>? = chooseConstructors(results)
+  return ApplicabilityResult(applicableResults != null, applicableResults ?: results)
+}
+
+/**
+ * @return applicable results or `null` if there are no applicable results
+ */
+private fun chooseConstructors(results: List<GroovyMethodResult>): List<GroovyMethodResult>? {
+  val applicable = results.filterTo(SmartList()) {
+    it.isApplicable
+  }
+  if (applicable.isNotEmpty()) {
+    return chooseOverloads(applicable)
+  }
+  else {
+    return null
+  }
 }
