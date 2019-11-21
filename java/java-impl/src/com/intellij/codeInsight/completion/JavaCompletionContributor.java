@@ -35,6 +35,7 @@ import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
@@ -975,21 +976,31 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (requires) {
           Module module = ModuleUtilCore.findModuleForFile(originalFile);
           if (module != null) {
+            scope = GlobalSearchScope.projectScope(project);
+            for (String name : JavaSourceModuleNameIndex.getAllKeys(project)) {
+              if (JavaSourceModuleNameIndex.getFilesByKey(name, scope).size() > 0) {
+                addAutoModuleReference(name, parent, filter, result);
+              }
+            }
             VirtualFile[] roots = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().librariesOnly().getClassesRoots();
             scope = GlobalSearchScope.filesScope(project, Arrays.asList(roots));
             for (String name : JavaAutoModuleNameIndex.getAllKeys(project)) {
-              if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0 &&
-                  PsiNameHelper.isValidModuleName(name, parent) &&
-                  filter.add(name)) {
-                LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
-                lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
-                lookup = PrioritizedLookupElement.withPriority(lookup, -1);
-                result.addElement(lookup);
+              if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0) {
+                addAutoModuleReference(name, parent, filter, result);
               }
             }
           }
         }
       }
+    }
+  }
+
+  private static void addAutoModuleReference(String name, PsiElement parent, Set<String> filter, CompletionResultSet result) {
+    if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
+      LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
+      lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+      lookup = PrioritizedLookupElement.withPriority(lookup, -1);
+      result.addElement(lookup);
     }
   }
 
