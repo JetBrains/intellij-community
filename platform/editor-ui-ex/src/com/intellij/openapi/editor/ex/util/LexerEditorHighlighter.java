@@ -64,11 +64,27 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return new SegmentArrayWithData(createStorage());
   }
 
+  /**
+   * Defines how to pack/unpack and store highlighting states.
+   * <p>
+   * By default a editor highlighter uses {@link ShortBasedStorage} implementation which
+   * serializes information about element type to be highlighted with elements' indices ({@link IElementType#getIndex()})
+   * and deserializes ids back to {@link IElementType} using element types registry {@link IElementType#find(short)}.
+   * <p>
+   * If you need to store more information during syntax highlighting or
+   * if your element types cannot be restored from {@link IElementType#getIndex()},
+   * you can implement you own storage and override this method.
+   * <p>
+   * As an example, see {@link org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer},
+   * that lexes files with unregistered (without index) element types and its
+   * data storage ({@link org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerDataStorage}
+   * serializes/deserializes them to/from strings. The storage is created in {@link org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider.TextMateLexerEditorHighlighter}
+   *
+   * @return data storage for highlighter states
+   */
   @NotNull
-  protected final DataStorage createStorage() {
-    return myLexer instanceof DataStorageFactory
-           ? ((DataStorageFactory)myLexer).createDataStorage()
-           : (myLexer instanceof RestartableLexer ? new IntBasedStorage() : new ShortBasedStorage());
+  protected DataStorage createStorage() {
+    return myLexer instanceof RestartableLexer ? new IntBasedStorage() : new ShortBasedStorage();
   }
 
   public boolean isPlain() {

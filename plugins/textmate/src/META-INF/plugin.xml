@@ -18,6 +18,7 @@
                         serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateSettings"/>
     <applicationService id="textmateService" serviceInterface="org.jetbrains.plugins.textmate.TextMateService"
                         serviceImplementation="org.jetbrains.plugins.textmate.TextMateServiceImpl"/>
+    <editorHighlighterProvider filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="textmate"
                                    implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateSyntaxHighlighterFactory"/>
     <applicationConfigurable groupId="editor" displayName="TextMate Bundles" id="reference.settingsdialog.textmate.bundles" provider="org.jetbrains.plugins.textmate.configuration.TextMateConfigurableProvider"/>
