@@ -134,17 +134,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     awtFocusListener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
-        if (myProject.isDisposed()) return;
+        if (myProject.isDisposed()) {
+          return;
+        }
+
         assert event instanceof FocusEvent;
         FocusEvent focusEvent = (FocusEvent)event;
         if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
           Component component = focusEvent.getComponent();
           if (component != null) {
             boolean editorIsGoingToGetFocus =
-              Arrays.stream(FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorsComposites()).
-                flatMap(c -> Arrays.stream(c.getEditors()))
+              FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorComposites().stream()
+                .flatMap(c -> Arrays.stream(c.getEditors()))
                 .anyMatch(editor -> SwingUtilities.isDescendingFrom(component, editor.getComponent()));
-
             if (editorIsGoingToGetFocus) {
               myActiveStack.clear();
             }
@@ -656,7 +658,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                                       @NotNull List<? super FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
-    ToolWindowCollector.getInstance().recordActivation(id);
+    ToolWindowCollector.recordActivation(id);
     autoFocusContents &= forced;
 
     if (LOG.isDebugEnabled()) {

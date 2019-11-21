@@ -394,7 +394,7 @@ public class EditorWindow {
         public void focusGained(FocusEvent e) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!hasFocus()) return;
-            final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
+            final JComponent focus = myEditor.getSelectedWithProvider().getFileEditor().getPreferredFocusedComponent();
             if (focus != null && !focus.hasFocus()) {
               getGlobalInstance().requestFocus(focus, true);
             }

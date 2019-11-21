@@ -15,7 +15,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     val sourceText = InlayData.pattern.matcher(expectedText).replaceAll("")
     myFixture.configureByText(fileName, sourceText)
 
-    val file = myFixture.file
+    val file = myFixture.file!!
     val editor = myFixture.editor
     val sink = InlayHintsSinkImpl(provider.key)
     val collector = provider.getCollectorFor(file, editor, settings, sink) ?: error("Collector is expected")

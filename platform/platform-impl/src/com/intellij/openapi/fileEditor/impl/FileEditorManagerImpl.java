@@ -1036,8 +1036,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       composite = composites.get(0);
     }
 
-    final FileEditorProvider[] editorProviders = composite.getProviders();
-    final FileEditorProvider selectedProvider = composite.getSelectedEditorWithProvider().getSecond();
+    FileEditorProvider[] editorProviders = composite.getProviders();
+    FileEditorProvider selectedProvider = composite.getSelectedWithProvider().getProvider();
 
     for (int i = 0; i < editorProviders.length; i++) {
       if (editorProviders[i].getEditorTypeId().equals(fileEditorProviderId) && !selectedProvider.equals(editorProviders[i])) {
@@ -1514,9 +1514,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Nullable
   private EditorWithProviderComposite getEditorComposite(@NotNull final FileEditor editor) {
     for (EditorsSplitters splitters : getAllSplitters()) {
-      final EditorWithProviderComposite[] editorsComposites = splitters.getEditorsComposites();
-      for (int i = editorsComposites.length - 1; i >= 0; i--) {
-        final EditorWithProviderComposite composite = editorsComposites[i];
+      List<EditorWithProviderComposite> editorsComposites = splitters.getEditorComposites();
+      for (int i = editorsComposites.size() - 1; i >= 0; i--) {
+        final EditorWithProviderComposite composite = editorsComposites.get(i);
         final FileEditor[] editors = composite.getEditors();
         for (int j = editors.length - 1; j >= 0; j--) {
           final FileEditor _editor = editors[j];
