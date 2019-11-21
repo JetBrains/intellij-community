@@ -1187,15 +1187,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     doOpenTextEditor(descriptor, focusEditor);
   }
 
-  /**
-   * Unlike {@link #openTextEditor(OpenFileDescriptor, boolean)}
-   * do not check for injected editor because it can be ridiculously expensive thing to in EDT in e.g. CLion.
-   */
-  @Override
-  public boolean navigateToTextEditorEx(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    return doOpenTextEditor(descriptor, focusEditor) != null;
-  }
-
   @Nullable
   private TextEditor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     Pair<List<FileEditor>, FileEditor> editorsWithSelected = openEditorImpl(descriptor, focusEditor);
