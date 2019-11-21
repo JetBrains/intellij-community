@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Queue;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,17 +82,32 @@ public class Util {
 
       if (method != null) {
         final int index = method.getParameterList().getParameterIndex(((PsiParameter)element));
-        final PsiMethod superMethod = method.findDeepestSuperMethod();
-
-        if (superMethod != null) {
-          return superMethod.getParameterList().getParameters()[index];
-        }
+        return findClosestSuperMethodFixingParameterType(method, index).getParameterList()
+          .getParameters()[index];
       }
     }
 
     return element;
   }
 
+  private static PsiMethod findClosestSuperMethodFixingParameterType(PsiMethod method, int parameterIndex) {
+    PsiMethod superMethod = MethodUtils.getSuper(method);
+    if (superMethod == null) {
+      return method;
+    }
+    PsiParameter superParameter = superMethod.getParameterList().getParameters()[parameterIndex];
+    PsiType superParameterType = superParameter.getType();
+    if (!(superParameterType instanceof PsiClassType)) {
+      return superMethod;
+    }
+    PsiClassType superParameterClassType = (PsiClassType) superParameterType;
+    PsiClass resolvedSuperParameterClassType = superParameterClassType.resolve();
+    if (resolvedSuperParameterClassType instanceof PsiTypeParameter) {
+      return method;
+    }
+    return findClosestSuperMethodFixingParameterType(superMethod, parameterIndex);
+  }
+  
   public static boolean canBeMigrated(@NotNull final PsiElement[] es) {
     return Arrays.stream(es).allMatch(Util::canBeMigrated);
   }

@@ -1,0 +1,11 @@
+Types:
+PsiClass:Parent : Parent<java.lang.Long>
+PsiField:migrationField : java.lang.Long
+PsiReferenceExpression:migrationField : java.lang.Long
+PsiReferenceParameterList : Parent<java.lang.Long>
+
+Conversions:
+migrationField -> $
+
+New expression type changes:
+Fails:

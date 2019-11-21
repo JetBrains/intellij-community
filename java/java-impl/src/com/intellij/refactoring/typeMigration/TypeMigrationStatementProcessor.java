@@ -32,7 +32,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -561,6 +560,29 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         break;
 
       case TypeInfection.BOTH_INFECTED:
+        if (variable instanceof PsiParameter) {
+          PsiParameter parameter = (PsiParameter)variable;
+          PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(value, PsiMethodCallExpression.class);
+          if (methodCallExpression != null) {
+            PsiElement declarationScope = parameter.getDeclarationScope();
+            if (declarationScope instanceof PsiMethod) {
+              PsiMethod method = (PsiMethod)declarationScope;
+              PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+              PsiElement qualifier = methodExpression.getQualifier();
+              PsiClass implementingClass = null;
+              if (qualifier instanceof PsiExpression) {
+                PsiType qualifierType = ((PsiExpression)qualifier).getType();
+                if (qualifierType instanceof PsiClassType) {
+                  implementingClass = ((PsiClassType)qualifierType).resolve();
+                }
+              } 
+              if (implementingClass == null) {
+                implementingClass = PsiTreeUtil.getParentOfType(methodCallExpression, PsiClass.class);
+              }
+              myLabeler.addMethodParameterClassTypesAsMigrationRoots(implementingClass, method, method.getParameterList().getParameterIndex(parameter), left.getType());
+            }
+          }
+        }
         addTypeUsage(variable);
         break;
 

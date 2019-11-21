@@ -7,9 +7,15 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
  * @author db
@@ -878,6 +884,54 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testTypeParameterMigrationInInvalidCode() {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
+  }
+  
+  public void testOverridingMethodClassTypeParameter1(){
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public PsiType migrationType(PsiElement context) {
+        return myFactory.createTypeByFQClassName("java.lang.Long");
+      }
+
+      @Override
+      public PsiElement[] victims(PsiClass aClass) {
+        return Stream.of("migrationField")
+          .map(n -> aClass.findFieldByName(n, false))
+          .peek(TestCase::assertNotNull)
+          .toArray(PsiElement[]::new);
+      }
+
+      @Override
+      public SearchScope boundScope(PsiClass aClass) {
+        return new LocalSearchScope(aClass);
+      }
+    };
+    
+    start(provider, "Test");
+  }
+
+  public void testOverridingMethodClassTypeParameter2(){
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public PsiType migrationType(PsiElement context) {
+        return myFactory.createTypeByFQClassName("java.lang.Long");
+      }
+
+      @Override
+      public PsiElement[] victims(PsiClass aClass) {
+        return Stream.of("migrationField")
+          .map(n -> aClass.findFieldByName(n, false))
+          .peek(TestCase::assertNotNull)
+          .toArray(PsiElement[]::new);
+      }
+
+      @Override
+      public SearchScope boundScope(PsiClass aClass) {
+        return new LocalSearchScope(aClass);
+      }
+    };
+
+    start(provider, "Test");
   }
 
   private void doTestReturnType(final String methodName, final String migrationType) {

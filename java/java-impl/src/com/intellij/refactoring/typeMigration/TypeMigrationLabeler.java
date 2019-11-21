@@ -42,6 +42,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author db
@@ -282,12 +284,12 @@ public class TypeMigrationLabeler {
   class MigrationProducer {
     private final Map<UsageInfo, Object> myRemainConversions;
     private final MultiMap<PsiTypeElement, TypeMigrationUsageInfo> myVariableMigration = new MultiMap<PsiTypeElement, TypeMigrationUsageInfo>() {
-      @NotNull
-      @Override
-      protected Map<PsiTypeElement, Collection<TypeMigrationUsageInfo>> createMap() {
-        return new THashMap<>();
-      }
-    };
+        @NotNull
+        @Override
+        protected Map<PsiTypeElement, Collection<TypeMigrationUsageInfo>> createMap() {
+          return new THashMap<>();
+        }
+      };
 
     private MigrationProducer(Map<UsageInfo, Object> conversions) {
       myRemainConversions = conversions;
@@ -433,7 +435,7 @@ public class TypeMigrationLabeler {
 
   void convertExpression(final PsiExpression expr, final PsiType toType, final PsiType fromType, final boolean isCovariantPosition) {
     final TypeConversionDescriptorBase conversion = myRules.findConversion(fromType, toType, expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).resolveMethod() : null, expr,
-                                                     isCovariantPosition, this);
+                      isCovariantPosition, this);
 
     if (conversion == null) {
       markFailedConversion(Pair.create(fromType, toType), expr);
@@ -675,6 +677,10 @@ public class TypeMigrationLabeler {
       final PsiMethod method = (PsiMethod)((PsiParameter)resolved).getDeclarationScope();
 
       final int index = method.getParameterList().getParameterIndex(((PsiParameter)resolved));
+
+      PsiClass methodClass = method.getContainingClass();
+      addMethodParameterClassTypesAsMigrationRoots(methodClass, method, index, type);
+
       final PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
 
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
@@ -698,6 +704,99 @@ public class TypeMigrationLabeler {
     else {
       return !addRoot(new TypeMigrationUsageInfo(resolved), type, place, alreadyProcessed);
     }
+  }
+
+  void addMethodParameterClassTypesAsMigrationRoots(PsiClass implementingClass, PsiMethod method, int parameterIndex, PsiType type) {
+    if (implementingClass == null) {
+      return;
+    }
+    if (addMethodParameterClassTypeAsMigrationRoot(implementingClass, method, parameterIndex, type)) {
+      return;
+    }
+
+    PsiMethod[] directSuperMethods = method.findSuperMethods();
+    for (int i = 0; i < directSuperMethods.length; i++) {
+      addMethodParameterClassTypeAsMigrationRoot(implementingClass, directSuperMethods[i], parameterIndex, type);
+    }
+  }
+  
+  private boolean addMethodParameterClassTypeAsMigrationRoot(PsiClass implementingClass, PsiMethod method, int parameterIndex, PsiType type){
+    PsiParameter parameter = method.getParameterList().getParameter(parameterIndex);
+    if (parameter == null) {
+      return false;
+    }
+    if (!(parameter.getType() instanceof PsiClassType)) {
+      return false;
+    }
+    PsiClassType parameterType = (PsiClassType)parameter.getType();
+    PsiClass resolvedParameterType = parameterType.resolve();
+    if (!(resolvedParameterType instanceof PsiTypeParameter)) {
+      return false;
+    }
+    PsiTypeParameter typeParameter = (PsiTypeParameter)resolvedParameterType;
+    PsiClass methodClass = method.getContainingClass();
+    if (methodClass == null) {
+      return false;
+    }
+    if (!methodClass.equals(typeParameter.getOwner())) {
+      return false;
+    }
+    PsiJavaCodeReferenceElement[] extendsElements =
+      implementingClass.getExtendsList() != null ? implementingClass.getExtendsList().getReferenceElements() :
+      PsiJavaCodeReferenceElement.EMPTY_ARRAY;
+    PsiJavaCodeReferenceElement[] implementsElements =
+      implementingClass.getImplementsList() != null ? implementingClass.getImplementsList().getReferenceElements() :
+      PsiJavaCodeReferenceElement.EMPTY_ARRAY;
+
+    Set<PsiJavaCodeReferenceElement> superElements = Stream.concat(Stream.of(extendsElements), Stream.of(implementsElements))
+      .collect(Collectors.toSet());
+
+    PsiJavaCodeReferenceElement codeReferenceElement = superElements
+      .stream()
+      .filter(referenceElement -> methodClass.equals(referenceElement.resolve()))
+      .findFirst()
+      .orElse(null);
+    if (codeReferenceElement == null) {
+      return false;
+    }
+
+    PsiReferenceParameterList parameterList = codeReferenceElement.getParameterList();
+    if (parameterList == null) {
+      return false;
+    }
+
+    PsiTypeParameterList superClassTypeParameterList = methodClass.getTypeParameterList();
+    if (superClassTypeParameterList == null) {
+      return false;
+    }
+
+    int typeParameterIndex = superClassTypeParameterList.getTypeParameterIndex(typeParameter);
+
+    PsiType[] currentClassParameterTypes = Stream.of(parameterList.getTypeParameterElements())
+      .map(PsiTypeElement::getType)
+      .toArray(PsiType[]::new);
+
+    if (TypeConversionUtil.isAssignable(currentClassParameterTypes[typeParameterIndex], type)){
+      return false;
+    }
+
+    PsiType[] newClassParameterTypes = new PsiType[currentClassParameterTypes.length];
+    for(int i = 0; i < currentClassParameterTypes.length; i++){
+      if(i == typeParameterIndex){
+        newClassParameterTypes[i] = type;
+      } else {
+        newClassParameterTypes[i] = currentClassParameterTypes[i];
+      }
+    }
+
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+    PsiClassType newSuperType = elementFactory.createType(methodClass, newClassParameterTypes);
+
+    PsiReferenceParameterList parameterListToMigrate = codeReferenceElement.getParameterList();
+    addMigrationRoot(parameterListToMigrate, newSuperType, null, false, true,
+                     false);
+    
+    return true;
   }
 
   @NotNull
@@ -782,10 +881,10 @@ public class TypeMigrationLabeler {
           final PsiClass psiClass = (PsiClass)((PsiJavaCodeReferenceElement)parent).resolve();
           final PsiClass containingClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
           if (psiClass != null && containingClass != null) {
-           final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, containingClass, PsiSubstitutor.EMPTY);
-           if (classSubstitutor != null) {
-             return JavaPsiFacade.getElementFactory(parent.getProject()).createType(psiClass, classSubstitutor);
-           }
+            final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, containingClass, PsiSubstitutor.EMPTY);
+            if (classSubstitutor != null) {
+              return JavaPsiFacade.getElementFactory(parent.getProject()).createType(psiClass, classSubstitutor);
+            }
           }
           parent = PsiTreeUtil.getParentOfType(parent, PsiJavaCodeReferenceElement.class, true);
         }
@@ -799,7 +898,7 @@ public class TypeMigrationLabeler {
   public void clearStopException() {
     myException = null;
   }
-  
+
   boolean addRoot(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, boolean alreadyProcessed) {
     if (myShowWarning && myMigrationRoots.size() > 10 && !ApplicationManager.getApplication().isUnitTestMode()) {
       myShowWarning = false;
@@ -863,7 +962,7 @@ public class TypeMigrationLabeler {
       usages.add(place);
     }
   }
-  
+
   public void setTypeUsage(final PsiElement element, final PsiElement place) {
     setTypeUsage(new TypeMigrationUsageInfo(element), place);
   }
@@ -996,7 +1095,7 @@ public class TypeMigrationLabeler {
       checkNumberOfArguments = true;
     }
     final PsiType strippedType =
-                  migrationType instanceof PsiEllipsisType ? ((PsiEllipsisType)migrationType).getComponentType() : migrationType;
+      migrationType instanceof PsiEllipsisType ? ((PsiEllipsisType)migrationType).getComponentType() : migrationType;
     final PsiMethod method = (PsiMethod)param.getDeclarationScope();
     final PsiParameterList parameterList = method.getParameterList();
     final int parametersCount = parameterList.getParametersCount();
