@@ -54,8 +54,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       }
       else {
         if (((ApplicationEx)app).holdsReadLock()) {
-          LOG.error("Do not call synchronous refresh under read lock (except from EDT) - " +
-                    "this will cause a deadlock if there are any events to fire.");
+          LOG.error("Do not perform a synchronous refresh under read lock (except from EDT) - causes deadlocks if there are events to fire.");
           return;
         }
         queueSession(session, ModalityState.defaultModalityState());
