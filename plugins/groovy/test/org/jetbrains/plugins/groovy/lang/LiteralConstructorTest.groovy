@@ -62,6 +62,9 @@ class M {
   M() {}
   M(Map m) {}
 }
+class CollectionNoArgConstructor implements Collection {
+  CollectionNoArgConstructor() {}
+}
 ''')
   }
 
@@ -157,6 +160,25 @@ class M {
       'Person p = new Person(parent: [<caret>]])': true,
       'Person p = new Person(parent: [<caret>:])': true,
       'M m = [abc:[<caret>:]]'                   : false,
+    ]
+    constructorReferenceTest(data)
+  }
+
+  @Test
+  void 'constructor reference from safe cast'() {
+    def data = [
+      '[<caret>] as List'                      : false,
+      '[<caret>] as Set'                       : false,
+      '[<caret>] as SortedSet'                 : false,
+      '[<caret>] as Queue'                     : false,
+      '[<caret>] as Stack'                     : false,
+      '[<caret>] as LinkedList'                : false,
+      '[<caret>] as CollectionConstructor'     : false,
+      '[<caret>] as CollectionNoArgConstructor': false,
+      '[<caret>] as String'                    : false,
+      '[<caret>:] as List'                     : false,
+      '[<caret>] as Person'                    : true,
+      '[<caret>:] as Person'                   : true,
     ]
     constructorReferenceTest(data)
   }

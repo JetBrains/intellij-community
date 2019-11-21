@@ -11,11 +11,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_GROOVY_METHODS
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getExpressionArguments
+import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.getAssignmentOrReturnExpectedType
 import org.jetbrains.plugins.groovy.lang.typing.getWritePropertyType
 
@@ -46,6 +51,7 @@ class GrLiteralConstructorReference(element: GrListOrMap) : GrConstructorReferen
 private fun getExpectedType(literal: GrListOrMap): PsiType? {
   return getAssignmentOrReturnExpectedType(literal)
          ?: getExpectedTypeFromNamedArgument(literal)
+         ?: getExpectedTypeFromCoercion(literal)
 }
 
 private fun getExpectedTypeFromNamedArgument(literal: GrListOrMap): PsiType? {
@@ -54,6 +60,73 @@ private fun getExpectedTypeFromNamedArgument(literal: GrListOrMap): PsiType? {
   val propertyReference: GroovyPropertyWriteReference = label.constructorPropertyReference ?: return null
   return getWritePropertyType(propertyReference.advancedResolve())
 }
+
+private fun getExpectedTypeFromCoercion(literal: GrListOrMap): PsiType? {
+  val safeCast: GrSafeCastExpression = literal.parent as? GrSafeCastExpression ?: return null
+  if (!resolvesToDGM(safeCast)) {
+    return null
+  }
+  val typeElement: GrClassTypeElement = safeCast.castTypeElement as? GrClassTypeElement ?: return null
+  val typeResult: GroovyResolveResult = typeElement.referenceElement.resolve(false).singleOrNull() ?: return null
+  if (safeCastFallsBackToCast(literal, typeResult)) {
+    return typeElement.type
+  }
+  else {
+    return null
+  }
+}
+
+private fun resolvesToDGM(safeCast: GrSafeCastExpression): Boolean {
+  val method = safeCast.reference.resolve() as? PsiMethod ?: return false
+  val containingClass = (method as? GrGdkMethod)?.staticMethod?.containingClass
+  return containingClass?.qualifiedName == DEFAULT_GROOVY_METHODS
+}
+
+/**
+ * @return `true` if [org.codehaus.groovy.runtime.DefaultGroovyMethods.asType]
+ * will fall back to [org.codehaus.groovy.runtime.typehandling.DefaultTypeTransformation.castToType]
+ * inside `[] as X` or `[:] as X` expression, otherwise `false`
+ */
+private fun safeCastFallsBackToCast(literal: GrListOrMap, classResult: GroovyResolveResult): Boolean {
+  val clazz: PsiClass = classResult.element as? PsiClass ?: return false
+  if (literal.isMap) {
+    return !clazz.isInterface
+  }
+
+  if (clazz.qualifiedName in ignoredFqnsInSafeCast) {
+    return false
+  }
+
+  // new X(literal)
+  val constructors = resolveConstructor(clazz, PsiSubstitutor.EMPTY, listOf(ExpressionArgument(literal)), literal)
+  if (constructors.isNotEmpty() && constructors.all { it.isApplicable }) {
+    return false
+  }
+
+  if (InheritanceUtil.isInheritor(clazz, JAVA_UTIL_COLLECTION)) {
+    // def x = new X()
+    // x.addAll(literal)
+    val noArgConstructors = resolveConstructor(clazz, PsiSubstitutor.EMPTY, emptyList(), literal)
+    if (noArgConstructors.isNotEmpty() && noArgConstructors.all { it.isApplicable }) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * FQNs skipped in [org.codehaus.groovy.runtime.DefaultGroovyMethods.asType] for [Collection]
+ */
+private val ignoredFqnsInSafeCast = setOf(
+  JAVA_UTIL_LIST,
+  JAVA_UTIL_SET,
+  JAVA_UTIL_SORTED_SET,
+  JAVA_UTIL_QUEUE,
+  JAVA_UTIL_STACK,
+  JAVA_UTIL_LINKED_LIST,
+  JAVA_LANG_STRING
+)
 
 /**
  * @return `true` if [org.codehaus.groovy.runtime.typehandling.DefaultTypeTransformation.castToType]

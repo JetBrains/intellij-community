@@ -81,6 +81,25 @@ private class ConstructorProcessor(private val name: String) : ProcessorWithHint
   val candidates: List<PsiMethod> get() = myCandidates
 }
 
+
+/**
+ * @see org.codehaus.groovy.runtime.InvokerHelper.invokeConstructorOf
+ * @see groovy.lang.MetaClassImpl.invokeConstructor(java.lang.Class, java.lang.Object[])
+ */
+fun resolveConstructor(
+  clazz: PsiClass,
+  substitutor: PsiSubstitutor,
+  arguments: Arguments,
+  place: PsiElement
+): Collection<GroovyResolveResult> {
+  return chooseConstructors(
+    getAllConstructors(clazz, place),
+    arguments,
+    true,
+    withArguments(place, substitutor, false)
+  )
+}
+
 typealias WithArguments = (arguments: Arguments, mapConstructor: Boolean) -> (constructor: PsiMethod) -> GroovyMethodResult
 
 fun withArguments(place: PsiElement, substitutor: PsiSubstitutor, needsInference: Boolean): WithArguments {
