@@ -118,7 +118,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
                  MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiType.BOOLEAN, "hasPrevious") ||
                  MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiType.BOOLEAN, "next") ||
                  MethodCallUtils.isCallToMethod(expression, "java.util.Enumeration", PsiType.BOOLEAN, "hasMoreElements") ||
-                 MethodCallUtils.isCallToMethod(expression, "java.util.Queue", null, "poll") ||
+                 MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_QUEUE, null, "poll") ||
                  MethodCallUtils.isCallToMethod(expression, "java.lang.ref.ReferenceQueue", null, "poll");
         }
 

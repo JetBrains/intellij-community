@@ -30,7 +30,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
   };
   private static final Set<String> COLLECTIONS_WITH_SIZE_FIELD =
     ContainerUtil.immutableSet(CommonClassNames.JAVA_UTIL_ARRAY_LIST,
-                               "java.util.LinkedList",
+                               CommonClassNames.JAVA_UTIL_LINKED_LIST,
                                CommonClassNames.JAVA_UTIL_HASH_MAP,
                                "java.util.TreeMap");
   private final @NotNull PsiCodeBlock myBody;

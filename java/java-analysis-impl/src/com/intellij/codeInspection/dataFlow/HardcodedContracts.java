@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
@@ -55,7 +41,7 @@ public class HardcodedContracts {
   );
 
   private static final CallMatcher QUEUE_POLL = anyOf(
-    instanceCall("java.util.Queue", "poll").parameterCount(0),
+    instanceCall(JAVA_UTIL_QUEUE, "poll").parameterCount(0),
     instanceCall("java.util.Deque", "pollFirst", "pollLast").parameterCount(0)
     );
 
@@ -109,9 +95,9 @@ public class HardcodedContracts {
     .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(anyOf(
-      instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
+      instanceCall(JAVA_UTIL_SORTED_SET, "first", "last").parameterCount(0),
       instanceCall("java.util.Deque", "getFirst", "getLast").parameterCount(0),
-      instanceCall("java.util.Queue", "element").parameterCount(0)),
+      instanceCall(JAVA_UTIL_QUEUE, "element").parameterCount(0)),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), fail())))
@@ -122,7 +108,7 @@ public class HardcodedContracts {
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
               ContractProvider.of(StandardMethodContract.fromText("_->_")))
     .register(anyOf(
-      instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
+      instanceCall(JAVA_UTIL_QUEUE, "peek", "poll").parameterCount(0),
       instanceCall("java.util.Deque", "peekFirst", "peekLast", "pollFirst", "pollLast").parameterCount(0)),
               (call, paramCount) -> Arrays.asList(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,

@@ -29,7 +29,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Pavel.Dolgov
  */
 public class WrapWithUnmodifiableAction extends BaseIntentionAction {
-  private static final String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
   private static final String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
 
   @Override

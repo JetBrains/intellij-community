@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -62,7 +63,7 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.copyFileToProject("SomeClass.java");
 
     PsiClass arrayListPsiClass = myFixture.findClass("java.util.ArrayList");
-    PsiClass linkedListPsiClass = myFixture.findClass("java.util.LinkedList");
+    PsiClass linkedListPsiClass = myFixture.findClass(CommonClassNames.JAVA_UTIL_LINKED_LIST);
     PsiClass myList1PsiClass = myFixture.findClass("SomeClass.MyList1");
     PsiClass myList2PsiClass = myFixture.findClass("SomeClass.MyList2");
 

@@ -47,8 +47,13 @@ public interface CommonClassNames {
   String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   String JAVA_UTIL_LIST = "java.util.List";
   String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
+  String JAVA_UTIL_LINKED_LIST = "java.util.LinkedList";
   String JAVA_UTIL_SET = "java.util.Set";
   String JAVA_UTIL_HASH_SET = "java.util.HashSet";
+  String JAVA_UTIL_LINKED_HASH_SET = "java.util.LinkedHashSet";
+  String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_QUEUE = "java.util.Queue";
+  String JAVA_UTIL_STACK = "java.util.Stack";
   String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
   String JAVA_UTIL_DATE = "java.util.Date";
