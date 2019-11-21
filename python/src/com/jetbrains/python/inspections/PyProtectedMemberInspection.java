@@ -77,7 +77,7 @@ public class PyProtectedMemberInspection extends PyInspection {
       final PsiDirectory currentFileDirectory = importSource.getContainingFile().getContainingDirectory();
 
       if (currentFileDirectory != null && PyUtil.isPackage(currentFileDirectory, true, importSource)) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
 
         return StreamEx
           .of(importSource.getReference(resolveContext).multiResolve(false))
@@ -205,7 +205,7 @@ public class PyProtectedMemberInspection extends PyInspection {
 
     @Nullable
     private Set<String> collectDunderAlls(@NotNull PyReferenceExpression source) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
 
       final List<List<String>> resolvedDunderAlls = StreamEx
         .of(source.getReference(resolveContext).multiResolve(false))
@@ -224,7 +224,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     private boolean resolvesToFileSystemItem(@NotNull PyReferenceExpression referenceExpression) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
 
       return ContainerUtil.exists(referenceExpression.getReference(resolveContext).multiResolve(false),
                                   result -> result.getElement() instanceof PsiFileSystemItem);

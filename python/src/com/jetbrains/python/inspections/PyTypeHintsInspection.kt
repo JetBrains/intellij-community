@@ -165,7 +165,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkTypeVarArguments(call: PyCallExpression, target: PyExpression?) {
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
       var covariant = false
       var contravariant = false
       var bound: PyExpression? = null
@@ -662,7 +662,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun multiFollowAssignmentsChain(referenceExpression: PyReferenceExpression,
                                             follow: (PyTargetExpression) -> Boolean = this::followNotTypingOpaque): List<PsiElement> {
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
       return referenceExpression.multiFollowAssignmentsChain(resolveContext, follow).mapNotNull { it.element }
     }
   }

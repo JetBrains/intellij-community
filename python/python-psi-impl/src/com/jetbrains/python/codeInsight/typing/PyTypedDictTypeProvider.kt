@@ -52,7 +52,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
       if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
 
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
       val resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false)
 
       for (element in PyUtil.filterTopPriorityResults(resolveResults)) {

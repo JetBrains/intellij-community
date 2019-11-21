@@ -113,7 +113,7 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     private fun getNamedTupleTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyNamedTupleType? {
       if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
 
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
       val resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false)
 
       for (element in PyUtil.filterTopPriorityResults(resolveResults)) {

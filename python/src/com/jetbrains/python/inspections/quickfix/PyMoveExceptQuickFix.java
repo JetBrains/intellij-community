@@ -30,7 +30,7 @@ public class PyMoveExceptQuickFix implements LocalQuickFix {
     final PyExpression exceptClassExpression = part.getExceptClass();
     if (exceptClassExpression == null) return;
 
-    final PsiElement exceptClass = ((PyReferenceExpression)exceptClassExpression).followAssignmentsChain(PyResolveContext.noImplicits()).getElement();
+    final PsiElement exceptClass = ((PyReferenceExpression)exceptClassExpression).followAssignmentsChain(PyResolveContext.defaultContext()).getElement();
     if (exceptClass instanceof PyClass) {
       final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(part, PyTryExceptStatement.class);
       if (statement == null) return;
@@ -40,7 +40,7 @@ public class PyMoveExceptQuickFix implements LocalQuickFix {
       while (prevExceptPart != null) {
         final PyExpression classExpression = prevExceptPart.getExceptClass();
         if (classExpression == null) return;
-        final PsiElement aClass = ((PyReferenceExpression)classExpression).followAssignmentsChain(PyResolveContext.noImplicits()).getElement();
+        final PsiElement aClass = ((PyReferenceExpression)classExpression).followAssignmentsChain(PyResolveContext.defaultContext()).getElement();
         if (aClass instanceof PyClass) {
           if (superClasses.contains(aClass)) {
             statement.addBefore(part, prevExceptPart);

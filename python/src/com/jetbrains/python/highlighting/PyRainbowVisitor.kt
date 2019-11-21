@@ -83,7 +83,7 @@ class PyRainbowVisitor : RainbowVisitor() {
       return if (outerResolved is PyTargetExpression) getTargetContext(outerResolved) else null
     }
 
-    val resolveResults = targetExpression.getReference(PyResolveContext.noImplicits()).multiResolve(false)
+    val resolveResults = targetExpression.getReference(PyResolveContext.defaultContext()).multiResolve(false)
 
     val resolvesToGlobal = resolveResults
       .asSequence()

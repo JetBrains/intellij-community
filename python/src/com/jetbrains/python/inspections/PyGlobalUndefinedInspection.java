@@ -62,7 +62,7 @@ public class PyGlobalUndefinedInspection extends PyInspection {
       final PyTargetExpression[] globals = node.getGlobals();
 
       for (PyTargetExpression global : globals) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
 
         final List<PsiElement> elements = PyUtil.multiResolveTopPriority(global.getReference(resolveContext));
         final boolean noTopLevelDeclaration = elements.stream().noneMatch(PyUtil::isTopLevel);

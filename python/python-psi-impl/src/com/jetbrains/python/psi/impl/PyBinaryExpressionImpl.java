@@ -114,7 +114,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   @NotNull
   @Override
   public PsiPolyVariantReference getReference() {
-    return getReference(PyResolveContext.noImplicits());
+    return getReference(PyResolveContext.defaultContext());
   }
 
   @NotNull
@@ -140,7 +140,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     if (PyNames.CONTAINS.equals(getReferencedName())) return PyBuiltinCache.getInstance(this).getBoolType();
 
     final List<PyCallExpression.PyArgumentsMapping> results =
-      PyCallExpressionHelper.mapArguments(this, PyResolveContext.noImplicits().withTypeEvalContext(context));
+      PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context));
     if (!results.isEmpty()) {
       final List<PyType> types = new ArrayList<>();
       final List<PyType> matchedTypes = new ArrayList<>();

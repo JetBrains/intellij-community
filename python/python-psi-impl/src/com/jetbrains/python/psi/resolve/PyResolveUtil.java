@@ -215,7 +215,7 @@ public class PyResolveUtil {
     final String firstName = qualifiedName.getFirstComponent();
     if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
 
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
     final List<? extends RatedResolveResult> unqualifiedResults;
     if (scopeOwner instanceof PyiFile) {

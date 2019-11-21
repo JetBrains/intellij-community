@@ -81,7 +81,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain(PyResolveContext.noImplicits());
+      resolveResult = ref.followAssignmentsChain(PyResolveContext.defaultContext());
       resolved = resolveResult.getElement();
     }
     else {
@@ -446,7 +446,7 @@ public class PyCallExpressionHelper {
           }
         }
         // normal cases
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
         final List<QualifiedRatedResolveResult> resolveResults = multiResolveCallee(callee, resolveContext);
         final Stream<QualifiedRatedResolveResult> overloadsOtherwiseImplementations =
@@ -788,7 +788,7 @@ public class PyCallExpressionHelper {
     final PyCallableType callableType = PyUtil.as(context.getType(callable), PyCallableType.class);
     if (callableType == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
-    return mapArguments(callSite, callableType, callable, PyResolveContext.noImplicits().withTypeEvalContext(context));
+    return mapArguments(callSite, callableType, callable, PyResolveContext.defaultContext().withTypeEvalContext(context));
   }
 
   @NotNull

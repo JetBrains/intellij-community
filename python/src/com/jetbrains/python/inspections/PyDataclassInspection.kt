@@ -182,7 +182,7 @@ class PyDataclassInspection : PyInspection() {
       super.visitPyCallExpression(node)
 
       if (node != null) {
-        val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
+        val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
         val markedCallee = node.multiResolveCallee(resolveContext).singleOrNull()
         val callee = markedCallee?.element
         val calleeQName = callee?.qualifiedName

@@ -1138,7 +1138,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         return null;
       }
       List<? extends RatedResolveResult> results =
-        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.noImplicits());
+        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext());
       if (results != null && !results.isEmpty()) {
         return XDebuggerUtil.getInstance().createPositionByElement(results.get(0).getElement());
       }

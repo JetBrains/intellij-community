@@ -442,7 +442,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
       if (expression instanceof PyReferenceExpression) {
         final PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
         if (!referenceExpression.isQualified()) {
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
           for (ResolveResult result : referenceExpression.getReference(resolveContext).multiResolve(false)) {
             final PsiElement element = result.getElement();

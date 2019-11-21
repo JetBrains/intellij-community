@@ -59,7 +59,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.noImplicits());
+    return getReference(PyResolveContext.defaultContext());
   }
 
   @NotNull
@@ -87,7 +87,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
     return Ref.deref(
       StreamEx
-      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.noImplicits().withTypeEvalContext(context)))
+      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context)))
       .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
       .nonNull()
       .map(callee -> callee.getCallableType().getCallType(context, this))

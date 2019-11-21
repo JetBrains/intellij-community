@@ -110,7 +110,7 @@ public class PyArgumentListInspection extends PyInspection {
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext, implicitOffset);
 
     for (PyCallExpression.PyArgumentsMapping mapping : mappings) {

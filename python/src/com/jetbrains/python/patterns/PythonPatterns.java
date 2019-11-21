@@ -106,7 +106,7 @@ public class PythonPatterns extends PlatformPatterns {
 
     // TODO is it better or worse to allow implicits here?
     final PyResolveContext context = PyResolveContext
-      .noImplicits()
+      .defaultContext()
       .withTypeEvalContext(TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile()));
 
     return call.multiResolveCalleeFunction(context);

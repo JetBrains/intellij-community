@@ -52,7 +52,7 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
     Set<PsiElement> visited = new HashSet<>();
     visited.add(result);
     while (result instanceof PyReferenceExpression || result instanceof PyTargetExpression) {
-      PsiElement nextResult = ((PyReferenceOwner)result).getReference(PyResolveContext.noImplicits()).resolve();
+      PsiElement nextResult = ((PyReferenceOwner)result).getReference(PyResolveContext.defaultContext()).resolve();
       if (nextResult != null && !visited.contains(nextResult) &&
           PsiTreeUtil.getParentOfType(element, ScopeOwner.class) == PsiTreeUtil.getParentOfType(result, ScopeOwner.class) &&
           (nextResult instanceof PyReferenceExpression || nextResult instanceof PyTargetExpression || nextResult instanceof PyParameter)) {

@@ -269,7 +269,7 @@ public class PyEvaluator {
       if (!myEnableResolve) {
         return null;
       }
-      final ResolveResult[] results = expression.getReference(PyResolveContext.noImplicits()).multiResolve(false);
+      final ResolveResult[] results = expression.getReference(PyResolveContext.defaultContext()).multiResolve(false);
       if (results.length != 1) {
         return null;
       }

@@ -54,7 +54,7 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
       val argList = expr.parent as? PyArgumentList ?: return false
       val callExpr = argList.parent as? PyCallExpression ?: return false
       val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
 
       return callExpr.multiResolveCallee(resolveContext)
         .asSequence()
