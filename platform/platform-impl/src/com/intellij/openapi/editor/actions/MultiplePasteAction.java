@@ -44,7 +44,6 @@ import java.util.List;
  * @author max
  */
 public class MultiplePasteAction extends AnAction implements DumbAware {
-  private static final int PASTE_SIMPLE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE;
 
   public MultiplePasteAction() {
     setEnabledInModalContext(true);
@@ -68,7 +67,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
 
-    if (chooser.getExitCode() == DialogWrapper.OK_EXIT_CODE || chooser.getExitCode() == PASTE_SIMPLE_EXIT_CODE) {
+    if (chooser.getExitCode() == DialogWrapper.OK_EXIT_CODE || chooser.getExitCode() == getPasteSimpleExitCode()) {
       List<Transferable> selectedContents = chooser.getSelectedContents();
       CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
       if (selectedContents.size() == 1) {
@@ -81,7 +80,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       if (editor != null) {
         if (editor.isViewer()) return;
 
-        final AnAction pasteAction = ActionManager.getInstance().getAction(chooser.getExitCode() == PASTE_SIMPLE_EXIT_CODE 
+        final AnAction pasteAction = ActionManager.getInstance().getAction(chooser.getExitCode() == getPasteSimpleExitCode()
                                                                            ? IdeActions.ACTION_EDITOR_PASTE_SIMPLE 
                                                                            : IdeActions.ACTION_PASTE);
         AnActionEvent newEvent = new AnActionEvent(e.getInputEvent(),
@@ -118,6 +117,10 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     if (editor != null) return !editor.isViewer();
     Action pasteAction = ((JComponent)component).getActionMap().get(DefaultEditorKit.pasteAction);
     return pasteAction != null;
+  }
+
+  private static int getPasteSimpleExitCode() {
+    return DialogWrapper.NEXT_USER_EXIT_CODE;
   }
 
   private static class ClipboardContentChooser extends ContentChooser<Transferable> {
@@ -169,7 +172,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
       @Override
       protected void doAction(ActionEvent e) {
-        close(PASTE_SIMPLE_EXIT_CODE);
+        close(getPasteSimpleExitCode());
       }
     }
   }

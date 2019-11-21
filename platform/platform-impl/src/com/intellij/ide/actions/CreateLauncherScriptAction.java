@@ -20,7 +20,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,18 +41,16 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
 public class CreateLauncherScriptAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateLauncherScriptAction.class);
 
-  private static final NullableLazyValue<String> INTERPRETER_NAME = NullableLazyValue.createValue(() -> {
-    File python = PathEnvironmentVariableUtil.findInPath("python");
-    if (python != null) return "python";
-    python = PathEnvironmentVariableUtil.findInPath("python3");
-    if (python != null) return "python3";
-    return null;
-  });
+  private static class Holder {
+    private static final String INTERPRETER_NAME =
+      PathEnvironmentVariableUtil.findInPath("python") != null ? "python":
+      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" :null;
+  }
 
   public static boolean isAvailable() {
     return SystemInfo.isUnix &&
            (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
-           INTERPRETER_NAME.getValue() != null;
+           Holder.INTERPRETER_NAME != null;
   }
 
   @Override
@@ -167,7 +164,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
     Map<String, String> variables = newHashMap(
-      pair("$PYTHON$", INTERPRETER_NAME.getValue()),
+      pair("$PYTHON$", Holder.INTERPRETER_NAME),
       pair("$CONFIG_PATH$", PathManager.getConfigPath()),
       pair("$SYSTEM_PATH$", PathManager.getSystemPath()),
       pair("$RUN_PATH$", starter.getPath()));

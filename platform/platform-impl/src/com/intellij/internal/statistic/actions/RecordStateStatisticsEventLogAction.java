@@ -20,7 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class RecordStateStatisticsEventLogAction extends AnAction {
-  private static final FUStateUsagesLogger myStatesLogger = new FUStateUsagesLogger();
+  private static class Holder {
+    private static final FUStateUsagesLogger myStatesLogger = new FUStateUsagesLogger();
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -35,8 +37,8 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
         FeatureUsageLogger.INSTANCE.rollOver();
         EventLogFile logFile = FeatureUsageLogger.INSTANCE.getConfig().getActiveLogFile();
         VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile.getFile()) : null;
-        myStatesLogger.logApplicationStates();
-        myStatesLogger.logProjectStates(project, indicator);
+        Holder.myStatesLogger.logApplicationStates();
+        Holder.myStatesLogger.logProjectStates(project, indicator);
 
         ApplicationManager.getApplication().invokeLater(
           () -> {

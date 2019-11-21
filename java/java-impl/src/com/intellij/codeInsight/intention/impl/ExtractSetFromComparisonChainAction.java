@@ -56,21 +56,22 @@ import java.util.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntentionAction {
-  private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
-  private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
-  private static final String INITIALIZER_FORMAT_JAVA2 =
-    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-    "new " + CommonClassNames.JAVA_UTIL_HASH_SET +
-    "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(new {1}[] '{'{0}'}')))";
-  private static final String INITIALIZER_FORMAT_JAVA5 =
-    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-    "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<{1}>" +
-    "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList({0})))";
-  private static final String INITIALIZER_FORMAT_JAVA9 = CommonClassNames.JAVA_UTIL_SET + ".of({0})";
-  private static final String INITIALIZER_ENUM_SET =
-    CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
-    "java.util.EnumSet.of({0}))";
-
+  private static class Holder {
+    private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
+    private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
+    private static final String INITIALIZER_FORMAT_JAVA2 =
+      CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+      "new " + CommonClassNames.JAVA_UTIL_HASH_SET +
+      "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(new {1}[] '{'{0}'}')))";
+    private static final String INITIALIZER_FORMAT_JAVA5 =
+      CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+      "new " + CommonClassNames.JAVA_UTIL_HASH_SET + "<{1}>" +
+      "(" + CommonClassNames.JAVA_UTIL_ARRAYS + ".asList({0})))";
+    private static final String INITIALIZER_FORMAT_JAVA9 = CommonClassNames.JAVA_UTIL_SET + ".of({0})";
+    private static final String INITIALIZER_ENUM_SET =
+      CommonClassNames.JAVA_UTIL_COLLECTIONS + ".unmodifiableSet(" +
+      "java.util.EnumSet.of({0}))";
+  }
   @Override
   public boolean startInWriteAction() {
     return false;
@@ -184,18 +185,18 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
   @NotNull
   String getInitializer(PsiType type, PsiClass containingClass) {
     if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      return INITIALIZER_ENUM_SET;
+      return Holder.INITIALIZER_ENUM_SET;
     }
     if (PsiUtil.isLanguageLevel9OrHigher(containingClass)) {
-      return INITIALIZER_FORMAT_JAVA9;
+      return Holder.INITIALIZER_FORMAT_JAVA9;
     }
-    if (JavaPsiFacade.getInstance(containingClass.getProject()).findClass(GUAVA_IMMUTABLE_SET, containingClass.getResolveScope()) != null) {
-      return INITIALIZER_FORMAT_GUAVA;
+    if (JavaPsiFacade.getInstance(containingClass.getProject()).findClass(Holder.GUAVA_IMMUTABLE_SET, containingClass.getResolveScope()) != null) {
+      return Holder.INITIALIZER_FORMAT_GUAVA;
     }
     if (PsiUtil.isLanguageLevel5OrHigher(containingClass)) {
-      return INITIALIZER_FORMAT_JAVA5;
+      return Holder.INITIALIZER_FORMAT_JAVA5;
     }
-    return INITIALIZER_FORMAT_JAVA2;
+    return Holder.INITIALIZER_FORMAT_JAVA2;
   }
 
   @Override

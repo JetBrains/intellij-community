@@ -57,7 +57,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +74,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.ide.actions.RecentLocationsAction.SHORTCUT_HEX_COLOR;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -1369,7 +1367,7 @@ public class Switcher extends AnAction implements DumbAware {
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
       return "<html>"
              + IdeBundle.message("recent.files.checkbox.label")
-             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+             + " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
              + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
              + "</html>";
     }
