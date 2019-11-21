@@ -492,14 +492,13 @@
 
     <extensionPoint name="moduleConfigurationEditorProvider" interface="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider" area="IDEA_MODULE"/>
 
-    <extensionPoint name="callHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="callHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>
     </extensionPoint>
-    <extensionPoint name="methodHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="methodHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>
     </extensionPoint>
-
-    <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>
     </extensionPoint>
 
