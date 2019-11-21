@@ -78,7 +78,16 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
 
   @Override
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
-    return new PyCharmCommunityLinuxDistributionCustomizer(projectHome)
+    return new PyCharmCommunityLinuxDistributionCustomizer(projectHome) {
+      @Override
+      String getSnapName() { return "pycharm-community" }
+
+      @Override
+      String getSnapDescription() {
+        return "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " + \
+        "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
+      }
+    }
   }
 
   @Override
@@ -111,10 +120,6 @@ class PyCharmCommunityLinuxDistributionCustomizer extends LinuxDistributionCusto
   PyCharmCommunityLinuxDistributionCustomizer(projectHome) {
     iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
     iconPngPathForEAP = "$projectHome/python/resources/PyCharmCore128_EAP.png"
-    snapName = "pycharm-community"
-    snapDescription =
-      "Python IDE for professional developers. Save time while PyCharm takes care of the routine. "
-    "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
   }
 
   @Override
