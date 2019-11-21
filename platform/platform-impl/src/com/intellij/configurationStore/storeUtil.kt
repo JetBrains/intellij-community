@@ -168,13 +168,8 @@ private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
   }
 }
 
-inline fun runInSaveOnFrameDeactivationDisabledMode(task: () -> Unit) {
-  val saveAndSyncManager = SaveAndSyncHandler.getInstance()
-  saveAndSyncManager.blockSaveOnFrameDeactivation()
-  try {
+inline fun runInAutoSaveDisabledMode(task: () -> Unit) {
+  SaveAndSyncHandler.getInstance().disableAutoSave().use {
     task()
-  }
-  finally {
-    saveAndSyncManager.unblockSaveOnFrameDeactivation()
   }
 }

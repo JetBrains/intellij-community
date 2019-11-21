@@ -11,6 +11,7 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -188,21 +189,12 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
-    SaveAndSyncHandler saveAndSyncHandler = ApplicationManager.getApplication().getServiceIfCreated(SaveAndSyncHandler.class);
-    if (saveAndSyncHandler != null) {
-      saveAndSyncHandler.blockSyncOnFrameActivation();
-    }
-    try {
+    try (AccessToken ignored = SaveAndSyncHandler.getInstance().disableAutoSave()) {
       Project project = openExistingProject(file, baseDir, options);
       if (project != null && file != baseDir && !Files.isDirectory(file)) {
         openFileFromCommandLine(project, file, line);
       }
       return project;
-    }
-    finally {
-      if (saveAndSyncHandler != null) {
-        saveAndSyncHandler.unblockSyncOnFrameActivation();
-      }
     }
   }
 
@@ -211,9 +203,13 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   public static Project openExistingProject(@NotNull Path file,
                                             @Nullable("null for IPR project") Path projectDir,
                                             @NotNull OpenProjectTask options) {
-    if (options.getProject() != null && ProjectManagerEx.getInstanceEx().isProjectOpened(options.getProject())) {
-      return null;
+    if (options.getProject() != null) {
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+      if (projectManager != null && projectManager.isProjectOpened(options.getProject())) {
+        return null;
+      }
     }
+
     Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
       Project[] openProjects = ProjectUtil.getOpenProjects();
