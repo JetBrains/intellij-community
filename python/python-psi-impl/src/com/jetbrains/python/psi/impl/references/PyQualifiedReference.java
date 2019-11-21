@@ -31,6 +31,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
@@ -441,13 +442,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (resolveContext.getTypeEvalContext().getOrigin() == null) {
       final PsiFile containingFile = myElement.getContainingFile();
       if (containingFile instanceof StubBasedPsiElement) {
-        assert ((StubBasedPsiElement)containingFile).getStub() == null : "Stub origin for type eval context in isReferenceTo()";
+        assert ((StubBasedPsiElement<?>)containingFile).getStub() == null : "Stub origin for type eval context in isReferenceTo()";
       }
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(containingFile.getProject(), containingFile);
       resolveContext = resolveContext.withTypeEvalContext(context);
     }
-    if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
-        !PyUtil.isInitOrNewMethod(element)) {
+    PyElement pyElement = ObjectUtils.tryCast(element, PyElement.class);
+    if (pyElement != null && Comparing.equal(referencedName, pyElement.getName()) && !PyUtil.isInitOrNewMethod(element)) {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);
