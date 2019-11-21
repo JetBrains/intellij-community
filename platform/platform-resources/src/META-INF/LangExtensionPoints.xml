@@ -512,7 +512,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.documentation.DocCommentFixer"/>
     </extensionPoint>
 
-    <extensionPoint name="templateCompletionProcessor" interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
+    <extensionPoint name="templateCompletionProcessor" interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor" dynamic="true"/>
 
     <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender" dynamic="true"/>
     <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -529,7 +529,7 @@
       <with attribute="implementationClass" implements="com.intellij.util.indexing.DataIndexer"/>
     </extensionPoint>
 
-    <extensionPoint name="todoExtraPlaces" interface="com.intellij.psi.impl.cache.impl.todo.TodoIndexers$ExtraPlaceChecker"/>
+    <extensionPoint name="todoExtraPlaces" interface="com.intellij.psi.impl.cache.impl.todo.TodoIndexers$ExtraPlaceChecker" dynamic="true"/>
 
     <extensionPoint name="problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="problemHighlightFilter" interface="com.intellij.codeInsight.daemon.ProblemHighlightFilter" dynamic="true"/>

@@ -32,14 +32,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexEntry, Integer, FileContent>> {
   public static final TodoIndexers INSTANCE = new TodoIndexers();
-  private static final ExtensionPointName<ExtraPlaceChecker> EXTRA_TODO_PLACES = ExtensionPointName.create("com.intellij.todoExtraPlaces");
+
+  private static final ExtensionPointName<ExtraPlaceChecker> EP_NAME = ExtensionPointName.create("com.intellij.todoExtraPlaces");
 
   private TodoIndexers() {
     super("com.intellij.todoIndexer");
   }
 
   public static boolean needsTodoIndex(@NotNull VirtualFile file) {
-    for (ExtraPlaceChecker checker : EXTRA_TODO_PLACES.getExtensionList()) {
+    for (ExtraPlaceChecker checker : EP_NAME.getExtensionList()) {
       if (checker.accept(null, file)) return true;
     }
     if (!file.isInLocalFileSystem()) {
@@ -52,7 +53,7 @@ public class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexEntry, 
   }
 
   public static boolean belongsToProject(@NotNull Project project, @NotNull VirtualFile file) {
-    for (ExtraPlaceChecker checker : EXTRA_TODO_PLACES.getExtensionList()) {
+    for (ExtraPlaceChecker checker : EP_NAME.getExtensionList()) {
       if (checker.accept(project, file)) return true;
     }
     if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
