@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {addExportMenu} from "@/charts/ChartManager"
+import {addExportMenu, StatChartManager} from "@/charts/ChartManager"
 import {GroupedMetricResponse} from "@/aggregatedStats/model"
 
 // todo https://www.amcharts.com/demos/variance-indicators/
-export class ClusteredChartManager {
+export class ClusteredChartManager implements StatChartManager {
   private readonly chart: am4charts.XYChart
 
   constructor(container: HTMLElement) {
@@ -42,7 +42,7 @@ export class ClusteredChartManager {
     label.tooltipText = "{category}"
   }
 
-  private render(data: GroupedMetricResponse): void {
+  render(data: GroupedMetricResponse): void {
     const chart = this.chart
 
     const oldSeries = new Map<string, am4charts.ColumnSeries>()
@@ -88,14 +88,5 @@ export class ClusteredChartManager {
 
   dispose(): void {
     this.chart.dispose()
-  }
-
-  setData(data: Promise<GroupedMetricResponse>) {
-    data
-      .then(data => {
-        if (data != null) {
-          this.render(data)
-        }
-      })
   }
 }

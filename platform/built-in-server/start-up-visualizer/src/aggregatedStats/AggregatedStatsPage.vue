@@ -40,7 +40,7 @@
       </el-col>
       <el-col :span="8">
         <div style="float: right">
-          <el-checkbox size="small" v-model="chartSettings.showScrollbarXPreview" @change="showScrollbarXPreviewChanged">Show horizontal scrollbar preview</el-checkbox>
+          <el-checkbox size="small" v-model="chartSettings.showScrollbarXPreview">Show horizontal scrollbar preview</el-checkbox>
         </div>
       </el-col>
     </el-row>
@@ -64,29 +64,29 @@
       <!-- more space for duration events (because number of duration metrics more than instant) -->
       <el-col :span="16">
         <el-card shadow="never" :body-style="{ padding: '0px' }">
-          <div class="aggregatedChart" ref="clusteredDurationChartContainer"></div>
+          <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d", "appComponentCreation_d", "projectComponentCreation_d"]' :chartSettings="chartSettings"/>
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card shadow="never" :body-style="{ padding: '0px' }">
-          <div class="aggregatedChart" ref="clusteredInstantChartContainer"></div>
+          <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
         </el-card>
       </el-col>
     </el-row>
 
     <el-tabs value="date" size="small">
-      <el-form :inline="true" size="small">
-        <el-form-item label="Granularity">
-          <el-select v-model="chartSettings.granularity" data-lpignore="true" filterable>
-            <el-option v-for='name in ["as is", "hour", "day", "week", "month"]' :key="name" :label="name" :value="name"/>
-          </el-select>
-        </el-form-item>
-      </el-form>
-
       <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
                    :key="item.order" :label="item.name" :name="item.order" lazy>
         <keep-alive>
           <div>
+            <el-form v-if="item.order === 'date'" :inline="true" size="small">
+              <el-form-item label="Granularity">
+                <el-select v-model="chartSettings.granularity" data-lpignore="true" filterable>
+                  <el-option v-for='name in ["as is", "hour", "day", "week", "month"]' :key="name" :label="name" :value="name"/>
+                </el-select>
+              </el-form-item>
+            </el-form>
+
             <el-row :gutter="5">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
@@ -100,9 +100,14 @@
               </el-col>
             </el-row>
             <el-row :gutter="5" style="margin-top: 5px;">
-              <el-col :span="24">
+              <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
                 </el-card>
               </el-col>
             </el-row>

@@ -14,6 +14,10 @@ export interface ChartManager {
   dispose(): void
 }
 
+export interface StatChartManager {
+  dispose(): void
+}
+
 export function addExportMenu(chart: am4charts.XYChart) {
   const exportMenu = new am4core.ExportMenu()
   const topItems = exportMenu.items[0].menu!!

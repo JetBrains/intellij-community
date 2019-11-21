@@ -3,31 +3,18 @@ import {Component, Vue, Watch} from "vue-property-decorator"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {InfoResponse, MachineGroup} from "@/aggregatedStats/model"
+import {DataRequest, InfoResponse, MachineGroup} from "@/aggregatedStats/model"
 import {debounce} from "debounce"
-import {AggregatedStatComponent, DataRequest} from "@/aggregatedStats/AggregatedStatComponent"
 import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
+import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
 
 @Component({
-  components: {LineChartComponent}
+  components: {LineChartComponent, ClusteredChartComponent}
 })
 export default class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
 
-  private readonly helper!: AggregatedStatComponent
-
-  created() {
-    // @ts-ignore
-    // noinspection JSConstantReassignment
-    this.helper = new AggregatedStatComponent()
-
-    if (module.hot != null) {
-      module.hot.dispose(() => {
-        console.log("dispose charts on hot reload")
-        this.helper.dispose()
-      })
-    }
-  }
+  private lastInfoResponse: InfoResponse | null = null
 
   chartSettings = this.dataModule.chartSettings
 
@@ -40,14 +27,6 @@ export default class AggregatedStatsPage extends Vue {
     this.loadData()
   }, 1000)
 
-  private reloadClusteredDataIfPossibleAfterDelay = debounce(() => {
-    this.reloadClusteredDataIfPossible()
-  }, 100)
-
-  showScrollbarXPreviewChanged(_value: boolean) {
-    this.dataModule.updateChartSettings(this.chartSettings)
-  }
-
   dataRequest: DataRequest | null = null
 
   loadData() {
@@ -58,7 +37,7 @@ export default class AggregatedStatsPage extends Vue {
           return
         }
 
-        this.helper.lastInfoResponse = data
+        this.lastInfoResponse = data
         this.products = data.productNames
         let selectedProduct = this.chartSettings.selectedProduct
         if (this.products.length === 0) {
@@ -90,7 +69,7 @@ export default class AggregatedStatsPage extends Vue {
   selectedProductChanged(product: string | null, _oldV: string): void {
     console.log("product changed", product, _oldV)
 
-    const infoResponse = this.helper.lastInfoResponse
+    const infoResponse = this.lastInfoResponse
     if (infoResponse != null) {
       this.applyChangedProduct(product, infoResponse)
     }
@@ -120,7 +99,6 @@ export default class AggregatedStatsPage extends Vue {
     if (isArrayContentTheSame(this.chartSettings.selectedMachine, selectedMachine)) {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
       if (product != null && selectedMachine != null && selectedMachine.length > 0) {
-        this.loadClusteredChartsData(product)
         this.requestDataReloading(product, selectedMachine)
       }
     }
@@ -130,7 +108,7 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   private requestDataReloading(product: string, machine: Array<string>) {
-    this.dataRequest = {product, machine, infoResponse: this.helper.lastInfoResponse!!, chartSettings: this.chartSettings}
+    this.dataRequest = Object.seal({product, machine, infoResponse: this.lastInfoResponse!!})
   }
 
   @Watch("chartSettings.selectedMachine")
@@ -139,8 +117,6 @@ export default class AggregatedStatsPage extends Vue {
       machine = [machine]
       this.chartSettings.selectedMachine = machine
     }
-
-    this.dataModule.updateChartSettings(this.chartSettings)
 
     console.log("machine changed", machine, _oldV)
     if (machine == null) {
@@ -152,15 +128,7 @@ export default class AggregatedStatsPage extends Vue {
       return
     }
 
-    this.loadClusteredChartsData(product)
     this.requestDataReloading(product, machine)
-  }
-
-  private loadClusteredChartsData(product: string): void {
-    const machine = this.chartSettings.selectedMachine
-    if (machine != null && machine.length > 0) {
-      this.helper.loadClusteredChartsData(product, machine, this.chartSettings, this.$refs as any, this.$notify)
-    }
   }
 
   @Watch("chartSettings.serverUrl")
@@ -168,32 +136,10 @@ export default class AggregatedStatsPage extends Vue {
     if (!isEmpty(newV)) {
       this.loadDataAfterDelay()
     }
-
-    this.dataModule.updateChartSettings(this.chartSettings)
   }
 
-  @Watch("chartSettings.aggregationOperator")
-  aggregationOperatorChanged(_newV: string | null, _oldV: string) {
-    this.reloadClusteredDataIfPossibleAfterDelay()
-    this.dataModule.updateChartSettings(this.chartSettings)
-  }
-
-  @Watch("chartSettings.granularity")
-  granularityChanged(_newV: string | null, _oldV: string) {
-    this.dataModule.updateChartSettings(this.chartSettings)
-  }
-
-  private reloadClusteredDataIfPossible() {
-    const product = this.chartSettings.selectedProduct
-    if (product == null || product.length === 0) {
-      return
-    }
-    this.loadClusteredChartsData(product)
-  }
-
-  @Watch("chartSettings.quantile")
-  quantileChanged(_newV: number, _oldV: number) {
-    this.reloadClusteredDataIfPossibleAfterDelay()
+  @Watch("chartSettings", {deep: true})
+  chartSettingsChanged(_newV: string | null, _oldV: string) {
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
@@ -202,11 +148,6 @@ export default class AggregatedStatsPage extends Vue {
     if (!isEmpty(serverUrl)) {
       this.loadData()
     }
-  }
-
-  beforeDestroy() {
-    const helper = this.helper
-    helper.dispose()
   }
 }
 

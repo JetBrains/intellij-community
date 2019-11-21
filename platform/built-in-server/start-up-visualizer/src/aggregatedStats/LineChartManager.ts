@@ -2,13 +2,13 @@
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
-import {addExportMenu} from "@/charts/ChartManager"
+import {addExportMenu, StatChartManager} from "@/charts/ChartManager"
 import HumanizeDuration from "humanize-duration"
 import {MetricDescriptor, Metrics} from "@/aggregatedStats/model"
 import {ChartConfigurator} from "@/aggregatedStats/ChartConfigurator"
 import * as am4plugins_annotation from "@amcharts/amcharts4/plugins/annotation"
 
-export class LineChartManager {
+export class LineChartManager implements StatChartManager {
   private readonly chart: am4charts.XYChart
 
   reportUrlPrefix: string | null = null
@@ -128,7 +128,6 @@ export class LineChartManager {
   }
 
   scrollbarXPreviewOptionChanged(chartSettings: ChartSettings) {
-    console.log("CHANGED")
     this.chartSettings = chartSettings
 
     // no need to dispose old scrollbar explicit - will be disposed automatically on set
@@ -151,48 +150,29 @@ export class LineChartManager {
   render(data: Array<Metrics>): void {
     const chart = this.chart
 
-    const scrollbarX = chart.scrollbarX as am4charts.XYChartScrollbar
-    const oldSeries = new Map<string, am4charts.LineSeries>()
-
-    for (const series of chart.series) {
-      oldSeries.set(series.name, series as am4charts.LineSeries)
-    }
-
-    for (const metric of this.metricDescriptors) {
-      let series = oldSeries.get(metric.key)
-      if (series == null) {
-        series = new am4charts.LineSeries()
+    if (chart.series.length === 0) {
+      const scrollbarX = chart.scrollbarX as am4charts.XYChartScrollbar
+      for (const metric of this.metricDescriptors) {
+        const series = new am4charts.LineSeries()
         this.configureLineSeries(metric, series)
         chart.series.push(series)
-      }
-      else {
-        oldSeries.delete(metric.key)
+        if (this.chartSettings.showScrollbarXPreview) {
+          scrollbarX.series.push(series)
+        }
       }
 
-      if (this.chartSettings.showScrollbarXPreview) {
-        scrollbarX.series.push(series)
+      const firstSeries = chart.series.getIndex(0)!!
+      if (!firstSeries.adapter.isEnabled("tooltipHTML")) {
+        firstSeries.adapter.add("tooltipHTML", this.toolTipAdapter as any)
+        const tooltip = firstSeries.tooltip!!
+        tooltip.pointerOrientation = "down"
+        tooltip.background.fillOpacity = 0.4
+        tooltip.adapter.add("y", (_x, _target) => {
+          return (this.chart.yAxesAndPlotContainer.y as number) + 40
+        })
+        tooltip.label.interactionsEnabled = true
       }
     }
-
-    const firstSeries = chart.series.getIndex(0)
-    if (firstSeries != null && !firstSeries.adapter.isEnabled("tooltipHTML")) {
-      firstSeries.adapter.add("tooltipHTML", this.toolTipAdapter as any)
-      const tooltip = firstSeries.tooltip!!
-      tooltip.pointerOrientation = "down"
-      tooltip.background.fillOpacity = 0.4
-      tooltip.adapter.add("y", (_x, _target) => {
-        return (this.chart.yAxesAndPlotContainer.y as number) + 40
-      })
-      tooltip.label.interactionsEnabled = true
-    }
-
-    oldSeries.forEach(value => {
-      chart.series.removeIndex(chart.series.indexOf(value))
-      if (this.chartSettings.showScrollbarXPreview) {
-        scrollbarX.series.removeIndex(scrollbarX.series.indexOf(value))
-      }
-      value.dispose()
-    })
 
     chart.data = data
   }
