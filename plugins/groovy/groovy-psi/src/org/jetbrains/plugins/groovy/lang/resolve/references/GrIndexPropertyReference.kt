@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListArgument
+import org.jetbrains.plugins.groovy.lang.psi.util.getRValue
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -49,7 +50,7 @@ class GrGetAtReference(element: GrIndexProperty) : GrIndexPropertyReference(elem
   override val arguments: Arguments get() = listOf(element.getArgumentListArgument())
 }
 
-class GrPutAtReference(element: GrIndexProperty, private val rValue: Argument) : GrIndexPropertyReference(element) {
+class GrPutAtReference(element: GrIndexProperty) : GrIndexPropertyReference(element) {
 
   override fun getRangeInElement(): TextRange {
     val argumentList = element.argumentList
@@ -58,5 +59,5 @@ class GrPutAtReference(element: GrIndexProperty, private val rValue: Argument) :
 
   override val methodName: String get() = "putAt"
 
-  override val arguments: Arguments get() = listOf(element.getArgumentListArgument(), rValue)
+  override val arguments: Arguments get() = listOf(element.getArgumentListArgument(), requireNotNull(element.getRValue()))
 }
