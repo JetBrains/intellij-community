@@ -120,10 +120,6 @@ public class OpenFileAction extends AnAction implements DumbAware {
       }
     }
 
-    if (LightEditUtil.openFile(file)) {
-      return;
-    }
-
     FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
     if (type == null) return;
 
@@ -131,7 +127,9 @@ public class OpenFileAction extends AnAction implements DumbAware {
       openFile(file, project);
     }
     else {
-      PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask(), -1);
+      if (!LightEditUtil.openFile(file)) {
+        PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask(), -1);
+      }
     }
   }
 
