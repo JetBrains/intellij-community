@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -93,12 +94,16 @@ class LightEditTabs extends JBEditorTabs {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setIcon(AllIcons.Actions.Close);
+      e.getPresentation().setIcon(getIcon());
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
       e.getPresentation().setText("Close. Alt-Click to Close Others.");
     }
 
+    private Icon getIcon() {
+      return
+        isUnsaved(myEditorInfo) ? AllIcons.General.Modified : AllIcons.Actions.Close;
+    }
 
     private void closeCurrentTab() {
       TabInfo tabInfo = findInfo(myEditorInfo);
@@ -116,6 +121,10 @@ class LightEditTabs extends JBEditorTabs {
     private void closeTab(@NotNull TabInfo tabInfo) {
       removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
     }
+  }
+
+  private static boolean isUnsaved(@NotNull LightEditorInfo info) {
+    return FileDocumentManager.getInstance().isFileModified(info.getFile());
   }
 
 }
