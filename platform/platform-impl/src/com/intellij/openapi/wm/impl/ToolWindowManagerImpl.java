@@ -78,7 +78,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private final Project myProject;
   private final EventDispatcher<ToolWindowManagerListener> myDispatcher = EventDispatcher.create(ToolWindowManagerListener.class);
-  private final DesktopLayout myLayout = new DesktopLayout();
+  private DesktopLayout myLayout = new DesktopLayout();
   private final Map<String, InternalDecorator> myId2InternalDecorator = new HashMap<>();
   private final Map<String, FloatingDecorator> myId2FloatingDecorator = new HashMap<>();
   private final Map<String, WindowedDecorator> myId2WindowedDecorator = new HashMap<>();
@@ -569,6 +569,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    * Before delegating it fires state changed.
    */
   private void execute(@NotNull List<? extends FinalizableCommand> commandList, boolean isFireStateChangedEvent) {
+    if (commandList.isEmpty()) {
+      return;
+    }
+
     if (isFireStateChangedEvent) {
       for (FinalizableCommand each : commandList) {
         if (each.willChangeState()) {
@@ -1228,9 +1232,14 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   public void setLayout(@NotNull DesktopLayout layout) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    List<FinalizableCommand> commandList = new ArrayList<>();
     // hide tool window that are invisible or its info is not presented in new layout
     List<WindowInfoImpl> currentInfos = myLayout.getInfos();
+    if (currentInfos.isEmpty()) {
+      myLayout = layout;
+      return;
+    }
+
+    List<FinalizableCommand> commandList = new ArrayList<>();
     for (WindowInfoImpl currentInfo : currentInfos) {
       WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (currentInfo.isVisible() && (info == null || !info.isVisible())) {
@@ -1282,6 +1291,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     execute(commandList);
     checkInvariants("");
+    myLayout = layout;
   }
 
   @Override
@@ -2367,6 +2377,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (!ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isInternal()) {
       return;
     }
+
     List<String> violations = new ArrayList<>();
     for (WindowInfoImpl info : myLayout.getInfos()) {
       String id = Objects.requireNonNull(info.getId());
