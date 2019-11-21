@@ -49,8 +49,8 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
     }
     else {
       val enclosingClassArguments: Arguments = listOf(enclosingClassArgument)
-      return { arguments: Arguments ->
-        withArguments(enclosingClassArguments + arguments)
+      return { arguments: Arguments, mapConstructor: Boolean ->
+        withArguments(enclosingClassArguments + arguments, mapConstructor)
       }
     }
   }

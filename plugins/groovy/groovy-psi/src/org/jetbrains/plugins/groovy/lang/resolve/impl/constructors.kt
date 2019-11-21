@@ -81,7 +81,7 @@ private class ConstructorProcessor(private val name: String) : ProcessorWithHint
   val candidates: List<PsiMethod> get() = myCandidates
 }
 
-typealias WithArguments = (arguments: Arguments) -> (constructor: PsiMethod) -> GroovyMethodResult
+typealias WithArguments = (arguments: Arguments, mapConstructor: Boolean) -> (constructor: PsiMethod) -> GroovyMethodResult
 
 fun withArguments(place: PsiElement, substitutor: PsiSubstitutor, needsInference: Boolean): WithArguments {
   return withArguments(place, substitutor, resultProducer(needsInference))
@@ -91,7 +91,8 @@ private typealias ResultProducer = (
   constructor: PsiMethod,
   place: PsiElement,
   state: ResolveState,
-  arguments: Arguments
+  arguments: Arguments,
+  mapConstructor: Boolean
 ) -> GroovyMethodResult
 
 private fun resultProducer(needsInference: Boolean): ResultProducer {
@@ -107,17 +108,17 @@ private fun resultProducer(needsInference: Boolean): ResultProducer {
  * Creates resolve result which always runs inference.
  * Used when the constructor result was obtained from class with diamond type.
  */
-private val INFERENCE_RESULT_PRODUCER: ResultProducer = ::MethodResolveResult
+private val INFERENCE_RESULT_PRODUCER: ResultProducer = ::ConstructorResolveResult
 
 /**
  * Checks if the constructor has type parameters to infer.
  */
-private val DEFAULT_RESULT_PRODUCER: ResultProducer = { constructor: PsiMethod, place: PsiElement, state: ResolveState, arguments: Arguments ->
+private val DEFAULT_RESULT_PRODUCER: ResultProducer = { constructor: PsiMethod, place: PsiElement, state: ResolveState, arguments: Arguments, mapConstructor: Boolean ->
   if (constructor.typeParameters.isNotEmpty()) {
-    MethodResolveResult(constructor, place, state, arguments)
+    ConstructorResolveResult(constructor, place, state, arguments, mapConstructor)
   }
   else {
-    BaseMethodResolveResult(constructor, place, state, arguments)
+    BaseConstructorResolveResult(constructor, place, state, arguments, mapConstructor)
   }
 }
 
@@ -126,9 +127,9 @@ private val DEFAULT_RESULT_PRODUCER: ResultProducer = { constructor: PsiMethod, 
  */
 private fun withArguments(place: PsiElement, substitutor: PsiSubstitutor, producer: ResultProducer): WithArguments {
   val state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor)
-  return { arguments: Arguments ->
+  return { arguments: Arguments, mapConstructor: Boolean ->
     { constructor: PsiMethod ->
-      producer(constructor, place, state, arguments)
+      producer(constructor, place, state, arguments, mapConstructor)
     }
   }
 }
@@ -145,7 +146,7 @@ fun chooseConstructors(constructors: List<PsiMethod>,
   }
   val (applicable: Boolean, results: List<GroovyMethodResult>) = chooseConstructors(
     constructors,
-    withArguments(arguments)
+    withArguments(arguments, false)
   )
   if (!allowMapConstructor) {
     return results
@@ -162,7 +163,7 @@ fun chooseConstructors(constructors: List<PsiMethod>,
   }
   val (noArgApplicable: Boolean, noArgResults: List<GroovyMethodResult>) = chooseConstructors(
     constructors,
-    withArguments(emptyList())
+    withArguments(emptyList(), true)
   )
   if (noArgApplicable) {
     return noArgResults
