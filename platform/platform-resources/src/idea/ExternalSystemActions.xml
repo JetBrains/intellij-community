@@ -188,8 +188,8 @@
     <group id="ProjectReloadActionGroup" class="com.intellij.openapi.externalSystem.autoimport.ProjectReloadActionGroup">
       <action id="ProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction">
         <keyboard-shortcut first-keystroke="control shift O" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="control shift L" keymap="Mac OS X" replace-all="true"/>
-        <keyboard-shortcut first-keystroke="control shift L" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta shift L" keymap="Mac OS X" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta shift L" keymap="Mac OS X 10.5+" replace-all="true"/>
       </action>
       <action id="HideProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.HideProjectRefreshAction"/>
     </group>
