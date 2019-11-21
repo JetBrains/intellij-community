@@ -75,8 +75,8 @@ public class UnexpectedParamTagOrderInspection extends BaseInspection {
       //
       // Adding new created PsiDocTags (created via elementFactory.createParamTag()) to the docComment (via "docComment.addAfter()") results
       // in a falsely indented @param tag. Such tags have one space more/less as the other @param tags.
-      // This can be fixed by replacing the "content" of the docComment with a new created docComment instance from the text of the docComment.
-      docComment.replace(elementFactory.createDocCommentFromText(docComment.getText(), docComment.getContext()));
+      // This can be solved by replacing the docComment with itself.
+      docComment.replace(docComment);
     }
 
     private static void replaceParamTags(@NotNull final PsiDocComment docComment,
