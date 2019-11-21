@@ -17,7 +17,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -260,8 +259,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      PreviewDiffVirtualFile vcsContentFile = ((EditorTabPreview) diffPreview).getVcsContentFile();
-      FileEditorManager.getInstance(myProject).closeFile(vcsContentFile);
+      ((EditorTabPreview)diffPreview).closeEditorPreview();
     }
   }
 
@@ -272,11 +270,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      EditorTabPreview editorTabPreview = (EditorTabPreview) diffPreview;
-      PreviewDiffVirtualFile vcsContentFile = editorTabPreview.getVcsContentFile();
-      if (editorTabPreview.getCurrentName() != null) {
-        FileEditorManager.getInstance(myProject).openFile(vcsContentFile, true, true);
-      }
+      ((EditorTabPreview)diffPreview).openEditorPreview();
     }
   }
 
@@ -364,31 +358,29 @@ public class ChangesViewManager implements ChangesViewEx,
           contentPanel, myView){
 
           @Override
-          public String getCurrentName() {
+          protected String getCurrentName() {
             return changeProcessor.getCurrentChangeName();
           }
 
           @Override
           protected boolean skipPreviewUpdate() {
-            if (super.skipPreviewUpdate())
+            if (super.skipPreviewUpdate()) {
               return true;
+            }
 
             return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
           }
 
           @Override
-          protected boolean isContentEmpty() {
-            return changeProcessor.getCurrentChangeName() == null;
+          protected boolean hasContent() {
+            return changeProcessor.getCurrentChangeName() != null;
           }
 
           @Override
           protected void doRefresh(boolean fromModelRefresh) {
             changeProcessor.refresh(fromModelRefresh);
 
-            PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
-            if (isContentEmpty()) {
-              FileEditorManager.getInstance(project).closeFile(vcsContentFile);
-            }
+            closeEditorPreviewIfEmpty();
           }
         };
         mainPanel = contentPanel;

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -294,8 +293,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      PreviewDiffVirtualFile vcsContentFile = ((EditorTabPreview) diffPreview).getVcsContentFile();
-      FileEditorManager.getInstance(myProject).closeFile(vcsContentFile);
+      ((EditorTabPreview)diffPreview).closeEditorPreview();
     }
   }
 
@@ -308,11 +306,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      EditorTabPreview editorTabPreview = (EditorTabPreview) diffPreview;
-      PreviewDiffVirtualFile vcsContentFile = editorTabPreview.getVcsContentFile();
-      if (editorTabPreview.getCurrentName() != null) {
-        FileEditorManager.getInstance(myProject).openFile(vcsContentFile, true, true);
-      }
+      ((EditorTabPreview)diffPreview).openEditorPreview();
     }
   }
 
@@ -721,7 +715,7 @@ public class ShelvedChangesViewManager implements Disposable {
           }
 
           @Override
-          public String getCurrentName() {
+          protected String getCurrentName() {
             ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
             return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : "Shelf";
           }
@@ -729,10 +723,12 @@ public class ShelvedChangesViewManager implements Disposable {
           @Override
           protected void doRefresh(boolean fromModelRefresh) {
             changeProcessor.refresh(fromModelRefresh);
-            PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
-            if (changeProcessor.myCurrentShelvedElement == null) {
-              FileEditorManager.getInstance(project).closeFile(vcsContentFile);
-            }
+            closeEditorPreviewIfEmpty();
+          }
+
+          @Override
+          protected boolean hasContent() {
+            return changeProcessor.myCurrentShelvedElement != null;
           }
         };
 
