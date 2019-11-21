@@ -163,7 +163,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
 
   @Override
   public boolean isRainbowType(TextAttributesKey type) {
-    return PyRainbowVisitor.getHIGHLIGHTING_KEYS().contains(type);
+    return PyRainbowVisitor.Holder.getHIGHLIGHTING_KEYS().contains(type);
   }
 
   @Nullable

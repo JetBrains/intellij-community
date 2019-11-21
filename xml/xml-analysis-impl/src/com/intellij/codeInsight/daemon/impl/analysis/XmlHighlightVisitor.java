@@ -49,12 +49,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private static boolean ourDoJaxpTesting;
 
-  private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
-    @Override
-    public boolean isEmpty() {
-      return false;
-    }
-  };
+  private static class Holder {
+    private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
+      @Override
+      public boolean isEmpty() {
+        return false;
+      }
+    };
+  }
   private HighlightInfoHolder myHolder;
 
   public XmlHighlightVisitor() {
@@ -187,7 +189,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(warning).range(childByRole, startOffset, startOffset + length).descriptionAndTooltip(localizedMessage).create();
 
       if (highlightInfo == null) {
-        highlightInfo = HighlightInfo.newHighlightInfo(warning).range(new TextRange(startOffset, startOffset + length)).textAttributes(NONEMPTY_TEXT_ATTRIBUTES).descriptionAndTooltip(localizedMessage).create();
+        highlightInfo = HighlightInfo.newHighlightInfo(warning).range(new TextRange(startOffset, startOffset + length)).textAttributes(Holder.NONEMPTY_TEXT_ATTRIBUTES).descriptionAndTooltip(localizedMessage).create();
       }
 
       for (final IntentionAction quickFixAction : quickFixActions) {
