@@ -68,7 +68,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.text.html.ObjectView;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -694,8 +693,8 @@ public class ShelvedChangesViewManager implements Disposable {
           }
 
           @Override
-          protected void doRefresh() {
-            changeProcessor.refresh(false);
+          protected void doRefresh(boolean fromModelRefresh) {
+            changeProcessor.refresh(fromModelRefresh);
             PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
             if (changeProcessor.myCurrentShelvedElement == null) {
               FileEditorManager.getInstance(project).closeFile(vcsContentFile);
