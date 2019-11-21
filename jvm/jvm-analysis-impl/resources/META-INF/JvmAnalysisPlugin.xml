@@ -40,8 +40,11 @@
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
   </extensions>
   <actions>
-    <action id="DumpUastLog" internal="true" class="com.intellij.analysis.internal.DumpUastTreeAction" text="Dump UAST Tree">
+    <group id="UastInternal" text="UAST" internal="true" popup="true">
+      <action id="DumpUastLog" internal="true" class="com.intellij.analysis.internal.DumpUastTreeAction" text="Dump UAST Tree"/>
+      <action id="DumpUastLogByElement" internal="true" class="com.intellij.analysis.internal.DumpUastTreeActionByEach"
+              text="Dump UAST Tree By Each PsiElement"/>
       <add-to-group group-id="Internal" anchor="last"/>
-    </action>
+    </group>
   </actions>
 </idea-plugin>
