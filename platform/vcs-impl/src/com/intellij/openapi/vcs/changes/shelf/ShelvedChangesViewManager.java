@@ -108,6 +108,7 @@ public class ShelvedChangesViewManager implements Disposable {
     DataKey.create("ShelveChangesManager.ShelvedDeletedChangeListData");
   public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
+  private ShelfToolWindowPanel myShelfToolWindowPanel;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
     return project.getComponent(ShelvedChangesViewManager.class);
@@ -143,6 +144,7 @@ public class ShelvedChangesViewManager implements Disposable {
     else {
       if (myContent == null) {
         ShelfToolWindowPanel panel = new ShelfToolWindowPanel(myProject);
+        myShelfToolWindowPanel = panel;
         myContent = new MyShelfContent(panel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContent.setDisposer(panel);
@@ -279,7 +281,39 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @Override
   public void dispose() {
+    myShelfToolWindowPanel = null;
     myUpdateQueue.cancelAllUpdates();
+  }
+
+  public void closeEditorPreview() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myShelfToolWindowPanel == null) {
+      return;
+    }
+
+    ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
+    if (diffPreview instanceof EditorTabPreview) {
+      PreviewDiffVirtualFile vcsContentFile = ((EditorTabPreview) diffPreview).getVcsContentFile();
+      FileEditorManager.getInstance(myProject).closeFile(vcsContentFile);
+    }
+  }
+
+  public void openEditorPreview() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myShelfToolWindowPanel == null) {
+      return;
+    }
+
+    ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
+    if (diffPreview instanceof EditorTabPreview) {
+      EditorTabPreview editorTabPreview = (EditorTabPreview) diffPreview;
+      PreviewDiffVirtualFile vcsContentFile = editorTabPreview.getVcsContentFile();
+      if (editorTabPreview.getCurrentName() != null) {
+        FileEditorManager.getInstance(myProject).openFile(vcsContentFile, true, true);
+      }
+    }
   }
 
   public void updateOnVcsMappingsChanged() {
@@ -687,7 +721,7 @@ public class ShelvedChangesViewManager implements Disposable {
           }
 
           @Override
-          protected String getCurrentName() {
+          public String getCurrentName() {
             ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
             return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : "Shelf";
           }
