@@ -14,7 +14,10 @@ import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.CallInfo;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GrCastFix;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GrChangeVariableType;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GrMethodCallInfo;
 import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.*;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.CreateMethodFromUsageKt;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -53,12 +56,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 
 import java.util.*;
 
@@ -305,7 +308,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       GrExpression namedArgumentExpression = namedArgument.getExpression();
       if (namedArgumentExpression == null) continue;
 
-      if (getTupleInitializer(namedArgumentExpression) != null) continue;
+      if (hasTupleInitializer(namedArgumentExpression)) continue;
 
       if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue;
 
@@ -393,12 +396,8 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                  @NotNull @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String messageKey,
                                  @NotNull PsiElement context,
                                  @NotNull Position position) {
-    { // check if  current assignment is constructor call
-      final GrListOrMap initializer = getTupleInitializer(expression);
-      if (initializer != null) {
-
-        return;
-      }
+    if (hasTupleInitializer(expression)) {
+      return;
     }
 
     if (PsiUtil.isRawClassMemberAccess(expression)) return;
@@ -515,7 +514,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   protected void processReturnValue(@NotNull GrExpression expression,
                                     @NotNull PsiElement context,
                                     @NotNull PsiElement elementToHighlight) {
-    if (getTupleInitializer(expression) != null) return;
+    if (hasTupleInitializer(expression)) return;
     final PsiType returnType = PsiImplUtil.inferReturnType(expression);
     if (returnType == null || PsiType.VOID.equals(returnType)) return;
     processAssignment(returnType, expression, elementToHighlight, "cannot.return.type", context, Position.RETURN_VALUE);
@@ -838,6 +837,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
     super.visitListOrMap(listOrMap); // visitExpression
+
+    GroovyConstructorReference constructorReference = listOrMap.getConstructorReference();
+    if (constructorReference != null) {
+      CallReferenceHighlighter highlighter = new LiteralConstructorReferenceHighlighter(constructorReference, listOrMap, myHighlightSink);
+      if (highlighter.highlightMethodApplicability()) {
+        return;
+      }
+    }
 
     Map<String, NamedArgumentDescriptor> descriptors = NamedArgumentUtilKt.getDescriptors(listOrMap);
     if (descriptors.isEmpty()) return;

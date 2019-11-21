@@ -132,6 +132,15 @@ fun getExpectedType(expression: GrExpression): PsiType? {
 }
 
 private fun getExpectedTypeAndPosition(expression: GrExpression): ExpectedType? {
+  return getAssignmentOrReturnExpectedTypeAndPosition(expression)
+         ?: getArgumentExpectedType(expression)
+}
+
+fun getAssignmentOrReturnExpectedType(expression: GrExpression): PsiType? {
+  return getAssignmentOrReturnExpectedTypeAndPosition(expression)?.type
+}
+
+private fun getAssignmentOrReturnExpectedTypeAndPosition(expression: GrExpression): ExpectedType? {
   val parent = expression.parent
   val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, false, GrFunctionalExpression::class.java)
 
@@ -168,15 +177,16 @@ private fun getExpectedTypeAndPosition(expression: GrExpression): ExpectedType? 
       return ExpectedType(declaredType, ASSIGNMENT)
     }
   }
-  else if (parent is GrArgumentList) {
-    val call = parent.parent as? GrCallExpression ?: return null
-    val result = call.advancedResolve() as? GroovyMethodResult ?: return null
-    val mapping = result.candidate?.argumentMapping ?: return null
-    val type = result.substitutor.substitute(mapping.expectedType(ExpressionArgument(expression))) ?: return null
-    return ExpectedType(type, METHOD_PARAMETER)
-  }
-
   return null
+}
+
+private fun getArgumentExpectedType(expression: GrExpression): ExpectedType? {
+  val parent = expression.parent as? GrArgumentList ?: return null
+  val call = parent.parent as? GrCallExpression ?: return null
+  val result = call.advancedResolve() as? GroovyMethodResult ?: return null
+  val mapping = result.candidate?.argumentMapping ?: return null
+  val type = result.substitutor.substitute(mapping.expectedType(ExpressionArgument(expression))) ?: return null
+  return ExpectedType(type, METHOD_PARAMETER)
 }
 
 internal typealias ExpressionPredicate = (GrExpression) -> Boolean

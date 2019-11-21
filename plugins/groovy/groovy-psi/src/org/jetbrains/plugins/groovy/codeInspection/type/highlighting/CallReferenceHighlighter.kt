@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 
-abstract class CallReferenceHighlighter(protected val reference: GroovyCallReference, private val sink: HighlightSink) {
+abstract class CallReferenceHighlighter(protected val reference: GroovyCallReference, protected val sink: HighlightSink) {
 
   protected open val ambiguousMethodMessage: String get() = GroovyBundle.message("method.call.is.ambiguous")
 
@@ -63,7 +63,9 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     sink.registerProblem(highlightElement, ProblemHighlightType.GENERIC_ERROR, message, *fixes)
   }
 
-  fun highlightMethodApplicability(): Boolean {
+  protected open fun shouldHighlightInapplicable(): Boolean = true
+
+  open fun highlightMethodApplicability(): Boolean {
     val userArguments = reference.arguments ?: run {
       highlightUnknownArgs()
       return true
@@ -85,6 +87,9 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
 
     when (totalApplicability) {
       inapplicable -> {
+        if (!shouldHighlightInapplicable()) {
+          return false
+        }
         highlightInapplicableMethod(results.filter { it.value == inapplicable }.keys, userArguments)
         return true
       }

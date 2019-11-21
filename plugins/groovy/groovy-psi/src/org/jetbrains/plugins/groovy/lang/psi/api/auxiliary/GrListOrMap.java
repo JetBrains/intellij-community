@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 /**
  * @author ilyas
@@ -32,4 +33,7 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
 
   @Nullable
   PsiElement getRBrack();
+
+  @Nullable
+  GroovyConstructorReference getConstructorReference();
 }

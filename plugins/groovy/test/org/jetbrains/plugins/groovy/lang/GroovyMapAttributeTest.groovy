@@ -366,7 +366,6 @@ class Ccc<T> {
 }
 
 class CccMap extends Ccc<Map> {}
-
 class CccList extends Ccc<ArrayList> {}
 """)
 
@@ -374,8 +373,8 @@ class CccList extends Ccc<ArrayList> {}
 println(new CccMap(foo: [:]))
 println(new CccList(foo: []))
 
-println(new CccMap(foo: <warning descr="Type of argument 'foo' can not be 'List'">[]</warning>))
-println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'LinkedHashMap<Object, Object>'">[:]</warning>))
+println(new CccMap(foo: <warning descr="Cannot instantiate interface 'Map'">[]</warning>))
+println(new CccList(foo: [:])) // new ArrayList()
 """
   }
 

@@ -30,7 +30,7 @@ fun getAllConstructors(clazz: PsiClass, place: PsiElement): List<PsiMethod> {
 
 private fun classConstructors(clazz: PsiClass): List<PsiMethod> {
   val constructors = clazz.constructors
-  if (constructors.isEmpty()) {
+  if (constructors.isEmpty() && !clazz.isInterface) {
     return listOf(getDefaultConstructor(clazz))
   }
   else {

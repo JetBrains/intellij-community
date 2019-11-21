@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiClassType
@@ -34,9 +34,21 @@ private fun getArguments(namedArguments: Array<out GrNamedArgument>,
     }
   }
 
+  if (!getExpressionArguments(expressionArguments, result)) {
+    return null
+  }
+
+  closureArguments.mapTo(result) {
+    ExpressionArgument(it)
+  }
+
+  return result
+}
+
+private fun getExpressionArguments(expressionArguments: Array<out GrExpression>, result: MutableList<Argument>): Boolean {
   for (expression in expressionArguments) {
     if (expression is GrSpreadArgument) {
-      val type = expression.argument.type as? GrTupleType ?: return null
+      val type = expression.argument.type as? GrTupleType ?: return false
       type.componentTypes.mapTo(result) {
         JustTypeArgument(it)
       }
@@ -45,12 +57,17 @@ private fun getArguments(namedArguments: Array<out GrNamedArgument>,
       result += ExpressionArgument(expression)
     }
   }
+  return true
+}
 
-  closureArguments.mapTo(result) {
-    ExpressionArgument(it)
+fun getExpressionArguments(expressionArguments: Array<out GrExpression>): Arguments? {
+  val result = ArrayList<Argument>()
+  if (getExpressionArguments(expressionArguments, result)) {
+    return result
   }
-
-  return result
+  else {
+    return null
+  }
 }
 
 fun argumentMapping(method: PsiMethod, substitutor: PsiSubstitutor, arguments: Arguments, context: PsiElement): ArgumentMapping = when {

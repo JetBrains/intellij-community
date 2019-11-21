@@ -524,7 +524,7 @@ class A {
 }
 
 new A(foo: {
-    prop
+    <warning descr="Cannot resolve symbol 'prop'">prop</warning>
 }) 
 '''
   }

@@ -26,6 +26,8 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
 
   protected open val supportsMapInvocation: Boolean get() = true
 
+  protected open val supportsEnclosingInstance: Boolean get() = true
+
   final override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     val classCandidate: GroovyResolveResult = resolveClass() ?: return emptyList()
     val clazz: PsiClass = classCandidate.element as? PsiClass ?: return emptyList()
@@ -43,6 +45,9 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
   }
 
   private fun withEnclosingClassArguments(clazz: PsiClass, withArguments: WithArguments): WithArguments {
+    if (!supportsEnclosingInstance) {
+      return withArguments
+    }
     val enclosingClassArgument: Argument? = enclosingClassArgument(element, clazz)
     if (enclosingClassArgument == null) {
       return withArguments
