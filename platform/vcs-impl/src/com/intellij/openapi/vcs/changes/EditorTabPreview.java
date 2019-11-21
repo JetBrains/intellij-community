@@ -70,7 +70,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   @Nullable
   protected abstract String getCurrentName();
 
-  protected abstract void doRefresh();
+  protected abstract void doRefresh(boolean fromModelRefresh);
 
   protected boolean skipPreviewUpdate() {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -87,7 +87,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   @Override
   public void updatePreview(boolean fromModelRefresh) {
     if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
-      doRefresh();
+      doRefresh(fromModelRefresh);
     }
   }
 
