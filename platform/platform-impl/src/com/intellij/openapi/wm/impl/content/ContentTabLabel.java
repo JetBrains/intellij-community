@@ -362,7 +362,7 @@ class ContentTabLabel extends BaseLabel {
     return myContent;
   }
 
-  private static class CurrentTooltip {
+  private static final class CurrentTooltip {
     final IdeTooltip currentTooltip;
     final AdditionalIcon icon;
 

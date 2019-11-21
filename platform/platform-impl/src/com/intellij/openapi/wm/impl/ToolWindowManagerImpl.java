@@ -1223,7 +1223,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   @Override
-  public void setLayout(@NotNull final DesktopLayout layout) {
+  public void setLayout(@NotNull DesktopLayout layout) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FinalizableCommand> commandList = new ArrayList<>();
     // hide tool window that are invisible or its info is not presented in new layout
