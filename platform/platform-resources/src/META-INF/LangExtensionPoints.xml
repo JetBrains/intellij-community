@@ -522,7 +522,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
 
-    <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
+    <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider" dynamic="true"/>
 
     <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.IdIndexer"/>
