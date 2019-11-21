@@ -88,7 +88,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
   private final ActiveStack myActiveStack = new ActiveStack();
   private final SideStack mySideStack = new SideStack();
-  private AWTEventListener awtFocusListener;
 
   private ToolWindowsPane myToolWindowsPane;
   private IdeFrameImpl myFrame;
@@ -131,30 +130,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
-    awtFocusListener = new AWTEventListener() {
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        if (myProject.isDisposed()) {
-          return;
-        }
-
-        assert event instanceof FocusEvent;
-        FocusEvent focusEvent = (FocusEvent)event;
-        if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
-          Component component = focusEvent.getComponent();
-          if (component != null) {
-            boolean editorIsGoingToGetFocus =
-              FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorComposites().stream()
-                .flatMap(c -> Arrays.stream(c.getEditors()))
-                .anyMatch(editor -> SwingUtilities.isDescendingFrom(component, editor.getComponent()));
-            if (editorIsGoingToGetFocus) {
-              myActiveStack.clear();
-            }
-          }
-        }
-      }
-    };
-
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
@@ -166,11 +141,38 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     });
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      AWTEventListener awtFocusListener;
+
       @Override
       public void projectOpened(@NotNull Project project) {
         if (project != myProject) {
           return;
         }
+
+        awtFocusListener = new AWTEventListener() {
+          @Override
+          public void eventDispatched(AWTEvent event) {
+            if (myProject.isDisposed()) {
+              return;
+            }
+
+            assert event instanceof FocusEvent;
+            FocusEvent focusEvent = (FocusEvent)event;
+            if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
+              Component component = focusEvent.getComponent();
+              if (component != null) {
+                boolean editorIsGoingToGetFocus =
+                  FileEditorManagerEx.getInstanceEx(project).getSplitters().getEditorComposites().stream()
+                    .flatMap(c -> Arrays.stream(c.getEditors()))
+                    .anyMatch(editor -> SwingUtilities.isDescendingFrom(component, editor.getComponent()));
+                if (editorIsGoingToGetFocus) {
+                  myActiveStack.clear();
+                }
+              }
+            }
+          }
+        };
+        Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK);
 
         //noinspection TestOnlyProblems
         init();
@@ -186,6 +188,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       public void projectClosed(@NotNull Project project) {
         if (project == myProject) {
           ToolWindowManagerImpl.this.projectClosed();
+          Toolkit.getDefaultToolkit().removeAWTEventListener(awtFocusListener);
         }
       }
     });
@@ -227,8 +230,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       })
       .handleWindowed(toolWindowId -> {})
       .bind(myProject);
-
-    Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK);
     checkInvariants("");
   }
 
@@ -523,8 +524,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (myFrame == null) {
       return;
     }
-
-    Toolkit.getDefaultToolkit().removeAWTEventListener(awtFocusListener);
 
     myFrame.releaseFrame();
     List<FinalizableCommand> commandsList = new ArrayList<>();
