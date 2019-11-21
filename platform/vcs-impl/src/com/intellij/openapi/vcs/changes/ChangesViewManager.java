@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.util.DiffPlaces;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -351,16 +352,19 @@ public class ChangesViewManager implements ChangesViewEx,
       };
       contentPanel.addToCenter(myCommitPanelSplitter);
 
-      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView);
+      boolean isPreviewInEditor = Registry.is("show.diff.preview.as.editor.tab");
+      String place = isPreviewInEditor ? DiffPlaces.DEFAULT : DiffPlaces.CHANGES_VIEW;
+
+      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView, place);
       Disposer.register(this, changeProcessor);
 
       JComponent mainPanel;
-      if (Registry.is("show.diff.preview.as.editor.tab")) {
+      if (isPreviewInEditor) {
         myDiffPreview = new EditorTabPreview(changeProcessor,
           contentPanel, myView){
 
           @Override
-          protected String getCurrentName() {
+          public String getCurrentName() {
             return changeProcessor.getCurrentChangeName();
           }
 

@@ -68,7 +68,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   }
 
   @Nullable
-  protected abstract String getCurrentName();
+  public abstract String getCurrentName();
 
   protected abstract void doRefresh(boolean fromModelRefresh);
 
@@ -110,7 +110,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   }
 
   @NotNull
-  protected PreviewDiffVirtualFile getVcsContentFile() {
+  public PreviewDiffVirtualFile getVcsContentFile() {
     return myPreviewDiffVirtualFile;
   }
 
