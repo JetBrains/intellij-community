@@ -56,24 +56,24 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   }
 
   override fun fetchDefaultRemote(repositories: Collection<GitRepository>): GitFetchResult {
-    val remotesToFetch = mutableListOf<Pair<GitRepository, GitRemote>>()
+    val remotesToFetch = mutableListOf<RemoteRefCoordinates>()
     for (repository in repositories) {
       val remote = getDefaultRemoteToFetch(repository)
-      if (remote != null) remotesToFetch.add(repository to remote)
+      if (remote != null) remotesToFetch.add(RemoteRefCoordinates(repository, remote))
       else LOG.info("No remote to fetch found in $repository")
     }
     return fetch(remotesToFetch)
   }
 
   override fun fetchAllRemotes(repositories: Collection<GitRepository>): GitFetchResult {
-    val remotesToFetch = mutableListOf<Pair<GitRepository, GitRemote>>()
+    val remotesToFetch = mutableListOf<RemoteRefCoordinates>()
     for (repository in repositories) {
       if (repository.remotes.isEmpty()) {
         LOG.info("No remote to fetch found in $repository")
       }
       else {
         for (remote in repository.remotes) {
-          remotesToFetch.add(repository to remote)
+          remotesToFetch.add(RemoteRefCoordinates(repository, remote))
         }
       }
     }
@@ -81,14 +81,14 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   }
 
   override fun fetch(repository: GitRepository, remote: GitRemote): GitFetchResult {
-    return fetch(listOf(repository to remote))
+    return fetch(listOf(RemoteRefCoordinates(repository, remote)))
   }
 
-  private fun fetch(remotes: List<Pair<GitRepository, GitRemote>>): GitFetchResult {
+  private fun fetch(arguments: List<RemoteRefCoordinates>): GitFetchResult {
     return withIndicator {
       val activity = IdeActivity.started(project, "vcs", "fetch")
 
-      val tasks = fetchInParallel(remotes)
+      val tasks = fetchInParallel(arguments)
       val results = waitForFetchTasks(tasks)
 
       val mergedResults = mutableMapOf<GitRepository, RepoResult>()
@@ -110,9 +110,9 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
   }
 
-  private fun fetchInParallel(remotes: List<Pair<GitRepository, GitRemote>>): List<FetchTask> {
+  private fun fetchInParallel(remotes: List<RemoteRefCoordinates>): List<FetchTask> {
     val tasks = mutableListOf<FetchTask>()
-    val maxThreads = getMaxThreads(remotes.mapTo(HashSet()) {it.first}, remotes.size)
+    val maxThreads = getMaxThreads(remotes.mapTo(HashSet()) { it.repository }, remotes.size)
     LOG.debug("Fetching $remotes using $maxThreads threads")
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
@@ -203,6 +203,8 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     val matcher = PRUNE_PATTERN.matcher(line)
     return if (matcher.matches()) matcher.group(1) else null
   }
+
+  private data class RemoteRefCoordinates(val repository: GitRepository, val remote: GitRemote)
 
   private class FetchTask(val repository: GitRepository, val remote: GitRemote, val future: Future<SingleRemoteResult>)
 
