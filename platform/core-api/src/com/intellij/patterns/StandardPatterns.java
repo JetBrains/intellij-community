@@ -33,7 +33,7 @@ public class StandardPatterns {
   }
 
   @NotNull
-  public static <T> ObjectPattern.Capture<T> instanceOf(Class<T> aClass) {
+  public static <T> ObjectPattern.Capture<T> instanceOf(@NotNull Class<T> aClass) {
     return new ObjectPattern.Capture<>(aClass);
   }
 
