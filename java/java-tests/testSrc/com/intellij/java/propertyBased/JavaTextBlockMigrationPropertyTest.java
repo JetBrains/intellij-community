@@ -2,6 +2,7 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.TextBlockBackwardMigrationInspection;
 import com.intellij.codeInspection.TextBlockMigrationInspection;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -82,7 +83,13 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     if (concatenations.isEmpty()) return;
 
     myFixture.openFileInEditor(file);
+    MigrationInvoker migrationInvoker = new MigrationInvoker();
+    BackwardMigrationInvoker backwardMigrationInvoker = new BackwardMigrationInvoker();
     for (PsiPolyadicExpression concatenation : concatenations) {
+      if (SuppressionUtil.isSuppressed(concatenation, migrationInvoker.getToolId()) ||
+          SuppressionUtil.isSuppressed(concatenation, backwardMigrationInvoker.getToolId())) {
+        continue;
+      }
       PsiExpression[] operands = concatenation.getOperands();
       if (operands.length < 2) continue;
 
@@ -103,10 +110,10 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       PsiExpression parent = (PsiExpression)WriteCommandAction.runWriteCommandAction(concatenation.getProject(), replaceAction);
       PsiPolyadicExpression replaced = (PsiPolyadicExpression)PsiUtil.skipParenthesizedExprDown(parent);
 
-      invokeIntention(replaced, myFixture, new MigrationInvoker());
+      invokeIntention(replaced, myFixture, migrationInvoker);
       PsiLiteralExpression textBlock = (PsiLiteralExpression)PsiUtil.skipParenthesizedExprDown(parent);
 
-      invokeIntention(textBlock, myFixture, new BackwardMigrationInvoker());
+      invokeIntention(textBlock, myFixture, backwardMigrationInvoker);
       PsiElement element = PsiUtil.skipParenthesizedExprDown(parent);
       PsiPolyadicExpression after = (PsiPolyadicExpression)element;
 
@@ -181,6 +188,9 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
 
     @NotNull
     String getFixHint();
+
+    @NotNull
+    String getToolId();
   }
 
   private static class MigrationInvoker implements ActionInvoker<PsiPolyadicExpression> {
@@ -200,6 +210,12 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     public String getFixHint() {
       return "Replace with text block";
     }
+
+    @NotNull
+    @Override
+    public String getToolId() {
+      return "TextBlockMigration";
+    }
   }
 
   private static class BackwardMigrationInvoker implements ActionInvoker<PsiLiteralExpression> {
@@ -212,6 +228,12 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     @Override
     public String getFixHint() {
       return "Replace with regular string literal";
+    }
+
+    @NotNull
+    @Override
+    public String getToolId() {
+      return "TextBlockBackwardMigration";
     }
   }
 }
