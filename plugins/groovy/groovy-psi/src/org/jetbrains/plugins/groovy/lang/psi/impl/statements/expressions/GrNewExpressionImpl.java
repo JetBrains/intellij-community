@@ -6,8 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
-import kotlin.Lazy;
-import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -33,9 +31,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionRefer
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private final Lazy<GroovyCallReference> myConstructorReference = LazyKt.lazy(
-    () -> getArrayCount() > 0 || getReferenceElement() == null ? null : new GrNewExpressionReference(this)
-  );
+  private final GroovyCallReference myConstructorReference = new GrNewExpressionReference(this);
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -156,6 +152,6 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   @Nullable
   @Override
   public GroovyCallReference getConstructorReference() {
-    return myConstructorReference.getValue();
+    return getArrayCount() > 0 || getReferenceElement() == null ? null : myConstructorReference;
   }
 }
