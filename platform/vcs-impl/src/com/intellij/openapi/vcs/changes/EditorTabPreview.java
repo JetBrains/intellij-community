@@ -68,7 +68,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   }
 
   @Nullable
-  public abstract String getCurrentName();
+  protected abstract String getCurrentName();
 
   protected abstract void doRefresh(boolean fromModelRefresh);
 
@@ -110,7 +110,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   }
 
   @NotNull
-  public PreviewDiffVirtualFile getVcsContentFile() {
+  private PreviewDiffVirtualFile getVcsContentFile() {
     return myPreviewDiffVirtualFile;
   }
 
@@ -140,6 +140,22 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
     @Override
     public String getEditorTabName() {
       return notNullize(myGetName.get());
+    }
+  }
+
+  protected abstract boolean hasContent();
+
+  public void closeEditorPreviewIfEmpty() {
+    if (!hasContent()) closeEditorPreview();
+  }
+
+  public void closeEditorPreview() {
+    FileEditorManager.getInstance(myProject).closeFile(getVcsContentFile());
+  }
+
+  public void openEditorPreview() {
+    if (hasContent()) {
+      FileEditorManager.getInstance(myProject).openFile(getVcsContentFile(), true, true);
     }
   }
 }
