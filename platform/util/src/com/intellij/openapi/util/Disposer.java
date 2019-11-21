@@ -67,6 +67,13 @@ public class Disposer {
 
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
 
+  /**
+   * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
+   *
+   * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
+   *                                                       if {@code parent} is being disposed ({@link #isDisposing(Disposable)}) or
+   *                                                       already disposed ({@link #isDisposed(Disposable)}.
+   */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
     ourTree.register(parent, child);
   }
