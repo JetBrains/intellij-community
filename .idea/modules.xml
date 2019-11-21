@@ -472,6 +472,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib-loader/intellij.android.layoutlib-loader.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib-loader/intellij.android.layoutlib-loader.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/layoutlib-native/intellij.android.layoutlib-native.iml" filepath="$PROJECT_DIR$/../adt/idea/layoutlib-native/intellij.android.layoutlib-native.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/mlkit/intellij.android.mlkit.iml" filepath="$PROJECT_DIR$/../adt/idea/mlkit/intellij.android.mlkit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/mlkit/intellij.android.mlkit.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/mlkit/intellij.android.mlkit.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/naveditor/intellij.android.naveditor.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/intellij.android.observable.iml" />
