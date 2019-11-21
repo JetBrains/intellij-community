@@ -261,4 +261,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
+  public void testInlineLambdaFromLocal() { doTest(); }
 }
