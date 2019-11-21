@@ -52,10 +52,12 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private final T myElement;
   @NotNull
   private final R myRef;
+  private final List<PsiClass> myClassesToImport;
 
   protected ImportClassFixBase(@NotNull T elem, @NotNull R ref) {
     myElement = elem;
     myRef = ref;
+    myClassesToImport = calcClassesToImport();
   }
 
   @Override
@@ -95,6 +97,16 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @NotNull
   public List<PsiClass> getClassesToImport(boolean acceptWrongNumberOfTypeParams) {
+    if (!myElement.isValid() || ContainerUtil.exists(myClassesToImport, c -> !c.isValid())) {
+      return Collections.emptyList();
+    }
+    if (!acceptWrongNumberOfTypeParams && hasTypeParameters(myRef)) {
+      return ContainerUtil.findAll(myClassesToImport, PsiTypeParameterListOwner::hasTypeParameters);
+    }
+    return myClassesToImport;
+  }
+
+  private List<PsiClass> calcClassesToImport() {
     if (myRef instanceof PsiJavaReference) {
       JavaResolveResult result = ((PsiJavaReference)myRef).advancedResolve(true);
       PsiElement element = result.getElement();
@@ -115,7 +127,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       return Collections.emptyList();
     }
 
-    boolean referenceHasTypeParameters = hasTypeParameters(myRef);
     final Project project = myElement.getProject();
     PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(name, scope);
     if (classes.length == 0) return Collections.emptyList();
@@ -125,7 +136,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) continue;
-      if (!acceptWrongNumberOfTypeParams && referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(project).isQualifiedName(qName)) continue; //do not show classes from default or invalid package
@@ -140,21 +150,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     classList.removeIf(
       aClass -> (anyAccessibleFound || !BaseIntentionAction.canModify(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
-
-    if (acceptWrongNumberOfTypeParams && referenceHasTypeParameters) {
-      final List<PsiClass> candidates = new ArrayList<>();
-      for (Iterator<PsiClass> iterator = classList.iterator(); iterator.hasNext(); ) {
-        final PsiClass aClass = iterator.next();
-        if (!aClass.hasTypeParameters()) {
-          iterator.remove();
-          candidates.add(aClass);
-        }
-      }
-
-      if (classList.isEmpty()) {
-        classList.addAll(candidates);
-      }
-    }
 
     classList = filterByRequiredMemberName(classList);
 
