@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
@@ -17,7 +17,9 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.committed.*;
+import com.intellij.openapi.vcs.changes.committed.RepositoryLocationGroup;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipperAdapter;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -118,12 +120,6 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   @Override
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
-  }
-
-  @Override
-  @Nullable
-  public VcsCommittedViewAuxiliary createActions(final DecoratorManager manager, final RepositoryLocation location) {
-    return null;
   }
 
   @Override
