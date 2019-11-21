@@ -481,7 +481,7 @@
 
     <extensionPoint name="methodNavigationOffsetProvider" interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider"/>
 
-    <extensionPoint name="filePasteProvider" interface="com.intellij.ide.PasteProvider"/>
+    <extensionPoint name="filePasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>
 
     <extensionPoint name="testFinder" interface="com.intellij.testIntegration.TestFinder" dynamic="true"/>
     <extensionPoint name="testSrcLocator" interface="com.intellij.testIntegration.TestLocationProvider"/>
