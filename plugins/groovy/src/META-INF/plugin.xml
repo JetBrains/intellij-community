@@ -255,8 +255,6 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCollectionToArrayConverter"/>
 
-    <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
-
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
 
@@ -1198,9 +1196,6 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedImplicitUsageProvider"/>
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
-    <psi.referenceContributor language="Groovy"
-                              implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
-
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
