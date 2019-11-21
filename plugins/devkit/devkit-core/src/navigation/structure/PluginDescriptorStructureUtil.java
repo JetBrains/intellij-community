@@ -112,6 +112,9 @@ public class PluginDescriptorStructureUtil {
       return null;
     }
 
+    if (element instanceof PluginModule) {
+      return getPluginModuleLocation((PluginModule)element);
+    }
     if (element instanceof IdeaVersion) {
       return getIdeaVersionLocation((IdeaVersion)element);
     }
@@ -152,6 +155,9 @@ public class PluginDescriptorStructureUtil {
     return guessTagLocation(element);
   }
 
+  private static String getPluginModuleLocation(PluginModule pluginModule) {
+    return pluginModule.getValue().getStringValue();
+  }
 
   @Nullable
   private static String getIdeaVersionLocation(IdeaVersion element) {
