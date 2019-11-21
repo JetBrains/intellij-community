@@ -924,7 +924,6 @@
     <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
                         serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 
-    <!--<projectViewPane implementation="com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane"/>-->
     <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
 
     <renameHandler implementation="com.intellij.refactoring.rename.PlainDirectoryRenameHandler"/>
