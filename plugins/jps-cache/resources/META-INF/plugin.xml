@@ -21,4 +21,11 @@
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
   </actions>
+
+  <!-- Dirty hack for not making plugin dynamic https://youtrack.jetbrains.com/issue/IDEA-227327 -->
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.jps.cache.JpsCachesDummyProjectComponent</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>
