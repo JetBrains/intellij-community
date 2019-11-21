@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -28,6 +29,8 @@ import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -222,9 +225,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myChangesBrowser.getViewer().addSelectionListener(() -> {
       if (myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myChangesBrowser.getSelectedChanges().isEmpty()) {
-        FileEditorManager instance = FileEditorManager.getInstance(project);
-        PreviewDiffVirtualFile file = new PreviewDiffVirtualFile(myDiffPreviewProvider);
-        instance.openFile(file, false, true);
+        openPreviewInEditor(project);
       }
     }, this);
   }
@@ -467,7 +468,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
           FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
         }
         else {
-          FileEditorManager.getInstance(myLogData.getProject()).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
+          openPreviewInEditor(myLogData.getProject());
         }
       }
 
@@ -475,6 +476,39 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
+  }
+
+  private void openPreviewInEditor(Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myDiffPreviewProvider == null) {
+      return;
+    }
+
+    PreviewDiffVirtualFile previewDiffVirtualFile = new PreviewDiffVirtualFile(myDiffPreviewProvider);
+    boolean wasOpen = FileEditorManager.getInstance(project).isFileOpen(previewDiffVirtualFile);
+
+    FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(previewDiffVirtualFile, true, true);
+
+    if (!wasOpen) {
+      DumbAwareAction action = new DumbAwareAction() {
+        {
+          setShortcutSet(CommonShortcuts.ESCAPE);
+        }
+
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(() -> {
+            IdeFocusManager.getInstance(project).requestFocus(myChangesBrowser.getPreferredFocusedComponent(), true);
+          }, false);
+        }
+      };
+      action.registerCustomShortcutSet(fileEditors[0].getComponent(), null);
+
+      Disposer.register(fileEditors[0], () -> {
+        action.unregisterCustomShortcutSet(fileEditors[0].getComponent());
+      });
+    }
   }
 
   @Override
