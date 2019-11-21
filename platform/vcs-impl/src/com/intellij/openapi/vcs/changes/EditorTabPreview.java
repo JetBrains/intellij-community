@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class EditorTabPreview implements ChangesViewPreview {
@@ -66,7 +67,11 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   protected abstract void doRefresh();
 
   protected boolean skipPreviewUpdate() {
-    return ToolWindowManager.getInstance(myProject).isEditorComponentActive();
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+
+    //todo use Commit tw name when it will be in platform
+    return toolWindowManager.isEditorComponentActive()
+      || !Objects.equals(toolWindowManager.getActiveToolWindowId(), "Commit");
   }
 
   protected boolean isContentEmpty() {
