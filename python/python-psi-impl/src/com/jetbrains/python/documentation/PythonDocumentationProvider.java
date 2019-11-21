@@ -534,7 +534,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+                                                  @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     if (contextElement != null) {
       final IElementType elementType = contextElement.getNode().getElementType();
       if (PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementType)) {
@@ -559,7 +560,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
         if (docstringOwner != null) return docstringOwner;
       }
     }
-    return super.getCustomDocumentationElement(editor, file, contextElement);
+    return super.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
   }
 
   private static void appendWithTags(@NotNull StringBuilder result, @NotNull String escapedContent, @NotNull String... tags) {
