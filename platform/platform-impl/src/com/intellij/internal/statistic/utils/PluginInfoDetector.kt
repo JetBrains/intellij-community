@@ -18,7 +18,7 @@ fun getPluginInfo(clazz: Class<*>): PluginInfo {
       return getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
     }
     PluginManagerCore.isRunningFromSources() && !PluginManagerCore.isUnitTestMode -> {
-      return unknownPlugin
+      return platformPlugin
     }
     else -> {
       return getPluginInfo(clazz.name)
