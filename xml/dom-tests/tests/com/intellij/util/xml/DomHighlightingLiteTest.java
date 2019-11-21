@@ -253,7 +253,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     final String shortName = inspection.getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
-      HighlightDisplayKey.register(shortName);
+      HighlightDisplayKey.register(shortName, shortName, inspection.getID());
     }
   }
 

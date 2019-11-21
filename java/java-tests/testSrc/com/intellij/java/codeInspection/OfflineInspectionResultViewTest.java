@@ -46,7 +46,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
     HighlightDisplayKey key = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     if (key == null) {
-      HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME);
+      HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME, UnusedDeclarationInspectionBase.SHORT_NAME);
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl("test") {

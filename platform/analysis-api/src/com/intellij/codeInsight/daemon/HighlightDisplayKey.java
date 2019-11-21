@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,12 @@ public class HighlightDisplayKey {
     return null;
   }
 
+
+  /**
+   * @deprecated Use {@link #register(String, String, String)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name) {
     final HighlightDisplayKey key = find(name);
@@ -42,22 +49,28 @@ public class HighlightDisplayKey {
       LOG.error("Key with name '" + name + "' already registered with display name: " + getDisplayNameByKey(key));
       return null;
     }
-    return new HighlightDisplayKey(name);
+    return new HighlightDisplayKey(name, name);
   }
 
   /**
-   * @see #register(String, Computable)
+   * @deprecated Use {@link #register(String, String, String)} instead
    */
+  @Deprecated
   @Nullable
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull final String displayName) {
     return register(name, displayName, name);
   }
 
+  /**
+   * @deprecated Use {@link #register(String, Computable, String)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull Computable<String> displayName) {
     return register(name, displayName, name);
   }
-
 
   /**
    * @see #register(String, Computable, String)
@@ -136,10 +149,6 @@ public class HighlightDisplayKey {
     return ourKeyToAlternativeIDMap.get(key);
   }
 
-
-  private HighlightDisplayKey(@NonNls @NotNull final String name) {
-    this(name, name);
-  }
 
   public HighlightDisplayKey(@NonNls @NotNull final String name, @NonNls @NotNull final String ID) {
     myName = name;
