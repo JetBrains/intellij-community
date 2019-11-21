@@ -59,7 +59,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private boolean myHighlightingOn;
   private JPanel myPanelWrapper;
-  private final MergePanelFiltering myStrategy;
+  @NotNull private final MergePanelFiltering myStrategy;
   private final CommonFilter myFilterMerged = new CommonFilter(message("tab.repository.merge.panel.filter.plus"));
   private final CommonFilter myFilterNotMerged = new CommonFilter(message("tab.repository.merge.panel.filter.minus"));
   private final CommonFilter myFilterAlien = new CommonFilter(message("tab.repository.merge.panel.filter.others"));
@@ -168,7 +168,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   @Override
-  public Icon decorate(final CommittedChangeList list) {
+  public Icon decorate(@NotNull CommittedChangeList list) {
     final ListMergeStatus status = getStatus(list, false);
     return (status == null) ? ListMergeStatus.ALIEN.getIcon() : status.getIcon();
   }
@@ -347,7 +347,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         }
 
         @Override
-        public boolean report(final CommittedChangeList list) {
+        public boolean report(@NotNull CommittedChangeList list) {
           if (list instanceof SvnChangeList) {
             final SvnChangeList svnList = (SvnChangeList)list;
             final String wcPath = svnList.getWcPath();
@@ -631,6 +631,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     return null;
   }
 
+  @NotNull
   public MergePanelFiltering getStrategy() {
     return myStrategy;
   }
@@ -662,22 +663,23 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       return myPanel;
     }
 
+    @NotNull
     @Override
     public CommittedChangesFilterKey getKey() {
       return new CommittedChangesFilterKey(ourKey, CommittedChangesFilterPriority.MERGE);
     }
 
     @Override
-    public void setFilterBase(final List<? extends CommittedChangeList> changeLists) {
+    public void setFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     }
 
     @Override
-    public void addChangeListener(final ChangeListener listener) {
+    public void addChangeListener(@NotNull ChangeListener listener) {
       myListener = listener;
     }
 
     @Override
-    public void removeChangeListener(final ChangeListener listener) {
+    public void removeChangeListener(@NotNull ChangeListener listener) {
       myListener = null;
     }
 
@@ -686,12 +688,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
+    public void appendFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     }
 
     @Override
     @NotNull
-    public List<CommittedChangeList> filterChangeLists(final List<? extends CommittedChangeList> changeLists) {
+    public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
       if ((!myFilterAlien.mySelected) && (!myFilterNotMerged.mySelected) && (!myFilterMerged.mySelected)) {
         return new ArrayList<>(changeLists);
       }

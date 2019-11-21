@@ -105,7 +105,7 @@ public class MergeInfoHolder {
     }
 
     @Override
-    public boolean report(final CommittedChangeList list) {
+    public boolean report(@NotNull CommittedChangeList list) {
       if (list instanceof SvnChangeList) {
         final MergeCheckResult checkState =
           myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch, myBranchPath);

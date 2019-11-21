@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.committed;
 
@@ -323,6 +323,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       super("COMMITTED_CHANGES_FILTER_HISTORY", 20);
     }
 
+    @NotNull
     @Override
     public CommittedChangesFilterKey getKey() {
       return new CommittedChangesFilterKey("text", CommittedChangesFilterPriority.TEXT);
@@ -334,35 +335,43 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         changeListener.stateChanged(new ChangeEvent(this));
       }
     }
+
     @Override
     public JComponent getFilterUI() {
       return null;
     }
+
     @Override
-    public void setFilterBase(List<? extends CommittedChangeList> changeLists) {
+    public void setFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     }
+
     @Override
-    public void addChangeListener(ChangeListener listener) {
+    public void addChangeListener(@NotNull ChangeListener listener) {
       myList.add(listener);
     }
+
     @Override
-    public void removeChangeListener(ChangeListener listener) {
+    public void removeChangeListener(@NotNull ChangeListener listener) {
       myList.remove(listener);
     }
+
     @Override
     public void resetFilterBase() {
     }
+
     @Override
-    public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
+    public void appendFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     }
+
     @Override
     @NotNull
-    public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
+    public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
       final FilterHelper filterHelper;
       setEmptyMessage(myChangesLoaded);
       if (myRegexCheckbox.isSelected()) {
         filterHelper = new RegexFilterHelper(myFilterComponent.getFilter());
-      } else {
+      }
+      else {
         filterHelper = new WordMatchFilterHelper(myFilterComponent.getFilter());
       }
       final List<CommittedChangeList> result = new ArrayList<>();
@@ -387,14 +396,16 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       @Override
       public void onBeforeStartReport() {
       }
+
       @Override
-      public boolean report(CommittedChangeList list) {
+      public boolean report(@NotNull CommittedChangeList list) {
         resultList.add(list);
         return false;
       }
+
       @Override
       public void onAfterEndReport() {
-        if (! resultList.isEmpty()) {
+        if (!resultList.isEmpty()) {
           notification.execute(project, root, resultList);
         }
       }

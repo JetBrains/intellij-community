@@ -85,7 +85,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
 
     @Override
-    public long getNumber(final CommittedChangeList list) {
+    public long getNumber(@NotNull CommittedChangeList list) {
       final long time = list.getCommitDate().getTime();
       final Long roundedTime = Long.valueOf(time - (time % CvsChangeList.SUITABLE_DIFF));
       final CommittedChangeListKey key = new CommittedChangeListKey(list.getCommitterName(), roundedTime, list.getComment());

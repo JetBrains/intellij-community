@@ -589,13 +589,15 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
       myVcsZipper = vcsZipper;
     }
 
+    @NotNull
     @Override
-    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<? extends RepositoryLocation> in) {
+    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
       return myVcsZipper.groupLocations(in);
     }
 
+    @NotNull
     @Override
-    public CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists) {
+    public CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
       if (lists.size() == 1) {
         return lists.get(0);
       }
@@ -619,7 +621,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     }
 
     @Override
-    public long getNumber(final CommittedChangeList list) {
+    public long getNumber(@NotNull CommittedChangeList list) {
       return myVcsZipper.getNumber(list);
     }
   }

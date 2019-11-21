@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -363,7 +363,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   @Override
-  public void removeFilteringStrategy(final CommittedChangesFilterKey key) {
+  public void removeFilteringStrategy(@NotNull CommittedChangesFilterKey key) {
     final ChangeListFilteringStrategy strategy = myFilteringStrategy.removeStrategy(key);
     if (strategy != null) {
       strategy.removeChangeListener(myFilterChangeListener);
@@ -372,7 +372,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   @Override
-  public boolean setFilteringStrategy(final ChangeListFilteringStrategy filteringStrategy) {
+  public boolean setFilteringStrategy(@NotNull ChangeListFilteringStrategy filteringStrategy) {
     if (myInnerSplitter.canAdd()) {
       filteringStrategy.addChangeListener(myFilterChangeListener);
 
@@ -455,19 +455,19 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   @Override
-  public void install(final CommittedChangeListDecorator decorator) {
+  public void install(@NotNull CommittedChangeListDecorator decorator) {
     myDecorators.add(decorator);
     repaintTree();
   }
 
   @Override
-  public void remove(final CommittedChangeListDecorator decorator) {
+  public void remove(@NotNull CommittedChangeListDecorator decorator) {
     myDecorators.remove(decorator);
     repaintTree();
   }
 
   @Override
-  public void reportLoadedLists(final CommittedChangeListsListener listener) {
+  public void reportLoadedLists(@NotNull CommittedChangeListsListener listener) {
     List<CommittedChangeList> lists = new ArrayList<>(myChangeLists);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       listener.onBeforeStartReport();
