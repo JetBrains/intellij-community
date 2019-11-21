@@ -1227,18 +1227,20 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   @Override
   public void setLayout(@NotNull DesktopLayout layout) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
     List<FinalizableCommand> commandList = new ArrayList<>();
     // hide tool window that are invisible or its info is not presented in new layout
-    final List<WindowInfoImpl> currentInfos = myLayout.getInfos();
-    for (final WindowInfoImpl currentInfo : currentInfos) {
-      final WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
+    List<WindowInfoImpl> currentInfos = myLayout.getInfos();
+    for (WindowInfoImpl currentInfo : currentInfos) {
+      WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (currentInfo.isVisible() && (info == null || !info.isVisible())) {
         deactivateToolWindowImpl(currentInfo, true, commandList);
       }
     }
+
     // change anchor of tool windows
-    for (final WindowInfoImpl currentInfo : currentInfos) {
-      final WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
+    for (WindowInfoImpl currentInfo : currentInfos) {
+      WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (info == null) {
         continue;
       }
@@ -1246,8 +1248,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         setToolWindowAnchorImpl(currentInfo.getId(), info.getAnchor(), info.getOrder(), commandList);
       }
     }
+
     // change types of tool windows
-    for (final WindowInfoImpl currentInfo : currentInfos) {
+    for (WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (info == null) {
         continue;
@@ -1256,17 +1259,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         setToolWindowTypeImpl(currentInfo.getId(), info.getType(), commandList);
       }
     }
+
     // change other properties
-    for (final WindowInfoImpl currentInfo : currentInfos) {
+    for (WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (info == null) {
         continue;
       }
       copyWindowOptions(info, commandList);
     }
+
     // restore visibility
-    for (final WindowInfoImpl currentInfo : currentInfos) {
-      final WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
+    for (WindowInfoImpl currentInfo : currentInfos) {
+      WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (info == null) {
         continue;
       }
@@ -1280,7 +1285,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   @Override
-  public void invokeLater(@NotNull final Runnable runnable) {
+  public void invokeLater(@NotNull Runnable runnable) {
     List<FinalizableCommand> commandList = new ArrayList<>();
     commandList.add(new InvokeLaterCmd(runnable, myCommandProcessor));
     execute(commandList);
