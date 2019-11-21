@@ -16,10 +16,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.lang.resolve.impl.chooseOverloads
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructors
 
-abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element), GroovyCallReference {
+abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element),
+                                                                    GroovyConstructorReference {
 
-  // TODO consider introducing GroovyConstructorCallReference and putting it there
-  private fun resolveClass(): GroovyResolveResult? = myConstructedClassReference.resolve(false).singleOrNull()
+  final override fun resolveClass(): GroovyResolveResult? = myConstructedClassReference.resolve(false).singleOrNull()
 
   private val myConstructedClassReference = object : GroovyCachingReference<T>(element) {
     override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
