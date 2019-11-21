@@ -28,7 +28,9 @@
     <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
     </extensionPoint>
-
+    <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.application.options.CodeCompletionOptions" />
+    </extensionPoint>
     <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP">
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
     </extensionPoint>
@@ -499,10 +501,6 @@
 
     <extensionPoint name="typeHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>
-    </extensionPoint>
-
-    <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
-      <with attribute="instance" implements="com.intellij.application.options.CodeCompletionOptions" />
     </extensionPoint>
 
     <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter" dynamic="true"/>
