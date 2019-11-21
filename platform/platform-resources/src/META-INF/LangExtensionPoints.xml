@@ -505,19 +505,19 @@
       <with attribute="instance" implements="com.intellij.application.options.CodeCompletionOptions" />
     </extensionPoint>
 
-    <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
+    <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter" dynamic="true"/>
 
     <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor" dynamic="true"/>
 
     <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
 
-    <extensionPoint name="lang.documentationFixer" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.documentationFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.documentation.DocCommentFixer"/>
     </extensionPoint>
 
     <extensionPoint name="templateCompletionProcessor" interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 
-    <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender"/>
+    <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender" dynamic="true"/>
     <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
