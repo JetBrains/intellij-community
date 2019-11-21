@@ -403,7 +403,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter"/>
+    <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter" dynamic="true"/>
 
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
