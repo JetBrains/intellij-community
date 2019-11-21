@@ -10,6 +10,7 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -63,6 +64,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.fileEditor.impl.EditorsSplitters.findDefaultComponentInSplittersIfPresent;
@@ -1789,16 +1791,33 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     return element;
   }
 
+  private final AtomicReference<Runnable> pendingSetLayoutTask = new AtomicReference<>();
+
   @Override
   public void loadState(@NotNull Element state) {
     for (Element e : state.getChildren()) {
       if (DesktopLayout.TAG.equals(e.getName())) {
         DesktopLayout layout = new DesktopLayout();
         layout.readExternal(e);
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        Runnable task = () -> {
           myLayout.copyNotRegisteredFrom(layout);
           setLayout(layout);
-        });
+        };
+
+        Application app = ApplicationManager.getApplication();
+        if (app.isDispatchThread()) {
+          pendingSetLayoutTask.set(null);
+          task.run();
+        }
+        else {
+          pendingSetLayoutTask.set(task);
+          app.invokeLater(() -> {
+            Runnable effectiveTask = pendingSetLayoutTask.getAndSet(null);
+            if (effectiveTask != null) {
+              effectiveTask.run();
+            }
+          }, myProject.getDisposed());
+        }
       }
       else if (LAYOUT_TO_RESTORE.equals(e.getName())) {
         myLayoutToRestoreLater = new DesktopLayout();
