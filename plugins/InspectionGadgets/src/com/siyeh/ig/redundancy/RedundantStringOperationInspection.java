@@ -38,8 +38,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_TO_STRING = instanceCall(JAVA_LANG_STRING, "toString").parameterCount(0);
   private static final CallMatcher STRING_INTERN = instanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
   private static final CallMatcher STRING_LENGTH = instanceCall(JAVA_LANG_STRING, "length").parameterCount(0);
+  private static final CallMatcher STRING_SUBSTRING_SINGLE_ARG = instanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int");
   private static final CallMatcher STRING_SUBSTRING = anyOf(
-    instanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int"),
+    STRING_SUBSTRING_SINGLE_ARG,
     instanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int", "int"));
   private static final CallMatcher STRING_BUILDER_APPEND =
     instanceCall(CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
@@ -50,6 +51,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_LAST_INDEX_OF = instanceCall(JAVA_LANG_STRING, "lastIndexOf").parameterCount(2);
   private static final CallMatcher STRING_IS_EMPTY = instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
   private static final CallMatcher CASE_CHANGE = exactInstanceCall(JAVA_LANG_STRING, "toUpperCase", "toLowerCase");
+  private static final CallMatcher STRING_INDEX_OF_ONE_ARG = instanceCall(JAVA_LANG_STRING, "indexOf").parameterCount(1);
 
   @Nls
   @NotNull
@@ -79,7 +81,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(PRINTSTREAM_PRINTLN, call -> getRedundantArgumentProblem(getSingleEmptyStringArgument(call)))
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
       .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem)
-      .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem);
+      .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
+      .register(STRING_INDEX_OF_ONE_ARG, this::getRedundantSubstringIndexOfProblem);
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -132,6 +135,20 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                    new StringConstructorFix(false));
         }
       }
+      return null;
+    }
+
+    private ProblemDescriptor getRedundantSubstringIndexOfProblem(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (STRING_SUBSTRING_SINGLE_ARG.test(qualifierCall) && qualifierCall.getMethodExpression().getQualifierExpression() != null) {
+        PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+        if (anchor != null) {
+          return myManager.createProblemDescriptor(anchor, (TextRange)null, 
+                                                   InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                                   new RemoveSubstringBeforeIndexOfFix());
+        }
+      } 
       return null;
     }
 
@@ -259,6 +276,30 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           callRange.getStartOffset());
       }
       return call.getTextRange();
+    }
+  }
+
+  private static class RemoveSubstringBeforeIndexOfFix implements LocalQuickFix {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove redundant 'substring()' call";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (substringCall == null) return;
+      PsiExpression stringExpr = substringCall.getMethodExpression().getQualifierExpression();
+      if (stringExpr == null) return;
+      PsiMethodCallExpression indexOfCall = ExpressionUtils.getCallForQualifier(substringCall);
+      if (indexOfCall == null) return;
+      PsiExpression[] args = substringCall.getArgumentList().getExpressions();
+      if (args.length != 1) return;
+      CommentTracker ct = new CommentTracker();
+      indexOfCall.getArgumentList().add(ct.markUnchanged(args[0]));
+      ct.replaceAndRestoreComments(substringCall, stringExpr);
     }
   }
 
