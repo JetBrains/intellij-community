@@ -75,8 +75,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author yole
  */
-// todo: bundle messages
-// todo: pydevd supports module reloading - look for a way to use the feature
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
 
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
@@ -99,8 +97,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final Object myFrameCacheObject = new Object();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
   private boolean myDownloadSources = false;
-
-  private boolean myClosing = false;
 
   protected PyPositionConverter myPositionConverter;
   private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
@@ -424,16 +420,16 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if ("@@BUILD_NUMBER@@".equals(remoteVersion)) {
       remoteVersion = currentBuild;
     }
-    else remoteVersion = StringUtil.trimStart(remoteVersion, "PY-");
+    else {
+      remoteVersion = StringUtil.trimStart(remoteVersion, "PY-");
+    }
     printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
 
-    if (remoteVersion != null) {
-      if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
-        LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
-        printToConsole(String.format("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder\n" +
-                       "Or execute: 'pip install pydevd-pycharm~=%s'\n", currentBuild),
-                       ConsoleViewContentType.ERROR_OUTPUT);
-      }
+    if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
+      LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
+      printToConsole(String.format("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder\n" +
+                                   "Or execute: 'pip install pydevd-pycharm~=%s'\n", currentBuild),
+                     ConsoleViewContentType.ERROR_OUTPUT);
     }
   }
 
@@ -564,7 +560,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void resume(@Nullable XSuspendContext context) {
-    passToAllThreads(ResumeOrStepCommand.Mode.RESUME);
+    passResumeToAllThreads();
   }
 
   @Override
@@ -611,11 +607,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return false;
   }
 
-  private void passToAllThreads(final ResumeOrStepCommand.Mode mode) {
+  private void passResumeToAllThreads() {
     dropFrameCaches();
     if (isConnected()) {
       for (PyThreadInfo thread : myDebugger.getThreads()) {
-        myDebugger.resumeOrStep(thread.getId(), mode);
+        myDebugger.resumeOrStep(thread.getId(), ResumeOrStepCommand.Mode.RESUME);
       }
     }
   }
@@ -1060,7 +1056,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-    myClosing = true;
   }
 
   @Override

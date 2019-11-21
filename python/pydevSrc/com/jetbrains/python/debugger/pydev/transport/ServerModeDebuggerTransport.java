@@ -125,7 +125,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   }
 
   public static class DebuggerReader extends BaseDebuggerReader {
-    public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) throws IOException {
+    public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) {
       super(stream, StandardCharsets.UTF_8, debugger); //TODO: correct encoding?
       start(getClass().getName());
     }

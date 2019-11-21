@@ -48,10 +48,7 @@ public class GetVariableCommand extends GetFrameCommand {
 
   @Override
   protected void buildPayload(Payload payload) {
-    if (myParent.getVariableLocator() != null) {
-      payload.add(myParent.getVariableLocator().getThreadId()).add(myParent.getVariableLocator().getPyDBLocation());
-    }
-    else if (myVariableName.contains(BY_ID)) {
+    if (myVariableName.contains(BY_ID)) {
       //id instead of frame_id
       payload.add(getThreadId()).add(myVariableName);
     }

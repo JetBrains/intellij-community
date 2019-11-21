@@ -17,7 +17,7 @@ public abstract class PySourcePosition {
   @Nullable
   protected String normalize(@Nullable String file) {
     if (file == null) {
-      return file;
+      return null;
     }
 
     return FileUtil.toSystemIndependentName(file);

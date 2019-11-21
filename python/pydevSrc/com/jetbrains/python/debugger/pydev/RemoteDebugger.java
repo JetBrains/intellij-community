@@ -264,6 +264,10 @@ public class RemoteDebugger implements ProcessDebugger {
   // todo: change variable in lists doesn't work - either fix in pydevd or format var name appropriately
   private void setTempVariable(final String threadId, final String frameId, final PyDebugValue var) {
     final PyDebugValue topVar = var.getTopParent();
+    if (topVar == null) {
+      LOG.error("Top parent is null");
+      return;
+    }
     if (!myDebugProcess.canSaveToTemp(topVar.getName())) {
       return;
     }
