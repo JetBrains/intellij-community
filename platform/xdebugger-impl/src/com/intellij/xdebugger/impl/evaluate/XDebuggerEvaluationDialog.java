@@ -102,6 +102,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myResultPanel = JBUI.Panels.simplePanel()
       .addToTop(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")))
       .addToCenter(myTreePanel.getMainPanel());
+    myResultPanel.setMinimumSize(new Dimension(JBUI.scale(500), myResultPanel.getMaximumSize().height));
+
     myMainPanel = new EvaluationMainPanel();
 
     mySwitchModeAction = new SwitchModeAction();
