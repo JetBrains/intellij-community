@@ -147,7 +147,7 @@ public class PreemptiveSafeFileOutputStream extends OutputStream {
       Files.delete(file);
     }
     catch (IOException e) {
-      Logger.getInstance(SafeFileOutputStream.class).warn("cannot delete " + file, e);
+      Logger.getInstance(PreemptiveSafeFileOutputStream.class).warn("cannot delete " + file, e);
     }
   }
 }
