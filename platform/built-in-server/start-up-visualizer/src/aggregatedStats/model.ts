@@ -19,7 +19,7 @@ export interface Machine {
 }
 
 export interface GroupedMetricResponse {
-  readonly groupNames: Array<string>
+  groupNames: Array<string>
   readonly data: Array<{ [key: string]: Array<string | number>; }>
 }
 
@@ -40,7 +40,8 @@ export interface DataQuery {
 
 export interface DataQueryFilter {
   field: string
-  value: number | string | Array<string>
+  value?: number | string | Array<string>
+  sql?: string
   operator?: ">"
 }
 

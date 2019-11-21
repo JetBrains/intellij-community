@@ -6,7 +6,7 @@
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
   import {loadJson} from "@/httpUtil"
-  import {DataQuery, DataRequest, expandMachineAsFilterValue} from "@/aggregatedStats/model"
+  import {DataQuery, DataRequest, expandMachineAsFilterValue, GroupedMetricResponse} from "@/aggregatedStats/model"
   import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
   import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
   import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
@@ -36,11 +36,12 @@
         aggregator = `quantileTDigest(${chartSettings.quantile / 100})`
       }
 
+      // server will cache request, so, `now` here can lead to cached response, but it is ok because data collected each several hours, so, cache cleared in any case
       const dataQuery: DataQuery = {
         fields: this.metrics,
         aggregator,
         dimensions: [
-          {name: "t", sql: this.timeRange === "lastMonth" ? "toStartOfWeek(generated_time, 1)" : "toStartOfMonth(generated_time)"}
+          {name: "t", sql: `toStartOfInterval(generated_time, interval 1 ${this.timeRange === "lastMonth" ? "week" : "month"}, '${Intl.DateTimeFormat().resolvedOptions().timeZone}')`}
         ],
         // do not use "Jan 06" because not clear - 06 here it is month or year
         timeDimensionFormat: this.timeRange === "lastMonth" ? "02 Jan" : "Jan",
@@ -55,9 +56,7 @@
       }
 
       if (this.timeRange === "lastMonth") {
-        const startDate = new Date()
-        startDate.setMonth(startDate.getMonth() - 1)
-        dataQuery.filters!!.push({field: "generated_time", value: Math.round(startDate.getTime() / 1000), operator: ">"})
+        dataQuery.filters!!.push({field: "generated_time", sql: "> subtractMonths(now(), 1)"})
       }
 
       const url = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` + encodeURIComponent(JSON.stringify(dataQuery))
@@ -71,9 +70,14 @@
       const dataRequestCounter = this.dataRequestCounter
       this.queue.add(() => {
         loadJson(url, null, this.$notify)
-          .then(data => {
+          .then((data: GroupedMetricResponse | null) => {
             if (data == null || dataRequestCounter !== this.dataRequestCounter) {
               return
+            }
+
+            // we want to show only last 4 weeks, but due to rounding, db can return to us 5 (since we round to start of week)
+            if (this.timeRange === "lastMonth" && data.groupNames.length > 4) {
+              data.groupNames = data.groupNames.slice(data.groupNames.length - 4)
             }
 
             const chartManager = this.getOrCreateChartManager()
