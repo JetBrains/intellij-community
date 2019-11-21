@@ -368,13 +368,9 @@ class StubSerializationHelper {
       externalId = myNameStorage.valueOf(id);
     } catch (Throwable ignore) {}
     return new SerializerNotFoundException(
-      brokenStubFormat(ourRootStubSerializer.get()) +
+      StubUtil.brokenStubFormat(ourRootStubSerializer.get()) +
       "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
       "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
-  }
-
-  static String brokenStubFormat(ObjectStubSerializer root) {
-    return "Broken stub format, most likely version of " + root + " was not updated after serialization changes\n";
   }
 
   private void deserializeChildren(StubInputStream stream,

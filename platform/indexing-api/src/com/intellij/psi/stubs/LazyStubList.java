@@ -92,7 +92,7 @@ class LazyStubList extends StubList {
       throw e;
     }
     catch (Exception | Error e) {
-      throw new RuntimeException(StubSerializationHelper.brokenStubFormat(myRootSerializer), e);
+      throw new RuntimeException(StubUtil.brokenStubFormat(myRootSerializer), e);
     }
   }
 

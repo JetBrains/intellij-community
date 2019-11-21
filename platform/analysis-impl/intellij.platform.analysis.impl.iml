@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

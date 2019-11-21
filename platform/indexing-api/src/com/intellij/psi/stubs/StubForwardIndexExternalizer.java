@@ -35,7 +35,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     if (!indexedStubs.isEmpty()) {
       StubKeySerializationState stubKeySerializationState = createStubIndexKeySerializationState(out, indexedStubs.keySet());
 
-      StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+      StubIndexEx stubIndex = (StubIndexEx)StubIndex.getInstance();
       for (StubIndexKey stubIndexKey : indexedStubs.keySet()) {
         writeStubIndexKey(out, stubIndexKey, stubKeySerializationState);
         Map<Object, StubIdList> map = indexedStubs.get(stubIndexKey);
@@ -53,14 +53,14 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     if (!myEnsuredStubElementTypesLoaded) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         SerializationManager.getInstance().initSerializers();
-        StubIndexImpl.initExtensions();
+        StubIndexEx.initExtensions();
       });
       myEnsuredStubElementTypesLoaded = true;
     }
     int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);
     if (stubIndicesValueMapSize > 0) {
       THashMap<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = requestedIndex != null ? null : new THashMap<>(stubIndicesValueMapSize);
-      StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+      StubIndexEx stubIndex = (StubIndexEx)StubIndex.getInstance();
       StubKeySerializationState stubKeySerializationState = createStubIndexKeySerializationState(in, stubIndicesValueMapSize);
       for (int i = 0; i < stubIndicesValueMapSize; ++i) {
         ID<Object, ?> indexKey = (ID<Object, ?>)readStubIndexKey(in, stubKeySerializationState);
