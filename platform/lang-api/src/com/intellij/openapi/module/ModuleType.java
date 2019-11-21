@@ -27,7 +27,7 @@ import javax.swing.*;
  * in different IDEs.
  * </p>
  * If you need
- * to show special kinds of projects in New Project wizard, register an implemention of {@link ModuleBuilder} as an extension instead. If you
+ * to show special kinds of projects in New Project wizard, register an implementation of {@link ModuleBuilder} as an extension instead. If you
  * need to allow users to configure something related to some technology in the IDE, use {@link com.intellij.openapi.options.Configurable projectConfigurable}
  * for project-level settings and {@link com.intellij.facet.Facet} or {@link ModuleConfigurationEditorProvider} for module-level settings.
  * If you need to make an action enabled in presence of a specific technology only, do this by looking for required files in the project
