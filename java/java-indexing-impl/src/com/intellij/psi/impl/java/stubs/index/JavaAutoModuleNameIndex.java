@@ -24,7 +24,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   private final FileBasedIndex.InputFilter myFilter = new DefaultFileTypeSpecificInputFilter(ArchiveFileType.INSTANCE) {
     @Override
     public boolean acceptInput(@NotNull VirtualFile f) {
-      return f.isDirectory() && f.getParent() == null && "jar".equalsIgnoreCase(f.getExtension()) && JavaModuleNameIndex.descriptorFile(f) == null;
+      return f.isDirectory() && f.getParent() == null && "jar".equalsIgnoreCase(f.getExtension());
     }
   };
 
@@ -43,7 +43,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   @NotNull
@@ -77,7 +77,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static Collection<VirtualFile> getFilesByKey(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, scope);
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, new JavaAutoModuleFilterScope(scope));
   }
 
   @NotNull

@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,19 +29,16 @@ public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
   private final FileBasedIndex.InputFilter myFilter = new DefaultFileTypeSpecificInputFilter(myManifestFileType) {
     @Override
     public boolean acceptInput(@NotNull VirtualFile f) {
-      return f.isInLocalFileSystem() && JavaModuleNameIndex.descriptorFile(f.getParent().getParent()) == null;
+      return f.isInLocalFileSystem();
     }
   };
 
   private final DataIndexer<String, Void, FileContent> myIndexer = data -> {
-    VirtualFile f = data.getFile();
-    if (f.getParent().getParent().equals(ProjectFileIndex.getInstance(data.getProject()).getSourceRootForFile(f))) {
-      try {
-        String name = new Manifest(new ByteArrayInputStream(data.getContent())).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
-        if (name != null) return singletonMap(name, null);
-      }
-      catch (IOException ignored) { }
+    try {
+      String name = new Manifest(new ByteArrayInputStream(data.getContent())).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
+      if (name != null) return singletonMap(name, null);
     }
+    catch (IOException ignored) { }
     return emptyMap();
   };
 
@@ -54,7 +50,7 @@ public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 1;
+    return 2;
   }
 
   @NotNull
@@ -88,7 +84,7 @@ public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static Collection<VirtualFile> getFilesByKey(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, scope);
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, new JavaAutoModuleFilterScope(scope));
   }
 
   @NotNull
