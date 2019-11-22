@@ -104,6 +104,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun getState(): RecentProjectManagerState {
     synchronized(stateLock) {
+      // https://youtrack.jetbrains.com/issue/TBX-3756
       @Suppress("DEPRECATION")
       state.recentPaths.clear()
       @Suppress("DEPRECATION")
@@ -126,16 +127,25 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     synchronized(stateLock) {
       this.state = state
       state.pid = null
+
       @Suppress("DEPRECATION")
-      val openPaths = state.openPaths
-      if (openPaths.isNotEmpty()) {
-        migrateOpenPaths(openPaths)
+      migrateOpenPaths(state.openPaths)
+
+      // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
+      @Suppress("DEPRECATION")
+      if (state.recentPaths.isNotEmpty() && state.recentPaths.size != state.additionalInfo.size) {
+        val existingPaths = state.recentPaths.toSet()
+        state.additionalInfo.keys.removeIf { !existingPaths.contains(it) }
       }
     }
   }
 
   // reorder according to openPaths order and mark as opened
   private fun migrateOpenPaths(openPaths: MutableList<String>) {
+    if (openPaths.isEmpty()) {
+      return
+    }
+
     val oldInfoMap: MutableMap<String, RecentProjectMetaInfo> = THashMap()
     for (path in openPaths) {
       val info = state.additionalInfo.remove(path)
