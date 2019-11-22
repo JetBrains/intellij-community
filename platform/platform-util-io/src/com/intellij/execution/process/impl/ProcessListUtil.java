@@ -271,7 +271,7 @@ public final class ProcessListUtil {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
     if (lines.length % 3 != 0) {
-      LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
+      LOG.error("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
       LOG.debug(output);
       return null;
     }
@@ -280,7 +280,7 @@ public final class ProcessListUtil {
       int offset = i * 3;
       int id = StringUtil.parseInt(lines[offset], -1);
       if (id == -1) {
-        LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
+        LOG.error("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
         LOG.debug(output);
         return null;
       }
