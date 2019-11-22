@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -612,18 +613,26 @@ public final class IdeKeyEventDispatcher implements Disposable {
   };
 
   public boolean processAction(final InputEvent e, @NotNull ActionProcessor processor) {
+    return processAction(e, processor, myContext.getDataContext(), myContext.getActions().toArray(AnAction.EMPTY_ARRAY),
+                         myPresentationFactory);
+  }
+
+  private static boolean processAction(final InputEvent e,
+                                       @NotNull ActionProcessor processor,
+                                       DataContext context,
+                                       AnAction[] actions,
+                                       PresentationFactory presentationFactory) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<>();
-    List<AnAction> actions = myContext.getActions();
-    for (final AnAction action : actions.toArray(AnAction.EMPTY_ARRAY)) {
+    for (final AnAction action : actions) {
       long startedAt = System.currentTimeMillis();
-      Presentation presentation = myPresentationFactory.getPresentation(action);
+      Presentation presentation = presentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       final AnActionEvent actionEvent =
-        processor.createEvent(e, myContext.getDataContext(), ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
+        processor.createEvent(e, context, ActionPlaces.KEYBOARD_SHORTCUT, presentation, ActionManager.getInstance());
 
       try (AccessToken ignored = ProhibitAWTEvents.start("update")) {
         ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, true);
@@ -644,8 +653,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       processor.onUpdatePassed(e, action, actionEvent);
 
-      if (myContext.getDataContext() instanceof DataManagerImpl.MyDataContext) { // this is not true for test data contexts
-        ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount(), this);
+      if (context instanceof DataManagerImpl.MyDataContext) { // this is not true for test data contexts
+        ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
       }
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
@@ -672,21 +681,40 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
 
-      showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
+      showDumbModeDialogLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
+                                                   nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
     IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
   }
 
-  private static void showDumbModeWarningLaterIfNobodyConsumesEvent(final InputEvent e, final AnActionEvent... actionEvents) {
-    if (ModalityState.current() == ModalityState.NON_MODAL) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (e.isConsumed()) return;
+  private static void showDumbModeDialogLaterIfNobodyConsumesEvent(@Nullable Project project,
+                                                                   InputEvent e,
+                                                                   ActionProcessor processor,
+                                                                   AnAction[] actions,
+                                                                   PresentationFactory presentationFactory,
+                                                                   AnActionEvent... actionEvents) {
+    if (project == null) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (e.isConsumed()) return;
 
-          ActionUtil.showDumbModeWarning(actionEvents);
+      List<String> actionNames = new ArrayList<>();
+      for (final AnActionEvent event : actionEvents) {
+        final String s = event.getPresentation().getText();
+        if (StringUtil.isNotEmpty(s)) {
+          actionNames.add(s);
+        }
+      }
+      if (DumbService.getInstance(project).showDumbModeDialog(actionNames)) {
+        //invokeLater to make sure correct dataContext is taken from focus
+        ApplicationManager.getApplication().invokeLater(() -> {
+          DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+            processAction(e, processor, context, actions, presentationFactory);
+          });
         });
       }
+    });
   }
 
   private static DumbModeWarningListener dumbModeWarningListener  = null;

@@ -281,6 +281,13 @@ public abstract class DumbService {
    */
   public abstract void showDumbModeNotification(@NotNull String message);
 
+  /**
+   * Show modal progress about indexing blocking those actions until it is cancelled or indexing stops.
+   *
+   * @return true if indexing stopped, and the dialog was not cancelled.
+   */
+  public abstract boolean showDumbModeDialog(@NotNull List<String> actionNames);
+
   public abstract Project getProject();
 
   @Contract(value = "null -> false", pure = true)

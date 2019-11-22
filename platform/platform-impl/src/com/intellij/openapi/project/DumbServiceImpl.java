@@ -8,9 +8,13 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -21,6 +25,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -29,6 +34,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -36,6 +42,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
@@ -51,6 +58,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -71,6 +79,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
    * The task is removed from this map after it's finished or when the project is disposed.
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = ContainerUtil.newConcurrentMap();
+  private Pair<DumbModeTask, ProgressIndicatorEx> myCurrentProgress; //used from EDT only
+  private volatile ProgressIndicatorEx myDialogIndicator; //used from EDT only
+  private boolean myDialogRequested = false;//used from EDT only
 
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
@@ -418,6 +429,103 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
+  public boolean showDumbModeDialog(@NotNull List<String> actionNames) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!isDumb()) {
+      UIEventLogger.logUIEvent(UIEventId.DumbModeDialogWasNotNeeded, new FeatureUsageData().addProject(myProject));
+      return true;
+    }
+    if (myDialogRequested) {
+      //here should be an assert that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
+      return false;
+    }
+    long startTimestamp = System.currentTimeMillis();
+    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogShown, new FeatureUsageData().addProject(myProject));
+    myDialogRequested = true;
+    AtomicBoolean dialogCancelled = new AtomicBoolean(false);
+    Semaphore semaphore = new Semaphore(1);
+    runWhenSmart(semaphore::up);
+    Task.Modal task = new Task.Modal(myProject, createDialogTitle(actionNames), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        LaterInvocator.markTransparent(indicator.getModalityState());
+        indicator.setText("Waiting for indexing to finish...");
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          myDialogIndicator = (ProgressIndicatorEx)indicator;
+          attachDialogIndicatorToCurrentProgress();
+        });
+        try {
+          ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
+        }
+        catch (ProcessCanceledException e) {
+          dialogCancelled.set(true);
+        }
+      }
+    };
+    task.setCancelText(createCancelButtonText(actionNames));
+    ProgressManager.getInstance().run(task);
+    myDialogIndicator = null;
+    myDialogRequested = false;
+    FeatureUsageData featureUsageData = new FeatureUsageData().addProject(myProject).
+      addData("duration_ms", System.currentTimeMillis() - startTimestamp);
+    if (dialogCancelled.get()) {
+      UIEventLogger.logUIEvent(UIEventId.DumbModeDialogCancelled, featureUsageData);
+      return false;
+    }
+    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogProceededToActions, featureUsageData);
+    LOG.assertTrue(!isDumb(myProject));
+    return true;
+  }
+
+  @NotNull
+  private static String createDialogTitle(@NotNull List<String> actionNames) {
+    if (actionNames.isEmpty()) {
+      return "Action";
+    }
+    else if (actionNames.size() == 1) {
+      return "'" + actionNames.get(0) + "' Action";
+    }
+    else {
+      return "Actions: " + StringUtil.join(actionNames, ", ");
+    }
+  }
+
+  @NotNull
+  private static String createCancelButtonText(@NotNull List<String> actionNames) {
+    if (actionNames.isEmpty()) {
+      return "Discard action";
+    }
+    else if (actionNames.size() == 1) {
+      return "Discard '" + actionNames.get(0) + "'";
+    }
+    else {
+      return "Discard actions";
+    }
+  }
+
+  private void attachDialogIndicatorToCurrentProgress() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ProgressIndicatorEx dialogIndicator = myDialogIndicator;
+    if (dialogIndicator == null || myCurrentProgress == null) return;
+
+    AbstractProgressIndicatorExBase delegatingVisibleStateIndicator = new AbstractProgressIndicatorExBase() {
+      @Override
+      public void setText(String text) {
+      }
+
+      @Override
+      protected void delegateProgressChange(@NotNull IndicatorAction action) {
+        super.delegateProgressChange(action);
+        action.execute(dialogIndicator);
+      }
+    };
+
+    String text = dialogIndicator.getText();
+    myCurrentProgress.second.addStateDelegate(delegatingVisibleStateIndicator);
+    dialogIndicator.setText(text);
+  }
+
+  @Override
   public void waitForSmartMode() {
     Application application = ApplicationManager.getApplication();
     if (application.isReadAccessAllowed() || application.isDispatchThread()) {
@@ -617,7 +725,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         Disposer.dispose(prevTask);
       }
 
-      result.complete(pollTaskQueue());
+      Pair<DumbModeTask, ProgressIndicatorEx> value = pollTaskQueue();
+      myCurrentProgress = value;
+      attachDialogIndicatorToCurrentProgress();
+      result.complete(value);
     });
     return waitForFuture(result);
   }

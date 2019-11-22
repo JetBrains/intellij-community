@@ -17,7 +17,11 @@ enum class UIEventId {
   ProgressPaused,
   ProgressResumed,
   BreadcrumbShowTooltip,
-  BreadcrumbNavigate
+  BreadcrumbNavigate,
+  DumbModeDialogShown,
+  DumbModeDialogWasNotNeeded,
+  DumbModeDialogCancelled,
+  DumbModeDialogProceededToActions
 }
 
 fun logUIEvent(eventId: UIEventId) {
