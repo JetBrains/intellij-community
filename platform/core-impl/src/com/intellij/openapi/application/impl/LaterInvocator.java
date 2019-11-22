@@ -15,12 +15,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
-import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -179,7 +179,7 @@ public class LaterInvocator {
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
-      if (SystemPropertyUtil.getBoolean("invoke.later.wrap.error", true)) {
+      if (SystemProperties.getBooleanProperty("invoke.later.wrap.error", true)) {
         // wrap everything to keep the current thread stacktrace
         // also TC ComparisonFailure feature depends on this
         throw new RuntimeException(cause);
