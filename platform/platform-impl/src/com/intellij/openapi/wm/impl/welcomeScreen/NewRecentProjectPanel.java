@@ -62,7 +62,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   @Override
   public void addNotify() {
     super.addNotify();
-    final JList list = UIUtil.findComponentOfType(this, JList.class);
+
+    JList list = UIUtil.findComponentOfType(this, JList.class);
     if (list != null) {
       list.updateUI();
     }
@@ -140,15 +141,14 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
   @Override
   protected ListCellRenderer createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
-    return new RecentProjectItemRenderer(myPathShortener) {
+    return new RecentProjectItemRenderer() {
        private GridBagConstraints nameCell;
        private GridBagConstraints pathCell;
-       private GridBagConstraints closeButtonCell;
 
       private void initConstraints () {
         nameCell = new GridBagConstraints();
         pathCell = new GridBagConstraints();
-        closeButtonCell = new GridBagConstraints();
+        GridBagConstraints closeButtonCell = new GridBagConstraints();
 
         nameCell.gridx = 0;
         nameCell.gridy = 0;
@@ -182,7 +182,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
       @Override
       protected Color getListForeground(boolean isSelected, boolean hasFocus) {
-        return UIUtil.getListForeground(isSelected && hasFocus);
+        return UIUtil.getListForeground(isSelected && hasFocus, true);
       }
 
       @Override
@@ -294,13 +294,9 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     };
   }
 
-
-
   @Nullable
   @Override
   protected JPanel createTitle() {
     return null;
   }
-
-
 }
