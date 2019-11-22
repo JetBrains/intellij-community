@@ -63,22 +63,27 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
   override fun getLastReport() = lastReport
 
   override fun runActivity(project: Project) {
+    if (ActivityImpl.listener != null) {
+      return
+    }
+
+    val projectName = project.name
     ActivityImpl.listener = Consumer { activity ->
       if (activity.end != 0L && activity.category == null && activity.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
-        reportIfAnotherAlreadySet(project)
+        ActivityImpl.listener = null
+        reportIfAnotherAlreadySet(projectName)
       }
     }
   }
 
   override fun lastOptionTopHitProviderFinishedForProject(project: Project) {
-    reportIfAnotherAlreadySet(project)
+    reportIfAnotherAlreadySet(project.name)
   }
 
-  private fun reportIfAnotherAlreadySet(project: Project) {
+  private fun reportIfAnotherAlreadySet(projectName: String) {
     // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
     if (startUpFinishedCounter.incrementAndGet() == 2) {
       startUpFinishedCounter.set(0)
-      val projectName = project.name
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
       NonUrgentExecutor.getInstance().execute {
         logStats(projectName)
