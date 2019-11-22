@@ -289,4 +289,28 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
       myDebugProcess.getProcessHandler().destroyProcess();
     }
   }
+
+  /**
+   * Toggles breakpoint in the script returned by {@link PyDebuggerTask#getScriptName()}.
+   *
+   * @param line starting with 0
+   */
+  protected void toggleBreakpoint(int line) {
+    toggleBreakpoint(getFilePath(getScriptName()), line);
+  }
+
+  /**
+   * Toggles multiple breakpoints with {@link PyDebuggerTask#toggleBreakpoint(int)}.
+   */
+  protected void toggleBreakpoints(int... lines) {
+    toggleBreakpoints(getFilePath(getScriptName()), lines);
+  }
+
+  /**
+   * Toggles multiple breakpoints with {@link PyDebuggerTask#toggleBreakpoint(String, int)}.
+   */
+  protected void toggleBreakpoints(@NotNull String file, int... lines) {
+    for(int line : lines)
+      toggleBreakpoint(file, line);
+  }
 }
