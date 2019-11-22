@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -62,7 +63,11 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
   override fun getLastReport() = lastReport
 
   override fun runActivity(project: Project) {
-    reportIfAnotherAlreadySet(project)
+    ActivityImpl.listener = Consumer { activity ->
+      if (activity.end != 0L && activity.category == null && activity.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+        reportIfAnotherAlreadySet(project)
+      }
+    }
   }
 
   override fun lastOptionTopHitProviderFinishedForProject(project: Project) {
@@ -70,26 +75,27 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
   }
 
   private fun reportIfAnotherAlreadySet(project: Project) {
-    val end = StartUpMeasurer.getCurrentTime()
     // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
     if (startUpFinishedCounter.incrementAndGet() == 2) {
       startUpFinishedCounter.set(0)
       val projectName = project.name
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
       NonUrgentExecutor.getInstance().execute {
-        logStats(end, projectName)
+        logStats(projectName)
       }
     }
   }
 
   @Synchronized
-  private fun logStats(end: Long, projectName: String) {
+  private fun logStats(projectName: String) {
     val items = mutableListOf<ActivityImpl>()
     val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
     val services = mutableListOf<ActivityImpl>()
 
     val threadNameManager = ThreadNameManager()
+
+    var end = -1L
 
     StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
       // process it now to ensure that thread will have first name (because report writer can process events in any order)
@@ -102,6 +108,9 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
         val category = item.category
         if (category == null) {
           items.add(item)
+          if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+            end = item.end
+          }
         }
         else if (category == ActivityCategory.APP_COMPONENT ||
                  category == ActivityCategory.PROJECT_COMPONENT ||
@@ -119,6 +128,11 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
     })
 
     if (items.isEmpty()) {
+      return
+    }
+
+    if (end == -1L) {
+      LOG.warn("Cannot find activity `${Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES}` to compute end of start-up")
       return
     }
 

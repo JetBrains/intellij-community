@@ -3,7 +3,7 @@
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.StartUpMeasurer.Phases
+import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
@@ -199,7 +199,7 @@ private fun startApp(app: ApplicationImpl,
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
     .thenCompose {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
-      val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
+      val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
 
       val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
@@ -346,7 +346,7 @@ private fun addActivateAndWindowsCliListeners() {
 
 @JvmOverloads
 fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = CompletableFuture.completedFuture(null)) {
-  val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
+  val initAppActivity = MainRunner.startupStart.endAndStart(Activities.INIT_APP)
   val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
   initUiTask
     .thenRunAsync(Runnable {

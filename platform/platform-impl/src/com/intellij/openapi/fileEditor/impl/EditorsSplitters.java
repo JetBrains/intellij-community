@@ -244,7 +244,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     ApplicationManager.getApplication().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity("editor restoring till paint"));
-    Activity restoringEditors = StartUpMeasurer.startMainActivity("editor restoring");
+    Activity restoringEditors = StartUpMeasurer.startMainActivity(StartUpMeasurer.Activities.EDITOR_RESTORING);
     JPanel component = myUIBuilder.process(mySplittersElement, getTopPanel());
     if (component != null) {
       component.setFocusable(false);
