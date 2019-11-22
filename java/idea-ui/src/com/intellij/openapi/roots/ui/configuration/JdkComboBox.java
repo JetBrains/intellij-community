@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
+import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
@@ -455,10 +456,10 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
 
   private void resolveSuggestionsIfNeeded() {
     collectNewSdkActions();
-    JdksDetector.getInstance().getDetectedSdksWithUpdate(myProject, this, myDetectedSdksListener);
+    SdkDetector.getInstance().getDetectedSdksWithUpdate(myProject, this, myDetectedSdksListener);
   }
 
-  private final JdksDetector.DetectedSdksListener myDetectedSdksListener = new JdksDetector.DetectedSdksListener() {
+  private final DetectedSdkListener myDetectedSdksListener = new DetectedSdkListener() {
     @Override
     public void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home) {
       myModel.addSuggestedItem(new SuggestedJdkItem(type, version, home));

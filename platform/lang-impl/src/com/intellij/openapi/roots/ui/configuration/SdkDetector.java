@@ -19,24 +19,24 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class JdksDetector {
-  private static final Logger LOG = Logger.getInstance(JdksDetector.class);
+public class SdkDetector {
+  private static final Logger LOG = Logger.getInstance(SdkDetector.class);
 
   @NotNull
-  public static JdksDetector getInstance() {
-    return ApplicationManager.getApplication().getService(JdksDetector.class);
+  public static SdkDetector getInstance() {
+    return ApplicationManager.getApplication().getService(SdkDetector.class);
   }
 
   private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
   private final Object myPublicationLock = new Object();
-  private final Set<DetectedSdksListener> myListeners = new HashSet<>();
-  private final List<Consumer<DetectedSdksListener>> myDetectedResults = new ArrayList<>();
+  private final Set<DetectedSdkListener> myListeners = new HashSet<>();
+  private final List<Consumer<DetectedSdkListener>> myDetectedResults = new ArrayList<>();
 
   /**
    * The callback interface to deliver Sdk search results
    * back to the callee in EDT thread
    */
-  public interface DetectedSdksListener {
+  public interface DetectedSdkListener {
     void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home);
     void onSearchStarted();
     void onSearchCompleted();
@@ -57,7 +57,7 @@ public class JdksDetector {
    */
   public void getDetectedSdksWithUpdate(@Nullable Project project,
                                         @NotNull Component component,
-                                        @NotNull DetectedSdksListener listener) {
+                                        @NotNull DetectedSdkListener listener) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
@@ -66,7 +66,7 @@ public class JdksDetector {
       return;
     }
 
-    EdtDetectedSdksListener actualListener = new EdtDetectedSdksListener(ModalityState.stateForComponent(component), listener);
+    EdtDetectedSdkListener actualListener = new EdtDetectedSdkListener(ModalityState.stateForComponent(component), listener);
     synchronized (myPublicationLock) {
       //skip multiple registrations
       if (!myListeners.add(actualListener)) return;
@@ -86,10 +86,10 @@ public class JdksDetector {
     });
   }
 
-  private final DetectedSdksListener myMulticaster = new DetectedSdksListener() {
-    void logEvent(@NotNull Consumer<DetectedSdksListener> e) {
+  private final DetectedSdkListener myMulticaster = new DetectedSdkListener() {
+    void logEvent(@NotNull Consumer<DetectedSdkListener> e) {
       myDetectedResults.add(e);
-      for (DetectedSdksListener listener : myListeners) {
+      for (DetectedSdkListener listener : myListeners) {
         e.accept(listener);
       }
     }
@@ -118,7 +118,7 @@ public class JdksDetector {
     }
   };
 
-  private static void startSdkDetection(@Nullable Project project, @NotNull DetectedSdksListener callback) {
+  private static void startSdkDetection(@Nullable Project project, @NotNull DetectedSdkListener callback) {
     Task.Backgroundable task = new Task.Backgroundable(
       project,
       "Detecting SDKs",
@@ -183,12 +183,12 @@ public class JdksDetector {
     ProgressManager.getInstance().run(task);
   }
 
-  private static class EdtDetectedSdksListener implements DetectedSdksListener {
+  private static class EdtDetectedSdkListener implements DetectedSdkListener {
     private final ModalityState myState;
-    private final DetectedSdksListener myTarget;
+    private final DetectedSdkListener myTarget;
 
-    EdtDetectedSdksListener(@NotNull ModalityState state,
-                            @NotNull DetectedSdksListener target) {
+    EdtDetectedSdkListener(@NotNull ModalityState state,
+                           @NotNull DetectedSdkListener target) {
       myState = state;
       myTarget = target;
     }
@@ -219,7 +219,7 @@ public class JdksDetector {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof EdtDetectedSdksListener && Objects.equals(((EdtDetectedSdksListener)obj).myTarget, myTarget);
+      return obj instanceof EdtDetectedSdkListener && Objects.equals(((EdtDetectedSdkListener)obj).myTarget, myTarget);
     }
   }
 }
