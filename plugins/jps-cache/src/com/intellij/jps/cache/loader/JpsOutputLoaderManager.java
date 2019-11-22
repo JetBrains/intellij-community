@@ -110,12 +110,16 @@ public class JpsOutputLoaderManager {
     Set<String> allCacheKeys = myServerClient.getAllCacheKeys();
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    Iterator<String> commitsIterator = GitRepositoryUtil.getCommitsIterator(myProject);
+    List<Iterator<String>> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject);
     String commitId = "";
     int commitsBehind = 0;
-    while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
-      commitId = commitsIterator.next();
-      commitsBehind++;
+    for (Iterator<String> commitsIterator : repositoryList) {
+      if (allCacheKeys.contains(commitId)) continue;
+      commitsBehind = 0;
+      while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
+        commitId = commitsIterator.next();
+        commitsBehind++;
+      }
     }
 
     if (!allCacheKeys.contains(commitId)) {
