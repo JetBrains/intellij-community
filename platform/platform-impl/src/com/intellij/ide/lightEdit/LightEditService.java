@@ -26,7 +26,6 @@ public class LightEditService implements Disposable, LightEditorListener {
 
   public LightEditService() {
     myEditorManager = new LightEditorManager();
-    Disposer.register(this, myEditorManager);
     myEditorManager.addListener(this);
   }
 
@@ -38,6 +37,7 @@ public class LightEditService implements Disposable, LightEditorListener {
           .setOnCloseHandler(()->handleClose())
           .build();
       SplashManager.hideBeforeShow(myWrapper.getWindow());
+      myWrapperIsStale = false;
     }
   }
 
@@ -70,6 +70,7 @@ public class LightEditService implements Disposable, LightEditorListener {
   private boolean handleClose() {
     disposeEditorPanel();
     myWrapperIsStale = true;
+    Disposer.dispose(myEditorManager);
     if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
       Disposer.dispose(myWrapper);
       try {
@@ -96,6 +97,7 @@ public class LightEditService implements Disposable, LightEditorListener {
     if (myWrapper != null && !myWrapperIsStale) {
       disposeEditorPanel();
       Disposer.dispose(myWrapper);
+      Disposer.dispose(myEditorManager);
     }
   }
 
