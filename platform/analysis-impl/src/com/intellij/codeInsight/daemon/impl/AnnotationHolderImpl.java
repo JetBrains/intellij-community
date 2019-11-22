@@ -169,6 +169,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   void queueToUpdateIncrementally() {
   }
 
+  @NotNull
   @Override
   public AnnotationBuilder newAnnotation(@NotNull TextRange range, @NotNull HighlightSeverity severity, @NotNull String message) {
     return new B(this, range, severity, message);
