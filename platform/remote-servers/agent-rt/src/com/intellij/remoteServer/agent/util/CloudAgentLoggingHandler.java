@@ -11,6 +11,7 @@ import java.io.OutputStream;
  * @author michael.golubev
  */
 public interface CloudAgentLoggingHandler {
+  String getProjectHash();
 
   void println(String message);
 

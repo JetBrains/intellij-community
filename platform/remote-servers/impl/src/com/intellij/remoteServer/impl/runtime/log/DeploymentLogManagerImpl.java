@@ -57,6 +57,12 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     });
   }
 
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
   public DeploymentLogManagerImpl withMainHandlerVisible(boolean mainHandlerVisible) {
     myMainHandlerVisible = mainHandlerVisible;
     return this;
