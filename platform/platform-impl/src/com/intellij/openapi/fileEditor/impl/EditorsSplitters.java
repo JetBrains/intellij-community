@@ -187,7 +187,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private Element writePanel(@NotNull Component comp) {
     if (comp instanceof Splitter) {
       final Splitter splitter = (Splitter)comp;
@@ -203,14 +202,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return res;
     }
     else if (comp instanceof JBTabs) {
-      final Element res = new Element("leaf");
+      Element result = new Element("leaf");
       Integer limit = UIUtil.getClientProperty(((JBTabs)comp).getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
       if (limit != null) {
-        res.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), String.valueOf(limit));
+        result.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), String.valueOf(limit));
       }
 
-      writeWindow(res, findWindowWith(comp));
-      return res;
+      writeWindow(result, findWindowWith(comp));
+      return result;
     }
     else {
       LOG.error(comp.getClass().getName());
@@ -218,18 +217,18 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  private void writeWindow(@NotNull Element res, @Nullable EditorWindow window) {
+  private void writeWindow(@NotNull Element result, @Nullable EditorWindow window) {
     if (window != null) {
       EditorWithProviderComposite[] composites = window.getEditors();
       for (int i = 0; i < composites.length; i++) {
         VirtualFile file = window.getFileAt(i);
-        res.addContent(writeComposite(file, composites[i], window.isFilePinned(file), window.getSelectedEditor()));
+        result.addContent(writeComposite(composites[i], window.isFilePinned(file), window.getSelectedEditor()));
       }
     }
   }
 
   @NotNull
-  private Element writeComposite(VirtualFile file, EditorWithProviderComposite composite, boolean pinned, EditorWithProviderComposite selectedEditor) {
+  private Element writeComposite(@NotNull EditorWithProviderComposite composite, boolean pinned, @Nullable EditorWithProviderComposite selectedEditor) {
     Element fileElement = new Element("file");
     composite.currentStateAsHistoryEntry().writeExternal(fileElement, getManager().getProject());
     fileElement.setAttribute(PINNED, Boolean.toString(pinned));
@@ -687,11 +686,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull
-  EditorWindow[] getOrderedWindows() {
-    final List<EditorWindow> res = new ArrayList<>();
-
+  List<EditorWindow> getOrderedWindows() {
+    List<EditorWindow> result = new ArrayList<>();
     // Collector for windows in tree ordering:
-    class Inner{
+    class Inner {
       private void collect(final JPanel panel){
         final Component comp = panel.getComponent(0);
         if (comp instanceof Splitter) {
@@ -702,7 +700,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         else if (comp instanceof JPanel || comp instanceof JBTabs) {
           final EditorWindow window = findWindowWith(comp);
           if (window != null) {
-            res.add(window);
+            result.add(window);
           }
         }
       }
@@ -718,14 +716,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
     }
 
-    LOG.assertTrue(res.size() == myWindows.size());
-    return res.toArray(new EditorWindow[0]);
+    LOG.assertTrue(result.size() == myWindows.size());
+    return result;
   }
 
   @Nullable
-  private EditorWindow findWindowWith(final Component component) {
+  private EditorWindow findWindowWith(@Nullable Component component) {
     if (component != null) {
-      for (final EditorWindow window : myWindows) {
+      for (EditorWindow window : myWindows) {
         if (SwingUtilities.isDescendingFrom(component, window.myPanel)) {
           return window;
         }
@@ -893,7 +891,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       if (focusedFile == null) {
         ToolWindowManager manager = ToolWindowManager.getInstance(getManager().getProject());
         manager.invokeLater(() -> {
-          if (null == manager.getActiveToolWindowId()) {
+          if (manager.getActiveToolWindowId() == null) {
             ToolWindow toolWindow = manager.getToolWindow(PROJECT_VIEW);
             if (toolWindow != null) {
               toolWindow.activate(null);

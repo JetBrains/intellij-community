@@ -507,10 +507,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public EditorWindow getNextWindow(@NotNull final EditorWindow window) {
-    final EditorWindow[] windows = getSplitters().getOrderedWindows();
-    for (int i = 0; i != windows.length; ++i) {
-      if (windows[i].equals(window)) {
-        return windows[(i + 1) % windows.length];
+    List<EditorWindow> windows = getSplitters().getOrderedWindows();
+    for (int i = 0; i != windows.size(); ++i) {
+      if (windows.get(i).equals(window)) {
+        return windows.get((i + 1) % windows.size());
       }
     }
     LOG.error("Not window found");
@@ -519,10 +519,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public EditorWindow getPrevWindow(@NotNull final EditorWindow window) {
-    final EditorWindow[] windows = getSplitters().getOrderedWindows();
-    for (int i = 0; i != windows.length; ++i) {
-      if (windows[i].equals(window)) {
-        return windows[(i + windows.length - 1) % windows.length];
+    List<EditorWindow> windows = getSplitters().getOrderedWindows();
+    for (int i = 0; i != windows.size(); ++i) {
+      if (windows.get(i).equals(window)) {
+        return windows.get((i + windows.size() - 1) % windows.size());
       }
     }
     LOG.error("Not window found");
@@ -1922,10 +1922,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     @Override
     public void uiSettingsChanged(final UISettings uiSettings) {
       assertDispatchThread();
-      TransactionGuard.submitTransaction(myProject, () -> handleUiSettingChange(uiSettings));
-    }
-
-    private void handleUiSettingChange(UISettings uiSettings) {
       mySplitters.revalidate();
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(uiSettings.getEditorTabPlacement());

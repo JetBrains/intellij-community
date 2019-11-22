@@ -452,6 +452,7 @@ public class EditorWindow {
     LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
   }
 
+  @Nullable
   public EditorWithProviderComposite getSelectedEditor() {
     return getSelectedEditor(false);
   }
@@ -460,14 +461,13 @@ public class EditorWindow {
    * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
    *                    editor for which menu is invoked will be returned
    */
+  @Nullable
   public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
-    final TComp comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
-    if (comp != null) {
-      return comp.myEditor;
-    }
-    return null;
+    TComp comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
+    return comp == null ? null : comp.myEditor;
   }
 
+  @NotNull
   public EditorWithProviderComposite[] getEditors() {
     final int tabCount = getTabCount();
     final EditorWithProviderComposite[] res = new EditorWithProviderComposite[tabCount];
@@ -477,6 +477,7 @@ public class EditorWindow {
     return res;
   }
 
+  @NotNull
   public VirtualFile[] getFiles() {
     final int tabCount = getTabCount();
     final VirtualFile[] res = new VirtualFile[tabCount];
