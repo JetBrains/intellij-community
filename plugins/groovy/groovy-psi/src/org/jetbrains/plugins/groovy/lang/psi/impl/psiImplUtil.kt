@@ -104,6 +104,11 @@ fun GrMethodCall.isImplicitCall(): Boolean {
   return expression !is GrReferenceExpression || expression.isImplicitCallReceiver
 }
 
+fun GrMethodCall.isExplicitCall(): Boolean {
+  val expression = invokedExpression
+  return expression is GrReferenceExpression && !expression.isImplicitCallReceiver && expression.referenceName != null
+}
+
 fun GrCodeReferenceElement.getDiamondTypes(): Array<out PsiType?> {
   val result = advancedResolve()
   return result.getTypeArgumentsFromResult()

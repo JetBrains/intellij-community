@@ -77,7 +77,7 @@ private fun GrReferenceExpression.handleSpecialCases(): Collection<GroovyResolve
   return null
 }
 
-fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
+fun GrReferenceExpression.resolveKinds(): Set<GroovyResolveKind> {
   return resolveKinds(isQualified)
 }
 
