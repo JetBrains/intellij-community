@@ -1,0 +1,11 @@
+Types:
+PsiField:migrationField : long[]
+PsiNewExpression:new int[] : long[]
+PsiReferenceExpression:migrationField : long[]
+
+Conversions:
+
+New expression type changes:
+new int[] -> long[]
+Fails:
+migrationField->long[]

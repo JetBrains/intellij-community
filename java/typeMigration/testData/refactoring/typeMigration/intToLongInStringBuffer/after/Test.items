@@ -1,0 +1,9 @@
+Types:
+PsiField:migrationField : long
+PsiReferenceExpression:migrationField : long
+
+Conversions:
+migrationField -> $
+
+New expression type changes:
+Fails:

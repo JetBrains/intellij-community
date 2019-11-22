@@ -32,7 +32,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -538,14 +537,21 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         PsiType psiType = migrationType != null ? migrationType : right.getType();
         if (psiType != null) {
           if (canBeVariableType(psiType)) {
-            if (declarationType != null &&
-                !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true) &&
-                !TypeConversionUtil.isAssignable(left.getType(), psiType)) {
-              PsiType initialType = left.getType();
-              if (initialType instanceof PsiEllipsisType) {
-                initialType = ((PsiEllipsisType)initialType).getComponentType();
+            if (declarationType != null) {
+              boolean targetTypeIsAssignableToDeclarationType = TypeConversionUtil.isAssignable(declarationType, psiType);
+              if (!myLabeler.addMigrationRoot(variable, psiType, myStatement, targetTypeIsAssignableToDeclarationType, true) &&
+                  !TypeConversionUtil.isAssignable(left.getType(), psiType)) {
+                PsiType initialType = left.getType();
+                if (initialType instanceof PsiEllipsisType && !(psiType instanceof PsiEllipsisType)) {
+                  if (psiType instanceof PsiArrayType) {
+                    initialType = ((PsiEllipsisType)initialType).toArrayType();
+                  }
+                  else {
+                    initialType = ((PsiEllipsisType)initialType).getComponentType();
+                  }
+                }
+                myLabeler.convertExpression(value, psiType, initialType, isCovariantPosition && targetTypeIsAssignableToDeclarationType);
               }
-              myLabeler.convertExpression(value, psiType, initialType, isCovariantPosition);
             }
           }
           else {

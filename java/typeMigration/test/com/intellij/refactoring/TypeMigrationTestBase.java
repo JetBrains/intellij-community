@@ -8,9 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
@@ -20,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
  * @author anna
@@ -143,7 +147,8 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
     final PsiElement[] migrationElements = provider.victims(aClass);
     final PsiType migrationType = provider.migrationType(migrationElements[0]);
     final TypeMigrationRules rules = new TypeMigrationRules(getProject());
-    rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
+    rules.setBoundScope(provider.boundScope(aClass));
+    Stream.of(provider.conversionDescriptors()).forEach(rules::addConversionDescriptor);
     final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElements, migrationType, rules);
 
     final UsageInfo[] usages = pr.findUsages();
@@ -166,6 +171,14 @@ public abstract class TypeMigrationTestBase extends LightMultiFileTestCase {
 
     default PsiElement[] victims(PsiClass aClass) {
       return new PsiElement[] {victim(aClass)};
+    }
+    
+    default SearchScope boundScope(PsiClass aClass){
+      return new LocalSearchScope(aClass.getContainingFile());
+    }
+    
+    default TypeConversionRule[] conversionDescriptors(){
+      return new TypeConversionRule[0];
     }
   }
 

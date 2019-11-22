@@ -7,9 +7,17 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author db
@@ -464,7 +472,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                      myFactory.createTypeFromText("java.util.List<java.lang.String>", null));
   }
 
-   public void testT87() {
+  public void testT87() {
     doTestMethodType("getArray",
                      myFactory.createTypeFromText("java.lang.String", null).createArrayType());
   }
@@ -558,7 +566,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
   }
 
-   //raw list type now should not be changed
+  //raw list type now should not be changed
   public void testT104() {
     doTestFirstParamType("method",
                          myFactory.createTypeFromText("java.lang.String", null).createArrayType());
@@ -615,9 +623,9 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT114() {
-      doTestFirstParamType("method",
-                           new PsiEllipsisType(myFactory.createTypeFromText("java.lang.String", null)));
-    }
+    doTestFirstParamType("method",
+                         new PsiEllipsisType(myFactory.createTypeFromText("java.lang.String", null)));
+  }
 
   //varargs && ArrayList
   public void testT118() {
@@ -878,6 +886,87 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testTypeParameterMigrationInInvalidCode() {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
+  }
+
+  public void testNonMigratableMethodArgumentExpression() {
+    doTestMethodType("migrationMethod", PsiType.LONG);
+  }
+
+  public void testIntToLongInStringBuffer() {
+    doTestFieldType("migrationField", PsiType.LONG);
+  }
+
+  public void testOverloadedMethod1() {
+    doTestMethodType("migrationMethod", PsiType.LONG);
+  }
+
+  public void testOverloadedMethod2() {
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public PsiType migrationType(PsiElement context) {
+        return PsiType.LONG;
+      }
+
+      @Override
+      public PsiElement victim(PsiClass aClass) {
+        return aClass.findMethodsByName("migrationMethod", false)[0];
+      }
+
+      @Override
+      public SearchScope boundScope(PsiClass aClass) {
+        // Restrict the scope to the class (instead of the class file) to push class 'Foo' out of scope
+        return new LocalSearchScope(aClass);
+      }
+    };
+
+    start(provider, "Test");
+  }
+
+  public void testArrayMigrationWithEllipsisReceivingParameter() {
+    AtomicBoolean conversionRuleInvoked = new AtomicBoolean();
+    final TypeConversionRule conversionRule = new TypeConversionRule() {
+      
+      @Nullable
+      @Override
+      public TypeConversionDescriptorBase findConversion(PsiType from,
+                                                         PsiType to,
+                                                         PsiMember member,
+                                                         PsiExpression context,
+                                                         TypeMigrationLabeler labeler) {
+        assertEquals(PsiType.INT.createArrayType(), from);
+        assertEquals(PsiType.LONG.createArrayType(), to);
+        conversionRuleInvoked.set(true);
+        return null;
+      }
+    };
+
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public PsiType migrationType(PsiElement context) {
+        return PsiType.LONG.createArrayType();
+      }
+
+      @Override
+      public PsiElement[] victims(PsiClass aClass) {
+        PsiField field = aClass.findFieldByName("migrationField", false);
+        assertNotNull(field);
+        return new PsiElement[]{field};
+      }
+
+      @Override
+      public SearchScope boundScope(PsiClass aClass) {
+        // Restrict the scope to the class (instead of the class file) to push class 'Bar' out of scope
+        return new LocalSearchScope(aClass);
+      }
+
+      @Override
+      public TypeConversionRule[] conversionDescriptors() {
+        return new TypeConversionRule[]{conversionRule};
+      }
+    };
+
+    start(provider, "Test");
+    assertTrue(conversionRuleInvoked.get());
   }
 
   private void doTestReturnType(final String methodName, final String migrationType) {
