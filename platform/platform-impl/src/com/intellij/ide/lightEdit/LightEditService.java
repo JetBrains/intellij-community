@@ -72,7 +72,12 @@ public class LightEditService implements Disposable, LightEditorListener {
     myWrapperIsStale = true;
     if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
       Disposer.dispose(myWrapper);
-      ApplicationManager.getApplication().exit();
+      try {
+        ApplicationManager.getApplication().exit();
+      }
+      catch (Throwable t) {
+        System.exit(1);
+      }
     }
     return true;
   }
