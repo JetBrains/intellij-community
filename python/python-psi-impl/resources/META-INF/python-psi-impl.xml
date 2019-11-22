@@ -111,6 +111,8 @@
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyModulePackageCompletionContributor"/>
+
+    <lang.ast.factory language="Python" implementationClass="com.jetbrains.python.psi.impl.PythonASTFactory"/>
   </extensions>
 
   <extensionPoints>
