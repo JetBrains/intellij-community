@@ -238,9 +238,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return fileElement;
   }
 
-  public void openFiles() {
+  @Nullable
+  Ref<JPanel> restoreEditors() {
     if (mySplittersElement == null) {
-      return;
+      return null;
     }
 
     ApplicationManager.getApplication().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity("editor restoring till paint"));
@@ -250,21 +251,33 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       component.setFocusable(false);
     }
     restoringEditors.end();
+    return new Ref<>(component);
+  }
+
+  public void openFiles() {
+    Ref<JPanel> componentRef = restoreEditors();
+    if (componentRef == null) {
+      return;
+    }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (component != null) {
-        removeAll();
-        add(component, BorderLayout.CENTER);
-        mySplittersElement = null;
-      }
-
-      // clear empty splitters
-      for (EditorWindow window : getWindows()) {
-        if (window.getTabCount() == 0) {
-          window.removeFromSplitter();
-        }
-      }
+      doOpenFiles(componentRef.get());
     }, ModalityState.any());
+  }
+
+  void doOpenFiles(@Nullable JPanel component) {
+    if (component != null) {
+      removeAll();
+      add(component, BorderLayout.CENTER);
+      mySplittersElement = null;
+    }
+
+    // clear empty splitters
+    for (EditorWindow window : getWindows()) {
+      if (window.getTabCount() == 0) {
+        window.removeFromSplitter();
+      }
+    }
   }
 
   public int getEditorsCount() {

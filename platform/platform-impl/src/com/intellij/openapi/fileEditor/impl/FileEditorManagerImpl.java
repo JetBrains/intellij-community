@@ -1255,6 +1255,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
+  public boolean hasOpenFiles() {
+    return !myOpenedEditors.isEmpty();
+  }
+
   @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
