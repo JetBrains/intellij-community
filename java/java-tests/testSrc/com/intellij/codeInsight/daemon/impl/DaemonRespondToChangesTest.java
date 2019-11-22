@@ -1536,7 +1536,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspectionBase.SHORT_NAME);
     if (myDeadCodeKey == null) {
-      myDeadCodeKey = HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME);
+      myDeadCodeKey = HighlightDisplayKey.register(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME,
+                                                   UnusedDeclarationInspectionBase.SHORT_NAME);
     }
     UnusedDeclarationInspectionBase myDeadCodeInspection = new UnusedDeclarationInspectionBase(true);
     enableInspectionTool(myDeadCodeInspection);
@@ -2419,15 +2420,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
-    if (ForkJoinPool.commonPool().getParallelism()<=2) {
-      System.err.println("Too low parallelism, I will not even bother, it's hopeless: " + ForkJoinPool.commonPool().getParallelism());
-      return;
-    }
-    useAnnotatorsIn(new Annotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
-    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
-    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
+    if (!ensureEnoughParallelism()) return;
+    useAnnotatorsIn(new Annotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
     // also check in the opposite order in case the order of annotators is important
-    useAnnotatorsIn(new Annotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, () -> checkSwearingAnnotationIsVisibleImmediately());
+    useAnnotatorsIn(new Annotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
 
   private void checkSwearingAnnotationIsVisibleImmediately() {
@@ -2436,7 +2434,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                   "  int foo(Object param) {//XXX\n" +
                   "    return 0;\n" +
                   "  }/* */\n" +
-                  "//XXX\n" +
                   "}\n";
     configureByText(StdFileTypes.JAVA, text);
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
@@ -2455,7 +2452,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         .filter(tooltip -> tooltip instanceof HighlightInfo
                              && MyFastAnnotator.SWEARING.equals(((HighlightInfo)tooltip).getDescription()))
         .count();
-      if (highlighted == 2) {
+      if (highlighted != 0) {
         toSleepMs.set(0);
         throw new DebugException(); // sorry for that, had to differentiate from failure
       }
@@ -2476,6 +2473,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     catch (DebugException ignored) {
     }
+  }
+
+  public static class MyNewBuilderAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiComment && element.getText().equals("//XXX")) {
+        holder.newAnnotation(element.getTextRange(), HighlightSeverity.ERROR, MyFastAnnotator.SWEARING).create();
+        // sleep after creating annotation to emulate very big annotator which does a great amount of work after registering annotation
+
+        // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
+        while (toSleepMs.addAndGet(-100) > 0) {
+          TimeoutUtil.sleep(100);
+        }
+      }
+    }
+  }
+
+  private static boolean ensureEnoughParallelism() {
+    if (ForkJoinPool.commonPool().getParallelism() <= 2) {
+      System.err.println("Too low parallelism, I will not even bother, it's hopeless: " + ForkJoinPool.commonPool().getParallelism());
+      return false;
+    }
+    return true;
+  }
+
+  public void testAddAnnotationViaBuilderEntailsCreatingCorrespondingRangeHighlighterImmediately() {
+    if (!ensureEnoughParallelism()) return;
+    useAnnotatorsIn(new Annotator[]{new MyNewBuilderAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
 }
 

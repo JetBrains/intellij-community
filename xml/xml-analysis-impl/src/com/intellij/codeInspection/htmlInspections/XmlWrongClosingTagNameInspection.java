@@ -9,6 +9,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
@@ -95,9 +96,10 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    final Annotation annotation = holder.createErrorAnnotation(start, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"));
-    annotation.registerFix(renameEndAction);
-    annotation.registerFix(renameStartAction);
+    holder.newAnnotation(start.getTextRange(), HighlightSeverity.ERROR, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"))
+      .newFix(renameEndAction).registerFix()
+      .newFix(renameStartAction).registerFix()
+      .create();
   }
 
   private static void registerProblemEnd(@NotNull final AnnotationHolder holder,
@@ -120,10 +122,11 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    final Annotation annotation = holder.createErrorAnnotation(end, XmlErrorMessages.message("wrong.closing.tag.name"));
-    annotation.registerFix(new RemoveExtraClosingTagIntentionAction());
-    annotation.registerFix(renameEndAction);
-    annotation.registerFix(renameStartAction);
+    holder.newAnnotation(end.getTextRange(), HighlightSeverity.ERROR, XmlErrorMessages.message("wrong.closing.tag.name"))
+      .newFix(new RemoveExtraClosingTagIntentionAction()).registerFix()
+      .newFix(renameEndAction).registerFix()
+      .newFix(renameStartAction).registerFix()
+      .create();
   }
 
   @Nullable
