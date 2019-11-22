@@ -1182,15 +1182,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return textEditor == null ? null : textEditor.getEditor();
   }
 
-  /**
-   * Unlike {@link #openTextEditor(OpenFileDescriptor, boolean)}
-   * do not check for injected editor because it can be ridiculously expensive thing to in EDT in e.g. CLion.
-   */
-  @Override
-  public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    doOpenTextEditor(descriptor, focusEditor);
-  }
-
   @Nullable
   private TextEditor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     Pair<List<FileEditor>, FileEditor> editorsWithSelected = openEditorImpl(descriptor, focusEditor);

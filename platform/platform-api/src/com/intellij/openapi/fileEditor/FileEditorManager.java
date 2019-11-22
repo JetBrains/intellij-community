@@ -62,10 +62,9 @@ public abstract class FileEditorManager {
   public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
-   * Same as {@link #openTextEditor(OpenFileDescriptor, boolean)}
-   * but potentially can be faster thanks to not checking for injected editor at the specified offset.
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @deprecated use {@link #openTextEditor(OpenFileDescriptor, boolean)}
    */
+  @Deprecated
   public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     openTextEditor(descriptor, focusEditor);
   }
