@@ -54,8 +54,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   private final DependenciesPanel.DependencyPanelSettings mySettings = new DependenciesPanel.DependencyPanelSettings();
   public static final String DEFAULT_PACKAGE_ABBREVIATION = AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
 
-
-  public CyclicDependenciesPanel(Project project, final CyclicDependenciesBuilder builder) {
+  public CyclicDependenciesPanel(@NotNull Project project, @NotNull CyclicDependenciesBuilder builder) {
     super(new BorderLayout());
     myDependencies = builder.getCyclicDependencies();
     myBuilder = builder;

@@ -128,25 +128,23 @@ class ImageSvgPreCompiler {
 
     private fun mainImpl(args: Array<String>) {
       println("Pre-building SVG images...")
-      println("Usage: <tool> tasks_file product_icons*")
-      println("")
-      println("tasks_file: list of paths, every path on a new line: {<input dir>\n<output dir>\n}+")
-      println("")
+      if (args.isEmpty()) {
+        println("Usage: <tool> tasks_file product_icons*")
+        println("")
+        println("tasks_file: list of paths, every path on a new line: {<input dir>\\n<output dir>\\n}+")
+        println("")
+        exitProcess(1)
+      }
 
       System.setProperty("java.awt.headless", "true")
 
       val argsFile = args.firstOrNull() ?: error("only one parameter is supported")
-      val requests = File(argsFile).readLines().chunked(2).mapNotNull { block ->
+      val requests = File(argsFile).readLines().chunked(2).map { block ->
         if (block.size != 2) error("Invalid args format. Two paths were expected but was: $block")
 
         val (from, to) = block
         val fromFile = Paths.get(from)
         val toFile = Paths.get(to)
-
-        if (!fromFile.exists()) {
-          println("WARN: FROM path: $fromFile does not exist")
-          return@mapNotNull null
-        }
 
         Request(from = fromFile, to = toFile)
       }.toList()

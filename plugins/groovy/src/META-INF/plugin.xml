@@ -51,9 +51,6 @@
                     interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
     <extensionPoint name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport"/>
 
-    <!--suppress DeprecatedClassUsageInspection -->
-    <extensionPoint name="callExpressionTypeCalculator"
-                    interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
     <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator"/>
     </extensionPoint>
@@ -177,8 +174,6 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
-    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" order="last"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculator" order="last"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression" order="last"
@@ -311,7 +306,7 @@
                  description="Whether to skip substitutor computation if return type doesn't depend on it"/>
     <registryKey key="groovy.assert.element.kind.in.resolve" defaultValue="true"
                  description="Whether to throw error if the element is unexpected in resolve processor"/>
-    <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
+    <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="false"
                  description="Allows to collect method usages for more precise type inference"/>
 
 

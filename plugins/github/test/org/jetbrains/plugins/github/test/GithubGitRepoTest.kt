@@ -39,6 +39,7 @@ abstract class GithubGitRepoTest : GithubTest() {
       override fun saveAuthData() {}
       override fun forgetPassword() {}
       override fun wasCancelled() = false
+      override fun wasRequested(): Boolean = true
     })
   }
 

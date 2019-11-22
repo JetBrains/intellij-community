@@ -23,15 +23,18 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -45,17 +48,16 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
-  /**
-   * @deprecated use {@link #getCreationTrace()}
-   */
-  @Deprecated
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
+
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
@@ -84,6 +86,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
+
   // default project constructor
   ProjectImpl() {
     super(ApplicationManager.getApplication());
@@ -99,11 +102,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     myLight = false;
   }
 
-
-
   @Override
   public boolean isDisposed() {
     return super.isDisposed() || temporarilyDisposed;
+  }
+
+  @Override
+  public boolean isDisposedOrDisposeInProgress() {
+    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
   }
 
   @Override
@@ -225,22 +231,65 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  public void registerComponents() {
+  public final void registerComponents() {
     String activityNamePrefix = activityNamePrefix();
-    Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
+    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
     registerComponents(PluginManagerCore.getLoadedPlugins());
     if (activity != null) {
-      activity.end();
+      activity = activity.endAndStart("projectComponentRegistered");
     }
 
-    Application app = ApplicationManager.getApplication();
-    app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    ProjectServiceContainerCustomizer.getEp().processWithPluginDescriptor((customizer, pluginDescriptor) -> {
+      String id = pluginDescriptor.getPluginId().getIdString();
+      if (!(id.equals("com.intellij.treeProjectModel") ||
+            (ApplicationManager.getApplication().isUnitTestMode() && id.equals(PluginManagerCore.CORE_PLUGIN_ID)))) {
+        LOG.error("Plugin " + pluginDescriptor + " is not approved to add ProjectServiceContainerCustomizer");
+      }
+
+      try {
+        customizer.serviceContainerInitialized(this);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    });
+
+    if (activity != null) {
+      activity.end();
+    }
   }
 
   public void init(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
+
+    // before components
+    //noinspection TestOnlyProblems
+    if (!isDefault() && !isLight()) {
+      Activity activity = StartUpMeasurer.startActivity("project services preloading");
+      CompletableFuture<?> future = preloadServices(PluginManagerCore.getLoadedPlugins())
+        .whenComplete((o, throwable) -> {
+          if (throwable != null) {
+            LOG.error(throwable);
+          }
+          activity.end();
+        });
+
+      if (SystemInfo.isWindows && System.getenv("TEAMCITY_VERSION") != null) {
+        try {
+          future.get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
     createComponents(indicator);
+
     if (indicator != null && !application.isHeadlessEnvironment()) {
       distributeProgress(indicator);
     }
@@ -298,6 +347,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
+    setDisposeInProgress();
+
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
@@ -329,10 +380,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project" +
-           (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + (myComponentStore.isComputed() ? getPresentableUrl() : "<no component store>") + "'") +
-           " " + myName;
+    return "Project (name=" + myName + ", containerState=" + myContainerState.name() +
+           ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
+           (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
 
   @TestOnly
@@ -345,5 +395,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public String activityNamePrefix() {
     return "project ";
+  }
+
+  @ApiStatus.Internal
+  public final void setDisposeInProgress() {
+    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
   }
 }

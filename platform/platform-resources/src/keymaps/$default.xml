@@ -39,6 +39,9 @@
   <action id="EditorEscape">
     <keyboard-shortcut first-keystroke="ESCAPE"/>
   </action>
+  <action id="FocusEditor">
+    <keyboard-shortcut first-keystroke="ESCAPE"/>
+  </action>
   <action id="StepInto">
     <keyboard-shortcut first-keystroke="F7"/>
   </action>

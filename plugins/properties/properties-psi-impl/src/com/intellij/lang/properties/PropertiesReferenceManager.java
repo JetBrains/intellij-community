@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -30,7 +28,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author max
  */
-public class PropertiesReferenceManager {
+public final class PropertiesReferenceManager {
   private final PsiManager myPsiManager;
   private final DumbService myDumbService;
 
@@ -38,9 +36,9 @@ public class PropertiesReferenceManager {
     return ServiceManager.getService(project, PropertiesReferenceManager.class);
   }
 
-  public PropertiesReferenceManager(PsiManager psiManager, DumbService dumbService) {
-    myPsiManager = psiManager;
-    myDumbService = dumbService;
+  public PropertiesReferenceManager(@NotNull Project project) {
+    myPsiManager = PsiManager.getInstance(project);
+    myDumbService = DumbService.getInstance(project);
   }
 
   @NotNull

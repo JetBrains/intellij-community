@@ -48,9 +48,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
   }
 
-  public InjectedLanguageManagerImpl(Project project, DumbService dumbService) {
+  public InjectedLanguageManagerImpl(Project project) {
     myProject = project;
-    myDumbService = dumbService;
+    myDumbService = DumbService.getInstance(myProject);
     myDocManager = PsiDocumentManager.getInstance(project);
 
     MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
@@ -65,7 +65,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }, false, this);
 
-    LanguageInjector.EXTENSION_POINT_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<LanguageInjector>() {
+    LanguageInjector.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjector>() {
       @Override
       public void extensionAdded(@NotNull LanguageInjector extension, @NotNull PluginDescriptor pluginDescriptor) {
         clearInjectorCache();
@@ -75,7 +75,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       public void extensionRemoved(@NotNull LanguageInjector extension, @NotNull PluginDescriptor pluginDescriptor) {
         clearInjectorCache();
       }
-    }, false, this);
+    }, this);
   }
 
   PsiDocumentManager getDocManager() {

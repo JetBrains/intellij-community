@@ -41,7 +41,7 @@ import java.io.IOException;
 
 /**
  * Engine to create SDK for tests.
- * See {@link #createTempSdk(com.intellij.openapi.vfs.VirtualFile, SdkCreationType, com.intellij.openapi.module.Module)}
+ * See {@link #createTempSdk(VirtualFile, SdkCreationType, Module)}
  *
  * @author Ilya.Kazakevich
  */
@@ -112,7 +112,7 @@ public final class PySdkTools {
 
     modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
 
-    for (final String path : PythonSdkType.getSysPathsFromScript(sdk.getHomePath())) {
+    for (final String path : PythonSdkType.getSysPathsFromScript(sdk)) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {

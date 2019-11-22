@@ -9,13 +9,12 @@ import javax.swing.JComponent
 
 @PublishedApi
 @JvmOverloads
-internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
-  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration(), isUseMagic = isUseMagic))
+internal fun createLayoutBuilder(isUseMagic: Boolean = true /* preserved for API compatibility */): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
 
 interface LayoutBuilderImpl {
   val rootRow: Row
-  val topButtonGroup: ButtonGroup?
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)

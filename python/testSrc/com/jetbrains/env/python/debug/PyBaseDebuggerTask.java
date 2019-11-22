@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -101,7 +102,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void resume() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue(currentSession.isSuspended());
+    Assert.assertTrue("Resume called for session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.resume();
@@ -110,7 +111,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void stepOver() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue(currentSession.isSuspended());
+    Assert.assertTrue("Step over called for session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.stepOver(false);
@@ -119,7 +120,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected void stepInto() {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
-    Assert.assertTrue(currentSession.isSuspended());
+    Assert.assertTrue("Step into called for session that is not in suspended state", currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     currentSession.stepInto();
@@ -338,6 +339,39 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
         }
       }
     }
+  }
+
+  protected static XBreakpoint addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
+    return XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
+  }
+
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
+                                          boolean notifyOnTerminate,
+                                          boolean notifyOnFirst,
+                                          boolean ignoreLibraries,
+                                          @Nullable String condition,
+                                          @Nullable String logExpression) {
+    XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
+    XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
+
+    PyExceptionBreakpointProperties properties = new PyExceptionBreakpointProperties("BaseException");
+    properties.setNotifyOnTerminate(notifyOnTerminate);
+    properties.setNotifyOnlyOnFirst(notifyOnFirst);
+    properties.setIgnoreLibraries(ignoreLibraries);
+    XBreakpoint exceptionBreakpoint = addExceptionBreakpoint(fixture, properties);
+    if (condition != null) {
+      exceptionBreakpoint.setCondition(condition);
+    }
+    if (logExpression != null) {
+      exceptionBreakpoint.setLogExpression(logExpression);
+    }
+  }
+
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
+                                          boolean notifyOnTerminate,
+                                          boolean notifyOnFirst,
+                                          boolean ignoreLibraries) {
+    createExceptionBreak(fixture, notifyOnTerminate, notifyOnFirst, ignoreLibraries, null, null);
   }
 
   public String getRunningThread() {

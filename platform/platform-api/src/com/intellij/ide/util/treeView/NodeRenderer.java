@@ -26,7 +26,7 @@ import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
   protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
-    if (!StartupUiUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus && icon != null) {
+    if (icon != null && !StartupUiUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus) {
       return IconLoader.getDarkIcon(icon, true);
     }
     return icon;
@@ -37,7 +37,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     Object node = TreeUtil.getUserObject(value);
 
     if (node instanceof NodeDescriptor) {
-      NodeDescriptor descriptor = (NodeDescriptor)node;
+      NodeDescriptor<?> descriptor = (NodeDescriptor<?>)node;
       // TODO: use this color somewhere
       Color color = descriptor.getColor();
       setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
@@ -47,7 +47,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
     if (p0 instanceof PresentationData) {
       PresentationData presentation = (PresentationData)p0;
-      Color color = node instanceof NodeDescriptor ? ((NodeDescriptor)node).getColor() : null;
+      Color color = node instanceof NodeDescriptor ? ((NodeDescriptor<?>)node).getColor() : null;
       setIcon(fixIconIfNeeded(presentation.getIcon(false), selected, hasFocus));
 
       final List<PresentableNodeDescriptor.ColoredFragment> coloredText = presentation.getColoredText();
@@ -111,7 +111,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
   @Nullable
   protected ItemPresentation getPresentation(Object node) {
-    return node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor)node).getPresentation() :
+    return node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor<?>)node).getPresentation() :
            node instanceof NavigationItem ? ((NavigationItem)node).getPresentation() :
            null;
   }

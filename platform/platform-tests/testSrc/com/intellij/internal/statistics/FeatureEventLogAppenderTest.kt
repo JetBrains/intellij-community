@@ -30,7 +30,7 @@ class FeatureEventLogAppenderTest {
 
   @Test
   fun `test no files`() {
-    doTest(newArrayList(), newArrayList(), -1, false)
+    doTest(ArrayList(), ArrayList(), -1, false)
   }
 
   @Test

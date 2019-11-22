@@ -88,14 +88,23 @@ class StateQueue {
     }
 
     if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
-      MultiMap<Object, DfaMemoryStateImpl> groups = MultiMap.create();
-      for (DfaMemoryStateImpl memoryState : memoryStates) {
-        groups.putValue(memoryState.getSuperficialKey(), memoryState);
-      }
+      while (true) {
+        int beforeSize = memoryStates.size();
+        MultiMap<Object, DfaMemoryStateImpl> groups = MultiMap.create();
+        for (DfaMemoryStateImpl memoryState : memoryStates) {
+          groups.putValue(memoryState.getSuperficialKey(), memoryState);
+        }
 
-      memoryStates = new ArrayList<>();
-      for (Map.Entry<Object, Collection<DfaMemoryStateImpl>> entry : groups.entrySet()) {
-        memoryStates.addAll(mergeGroup((List<DfaMemoryStateImpl>)entry.getValue()));
+        memoryStates = new ArrayList<>();
+        for (Map.Entry<Object, Collection<DfaMemoryStateImpl>> entry : groups.entrySet()) {
+          memoryStates.addAll(mergeGroup((List<DfaMemoryStateImpl>)entry.getValue()));
+        }
+        if (memoryStates.size() == beforeSize) break;
+        beforeSize = memoryStates.size();
+        if (beforeSize == 1) break;
+        // If some states were merged it's possible that they could be further squashed
+        memoryStates = squash(memoryStates);
+        if (memoryStates.size() == beforeSize || memoryStates.size() == 1) break;
       }
     }
 

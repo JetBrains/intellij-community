@@ -3,10 +3,9 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.json.JsonLanguage;
-import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
@@ -30,13 +29,22 @@ public class JsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private void doTest(@Language("JSON") String schema, @Language("JSON") String text, boolean shouldHaveInjection) throws Exception {
+  private void doTest(@Language("JSON") String schema, @Language("JSON") String text, boolean shouldHaveInjection) {
     final PsiFile file = configureInitially(schema, text, "json");
-    PsiElement injectedElement = InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(file, getEditor().getCaretModel().getOffset());
-    assertSame(shouldHaveInjection, injectedElement != null);
+    checkInjection(shouldHaveInjection, file, JsonFile.class);
   }
 
-  public void testXml() throws Exception {
+  public static void checkInjection(boolean shouldHaveInjection, PsiFile file, Class<? extends PsiFile> ownLanguageFileClass) {
+    assertNotNull(file);
+    if (shouldHaveInjection) {
+      assertTrue(file.getClass().getSimpleName().startsWith("XmlFile"));
+    }
+    else {
+      assertInstanceOf(file, ownLanguageFileClass);
+    }
+  }
+
+  public void testXml() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"X\": {\n" +
@@ -48,7 +56,7 @@ public class JsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
                 "}", true);
   }
 
-  public void testNoInjection() throws Exception {
+  public void testNoInjection() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"X\": {\n" +
@@ -59,7 +67,7 @@ public class JsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
                 "}", false);
   }
 
-  public void testOneOfSchema() throws Exception {
+  public void testOneOfSchema() {
     @Language("JSON") String schema = "{\n" +
                                       "  \"additionalProperties\": {\n" +
                                       "    \"oneOf\": [\n" +

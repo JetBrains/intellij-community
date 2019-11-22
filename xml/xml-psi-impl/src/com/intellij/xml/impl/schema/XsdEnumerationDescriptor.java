@@ -130,7 +130,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   @Override
   public boolean isEnumerated(@Nullable XmlElement context) {
-    return processEnumeration(context, PairProcessor.TRUE, false);
+    return processEnumeration(context, PairProcessor.alwaysTrue(), false);
   }
 
   @Override

@@ -14,27 +14,17 @@ import java.nio.file.Paths;
 abstract public class BaseEventLogWhitelistPersistence {
   public static final String FUS_WHITELIST_PATH = "event-log-whitelist";
 
-  @NotNull
-  protected final String myRecorderId;
-  @NotNull
-  protected final String myWhitelistFileName;
-
-  protected BaseEventLogWhitelistPersistence(@NotNull String id, @NotNull String whitelistFileName) {
-    myRecorderId = id;
-    myWhitelistFileName = whitelistFileName;
-  }
+  @Nullable
+  public abstract String getCachedWhitelist();
 
   @NotNull
-  public File getWhitelistFile() throws IOException {
+  public static File getDefaultWhitelistFile(@NotNull String recorderId, @NotNull String whitelistFileName) throws IOException {
     final Path configPath = Paths.get(PathManager.getConfigPath());
     final Path whitelistDir = configPath
       .resolve(FUS_WHITELIST_PATH)
-      .resolve(StringUtil.toLowerCase(myRecorderId));
+      .resolve(StringUtil.toLowerCase(recorderId));
     return whitelistDir.
-      resolve(myWhitelistFileName).
+      resolve(whitelistFileName).
       toFile().getCanonicalFile();
   }
-
-  @Nullable
-  public abstract String getCachedWhitelist();
 }

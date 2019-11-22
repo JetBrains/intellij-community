@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -17,12 +16,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STRING_COMPARISON_METHODS = CallMatcher.exactInstanceCall(
     CommonClassNames.JAVA_LANG_STRING, "equals", "startsWith", "endsWith", "contains", "indexOf", "lastIndexOf");
 
   private static final CallMatcher CASE_PRESERVING_METHODS = CallMatcher.exactInstanceCall(
-    CommonClassNames.JAVA_LANG_STRING, "trim", "repeat", "substring");
+    CommonClassNames.JAVA_LANG_STRING, "trim", "repeat", "substring", "strip");
 
   private static final CallMatcher TO_LOWER_CASE = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "toLowerCase");
   private static final CallMatcher TO_UPPER_CASE = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "toUpperCase");
@@ -68,7 +69,7 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
   static StringCase fromExpression(@Nullable PsiExpression expression, int energy) {
     if (expression == null || energy <= 0) return StringCase.UNSURE;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    String str = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(expression), String.class);
+    String str = tryCast(ExpressionUtils.computeConstantExpression(expression), String.class);
     if (str != null) {
       return fromConstant(str);
     }
@@ -112,9 +113,11 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
 
   @Nullable
   private static PsiExpression resolveDefinition(@NotNull PsiExpression expression) {
-    PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(expression);
+    PsiReferenceExpression referenceExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
+    if (referenceExpression == null) return null;
+    PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
     if (variable == null) return null;
-    PsiCodeBlock block = ObjectUtils.tryCast(PsiUtil.getVariableCodeBlock(variable, null), PsiCodeBlock.class);
+    PsiCodeBlock block = tryCast(PsiUtil.getVariableCodeBlock(variable, null), PsiCodeBlock.class);
     if (block == null) return null;
     PsiElement[] defs = DefUseUtil.getDefs(block, variable, expression);
     if (defs.length != 1) return null;

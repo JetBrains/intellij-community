@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlScalarType extends YamlMetaType {
 
   protected YamlScalarType(@NotNull String typeName) {

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +37,7 @@ public class FileWatchRequestModifier implements Runnable {
     final List<VcsDirectoryMapping> deleted = new ArrayList<>(myDirectoryMappingWatches.keySet());
     deleted.removeAll(copy);
 
-    final Map<String, VcsDirectoryMapping> toAdd = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+    final Map<String, VcsDirectoryMapping> toAdd = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
     for (VcsDirectoryMapping mapping : added) {
       if (!mapping.isDefaultMapping()) {
         toAdd.put(FileUtil.toCanonicalPath(mapping.getDirectory()), mapping);

@@ -93,7 +93,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
     private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable LocalQuickFix quickFix) {
       final PyParameterList parameterList = function.getParameterList();
       final String message = PyBundle.message(PyNames.NEW.equals(function.getName()) ? "INSP.new.incompatible.to.init"
-                                                                                     : "INSP.init.incompatible.to.new");
+                                                                                        : "INSP.init.incompatible.to.new");
       if (quickFix != null) {
         registerProblem(parameterList, message, quickFix);
       }

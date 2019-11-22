@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
 import com.google.common.cache.Cache
@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import javax.swing.JComponent
 
 class PyStubPackagesAdvertiser : PyInspection() {
@@ -91,7 +91,9 @@ class PyStubPackagesAdvertiser : PyInspection() {
       if (qName == null) return
 
       if (ref != null &&
-          ref.getReference(resolveContext).multiResolve(false).asSequence().mapNotNull { it.element }.any { isInStubPackage(it) }) {
+          ref.getReference(resolveContext).multiResolve(false).asSequence().mapNotNull { it.element }.any {
+            isInStubPackage(it)
+          }) {
         return
       }
 
@@ -103,7 +105,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
                   sources: Set<String>,
                   problemsHolder: ProblemsHolder) {
     val module = ModuleUtilCore.findModuleForFile(file) ?: return
-    val sdk = PythonSdkType.findPythonSdk(module) ?: return
+    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
 
     val installedPackages = PyPackageManager.getInstance(sdk).packages ?: emptyList()
     if (installedPackages.isEmpty()) return
@@ -128,7 +130,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
     val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(forcedSourcesToProcess(sources), cache)
 
     val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
-      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad, FORCED, installedPackages),
+      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad,
+                                              FORCED, installedPackages),
       availablePackages
     )
 
@@ -160,7 +163,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
     val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(checkedSourcesToProcess(sources), cache)
 
     val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
-      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad, CHECKED, installedPackages),
+      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad,
+                                              CHECKED, installedPackages),
       availablePackages
     )
 
@@ -295,8 +299,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
       override fun finished(exceptions: MutableList<ExecutionException>?) {
         val status = ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java)
 
-        val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection
-          .findIncompatibleRuntimeToStubPackages(sdk) { it.name in stubPkgNamesToInstall }
+        val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection.findIncompatibleRuntimeToStubPackages(
+          sdk) { it.name in stubPkgNamesToInstall }
           .map { it.second }
 
         if (stubPkgsToUninstall.isNotEmpty()) {
@@ -345,7 +349,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
     val reqs = mutableListOf<PyRequirement>()
     val args = mutableListOf("--no-deps")
 
-    (cached.asSequence().filterNot { ignoredPackages.contains(it.name.removeSuffix(STUBS_SUFFIX)) } + loaded.values.asSequence().flatten())
+    (cached.asSequence().filterNot { ignoredPackages.contains(it.name.removeSuffix(
+      STUBS_SUFFIX)) } + loaded.values.asSequence().flatten())
       .forEach {
         val version = it.latestVersion
         val url = it.repoUrl

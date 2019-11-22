@@ -75,6 +75,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.colorBlindness = value
     }
 
+  var useContrastScrollbars: Boolean
+    get() = state.useContrastScrollBars
+    set(value) {
+      state.useContrastScrollBars = value
+    }
+
   var hideToolStripes: Boolean
     get() = state.hideToolStripes
     set(value) {
@@ -406,19 +412,26 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
     @Suppress("ObjectPropertyName")
     @Volatile
-    private var _instance: UISettings? = null
+    private var cachedInstance: UISettings? = null
 
     @JvmStatic
     val instance: UISettings
-      get() = instanceOrNull!!
+      get() {
+        var result = cachedInstance
+        if (result == null) {
+          LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
+          result = ApplicationManager.getApplication().getService(UISettings::class.java)!!
+          cachedInstance = result
+        }
+        return result
+      }
 
     @JvmStatic
     val instanceOrNull: UISettings?
       get() {
-        var result = _instance
+        val result = cachedInstance
         if (result == null && LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete) {
-          result = ServiceManager.getService(UISettings::class.java)
-          _instance = result
+          return instance
         }
         return result
       }
@@ -448,26 +461,18 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
      */
     @JvmStatic
     fun setupAntialiasing(g: Graphics) {
-      val g2d = g as Graphics2D
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
+      g as Graphics2D
+      g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
 
-      val application = ApplicationManager.getApplication()
-      if (application == null) {
-        // We cannot use services while Application has not been loaded yet
-        // So let's apply the default hints.
+      if (LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete && ApplicationManager.getApplication() == null) {
+        // cannot use services while Application has not been loaded yet, so let's apply the default hints
         GraphicsUtil.applyRenderingHints(g)
         return
       }
 
-      val uiSettings = ServiceManager.getService(UISettings::class.java)
-      if (uiSettings != null) {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF)
-      }
+      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
 
-      setupFractionalMetrics(g2d)
+      setupFractionalMetrics(g)
     }
 
     /**
@@ -539,7 +544,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
-    if (this === _instance) {
+    if (this === cachedInstance) {
       myTreeDispatcher.multicaster.uiSettingsChanged(this)
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }

@@ -44,16 +44,6 @@ public final class PythonIcons {
     /** 16x16 */ public static final Icon Function = load("/icons/com/jetbrains/python/function.svg");
     /** 16x16 */ public static final Icon IpythonNotebook = load("/icons/com/jetbrains/python/IpythonNotebook.svg");
     /** 16x16 */ public static final Icon Jython = load("/icons/com/jetbrains/python/jython.svg");
-
-    public final static class Nodes {
-      /** 16x16 */ public static final Icon Cyan_dot = load("/icons/com/jetbrains/python/nodes/cyan-dot.svg");
-      /** 16x16 */ public static final Icon Lock = load("/icons/com/jetbrains/python/nodes/lock.svg");
-      /** 16x16 */ public static final Icon Red_inv_triangle = load("/icons/com/jetbrains/python/nodes/red-inv-triangle.svg");
-
-    }
-    /** 16x16 */ public static final Icon PropertyDeleter = load("/icons/com/jetbrains/python/propertyDeleter.svg");
-    /** 16x16 */ public static final Icon PropertyGetter = load("/icons/com/jetbrains/python/propertyGetter.svg");
-    /** 16x16 */ public static final Icon PropertySetter = load("/icons/com/jetbrains/python/propertySetter.svg");
     /** 16x16 */ public static final Icon Pypy = load("/icons/com/jetbrains/python/pypy.svg");
     /** 16x16 */ public static final Icon Python = load("/icons/com/jetbrains/python/python.svg");
     /** 16x16 */ public static final Icon PythonClosed = load("/icons/com/jetbrains/python/pythonClosed.svg");

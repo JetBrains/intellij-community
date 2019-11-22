@@ -7,7 +7,7 @@ import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
     PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
   }

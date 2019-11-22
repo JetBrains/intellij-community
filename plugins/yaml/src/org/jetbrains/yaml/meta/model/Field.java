@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("UnusedReturnValue")
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class Field {
 
   public enum Relation {

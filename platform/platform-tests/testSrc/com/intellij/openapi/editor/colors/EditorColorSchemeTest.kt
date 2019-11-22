@@ -25,7 +25,8 @@ class EditorColorSchemeTest {
   @Rule
   val fsRule = InMemoryFsRule()
 
-  @Test fun loadSchemes() {
+  @Test
+  fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
     val schemeData = """
     <scheme name="Foo" version="142" parent_scheme="Default">
@@ -60,6 +61,8 @@ class EditorColorSchemeTest {
       it.reload()
     }
 
-    assertThat(manager.schemeManager.allSchemes.map { it.name }).isEqualTo(schemeNamesBeforeReload)
+    assertThat(manager.schemeManager.allSchemes
+      .map { it.name })
+      .isEqualTo(schemeNamesBeforeReload)
   }
 }

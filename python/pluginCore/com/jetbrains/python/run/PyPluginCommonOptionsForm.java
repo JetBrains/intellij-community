@@ -22,10 +22,7 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -115,7 +112,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
       @Override
       public void actionPerformed(ActionEvent e) {
         for (Consumer<Boolean> f : myRemoteInterpreterModeListeners) {
-          f.accept(PySdkUtil.isRemote(getSelectedSdk()));
+          f.accept(PythonSdkUtil.isRemote(getSelectedSdk()));
         }
       }
     });
@@ -124,7 +121,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private void updateControls() {
     myModuleComboBox.setEnabled(myUseModuleSdkRadioButton.isSelected());
     myInterpreterComboBox.setEnabled(myUseSpecifiedSdkRadioButton.isSelected());
-    myPathMappingsComponent.setVisible(PySdkUtil.isRemote(getSelectedSdk()));
+    myPathMappingsComponent.setVisible(PythonSdkUtil.isRemote(getSelectedSdk()));
   }
 
   @Override
@@ -182,7 +179,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   public void setSdkHome(String sdkHome) {
     List<Sdk> sdkList = new ArrayList<>();
     sdkList.add(null);
-    final List<Sdk> allSdks = PythonSdkType.getAllSdks();
+    final List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
     Collections.sort(allSdks, new PreferredSdkComparator());
     Sdk selection = null;
     for (Sdk sdk : allSdks) {

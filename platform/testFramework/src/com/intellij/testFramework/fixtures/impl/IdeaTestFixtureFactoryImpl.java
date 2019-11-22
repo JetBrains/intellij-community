@@ -1,37 +1,34 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author mike
  */
 public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
-  protected final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> myFixtureBuilderProviders =
-    new HashMap<>();
+  protected final Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> myFixtureBuilderProviders = new THashMap<>();
 
   public IdeaTestFixtureFactoryImpl() {
     registerFixtureBuilder(EmptyModuleFixtureBuilder.class, MyEmptyModuleFixtureBuilderImpl.class);
   }
 
   @Override
-  public final <T extends ModuleFixtureBuilder> void registerFixtureBuilder(@NotNull Class<T> aClass, @NotNull Class<? extends T> implClass) {
+  public final <T extends ModuleFixtureBuilder<?>> void registerFixtureBuilder(@NotNull Class<T> aClass, @NotNull Class<? extends T> implClass) {
     myFixtureBuilderProviders.put(aClass, implClass);
   }
 
   @Override
-  public void registerFixtureBuilder(@NotNull Class<? extends ModuleFixtureBuilder> aClass, @NotNull String implClassName) {
+  public void registerFixtureBuilder(@NotNull Class<? extends ModuleFixtureBuilder<?>> aClass, @NotNull String implClassName) {
     try {
       Class implClass = Class.forName(implClassName);
       Assert.assertTrue(aClass.isAssignableFrom(implClass));
@@ -88,7 +85,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   }
 
   public static class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {
-    public MyEmptyModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
+    public MyEmptyModuleFixtureBuilderImpl(@NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
       super(testFixtureBuilder);
     }
 

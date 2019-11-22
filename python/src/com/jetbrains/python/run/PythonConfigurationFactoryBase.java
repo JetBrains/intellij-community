@@ -19,7 +19,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,6 +32,6 @@ public abstract class PythonConfigurationFactoryBase extends ConfigurationFactor
 
   @Override
   public boolean isApplicable(@NotNull Project project) {
-    return PlatformUtils.isPyCharm() || PythonSdkType.hasValidSdk();
+    return PlatformUtils.isPyCharm() || PythonSdkUtil.hasValidSdk();
   }
 }

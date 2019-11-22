@@ -24,7 +24,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.CredentialsType
 import com.intellij.remote.ext.CredentialsCase
-import com.jetbrains.python.remote.*
+import com.jetbrains.python.remote.PyRemotePathMapper
+import com.jetbrains.python.remote.PyRemoteProcessHandlerBase
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider
 
 interface PythonConsoleRemoteProcessCreator<T> {
   val credentialsType: CredentialsType<T>

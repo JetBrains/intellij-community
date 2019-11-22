@@ -46,7 +46,7 @@ public class CyclicDependenciesBuilder{
 
   private String myRootNodeNameInUsageView;
 
-  public CyclicDependenciesBuilder(@NotNull Project project, final AnalysisScope scope) {
+  public CyclicDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     myProject = project;
     myScope = scope;
     myForwardBuilder = new ForwardDependenciesBuilder(myProject, myScope){
@@ -62,11 +62,12 @@ public class CyclicDependenciesBuilder{
     };
   }
 
-  public String getRootNodeNameInUsageView() {
+  @NotNull
+  private String getRootNodeNameInUsageView() {
     return myRootNodeNameInUsageView;
   }
 
-  public void setRootNodeNameInUsageView(final String rootNodeNameInUsageView) {
+  public void setRootNodeNameInUsageView(@NotNull String rootNodeNameInUsageView) {
     myRootNodeNameInUsageView = rootNodeNameInUsageView;
   }
 
@@ -75,10 +76,12 @@ public class CyclicDependenciesBuilder{
     return myProject;
   }
 
+  @NotNull
   public AnalysisScope getScope() {
     return myScope;
   }
 
+  @NotNull
   public DependenciesBuilder getForwardBuilder() {
     return myForwardBuilder;
   }
@@ -95,7 +98,7 @@ public class CyclicDependenciesBuilder{
               myPackages.put(psiJavaFile.getPackageName(), aPackage);
             }
           }
-          final Set<PsiPackage> packs = getPackageHierarhy(psiJavaFile.getPackageName());
+          final Set<PsiPackage> packs = getPackageHierarchy(psiJavaFile.getPackageName());
           final ForwardDependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), new AnalysisScope(psiJavaFile));
           builder.setTotalFileCount(getScope().getFileCount());
           builder.setInitialFileCount(++myFileCount);
@@ -103,11 +106,7 @@ public class CyclicDependenciesBuilder{
           final Set<PsiFile> psiFiles = builder.getDependencies().get(psiJavaFile);
           if (psiFiles == null) return;
           for (PsiPackage pack : packs) {
-            Set<PsiPackage> pack2Packages = myPackageDependencies.get(pack);
-            if (pack2Packages == null) {
-              pack2Packages = new HashSet<>();
-              myPackageDependencies.put(pack, pack2Packages);
-            }
+            Set<PsiPackage> pack2Packages = myPackageDependencies.computeIfAbsent(pack, __ -> new HashSet<>());
             for (PsiFile psiFile : psiFiles) {
               if (!(psiFile instanceof PsiJavaFile) ||
                   !projectFileIndex.isInSourceContent(psiFile.getVirtualFile()) ||
@@ -210,11 +209,7 @@ public class CyclicDependenciesBuilder{
     }
     final HashMap<PsiPackage, Set<List<PsiPackage>>> result = new HashMap<>();
     for (PsiPackage psiPackage : packages) {
-      Set<List<PsiPackage>> paths2Pack = result.get(psiPackage);
-      if (paths2Pack == null) {
-        paths2Pack = new HashSet<>();
-        result.put(psiPackage, paths2Pack);
-      }
+      Set<List<PsiPackage>> paths2Pack = result.computeIfAbsent(psiPackage, __ -> new HashSet<>());
       paths2Pack.addAll(GraphAlgorithms.getInstance().findCycles(myGraph, psiPackage));
     }
     return result;
@@ -258,7 +253,8 @@ public class CyclicDependenciesBuilder{
     }));
   }
 
-  public Set<PsiPackage> getPackageHierarhy(String packageName) {
+  @NotNull
+  private Set<PsiPackage> getPackageHierarchy(@NotNull String packageName) {
     final Set<PsiPackage> result = new HashSet<>();
     PsiPackage psiPackage = findPackage(packageName);
     if (psiPackage != null) {
@@ -267,7 +263,7 @@ public class CyclicDependenciesBuilder{
     else {
       return result;
     }
-    while (psiPackage.getParentPackage() != null && psiPackage.getParentPackage().getQualifiedName().length() != 0) {
+    while (psiPackage.getParentPackage() != null && !psiPackage.getParentPackage().getQualifiedName().isEmpty()) {
       final PsiPackage aPackage = findPackage(psiPackage.getParentPackage().getQualifiedName());
       if (aPackage == null) {
         break;
@@ -278,8 +274,7 @@ public class CyclicDependenciesBuilder{
     return result;
   }
 
-  private PsiPackage findPackage(String packName) {
-    final PsiPackage psiPackage = getAllScopePackages().get(packName);
-    return psiPackage;
+  private PsiPackage findPackage(@NotNull String packName) {
+    return getAllScopePackages().get(packName);
   }
 }

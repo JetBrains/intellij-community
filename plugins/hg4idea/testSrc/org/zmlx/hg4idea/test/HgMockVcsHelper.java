@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +40,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 
 /**
  * Substitutes AbstractVcsHelperImpl for tests, where dialogs need to be tested.
@@ -121,7 +120,7 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   public List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files,
                                            MergeProvider provider,
                                            @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    return emptyList();
+    return ContainerUtil.emptyList();
   }
 
   @Override

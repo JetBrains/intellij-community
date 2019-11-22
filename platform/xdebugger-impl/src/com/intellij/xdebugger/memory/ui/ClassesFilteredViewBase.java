@@ -170,6 +170,10 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     addToCenter(scroll);
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myFilterTextField;
+  }
+
   @NotNull
   protected ClassesTable createClassesTable(MemoryViewManagerState memoryViewManagerState) {
     return new ClassesTable(myProject,this, memoryViewManagerState.isShowWithDiffOnly,

@@ -216,6 +216,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   protected void updateText(boolean isReturn) {
-    myText = isReturn ? PyBundle.message("INTN.specify.return.type.in.annotation") : PyBundle.message("INTN.specify.type.in.annotation");
+    myText = isReturn ? PyBundle.message("INTN.specify.return.type.in.annotation") : PyBundle
+      .message("INTN.specify.type.in.annotation");
   }
 }

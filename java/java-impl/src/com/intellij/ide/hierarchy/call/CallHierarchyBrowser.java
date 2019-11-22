@@ -99,7 +99,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
     if (CALLER_TYPE.equals(typeName)) {
       return new CallerMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
-    else if (CALLEE_TYPE.equals(typeName)) {
+    if (CALLEE_TYPE.equals(typeName)) {
       return new CalleeMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
     else {

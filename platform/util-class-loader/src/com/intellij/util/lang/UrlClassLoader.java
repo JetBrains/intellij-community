@@ -97,7 +97,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public static final class Builder {
-    private List<URL> myURLs = ContainerUtilRt.emptyList();
+    private List<URL> myURLs = Collections.emptyList();
     private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
     private ClassLoader myParent;
     private boolean myLockJars;

@@ -20,12 +20,14 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-@ApiStatus.Experimental
+/**
+ * Implementations of this interface are supposed to create/update run configurations based on information obtained from
+ * external build tool (e.g., Gradle)
+ */
 public interface RunConfigurationImporter {
   ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.runConfigurationImporter");
 

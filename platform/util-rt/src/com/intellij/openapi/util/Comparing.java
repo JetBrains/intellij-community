@@ -148,7 +148,7 @@ public class Comparing {
     return 0;
   }
 
-  public static <T extends Comparable<T>> int compare(@Nullable T o1, @Nullable T o2) {
+  public static <T extends Comparable<? super T>> int compare(@Nullable T o1, @Nullable T o2) {
     if (o1 == o2) return 0;
     if (o1 == null) return -1;
     if (o2 == null) return 1;

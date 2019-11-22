@@ -48,7 +48,7 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @NotNull
   @Override
   public List<EngineInfo> getEngineInfos() {
-    return ContainerUtil.newArrayList(getFactories().keySet());
+    return new ArrayList<>(getFactories().keySet());
   }
 
   @Nullable

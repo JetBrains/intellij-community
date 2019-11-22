@@ -168,8 +168,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           return;
         }
 
-        final UndoManager manager = UndoManager.getInstance(project);
-        if (manager.isUndoInProgress() || manager.isRedoInProgress()) {
+        if (UndoManager.getInstance(project).isUndoOrRedoInProgress()) {
           return;
         }
 

@@ -96,7 +96,7 @@
                           <text resource-bundle="messages/ApplicationBundle" key="label.do.not.indent.children.of"/>
                         </properties>
                       </component>
-                      <component id="d6b64" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInsertNewLineTagNames">
+                      <component id="d6b64" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myInsertNewLineTagNames" custom-create="true">
                         <constraints>
                           <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -106,7 +106,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="47f60" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRemoveNewLineTagNames">
+                      <component id="47f60" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myRemoveNewLineTagNames" custom-create="true">
                         <constraints>
                           <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -116,7 +116,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="655c2" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDoNotAlignChildrenTagNames">
+                      <component id="655c2" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myDoNotAlignChildrenTagNames" custom-create="true">
                         <constraints>
                           <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -126,7 +126,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="c0d93" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInlineElementsTagNames">
+                      <component id="c0d93" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myInlineElementsTagNames" custom-create="true">
                         <constraints>
                           <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -160,7 +160,7 @@
                           <text resource-bundle="messages/ApplicationBundle" key="don.t.break.if.inline.content"/>
                         </properties>
                       </component>
-                      <component id="77303" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myKeepWhiteSpacesTagNames">
+                      <component id="77303" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myKeepWhiteSpacesTagNames" custom-create="true">
                         <constraints>
                           <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>
@@ -170,7 +170,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="c854c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDontBreakIfInlineContent">
+                      <component id="c854c" class="com.intellij.ui.components.fields.ExpandableTextField" binding="myDontBreakIfInlineContent" custom-create="true">
                         <constraints>
                           <grid row="6" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="3" indent="0" use-parent-layout="false">
                             <preferred-size width="100" height="-1"/>

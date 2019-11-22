@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
   @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   public CapturingProcessHandler(@NotNull Process process) {
     this(process, null, "");
+    DeprecatedMethodException.report("Use CapturingProcessHandler(Process, Charset, String) instead");
   }
 
   /**

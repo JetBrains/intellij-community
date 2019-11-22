@@ -27,7 +27,6 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -266,7 +265,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       names.add(var.getName());
     }
     if (expression != null) {
-      ContainerUtil.addAll(names, suggestNames());
+      names.addAll(suggestNames());
     }
 
     myNameField = new NameSuggestionsField(ArrayUtilRt.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);

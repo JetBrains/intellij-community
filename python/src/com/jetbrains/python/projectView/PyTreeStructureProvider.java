@@ -43,6 +43,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,17 +140,17 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
         }
         VirtualFile dirParent = dir.getParent();
 
-        if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
+        if (dirParent != null && dirParent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME)) {
           continue;
         }
 
-        if (dirParent != null && dirParent.getName().equals(PythonSdkType.REMOTE_SOURCES_DIR_NAME)) {
+        if (dirParent != null && dirParent.getName().equals(PythonSdkUtil.REMOTE_SOURCES_DIR_NAME)) {
           continue;
         }
         if (dirParent != null) {
           VirtualFile grandParent = dirParent.getParent();
 
-          if (grandParent != null && grandParent.getName().equals(PythonSdkType.REMOTE_SOURCES_DIR_NAME)) {
+          if (grandParent != null && grandParent.getName().equals(PythonSdkUtil.REMOTE_SOURCES_DIR_NAME)) {
             continue;
           }
         }

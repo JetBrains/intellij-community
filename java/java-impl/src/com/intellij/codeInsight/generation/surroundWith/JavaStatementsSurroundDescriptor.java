@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.NotNull;
 

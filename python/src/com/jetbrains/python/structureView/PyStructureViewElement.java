@@ -13,7 +13,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import icons.PythonIcons;
+import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -274,13 +274,13 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           icon.setIcon(normal_icon, 0);
           Icon overlay = null;
           if (myVisibility == Visibility.PRIVATE || myVisibility == Visibility.PROTECTED) {
-            overlay = PythonIcons.Python.Nodes.Lock;
+            overlay = PythonPsiApiIcons.Nodes.Lock;
           }
           else if (myVisibility == Visibility.PREDEFINED) {
-            overlay = PythonIcons.Python.Nodes.Cyan_dot;
+            overlay = PythonPsiApiIcons.Nodes.Cyan_dot;
           }
           else if (myVisibility == Visibility.INVISIBLE) {
-            overlay = PythonIcons.Python.Nodes.Red_inv_triangle;
+            overlay = PythonPsiApiIcons.Nodes.Red_inv_triangle;
           }
           if (overlay != null) {
             icon.setIcon(overlay, 1);

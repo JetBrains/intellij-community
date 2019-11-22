@@ -16,12 +16,19 @@
 package com.jetbrains.python.remote;
 
 import com.intellij.remote.RemoteSdkAdditionalData;
+import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
  */
-public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PyRemoteSdkSkeletonsPathAware {
+public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<PyRemoteSdkCredentials>, PyRemoteSdkSkeletonsPathAware,
+                                                       PyRemoteSdkAdditionalDataMarker {
   String getVersionString();
 
   void setVersionString(String versionString);
+
+  @Nullable
+  PythonSdkFlavor getFlavor();
 }

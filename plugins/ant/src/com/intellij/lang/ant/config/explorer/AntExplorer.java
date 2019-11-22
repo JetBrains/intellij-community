@@ -364,7 +364,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
       final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getTarget();
       if (target instanceof MetaTarget) {
-        ContainerUtil.addAll(targets, target.getTargetNames());
+        targets.addAll(target.getTargetNames());
       }
       else {
         targets.add(target.getName());

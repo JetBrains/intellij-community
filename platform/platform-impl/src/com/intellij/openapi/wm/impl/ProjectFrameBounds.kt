@@ -44,14 +44,14 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
    */
   fun getFrameInfoInDeviceSpace() = frameInfoHelper.info
 
-  fun getActualFrameInfoInDeviceSpace(frame: IdeFrameImpl, windowManager: WindowManagerImpl): FrameInfo? {
+  fun getActualFrameInfoInDeviceSpace(frame: ProjectFrameHelper, windowManager: WindowManagerImpl): FrameInfo? {
     if (frameInfoHelper.isDirty) {
       updateAndGetModificationCount(frame, windowManager)
     }
     return frameInfoHelper.info
   }
 
-  private fun updateAndGetModificationCount(frame: IdeFrameImpl, windowManager: WindowManagerImpl) {
+  private fun updateAndGetModificationCount(frame: ProjectFrameHelper, windowManager: WindowManagerImpl) {
     frameInfoHelper.updateAndGetModificationCount(frame, pendingBounds, windowManager)
   }
 

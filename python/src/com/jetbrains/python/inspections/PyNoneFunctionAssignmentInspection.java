@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +62,7 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
         if (type instanceof PyNoneType && callee != null) {
           final Condition<PyCallable> ignoredCallable =
             callable -> myTypeEvalContext.getReturnType(callable) != PyNoneType.INSTANCE ||
-                        PySdkUtil.isElementInSkeletons(callable) ||
+                        PythonSdkUtil.isElementInSkeletons(callable) ||
                         callable instanceof PyFunction && hasInheritors((PyFunction)callable);
 
           final List<PyCallable> callables = call.multiResolveCalleeFunction(getResolveContext());

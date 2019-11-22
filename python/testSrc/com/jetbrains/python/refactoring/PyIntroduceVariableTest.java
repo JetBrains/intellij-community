@@ -5,10 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
@@ -287,7 +284,7 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
                                                        "    return quux[42].spam + 'eggs'");
     final PsiElement element = myFixture.getElementAtCaret();
     assertInstanceOf(element, PyFunction.class);
-    final Collection<String> usedNames = PyRefactoringUtil.collectUsedNames(element);
+    final Collection<String> usedNames = PyUtil.collectUsedNames(element);
     assertSameElements(usedNames, "foo", "baz", "quux");
   }
 
@@ -324,6 +321,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   // PY-32827 EA-90746
   public void testInvalidElementAccessAfterPostReformatOfUsageSite() {
     doTestInplace(null);
+  }
+
+  // PY-37555
+  public void testArgumentToUnnamedParameter() {
+    doTestSuggestions(PyStringLiteralExpression.class, "value");
   }
 
   @Override

@@ -105,6 +105,7 @@ public class DataPack extends DataPackBase {
 
   public static class ErrorDataPack extends DataPack {
     @NotNull private final Throwable myError;
+
     public ErrorDataPack(@NotNull Throwable error) {
       super(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY), EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
       myError = error;

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,7 +62,7 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
       final String conditionalText = "if " + defName + " is None:" +
                                      "\n\t" + defName + " = " + defaultValue.getText();
       final PyIfStatement conditionalAssignment = generator.createFromText(languageLevel, PyIfStatement.class, conditionalText);
-      PyUtil.addElementToStatementList(conditionalAssignment, function.getStatementList(), true);
+      PyRefactoringUtil.addElementToStatementList(conditionalAssignment, function.getStatementList(), true);
     }
   }
 }

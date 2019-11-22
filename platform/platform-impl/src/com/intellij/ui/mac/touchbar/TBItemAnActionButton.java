@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
@@ -31,8 +30,6 @@ class TBItemAnActionButton extends TBItemButton {
   public static final int SHOWMODE_TEXT_ONLY = 1;
   public static final int SHOWMODE_IMAGE_TEXT = 2;
   public static final int SHOWMODE_IMAGE_ONLY_IF_PRESENTED = 3;
-
-  private static final Logger LOG = Logger.getInstance(TBItemAnActionButton.class);
 
   private @NotNull AnAction myAnAction;
   private @Nullable String myActionId;
@@ -141,8 +138,7 @@ class TBItemAnActionButton extends TBItemButton {
 
     boolean isSelected = false;
     if (myAnAction instanceof Toggleable) {
-      final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
-      isSelected = selectedProp == Boolean.TRUE;
+      isSelected = Toggleable.isSelected(presentation);
       if (myNativePeer != ID.NIL && myActionId != null && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }

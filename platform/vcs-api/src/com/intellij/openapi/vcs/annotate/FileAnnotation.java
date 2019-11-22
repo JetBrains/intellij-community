@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -228,7 +229,9 @@ public abstract class FileAnnotation {
     myReloader = reloader;
   }
 
-
+  /**
+   * @deprecated does nothing
+   */
   @Deprecated
   public boolean revisionsNotEmpty() {
     return true;
@@ -289,6 +292,11 @@ public abstract class FileAnnotation {
     Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException;
   }
 
+
+  @NotNull
+  public static String formatDate(@NotNull Date date) {
+    return JBDateFormat.getFormatter("vcs.annotate").formatPrettyDate(date);
+  }
 
   @Nullable
   private static CurrentFileRevisionProvider createDefaultCurrentFileRevisionProvider(@NotNull FileAnnotation annotation) {

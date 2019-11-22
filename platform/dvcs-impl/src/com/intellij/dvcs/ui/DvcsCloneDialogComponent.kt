@@ -15,6 +15,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
@@ -46,6 +47,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
       }
     })
   }
+
+  override fun getPreferredFocusedComponent(): JComponent = urlEditor
 
   private fun defaultDirectoryPath(url: String): String {
     return StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, url), vcsDirectoryName)

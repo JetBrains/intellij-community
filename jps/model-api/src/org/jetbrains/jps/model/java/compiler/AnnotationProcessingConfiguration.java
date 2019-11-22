@@ -29,6 +29,8 @@ public interface AnnotationProcessingConfiguration {
   @NotNull
   String getProcessorPath();
 
+  boolean isUseProcessorModulePath();
+
   @NotNull
   String getGeneratedSourcesDirectoryName(boolean forTests);
 

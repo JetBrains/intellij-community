@@ -18,4 +18,5 @@
 
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
+  <module value="com.intellij.modules.java-capable"/>
 </idea-plugin>

@@ -1,24 +1,27 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.google.common.base.Preconditions;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.StructuredDocString;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +71,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   private static void generateDocstring(@Nullable PyNamedParameter param, @NotNull PyFunction pyFunction) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(pyFunction)) return;
 
-    if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) return;
+    if (!PyGenerateDocstringIntention.ensureNotPlainDocstringFormat(pyFunction)) return;
 
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
     String type = PyNames.OBJECT;
@@ -90,7 +93,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
     WriteAction.run(() -> {
       docstringGenerator.addFirstEmptyLine().buildAndInsert();
-      docstringGenerator.startTemplate();
+      startTemplate(docstringGenerator);
     });
   }
 
@@ -117,5 +120,47 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
     final StructuredDocString structuredDocString = function.getStructuredDocString();
     return structuredDocString != null && structuredDocString.getReturnType() != null;
+  }
+
+  public static void startTemplate(PyDocstringGenerator generator) {
+    Preconditions.checkNotNull(generator.getDocStringOwner(), "For this action docstring owner must be supplied");
+    final PyStringLiteralExpression docStringExpression = generator.getDocStringExpression();
+    assert docStringExpression != null;
+
+    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(docStringExpression);
+
+    if (generator.getAddedParams().size() > 1) {
+      throw new IllegalArgumentException("TemplateBuilder can be created only for one parameter");
+    }
+
+    final PyDocstringGenerator.DocstringParam paramToEdit = generator.getParamToEdit();
+    final DocStringFormat format = generator.getDocStringFormat();
+    if (format == DocStringFormat.PLAIN) {
+      return;
+    }
+    final StructuredDocString parsed = DocStringUtil.parseDocString(format, docStringExpression);
+    final Substring substring;
+    if (paramToEdit.isReturnValue()) {
+      substring = parsed.getReturnTypeSubstring();
+    }
+    else {
+      final String paramName = paramToEdit.getName();
+      substring = parsed.getParamTypeSubstring(paramName);
+    }
+    if (substring == null) {
+      return;
+    }
+    builder.replaceRange(substring.getTextRange(), PyDocstringGenerator.getDefaultType(generator.getParamToEdit()));
+    Template template = PyUtil.updateDocumentUnblockedAndCommitted(generator.getDocStringOwner(), document -> {
+      return ((TemplateBuilderImpl)builder).buildInlineTemplate();
+    });
+    final VirtualFile virtualFile = generator.getDocStringOwner().getContainingFile().getVirtualFile();
+    if (virtualFile == null) return;
+    final Project project = generator.getDocStringOwner().getProject();
+    final Editor targetEditor = PsiUtilBase.findEditor(generator.getDocStringOwner());
+    if (targetEditor != null && template != null) {
+      targetEditor.getCaretModel().moveToOffset(docStringExpression.getTextOffset());
+      TemplateManager.getInstance(project).startTemplate(targetEditor, template);
+    }
   }
 }

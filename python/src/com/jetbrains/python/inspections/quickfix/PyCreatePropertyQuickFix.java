@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PyCreatePropertyQuickFix implements LocalQuickFix {
@@ -39,7 +40,7 @@ public class PyCreatePropertyQuickFix implements LocalQuickFix {
           final String fieldName = "_" + propertyName;
           final PyElementGenerator generator = PyElementGenerator.getInstance(project);
           final PyFunction property = generator.createProperty(LanguageLevel.forElement(cls), propertyName, fieldName, myAccessDirection);
-          PyUtil.addElementToStatementList(property, cls.getStatementList(), myAccessDirection == AccessDirection.READ);
+          PyRefactoringUtil.addElementToStatementList(property, cls.getStatementList(), myAccessDirection == AccessDirection.READ);
         }
       }
     }

@@ -67,7 +67,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     boolean forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
                                   || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
                                   || e.getPlace() == ActionPlaces.WELCOME_SCREEN;
-    RecentProjectsManagerBase.getInstanceEx().doOpenProject(file, new OpenProjectTask(forceOpenInNewFrame, project));
+    RecentProjectsManagerBase.getInstanceEx().openProject(file, new OpenProjectTask(forceOpenInNewFrame, project));
   }
 
   @SystemIndependent

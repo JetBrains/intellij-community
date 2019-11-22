@@ -171,12 +171,12 @@ public class PluginDescriptorTest {
 
   private static IdeaPluginDescriptorImpl loadDescriptor(File dir) {
     assertTrue(dir + " does not exist", dir.exists());
-    try {
-      return PluginManagerCore.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
+    PluginManagerCore.ourPluginError = null;
+    IdeaPluginDescriptorImpl result = PluginManagerCore.loadDescriptor(dir, PluginManagerCore.PLUGIN_XML);
+    if (result == null) {
+      assertNotNull(PluginManagerCore.ourPluginError);
+      PluginManagerCore.ourPluginError = null;
     }
-    catch (AssertionError e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("Problems found loading plugins"));
-      return null;
-    }
+    return result;
   }
 }

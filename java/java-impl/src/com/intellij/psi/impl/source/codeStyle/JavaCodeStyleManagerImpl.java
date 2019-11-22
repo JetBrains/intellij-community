@@ -548,14 +548,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     NamesByExprInfo byExprPlace = suggestVariableNameByExpressionPlace(expr, variableKind);
     NamesByExprInfo byExprAllMethods = suggestVariableNameByExpressionOnly(expr, variableKind, true);
 
-    ContainerUtil.addAll(names, byExpr.names);
-    ContainerUtil.addAll(names, byExprPlace.names);
+    names.addAll(byExpr.names);
+    names.addAll(byExprPlace.names);
 
     PsiType type = expr.getType();
     if (type != null && variableKind != null) {
-      ContainerUtil.addAll(names, doSuggestNamesByType(type, variableKind, false));
+      names.addAll(doSuggestNamesByType(type, variableKind, false));
     }
-    ContainerUtil.addAll(names, byExprAllMethods.names);
+    names.addAll(byExprAllMethods.names);
 
     String propertyName = byExpr.propertyName != null ? byExpr.propertyName : byExprPlace.propertyName;
     return new NamesByExprInfo(propertyName, names);

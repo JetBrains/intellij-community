@@ -133,7 +133,7 @@ public class AllClassesGetter {
       }
       return true;
     });
-    LinkedHashSet<String> sorted = CompletionUtil.sortMatching(prefixMatcher, names);
+    LinkedHashSet<String> sorted = prefixMatcher.sortMatching(names);
     AllClassesSearchExecutor.processClassesByNames(project, scope, sorted, processor);
   }
 

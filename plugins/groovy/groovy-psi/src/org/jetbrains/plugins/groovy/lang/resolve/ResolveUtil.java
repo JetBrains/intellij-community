@@ -726,7 +726,7 @@ public class ResolveUtil {
     if (hasApplicableMethods) {
       ContainerUtil.addAll(allCandidates, methodCandidates);
     }
-    ContainerUtil.addAll(allCandidates, propertyCandidates);
+    allCandidates.addAll(propertyCandidates);
 
     //search for getters
     for (PropertyKind kind : Arrays.asList(PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER)) {
@@ -745,7 +745,7 @@ public class ResolveUtil {
       if (applicable.size() == 1) {
         return applicable.toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
-      ContainerUtil.addAll(allCandidates, applicable);
+      allCandidates.addAll(applicable);
     }
 
     if (!allCandidates.isEmpty()) {

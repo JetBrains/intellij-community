@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -32,10 +33,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Map;
 
 /**
@@ -250,35 +251,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
-    AncestorListener ancestorListener = new AncestorListener() {
-
-      private static final String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
-
-      @Override
-      public void ancestorAdded(AncestorEvent event) {
-        registerEscapeAction();
-      }
-
-      @Override
-      public void ancestorMoved(AncestorEvent event) {}
-
-      private void registerEscapeAction() {
-
-        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(
-          KeyEvent.VK_ESCAPE, 0),FOCUS_EDITOR_ACTION_KEY);
-        getActionMap().put(FOCUS_EDITOR_ACTION_KEY, new AbstractAction() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          }
-        });
-      }
-
-      @Override
-      public void ancestorRemoved(AncestorEvent event) {}
-    };
-    addAncestorListener(ancestorListener);
-    Disposer.register(myHeader, () -> removeAncestorListener(ancestorListener));
+    ShortcutSet ss = ActionManager.getInstance().getAction("FocusEditor").getShortcutSet();
+    DumbAwareAction.create(__ -> ToolWindowManager.getInstance(myProject).activateEditorComponent()).registerCustomShortcutSet(ss, this);
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {

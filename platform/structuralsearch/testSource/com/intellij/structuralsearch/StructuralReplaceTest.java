@@ -460,6 +460,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expected1c = "class A { void /**/ b(int c, int d, int e) {} }";
     assertEquals("replace multi match parameter", expected1c, replace(in1, "void b(int '_x*);", "void /**/ b(int $x$);"));
 
+    String expected1d = "class A { void b(int c, int d, int e) {} void c(int c, int d, int e) {} }";
+    assertEquals("replace multiple occurrences of the same variable", expected1d, replace(in1, "void b('_T '_p*);", "void b($T$ $p$); " +
+                                                                                                                    "void c($T$ $p$) {}"));
+
     String in2 = "class X {" +
                  "  void x() {}" +
                  "}";
@@ -2124,6 +2128,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("Should replace unmatched annotation parameters when matching just annotation",
                  expected1d, replace(in1, "@SuppressWarnings", "@ SuppressWarnings"));
 
+
     final String in2 = "class X {" +
                  "  @SuppressWarnings(\"unused\") String s;" +
                  "}";
@@ -2143,6 +2148,16 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                              "}";
     assertEquals(expected2c, replace(in2, "@'_A('_v='_x)", "@$A$($v$=$x$)"));
 
+    final String expected2d = "class X {" +
+                              "  @SuppressWarnings({\"unused\", \"raw\"}) String s;" +
+                              "}";
+    assertEquals(expected2d, replace(in2, "@'_A('_x)", "@$A$({$x$, \"raw\"})"));
+
+    final String expected2e = "class X {" +
+                              "  @SuppressWarnings(value={1,2}, value=\"unused\") String s;" +
+                              "}";
+    assertEquals(expected2e, replace(in2, "@'_A('_n='_v)", "@$A$($n$={1,2}, $n$=$v$)"));
+
 
     final String in3 = "class X {" +
                        "  @Language(value=\"RegExp\", prefix=\"xxx\") String pattern;" +
@@ -2159,6 +2174,27 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                              "  @Anno(one=1, two=1, three=1) String s;" +
                              "}";
     assertEquals(expected4, replace(in4, "@'_A('_p*=1)", "@$A$($p$=1, three=1)"));
+
+    final String expected4b = "class X {  @Anno(one=2,two=1) String s;}";
+    assertEquals(expected4b, replace(in4, "@'_A('_p:one =1)", "@$A$($p$=2)"));
+
+    final String in5 = "@RunWith(SpringJUnit4ClassRunner.class)\n" +
+                       "@ContextConfiguration(classes = {\n" +
+                       "        ThisShellBeTwoClassesInContextHierarchyConfig.class,\n" +
+                       "        SomeTest.SomeTestConfig.class,\n" +
+                       "        WhateverConfig.class\n" +
+                       "})\n" +
+                       "@Transactional\n" +
+                       "public class SomeTest {}";
+    final String expected5 = "@RunWith(SpringJUnit4ClassRunner.class)\n" +
+                             "@ContextHierarchy(classes = {\n" +
+                             "        @ContextConfiguration(classes = {ThisShellBeTwoClassesInContextHierarchyConfig.class,SomeTest.SomeTestConfig.class,WhateverConfig.class, Object.class})\n" +
+                             "})\n" +
+                             "@Transactional\n" +
+                             "public class SomeTest {}";
+    assertEquals(expected5, replace(in5, "@ContextConfiguration(classes = {'_X*})", "@ContextHierarchy(classes = {\n" +
+                                                                                    "        @ContextConfiguration(classes = {$X$, Object.class})\n" +
+                                                                                    "})"));
   }
 
   public void testReplacePolyadicExpression() {

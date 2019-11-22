@@ -423,13 +423,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  @Deprecated
   public void setDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
+  /**
+   * @deprecated use {@link #setAutoDirectoryMappings(List)}
+   */
   @Deprecated
   public void setAutoDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
     setAutoDirectoryMappings(ContainerUtil.append(myMappings.getDirectoryMappings(), new VcsDirectoryMapping(path, activeVcsName)));
@@ -715,7 +717,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   /**
-   * @deprecated {@link BackgroundableActionLock}
+   * @deprecated use {@link BackgroundableActionLock}
    */
   @Deprecated
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {

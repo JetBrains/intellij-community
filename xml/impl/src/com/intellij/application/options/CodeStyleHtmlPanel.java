@@ -17,28 +17,29 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.RightMarginForm;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.ListItemsDialogWrapper;
+import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.List;
 
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
@@ -54,17 +55,17 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox mySpacesAroundEquality;
   private JCheckBox mySpacesAroundTagName;
   private JCheckBox myAlignText;
-  private TextFieldWithBrowseButton myInsertNewLineTagNames;
-  private TextFieldWithBrowseButton myRemoveNewLineTagNames;
-  private TextFieldWithBrowseButton myDoNotAlignChildrenTagNames;
-  private TextFieldWithBrowseButton myKeepWhiteSpacesTagNames;
-  private TextFieldWithBrowseButton myInlineElementsTagNames;
+  private ExpandableTextField myInsertNewLineTagNames;
+  private ExpandableTextField myRemoveNewLineTagNames;
+  private ExpandableTextField myDoNotAlignChildrenTagNames;
+  private ExpandableTextField myKeepWhiteSpacesTagNames;
+  private ExpandableTextField myInlineElementsTagNames;
   private JTextField myDoNotAlignChildrenMinSize;
   private JCheckBox myShouldKeepBlankLines;
   private JCheckBox mySpaceInEmptyTag;
   private JCheckBox myWrapText;
   private JCheckBox myShouldKeepLineBreaksInText;
-  private TextFieldWithBrowseButton myDontBreakIfInlineContent;
+  private ExpandableTextField myDontBreakIfInlineContent;
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
   private JComboBox myQuotesCombo;
@@ -84,19 +85,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     fillEnumCombobox(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
     fillEnumCombobox(myAfterLastAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
 
-    customizeField(ApplicationBundle.message("title.insert.new.line.before.tags"), myInsertNewLineTagNames);
-    customizeField(ApplicationBundle.message("title.remove.line.breaks.before.tags"), myRemoveNewLineTagNames);
-    customizeField(ApplicationBundle.message("title.do.not.indent.children.of"), myDoNotAlignChildrenTagNames);
-    customizeField(ApplicationBundle.message("title.inline.elements"), myInlineElementsTagNames);
-    customizeField(ApplicationBundle.message("title.keep.whitespaces.inside"), myKeepWhiteSpacesTagNames);
-    customizeField(ApplicationBundle.message("title.dont.wrap.if.inline.content"), myDontBreakIfInlineContent);
-
-    myInsertNewLineTagNames.getTextField().setColumns(5);
-    myRemoveNewLineTagNames.getTextField().setColumns(5);
-    myDoNotAlignChildrenTagNames.getTextField().setColumns(5);
-    myKeepWhiteSpacesTagNames.getTextField().setColumns(5);
-    myInlineElementsTagNames.getTextField().setColumns(5);
-    myDontBreakIfInlineContent.getTextField().setColumns(5);
+    myInsertNewLineTagNames.setColumns(5);
+    myRemoveNewLineTagNames.setColumns(5);
+    myDoNotAlignChildrenTagNames.setColumns(5);
+    myKeepWhiteSpacesTagNames.setColumns(5);
+    myInlineElementsTagNames.setColumns(5);
+    myDontBreakIfInlineContent.setColumns(5);
 
     myQuotesCombo.addActionListener(new ActionListener() {
       @Override
@@ -127,10 +121,15 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
         return new Dimension(prefSize.width + 15, prefSize.height);
       }
     };
-  }
 
-  private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {
-    ListItemsDialogWrapper.installListItemsDialogForTextField(uiField, () -> new TagListDialog(title));
+    Function<String, List<String>> parser = (list) -> Arrays.asList(list.split(","));
+    Function<List<String>, String> joiner = (list) -> StringUtil.join(list, ",");
+    myInsertNewLineTagNames = new ExpandableTextField(parser, joiner);
+    myRemoveNewLineTagNames = new ExpandableTextField(parser, joiner);
+    myDoNotAlignChildrenTagNames = new ExpandableTextField(parser, joiner);
+    myInlineElementsTagNames = new ExpandableTextField(parser, joiner);
+    myKeepWhiteSpacesTagNames = new ExpandableTextField(parser, joiner);
+    myDontBreakIfInlineContent = new ExpandableTextField(parser, joiner);
   }
 
   @Override

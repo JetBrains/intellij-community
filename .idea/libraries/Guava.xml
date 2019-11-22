@@ -1,12 +1,24 @@
 <component name="libraryTable">
   <library name="Guava" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.google.guava:guava:25.1-jre" />
+    <properties maven-id="com.google.guava:guava:27.1-jre">
+      <exclude>
+        <dependency maven-id="com.google.guava:listenablefuture" />
+        <dependency maven-id="com.google.code.findbugs:jsr305" />
+        <dependency maven-id="org.checkerframework:checker-qual" />
+        <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+        <dependency maven-id="org.codehaus.mojo:animal-sniffer-annotations" />
+      </exclude>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/25.1-jre/guava-25.1-jre.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/27.1-jre/guava-27.1-jre.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/1.1/j2objc-annotations-1.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/25.1-jre/guava-25.1-jre-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/27.1-jre/guava-27.1-jre-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/1.1/j2objc-annotations-1.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

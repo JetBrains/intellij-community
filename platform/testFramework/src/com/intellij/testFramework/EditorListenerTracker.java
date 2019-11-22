@@ -40,7 +40,12 @@ public final class EditorListenerTracker {
           afterList.removeAll(beforeList);
         }
         // listeners may hang on default project which comes and goes unpredictably, so just ignore them
-        afterList.removeIf(listener -> listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject());
+        afterList.removeIf(listener -> {
+          //noinspection CastConflictsWithInstanceof
+          return (listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject()) ||
+                 // app level listener
+                 listener.getClass().getName().startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$");
+        });
         if (!afterList.isEmpty()) {
           leaked.put(aClass, afterList);
         }

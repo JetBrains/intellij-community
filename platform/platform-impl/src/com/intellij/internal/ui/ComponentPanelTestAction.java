@@ -747,7 +747,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             actionsArray[1].getTemplatePresentation().setEnabled(false);
           }
 
-          e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, selected);
+          Toggleable.setSelected(e.getPresentation(), selected);
         }
       };
 

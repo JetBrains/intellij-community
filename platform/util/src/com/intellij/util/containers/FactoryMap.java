@@ -17,10 +17,10 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,12 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
    */
   @Deprecated
   public FactoryMap() {
+    DeprecatedMethodException.report("Use FactoryMap.create*() instead");
   }
+
+  private FactoryMap(boolean safe) {
+  }
+
 
   @NotNull
   protected Map<K, V> createMap() {
@@ -58,6 +63,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     V value = map.get(k);
     if (value == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+      //noinspection unchecked
       value = create((K)key);
       if (stamp.mayCacheNow()) {
         V v = notNull(value);
@@ -82,7 +88,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   private static <T> T notNull(final Object key) {
     //noinspection unchecked
-    return key == null ? FactoryMap.FAKE_NULL() : (T)key;
+    return key == null ? FAKE_NULL() : (T)key;
   }
   @Nullable
   private static <T> T nullize(T value) {
@@ -169,19 +175,9 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
                                  entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));
   }
 
-  /**
-   * @deprecated Use {@link #create(Function)} instead. TODO to be removed in IDEA 2018
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  @Deprecated
-  @NotNull
-  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue) {
-    return (FactoryMap<K, V>)create(computeValue);
-  }
-
   @NotNull
   public static <K, V> Map<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue) {
-    return new FactoryMap<K, V>() {
+    return new FactoryMap<K, V>(true) {
       @Nullable
       @Override
       protected V create(K key) {
@@ -192,7 +188,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends Map<K, V>> mapCreator) {
-    return new FactoryMap<K, V>() {
+    return new FactoryMap<K, V>(true) {
       @Nullable
       @Override
       protected V create(K key) {

@@ -13,10 +13,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -40,7 +40,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     final PyClass containingClass = problemFunction.getContainingClass();
     if (containingClass == null) return;
 
-    final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
+    final List<UsageInfo> usages = PyCodeFragmentUtil.findUsages(problemFunction, false);
     final PyParameter[] parameters = problemFunction.getParameterList().getParameters();
     if (parameters.length > 0) {
       parameters[0].delete();

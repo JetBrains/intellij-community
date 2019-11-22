@@ -211,6 +211,9 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
     }
   }
 
+  /**
+   * @deprecated use {@link #getRunProfile(ExecutionEnvironment)}
+   */
   @Deprecated
   public MyRunProfile getRunProfile() {
     return null;

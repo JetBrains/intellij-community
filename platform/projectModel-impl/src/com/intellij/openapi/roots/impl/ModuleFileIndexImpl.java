@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,8 +17,9 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @NotNull
   private final Module myModule;
 
-  public ModuleFileIndexImpl(@NotNull Module module, @NotNull DirectoryIndex directoryIndex) {
-    super(directoryIndex, FileTypeRegistry.getInstance());
+  public ModuleFileIndexImpl(@NotNull Module module) {
+    super(DirectoryIndex.getInstance(module.getProject()));
+
     myModule = module;
   }
 

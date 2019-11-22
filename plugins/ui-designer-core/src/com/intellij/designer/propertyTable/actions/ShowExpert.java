@@ -18,10 +18,7 @@ package com.intellij.designer.propertyTable.actions;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,7 +60,7 @@ public class ShowExpert extends ToggleAction {
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     myTable.showExpert(state);
     if (ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP.equals(e.getPlace())) {
-      getTemplatePresentation().putClientProperty(SELECTED_PROPERTY, state);
+      Toggleable.setSelected(getTemplatePresentation(), state);
     }
   }
 }

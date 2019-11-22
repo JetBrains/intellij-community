@@ -1,11 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,24 +21,45 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 /**
  * @author Irina.Chernushina on 2/20/2017.
  */
-public abstract class JsonBySchemaCompletionBaseTest extends JavaCompletionTestCase {
-  protected void testBySchema(@Language("JSON") @NotNull final String schema, final @NotNull String text, final @NotNull String extension,
-                              final @NotNull String... variants) throws Exception {
-    final int position = EditorTestUtil.getCaretPosition(text);
-    assertThat(position).isGreaterThan(0);
-    final String completionText = text.replace("<caret>", "IntelliJIDEARulezzz");
+public abstract class JsonBySchemaCompletionBaseTest extends BasePlatformTestCase {
+  protected List<LookupElement> myItems;
 
-    final PsiFile file = createFile(myModule, "tslint." + extension, completionText);
-    final PsiElement element = file.findElementAt(position);
+  @Override
+  protected void tearDown() throws Exception {
+    myItems = null;
+    super.tearDown();
+  }
+
+  protected void testBySchema(@Language("JSON") @NotNull String schema,
+                              @NotNull String text,
+                              @NotNull String extension,
+                              @NotNull String... variants) throws Exception {
+    int position = EditorTestUtil.getCaretPosition(text);
+    assertThat(position).isGreaterThan(0);
+    String completionText = text.replace("<caret>", "IntelliJIDEARulezzz");
+
+    VirtualFile fileInTemp = myFixture.findFileInTempDir("tslint." + extension);
+    if (fileInTemp != null) {
+      WriteAction.run(() -> fileInTemp.delete(null));
+    }
+
+    PsiFile file = myFixture.addFileToProject("tslint." + extension, completionText);
+    PsiElement element = file.findElementAt(position);
     assertThat(element).isNotNull();
 
-    final PsiFile schemaFile = createFile(myModule, "testSchema.json", schema);
-    final JsonSchemaObject schemaObject = JsonSchemaReader.readFromFile(myProject, schemaFile.getVirtualFile());
+    VirtualFile schemaInTemp = myFixture.findFileInTempDir("testSchema.json");
+    if (schemaInTemp != null) {
+      WriteAction.run(() -> schemaInTemp.delete(null));
+    }
+
+    PsiFile schemaFile = myFixture.addFileToProject("testSchema.json", schema);
+    JsonSchemaObject schemaObject = JsonSchemaReader.readFromFile(getProject(), schemaFile.getVirtualFile());
     assertThat(schemaObject).isNotNull();
 
-    final List<LookupElement> foundVariants = JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element, element);
+    List<LookupElement> foundVariants = JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element, element);
     Collections.sort(foundVariants, Comparator.comparing(LookupElement::getLookupString));
-    myItems = foundVariants.toArray(LookupElement.EMPTY_ARRAY);
-    assertStringItems(variants);
+    List<String> actual = ContainerUtil.map(foundVariants, LookupElement::getLookupString);
+    assertOrderedEquals(actual, variants);
+    myItems = foundVariants;
   }
 }

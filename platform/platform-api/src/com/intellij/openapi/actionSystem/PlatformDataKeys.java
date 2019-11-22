@@ -29,11 +29,6 @@ import com.intellij.ui.content.ContentManager;
 import java.awt.*;
 import java.util.Comparator;
 
-/**
- * Platform data keys.
- *
- * @see LangDataKeys
- */
 public class PlatformDataKeys extends CommonDataKeys {
 
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");

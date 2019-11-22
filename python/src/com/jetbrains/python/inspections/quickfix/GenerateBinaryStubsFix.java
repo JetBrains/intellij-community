@@ -36,13 +36,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
@@ -149,8 +150,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
             if (!generateSkeletonsForList(refresher, indicator, folder)) return;
           }
           else {
-            //noinspection unchecked
-            refresher.generateSkeleton(myQualifiedName, "", assemblyRefs, Consumer.EMPTY_CONSUMER);
+            refresher.generateSkeleton(myQualifiedName, "", assemblyRefs, EmptyConsumer.getInstance());
           }
           final VirtualFile skeletonDir;
           skeletonDir = LocalFileSystem.getInstance().findFileByPath(refresher.getSkeletonsPath());
@@ -190,8 +190,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
           indicator.setText2(name);
           final PySkeletonRefresher.PyBinaryItem item = binaries.modules.get(name);
           final String modulePath = item != null ? item.getPath() : "";
-          //noinspection unchecked
-          refresher.generateSkeleton(name, modulePath, new ArrayList<>(), Consumer.EMPTY_CONSUMER);
+          refresher.generateSkeleton(name, modulePath, new ArrayList<>(), EmptyConsumer.getInstance());
         }
       }
     }
@@ -258,6 +257,6 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   @Nullable
   private static Sdk getPythonSdk(@NotNull final PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    return (module == null) ? null : PythonSdkType.findPythonSdk(module);
+    return (module == null) ? null : PythonSdkUtil.findPythonSdk(module);
   }
 }

@@ -84,13 +84,7 @@ public class MavenProjectsProcessor {
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    scheduleTask(new MavenProjectsProcessorTask() {
-      @Override
-      public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
-        throws MavenProcessCanceledException {
-        semaphore.up();
-      }
-    });
+    scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
 
     while (true) {
       if (isStopped || semaphore.waitFor(1000)) return;
@@ -159,7 +153,13 @@ public class MavenProjectsProcessor {
     }
     catch (MavenProcessCanceledException e) {
       synchronized (myQueue) {
-        myQueue.clear();
+
+        while (!myQueue.isEmpty()) {
+          MavenProjectsProcessorTask removedTask = myQueue.remove();
+          if (removedTask instanceof MavenProjectsProcessorWaitForCompletionTask) {
+            ((MavenProjectsProcessorWaitForCompletionTask)removedTask).mySemaphore.up();
+          }
+        }
         isProcessing = false;
       }
       throw e;
@@ -176,5 +176,17 @@ public class MavenProjectsProcessor {
                      "See logs for details",
                      NotificationType.ERROR
     ).addAction(ActionManager.getInstance().getAction("ShowLog")).notify(myProject);
+  }
+
+  private static class MavenProjectsProcessorWaitForCompletionTask implements MavenProjectsProcessorTask {
+    private final Semaphore mySemaphore;
+
+    MavenProjectsProcessorWaitForCompletionTask(Semaphore semaphore) {mySemaphore = semaphore;}
+
+    @Override
+    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
+      throws MavenProcessCanceledException {
+      mySemaphore.up();
+    }
   }
 }

@@ -203,7 +203,7 @@ public class ModuleHighlightUtil {
       }
       else {
         Collection<PsiJavaModule> cycle = JavaModuleGraphUtil.findCycle(target);
-        if (cycle != null && cycle.contains(container)) {
+        if (cycle.contains(container)) {
           Stream<String> stream = cycle.stream().map(PsiJavaModule::getName);
           if (ApplicationManager.getApplication().isUnitTestMode()) stream = stream.sorted();
           String message = JavaErrorMessages.message("module.cyclic.dependence", stream.collect(Collectors.joining(", ")));
@@ -314,10 +314,10 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  @Nullable
+  @NotNull
   static List<HighlightInfo> checkServiceImplementations(@NotNull PsiProvidesStatement statement, @NotNull PsiFile file) {
     PsiReferenceList implRefList = statement.getImplementationList();
-    if (implRefList == null) return null;
+    if (implRefList == null) return Collections.emptyList();
 
     List<HighlightInfo> results = ContainerUtil.newSmartList();
     PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
@@ -391,7 +391,7 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  @Nullable
+  @NotNull
   static List<HighlightInfo> checkModifiers(@NotNull PsiRequiresStatement statement) {
     PsiModifierList modList = statement.getModifierList();
     if (modList != null && PsiJavaModule.JAVA_BASE.equals(statement.getModuleName())) {
@@ -406,7 +406,7 @@ public class ModuleHighlightUtil {
           }).toList();
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   private static QuickFixFactory factory() {

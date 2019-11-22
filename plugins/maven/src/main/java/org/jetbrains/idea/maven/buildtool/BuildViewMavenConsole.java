@@ -3,12 +3,16 @@ package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.*;
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -86,6 +90,7 @@ public class BuildViewMavenConsole extends MavenConsole {
 
   @Override
   public void attachToProcess(ProcessHandler processHandler) {
+    super.attachToProcess(processHandler);
     processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(myEventParser, false));
     if (myBuildView != null) {
       myBuildView.attachToProcess(processHandler);
@@ -97,6 +102,16 @@ public class BuildViewMavenConsole extends MavenConsole {
         RunContentDescriptor descriptor =
           new RunContentDescriptor(myBuildView, processHandler, consolePanel, myTitle, MavenIcons.MavenLogo);
         descriptor.setExecutionId(myExecutionId);
+        RunnerAndConfigurationSettings configuration = processHandler.getUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY);
+        if (configuration != null) {
+          ExecutionEnvironment environment =
+            ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration.getConfiguration()).build();
+          String toolWindowId =
+            ExecutionManager.getInstance(myProject).getContentManager().getContentDescriptorToolWindowId(environment);
+          if (toolWindowId != null) {
+            descriptor.setContentToolWindowId(toolWindowId);
+          }
+        }
         Disposer.register(descriptor, myBuildView);
         ExecutionManager.getInstance(myProject).getContentManager().showRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor);
       });

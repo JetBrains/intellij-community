@@ -22,7 +22,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,6 @@ import java.util.function.Supplier;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface StartBuildEvent extends StartEvent {
   String getBuildTitle();
 

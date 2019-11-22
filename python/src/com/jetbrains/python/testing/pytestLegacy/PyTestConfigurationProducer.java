@@ -18,16 +18,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyPackageVersionComparator;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +87,7 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
       return false;
     }
 
-    final Sdk sdk = PythonSdkType.findPythonSdk(context.getModule());
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(context.getModule());
     if (sdk == null) {
       return false;
     }
@@ -117,7 +117,7 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
       keywords = pyFunction.getName();
       if (pyClass != null) {
         final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
-        final PyPackage pytestPackage = packages != null ? PyPackageUtil.findPackage(packages, "pytest") : null;
+        final PyPackage pytestPackage = packages != null ? PyPsiPackageUtil.findPackage(packages, "pytest") : null;
         if (pytestPackage != null && PyPackageVersionComparator.getSTR_COMPARATOR().compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
           keywords = pyClass.getName() + " and " + keywords;
         }
@@ -166,7 +166,7 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
       return false;
     }
 
-    final Sdk sdk = PythonSdkType.findPythonSdk(context.getModule());
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(context.getModule());
     if (sdk == null) return false;
     final String keywords = getKeywords(element, sdk);
     final String scriptName = ((PyTestRunConfiguration)configuration).getTestToRun();

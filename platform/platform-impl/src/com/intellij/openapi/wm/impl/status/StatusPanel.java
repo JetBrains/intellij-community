@@ -37,7 +37,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -72,11 +71,11 @@ class StatusPanel extends JPanel {
     @Override
     protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
       if (myTimeText != null && text.endsWith(myTimeText)) {
-        int withoutTime = maxWidth - SwingUtilities2.stringWidth(this, fm, myTimeText);
+        int withoutTime = maxWidth - fm.stringWidth(myTimeText);
         int end = Math.min(text.length() - myTimeText.length() - 1, 1000);
         while (end > 0) {
           final String truncated = text.substring(0, end) + "... ";
-          if (SwingUtilities2.stringWidth(this, fm, truncated) < withoutTime) {
+          if (fm.stringWidth(truncated) < withoutTime) {
             text = truncated + myTimeText;
             break;
           }

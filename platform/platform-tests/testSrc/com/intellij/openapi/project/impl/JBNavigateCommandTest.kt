@@ -5,6 +5,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.EmptyModuleType
@@ -52,6 +53,29 @@ class JBNavigateCommandTest {
 
   fun getTestDataPath(): String {
     return "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
+  }
+
+  @Test
+  fun pathWithLineColumn() = runBlocking {
+    createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
+      configure(project)
+      navigate(project.name, mapOf("path" to "A.java:1:5"))
+      assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
+      val currentLogicalPosition = getCurrentLogicalPosition(project)
+      assertThat(currentLogicalPosition.line).isEqualTo(1)
+      assertThat(currentLogicalPosition.column).isEqualTo(5)
+    }
+  }
+
+  @Test
+  fun pathWithLine() = runBlocking {
+    createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
+      configure(project)
+      navigate(project.name, mapOf("path" to "A.java:2"))
+      assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
+      val currentLogicalPosition = getCurrentLogicalPosition(project)
+      assertThat(currentLogicalPosition.line).isEqualTo(2)
+    }
   }
 
   @Test
@@ -116,6 +140,12 @@ class JBNavigateCommandTest {
 
       PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
     }
+  }
+
+  private fun getCurrentLogicalPosition(project: Project): LogicalPosition {
+    return FileEditorManager.getInstance(project).allEditors.map {
+      (it as TextEditor).editor.offsetToLogicalPosition(it.editor.caretModel.offset)
+    }.first()
   }
 
   private fun navigate(projectName: String, parameters: Map<String, String>) {

@@ -16,7 +16,6 @@
 
 package com.intellij.util.concurrency;
 
-import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
@@ -60,36 +59,19 @@ public class AtomicFieldUpdater<ContainingClass, FieldType> {
     return new AtomicFieldUpdater<>(ownerClass, int.class);
   }
 
-  private AtomicFieldUpdater(@NotNull Class<ContainingClass> ownerClass, @NotNull Class<FieldType> fieldType) {
-    Field found = getTheOnlyVolatileFieldOfClass(ownerClass, fieldType);
-    offset = unsafe.objectFieldOffset(found);
+  @NotNull
+  public static <O,E> AtomicFieldUpdater<O, E> forField(@NotNull Field field) {
+    return new AtomicFieldUpdater<>(field);
   }
 
-  @NotNull
-  private static <T,V> Field getTheOnlyVolatileFieldOfClass(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
-    Field[] declaredFields = ownerClass.getDeclaredFields();
-    Field found = null;
-    for (Field field : declaredFields) {
-      if ((field.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0) {
-        continue;
-      }
-      if (fieldType.isAssignableFrom(field.getType())) {
-        if (found == null) {
-          found = field;
-        }
-        else {
-          throw new IllegalArgumentException("Two fields of "+fieldType+" found in the "+ownerClass+": "+found.getName() + " and "+field.getName());
-        }
-      }
-    }
-    if (found == null) {
-      throw new IllegalArgumentException("No (non-static, non-final) field of "+fieldType+" found in the "+ownerClass);
-    }
-    found.setAccessible(true);
-    if (!BitUtil.isSet(found.getModifiers(), Modifier.VOLATILE)) {
-      throw new IllegalArgumentException("Field " + found + " in the " + ownerClass + " must be volatile");
-    }
-    return found;
+  private AtomicFieldUpdater(@NotNull Class<ContainingClass> ownerClass, @NotNull Class<FieldType> fieldType) {
+    this(ReflectionUtil.getTheOnlyVolatileInstanceFieldOfClass(ownerClass, fieldType));
+  }
+
+  private AtomicFieldUpdater(@NotNull Field field) {
+    field.setAccessible(true);
+    if (!Modifier.isVolatile(field.getModifiers()) || Modifier.isStatic(field.getModifiers())) throw new IllegalArgumentException(field + " must be volatile instance");
+    offset = unsafe.objectFieldOffset(field);
   }
 
   public boolean compareAndSet(@NotNull ContainingClass owner, FieldType expected, FieldType newValue) {

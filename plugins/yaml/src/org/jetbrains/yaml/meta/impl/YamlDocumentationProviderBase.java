@@ -24,7 +24,7 @@ import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.Objects;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlDocumentationProviderBase extends AbstractDocumentationProvider {
 
   @Override

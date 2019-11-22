@@ -42,16 +42,16 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   @Override
   protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
     super.setDefaults(properties, prefix);
-    isClassesUsages = properties.getBoolean(prefix + "isClassesUsages", false);
+    isClassesUsages = properties.getBoolean(prefix + "isClassesUsages");
     isIncludeSubpackages = properties.getBoolean(prefix + "isIncludeSubpackages", true);
-    isSkipPackageStatements = properties.getBoolean(prefix + "isSkipPackageStatements", false);
+    isSkipPackageStatements = properties.getBoolean(prefix + "isSkipPackageStatements");
   }
 
   @Override
   protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
     super.storeDefaults(properties, prefix);
     properties.setValue(prefix + "isClassesUsages", isClassesUsages);
-    properties.setValue(prefix + "isIncludeSubpackages", isIncludeSubpackages);
+    properties.setValue(prefix + "isIncludeSubpackages", isIncludeSubpackages, true);
     properties.setValue(prefix + "isSkipPackageStatements", isSkipPackageStatements);
   }
 

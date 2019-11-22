@@ -651,16 +651,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
         @Override
         public void afterVfsChange() {
           for (VFileEvent event : events) {
-            VirtualFile file = event.getFile();
-            if (file != null && !file.isValid()) continue;
-
-            if (event instanceof VFileContentChangeEvent) {
+            if (event instanceof VFileContentChangeEvent && ((VFileContentChangeEvent)event).getFile().isValid()) {
               myFileDocumentManager.contentsChanged((VFileContentChangeEvent)event);
             }
-            else if (event instanceof VFileDeleteEvent) {
+            else if (event instanceof VFileDeleteEvent && ((VFileDeleteEvent)event).getFile().isValid()) {
               myFileDocumentManager.fileDeleted((VFileDeleteEvent)event);
             }
-            else if (event instanceof VFilePropertyChangeEvent) {
+            else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getFile().isValid()) {
               myFileDocumentManager.propertyChanged((VFilePropertyChangeEvent)event);
             }
           }

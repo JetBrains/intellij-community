@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,10 +64,10 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
     if (passParentEnvs) {
-      path = appendSystemEnvPaths(path, JYTHONPATH);
+      path = PythonEnvUtil.appendSystemEnvPaths(path, JYTHONPATH);
     }
     final String jythonPath = StringUtil.join(path, File.pathSeparator);
-    addToEnv(JYTHONPATH, jythonPath, env);
+    PythonEnvUtil.addToEnv(JYTHONPATH, jythonPath, env);
   }
 
   @NotNull
@@ -76,7 +77,7 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   public static String getPythonPathCmdLineArgument(Collection<String> path) {
-    return PYTHON_PATH_PREFIX + StringUtil.join(appendSystemEnvPaths(path, JYTHONPATH), File.pathSeparator);
+    return PYTHON_PATH_PREFIX + StringUtil.join(PythonEnvUtil.appendSystemEnvPaths(path, JYTHONPATH), File.pathSeparator);
   }
 
   @Override

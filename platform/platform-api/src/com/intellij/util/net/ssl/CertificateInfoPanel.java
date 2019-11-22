@@ -51,12 +51,12 @@ public class CertificateInfoPanel extends JPanel {
     String notBefore = DATE_FORMAT.format(myCertificateWrapper.getNotBefore());
     String notAfter = DATE_FORMAT.format(myCertificateWrapper.getNotAfter());
     builder = builder
-      .setIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
+      .setFormLeftIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
       .addLabeledComponent("Valid from:", createColoredComponent(notBefore, "not yet valid", myCertificateWrapper.isNotYetValid()))
       .addLabeledComponent("Valid until:", createColoredComponent(notAfter, "expired", myCertificateWrapper.isExpired()));
-    builder.setIndent(0);
+    builder.setFormLeftIndent(0);
     updateBuilderWithTitle(builder, "Fingerprints");
-    builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
+    builder.setFormLeftIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
     builder.addLabeledComponent("SHA-256:", getTextPane(formatHex(myCertificateWrapper.getSha256Fingerprint(), true)));
     builder.addLabeledComponent("SHA-1:", getTextPane(formatHex(myCertificateWrapper.getSha1Fingerprint(), true)));
     add(builder.getPanel(), BorderLayout.NORTH);
@@ -86,7 +86,7 @@ public class CertificateInfoPanel extends JPanel {
   }
 
   private static void updateBuilderWithPrincipalData(FormBuilder builder, Map<String, String> fields) {
-    builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
+    builder = builder.setFormLeftIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
     for (CommonField field : CommonField.values()) {
       String value = fields.get(field.getShortName());
       if (value == null) {
@@ -95,7 +95,7 @@ public class CertificateInfoPanel extends JPanel {
       String label = String.format("<html>%s (<b>%s</b>)</html>", field.getShortName(), field.getLongName());
       builder = builder.addLabeledComponent(label, new JBLabel(value));
     }
-    builder.setIndent(0);
+    builder.setFormLeftIndent(0);
   }
 
   private static void updateBuilderWithTitle(FormBuilder builder, String title) {

@@ -264,6 +264,24 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
+  fun testEventActionWithListInDataValue() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("key", listOf("my value", "some value", "value"))
+
+    testEventSerialization(event, false, "key")
+  }
+
+  @Test
+  fun testEventActionWithUnicodeInListDataValueEscaping() {
+    val event = newEvent("recorder-id", "event-type")
+    event.event.addData("key", listOf("my\uFFFDvalue", "some\u013C\u02BE\u037Cvalue", "\u013C\u037Cvalue"))
+
+    val data = HashMap<String, Any>()
+    data["key"] = listOf("my?value", "some???value", "??value")
+    testEventEscaping(event, "recorder-id", "event-type", data)
+  }
+
+  @Test
   fun testEventRequestWithSingleRecord() {
     val events = ArrayList<LogEvent>()
     events.add(newEvent("recorder-id", "first-type"))
@@ -527,8 +545,16 @@ class FeatureEventLogSerializationTest {
     val obj = json.getAsJsonObject("event").get("data").asJsonObject
     for (option in expectedData.keys) {
       assertTrue(isValid(option))
-      assertTrue(obj.get(option).isJsonPrimitive)
-      assertEquals(obj.get(option).asString, expectedData[option])
+      assertTrue(obj.get(option).isJsonPrimitive || obj.get(option).isJsonArray)
+      when {
+        obj.get(option).isJsonPrimitive -> assertEquals(obj.get(option).asString, expectedData[option])
+        obj.get(option).isJsonArray -> {
+          for ((dataPart, expected) in obj.getAsJsonArray(option).zip(expectedData[option] as Collection<*>)) {
+            assertEquals(dataPart.asString, expected)
+          }
+        }
+      }
+
     }
   }
 
@@ -599,8 +625,15 @@ class FeatureEventLogSerializationTest {
     val obj = json.getAsJsonObject("event").get("data").asJsonObject
     for (option in dataOptions) {
       assertTrue(isValid(option))
-      assertTrue(obj.get(option).isJsonPrimitive)
-      assertTrue(isValid(obj.get(option).asString))
+
+      when {
+        obj.get(option).isJsonPrimitive -> assertTrue(isValid(obj.get(option).asString))
+        obj.get(option).isJsonArray -> {
+          for (dataPart in obj.getAsJsonArray(option)) {
+            assertTrue(isValid(dataPart.asString))
+          }
+        }
+      }
     }
   }
 

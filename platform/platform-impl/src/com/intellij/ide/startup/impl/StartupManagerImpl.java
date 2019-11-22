@@ -2,7 +2,7 @@
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -155,7 +154,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
     // (depending on dumb-awareness), but because there is no other concurrent phase and timeline end equals to last dumb-aware activity,
     // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
-    Activity dumbAwareActivity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE);
+    Activity dumbAwareActivity = StartUpMeasurer.startMainActivity("project post-startup dumb-aware activities");
 
     AtomicReference<Activity> edtActivity = new AtomicReference<>();
 
@@ -169,7 +168,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       }
       else {
         if (edtActivity.get() == null) {
-          edtActivity.set(StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT));
+          edtActivity.set(StartUpMeasurer.startMainActivity("project post-startup edt activities"));
         }
 
         counter.incrementAndGet();
@@ -194,7 +193,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     dumbAwareActivity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
 
-    StartupActivity.POST_STARTUP_ACTIVITY.getPoint(null).addExtensionPointListener(
+    StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(
       new ExtensionPointListener<StartupActivity>() {
         @Override
         public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -205,7 +204,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
             dumbService.runWhenSmart(() -> runActivity(new AtomicBoolean(), extension, pluginDescriptor));
           }
         }
-      }, false, this);
+      }, this);
   }
 
   private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -229,7 +228,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
 
     String pluginId = pluginDescriptor.getPluginId().getIdString();
-    long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass(), null, pluginId);
+    long duration = StartUpMeasurer.addCompletedActivity(startTime, extension.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       reportUiFreeze(uiFreezeWarned);
     }
@@ -384,7 +383,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   }
 
   private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String phaseName) {
-    Activity activity = StartUpMeasurer.start(phaseName);
+    Activity activity = StartUpMeasurer.startMainActivity(phaseName);
 
     while (true) {
       Runnable runnable;
@@ -403,29 +402,42 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       runActivity(runnable);
 
-      ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, runnable.getClass(), null, pluginId);
+      StartUpMeasurer.addCompletedActivity(startTime, runnable.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId);
     }
 
     activity.end();
   }
 
-  public void scheduleBackgroundPostStartupActivities() {
-    List<StartupActivity> backgroundPostStartupActivities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
+  public final void scheduleBackgroundPostStartupActivities() {
+    if (myProject.isDisposedOrDisposeInProgress()) {
+      return;
+    }
 
-    Extensions.getRootArea().getExtensionPoint(StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY).addExtensionPointListener(
-      new ExtensionPointListener<StartupActivity>() {
+    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      if (myProject.isDisposedOrDisposeInProgress()) {
+        return;
+      }
+
+      List<StartupActivity.Background> activities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
+      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<StartupActivity.Background>() {
         @Override
-        public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
           extension.runActivity(myProject);
         }
-      }, false, this);
+      }, this);
 
-    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(
-      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-        for (StartupActivity activity : backgroundPostStartupActivities) {
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+        for (StartupActivity activity : activities) {
+          ProgressManager.checkCanceled();
+
+          if (myProject.isDisposedOrDisposeInProgress()) {
+            return;
+          }
+
           activity.runActivity(myProject);
         }
-      }), 5, TimeUnit.SECONDS);
+      });
+    }, 5, TimeUnit.SECONDS);
   }
 
   @Override

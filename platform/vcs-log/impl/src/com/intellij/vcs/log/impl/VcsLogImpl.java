@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -66,7 +67,7 @@ public class VcsLogImpl implements VcsLog {
   public void requestSelectedDetails(@NotNull Consumer<? super List<VcsFullCommitDetails>> consumer) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
     myLogData.getCommitDetailsGetter().loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer,
-                                                       Consumer.EMPTY_CONSUMER, null);
+                                                       EmptyConsumer.getInstance(), null);
   }
 
   @Nullable

@@ -11,7 +11,7 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +31,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     super(project, true);
     setTitle("Manage Python Packages");
 
-    List<Sdk> sdks = PythonSdkType.getAllSdks();
+    List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     Collections.sort(sdks, new PreferredSdkComparator());
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
     sdkComboBox.setRenderer(new PySdkListCellRenderer(null));

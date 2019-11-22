@@ -11,12 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase.Companion.PREBUILT_INDICES_PATH_PROPERTY
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase.Companion.SDK_STUBS_STORAGE_NAME
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFileElementType
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import org.jetbrains.index.stubs.LanguageLevelAwareStubsGenerator
 import org.jetbrains.index.stubs.ProjectSdkStubsGenerator
 import org.jetbrains.index.stubs.mergeStubs
@@ -75,7 +75,7 @@ fun packStdlibFromPath(baseDir: String, root: String) {
       }
       val sdkHome = python.absolutePath
 
-      val executable = File(PythonSdkType.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
+      val executable = File(PythonSdkUtil.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
       println("Packing stdlib of $sdkHome")
 
       val cph = CapturingProcessHandler(GeneralCommandLine(executable.absolutePath, PythonHelper.GENERATOR3.asParamString(), "-u", baseDir))
@@ -90,7 +90,7 @@ fun packStdlibFromPath(baseDir: String, root: String) {
 
 class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
   override val moduleTypeId: String
-    get() = PythonModuleTypeBase.PYTHON_MODULE
+    get() = PyNames.PYTHON_MODULE_ID
 
   override fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk = createPythonSdkProducer(sdkPath)
 

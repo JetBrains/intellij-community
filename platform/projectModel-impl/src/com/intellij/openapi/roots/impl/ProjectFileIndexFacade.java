@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,14 +20,14 @@ import java.util.Collection;
  * @author yole
  */
 public final class ProjectFileIndexFacade extends FileIndexFacade {
-  // PsiManagerImpl is created for default project, but DirectoryIndex must be not created for default project.
-  private final NotNullLazyValue<DirectoryIndex> myDirectoryIndex = NotNullLazyValue.createValue(() -> DirectoryIndex.getInstance(myProject));
+  private final DirectoryIndex myDirectoryIndex;
   private final ProjectFileIndex myFileIndex;
 
   ProjectFileIndexFacade(@NotNull Project project) {
     super(project);
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myDirectoryIndex = DirectoryIndex.getInstance(project);
   }
 
   @Override
@@ -80,7 +79,7 @@ public final class ProjectFileIndexFacade extends FileIndexFacade {
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
-      if (!myDirectoryIndex.getValue().getInfoForFile(childDir).isInProject(childDir)) return false;
+      if (!myDirectoryIndex.getInfoForFile(childDir).isInProject(childDir)) return false;
       childDir = childDir.getParent();
     }
   }
@@ -101,7 +100,7 @@ public final class ProjectFileIndexFacade extends FileIndexFacade {
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
     if (file instanceof VirtualFileWindow) return true;
-    DirectoryInfo info = myDirectoryIndex.getValue().getInfoForFile(file);
+    DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
     if (!info.isInProject(file)) return false;
     if (info.hasLibraryClassRoot() && !info.isInModuleSource(file)) return false;
     return info.getModule() != null;

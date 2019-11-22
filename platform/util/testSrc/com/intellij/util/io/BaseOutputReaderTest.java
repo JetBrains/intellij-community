@@ -71,13 +71,19 @@ public class BaseOutputReaderTest {
 
   @Test(timeout = 30000)
   public void testNonBlockingChunkRead() throws Exception {
-    List<String> lines = readLines(BaseDataReader.SleepingPolicy.SIMPLE, false, true, true);
+    List<String> lines = readLines(BaseDataReader.SleepingPolicy.NON_BLOCKING, false, true, true);
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
   }
 
   @Test(timeout = 30000)
+  public void testNonBlockingLineRead() throws Exception {
+    List<String> lines = readLines(BaseDataReader.SleepingPolicy.NON_BLOCKING, true, false, true);
+    assertThat(lines).containsExactly(r(TEST_DATA[0]), r(TEST_DATA[1] + TEST_DATA[2]), r(TEST_DATA[3]), r(TEST_DATA[4] + TEST_DATA[5] + TEST_DATA[6]));
+  }
+
+  @Test(timeout = 30000)
   public void testNonBlockingRead() throws Exception {
-    List<String> lines = readLines(BaseDataReader.SleepingPolicy.SIMPLE, true, true, true);
+    List<String> lines = readLines(BaseDataReader.SleepingPolicy.NON_BLOCKING, true, true, true);
     assertThat(lines.size()).as("chunks: " + lines).isBetween(7, 9);
     assertThat(lines).startsWith(r(TEST_DATA[0]), r(TEST_DATA[1]), r(TEST_DATA[2])).endsWith(r(TEST_DATA[4]), r(TEST_DATA[5]), r(TEST_DATA[6]));
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(TEST_DATA, BaseOutputReaderTest::r, ""));
@@ -91,7 +97,7 @@ public class BaseOutputReaderTest {
 
   @Test(timeout = 30000)
   public void testNonBlockingStop() throws Exception {
-    doStopTest(BaseDataReader.SleepingPolicy.SIMPLE);
+    doStopTest(BaseDataReader.SleepingPolicy.NON_BLOCKING);
   }
 
   private List<String> readLines(BaseDataReader.SleepingPolicy policy, boolean split, boolean incomplete, boolean separators) throws Exception {

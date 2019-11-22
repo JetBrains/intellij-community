@@ -192,6 +192,7 @@ class TestingTasksImpl extends TestingTasks {
     if (options.testDiscoveryEnabled) {
       def file = getTestDiscoveryTraceFilePath()
       def serverUrl = System.getProperty("intellij.test.discovery.url")
+      def token = System.getProperty("intellij.test.discovery.token")
       context.messages.info("Trying to upload $file into $serverUrl.")
       if (file != null && new File(file).exists()) {
         if (serverUrl == null) {
@@ -199,7 +200,7 @@ class TestingTasksImpl extends TestingTasks {
                                    "Will not upload to remote server. Please set 'intellij.test.discovery.url' system property.")
           return
         }
-        def uploader = new TraceFileUploader(serverUrl) {
+        def uploader = new TraceFileUploader(serverUrl, token) {
           @Override
           protected void log(String message) {
             context.messages.info(message)
@@ -212,7 +213,7 @@ class TestingTasksImpl extends TestingTasks {
             'teamcity-build-configuration-name': System.getenv('TEAMCITY_BUILDCONF_NAME'),
             'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
             'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
-            'project'                          : 'intellij',
+            'project'                          : System.getProperty('intellij.test.discovery.project') ?: 'intellij',
             'checkout-root-prefix'             : System.getProperty("intellij.build.test.discovery.checkout.root.prefix"),
           ])
         }

@@ -50,8 +50,9 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
       if (o == null) return false;
 
       V v = get();
-      Object thatV = ((ValueReference)o).get();
-      return v != null && thatV != null && v.equals(thatV);
+      //noinspection unchecked
+      V thatV = ((ValueReference<K, V>)o).get();
+      return v != null && v.equals(thatV);
     }
 
     @NotNull
@@ -64,10 +65,10 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
   @Override
   @NotNull
   KeyReference<K,V> createKeyReference(@NotNull K k, @NotNull final V v) {
-    final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
+    ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
     WeakKey<K, V> keyReference = new WeakKey<>(k, valueReference, myHashingStrategy, myKeyQueue);
     if (valueReference instanceof WeakValue) {
-      ((WeakValue)valueReference).myKeyReference = keyReference;
+      ((WeakValue<K, V>)valueReference).myKeyReference = keyReference;
     }
     return keyReference;
   }

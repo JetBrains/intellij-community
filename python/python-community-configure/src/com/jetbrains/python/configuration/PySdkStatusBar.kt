@@ -54,7 +54,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
 
     module = ModuleUtil.findModuleForFile(file, project) ?: return WidgetState.HIDDEN
 
-    val sdk = PythonSdkType.findPythonSdk(module)
+    val sdk = PythonSdkUtil.findPythonSdk(module)
     return if (sdk == null) {
       WidgetState("", noInterpreterMarker, true)
     }
@@ -92,7 +92,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
     val group = DefaultActionGroup()
 
     val moduleSdksByTypes = groupModuleSdksByTypes(PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks(project), module) {
-      PythonSdkType.isInvalid(it) ||
+      PythonSdkUtil.isInvalid(it) ||
       PythonSdkType.hasInvalidRemoteCredentials(it) ||
       PythonSdkType.isIncompleteRemote(it) ||
       !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
@@ -109,7 +109,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
     group.add(InterpreterSettingsAction())
     group.add(AddInterpreterAction())
 
-    val currentSdkName = PythonSdkType.findPythonSdk(module)?.name
+    val currentSdkName = PythonSdkUtil.findPythonSdk(module)?.name
     return JBPopupFactory.getInstance().createActionGroupPopup(
       "Project Interpreter",
       group,

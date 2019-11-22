@@ -90,6 +90,9 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     if (myBinding instanceof BeanBinding && !myAccessor.isWritable()) {
       ((BeanBinding)myBinding).deserializeInto(context, children.get(0));
     }
+    else if (myBinding instanceof CollectionBinding && !myAccessor.isWritable()) {
+      Binding.deserializeList(myBinding, myAccessor.read(context), children);
+    }
     else {
       myAccessor.set(context, Binding.deserializeList(myBinding, myAccessor.read(context), children));
     }

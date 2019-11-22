@@ -31,9 +31,8 @@ import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +66,7 @@ public class PythonTask {
   private Runnable myAfterCompletion;
 
   public PythonTask(Module module, String runTabTitle) throws ExecutionException {
-    this(module, runTabTitle, PythonSdkType.findPythonSdk(module));
+    this(module, runTabTitle, PythonSdkUtil.findPythonSdk(module));
   }
 
   @NotNull
@@ -131,7 +130,7 @@ public class PythonTask {
     PydevConsoleRunner.setCorrectStdOutEncoding(commandLine, myModule.getProject()); // To support UTF-8 output
 
     ProcessHandler handler;
-    if (PySdkUtil.isRemote(mySdk)) {
+    if (PythonSdkUtil.isRemote(mySdk)) {
       assert mySdk != null;
       handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
     }
@@ -172,7 +171,7 @@ public class PythonTask {
     assert scriptParams != null;
 
     Map<String, String> env = cmd.getEnvironment();
-    if (!SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
+    if (!SystemInfo.isWindows && !PythonSdkUtil.isRemote(mySdk)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
       bashParams.addParameter("-cl");

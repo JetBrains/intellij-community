@@ -2,11 +2,11 @@
 package com.jetbrains.python.inspections.stdlib
 
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
+import com.jetbrains.python.codeInsight.DUNDER_POST_INIT
+import com.jetbrains.python.psi.types.PyNamedTupleType
+import com.jetbrains.python.psi.types.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
-import com.jetbrains.python.codeInsight.stdlib.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression

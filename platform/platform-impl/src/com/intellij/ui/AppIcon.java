@@ -13,9 +13,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.MultiResolutionImageProvider;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
@@ -120,17 +122,18 @@ public abstract class AppIcon {
       }
     }
 
-    public abstract boolean _setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
+    public abstract boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
 
-    public abstract boolean _hideProgress(IdeFrame frame, Object processId);
+    public abstract boolean _hideProgress(@Nullable JFrame frame, Object processId);
 
-    public abstract void _setTextBadge(IdeFrame frame, String text);
+    public abstract void _setTextBadge(@Nullable JFrame frame, String text);
 
-    public abstract void _setOkBadge(IdeFrame frame, boolean visible);
+    public abstract void _setOkBadge(@Nullable JFrame frame, boolean visible);
 
-    public abstract void _requestAttention(IdeFrame frame, boolean critical);
+    public abstract void _requestAttention(@Nullable JFrame frame, boolean critical);
 
-    protected abstract IdeFrame getIdeFrame(@Nullable Project project);
+    @Nullable
+    protected abstract JFrame getIdeFrame(@Nullable Project project);
 
     private boolean isAppActive() {
       Application app = ApplicationManager.getApplication();
@@ -139,11 +142,19 @@ public abstract class AppIcon {
         myAppListener = new ApplicationActivationListener() {
           @Override
           public void applicationActivated(@NotNull IdeFrame ideFrame) {
-            if (Registry.is("ide.appIcon.progress")) {
-              _hideProgress(ideFrame, myCurrentProcessId);
+            JFrame frame;
+            if (ideFrame instanceof JFrame) {
+              frame = (JFrame)ideFrame;
             }
-            _setOkBadge(ideFrame, false);
-            _setTextBadge(ideFrame, null);
+            else {
+              frame = ((ProjectFrameHelper)ideFrame).getFrame();
+            }
+
+            if (Registry.is("ide.appIcon.progress")) {
+              _hideProgress(frame, myCurrentProcessId);
+            }
+            _setOkBadge(frame, false);
+            _setTextBadge(frame, null);
           }
         };
         app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
@@ -192,7 +203,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void _setTextBadge(IdeFrame frame, String text) {
+    public void _setTextBadge(@Nullable JFrame frame, String text) {
       assertIsDispatchThread();
 
       try {
@@ -218,25 +229,27 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void _requestAttention(IdeFrame frame, boolean critical) {
+    public void _requestAttention(@Nullable JFrame frame, boolean critical) {
       assertIsDispatchThread();
 
       try {
         getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
       }
-      catch (NoSuchMethodException ignored) { }
+      catch (NoSuchMethodException ignored) {
+      }
       catch (Exception e) {
         LOG.error(e);
       }
     }
 
+    @Nullable
     @Override
-    protected IdeFrame getIdeFrame(@Nullable Project project) {
+    protected JFrame getIdeFrame(@Nullable Project project) {
       return null;
     }
 
     @Override
-    public boolean _hideProgress(IdeFrame frame, Object processId) {
+    public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
       assertIsDispatchThread();
 
       if (getAppImage() == null) return false;
@@ -251,7 +264,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void _setOkBadge(IdeFrame frame, boolean visible) {
+    public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
       assertIsDispatchThread();
 
       if (getAppImage() == null) return;
@@ -263,7 +276,7 @@ public abstract class AppIcon {
 
         int myImgWidth = img.myImg.getWidth();
         if (myImgWidth != 128) {
-          okIcon = IconUtil.scale(okIcon, frame != null ? frame.getComponent() : null, myImgWidth / 128f);
+          okIcon = IconUtil.scale(okIcon, frame != null ? frame.getRootPane() : null, myImgWidth / 128f);
         }
 
         int x = myImgWidth - okIcon.getIconWidth();
@@ -280,7 +293,7 @@ public abstract class AppIcon {
     private static final Color PROGRESS_OUTLINE_COLOR = new Color(140, 139, 140);
 
     @Override
-    public boolean _setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+    public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       assertIsDispatchThread();
 
       if (getAppImage() == null) return false;
@@ -345,7 +358,7 @@ public abstract class AppIcon {
       BufferedImage current = new BufferedImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      UIUtil.drawImage(g, appImage, 0, 0, null);
+      StartupUiUtil.drawImage(g, appImage, 0, 0, null);
       return new AppImage(current, g);
     }
 
@@ -368,7 +381,7 @@ public abstract class AppIcon {
       }
     }
 
-    private static Method getAppMethod(final String name, Class... args) throws NoSuchMethodException, ClassNotFoundException {
+    private static Method getAppMethod(final String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
       return getAppClass().getMethod(name, args);
     }
 
@@ -384,7 +397,7 @@ public abstract class AppIcon {
   @SuppressWarnings("UseJBColor")
   private static class Win7AppIcon extends BaseIcon {
     @Override
-    public boolean _setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+    public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       myCurrentProcessId = processId;
 
       if (Math.abs(myLastValue - value) < 0.02d) {
@@ -406,7 +419,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public boolean _hideProgress(IdeFrame frame, Object processId) {
+    public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) {
         return false;
       }
@@ -529,7 +542,7 @@ public abstract class AppIcon {
     private static final Color errorBadgeTextBackgroundColor = new Color(0, 0, 0, 39);
 
     @Override
-    public void _setTextBadge(IdeFrame frame, String text) {
+    public void _setTextBadge(@Nullable JFrame frame, String text) {
       if (!isValid(frame)) {
         return;
       }
@@ -539,7 +552,7 @@ public abstract class AppIcon {
       if (text != null) {
         try {
           int size = 16;
-          BufferedImage image = UIUtil.createImage(frame.getComponent(), size, size, BufferedImage.TYPE_INT_ARGB);
+          BufferedImage image = UIUtil.createImage(frame.getRootPane(), size, size, BufferedImage.TYPE_INT_ARGB);
           Graphics2D g = image.createGraphics();
 
           int shadowRadius = 16;
@@ -583,7 +596,7 @@ public abstract class AppIcon {
     private WinDef.HICON myOkIcon;
 
     @Override
-    public void _setOkBadge(IdeFrame frame, boolean visible) {
+    public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
       if (!isValid(frame)) {
         return;
       }
@@ -617,7 +630,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void _requestAttention(IdeFrame frame, boolean critical) {
+    public void _requestAttention(@Nullable JFrame frame, boolean critical) {
       try {
         if (isValid(frame)) {
           Win7TaskBar.attention(frame);
@@ -628,16 +641,17 @@ public abstract class AppIcon {
       }
     }
 
+    @Nullable
     @Override
-    protected IdeFrame getIdeFrame(@Nullable Project project) {
-      return WindowManager.getInstance().getIdeFrame(project);
+    protected JFrame getIdeFrame(@Nullable Project project) {
+      return WindowManager.getInstance().getFrame(project);
     }
 
     @Override
     public void requestFocus(IdeFrame frame) { }
 
-    private static boolean isValid(IdeFrame frame) {
-      return frame != null && ((Component)frame).isDisplayable();
+    private static boolean isValid(@Nullable JFrame frame) {
+      return frame != null && frame.isDisplayable();
     }
   }
 

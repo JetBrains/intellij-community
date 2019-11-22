@@ -29,7 +29,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     val defaultAppSettings = GitVcsApplicationSettings()
 
     val settings = GitVcsSettings.getInstance(project)
-    val defaultSettings = GitVcsSettings(defaultAppSettings)
+    val defaultSettings = GitVcsSettings()
 
     addEnumIfDiffers(set, settings, defaultSettings, { it.syncSetting }, "repo.sync")
     addEnumIfDiffers(set, settings, defaultSettings, { it.updateMethod }, "update.type")

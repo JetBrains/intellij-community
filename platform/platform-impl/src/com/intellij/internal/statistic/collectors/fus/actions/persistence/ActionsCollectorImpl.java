@@ -14,11 +14,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider;
-import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,33 +45,49 @@ public class ActionsCollectorImpl extends ActionsCollector {
     "Reload Classes", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
-  private boolean myKeymapsInitialized;
-
   public static boolean isCustomAllowedAction(@NotNull String actionId) {
     return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
+  }
+
+  public boolean isWhitelistedActionId(@NotNull String actionId) {
+    return isCustomAllowedAction(actionId) || myXmlActionIds.contains(actionId);
   }
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
-    FeatureUsageData data = new FeatureUsageData();
+    FeatureUsageData data = new FeatureUsageData().addData("action_id", recorded);
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
     }
     else if (event instanceof MouseEvent) {
       data.addInputEvent((MouseEvent)event);
     }
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, recorded, data);
+    FUCounterUsageLogger.getInstance().logEvent(GROUP, "custom.action.invoked", data);
   }
 
   @Override
   public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
-    record(GROUP, project, action, event, data -> {
+    record(GROUP, "action.invoked", project, action, event, data -> {
       if (lang != null) data.addCurrentFile(lang);
     });
   }
 
+  /**
+   * @deprecated Reporting dynamic action id as event id is deprecated. All event ids should be enumerable and known before ahead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   public static void record(@NotNull String groupId,
+                            @Nullable Project project,
+                            @Nullable AnAction action,
+                            @Nullable AnActionEvent event,
+                            @Nullable Consumer<FeatureUsageData> configurator) {
+    record(groupId, null, project, action, event, configurator);
+  }
+
+  public static void record(@NotNull String groupId,
+                            @Nullable String eventId,
                             @Nullable Project project,
                             @Nullable AnAction action,
                             @Nullable AnActionEvent event,
@@ -103,7 +119,10 @@ public class ActionsCollectorImpl extends ActionsCollector {
     else {
       data.addData("class", actionClassName);
     }
-    FUCounterUsageLogger.getInstance().logEvent(groupId, actionId, data);
+    data.addData("action_id", actionId);
+
+    String reportedEventId = StringUtil.notNullize(eventId, actionId);
+    FUCounterUsageLogger.getInstance().logEvent(groupId, reportedEventId, data);
   }
 
   @NotNull
@@ -122,20 +141,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   }
 
   private boolean canReportActionId(@NotNull String actionId) {
-    ensureMapInitialized();
     return myXmlActionIds.contains(actionId);
-  }
-
-  private synchronized void ensureMapInitialized() {
-    if (!myKeymapsInitialized) {
-      for (Keymap keymap : DefaultKeymap.getInstance().getKeymaps()) {
-        if (!(keymap instanceof DefaultKeymapImpl)) continue;
-        Class<BundledKeymapProvider> providerClass = ((DefaultKeymapImpl)keymap).getProviderClass();
-        if (!PluginInfoDetectorKt.getPluginInfo(providerClass).isDevelopedByJetBrains()) continue;
-        myXmlActionIds.addAll(keymap.getActionIdList());
-      }
-      myKeymapsInitialized = true;
-    }
   }
 
   @Override
@@ -153,4 +159,13 @@ public class ActionsCollectorImpl extends ActionsCollector {
     }
   }
 
+  @Override
+  public void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
+    if (keymap instanceof DefaultKeymapImpl) {
+      Class<BundledKeymapProvider> provider = ((DefaultKeymapImpl)keymap).getProviderClass();
+      if (PluginInfoDetectorKt.getPluginInfo(provider).isDevelopedByJetBrains()) {
+        myXmlActionIds.addAll(actionIds);
+      }
+    }
+  }
 }

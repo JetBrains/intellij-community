@@ -17,13 +17,13 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.content.*;
-import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 
 /**
  * PanelContentUI simply shows selected content in a panel.
@@ -68,7 +68,7 @@ class PanelContentUI implements ContentUI {
     myPanel = new JPanel(new BorderLayout());
     UIUtil.putClientProperty(myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
       if (myContentManager == null || myContentManager.getContentCount() == 0) {
-        return EmptyIterator.getInstance();
+        return Collections.emptyIterator();
       }
       return JBIterable.of(myContentManager.getContents())
         .map(content -> {

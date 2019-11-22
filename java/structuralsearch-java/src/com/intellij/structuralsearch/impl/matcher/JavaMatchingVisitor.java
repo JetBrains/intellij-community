@@ -271,9 +271,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitAnnotation(PsiAnnotation annotation) {
     final PsiAnnotation other = (PsiAnnotation)myMatchingVisitor.getElement();
-    myMatchingVisitor.setResult(myMatchingVisitor.match(annotation.getNameReferenceElement(), other.getNameReferenceElement()) &&
-                                myMatchingVisitor.matchInAnyOrder(annotation.getParameterList().getAttributes(),
-                                                                  other.getParameterList().getAttributes()));
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(annotation.getNameReferenceElement(), other.getNameReferenceElement()))) return;
+    final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    if (attributes.length == 0) {
+      return;
+    }
+    final PsiNameValuePair[] otherAttributes = other.getParameterList().getAttributes();
+    final List<PsiElement> unmatchedElements = new SmartList<>(otherAttributes);
+    final MatchContext context = myMatchingVisitor.getMatchContext();
+    context.pushMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
+    try {
+      if (myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(attributes, otherAttributes)) && !unmatchedElements.isEmpty()) {
+        other.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
+      }
+    } finally {
+      context.popMatchedElementsListener();
+    }
   }
 
   @Override

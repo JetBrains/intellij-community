@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
           System.setProperty("com.jetbrains.suppressWindowRaise", "false");
           myActive.onReady();
           myPublisher.onFrameActivated();
-          if (ideFrame instanceof IdeFrameImpl) {  // don't fire events when welcome screen is activated/deactivated
+          if (ideFrame instanceof ProjectFrameHelper) {  // don't fire events when welcome screen is activated/deactivated
             LifecycleUsageTriggerCollector.onFrameActivated(ideFrame.getProject());
           }
           for (FrameStateListener listener : myListeners) {
@@ -50,7 +50,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
             return;
           }
 
-          if (ideFrame instanceof IdeFrameImpl) {  // don't fire events when welcome screen is activated/deactivated
+          if (ideFrame instanceof ProjectFrameHelper) {  // don't fire events when welcome screen is activated/deactivated
             LifecycleUsageTriggerCollector.onFrameDeactivated(ideFrame.getProject());
           }
           myPublisher.onFrameDeactivated();

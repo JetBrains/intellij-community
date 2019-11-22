@@ -30,7 +30,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
 import java.util.*;
 
-import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 
 /**
  * @author Irina.Chernushina on 2/2/2016.
@@ -142,7 +142,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     for (UserDefinedJsonSchemaConfiguration info : list) {
       String pathToSchema = info.getRelativePathToSchema();
       final JsonSchemaConfigurable configurable =
-        new JsonSchemaConfigurable(myProject, isHttpPath(pathToSchema) || new File(pathToSchema).isAbsolute() ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
+        new JsonSchemaConfigurable(myProject, isAbsoluteUrl(pathToSchema) || new File(pathToSchema).isAbsolute() ? pathToSchema : new File(myProject.getBasePath(), pathToSchema).getPath(),
                                    info, myTreeUpdater, myNameCreator);
       configurable.setError(myError, true);
       myRoot.add(new MyNode(configurable));

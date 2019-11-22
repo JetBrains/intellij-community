@@ -17,6 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +85,7 @@ public class PyTestCreator implements TestCreator {
     if (!fileName.endsWith(".py")) {
       fileName = fileName + "." + PythonFileType.INSTANCE.getDefaultExtension();
     }
-    final PyFile psiFile = PyUtil.getOrCreateFile(model.getTargetDir() + "/" + fileName, project);
+    final PyFile psiFile = PyRefactoringUtil.getOrCreateFile(model.getTargetDir() + "/" + fileName, project);
 
     final String className = model.getClassName();
     final List<String> methods = model.getMethods();

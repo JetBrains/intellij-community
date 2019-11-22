@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.annotate.AnnotationTooltipBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
     @Override
     public String getValue(@NotNull CommitInfo info) {
-      return DateFormatUtil.formatPrettyDate(info.getDate());
+      return FileAnnotation.formatDate(info.getDate());
     }
   };
 

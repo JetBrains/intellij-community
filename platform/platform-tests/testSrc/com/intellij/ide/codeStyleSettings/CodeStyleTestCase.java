@@ -5,7 +5,6 @@ import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,16 +52,8 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new LightProjectDescriptor() {
-      @Override
-      public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
-        setupProject();
-        super.setUpProject(project, handler);
-      }
-    };
+    return new LightProjectDescriptor();
   }
-
-  protected void setupProject() throws Exception {}
 
   @NotNull
   protected CodeStyleSettings importSettings() throws SchemeImportException {

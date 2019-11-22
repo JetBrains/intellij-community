@@ -132,7 +132,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
   int getOffset();
 
   /**
-   * @return    document offset for the start of the logical line where caret is located
+   * @return    document offset for the start of the visual line where caret is located
    */
   int getVisualLineStart();
 

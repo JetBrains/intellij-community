@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 interface TerminalShellCommandHandler {
-  fun execute(project: Project, command: String): Boolean
+  fun execute(project: Project, getWorkingDirectory: () -> String?, command: String): Boolean
 
   companion object {
     @JvmStatic

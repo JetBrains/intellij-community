@@ -82,9 +82,10 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
           }
         }
       };
-      serverChannel.close().addListener(listener);
+
+      addCloseListener(serverChannel, countDown, listener);
       for (Channel channel : clientChannels) {
-        channel.close().addListener(listener);
+        addCloseListener(channel, countDown, listener);
       }
 
       try {
@@ -103,6 +104,18 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
       if (eventLoopGroup != null) {
         eventLoopGroup.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
       }
+    }
+  }
+
+  private static void addCloseListener(@NotNull Channel serverChannel,
+                                       @NotNull CountDownLatch countDown,
+                                       @NotNull GenericFutureListener<ChannelFuture> listener) {
+    ChannelFuture close = serverChannel.close();
+    if (close.isDone()) {
+      countDown.countDown();
+    }
+    else {
+      close.addListener(listener);
     }
   }
 }

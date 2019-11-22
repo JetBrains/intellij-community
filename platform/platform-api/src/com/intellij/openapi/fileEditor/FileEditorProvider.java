@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
  * @see DumbAware
  */
 public interface FileEditorProvider {
-
   ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<>("com.intellij.fileEditorProvider");
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,8 +62,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Mikhail Golubev
  */
 @State(name = "CertificateManager", storages = @Storage("certificates.xml"))
-public class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
-
+public final class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
   @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
   @NonNls public static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
   @NonNls public static final String DEFAULT_PASSWORD = "changeit";
@@ -90,7 +90,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    * Component initialization constructor
    */
   public CertificateManager() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    AppExecutorUtil.getAppExecutorService().execute(() -> {
       try {
         // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
         // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());

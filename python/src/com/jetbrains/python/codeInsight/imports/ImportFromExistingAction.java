@@ -10,10 +10,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -105,7 +102,7 @@ public class ImportFromExistingAction implements QuestionAction {
     DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
       .createPopupChooserBuilder(mySources)
       .setRenderer(new CellRenderer(myName))
-      .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
+      .setTitle(myUseQualifiedImport ? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
       .setItemChosenCallback((item) -> {
         PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
         doWriteAction(item);
@@ -140,7 +137,7 @@ public class ImportFromExistingAction implements QuestionAction {
       file = manager.getTopLevelFile(myTarget);
     }
     // We are trying to import top-level module or package which thus cannot be qualified
-    if (isRoot(item.getFile())) {
+    if (PyUtil.isRoot(item.getFile())) {
       if (myImportLocally) {
         AddImportHelper.addLocalImportStatement(myTarget, myName);
       } else {
@@ -202,16 +199,6 @@ public class ImportFromExistingAction implements QuestionAction {
     if (myOnDoneCallback != null) {
       myOnDoneCallback.run();
     }
-  }
-
-  public static boolean isRoot(PsiFileSystemItem directory) {
-    if (directory == null) return true;
-    VirtualFile vFile = directory.getVirtualFile();
-    if (vFile == null) return true;
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(directory.getProject());
-    return Comparing.equal(fileIndex.getClassRootForFile(vFile), vFile) ||
-           Comparing.equal(fileIndex.getContentRootForFile(vFile), vFile) ||
-           Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile);
   }
 
   // Stolen from FQNameCellRenderer

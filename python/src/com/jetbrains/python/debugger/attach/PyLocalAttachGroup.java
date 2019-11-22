@@ -19,12 +19,13 @@ import com.intellij.execution.process.ProcessInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
+import com.intellij.xdebugger.attach.XAttachProcessPresentationGroup;
+import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class PyLocalAttachGroup implements XLocalAttachGroup {
+class PyLocalAttachGroup implements XAttachProcessPresentationGroup {
   public static final PyLocalAttachGroup INSTANCE = new PyLocalAttachGroup();
 
   private PyLocalAttachGroup() {
@@ -32,7 +33,7 @@ class PyLocalAttachGroup implements XLocalAttachGroup {
 
   @Override
   public int getOrder() {
-    return XLocalAttachGroup.DEFAULT.getOrder() - 10;
+    return XDefaultLocalAttachGroup.INSTANCE.getOrder() - 10;
   }
 
   @NotNull
@@ -43,13 +44,13 @@ class PyLocalAttachGroup implements XLocalAttachGroup {
 
   @NotNull
   @Override
-  public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public Icon getItemIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
   @NotNull
   @Override
-  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getArgs();
   }
 }

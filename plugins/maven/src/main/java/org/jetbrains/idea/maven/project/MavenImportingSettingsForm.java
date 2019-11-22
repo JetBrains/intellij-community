@@ -76,7 +76,6 @@ public class MavenImportingSettingsForm {
     myGeneratedSourcesComboBox.setRenderer(SimpleListCellRenderer.create("", value -> value.title));
 
     LabelTextReplacingUtil.replaceText(myPanel);
-    myDownloadAnnotationsCheckBox.setVisible(Registry.is("external.system.import.resolve.annotations"));
     myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
   }
 

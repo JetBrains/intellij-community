@@ -5,28 +5,22 @@ import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.Future;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 @SuppressWarnings({"UnusedDeclaration"})
-public final class MainImpl {
-  private MainImpl() { }
-
-  /**
-   * Called from PluginManager via reflection.
-   */
-  public static void start(@NotNull String[] args) throws Exception {
+public final class MainImpl implements StartupUtil.AppStarter {
+  public MainImpl() {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
+  }
 
-    StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
-      @Override
-      public void start(@NotNull Future<?> initUiTask) {
-        ApplicationLoader.initApplication(args, initUiTask);
-      }
+  @Override
+  public void start(@NotNull List<String> args, @NotNull CompletionStage<?> initUiTask) {
+    ApplicationLoader.initApplication(args, initUiTask);
+  }
 
-      @Override
-      public void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {
-        ApplicationLoader.setWizardStepsProvider(provider);
-      }
-    });
+  @Override
+  public void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {
+    ApplicationLoader.setWizardStepsProvider(provider);
   }
 }

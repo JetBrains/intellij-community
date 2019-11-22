@@ -140,6 +140,10 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
       CommentTracker tracker = new CommentTracker();
       PsiStatement thenBranch = model.getThenBranch();
       tracker.text(thenBranch);
+      PsiStatement elseBranch = model.getElseBranch();
+      if (!PsiTreeUtil.isAncestor(ifStatement, elseBranch, true)) {
+        new CommentTracker().deleteAndRestoreComments(elseBranch);
+      }
       PsiElement result = PsiReplacementUtil.replaceStatement(ifStatement, thenBranch.getText(), tracker);
       SimplifiableIfStatementInspection.tryJoinDeclaration(result);
     }

@@ -10,7 +10,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-core:3.3.9" type="repository">
-        <properties maven-id="org.apache.maven:maven-core:3.3.9" />
+        <properties maven-id="org.apache.maven:maven-core:3.3.9">
+          <exclude>
+            <dependency maven-id="com.google.inject:guice" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/3.3.9/maven-core-3.3.9.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.3.9/maven-model-3.3.9.jar!/" />
@@ -31,9 +35,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/javax/enterprise/cdi-api/1.0/cdi-api-1.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/javax/annotation/jsr250-api/1.0/jsr250-api-1.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.2/org.eclipse.sisu.inject-0.3.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/inject/guice/4.0/guice-4.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/aopalliance/aopalliance/1.0/aopalliance-1.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.21/plexus-interpolation-1.21.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.5.2/plexus-classworlds-2.5.2.jar!/" />
@@ -46,6 +47,21 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="PROVIDED" name="javax-inject" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="com.google.inject:guice-no_aop:4.0" type="repository">
+        <properties maven-id="com.google.inject:guice:4.0">
+          <exclude>
+            <dependency maven-id="aopalliance:aopalliance" />
+            <dependency maven-id="com.google.guava:guava" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/inject/guice/4.0/guice-4.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

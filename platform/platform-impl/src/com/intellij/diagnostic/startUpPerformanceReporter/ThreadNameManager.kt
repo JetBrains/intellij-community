@@ -15,11 +15,21 @@ internal class ThreadNameManager {
       return result
     }
 
-    val name = event.threadName
+    val pooledPrefix = "ApplicationImpl pooled thread "
+
+    var name = event.threadName
+    if (name.endsWith("]") && name.contains(pooledPrefix)) {
+      val lastOpen = name.lastIndexOf('[')
+      if (lastOpen > 0) {
+        name = name.substring(lastOpen + 1, name.length - 1)
+      }
+    }
+
     result = when {
       name.startsWith("AWT-EventQueue-") -> "edt"
       name.startsWith("Idea Main Thread") -> "idea main"
-      name.startsWith("ApplicationImpl pooled thread ") -> name.replace("ApplicationImpl pooled thread ", "pooled ")
+      name.startsWith(pooledPrefix) -> name.replace(pooledPrefix, "pooled ")
+      name.startsWith("StatisticsFileEventLogger: ") -> "StatFileEventLogger"
       else -> name
     }
     idToName.put(event.threadId, result)

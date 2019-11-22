@@ -686,49 +686,39 @@ public class AnnotationUtil {
   private static final String[] SIMPLE_NAMES =
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
-  /** @deprecated simple name is not enough for reliable identification (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated simple name is not enough for reliable identification */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
   }
 
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, CHECK_TYPE);
   }
 
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull Collection<String> annotations,
                                     boolean checkHierarchy) {
     return isAnnotated(listOwner, annotations, flags(checkHierarchy, true, true));
   }
 
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull Collection<String> annotations,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal) {
-    return isAnnotated(listOwner, annotations, flags(checkHierarchy, skipExternal, skipExternal));
-  }
-
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
     return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
   }
 
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull String annotationFQN,
                                     boolean checkHierarchy,

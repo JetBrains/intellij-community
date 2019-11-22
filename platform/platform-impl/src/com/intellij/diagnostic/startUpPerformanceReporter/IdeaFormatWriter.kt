@@ -3,8 +3,8 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
-import com.intellij.diagnostic.ParallelActivity
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
@@ -25,6 +25,8 @@ private class ExposingCharArrayWriter : CharArrayWriter(8192) {
   }
 }
 
+private const val VERSION = "11"
+
 internal class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
                                 private val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
                                 private val threadNameManager: ThreadNameManager) {
@@ -39,7 +41,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", "10")
+        writer.writeStringField("version", VERSION)
         writer.writeStringField("build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
         writer.writeStringField("productCode", ApplicationInfo.getInstance().build.productCode)
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
@@ -47,7 +49,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writeIcons(writer)
 
         writer.array("traceEvents") {
-          TraceEventFormat(timeOffset, instantEvents).writeInstantEvents(writer)
+          TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager).writeInstantEvents(writer)
         }
 
         var totalDuration = 0L
@@ -67,8 +69,9 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
               writeItemTimeInfo(item, duration, timeOffset, writer)
             }
           }
-          totalDuration += writeUnknown(writer, items.last().end, end, timeOffset)
         }
+
+        totalDuration += end - items.last().end
 
         writeParallelActivities(timeOffset, writer)
 
@@ -97,11 +100,11 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
       val list = activities.getValue(name)
       StartUpPerformanceReporter.sortItems(list)
 
-      if (name.endsWith("Component") || name.endsWith("Service")) {
+      if (name.endsWith("Service") || name.endsWith("Component")) {
         computeOwnTime(list, ownDurations)
       }
 
-      val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
+      val measureThreshold = if (name == ActivityCategory.APP_INIT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
       writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold)
     }
   }
@@ -110,7 +113,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
                               offset: Long, writer: JsonGenerator,
                               fieldName: String,
                               ownDurations: ObjectLongHashMap<ActivityImpl>,
-                              measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD) {
+                              measureThreshold: Long = StartUpMeasurer.MEASURE_THRESHOLD) {
     if (activities.isEmpty()) {
       return
     }
@@ -122,7 +125,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
 
         item.pluginId?.let {
-          StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
+          StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", duration, pluginCostMap)
         }
 
         if (duration <= measureThreshold) {
@@ -159,26 +162,12 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
-  return when {
-    name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
+  val last = name.last()
+  return when (last) {
+    'y' -> name.substring(0, name.length - 1) + "ies"
+    's' -> name
     else -> name.substring(0) + 's'
   }
-}
-
-private fun writeUnknown(writer: JsonGenerator, start: Long, end: Long, offset: Long): Long {
-  val duration = end - start
-  val durationInMs = TimeUnit.NANOSECONDS.toMillis(duration)
-  if (durationInMs <= 1) {
-    return 0
-  }
-
-  writer.obj {
-    writer.writeStringField("name", "unknown")
-    writer.writeNumberField("duration", durationInMs)
-    writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(start - offset))
-    writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(end - offset))
-  }
-  return duration
 }
 
 private fun writeIcons(writer: JsonGenerator) {

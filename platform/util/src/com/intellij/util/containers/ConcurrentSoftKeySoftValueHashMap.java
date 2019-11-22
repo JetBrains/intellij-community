@@ -79,7 +79,7 @@ class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
     final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
     SoftKey<K, V> keyReference = new SoftKey<>(k, valueReference, myHashingStrategy, myKeyQueue);
     if (valueReference instanceof SoftValue) {
-      ((SoftValue)valueReference).myKeyReference = keyReference;
+      ((SoftValue<K,V>)valueReference).myKeyReference = keyReference;
     }
     return keyReference;
   }

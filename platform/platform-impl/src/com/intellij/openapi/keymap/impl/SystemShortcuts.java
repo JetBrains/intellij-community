@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-public class SystemShortcuts {
+public final class SystemShortcuts {
   private static final Logger LOG = Logger.getInstance(SystemShortcuts.class);
   private static final @NotNull String ourNotificationGroupId = "System shortcuts conflicts";
   private static final @NotNull String ourUnknownSysAction = "Unknown action";
@@ -45,13 +45,15 @@ public class SystemShortcuts {
   private @NotNull final MuteConflictsSettings myMutedConflicts = new MuteConflictsSettings();
 
   private @Nullable Keymap myKeymap;
-  private @NotNull Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
+
+  @NotNull
+  private final Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
 
   public SystemShortcuts() {
     readSystem();
   }
 
-  public static class ConflictItem {
+  public static final class ConflictItem {
     final @NotNull String mySysActionDesc;
     final @NotNull KeyStroke mySysKeyStroke;
     final @NotNull String[] myActionIds;
@@ -337,6 +339,7 @@ public class SystemShortcuts {
     return result == null ? ourUnknownSysAction : result;
   }
 
+  private static final boolean DEBUG_SYSTEM_SHORTCUTS = Boolean.getBoolean("debug.system.shortcuts");
   private void readSystem() {
     myKeyStroke2SysShortcut.clear();
 
@@ -359,6 +362,7 @@ public class SystemShortcuts {
       if (all == null || all.isEmpty())
         return;
 
+      String debugInfo = "";
       for (AWTKeyStroke shk: all) {
         if (shk.getModifiers() == 0) {
           //System.out.println("Skip system shortcut [without modifiers]: " + shk);
@@ -380,6 +384,13 @@ public class SystemShortcuts {
           sysKS = KeyStroke.getKeyStroke(shk.getKeyCode(), shk.getModifiers());
 
         myKeyStroke2SysShortcut.put(sysKS, shk);
+
+        if (DEBUG_SYSTEM_SHORTCUTS) {
+          debugInfo += shk.toString() + ";\n";
+        }
+      }
+      if (DEBUG_SYSTEM_SHORTCUTS) {
+        Logger.getInstance(SystemShortcuts.class).info("system shortcuts:\n" + debugInfo);
       }
     } catch (Throwable e) {
       Logger.getInstance(SystemShortcuts.class).debug(e);

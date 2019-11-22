@@ -45,6 +45,13 @@ MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 # Prefix for saving functions return values in locals
 RETURN_VALUES_DICT = '__pydevd_ret_val_dict'
 
+original_excepthook = sys.__excepthook__
+
+
+def dummy_excepthook(exctype, value, traceback):
+    return None
+
+
 import os
 
 from _pydevd_bundle import pydevd_vm_type

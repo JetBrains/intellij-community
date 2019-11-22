@@ -11,9 +11,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getQualifierType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -83,3 +83,5 @@ fun inferDerivedSubstitutor(leftType: PsiType, derived: PsiClass, context: PsiEl
   session.addConstraint(TypeCompatibilityConstraint(leftType, session.substituteWithInferenceVariables(derived.type())))
   return session.infer()
 }
+
+class ExpectedType(val type: PsiType, val position: GrTypeConverter.Position)

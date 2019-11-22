@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.ide.actions.runAnything.RunAnythingContext;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase;
 import com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -222,8 +225,11 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
         mavenProject = mavenProjects.get(0);
       }
       else {
-        String moduleName = goals.remove(0);
-        Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
+        RunAnythingContext executingContext = dataContext.getData(RunAnythingProvider.EXECUTING_CONTEXT);
+        Module module = executingContext instanceof RunAnythingContext.ModuleContext
+                        ? ((RunAnythingContext.ModuleContext)executingContext).getModule()
+                        : ModuleManager.getInstance(project).findModuleByName(goals.remove(0));
+
         if (module != null) {
           mavenProject = projectsManager.findProject(module);
         }
@@ -242,5 +248,15 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
         mavenRunner.run(params, mavenRunner.getSettings(), null);
       }
     }
+  }
+
+  @Nullable
+  @Override
+  public RunAnythingContext getPreferableContext(@NotNull DataContext dataContext) {
+    Module module = dataContext.getData(LangDataKeys.MODULE);
+    if (module != null) {
+      return new RunAnythingContext.ModuleContext(module);
+    }
+    return super.getPreferableContext(dataContext);
   }
 }

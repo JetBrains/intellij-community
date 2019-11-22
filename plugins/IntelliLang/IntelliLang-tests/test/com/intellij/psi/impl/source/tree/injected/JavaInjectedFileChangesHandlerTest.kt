@@ -465,6 +465,39 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+  fun `test text block trim indent`() {
+    with(myFixture) {
+      configureByText("classA.java", """
+        import org.intellij.lang.annotations.Language;
+        
+        class A {
+          @Language("HTML")
+          String s = ""${'"'}
+          <html>
+            <body>
+              <h1>title</h1>
+              <p>
+                this is a test.<caret>
+              </p>
+            </body>
+          </html>""${'"'};
+        }
+      """.trimIndent())
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      val fragmentFile = quickEditHandler.newFile
+      TestCase.assertEquals(
+        """|<html>
+           |  <body>
+           |    <h1>title</h1>
+           |    <p>
+           |      this is a test.
+           |    </p>
+           |  </body>
+           |</html>""".trimMargin(), fragmentFile.text)
+    }
+  }
+
   fun `test delete-commit-delete`() {
     with(myFixture) {
 

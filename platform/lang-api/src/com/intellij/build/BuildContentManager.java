@@ -18,7 +18,6 @@ package com.intellij.build;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,6 @@ import javax.swing.*;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildContentManager {
   void addContent(Content content);
 

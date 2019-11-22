@@ -22,7 +22,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCon
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -67,7 +67,7 @@ public class DefaultArrangementEntryMatcherSerializerTest {
     // Inspired by IDEA-91826.
     ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
     ArrangementSettingsToken typeToPreserve = FIELD;
-    Set<ArrangementSettingsToken> modifiersToPreserve = ContainerUtilRt.newHashSet(PUBLIC, STATIC, FINAL);
+    Set<ArrangementSettingsToken> modifiersToPreserve = ContainerUtil.newHashSet(PUBLIC, STATIC, FINAL);
     condition.addOperand(new ArrangementAtomMatchCondition(typeToPreserve, typeToPreserve));
     for (ArrangementSettingsToken modifier : modifiersToPreserve) {
       condition.addOperand(new ArrangementAtomMatchCondition(modifier, modifier));

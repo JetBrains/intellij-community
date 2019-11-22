@@ -20,7 +20,7 @@ import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor;
 import java.util.ArrayList;
 import java.util.Objects;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override

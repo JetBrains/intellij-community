@@ -12,23 +12,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
+  public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
+
   // Use constants for better overview of existing phases (and preserve consistent naming).
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`,
   // not to put common part of name to end of).
   // It is not serves only display purposes - it is IDs. Visualizer and another tools to analyze data uses phase IDs,
   // so, any changes must be discussed across all involved and reflected in changelog (see `format-changelog.md`).
   public static final class Phases {
-    public static final String LOAD_MAIN_CLASS = "load main class";
-
-    // this phase name is not fully clear - it is time from `PluginManager.start` to `ApplicationLoader.initApplication`
-    public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
-    public static final String CHECK_SYSTEM_DIR = "check system dirs";
-    public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
-
-    public static final String WAIT_TASKS = "wait tasks";
-    public static final String IMPORT_CONFIGS = "import configs";
-
-    public static final String CONFIGURE_LOGGING = "configure logging";
     public static final String APP_STARTER = "appStarter";
 
     // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
@@ -41,22 +32,11 @@ public final class StartUpMeasurer {
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
-    public static final String FRAME_INITIALIZATION = "frame initialization";
 
-    public static final String PROJECT_CONVERSION = "project conversion";
-    public static final String PROJECT_BEFORE_LOADED = "project before loaded callbacks";
-    public static final String PROJECT_INSTANTIATION = "project instantiation";
     public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
-    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE = "project post-startup dumb-aware activities";
-    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT = "project post-startup edt activities";
-
-    public static final String LOAD_MODULES = "module loading";
-    public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";
-
-    public static final String RESTORING_EDITORS = "restoring editors";
   }
 
   @SuppressWarnings("StaticNonFinalField")
@@ -64,22 +44,6 @@ public final class StartUpMeasurer {
 
   public static void stopPluginCostMeasurement() {
     measuringPluginStartupCosts = false;
-  }
-
-  // ExtensionAreas not available for ExtensionPointImpl
-  public enum Level {
-    APPLICATION("app"), PROJECT("project"), MODULE("module");
-
-    private final String jsonFieldNamePrefix;
-
-    Level(@NotNull String jsonFieldNamePrefix) {
-      this.jsonFieldNamePrefix = jsonFieldNamePrefix;
-    }
-
-    @NotNull
-    public String getJsonFieldNamePrefix() {
-      return jsonFieldNamePrefix;
-    }
   }
 
   private static long startTime = System.nanoTime();
@@ -107,13 +71,6 @@ public final class StartUpMeasurer {
     return TimeUnit.NANOSECONDS.toMillis(getCurrentTime() - startTime);
   }
 
-  @NotNull
-  public static Activity start(@NotNull String name, @Nullable String description) {
-    ActivityImpl activity = new ActivityImpl(name, null, null);
-    activity.setDescription(description);
-    return activity;
-  }
-
   /**
    * The instant events correspond to something that happens but has no duration associated with it.
    * See https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp
@@ -121,19 +78,66 @@ public final class StartUpMeasurer {
    * Scope is not supported — reported as global.
    */
   public static void addInstantEvent(@NotNull String name) {
-    ActivityImpl activity = new ActivityImpl(name, null, null);
+    ActivityImpl activity = new ActivityImpl(name, null);
     activity.setEnd(-1);
     add(activity);
   }
 
   @NotNull
-  public static Activity start(@NotNull String name) {
-    return new ActivityImpl(name, null, null);
+  public static Activity startActivity(@NotNull String name) {
+    return startActivity(name, ActivityCategory.APP_INIT);
   }
 
   @NotNull
-  public static Activity start(@NotNull String name, @NotNull Level level) {
-    return new ActivityImpl(name, level, null);
+  public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category) {
+    return startActivity(name, category, null);
+  }
+
+  @NotNull
+  public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
+    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */  pluginId);
+    activity.setCategory(category);
+    return activity;
+  }
+
+  @NotNull
+  public static Activity startMainActivity(@NotNull String name) {
+    return new ActivityImpl(name, null);
+  }
+
+  /**
+   * Default threshold is applied.
+   */
+  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, String pluginId) {
+    long end = getCurrentTime();
+    long duration = end - start;
+    if (duration <= MEASURE_THRESHOLD) {
+      return duration;
+    }
+
+    addCompletedActivity(start, end, clazz.getName(), category, pluginId);
+    return duration;
+  }
+
+  /**
+   * Default threshold is applied.
+   */
+  public static long addCompletedActivity(long start, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+    long end = getCurrentTime();
+    long duration = end - start;
+    if (duration <= MEASURE_THRESHOLD) {
+      return duration;
+    }
+
+    addCompletedActivity(start, end, name, category, pluginId);
+    return duration;
+  }
+
+  private static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId);
+    item.setCategory(category);
+    item.setEnd(end);
+    add(item);
   }
 
   public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {
@@ -171,7 +175,7 @@ public final class StartUpMeasurer {
 
     List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
 
-    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
+    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, null);
     parent.setEnd(getCurrentTime());
 
     for (int i = 0; i < entries.size(); i++) {
@@ -180,7 +184,7 @@ public final class StartUpMeasurer {
         startTime = start;
       }
 
-      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, Level.APPLICATION, null, null);
+      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, null);
       activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
       items.add(activity);
     }

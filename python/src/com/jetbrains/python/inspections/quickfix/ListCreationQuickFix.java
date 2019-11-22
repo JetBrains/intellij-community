@@ -51,7 +51,7 @@ public class ListCreationQuickFix implements LocalQuickFix {
         stringBuilder.append(expr.getText()).append(", ");
       statement.delete();
     }
-    assignedValue.replace(
-      elementGenerator.createExpressionFromText("[" + stringBuilder.substring(0, stringBuilder.length() - 2) + "]"));
+    final String text = "[" + stringBuilder.substring(0, stringBuilder.length() - 2) + "]";
+    assignedValue.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(assignedValue), text));
   }
 }

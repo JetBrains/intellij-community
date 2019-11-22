@@ -322,6 +322,10 @@ public class HtmlParsing {
     return myTagMarkersStack.peek();
   }
 
+  protected int tagLevel() {
+    return myTagNamesStack.size();
+  }
+
   private void doneTag(PsiBuilder.Marker tag) {
     tag.done(XmlElementType.HTML_TAG);
     final String tagName = myTagNamesStack.peek();

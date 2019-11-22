@@ -89,6 +89,11 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    */
   boolean isDisposed();
 
+  @ApiStatus.Experimental
+  default boolean isDisposedOrDisposeInProgress() {
+    return isDisposed();
+  }
+
   /**
    * @deprecated Use {@link ExtensionPointName#getExtensionList(AreaInstance)}
    */
@@ -105,12 +110,10 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
-  @ApiStatus.Experimental
   default <T> T getService(@NotNull Class<T> serviceClass) {
     return getService(serviceClass, true);
   }
 
-  @ApiStatus.Experimental
   @Nullable
   default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getService(serviceClass, false);
@@ -136,7 +139,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @Nullable PluginId pluginId) {
+  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId) {
     //noinspection unchecked
     return (T)new CachingConstructorInjectionComponentAdapter(key, aClass, null, true).getComponentInstance(getPicoContainer());
   }

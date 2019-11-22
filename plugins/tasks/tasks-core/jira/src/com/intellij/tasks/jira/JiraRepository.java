@@ -226,12 +226,16 @@ public class JiraRepository extends BaseRepositoryImpl {
       return deploymentType.getAsString().equals("Cloud");
     }
     // Legacy heuristics
-    final boolean atlassianSubDomain = hostEndsWith(serverInfo.get("baseUrl").getAsString(), ".atlassian.net");
+    final boolean atlassianSubDomain = isAtlassianNetSubDomain(serverInfo.get("baseUrl").getAsString());
     if (atlassianSubDomain) {
       return true;
     }
     // JIRA OnDemand versions contained "OD" abbreviation
     return serverInfo.get("version").getAsString().contains("OD") ;
+  }
+
+  private static boolean isAtlassianNetSubDomain(@NotNull String url) {
+    return hostEndsWith(url, ".atlassian.net");
   }
 
   private static boolean hostEndsWith(@NotNull String url, @NotNull String suffix) {
@@ -307,8 +311,15 @@ public class JiraRepository extends BaseRepositoryImpl {
         JsonObject object = GSON.fromJson(entityContent, JsonObject.class);
         if (object.has("errorMessages")) {
           String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
-          // something meaningful to user, e.g. invalid field name in JQL query
+          // If anonymous access is enabled on server, it might reply only with a cryptic 400 error about inaccessible issue fields,
+          // e.g. "Field 'assignee' does not exist or this field cannot be viewed by anonymous users."
+          // Unfortunately, there is no better way to indicate such errors other than by matching by the error message itself.
           LOG.warn(reason);
+          if (statusCode ==  HttpStatus.SC_BAD_REQUEST && reason.contains("cannot be viewed by anonymous users")) {
+            // Oddly enough, in case of JIRA Cloud issues are access anonymously only if API Token is correct, but email is wrong.
+            throw new Exception(isInCloud() ? TaskBundle.message("jira.failure.email.address") : TaskBundle.message("failure.login"));
+          }
+          // something meaningful to user, e.g. invalid field name in JQL query
           throw new Exception(TaskBundle.message("failure.server.message", reason));
         }
       }
@@ -377,7 +388,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   private boolean isRestApiSupported() {
-    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
+    return myApiVersion == null || myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
   }
 
   public boolean isJqlSupported() {
@@ -411,7 +422,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     // reset remote API version, only if server URL was changed
     if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
-      myInCloud = false;
+      myInCloud = isAtlassianNetSubDomain(getUrl());
     }
   }
 

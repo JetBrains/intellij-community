@@ -17,7 +17,7 @@ class ChangeReminderBrowserNode(private val files: Collection<VirtualFile>,
                                 private val predictionService: PredictionService
 ) : ChangesBrowserNode<Collection<VirtualFile>>(files) {
   companion object {
-    private const val NODE_TITLE = "Related Files"
+    private const val NODE_TITLE = "People who change the files in the active changelist also change"
     private const val LOADING_ATTRIBUTE = "Git Log is loading..."
     private const val CALCULATING_ATTRIBUTE = "Calculating..."
   }
@@ -38,7 +38,6 @@ class ChangeReminderBrowserNode(private val files: Collection<VirtualFile>,
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.append(NODE_TITLE, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     appendCount(renderer)
-    renderer.icon = AllIcons.General.Information
     val project = predictionService.project
     if (predictionService.isReady) {
       if (predictionService.inProgress) {

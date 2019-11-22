@@ -38,6 +38,12 @@ interface RowBuilder : BaseBuilder {
   }
 
   /**
+   * Creates row with hideable decorator
+   * It allows to hide some information under the titled decorator
+   */
+  fun hideableRow(title: String, init: Row.() -> Unit): Row
+
+  /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
    */
   fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
@@ -45,31 +51,35 @@ interface RowBuilder : BaseBuilder {
   }
 
   fun commentRow(text: String) {
-    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true))
+    createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(text, true, -1))
   }
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  withButtonGroup(ButtonGroup()) {
-    CellBuilderWithButtonGroupProperty(prop.toBinding()).init()
-  }
+  buttonGroup(prop.toBinding(), init)
 }
 
 inline fun <reified T : Any> InnerCell.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  buttonGroup(PropertyBinding(getter, setter), init)
+}
+
+inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
-    CellBuilderWithButtonGroupProperty(PropertyBinding(getter, setter)).init()
+    CellBuilderWithButtonGroupProperty(binding).init()
   }
 }
 
 inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
-  withButtonGroup(ButtonGroup()) {
-    RowBuilderWithButtonGroupProperty(this, prop.toBinding()).init()
-  }
+  buttonGroup(prop.toBinding(), init)
 }
 
 inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
+  buttonGroup(PropertyBinding(getter, setter), init)
+}
+
+inline fun <reified T : Any> RowBuilder.buttonGroup(binding: PropertyBinding<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
-    RowBuilderWithButtonGroupProperty(this, PropertyBinding(getter, setter)).init()
+    RowBuilderWithButtonGroupProperty(this, binding).init()
   }
 }
 

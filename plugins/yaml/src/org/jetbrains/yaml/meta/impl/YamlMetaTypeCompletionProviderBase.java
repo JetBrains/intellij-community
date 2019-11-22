@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvider<CompletionParameters> {
   protected static final Logger LOG = Logger.getInstance(YamlMetaTypeCompletionProviderBase.class);
 

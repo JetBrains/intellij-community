@@ -23,10 +23,10 @@ import com.intellij.rt.execution.application.AppMainV2;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.xdebugger.attach.XAttachProcessPresentationGroup;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
@@ -71,7 +71,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   private static final Key<Map<String, LocalAttachInfo>> ADDRESS_MAP_KEY = Key.create("ADDRESS_MAP");
 
-  private static final XLocalAttachGroup ourAttachGroup = new JavaDebuggerAttachGroup("Java", -20);
+  private static final XAttachProcessPresentationGroup ourAttachGroup = new JavaDebuggerAttachGroup("Java", -20);
 
   static class JavaDebuggerAttachGroup extends XDefaultLocalAttachGroup {
     private final String myName;
@@ -95,7 +95,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @NotNull
     @Override
-    public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    public String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
       LocalAttachInfo attachInfo = getAttachInfo(project, info.getPid(), info.getCommandLine(), dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
       String res;
@@ -117,7 +117,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @NotNull
   @Override
-  public XLocalAttachGroup getAttachGroup() {
+  public XAttachProcessPresentationGroup getPresentationGroup() {
     return ourAttachGroup;
   }
 

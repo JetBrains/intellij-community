@@ -4,10 +4,13 @@ package com.intellij.psi.util
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil.lastChild
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
+
+val PsiElement?.elementType: IElementType? get() = PsiUtilCore.getElementType(this)
 
 inline fun <reified T : PsiElement> PsiElement.parentOfType(): T? = parentOfType(T::class)
 

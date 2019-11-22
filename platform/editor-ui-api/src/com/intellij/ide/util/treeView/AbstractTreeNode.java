@@ -27,7 +27,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
   private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
-  private AbstractTreeNode myParent;
+  private AbstractTreeNode<?> myParent;
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
@@ -54,7 +54,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   public PresentableNodeDescriptor getChildToHighlightAt(int index) {
     final Collection<? extends AbstractTreeNode> kids = getChildren();
     int i = 0;
-    for (final AbstractTreeNode kid : kids) {
+    for (final AbstractTreeNode<?> kid : kids) {
       if (i == index) return kid;
       i++;
     }
@@ -121,7 +121,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     if (object == this) return true;
     if (object == null || !object.getClass().equals(getClass())) return false;
     // we should not change this behaviour if value is set to null
-    return object instanceof AbstractTreeNode && Comparing.equal(myValue, ((AbstractTreeNode)object).myValue);
+    return Comparing.equal(myValue, ((AbstractTreeNode<?>)object).myValue);
   }
 
   @Override
@@ -245,7 +245,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   @Nullable
   protected final Object getParentValue() {
-    AbstractTreeNode parent = getParent();
+    AbstractTreeNode<?> parent = getParent();
     return parent == null ? null : parent.getValue();
   }
 

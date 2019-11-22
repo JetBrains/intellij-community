@@ -40,7 +40,7 @@ public class TestsProgressAnimator implements Runnable, Disposable {
   private final AbstractTestTreeBuilderBase myTreeBuilder;
 
   /**
-   * To be deleted when AbstractTreeBuilder would be completely eliminated
+   * @deprecated To be deleted when AbstractTreeBuilder would be completely eliminated
    */
   @Deprecated
   public TestsProgressAnimator(AbstractTestTreeBuilder builder) {

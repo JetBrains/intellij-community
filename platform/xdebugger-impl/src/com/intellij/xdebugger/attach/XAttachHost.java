@@ -17,7 +17,6 @@ package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.List;
 /**
  * This interface describes the host(local or remote), from which list of processes can be obtained
  */
-@ApiStatus.Experimental
 public interface XAttachHost {
   /**
    * @return a list of running processes on this host

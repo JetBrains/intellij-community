@@ -1,27 +1,8 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>com.intellij.util.net.ssl.CertificateManager</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.fileTypes.FileTypeManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.vfs.pointers.VirtualFilePointerManager</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
       <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.command.undo.DocumentReferenceManager</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.DocumentReferenceManagerImpl</implementation-class>
     </component>
 
     <component>
@@ -32,11 +13,6 @@
 
     <component>
       <implementation-class>com.intellij.openapi.application.impl.JitSuppressor</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.notification.NotificationsConfiguration</interface-class>
-      <implementation-class>com.intellij.notification.impl.NotificationsConfigurationImpl</implementation-class>
     </component>
 
     <component>
@@ -69,11 +45,6 @@
     <component>
       <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
     </component>
-
-    <component>
-      <interface-class>com.intellij.configurationStore.StoreReloadManager</interface-class>
-      <implementation-class>com.intellij.configurationStore.StoreReloadManagerImpl</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
@@ -94,12 +65,6 @@
     <component>
       <interface-class>com.intellij.ui.EditorNotifications</interface-class>
       <implementation-class>com.intellij.ui.EditorNotificationsImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl</implementation-class>
-      <loadForDefaultProject/>
     </component>
 
     <component>

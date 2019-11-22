@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * <p>Runs an activity on project open.</p>
  *
- * <p>If the activity implements {@link com.intellij.openapi.project.DumbAware} interface, it will be started in a pooled thread
+ * <p>If the activity implements {@link com.intellij.openapi.project.DumbAware} interface, e.g. {@link DumbAware}, it will be started in a pooled thread
  * under 'Loading Project' dialog, otherwise it will be started in the dispatch thread after the initialization.</p>
  *
  * @author Dmitry Avdeev
@@ -26,7 +26,12 @@ public interface StartupActivity {
    * immediately when this happens, so if you need to access other components, you're responsible for doing this in a
    * thread-safe way (e.g. by taking a read action to collect all the state you need).</p>
    */
-  ExtensionPointName<StartupActivity> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
+  ExtensionPointName<StartupActivity.Background> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
 
   void runActivity(@NotNull Project project);
+
+  interface DumbAware extends StartupActivity, com.intellij.openapi.project.DumbAware {
+  }
+
+  interface Background extends StartupActivity {}
 }

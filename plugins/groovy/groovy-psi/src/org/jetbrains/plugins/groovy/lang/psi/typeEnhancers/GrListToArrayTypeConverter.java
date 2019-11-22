@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiArrayType;
@@ -13,10 +13,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 public class GrListToArrayTypeConverter extends GrTypeConverter {
   @Nullable
   @Override
-  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
-                                          @NotNull PsiType actualType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
+  public ConversionResult isConvertible(@NotNull PsiType targetType,
+                                        @NotNull PsiType actualType,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
     if (!(targetType instanceof PsiArrayType) || !(actualType instanceof GrTupleType)) return null;
 
     final PsiType lComponentType = ((PsiArrayType)targetType).getComponentType();
@@ -27,7 +27,7 @@ public class GrListToArrayTypeConverter extends GrTypeConverter {
   }
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position == ApplicableTo.ASSIGNMENT;
+  public boolean isApplicableTo(@NotNull Position position) {
+    return position == Position.ASSIGNMENT;
   }
 }

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -37,10 +36,10 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class HighlightManagerImpl extends HighlightManager {
+public final class HighlightManagerImpl extends HighlightManager {
   private final Project myProject;
 
-  public HighlightManagerImpl(Project project, EditorFactory editorFactory) {
+  public HighlightManagerImpl(Project project) {
     myProject = project;
     ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(AnActionListener.TOPIC, new MyAnActionListener());
 
@@ -50,12 +49,12 @@ public class HighlightManagerImpl extends HighlightManager {
         Document document = event.getDocument();
         Editor[] editors = EditorFactory.getInstance().getEditors(document);
         for (Editor editor : editors) {
-          Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+          Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
           if (map == null) return;
 
           ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<>();
           for (RangeHighlighter highlighter : map.keySet()) {
-            HighlightInfo info = map.get(highlighter);
+            HighlightFlags info = map.get(highlighter);
             if (!info.editor.getDocument().equals(document)) continue;
             if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
               highlightersToRemove.add(highlighter);
@@ -68,15 +67,15 @@ public class HighlightManagerImpl extends HighlightManager {
         }
       }
     };
-    editorFactory.getEventMulticaster().addDocumentListener(documentListener, myProject);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
   @Nullable
-  private Map<RangeHighlighter, HighlightInfo> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
+  private Map<RangeHighlighter, HighlightFlags> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
-    Map<RangeHighlighter, HighlightInfo> map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
+    Map<RangeHighlighter, HighlightFlags> map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
     if (map == null && toCreate) {
       map = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHT_INFO_MAP_KEY, new HashMap<>());
     }
@@ -85,11 +84,11 @@ public class HighlightManagerImpl extends HighlightManager {
 
   @NotNull
   public RangeHighlighter[] getHighlighters(@NotNull Editor editor) {
-    Map<RangeHighlighter, HighlightInfo> highlightersMap = getHighlightInfoMap(editor, false);
+    Map<RangeHighlighter, HighlightFlags> highlightersMap = getHighlightInfoMap(editor, false);
     if (highlightersMap == null) return RangeHighlighter.EMPTY_ARRAY;
     Set<RangeHighlighter> set = new HashSet<>();
-    for (Map.Entry<RangeHighlighter, HighlightInfo> entry : highlightersMap.entrySet()) {
-      HighlightInfo info = entry.getValue();
+    for (Map.Entry<RangeHighlighter, HighlightFlags> entry : highlightersMap.entrySet()) {
+      HighlightFlags info = entry.getValue();
       if (info.editor.equals(editor)) set.add(entry.getKey());
     }
     return set.toArray(RangeHighlighter.EMPTY_ARRAY);
@@ -98,17 +97,17 @@ public class HighlightManagerImpl extends HighlightManager {
   private RangeHighlighter addSegmentHighlighter(@NotNull Editor editor, int startOffset, int endOffset, TextAttributes attributes, @HideFlags int flags) {
     RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, attributes, HighlighterTargetArea.EXACT_RANGE);
-    HighlightInfo info = new HighlightInfo(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);
-    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, true);
+    HighlightFlags info = new HighlightFlags(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);
+    Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, true);
     map.put(highlighter, info);
     return highlighter;
   }
 
   @Override
   public boolean removeSegmentHighlighter(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
-    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+    Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
     if (map == null) return false;
-    HighlightInfo info = map.get(highlighter);
+    HighlightFlags info = map.get(highlighter);
     if (info == null) return false;
     MarkupModel markupModel = info.editor.getMarkupModel();
     if (((MarkupModelEx)markupModel).containsHighlighter(highlighter)) {
@@ -246,13 +245,13 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   public boolean hideHighlights(@NotNull Editor editor, @HideFlags int mask) {
-    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+    Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
     if (map == null) return false;
 
     boolean done = false;
     List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
     for (RangeHighlighter highlighter : map.keySet()) {
-      HighlightInfo info = map.get(highlighter);
+      HighlightFlags info = map.get(highlighter);
       if (!info.editor.equals(editor)) continue;
       if ((info.flags & mask) != 0) {
         highlightersToRemove.add(highlighter);
@@ -268,9 +267,9 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   boolean hasHideByEscapeHighlighters(@NotNull Editor editor) {
-    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+    Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
     if (map != null) {
-      for (HighlightInfo info : map.values()) {
+      for (HighlightFlags info : map.values()) {
         if (!info.editor.equals(editor)) continue;
         if ((info.flags & HIDE_BY_ESCAPE) != 0) {
           return true;
@@ -299,13 +298,14 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
 
-  private final Key<Map<RangeHighlighter, HighlightInfo>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
+  private final Key<Map<RangeHighlighter, HighlightFlags>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
 
-  private static class HighlightInfo {
+  private static class HighlightFlags {
+    @NotNull
     final Editor editor;
     @HideFlags final int flags;
 
-    HighlightInfo(Editor editor, @HideFlags int flags) {
+    HighlightFlags(@NotNull Editor editor, @HideFlags int flags) {
       this.editor = editor;
       this.flags = flags;
     }

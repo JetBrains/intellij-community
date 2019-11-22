@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +35,7 @@ public class PsiDocumentManager2Test extends LightPlatformTestCase {
   public void testUnregisteredFileType() {
     class MyFileType extends XmlLikeFileType {
       private MyFileType() {
-        super(StdLanguages.XML);
+        super(XMLLanguage.INSTANCE);
       }
 
       @Override

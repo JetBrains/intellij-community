@@ -10,11 +10,7 @@
       <implementation-class>com.intellij.openapi.wm.impl.FocusManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.ide.DataManager</interface-class>
-      <implementation-class>com.intellij.ide.impl.DataManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.ide.impl.HeadlessDataManager</headless-implementation-class>
-    </component>
+
     <component>
       <implementation-class>com.intellij.ide.IdeTooltipManager</implementation-class>
     </component>
@@ -44,6 +40,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.DataManager"
+                        serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
+                        testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
   </extensions>
 </idea-plugin>

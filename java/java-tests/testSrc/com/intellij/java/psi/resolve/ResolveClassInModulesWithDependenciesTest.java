@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
+import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.easymock.IArgumentMatcher;
 
@@ -21,7 +21,7 @@ import java.util.Set;
 
 import static org.easymock.EasyMock.*;
 
-public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
+public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCase {
   public void testTwoModules() throws Exception {
     configureDependency();
     PsiReference ref = configure();

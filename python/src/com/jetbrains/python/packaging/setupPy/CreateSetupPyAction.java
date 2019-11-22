@@ -38,12 +38,13 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,11 +98,11 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   }
 
   private static boolean hasSetuptoolsPackage(@Nullable Module module) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk == null) return false;
 
     final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
-    return packages != null && PyPackageUtil.findPackage(packages, "setuptools") != null;
+    return packages != null && PyPsiPackageUtil.findPackage(packages, "setuptools") != null;
   }
 
   private static String getPackageList(DataContext dataContext) {

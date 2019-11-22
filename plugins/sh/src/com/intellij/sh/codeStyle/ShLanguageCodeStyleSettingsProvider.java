@@ -21,6 +21,14 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     };
   }
 
+  @Override
+  public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer,
+                                @NotNull SettingsType settingsType) {
+    if (settingsType == SettingsType.INDENT_SETTINGS) {
+      consumer.showStandardOptions("INDENT_SIZE", "USE_TAB_CHARACTER", "TAB_SIZE");
+    }
+  }
+
   @NotNull
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {

@@ -69,7 +69,7 @@ public class _FirstInSuiteTest extends TestCase {
 
   // performance tests
   public void testNothingPerformance() throws Exception {
-    Timings.getStatistics();
+    System.out.println(Timings.getStatistics());
     testNothing();
   }
 

@@ -24,7 +24,7 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.inspections.PyStringFormatParser;
+import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyStringElement;

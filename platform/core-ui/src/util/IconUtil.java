@@ -422,6 +422,20 @@ public class IconUtil {
     public int getIconHeight() {
       return myCrop.height;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof CropIcon)) return false;
+      CropIcon icon = (CropIcon)o;
+      return mySrc.equals(icon.mySrc) &&
+             myCrop.equals(icon.myCrop);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(mySrc, myCrop);
+    }
   }
 
   /**

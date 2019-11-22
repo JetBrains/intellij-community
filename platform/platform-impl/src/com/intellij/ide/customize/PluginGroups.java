@@ -41,7 +41,7 @@ public class PluginGroups {
   private Runnable myLoadingCallback;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadDescriptors(new ArrayList<>());
+    myAllPlugins = PluginManagerCore.loadDescriptors();
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
       protected List<IdeaPluginDescriptor> doInBackground() {

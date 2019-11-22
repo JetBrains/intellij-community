@@ -64,8 +64,8 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
           final List<PyNamedParameter> missingParams = getMissingParams(docString, realParams);
           if (!missingParams.isEmpty()) {
             for (PyNamedParameter param : missingParams) {
-              registerProblem(param, 
-                              PyBundle.message("INSP.missing.parameter.in.docstring", param.getName()), 
+              registerProblem(param,
+                              PyBundle.message("INSP.missing.parameter.in.docstring", param.getName()),
                               new DocstringQuickFix(param, null));
             }
           }

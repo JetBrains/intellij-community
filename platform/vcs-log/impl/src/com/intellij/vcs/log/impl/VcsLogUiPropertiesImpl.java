@@ -81,7 +81,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       return (T)result;
     }
     else if (property instanceof CommonUiProperties.TableColumnProperty) {
-      Integer savedWidth = getState().COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      Integer savedWidth = getState().COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumnIndex());
       if (savedWidth == null) return (T)Integer.valueOf(-1);
       return (T)savedWidth;
     }
@@ -120,7 +120,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
     else if (property instanceof CommonUiProperties.TableColumnProperty) {
-      getState().COLUMN_WIDTH.put(((CommonUiProperties.TableColumnProperty)property).getColumn(), (Integer)value);
+      getState().COLUMN_WIDTH.put(((CommonUiProperties.TableColumnProperty)property).getColumnIndex(), (Integer)value);
     }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");

@@ -33,7 +33,8 @@ import java.util.List;
 
 public abstract class MavenConsole {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
-  private List<ProcessListener> myProcessListeners = new SmartList<>();
+  private final List<ProcessListener> myProcessListeners = new SmartList<>();
+  private final List<AttachProcessListener> myAttachProcessListeners = new SmartList<>();
 
 
   public static MavenConsole createGuiMavenConsole(@NotNull Project project,
@@ -63,6 +64,10 @@ public abstract class MavenConsole {
     "FATAL_ERROR", MavenServerConsole.LEVEL_FATAL
   );
 
+  public interface AttachProcessListener {
+    void beforeProcessAttached(@NotNull ProcessHandler processHandler);
+  }
+
   public MavenConsole(MavenExecutionOptions.LoggingLevel outputLevel, boolean printStackTrace) {
     myOutputLevel = outputLevel.getLevel();
   }
@@ -73,6 +78,10 @@ public abstract class MavenConsole {
 
   public void addProcessListener(ProcessListener processListener) {
     myProcessListeners.add(processListener);
+  }
+
+  public void addAttachProcessListener(AttachProcessListener listener) {
+    myAttachProcessListeners.add(listener);
   }
 
   public boolean isSuppressed(String line) {
@@ -95,8 +104,11 @@ public abstract class MavenConsole {
   }
 
   public void attachToProcess(ProcessHandler processHandler) {
-    for(ProcessListener listener : myProcessListeners) {
-    processHandler.addProcessListener(listener);
+    for (ProcessListener listener : myProcessListeners) {
+      processHandler.addProcessListener(listener);
+    }
+    for (AttachProcessListener listener : myAttachProcessListeners) {
+      listener.beforeProcessAttached(processHandler);
     }
   }
 

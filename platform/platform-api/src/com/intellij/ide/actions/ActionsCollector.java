@@ -5,11 +5,13 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -53,4 +55,6 @@ public abstract class ActionsCollector {
   public abstract void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang);
 
   public abstract void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId);
+
+  public abstract void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds);
 }

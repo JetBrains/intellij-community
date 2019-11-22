@@ -150,6 +150,7 @@
     <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ProjectExcludesIgnoredFileProvider" order="after VCS.DefaultIgnoredFileProvider"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
     <dateTimeFormatter id="vcs.annotate" name="VCS Annotate" />
+    <dateTimeFormatter id="vcs.log" name="VCS Log" />
 
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>
 

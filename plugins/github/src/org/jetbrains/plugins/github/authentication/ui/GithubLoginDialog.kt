@@ -29,7 +29,9 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
                                                   title: String = "Log In to GitHub",
                                                   private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
-  private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique, project)
+  private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique, project).apply {
+    putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
+  }
 
   internal lateinit var login: String
   internal lateinit var token: String

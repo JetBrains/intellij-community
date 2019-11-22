@@ -284,7 +284,7 @@ public class DTree {
     if (file1.isContainer() || file2.isContainer()) return false;
     if (file1.getSize() != file2.getSize()) return false;
     try {
-      return DiffUtil.compareStreams(file1.getContentStream(), file2.getContentStream());
+      return DiffUtil.compareStreams(() -> file1.getContentStream(), () -> file2.getContentStream());
     }
     catch (IOException e) {
       LOG.warn(e);

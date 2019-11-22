@@ -17,6 +17,9 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,15 +31,15 @@ import com.intellij.psi.xml.XmlFile;
  */
 public class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdjuster {
   private static boolean isLanguageWithWSSignificant(Language lang) {
-    return lang == StdLanguages.HTML ||
-           lang == StdLanguages.XHTML ||
+    return lang == HTMLLanguage.INSTANCE ||
+           lang == XHTMLLanguage.INSTANCE ||
            lang == StdLanguages.JSP ||
            lang == StdLanguages.JSPX;
   }
 
   private static Language getLanguage(PsiElement element) {
     Language lang = element.getLanguage();
-    if (lang == StdLanguages.XML) {
+    if (lang == XMLLanguage.INSTANCE) {
       PsiElement parent = element.getParent();
       lang = parent.getLanguage();
     }

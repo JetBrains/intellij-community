@@ -55,7 +55,6 @@ import static com.intellij.util.ExceptionUtil.rethrowAllAsUnchecked;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
@@ -312,7 +311,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
       singleMessage = prefix + "binary file " + TreeConflictRefreshablePanel.filePath(path) + " (according to theirs changes)?";
     }
     return AbstractVcsHelper.getInstance(myVcs.getProject()).selectFilePathsToProcess(
-      newArrayList(paths), TreeConflictRefreshablePanel.TITLE, "Select binary files to patch", TreeConflictRefreshablePanel.TITLE,
+      new ArrayList<>(paths), TreeConflictRefreshablePanel.TITLE, "Select binary files to patch", TreeConflictRefreshablePanel.TITLE,
       singleMessage, new VcsShowConfirmationOption() {
         @Override
         public Value getValue() {

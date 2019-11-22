@@ -17,7 +17,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.PythonVisitorFilter;
+import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
 /**

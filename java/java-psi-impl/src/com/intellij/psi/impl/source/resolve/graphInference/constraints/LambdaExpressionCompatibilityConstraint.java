@@ -82,7 +82,9 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         });
         if (!isProperType || myExpression.hasFormalParameterTypes()) {
           for (PsiExpression returnExpression : returnExpressions) {
-            constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
+            if (!InferenceSession.ignoreLambdaConstraintTree(returnExpression)) {
+              constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
+            }
           }
         }
         else {

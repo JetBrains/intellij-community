@@ -20,7 +20,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.components.JBLabel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,6 @@ public class FormBuilder {
   private boolean myAlignLabelOnRight;
 
   private int myLineCount = 0;
-  private int myIndent;
   private final JPanel myPanel;
   private boolean myVertical;
 
@@ -49,7 +47,6 @@ public class FormBuilder {
   public FormBuilder() {
     myPanel = new JPanel(new GridBagLayout());
     myVertical = false;
-    myIndent = 0;
     myAlignLabelOnRight = false;
     myVerticalGap = DEFAULT_VGAP;
     myHorizontalGap = DEFAULT_HGAP;
@@ -171,7 +168,7 @@ public class FormBuilder {
       c.weighty = 0;
       c.fill = NONE;
       c.anchor = getLabelAnchor(false, fillVertically);
-      c.insets = JBUI.insets(topInset, myIndent + myFormLeftIndent, DEFAULT_VGAP, 0);
+      c.insets = JBUI.insets(topInset, myFormLeftIndent, DEFAULT_VGAP, 0);
 
       if (label != null) myPanel.add(label, c);
 
@@ -181,7 +178,7 @@ public class FormBuilder {
       c.weighty = getWeightY(fillVertically);
       c.fill = getFill(component, fillVertically);
       c.anchor = WEST;
-      c.insets = JBUI.insets(label == null ? topInset : 0, myIndent + myFormLeftIndent, 0, 0);
+      c.insets = JBUI.insets(label == null ? topInset : 0, myFormLeftIndent, 0, 0);
 
       myPanel.add(component, c);
 
@@ -195,7 +192,7 @@ public class FormBuilder {
       c.weighty = 0;
       c.fill = NONE;
       c.anchor = getLabelAnchor(true, fillVertically);
-      c.insets = JBUI.insets(topInset, myIndent + myFormLeftIndent, 0, myHorizontalGap);
+      c.insets = JBUI.insets(topInset, myFormLeftIndent, 0, myHorizontalGap);
 
       myPanel.add(label, c);
 
@@ -204,7 +201,7 @@ public class FormBuilder {
       c.weighty = getWeightY(fillVertically);
       c.fill = getFill(component, fillVertically);
       c.anchor = WEST;
-      c.insets = JBUI.insets(topInset, myIndent, 0, 0);
+      c.insets = JBUI.insets(topInset, 0, 0, 0);
 
       myPanel.add(component, c);
 
@@ -264,16 +261,6 @@ public class FormBuilder {
 
   public FormBuilder setHorizontalGap(int horizontalGap) {
     myHorizontalGap = horizontalGap;
-    return this;
-  }
-
-  /**
-   * @deprecated use {@link #setHorizontalGap} or {@link #setFormLeftIndent}, to be removed in IDEA 16
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-  public FormBuilder setIndent(int indent) {
-    myIndent = indent;
     return this;
   }
 

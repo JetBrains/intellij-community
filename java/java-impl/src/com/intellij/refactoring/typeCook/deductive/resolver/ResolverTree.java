@@ -28,7 +28,6 @@ import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
 import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
-import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import gnu.trove.TIntArrayList;
@@ -224,7 +223,7 @@ public class ResolverTree {
         final Set<PsiTypeVariable> in = ins.get(n);
 
         if (in == null) {
-          return EmptyIterator.getInstance();
+          return Collections.emptyIterator();
         }
 
         return in.iterator();
@@ -236,7 +235,7 @@ public class ResolverTree {
         final Set<PsiTypeVariable> out = outs.get(n);
 
         if (out == null) {
-          return EmptyIterator.getInstance();
+          return Collections.emptyIterator();
         }
 
         return out.iterator();

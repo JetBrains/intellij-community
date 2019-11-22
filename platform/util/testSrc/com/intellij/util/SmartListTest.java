@@ -1,15 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * @author max
@@ -62,8 +60,7 @@ public class SmartListTest {
     assertThat(l.get(2)).isEqualTo(3);
   }
 
-  @SuppressWarnings("CollectionAddedToSelf")
-  @Test
+  @Test(expected = IndexOutOfBoundsException.class)
   public void testFourElement() {
     SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
@@ -98,14 +95,13 @@ public class SmartListTest {
     assertThat(l.getModificationCount()).isEqualTo(++modCount);
     assertThat(l.toString()).isEqualTo("[]");
 
-    boolean thrown = false;
-    try {
-      l.set(1, 3);
-    }
-    catch (IndexOutOfBoundsException e) {
-      thrown = true;
-    }
-    assertThat(thrown).as("IndexOutOfBoundsException must be thrown").isTrue();
+    l.set(1, 3);
+  }
+
+  @Test(expected = IndexOutOfBoundsException.class)
+  public void testFourElement2() {
+    SmartList<Integer> l = new SmartList<>();
+    int modCount = 0;
 
     l.clear();
     assertThat(l).isEmpty();
@@ -113,72 +109,44 @@ public class SmartListTest {
     assertThat(l.toString()).isEqualTo("[]");
 
     Iterator<Integer> iterator = l.iterator();
-    assertThat(iterator).isSameAs(EmptyIterator.getInstance());
+    assertThat(iterator).isSameAs(Collections.emptyIterator());
     assertThat(iterator.hasNext()).isFalse();
 
     l.add(-2);
     iterator = l.iterator();
-    assertThat(iterator).isNotSameAs(EmptyIterator.getInstance());
+    assertThat(iterator).isNotSameAs(Collections.emptyIterator());
     assertThat(iterator.hasNext()).isTrue();
     assertThat(iterator.next()).isEqualTo(-2);
     assertThat(iterator.hasNext()).isFalse();
 
-    thrown = false;
-    try {
-      l.get(1);
-    }
-    catch (IndexOutOfBoundsException e) {
-      thrown = true;
-    }
-    assertThat(thrown).as("IndexOutOfBoundsException must be thrown").isTrue();
+    l.get(1);
+  }
 
+  @SuppressWarnings("CollectionAddedToSelf")
+  @Test(expected = ConcurrentModificationException.class)
+  public void testFourElement3() {
+    SmartList<Integer> l = new SmartList<>();
+    l.clear();
+    l.add(-2);
     l.addAll(l);
     assertThat(l).hasSize(2);
     assertThat(l.toString()).isEqualTo("[-2, -2]");
-    thrown = false;
-    try {
-      l.addAll(l);
-    }
-    catch (ConcurrentModificationException e) {
-      thrown = true;
-    }
-    assertThat(thrown).as("ConcurrentModificationException must be thrown").isTrue();
+    l.addAll(l);
   }
 
-  @Test
+  @Test(expected = IndexOutOfBoundsException.class)
   public void testAddIndexedNegativeIndex() {
-    SmartList<Integer> l = new SmartList<>();
-    try {
-      l.add(-1, 1);
-    }
-    catch (Exception e) {
-      return;
-    }
-    fail("IndexOutOfBoundsException must be thrown, " + l);
+    new SmartList<Integer>().add(-1, 1);
   }
 
-  @Test
+  @Test(expected = IndexOutOfBoundsException.class)
   public void testAddIndexedWrongIndex() {
-    SmartList<Integer> l = new SmartList<>(1);
-    try {
-      l.add(3, 1);
-    }
-    catch (Exception e) {
-      return;
-    }
-    fail("IndexOutOfBoundsException must be thrown, " + l);
+    new SmartList<>(1).add(3, 1);
   }
 
-  @Test
+  @Test(expected = IndexOutOfBoundsException.class)
   public void testAddIndexedEmptyWrongIndex() {
-    SmartList<Integer> l = new SmartList<>();
-    try {
-      l.add(1, 1);
-    }
-    catch (Exception e) {
-      return;
-    }
-    fail("IndexOutOfBoundsException must be thrown, " + l);
+    new SmartList<Integer>().add(1, 1);
   }
 
   @Test
@@ -295,7 +263,7 @@ public class SmartListTest {
     assertThat(list).isEqualTo(new LinkedList<>());
     assertThat(list).isEqualTo(Collections.emptyList());
     assertThat(list).isEqualTo(Arrays.asList());
-    assertThat(list).isEqualTo(ContainerUtilRt.emptyList());
+    assertThat(list).isEqualTo(ContainerUtil.emptyList());
 
     assertThat(list).isNotEqualTo(new SmartList<>(1));
     assertThat(list).isNotEqualTo(new ArrayList<>(Collections.singletonList(1)));
@@ -319,7 +287,7 @@ public class SmartListTest {
     assertThat(list).isNotEqualTo(new LinkedList<>());
     assertThat(list).isNotEqualTo(Collections.emptyList());
     assertThat(list).isNotEqualTo(Arrays.asList());
-    assertThat(list).isNotEqualTo(ContainerUtilRt.emptyList());
+    assertThat(list).isNotEqualTo(ContainerUtil.emptyList());
   }
 
   @Test
@@ -339,7 +307,7 @@ public class SmartListTest {
     assertThat(list).isNotEqualTo(new LinkedList<>());
     assertThat(list).isNotEqualTo(Collections.emptyList());
     assertThat(list).isNotEqualTo(Arrays.asList());
-    assertThat(list).isNotEqualTo(ContainerUtilRt.emptyList());
+    assertThat(list).isNotEqualTo(ContainerUtil.emptyList());
   }
 
   @Test

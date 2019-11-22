@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class CoreVirtualFilePointerManager extends VirtualFilePointerManager {
+public class CoreVirtualFilePointerManager extends VirtualFilePointerManager implements Disposable {
   @NotNull
   @Override
   public VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
@@ -66,5 +66,10 @@ public class CoreVirtualFilePointerManager extends VirtualFilePointerManager {
                                                    boolean recursively,
                                                    @NotNull Disposable parent, @NotNull VirtualFilePointerListener listener) {
     return create(url, parent, listener);
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }

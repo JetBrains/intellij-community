@@ -51,13 +51,13 @@ import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirementsKt;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
+import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,7 +133,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       @NotNull
       @Override
       public ValidationResult check() {
-        final Sdk sdk = PythonSdkType.findPythonSdk(myModule);
+        final Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
 
@@ -272,7 +272,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     });
     FileContentUtilCore.reparseFiles(filesToReparse);
 
-    PyUtil.rehighlightOpenEditors(myProject);
+    PyUiUtil.rehighlightOpenEditors(myProject);
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }

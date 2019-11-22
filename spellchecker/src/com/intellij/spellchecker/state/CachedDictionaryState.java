@@ -2,6 +2,7 @@
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.*;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ public class CachedDictionaryState extends DictionaryState implements Persistent
     return ServiceManager.getService(CachedDictionaryState.class);
   }
 
+  @NonInjectable
   public CachedDictionaryState(EditableDictionary dictionary) {
     super(dictionary);
     name = DEFAULT_NAME;

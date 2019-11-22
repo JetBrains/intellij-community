@@ -4,11 +4,9 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -19,12 +17,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
@@ -35,10 +34,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
@@ -248,16 +250,13 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   private void addCloseOnEsc(final RootPaneContainer frame) {
     JRootPane rootPane = frame.getRootPane();
-    ActionListener closeAction = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (!PopupUtil.handleEscKeyEvent()) {
-          close();
-        }
+    AnAction closeAction = DumbAwareAction.create(__ -> {
+      if (!PopupUtil.handleEscKeyEvent()) {
+        close();
       }
-    };
-    rootPane.registerKeyboardAction(closeAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-    ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow());
+    });
+    ShortcutSet ss = new CompositeShortcutSet(CommonShortcuts.ESCAPE, CommonShortcuts.getCloseActiveWindow());
+    closeAction.registerCustomShortcutSet(ss, rootPane);
   }
 
   public Window getFrame() {
@@ -350,7 +349,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myStatusBar = statusBar;
   }
 
-  private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
+  private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child, IdeFrameEx {
     private static final boolean USE_SINGLE_SYSTEM_MENUBAR = SystemInfo.isMacSystemMenu && "true".equalsIgnoreCase(System.getProperty("mac.system.menu.singleton"));
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
@@ -376,6 +375,17 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
+    public boolean isInFullScreen() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public Promise<?> toggleFullScreen(boolean state) {
+      return Promises.resolvedPromise();
+    }
+
+    @Override
     public void addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
         JdkEx.setHasCustomDecoration(this);
@@ -388,12 +398,14 @@ public class FrameWrapper implements Disposable, DataProvider {
       return getRootPane();
     }
 
+    @Nullable
     @Override
     public StatusBar getStatusBar() {
       StatusBar ownerBar = myOwner != null ? myOwner.myStatusBar : null;
       return ownerBar != null ? ownerBar : myParent != null ? myParent.getStatusBar() : null;
     }
 
+    @NotNull
     @Override
     public Rectangle suggestChildFrameBounds() {
       return myParent.suggestChildFrameBounds();
@@ -417,18 +429,20 @@ public class FrameWrapper implements Disposable, DataProvider {
       updateTitle();
     }
 
+    @Nullable
     @Override
     public IdeRootPaneNorthExtension getNorthExtension(String key) {
       return myOwner.getNorthExtension(key);
     }
 
+    @Nullable
     @Override
     public BalloonLayout getBalloonLayout() {
       return null;
     }
 
     private void updateTitle() {
-      IdeFrameImpl.updateTitle(this, myFrameTitle, myFileTitle, myFile);
+      ProjectFrameHelper.updateTitle(this, myFrameTitle, myFileTitle, myFile);
     }
 
     @Override
@@ -478,6 +492,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return getRootPane();
     }
 
+    @Nullable
     @Override
     public StatusBar getStatusBar() {
       return null;
@@ -489,6 +504,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return null;
     }
 
+    @NotNull
     @Override
     public Rectangle suggestChildFrameBounds() {
       return myParent.suggestChildFrameBounds();
@@ -502,16 +518,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     @Override
     public void setFrameTitle(String title) {
       setTitle(title);
-    }
-
-    @Override
-    public void setFileTitle(String fileTitle, File ioFile) {
-      setTitle(fileTitle);
-    }
-
-    @Override
-    public IdeRootPaneNorthExtension getNorthExtension(String key) {
-      return null;
     }
 
     @Override

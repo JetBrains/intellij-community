@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +151,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
     if (!super.isValidSdkPath(file)) return false;
-    return PythonSdkType.getVirtualEnvRoot(file.getPath()) != null;
+    return PythonSdkUtil.getVirtualEnvRoot(file.getPath()) != null;
   }
 
   @Override

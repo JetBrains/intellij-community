@@ -9,17 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
 import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JLabel
 
-open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder {
-  override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
-    return builder.rootRow.createChildRow(label, isSeparated, noGrid, title)
-  }
-
-  override fun createNoteOrCommentRow(component: JComponent): Row {
-    return builder.rootRow.createNoteOrCommentRow(component)
-  }
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
 
   override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     builder.withButtonGroup(buttonGroup, body)
@@ -49,9 +40,9 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 class CellBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
 
-  fun Cell.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+  fun Cell.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
-    return component()
+    return component(comment = comment)
       .onApply { if (component.isSelected) prop.set(value) }
       .onReset { component.isSelected = prop.get() == value }
       .onIsModified { component.isSelected != (prop.get() == value) }
@@ -62,13 +53,10 @@ class CellBuilderWithButtonGroupProperty<T : Any>
 class RowBuilderWithButtonGroupProperty<T : Any>
     @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
-  fun Row.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+  fun Row.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
-    subRowsEnabled = component.isSelected
-    component.addChangeListener {
-      subRowsEnabled = component.isSelected
-    }
-    return component()
+    attachSubRowsEnabled(component)
+    return component(comment = comment)
       .onApply { if (component.isSelected) prop.set(value) }
       .onReset { component.isSelected = prop.get() == value }
       .onIsModified { component.isSelected != (prop.get() == value) }
@@ -77,4 +65,11 @@ class RowBuilderWithButtonGroupProperty<T : Any>
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
   FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
+}
+
+fun Row.attachSubRowsEnabled(component: JBRadioButton) {
+  subRowsEnabled = component.isSelected
+  component.addChangeListener {
+    subRowsEnabled = component.isSelected
+  }
 }

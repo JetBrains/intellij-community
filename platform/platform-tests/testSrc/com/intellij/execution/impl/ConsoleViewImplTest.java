@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -202,6 +203,22 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.print("\rMr\rSmith", ConsoleViewContentType.NORMAL_OUTPUT);
     myConsole.flushDeferredText();
     assertEquals("Smith", myConsole.getText());
+  }
+
+  public void testCaretAfterMultilineOutput() {
+    assertCaretAt(0, 0);
+    myConsole.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+    assertCaretAt(0, 2);
+    myConsole.print("\nprompt:", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+    assertCaretAt(1, 7);
+  }
+
+  private void assertCaretAt(int line, int column) {
+    LogicalPosition position = myConsole.getEditor().getCaretModel().getLogicalPosition();
+    assertEquals(line, position.line);
+    assertEquals(column, position.column);
   }
 
   @NotNull

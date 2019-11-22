@@ -2,18 +2,25 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: catherine
@@ -80,7 +87,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   }
 
   public static void generateDocstring(@NotNull PyDocStringOwner docStringOwner, @Nullable Editor editor) {
-    if (!DocStringUtil.ensureNotPlainDocstringFormat(docStringOwner)) {
+    if (!ensureNotPlainDocstringFormat(docStringOwner)) {
       return;
     }
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator
@@ -93,5 +100,35 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
       editor.getCaretModel().moveToOffset(offset);
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
     }
+  }
+
+  /**
+   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames#DOCFORMAT} attribute or
+   * in module settings. If none of them applies, show standard choose dialog, asking user to pick one and updates module settings
+   * accordingly.
+   *
+   * @param anchor PSI element that will be used to locate containing file and project module
+   * @return false if no structured docstring format was specified initially and user didn't select any, true otherwise
+   */
+  public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement anchor) {
+    final Module module = DocStringUtil.getModuleForElement(anchor);
+    if (module == null) {
+      return false;
+    }
+
+    return ensureNotPlainDocstringFormatForFile(anchor.getContainingFile(), module);
+  }
+
+  private static boolean ensureNotPlainDocstringFormatForFile(@NotNull PsiFile file, @NotNull Module module) {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
+    if (settings.isPlain(file)) {
+      final List<String> values = DocStringFormat.ALL_NAMES_BUT_PLAIN;
+      final int i = MessagesService.getInstance().showChooseDialog(null, null, "Docstring format:", "Select Docstring Type", ArrayUtilRt.toStringArray(values), values.get(0), null);
+      if (i < 0) {
+        return false;
+      }
+      settings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
+    }
+    return true;
   }
 }

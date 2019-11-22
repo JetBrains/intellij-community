@@ -5,7 +5,7 @@ package org.jetbrains.yaml.meta.model;
 
 import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlStringType extends YamlScalarType {
   private static final YamlStringType SHARED_INSTANCE = new YamlStringType();
 

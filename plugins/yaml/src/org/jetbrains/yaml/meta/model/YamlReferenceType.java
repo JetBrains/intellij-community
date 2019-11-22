@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlReferenceType extends YamlScalarType {
 
   protected YamlReferenceType(@NotNull String typeName) {

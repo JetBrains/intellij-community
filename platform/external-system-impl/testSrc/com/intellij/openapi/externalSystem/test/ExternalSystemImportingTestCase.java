@@ -54,7 +54,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -467,7 +466,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
     projectSettings.setExternalProjectPath(getProjectPath());
     //noinspection unchecked
-    Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+    Set<ExternalProjectSettings> projects = new HashSet<>(systemSettings.getLinkedProjectsSettings());
     projects.remove(projectSettings);
     projects.add(projectSettings);
     //noinspection unchecked
@@ -512,12 +511,16 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
 
     if (!error.isNull()) {
-      String failureMsg = "Import failed: " + error.get().first;
-      if (StringUtil.isNotEmpty(error.get().second)) {
-        failureMsg += "\nError details: \n" + error.get().second;
-      }
-      fail(failureMsg);
+      handleImportFailure(error.get().first, error.get().second);
     }
+  }
+
+  protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+    String failureMsg = "Import failed: " + errorMessage;
+    if (StringUtil.isNotEmpty(errorDetails)) {
+      failureMsg += "\nError details: \n" + errorDetails;
+    }
+    fail(failureMsg);
   }
 
   protected ImportSpec createImportSpec() {

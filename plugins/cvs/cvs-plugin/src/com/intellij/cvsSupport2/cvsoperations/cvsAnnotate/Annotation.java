@@ -15,7 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsAnnotate;
 
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 
@@ -62,7 +62,7 @@ public class Annotation {
   public Date getDate() { return myDate; }
 
   public String getPresentableDateString() {
-    return DateFormatUtil.formatPrettyDate(getDate());
+    return FileAnnotation.formatDate(getDate());
   }
 
   public static String createMessageOn(String message) {

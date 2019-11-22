@@ -40,6 +40,7 @@ import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -110,7 +111,8 @@ private val STANDARD_COOKIE by lazy {
   if (token == null) {
     token = UUID.randomUUID().toString()
     file.write(token!!)
-    Files.setPosixFilePermissions(file, EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE))
+    Files.getFileAttributeView(file, PosixFileAttributeView::class.java)
+      ?.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE))
   }
 
   // explicit setting domain cookie on localhost doesn't work for chrome

@@ -37,7 +37,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +145,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    return psiFile != null && PySdkUtil.isElementInSkeletons(psiFile);
+    return psiFile != null && PythonSdkUtil.isElementInSkeletons(psiFile);
   }
 
   @Override

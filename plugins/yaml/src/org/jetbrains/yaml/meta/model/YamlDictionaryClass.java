@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
  * Represents type with single level of arbitrary named scalar values.
  * For arbitrary deep structure use {@link YamlUnstructuredClass}
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlDictionaryClass extends YamlMetaClass {
   public YamlDictionaryClass(String typeName, boolean allowEmptyValues) {
     super(typeName);

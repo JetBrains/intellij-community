@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -1113,12 +1112,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
     EdtTestUtil.runInEdtAndWait(() -> {
-      Application application = ApplicationManager.getApplication();
-      if (application != null && !application.isDisposed()) {
-        FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-        if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
+        FileBasedIndexImpl index = (FileBasedIndexImpl)app.getServiceIfCreated(FileBasedIndex.class);
+        if (index != null) {
+          index.waitForVfsEventsExecuted(timeout, timeUnit);
+        }
 
-        DocumentCommitThread commitThread = (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
+        DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);
         if (commitThread != null) {
           commitThread.waitForAllCommits(timeout, timeUnit);
         }

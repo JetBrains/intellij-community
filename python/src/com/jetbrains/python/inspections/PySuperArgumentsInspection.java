@@ -69,7 +69,7 @@ public class PySuperArgumentsInspection extends PyInspection {
                   registerProblem(
                     node.getArgumentList(),
                     PyBundle.message("INSP.$0.is.not.superclass.of.$1",
-                    secondClass.getName(), firstClass.getName())
+                                        secondClass.getName(), firstClass.getName())
                   );
                 }
               }

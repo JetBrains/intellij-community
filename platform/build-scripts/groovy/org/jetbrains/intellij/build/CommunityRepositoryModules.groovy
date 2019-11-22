@@ -164,12 +164,13 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.gradle") {
       withModule("intellij.gradle.common")
-      withModule("intellij.gradle.java")
-      withModule("intellij.gradle.jps")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
       withModule("intellij.gradle.toolingLoaderRt")
       withProjectLibrary("Gradle")
+    },
+    plugin("intellij.gradle.java") {
+      withModule("intellij.gradle.jps")
     },
     plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
@@ -241,7 +242,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
-      withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
 */

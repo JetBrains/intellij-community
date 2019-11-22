@@ -15,7 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Function;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlBooleanType extends YamlEnumType {
   public static YamlBooleanType getSharedInstance() {
     return StandardYamlBoolean.SHARED;

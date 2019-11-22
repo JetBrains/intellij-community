@@ -31,7 +31,7 @@ public class CheckLevelHighlightInfoHolder extends HighlightInfoHolder {
   private final HighlightInfoHolder myHolder;
   private PsiElement myLevel;
 
-  public CheckLevelHighlightInfoHolder(PsiFile file, HighlightInfoHolder holder) {
+  public CheckLevelHighlightInfoHolder(@NotNull PsiFile file, @NotNull HighlightInfoHolder holder) {
     super(file);
     myHolder = holder;
   }
@@ -75,7 +75,7 @@ public class CheckLevelHighlightInfoHolder extends HighlightInfoHolder {
   }
 
   @Override
-  public boolean addAll(Collection<? extends HighlightInfo> highlightInfos) {
+  public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
     return myHolder.addAll(highlightInfos);
   }
 
@@ -84,6 +84,7 @@ public class CheckLevelHighlightInfoHolder extends HighlightInfoHolder {
     return myHolder.size();
   }
 
+  @NotNull
   @Override
   public HighlightInfo get(int i) {
     return myHolder.get(i);

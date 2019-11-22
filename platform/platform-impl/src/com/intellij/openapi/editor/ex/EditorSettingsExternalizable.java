@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.ui.UINumericRange;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
@@ -671,7 +672,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   /**
-   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage instead
+   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#isParameterHintsEnabledForLanguage(Language)} instead
    */
   @Deprecated
   public boolean isShowParameterNameHints() {
@@ -679,7 +680,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   /**
-   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, com.intellij.lang.Language) instead
+   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, Language)} instead
    */
   @Deprecated
   public void setShowParameterNameHints(boolean value) {

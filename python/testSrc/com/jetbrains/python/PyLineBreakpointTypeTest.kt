@@ -7,8 +7,8 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil.getUserSkeletonsDirectory
 import com.jetbrains.python.debugger.PyLineBreakpointType
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.sdk.PySdkUtil.findSkeletonsDir
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil.findSkeletonsDir
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 class PyLineBreakpointTypeTest : PyTestCase() {
 
@@ -27,7 +27,7 @@ class PyLineBreakpointTypeTest : PyTestCase() {
 
   // PY-16932
   fun testPutAtSkeleton() {
-    val sdk = PythonSdkType.findPythonSdk(myFixture.module)
+    val sdk = PythonSdkUtil.findPythonSdk(myFixture.module)
     val skeletonsDir = findSkeletonsDir(sdk!!)
     val pythonFile = skeletonsDir!!.findFileByRelativePath("datetime.py")
     val line = 20

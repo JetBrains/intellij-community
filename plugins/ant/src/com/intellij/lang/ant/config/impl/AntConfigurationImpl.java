@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
@@ -103,7 +102,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final StartupManager myStartupManager;
 
-  public AntConfigurationImpl(final Project project, final DaemonCodeAnalyzer daemon) {
+  public AntConfigurationImpl(final Project project) {
     super(project);
     getProperties().registerProperty(DEFAULT_ANT, AntReference.EXTERNALIZER);
     getProperties().rememberKey(INSTANCE);
@@ -129,13 +128,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         restartDaemon();
       }
       private void restartDaemon() {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          daemon.restart();
-        }
-        else {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(daemon::restart);
-        }
+        GuiUtils.invokeLaterIfNeeded(() -> DaemonCodeAnalyzer.getInstance(project).restart(), ModalityState.any());
       }
     });
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
@@ -667,10 +660,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
       }
     }
-    GuiUtils.invokeLaterIfNeeded(() -> AntToolWindowFactory.updateAvailability(project),
-                                 ModalityState.defaultModalityState(),
-                                 project.getDisposed());
-
   }
 
   private AntWorkspaceConfiguration getAntWorkspaceConfiguration() {

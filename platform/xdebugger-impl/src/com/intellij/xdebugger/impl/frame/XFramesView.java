@@ -17,6 +17,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -167,6 +168,17 @@ public class XFramesView extends XDebugView {
     myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
+    myMainPanel.setFocusCycleRoot(true);
+    myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
+  }
+
+  private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
+    @NotNull
+    @Override
+    protected List<Component> getOrderedComponents() {
+      return Arrays.asList(myFramesList,
+                           myThreadComboBox);
+    }
   }
 
   public JComponent getDefaultFocusedComponent() {

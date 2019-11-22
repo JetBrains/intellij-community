@@ -119,7 +119,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     if (values.size() == 1) return ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
     return displayableText(values, 2 * MAX_FILTER_VALUE_LENGTH);
   }
-  
+
   protected class PredefinedValueAction extends DumbAwareAction {
     @NotNull protected final List<String> myValues;
 

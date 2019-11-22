@@ -65,6 +65,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private LineLayout.VisualFragment myDelegate;
   private FoldRegion myFoldRegion;
   private int myCurrentStartLogicalLine;
+  private int myCurrentStartLogicalLineStart;
   private int myCurrentEndLogicalLine;
   private int myNextWrapOffset;
   private ScaleContext myScaleContext;
@@ -269,6 +270,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
         }
       }
     }
+    myCurrentStartLogicalLineStart = myDocument.getLineStartOffset(myCurrentStartLogicalLine);
     return myFragment;
   }
 
@@ -399,39 +401,39 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
 
     // absolute
     int getStartOffset() {
-      return myDelegate != null ? myDelegate.getStartOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+      return myDelegate != null ? myDelegate.getStartOffset() + myCurrentStartLogicalLineStart
                                 : myFoldRegion != null ? myFoldRegion.getStartOffset() : getCurrentInlay().getOffset();
     }
 
     // absolute
     int getEndOffset() {
-      return myDelegate != null ? myDelegate.getEndOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+      return myDelegate != null ? myDelegate.getEndOffset() + myCurrentStartLogicalLineStart
                                 : myFoldRegion != null ? myFoldRegion.getEndOffset() : getCurrentInlay().getOffset();
     }
 
     // absolute
     int getMinOffset() {
-      return myDelegate != null ? myDelegate.getMinOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+      return myDelegate != null ? myDelegate.getMinOffset() + myCurrentStartLogicalLineStart
                                 : myFoldRegion != null ? myFoldRegion.getStartOffset() : getCurrentInlay().getOffset();
     }
 
     // absolute
     int getMaxOffset() {
-      return myDelegate != null ? myDelegate.getMaxOffset() + myDocument.getLineStartOffset(myCurrentStartLogicalLine)
+      return myDelegate != null ? myDelegate.getMaxOffset() + myCurrentStartLogicalLineStart
                                 : myFoldRegion != null ? myFoldRegion.getEndOffset() : getCurrentInlay().getOffset();
     }
 
     // offset is absolute
     float offsetToX(int offset) {
       return myDelegate != null
-             ? myDelegate.offsetToX(offset - myDocument.getLineStartOffset(myCurrentStartLogicalLine))
+             ? myDelegate.offsetToX(offset - myCurrentStartLogicalLineStart)
              : myFoldRegion != null ? getStartX() + getXForOffsetInsideFoldRegion(myFoldRegion, offset) : getEndX();
     }
 
     // offsets are absolute
     float offsetToX(float startX, int startOffset, int offset) {
       assert myDelegate != null;
-      int lineStartOffset = myDocument.getLineStartOffset(myCurrentStartLogicalLine);
+      int lineStartOffset = myCurrentStartLogicalLineStart;
       return myDelegate.offsetToX(startX, startOffset - lineStartOffset, offset - lineStartOffset);
     }
 

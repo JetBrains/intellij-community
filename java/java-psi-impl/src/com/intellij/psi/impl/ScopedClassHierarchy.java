@@ -92,7 +92,7 @@ class ScopedClassHierarchy {
     ScopedClassHierarchy hierarchy = getHierarchy(derivedClass, scope);
     Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
     if (map == null) {
-      map = ContainerUtil.newTroveMap(CLASS_HASHING_STRATEGY);
+      map = new THashMap<>(CLASS_HASHING_STRATEGY);
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       hierarchy.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), map);
       if (stamp.mayCacheNow()) {

@@ -66,6 +66,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon GroupByTestProduction = load("/actions/groupByTestProduction.svg");
     /** 16x16 */ public static final Icon Help = load("/actions/help.svg");
     /** 16x16 */ public static final Icon Highlighting = load("/actions/highlighting.svg");
+    /** 16x16 */ public static final Icon InSelection = load("/actions/inSelection.svg");
     /** 16x16 */ public static final Icon Install = load("/actions/install.svg");
     /** 16x16 */ public static final Icon IntentionBulb = load("/actions/intentionBulb.svg");
     /** 16x16 */ public static final Icon IntentionBulbGrey = load("/actions/intentionBulbGrey.svg");
@@ -2167,6 +2168,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ClassInitializer = load("/nodes/classInitializer.svg");
     /** 16x16 */ public static final Icon CompiledClassesFolder = load("/nodes/compiledClassesFolder.svg");
     /** 16x16 */ public static final Icon ConfigFolder = load("/nodes/configFolder.svg");
+    /** 16x16 */ public static final Icon Console = load("/nodes/console.svg");
     /** 16x16 */ public static final Icon Constant = load("/nodes/constant.svg");
     /** 16x16 */ public static final Icon Controller = load("/nodes/controller.svg");
     /** 16x16 */ public static final Icon CopyOfFolder = load("/nodes/copyOfFolder.svg");
@@ -2178,6 +2180,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon DataTables = load("/nodes/DataTables.svg");
     /** 16x16 */ public static final Icon Deploy = load("/nodes/deploy.svg");
     /** 16x16 */ public static final Icon Desktop = load("/nodes/desktop.svg");
+    /** 16x16 */ public static final Icon DoneMark = load("/nodes/doneMark.svg");
     /** 16x16 */ public static final Icon Editorconfig = load("/nodes/editorconfig.svg");
     /** 16x16 */ public static final Icon Ejb = load("/nodes/ejb.svg");
     /** 16x16 */ public static final Icon EjbBusinessMethod = load("/nodes/ejbBusinessMethod.svg");
@@ -2274,6 +2277,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PpLib = load("/nodes/ppLib.svg");
     /** 16x16 */ public static final Icon PpLibFolder = load("/nodes/ppLibFolder.svg");
     /** 16x16 */ public static final Icon PpWeb = load("/nodes/ppWeb.svg");
+    /** 16x16 */ public static final Icon ProcessMark = load("/nodes/processMark.svg");
     /** 16x16 */ public static final Icon Project = load("/nodes/project.svg");
     /** 16x16 */ public static final Icon Property = load("/nodes/property.svg");
     /** 16x16 */ public static final Icon PropertyRead = load("/nodes/propertyRead.svg");

@@ -21,7 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
+import com.jetbrains.python.psi.types.PyNamedTupleType;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;

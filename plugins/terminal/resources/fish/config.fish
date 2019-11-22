@@ -35,7 +35,7 @@ function override_jb_variables
     return
   end
   for variable in (env)
-    set name_and_value (string split -m 2 "=" -- $variable)
+    set name_and_value (string split -m 1 "=" -- $variable)
     set name $name_and_value[1]
     set value $name_and_value[2]
     if string match -q -- "_INTELLIJ_FORCE_SET_*" $name

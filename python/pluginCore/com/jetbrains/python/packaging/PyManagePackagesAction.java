@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +30,7 @@ public class PyManagePackagesAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (module != null && sdk != null) {
       new PyManagePackagesDialog(module.getProject(), sdk).show();
     }
@@ -39,6 +39,6 @@ public class PyManagePackagesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PythonSdkType.findPythonSdk(module) != null);
+    e.getPresentation().setEnabled(module != null && PythonSdkUtil.findPythonSdk(module) != null);
   }
 }

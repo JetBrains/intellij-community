@@ -18,19 +18,20 @@
 package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
+import git4idea.GitUtil
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.merge.GitConflictResolver
 import git4idea.ui.StashInfo
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
-import git4idea.util.StringScanner
 import java.nio.charset.Charset
 
 /**
@@ -100,12 +101,21 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   h.setSilent(true)
   h.addParameters("list")
   h.charset = charset
-  val out = Git.getInstance().runCommand(h).getOutputOrThrow()
+  val output = Git.getInstance().runCommand(h)
+  output.throwOnError()
 
   val result = mutableListOf<StashInfo>()
-  val s = StringScanner(out)
-  while (s.hasMoreData()) {
-    result.add(StashInfo(s.boundedToken(':'), s.boundedToken(':'), s.line().trim { it <= ' ' }))
+  for (line in output.output) {
+    val parts = line.split(':', limit = 3);
+    if (parts.size < 2) {
+      logger<GitUtil>().error("Can't parse stash record: ${line}")
+    }
+    else if (parts.size == 2) {
+      result.add(StashInfo(parts[0], null, parts[1].trim()))
+    }
+    else {
+      result.add(StashInfo(parts[0], parts[1].trim(), parts[2].trim()))
+    }
   }
   return result
 }

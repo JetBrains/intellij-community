@@ -32,7 +32,7 @@ public abstract class PsiDocumentManager {
    * @return the document manager instance.
    */
   public static PsiDocumentManager getInstance(@NotNull Project project) {
-    return project.getComponent(PsiDocumentManager.class);
+    return project.getService(PsiDocumentManager.class);
   }
 
   /**
@@ -79,6 +79,13 @@ public abstract class PsiDocumentManager {
    * Should be called in UI thread in a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard})
    */
   public abstract void commitAllDocuments();
+
+  /**
+   * Commits all modified but not committed documents under modal dialog (see {@link PsiDocumentManager#commitAllDocuments()}
+   * Should be called in UI thread and outside of write-action
+   * @return true if the operation completed successfully, false if it was cancelled.
+   */
+  public abstract boolean commitAllDocumentsUnderProgress();
 
   /**
    * If the document is committed, runs action synchronously, otherwise schedules to execute it right after it has been committed.

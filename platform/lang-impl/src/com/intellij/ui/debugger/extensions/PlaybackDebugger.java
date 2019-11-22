@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.debugger.extensions;
 
@@ -322,14 +322,13 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myLog.setText(null);
 
-    final IdeFrameImpl frame = getFrame();
-
-    final Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
-
-    if (c != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
-    } else {
+    JFrame frame = getFrame();
+    Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
+    if (c == null) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(frame, true));
+    }
+    else {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
     }
 
     //noinspection SSBasedInspection
@@ -337,11 +336,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   }
 
-  private static IdeFrameImpl getFrame() {
+  private static JFrame getFrame() {
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
-      if (each instanceof IdeFrame) {
-        return (IdeFrameImpl)each;
+      if (each instanceof IdeFrameImpl) {
+        return (JFrame)each;
       }
     }
 

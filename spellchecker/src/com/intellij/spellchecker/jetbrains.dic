@@ -59,6 +59,7 @@ bigfile
 bigint
 binlog
 bitcoin
+blit
 blog
 blogger
 blogging
@@ -447,6 +448,9 @@ metacharacters
 metadata
 metas
 metaspace
+micronaut
+microservice
+microservices
 middleint
 middleware
 millis

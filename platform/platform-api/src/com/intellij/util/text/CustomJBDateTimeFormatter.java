@@ -54,4 +54,28 @@ public class CustomJBDateTimeFormatter extends JBDateTimeFormatter {
   public String formatPrettyDate(long time) {
     return formatTime(time);
   }
+
+  @NotNull
+  @Override
+  public String formatDateTime(Date date) {
+    return formatTime(date);
+  }
+
+  @NotNull
+  @Override
+  public String formatDateTime(long time) {
+    return formatTime(time);
+  }
+
+  @NotNull
+  @Override
+  public String formatPrettyDateTime(@NotNull Date date) {
+    return formatTime(date);
+  }
+
+  @NotNull
+  @Override
+  public String formatPrettyDate(@NotNull Date date) {
+    return formatTime(date);
+  }
 }

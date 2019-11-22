@@ -35,7 +35,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) {
     private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
       "python" to 0.5,
       "scala" to 0.3,
-      "php" to 0.3,
+      "php" to 0.2,
       "kotlin" to 0.2,
       "java" to 0.1
     )
@@ -49,8 +49,9 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) {
     }
     else if (lookup is LookupImpl) {
       if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+      val language = lookup.language() ?: return@PropertyChangeListener
 
-      val lookupStorage = MutableLookupStorage.initLookupStorage(lookup, System.currentTimeMillis())
+      val lookupStorage = MutableLookupStorage.initLookupStorage(lookup, language, System.currentTimeMillis())
 
       processContextFactors(lookup, lookupStorage)
       processUserFactors(lookup, lookupStorage)
@@ -74,7 +75,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) {
     return CompletionActionsTracker(lookup, logger, experimentHelper)
   }
 
-  private fun shouldInitialize() = (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed())
+  private fun shouldInitialize() = (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed() && !CompletionTrackerDisabler.isDisabled())
                                    || isUnitTestMode()
 
   private fun shouldTrackSession() = CompletionMLRankingSettings.getInstance().isCompletionLogsSendAllowed || isUnitTestMode()
@@ -100,7 +101,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) {
     val file = lookup.psiFile
     if (file != null) {
       val result = mutableMapOf<String, MLFeatureValue>()
-      for (provider in ContextFeatureProvider.forLanguage(file.language)) {
+      for (provider in ContextFeatureProvider.forLanguage(lookupStorage.language)) {
         val providerName = provider.name
         for ((featureName, value) in provider.calculateFeatures(lookup)) {
           result["ml_ctx_${providerName}_$featureName"] = value

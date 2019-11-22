@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
@@ -14,12 +16,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.StringFactory;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,6 +45,7 @@ public abstract class ModuleInsight {
   private List<LibraryDescriptor> myLibraries;
   private final Set<String> myExistingModuleNames;
   private final Set<String> myExistingProjectLibraryNames;
+  private static final Set<String> ourModuleUndesirableNames = ImmutableSet.of("src");
 
   public ModuleInsight(@Nullable final ProgressIndicator progress, Set<String> existingModuleNames, Set<String> existingProjectLibraryNames) {
     myExistingModuleNames = existingModuleNames;
@@ -105,17 +110,18 @@ public abstract class ModuleInsight {
 
       myProgress.pushState();
       myProgress.setText("Building modules layout...");
+      Map<File, ModuleCandidate> rootToModule = new HashMap<>();
       for (DetectedSourceRoot sourceRoot : processedRoots) {
         final File srcRoot = sourceRoot.getDirectory();
-        final File moduleContentRoot = isEntryPointRoot(srcRoot) ? srcRoot : srcRoot.getParentFile();
-        ModuleDescriptor moduleDescriptor = contentRootToModules.get(moduleContentRoot);
-        if (moduleDescriptor != null) {
-          moduleDescriptor.addSourceRoot(moduleContentRoot, sourceRoot);
-        }
-        else {
-          moduleDescriptor = createModuleDescriptor(moduleContentRoot, Collections.singletonList(sourceRoot));
-          contentRootToModules.put(moduleContentRoot, moduleDescriptor);
-        }
+        final File moduleContentRoot = suggestModuleRoot(srcRoot);
+        rootToModule.computeIfAbsent(moduleContentRoot, file -> new ModuleCandidate(moduleContentRoot)).myRoots.add(sourceRoot);
+      }
+      maximizeModuleFolders(rootToModule.values());
+      for (Map.Entry<File, ModuleCandidate> entry : rootToModule.entrySet()) {
+        File root = entry.getKey();
+        ModuleCandidate module = entry.getValue();
+        ModuleDescriptor moduleDescriptor = createModuleDescriptor(module.myFolder, module.myRoots);
+        contentRootToModules.put(root, moduleDescriptor);
       }
 
       buildModuleDependencies(contentRootToModules);
@@ -126,6 +132,61 @@ public abstract class ModuleInsight {
     }
 
     addModules(contentRootToModules.values());
+  }
+
+  private static class ModuleCandidate {
+    final List<DetectedSourceRoot> myRoots = new ArrayList<>();
+    @NotNull File myFolder;
+
+    private ModuleCandidate(@NotNull File folder) {
+      myFolder = folder;
+    }
+  }
+
+  private void maximizeModuleFolders(@NotNull Collection<ModuleCandidate> modules) {
+    TObjectIntHashMap<File> dirToChildRootCount = new TObjectIntHashMap<>();
+    for (ModuleCandidate module : modules) {
+      walkParents(module.myFolder, this::isEntryPointRoot, file -> {
+        if (!dirToChildRootCount.adjustValue(file, 1)) {
+          dirToChildRootCount.put(file, 1);
+        }
+      }, true);
+    }
+    for (ModuleCandidate module : modules) {
+      File moduleRoot = module.myFolder;
+      Ref<File> adjustedRootRef = new Ref<>(module.myFolder);
+      walkParents(moduleRoot,
+                  file -> isEntryPointRoot(file) || dirToChildRootCount.get(file) != 1,
+                  file -> adjustedRootRef.set(file),
+                  false
+      );
+      module.myFolder = adjustedRootRef.get();
+    }
+  }
+
+  private static void walkParents(@NotNull File file, Predicate<File> stopCondition, @NotNull Consumer<File> fileConsumer, boolean includeStop) {
+    File current = file;
+    while (true) {
+      if (!includeStop) {
+        if (stopCondition.test(current)) break;
+        fileConsumer.consume(current);
+      } else {
+        fileConsumer.consume(current);
+        if (stopCondition.test(current)) break;
+      }
+      current = current.getParentFile();
+    }
+  }
+  
+  @NotNull
+  private File suggestModuleRoot(@NotNull File srcRoot) {
+    File current = isEntryPointRoot(srcRoot) ? srcRoot : srcRoot.getParentFile();
+    while (true) {
+      if (isEntryPointRoot(current) || !ourModuleUndesirableNames.contains(current.getName())) {
+        return current;
+      }
+      current = current.getParentFile();
+    }
   }
 
   protected void addExportedPackages(File sourceRoot, Set<String> packages) {

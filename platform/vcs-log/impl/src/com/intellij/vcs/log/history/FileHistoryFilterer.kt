@@ -235,7 +235,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
     return revisionFilter?.heads?.singleOrNull()?.hash
   }
-  
+
   companion object {
     private val LOG = Logger.getInstance(FileHistoryFilterer::class.java)
 

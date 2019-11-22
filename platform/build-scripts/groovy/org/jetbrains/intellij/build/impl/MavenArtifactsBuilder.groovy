@@ -264,9 +264,12 @@ class MavenArtifactsBuilder {
   }
 
   static boolean isOptionalDependency(JpsLibrary library) {
-    //todo: this is a temporary workaround until 'microba' library is published to Maven repository (IDEA-200834)
-    // given that this library contains UI elements which are used in few places it's unlikely that absence of this dependency will cause real problems
-    library.name == "microba"
+    //todo: this is a temporary workaround until these libraries are published to Maven repository;
+    // it's unlikely that code which depend on these libraries will be used when running tests so skipping these dependencies shouldn't cause real problems.
+    //  'microba' contains UI elements which are used in few places (IDEA-200834),
+    //  'wadl-core.jar' is used when searching for Maven artifacts only (IDEA-220227),
+    //  'precompiled_jshell-frontend' is used by "JShell Console" action only (IDEA-222381).
+    library.name == "microba" || library.name == "wadl-core" || library.name == "precompiled_jshell-frontend"
   }
 
   private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {

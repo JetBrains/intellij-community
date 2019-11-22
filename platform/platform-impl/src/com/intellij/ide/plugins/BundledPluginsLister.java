@@ -40,17 +40,17 @@ public class BundledPluginsLister implements ApplicationStarter {
       }
 
       try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
-        IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
+        List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
 
-        List<String> modules = Arrays.stream(plugins)
+        List<String> modules = plugins.stream()
           .flatMap(it -> it instanceof IdeaPluginDescriptorImpl ? ((IdeaPluginDescriptorImpl)it).getModules().stream() : Stream.empty())
           .sorted()
           .collect(Collectors.toList());
 
-        List<String> pluginIds = Arrays.stream(plugins)
-                                       .map(plugin -> plugin.getPluginId().getIdString())
-                                       .sorted()
-                                       .collect(Collectors.toList());
+        List<String> pluginIds = plugins.stream()
+          .map(plugin -> plugin.getPluginId().getIdString())
+          .sorted()
+          .collect(Collectors.toList());
 
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         List<String> extensions = Arrays.stream(fileTypeManager.getRegisteredFileTypes()).

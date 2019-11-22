@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -405,6 +406,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
     List<Node> list = new ArrayList<>(elements.length);
     for (Object element : elements) {
+      ProgressManager.checkCanceled();
       if (isValid(structure, element)) {
         list.add(new Node(structure, element, descriptor)); // an exception may be thrown while getting children
       }

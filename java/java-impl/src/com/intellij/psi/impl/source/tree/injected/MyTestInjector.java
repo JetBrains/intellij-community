@@ -10,6 +10,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -270,7 +271,7 @@ public class MyTestInjector {
         }
         PsiElement parent1 = host.getParent();
         if (parent1 instanceof PsiMethod && ((PsiMethod)parent1).getName().equals("xml")) {
-          placesToInject.addPlace(StdLanguages.XML, new TextRange(2,host.getTextLength()-2), null,null);
+          placesToInject.addPlace(XMLLanguage.INSTANCE, new TextRange(2, host.getTextLength() - 2), null, null);
           return;
         }
       }
@@ -284,7 +285,7 @@ public class MyTestInjector {
           placesToInject.addPlace(ql, textRangeToInject(host), null, null);
         }
         if ("xml".equals(variable.getName())) {
-          placesToInject.addPlace(StdLanguages.XML, textRangeToInject(host), null, null);
+          placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), null, null);
         }
         if ("js".equals(variable.getName())) { // with prefix/suffix
           placesToInject.addPlace(js, textRangeToInject(host), "function foo(doc,window) {", "}");

@@ -70,6 +70,13 @@ public class VcsLogContentUtil {
   public static <U extends AbstractVcsLogUi> U findAndSelect(@NotNull Project project,
                                                              @NotNull Class<U> clazz,
                                                              @NotNull Condition<? super U> condition) {
+    return find(project, clazz, true, condition);
+  }
+
+  @Nullable
+  public static <U extends AbstractVcsLogUi> U find(@NotNull Project project,
+                                                    @NotNull Class<U> clazz, boolean select,
+                                                    @NotNull Condition<? super U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     if (toolWindow == null) return null;
 
@@ -84,8 +91,10 @@ public class VcsLogContentUtil {
     });
     if (component == null) return null;
 
-    if (!toolWindow.isVisible()) toolWindow.activate(null);
-    if (!ContentUtilEx.selectContent(manager, component, true)) return null;
+    if (select) {
+      if (!toolWindow.isVisible()) toolWindow.activate(null);
+      if (!ContentUtilEx.selectContent(manager, component, true)) return null;
+    }
     //noinspection unchecked
     return (U)getLogUi(component);
   }
@@ -155,7 +164,7 @@ public class VcsLogContentUtil {
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<? super VcsLogUiImpl> consumer) {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (!selectMainLog(window)) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);
+      showLogIsNotAvailableMessage(project);
       return;
     }
 
@@ -166,6 +175,11 @@ public class VcsLogContentUtil {
     else {
       runConsumer.run();
     }
+  }
+
+  @CalledInAwt
+  public static void showLogIsNotAvailableMessage(@NotNull Project project) {
+    VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);
   }
 
   private static boolean selectMainLog(@NotNull ToolWindow window) {

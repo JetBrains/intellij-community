@@ -23,9 +23,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.rest.run.RestConfigurationEditor;
 import com.jetbrains.rest.run.RestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class SphinxRunConfiguration extends RestRunConfiguration {
     if (!model.contains("pdf") && getSdk() != null) {
       final List<PyPackage> packages = PyPackageManager.getInstance(getSdk()).getPackages();
       if (packages != null) {
-        final PyPackage rst2pdf = PyPackageUtil.findPackage(packages,"rst2pdf");
+        final PyPackage rst2pdf = PyPsiPackageUtil.findPackage(packages, "rst2pdf");
         if (rst2pdf != null) {
           model.add(13, "pdf");
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -46,8 +46,8 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
   @NonNls private static final String FIXES_STATS_TAG = "fixesStatsTag";
   @NonNls private static final String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
 
-  public FeatureUsageTrackerImpl(ProductivityFeaturesRegistry productivityFeaturesRegistry) {
-    myRegistry = productivityFeaturesRegistry;
+  public FeatureUsageTrackerImpl() {
+    myRegistry = ProductivityFeaturesRegistry.getInstance();
   }
 
   @Override

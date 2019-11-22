@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,8 @@ public interface VcsIgnoreManager {
    * @return true if the file is potentially ignored
    */
   boolean isPotentiallyIgnoredFile(@NotNull VirtualFile file);
+
+  boolean isPotentiallyIgnoredFile(@NotNull FilePath filePath);
 
   static VcsIgnoreManager getInstance(@NotNull Project project){
     return ServiceManager.getService(project, VcsIgnoreManager.class);

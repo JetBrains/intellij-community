@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -48,14 +46,12 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
 
   protected final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
-  public ModuleRootManagerImpl(@NotNull Module module,
-                               @NotNull ProjectRootManagerImpl projectRootManager,
-                               @NotNull VirtualFilePointerManager filePointerManager) {
+  public ModuleRootManagerImpl(@NotNull Module module) {
     myModule = module;
-    myProjectRootManager = projectRootManager;
-    myFilePointerManager = filePointerManager;
+    myProjectRootManager = ProjectRootManagerImpl.getInstanceImpl(module.getProject());
+    myFilePointerManager = VirtualFilePointerManager.getInstance();
 
-    myRootModel = new RootModelImpl(this, projectRootManager, filePointerManager);
+    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
     myOrderRootsCache = new OrderRootsCache(module);
   }
 

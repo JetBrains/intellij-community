@@ -19,4 +19,11 @@ class X {
     if(s3.<warning descr="Method 'equals()' always returns false: the argument contains an uppercase symbol while the qualifier is lowercase-only">equals</warning>(s2.toUpperCase()+"!"+"X")) {}
 
   }
+
+  void reassignParameter(String s) {
+    s = s.toLowerCase();
+    if (s.<warning descr="Method 'equals()' always returns false: the argument contains an uppercase symbol while the qualifier is lowercase-only">equals</warning>("Yes")) {
+
+    }
+  }
 }

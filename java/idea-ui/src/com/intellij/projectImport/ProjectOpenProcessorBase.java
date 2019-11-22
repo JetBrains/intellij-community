@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 /**
  * @author anna
@@ -192,7 +193,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       final Project projectToOpen;
       if (shouldOpenExisting) {
         try {
-          projectToOpen = ProjectManagerEx.getInstanceEx().loadProject(pathToOpen);
+          projectToOpen = ProjectManagerEx.getInstanceEx().loadProject(Paths.get(pathToOpen).toAbsolutePath());
         }
         catch (Exception e) {
           return null;

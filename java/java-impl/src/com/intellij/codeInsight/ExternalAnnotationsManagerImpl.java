@@ -42,7 +42,13 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -55,6 +61,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -74,22 +81,52 @@ import java.util.stream.Collectors;
 /**
  * @author anna
  */
-public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
+public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
 
   private final MessageBus myBus;
 
-  public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
-    super(psiManager);
+  public ExternalAnnotationsManagerImpl(@NotNull Project project) {
+    super(PsiManager.getInstance(project));
+
     myBus = project.getMessageBus();
-    myBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    MessageBusConnection connection = myBus.connect();
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         dropAnnotationsCache();
       }
     });
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (!event.isFromRefresh()) {
+            continue;
+          }
+
+          String name;
+          if (event instanceof VFileCreateEvent) {
+            name = ((VFileCreateEvent)event).getChildName();
+          }
+          else {
+            VirtualFile file = event.getFile();
+            if (file == null) {
+              continue;
+            }
+
+            name = file.getName();
+          }
+
+          if (event.isFromRefresh() && ANNOTATIONS_XML.equals(name)) {
+            dropAnnotationsCache();
+            notifyChangedExternally();
+          }
+        }
+      }
+    });
+
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
   }
 
@@ -955,40 +992,6 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     @Override
     protected boolean shouldSaveOptionsOnCancel() {
       return true;
-    }
-  }
-
-  private class MyVirtualFileListener implements VirtualFileListener {
-    private void processEvent(VirtualFileEvent event) {
-      if (event.isFromRefresh() && ANNOTATIONS_XML.equals(event.getFileName())) {
-        dropAnnotationsCache();
-        notifyChangedExternally();
-      }
-    }
-
-    @Override
-    public void contentsChanged(@NotNull VirtualFileEvent event) {
-      processEvent(event);
-    }
-
-    @Override
-    public void fileCreated(@NotNull VirtualFileEvent event) {
-      processEvent(event);
-    }
-
-    @Override
-    public void fileDeleted(@NotNull VirtualFileEvent event) {
-      processEvent(event);
-    }
-
-    @Override
-    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      processEvent(event);
-    }
-
-    @Override
-    public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      processEvent(event);
     }
   }
 

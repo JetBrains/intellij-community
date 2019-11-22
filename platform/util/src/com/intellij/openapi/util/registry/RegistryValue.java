@@ -52,41 +52,56 @@ public class RegistryValue {
   }
 
   public boolean asBoolean() {
-    if (myBooleanCachedValue == null) {
-      myBooleanCachedValue = Boolean.valueOf(get(myKey, "false", true));
+    Boolean result = myBooleanCachedValue;
+    if (result == null) {
+      myBooleanCachedValue = result = calcBoolean();
     }
+    return result.booleanValue();
+  }
 
-    return myBooleanCachedValue.booleanValue();
+  @NotNull
+  private Boolean calcBoolean() {
+    return Boolean.valueOf(get(myKey, "false", true));
   }
 
   public int asInteger() {
-    if (myIntCachedValue == null) {
-      try {
-        myIntCachedValue = Integer.valueOf(get(myKey, "0", true));
-      }
-      catch (NumberFormatException e) {
-        String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
-        assert bundleValue != null;
-        myIntCachedValue = Integer.valueOf(bundleValue);
-      }
+    Integer result = myIntCachedValue;
+    if (result == null) {
+      myIntCachedValue = result = calcInt();
     }
+    return result.intValue();
+  }
 
-    return myIntCachedValue.intValue();
+  @NotNull
+  private Integer calcInt() {
+    try {
+      return Integer.valueOf(get(myKey, "0", true));
+    }
+    catch (NumberFormatException e) {
+      String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
+      assert bundleValue != null;
+      return Integer.valueOf(bundleValue);
+    }
   }
 
   public double asDouble() {
-    if (myDoubleCachedValue == null) {
-      try {
-        myDoubleCachedValue = Double.valueOf(get(myKey, "0.0", true));
-      }
-      catch (NumberFormatException e) {
-        String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
-        assert bundleValue != null;
-        myDoubleCachedValue = Double.valueOf(bundleValue);
-      }
+    Double result = myDoubleCachedValue;
+    if (result == null) {
+      myDoubleCachedValue = result = calcDouble();
     }
+    return result.doubleValue();
+  }
 
-    return myDoubleCachedValue.doubleValue();
+  @NotNull
+  private Double calcDouble() {
+    try {
+      return Double.valueOf(get(myKey, "0.0", true));
+    }
+    catch (NumberFormatException e) {
+      String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
+      assert bundleValue != null;
+      return Double.valueOf(bundleValue);
+    }
   }
 
   Color asColor(Color defaultValue) {

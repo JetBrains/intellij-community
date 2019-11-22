@@ -3,18 +3,15 @@ package com.intellij.sh.psi.impl;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.sh.psi.ShSimpleCommand;
+import com.intellij.sh.psi.ShLiteral;
 import com.intellij.sh.psi.ShString;
 import org.jetbrains.annotations.NotNull;
 
 public class ShPsiImplUtil {
   @NotNull
-  static PsiReference[] getReferences(@NotNull ShString o) {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(o);
-  }
-
-  @NotNull
-  static PsiReference[] getReferences(@NotNull ShSimpleCommand o) {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(o);
+  static PsiReference[] getReferences(@NotNull ShLiteral o) {
+    return o instanceof ShString || o.getWord() != null
+           ? ReferenceProvidersRegistry.getReferencesFromProviders(o)
+           : PsiReference.EMPTY_ARRAY;
   }
 }

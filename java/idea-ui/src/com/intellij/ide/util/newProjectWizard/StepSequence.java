@@ -23,6 +23,8 @@ public class StepSequence {
   private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<>();
   private final MultiMap<String, ModuleWizardStep> mySpecificFinishingSteps = new MultiMap<>();
   @NonNls private final List<String> myTypes = new ArrayList<>();
+
+  private List<Class<? extends ModuleWizardStep>> myIgnoredSteps = Collections.emptyList();
   private List<ModuleWizardStep> mySelectedSteps;
 
   public StepSequence(ModuleWizardStep... commonSteps) {
@@ -74,7 +76,11 @@ public class StepSequence {
       ContainerUtil.removeDuplicates(mySelectedSteps);
     }
 
-    return mySelectedSteps;
+    return ContainerUtil.filter(mySelectedSteps, it -> !isIgnoredStep(it));
+  }
+
+  private boolean isIgnoredStep(ModuleWizardStep step) {
+    return myIgnoredSteps.stream().anyMatch(it -> it.isInstance(step));
   }
 
   @Nullable
@@ -95,6 +101,10 @@ public class StepSequence {
     myTypes.clear();
     myTypes.addAll(types);
     mySelectedSteps = null;
+  }
+
+  public void setIgnoredSteps(@NotNull List<Class<? extends ModuleWizardStep>> steps) {
+    myIgnoredSteps = steps;
   }
 
   public void setType(@Nullable @NonNls final String type) {

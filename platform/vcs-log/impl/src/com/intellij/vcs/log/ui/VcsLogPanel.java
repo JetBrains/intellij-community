@@ -74,7 +74,8 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.map(hashes, commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
+      return ContainerUtil.map(hashes,
+                               commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myUi.getHelpId();

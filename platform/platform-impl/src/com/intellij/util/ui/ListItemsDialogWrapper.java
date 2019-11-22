@@ -9,6 +9,7 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,11 @@ import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 
+/**
+ * @deprecated use {@link com.intellij.ui.components.fields.ExpandableTextField} instead
+ */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+@Deprecated
 public abstract class ListItemsDialogWrapper extends DialogWrapper {
   protected final JPanel myPanel;
   protected final JList<String> myList = new JBList<>(new DefaultListModel());

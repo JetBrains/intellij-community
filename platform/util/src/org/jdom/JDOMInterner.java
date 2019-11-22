@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,13 +9,17 @@ import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 import static com.intellij.openapi.util.JDOMUtil.getAttributes;
 
-public class JDOMInterner {
+public final class JDOMInterner {
+  @ApiStatus.Internal
+  public static final JDOMInterner INSTANCE = new JDOMInterner();
+
   private static final Condition<Object> IS_ELEMENT = Conditions.instanceOf(Element.class);
   private final Interner<String> myStrings = new StringInterner();
   private final OpenTHashSet<Element> myElements = new OpenTHashSet<>(new TObjectHashingStrategy<Element>() {

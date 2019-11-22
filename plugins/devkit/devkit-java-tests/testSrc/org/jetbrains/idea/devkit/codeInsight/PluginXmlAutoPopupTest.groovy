@@ -15,14 +15,14 @@
  */
 package org.jetbrains.idea.devkit.codeInsight
 
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
 @CompileStatic
-class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
+class PluginXmlAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
   void "test autopopup for class references"() {
     myFixture.addClass("public class FooFooFooFooFoo { }")
@@ -33,9 +33,9 @@ class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
   </extensionPoints>
 </idea-plugin>
 '''
-    type 'o'
-    assertNotNull(lookup)
-    assertSameElements(myFixture.lookupElementStrings,['FooFooFooFooFoo'])
+    myTester.typeWithPauses('o')
+    assertNotNull(myFixture.getLookup())
+    assertSameElements(myFixture.lookupElementStrings, ['FooFooFooFooFoo'])
   }
 
   void "test no autopopup when only word completion is available"() {
@@ -46,8 +46,7 @@ class PluginXmlAutoPopupTest extends CompletionAutoPopupTestCase {
   </extensionPoints>
 </idea-plugin>
 '''
-    type 'e'
-    assertNull(lookup)
+    myTester.typeWithPauses('e')
+    assertNull(myFixture.getLookup())
   }
-
 }

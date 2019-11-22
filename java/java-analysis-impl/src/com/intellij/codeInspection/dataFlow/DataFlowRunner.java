@@ -168,6 +168,13 @@ public class DataFlowRunner {
 
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
+
+      for (int i = 0; i < endOffset; i++) {
+        if (loopNumber[i] > 0 && myInstructions[i] instanceof BinopInstruction) {
+          ((BinopInstruction)myInstructions[i]).widenOperationInLoop();
+        }
+      }
+
       myNestedClosures.clear();
       myWasForciblyMerged = false;
 
@@ -335,6 +342,10 @@ public class DataFlowRunner {
         IntStreamEx.of(((ControlTransferInstruction)instruction).getPossibleTargetIndices()).elements(myInstructions)
                    .into(joinInstructions);
       } else if (instruction instanceof MethodCallInstruction && !((MethodCallInstruction)instruction).getContracts().isEmpty()) {
+        joinInstructions.add(myInstructions[index + 1]);
+      }
+      else if (instruction instanceof FinishElementInstruction && !((FinishElementInstruction)instruction).getVarsToFlush().isEmpty()) {
+        // Good chances to squash something after some vars are flushed
         joinInstructions.add(myInstructions[index + 1]);
       }
     }

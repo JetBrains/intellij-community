@@ -19,6 +19,11 @@ open class HashBangFileTypeDetector @JvmOverloads constructor(
     return if (FileUtil.isHashBangLine(firstCharsIfText, marker)) fileType else null
   }
 
+  override fun getDesiredContentPrefixLength(): Int {
+    // On vast majority of Linux systems, a restriction of 128 bytes of shebang length is compiled into kernel
+    return 256
+  }
+
   override fun getVersion() = _version
 
   override fun getDetectedFileTypes(): Collection<FileType> {

@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
 /**
@@ -220,7 +221,7 @@ public class JsonSchemaMappingsView implements Disposable {
 
   public String getSchemaSubPath() {
     String schemaFieldText = mySchemaField.getText();
-    if (isHttpPath(schemaFieldText)) return schemaFieldText;
+    if (isAbsoluteUrl(schemaFieldText)) return schemaFieldText;
     return FileUtil.toSystemDependentName(JsonSchemaInfo.getRelativePath(myProject, schemaFieldText));
   }
 

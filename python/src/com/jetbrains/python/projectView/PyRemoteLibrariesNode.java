@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +61,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
   @Nullable
   public static PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
     if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
-      VirtualFile remoteLibrary = PySdkUtil.findAnyRemoteLibrary(sdk);
+      VirtualFile remoteLibrary = PythonSdkUtil.findAnyRemoteLibrary(sdk);
 
       if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
         remoteLibrary = JarFileSystem.getInstance().getLocalByEntry(remoteLibrary);

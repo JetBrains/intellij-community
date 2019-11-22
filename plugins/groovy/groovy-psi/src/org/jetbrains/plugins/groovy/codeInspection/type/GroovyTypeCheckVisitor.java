@@ -54,7 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
@@ -482,7 +482,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                  @NotNull PsiElement context) {
     checkPossibleLooseOfPrecision(expectedType, expression, toHighlight);
 
-    processAssignment(expectedType, expression, toHighlight, "cannot.assign", context, ApplicableTo.ASSIGNMENT);
+    processAssignment(expectedType, expression, toHighlight, "cannot.assign", context, Position.ASSIGNMENT);
   }
 
   private void processAssignment(@NotNull PsiType expectedType,
@@ -490,7 +490,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                  @NotNull PsiElement toHighlight,
                                  @NotNull @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String messageKey,
                                  @NotNull PsiElement context,
-                                 @NotNull ApplicableTo position) {
+                                 @NotNull Position position) {
     { // check if  current assignment is constructor call
       final GrListOrMap initializer = getTupleInitializer(expression);
       if (initializer != null) {
@@ -532,7 +532,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                  @NotNull GroovyPsiElement context,
                                  @NotNull PsiElement elementToHighlight) {
     if (rType == null) return;
-    final ConversionResult result = TypesUtil.canAssign(lType, rType, context, ApplicableTo.ASSIGNMENT);
+    final ConversionResult result = TypesUtil.canAssign(lType, rType, context, Position.ASSIGNMENT);
     processResult(result, elementToHighlight, "cannot.assign", lType, rType, LocalQuickFix.EMPTY_ARRAY);
   }
 
@@ -616,7 +616,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (getTupleInitializer(expression) != null) return;
     final PsiType returnType = PsiImplUtil.inferReturnType(expression);
     if (returnType == null || PsiType.VOID.equals(returnType)) return;
-    processAssignment(returnType, expression, elementToHighlight, "cannot.return.type", context, ApplicableTo.RETURN_VALUE);
+    processAssignment(returnType, expression, elementToHighlight, "cannot.return.type", context, Position.RETURN_VALUE);
   }
 
   private void registerCannotApplyError(@NotNull String invokedText, @NotNull CallInfo info) {
@@ -902,7 +902,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (iteratedType == null) return;
     final PsiType targetType = variable.getType();
 
-    final ConversionResult result = TypesUtil.canAssign(targetType, iteratedType, forInClause, ApplicableTo.ASSIGNMENT);
+    final ConversionResult result = TypesUtil.canAssign(targetType, iteratedType, forInClause, Position.ASSIGNMENT);
     LocalQuickFix[] fixes = {new GrCastFix(TypesUtil.createListType(iterated, targetType), iterated)};
     processResult(result, variable, "cannot.assign", targetType, iteratedType, fixes);
   }

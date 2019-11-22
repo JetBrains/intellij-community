@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 
 /**
- * A text range defined by start and end offset.
+ * A text range defined by start and end (exclusive) offset.
  *
  * @see ProperTextRange
  */

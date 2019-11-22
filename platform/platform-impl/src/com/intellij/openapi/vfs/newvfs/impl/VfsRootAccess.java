@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -140,12 +141,11 @@ public class VfsRootAccess {
         assert location != null : project;
         allowed.add(FileUtil.toSystemIndependentName(location));
       }
-
-      allowed.addAll(ourAdditionalRoots);
     }
     catch (Error ignored) {
       // sometimes library.getRoots() may crash if called from inside library modification
     }
+    allowed.addAll(ourAdditionalRoots);
 
     return allowed;
   }
@@ -166,7 +166,7 @@ public class VfsRootAccess {
     insideGettingRoots = true;
     final Set<String> roots = new THashSet<>();
 
-    final OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries();
+    OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
     ContainerUtil.addAll(roots, enumerator.classes().getUrls());
     ContainerUtil.addAll(roots, enumerator.sources().getUrls());
 

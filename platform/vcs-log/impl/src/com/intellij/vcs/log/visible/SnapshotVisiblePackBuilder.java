@@ -17,7 +17,10 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class SnapshotVisiblePackBuilder {
   private static final int VISIBLE_RANGE = 1000;

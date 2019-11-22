@@ -70,9 +70,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private final Project myProject;
   private final PsiManager myManager;
 
-  public GroovyPsiElementFactoryImpl(Project project, PsiManager manager) {
+  public GroovyPsiElementFactoryImpl(Project project) {
     myProject = project;
-    myManager = manager;
+    myManager = PsiManager.getInstance(project);
   }
 
   @Override
@@ -454,8 +454,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrParenthesizedExpression createParenthesizedExpr(@NotNull GrExpression expression) {
-    return ((GrParenthesizedExpression) createExpressionFromText("(" + expression.getText() + ")"));
+  public GrParenthesizedExpression createParenthesizedExpr(@NotNull GrExpression expression, @Nullable PsiElement context) {
+    return ((GrParenthesizedExpression)createExpressionFromText("(" + expression.getText() + ")", context));
   }
 
   @NotNull

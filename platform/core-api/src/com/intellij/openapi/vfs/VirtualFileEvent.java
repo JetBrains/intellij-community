@@ -23,8 +23,7 @@ public class VirtualFileEvent extends EventObject {
   /** @deprecated Use {@link #VirtualFileEvent(Object, VirtualFile, VirtualFile, long, long)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
-  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, @Nullable VirtualFile parent) {
+  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @SuppressWarnings("unused") @NotNull String fileName, @Nullable VirtualFile parent) {
     this(requestor, file, parent, 0, 0);
   }
 

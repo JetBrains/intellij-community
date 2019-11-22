@@ -174,7 +174,7 @@ public class AntCommandLineBuilder {
   }
 
   public void addTargets(Collection<String> targets) {
-    ContainerUtil.addAll(myTargets, targets);
+    myTargets.addAll(targets);
   }
 
   public String[] getTargets() {

@@ -28,10 +28,13 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameViewHolder;
 import com.intellij.ui.*;
@@ -183,6 +186,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
   }
 
+  @Nullable
   @Override
   public StatusBar getStatusBar() {
     return null;
@@ -223,7 +227,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
       title += ' ' + ApplicationInfo.getInstance().getFullVersion();
     }
-    String suffix = IdeFrameImpl.getSuperUserSuffix();
+    String suffix = ProjectFrameHelper.getSuperUserSuffix();
     if (suffix != null) {
       title += ' ' + suffix;
     }
@@ -862,11 +866,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return arrow;
   }
 
+  @Nullable
   @Override
   public BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
 
+  @NotNull
   @Override
   public Rectangle suggestChildFrameBounds() {
     return getBounds();
@@ -882,16 +888,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Override
   public void setFrameTitle(String title) {
     setTitle(title);
-  }
-
-  @Override
-  public void setFileTitle(String fileTitle, File ioFile) {
-    setTitle(fileTitle);
-  }
-
-  @Override
-  public IdeRootPaneNorthExtension getNorthExtension(String key) {
-    return null;
   }
 
   @Override

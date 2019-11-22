@@ -30,6 +30,9 @@ public class NetUtils {
     }
   }
 
+  /**
+   * @deprecated use {@link InetAddress#getLoopbackAddress()}
+   */
   @Deprecated
   public static InetAddress getLoopbackAddress() {
     return InetAddress.getLoopbackAddress();

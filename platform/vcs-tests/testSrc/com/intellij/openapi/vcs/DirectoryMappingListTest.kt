@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.junit.Assume
 import java.io.File
+import java.nio.file.Paths
 
 class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private val BASE_PATH = "/vcs/directoryMappings/"
@@ -42,7 +43,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
     rootPath = projectRoot.path
 
-    myProject = ProjectManagerEx.getInstanceEx().loadProject("$rootPath/directoryMappings.ipr")
+    myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
     ProjectManagerEx.getInstanceEx().openTestProject(myProject)
     UIUtil.dispatchAllInvocationEvents() // startup activities
 
@@ -155,6 +156,40 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       mappings.cleanupMappings()
       assertEquals("cleanup failed: $child", 1, mappings.directoryMappings.size)
     }
+  }
+
+  fun testNoneVcsMappings() {
+    mappings.setMapping("$rootPath/parent", "CVS")
+
+    val children = listOf(
+      "$rootPath/parent/child1",
+      "$rootPath/parent/middle/child2",
+      "$rootPath/parent/middle/child3"
+    )
+    createDirectories(children)
+
+    mappings.setMapping(children[0], null)
+    mappings.cleanupMappings()
+    assertEquals("cleanup failed", 2, mappings.directoryMappings.size)
+
+    mappings.setMapping(children[1], "")
+    mappings.cleanupMappings()
+    assertEquals("cleanup failed", 3, mappings.directoryMappings.size)
+
+    mappings.setMapping(children[2], "Unknown")
+    mappings.cleanupMappings()
+    assertEquals("cleanup failed", 4, mappings.directoryMappings.size)
+
+    assertEquals("CVS", getVcsFor("$rootPath/parent/some/file".filePath))
+    assertEquals("CVS", getVcsFor("$rootPath/parent/middle/file".filePath))
+    assertEquals(null, getVcsFor("$rootPath/parent/child1/file".filePath))
+    assertEquals(null, getVcsFor("$rootPath/parent/middle/child2".filePath))
+    assertEquals(null, getVcsFor("$rootPath/parent/middle/child3".filePath))
+
+    assertEquals("$rootPath/parent".virtualFile, mappings.getMappedRootFor("$rootPath/parent/some/file".filePath)?.root)
+    assertEquals("$rootPath/parent/child1".virtualFile, mappings.getMappedRootFor("$rootPath/parent/child1/file".filePath)?.root)
+    assertEquals("$rootPath/parent/middle/child2".virtualFile, mappings.getMappedRootFor("$rootPath/parent/middle/child2".filePath)?.root)
+    assertEquals("$rootPath/parent/middle/child3".virtualFile, mappings.getMappedRootFor("$rootPath/parent/middle/child3".filePath)?.root)
   }
 
   fun testNestedInnerCopy() {

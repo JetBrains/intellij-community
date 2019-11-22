@@ -7,13 +7,16 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.AppIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -26,6 +29,7 @@ public abstract class WindowManagerEx extends WindowManager {
     return (WindowManagerEx)WindowManager.getInstance();
   }
 
+  @Nullable
   @Override
   public abstract IdeFrameImpl getFrame(@Nullable Project project);
 
@@ -37,9 +41,7 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
   @NotNull
-  public abstract IdeFrameImpl allocateFrame(@NotNull Project project);
-
-  public abstract void releaseFrame(@NotNull IdeFrameImpl frame);
+  public abstract ProjectFrameHelper allocateFrame(@NotNull Project project);
 
   /**
    * @return focus owner of the specified window.
@@ -58,6 +60,7 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract Window getMostRecentFocusedWindow();
 
+  @Nullable
   public abstract IdeFrame findFrameFor(@Nullable Project project);
 
   @NotNull
@@ -106,4 +109,29 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract void hideDialog(JDialog dialog, Project project);
 
   public abstract void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize);
+
+  @Nullable
+  @ApiStatus.Internal
+  public abstract ProjectFrameHelper getFrameHelper(@Nullable Project project);
+
+  /**
+   * Find frame for project or if project is null, for a last focused window.
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public abstract IdeFrameEx findFrameHelper(@Nullable Project project);
+
+  /**
+   * GUI test only.
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public abstract IdeFrameEx findFirstVisibleFrameHelper();
+
+  @ApiStatus.Internal
+  public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
+
+  @NotNull
+  @ApiStatus.Internal
+  public abstract List<ProjectFrameHelper> getProjectFrameHelpers();
 }

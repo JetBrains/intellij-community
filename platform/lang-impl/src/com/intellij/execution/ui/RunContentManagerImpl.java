@@ -1,10 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.KillableProcess;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
@@ -37,6 +34,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +42,10 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class RunContentManagerImpl implements RunContentManager, Disposable {
+public final class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
+  @ApiStatus.Internal
+  public static final Key<RunnerAndConfigurationSettings> TEMPORARY_CONFIGURATION_KEY = Key.create("TemporaryConfiguration");
   private static final Logger LOG = Logger.getInstance(RunContentManagerImpl.class);
   private static final Key<Executor> EXECUTOR_KEY = Key.create("Executor");
   private static final Key<ContentManagerListener> CLOSE_LISTENER_KEY = Key.create("CloseListener");
@@ -55,10 +55,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private final Map<String, Icon> myToolwindowIdToBaseIconMap = new THashMap<>();
   private final ConcurrentLinkedDeque<String> myToolwindowIdZBuffer = new ConcurrentLinkedDeque<>();
 
-  public RunContentManagerImpl(@NotNull Project project, @NotNull DockManager dockManager) {
+  public RunContentManagerImpl(@NotNull Project project) {
     myProject = project;
     DockableGridContainerFactory containerFactory = new DockableGridContainerFactory();
-    dockManager.register(DockableGridContainerFactory.TYPE, containerFactory);
+    DockManager.getInstance(project).register(DockableGridContainerFactory.TYPE, containerFactory);
     Disposer.register(myProject, containerFactory);
 
     AppUIUtil.invokeOnEdt(() -> init(), myProject.getDisposed());

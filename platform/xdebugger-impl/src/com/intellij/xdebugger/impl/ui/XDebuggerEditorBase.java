@@ -516,7 +516,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
         }
 
         @Override
-        public void mousePressed(MouseEvent event) {
+        public void mouseClicked(MouseEvent event) {
           handler.run();
         }
       });

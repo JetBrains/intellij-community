@@ -176,27 +176,27 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
       Element element = refEntity.getRefManager().export(refEntity, -1);
       if (element == null) return;
-      @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+      @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
 
       final HighlightSeverity severity = getSeverity(refElement);
       final String attributeKey = HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
-      problemClassElement.setAttribute("severity", severity.myName);
-      problemClassElement.setAttribute("attribute_key", attributeKey);
+      problemClassElement.setAttribute(INSPECTION_RESULTS_SEVERITY_ATTRIBUTE, severity.myName);
+      problemClassElement.setAttribute(INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE, attributeKey);
 
       problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
       element.addContent(problemClassElement);
 
-      @NonNls Element hintsElement = new Element("hints");
+      @NonNls Element hintsElement = new Element(INSPECTION_RESULTS_HINTS_ELEMENT);
 
       for (UnusedDeclarationHint hint : UnusedDeclarationHint.values()) {
-        @NonNls Element hintElement = new Element("hint");
-        hintElement.setAttribute("value", StringUtil.toLowerCase(hint.toString()));
+        @NonNls Element hintElement = new Element(INSPECTION_RESULTS_HINT_ELEMENT);
+        hintElement.setAttribute(INSPECTION_RESULTS_VALUE_ATTRIBUTE, StringUtil.toLowerCase(hint.toString()));
         hintsElement.addContent(hintElement);
       }
       element.addContent(hintsElement);
 
 
-      Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
+      Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
       StringBuffer buf = new StringBuffer();
       DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
       descriptionElement.addContent(buf.toString());

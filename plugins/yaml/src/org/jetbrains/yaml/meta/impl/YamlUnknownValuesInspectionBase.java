@@ -12,7 +12,7 @@ import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.meta.model.Field;
 import org.jetbrains.yaml.psi.*;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override

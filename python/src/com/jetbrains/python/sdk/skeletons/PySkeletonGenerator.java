@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVersionString;
+import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 
 /**
  * @author traff

@@ -664,7 +664,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new DumbAwareAction("Add Keyboard Shortcut") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          addKeyboardShortcut(actionId, restrictions, selectedKeymap, KeymapPanel.this, myQuickLists);
+          addKeyboardShortcut(actionId, restrictions, selectedKeymap, KeymapPanel.this, null, mySystemShortcuts, myQuickLists);
           currentKeymapChanged();
         }
       });

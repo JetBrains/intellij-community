@@ -28,9 +28,11 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   private static final String TEST_RULE = "{util#fus_test_mode}";
   private static final String TEST_WHITE_LIST_DATA_FILE = "test-white-list.json";
+  @NotNull
+  private final String myRecorderId;
 
   public EventLogTestWhitelistPersistence(@NotNull String recorderId) {
-    super(recorderId, TEST_WHITE_LIST_DATA_FILE);
+    myRecorderId = recorderId;
   }
 
   @Override
@@ -115,5 +117,10 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
     rule.event_data = dataRules;
     group.rules = rule;
     return group;
+  }
+
+  @NotNull
+  public File getWhitelistFile() throws IOException {
+    return getDefaultWhitelistFile(myRecorderId, TEST_WHITE_LIST_DATA_FILE);
   }
 }

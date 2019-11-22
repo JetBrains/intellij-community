@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
-class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager) : Disposable {
+class CachingGithubUserAvatarLoader : Disposable {
   private val LOG = logger<CachingGithubUserAvatarLoader>()
 
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
@@ -40,7 +40,7 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
     return avatarCache.get(url) {
       CompletableFuture.supplyAsync(Supplier {
         try {
-          progressManager.runProcess(Computable { loadAndDownscale(requestExecutor, indicator, url, imageSize) }, indicator)
+          ProgressManager.getInstance().runProcess(Computable { loadAndDownscale(requestExecutor, indicator, url, imageSize) }, indicator)
         }
         catch (e: ProcessCanceledException) {
           null

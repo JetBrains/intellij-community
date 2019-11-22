@@ -41,6 +41,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -48,7 +49,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,7 +327,7 @@ public class PyPackageUtil {
   }
 
   public static boolean packageManagementEnabled(@Nullable Sdk sdk) {
-    if (!PythonSdkType.isRemote(sdk)) {
+    if (!PythonSdkUtil.isRemote(sdk)) {
       return true;
     }
     return new CredentialsTypeExChecker() {
@@ -401,19 +402,9 @@ public class PyPackageUtil {
   }
 
 
-  @Nullable
-  public static PyPackage findPackage(@NotNull List<? extends PyPackage> packages, @NotNull String name) {
-    for (PyPackage pkg : packages) {
-      if (name.equalsIgnoreCase(pkg.getName())) {
-        return pkg;
-      }
-    }
-    return null;
-  }
-
   public static boolean hasManagement(@NotNull List<? extends PyPackage> packages) {
-    return (findPackage(packages, SETUPTOOLS) != null || findPackage(packages, DISTRIBUTE) != null) ||
-           findPackage(packages, PIP) != null;
+    return (PyPsiPackageUtil.findPackage(packages, SETUPTOOLS) != null || PyPsiPackageUtil.findPackage(packages, DISTRIBUTE) != null) ||
+           PyPsiPackageUtil.findPackage(packages, PIP) != null;
   }
 
   @Nullable

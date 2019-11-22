@@ -2,7 +2,6 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;

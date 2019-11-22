@@ -11,6 +11,6 @@ public abstract class NotificationsConfiguration implements Notifications {
   public abstract void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);
 
   public static NotificationsConfiguration getNotificationsConfiguration() {
-    return ApplicationManager.getApplication().getComponent(NotificationsConfiguration.class);
+    return ApplicationManager.getApplication().getService(NotificationsConfiguration.class);
   }
 }

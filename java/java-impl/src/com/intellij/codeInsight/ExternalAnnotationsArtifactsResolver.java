@@ -17,18 +17,18 @@ public interface ExternalAnnotationsArtifactsResolver {
    * Lookup and attach external annotations for given library synchronously.
    * @param library - a library to attach annotations roots to
    * @param mavenId - maven coordinates for annotations look-up in format "groupId:artifactId:version"
-   * @return modified library, with attached annotations.
+   * @return true if resolution was successful, false otherwise
    */
-  Library resolve(@NotNull Project project, @NotNull Library library, @Nullable String mavenId);
+  boolean resolve(@NotNull Project project, @NotNull Library library, @Nullable String mavenId);
 
   /**
    * Lookup and attach external annotations from given location to given library synchronously
    * @param project - current project
    * @param library - a library to attach annotations roots to
    * @param annotationsLocation - annotations location (including optional repositories url)
-   * @return modified library with attached annotations
+   * @return true if resolution was successful, false otherwise
    */
-  Library resolve(@NotNull Project project, @NotNull Library library, @NotNull AnnotationsLocation annotationsLocation);
+  boolean resolve(@NotNull Project project, @NotNull Library library, @NotNull AnnotationsLocation annotationsLocation);
 
   /**
    * Lookup and attach external annotations for given library in background.

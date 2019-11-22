@@ -17,7 +17,7 @@ import com.intellij.util.indexing.IdFilter;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
                                       @NotNull Processor<NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     Project project = parameters.getProject();
-    GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestScope(parameters.getSearchScope());
+    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestScope(parameters.getSearchScope());
     IdFilter filter = parameters.getIdFilter();
     PsiManager psiManager = PsiManager.getInstance(project);
     if (!StubIndex.getInstance().processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;

@@ -42,12 +42,19 @@ public class ReorderJarsMain {
       final Set<String> ignoredJars = libPath == null ? Collections.emptySet() : loadIgnoredJars(libPath);
 
       for (String jarUrl : toReorder.keySet()) {
-        if (ignoredJars.contains(StringUtil.trimStart(jarUrl, "/lib/"))) continue;
-        if (jarUrl.startsWith("/lib/ant")) continue;
+        if (ignoredJars.contains(StringUtil.trimStart(jarUrl, "/lib/")) ||
+            jarUrl.startsWith("/lib/ant")) {
+          System.out.println("Ignored jar: " + jarUrl);
+          continue;
+        }
 
         final File jarFile = new File(jarsPath, jarUrl);
-        if (!jarFile.isFile()) continue;
-
+        if (!jarFile.isFile()) {
+          System.out.println("Cannot find jar: " + jarUrl);
+          continue;
+        }
+        System.out.println("Reorder jar: " + jarUrl);
+        
         final JBZipFile zipFile = new JBZipFile(jarFile);
         final List<JBZipEntry> entries = zipFile.getEntries();
         final List<String> orderedEntries = toReorder.get(jarUrl);

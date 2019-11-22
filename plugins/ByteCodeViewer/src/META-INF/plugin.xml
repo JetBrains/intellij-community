@@ -2,7 +2,9 @@
   <name>Bytecode Viewer</name>
   <id>ByteCodeViewer</id>
   <description>
-    <![CDATA[Provides <i>View | Show Bytecode</i> action for easy inspection of Java bytecode instructions.]]>
+    <![CDATA[Shows the bytecode of a compiled Java class file.<p>
+
+To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]]>
   </description>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.java</depends>

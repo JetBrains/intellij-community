@@ -44,7 +44,6 @@ import java.util.Set;
  * @author Ilya.Kazakevich
  */
 public final class PythonUnitTestUtil {
-  public static final String TESTCASE_SETUP_NAME = "setUp";
   public static final Set<String> PYTHON_TEST_QUALIFIED_CLASSES = Collections.unmodifiableSet(Sets.newHashSet("unittest.TestCase",
                                                                                                               "unittest.case.TestCase"));
 

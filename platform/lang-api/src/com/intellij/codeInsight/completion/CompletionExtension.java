@@ -27,12 +27,13 @@ class CompletionExtension<T> extends LanguageExtension<T> {
     Set<String> allowed = new THashSet<>();
     while (key != null) {
       allowed.add(keyToString(key));
+      for (MetaLanguage metaLanguage : MetaLanguage.all()) {
+        if (metaLanguage.matchesLanguage(key))
+          allowed.add(metaLanguage.getID());
+      }
       key = key.getBaseLanguage();
     }
     allowed.add("any");
-    for (MetaLanguage metaLanguage : MetaLanguage.all()) {
-      allowed.add(metaLanguage.getID());
-    }
     return allowed;
   }
 }

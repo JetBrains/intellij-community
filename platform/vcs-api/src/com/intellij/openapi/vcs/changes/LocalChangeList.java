@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -28,7 +28,6 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
 
   /**
    * Logical id that identifies the changelist and should survive name changing.
-   * @return changelist id
    */
   @NotNull
   public String getId() {
@@ -64,19 +63,19 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   }
 
   /**
-   * Use {@link ChangeListManager#editName}
+   * @deprecated use {@link ChangeListManager#editName}
    */
   @Deprecated
   public abstract void setName(@NotNull String name);
 
   /**
-   * Use {@link ChangeListManager#editComment}
+   * @deprecated use {@link ChangeListManager#editComment}
    */
   @Deprecated
   public abstract void setComment(@Nullable String comment);
 
   /**
-   * Use {@link ChangeListManager#setReadOnly}
+   * @deprecated use {@link ChangeListManager#setReadOnly}
    */
   @Deprecated
   public abstract void setReadOnly(boolean isReadOnly);

@@ -13,17 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DeepComparatorHolder implements Disposable {
-
   @NotNull private final Project myProject;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
-
   @NotNull private final Map<VcsLogUi, DeepComparator> myComparators;
 
-  // initialized by pico-container
-  @SuppressWarnings("UnusedDeclaration")
-  private DeepComparatorHolder(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
+  private DeepComparatorHolder(@NotNull Project project) {
     myProject = project;
-    myRepositoryManager = repositoryManager;
     myComparators = new HashMap<>();
   }
 
@@ -31,7 +25,7 @@ public class DeepComparatorHolder implements Disposable {
   public DeepComparator getInstance(@NotNull VcsLogData dataProvider, @NotNull VcsLogUi ui) {
     DeepComparator comparator = myComparators.get(ui);
     if (comparator == null) {
-      comparator = new DeepComparator(myProject, myRepositoryManager, dataProvider, ui, this);
+      comparator = new DeepComparator(myProject, GitRepositoryManager.getInstance(myProject), dataProvider, ui, this);
       myComparators.put(ui, comparator);
       if (ui instanceof Disposable) {
         Disposer.register((Disposable)ui, new Disposable() {

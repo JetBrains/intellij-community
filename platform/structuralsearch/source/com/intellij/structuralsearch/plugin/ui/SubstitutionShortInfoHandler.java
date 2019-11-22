@@ -87,9 +87,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
     final String variableName = variableRange.subSequence(patternText).toString();
     final NamedScriptableDefinition variable = configuration.findVariable(variableName);
-    final boolean newDialog = Registry.is("ssr.use.new.search.dialog");
-    String filterText = StringUtil.escapeXmlEntities(getShortParamString(variable, !newDialog));
-    if (!editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()) && newDialog) {
+    String filterText = StringUtil.escapeXmlEntities(getShortParamString(variable, false));
+    if (!editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName())) {
       filterText =  appendLinkText(filterText, variableName);
     }
     final boolean replacementVariable =
@@ -219,7 +218,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   private static void showTooltip(@NotNull Editor editor, LogicalPosition position, @NotNull String text) {
-    if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips") && Registry.is("ssr.use.new.search.dialog")) {
+    if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
       return;
     }
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
@@ -258,7 +257,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   void updateEditorInlays() {
-    if (!Registry.is("ssr.use.editor.inlays.instead.of.tool.tips") || !Registry.is("ssr.use.new.search.dialog")) {
+    if (!Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
       return;
     }
     final String text = editor.getDocument().getText();

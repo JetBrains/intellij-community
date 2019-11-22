@@ -76,15 +76,16 @@ public class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @Override
-  public void updateNotifications(@NotNull final VirtualFile file) {
+  public void updateNotifications(@NotNull VirtualFile file) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed() || !file.isValid()) {
+      if (myProject.isDisposedOrDisposeInProgress() || !file.isValid()) {
         return;
       }
 
-      List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
-                                                      editor -> !(editor instanceof TextEditor)
-                                                                || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
+      List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file), editor -> {
+        return !(editor instanceof TextEditor) ||
+               AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
+      });
 
       ReadAction
         .nonBlocking(() -> calcNotificationUpdates(file, editors))

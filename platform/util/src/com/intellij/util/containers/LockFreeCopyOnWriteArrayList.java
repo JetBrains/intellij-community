@@ -807,7 +807,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   @Override
   public Iterator<E> iterator() {
     Object[] elements = array;
-    if (elements.length == 0) return EmptyIterator.getInstance();
+    if (elements.length == 0) return Collections.emptyIterator();
 
     return new COWIterator(elements, 0);
   }
@@ -845,7 +845,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       throw new IndexOutOfBoundsException("Index: " + index);
     }
 
-    return elements.length == 0 ? EmptyListIterator.getInstance() : new COWIterator(elements, index);
+    return elements.length == 0 ? Collections.emptyListIterator() : new COWIterator(elements, index);
   }
 
   private class COWIterator implements ListIterator<E> {

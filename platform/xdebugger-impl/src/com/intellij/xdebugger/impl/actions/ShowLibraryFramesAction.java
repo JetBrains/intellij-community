@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -48,7 +49,7 @@ final class ShowLibraryFramesAction extends ToggleAction {
 
     if (Boolean.TRUE.equals(isSupported)) {
       presentation.setVisible(true);
-      final boolean shouldShow = !Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
+      final boolean shouldShow = !Toggleable.isSelected(presentation);
       presentation.setText(shouldShow ? ourTextWhenShowIsOn : ourTextWhenShowIsOff);
     }
     else {

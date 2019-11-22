@@ -1,38 +1,48 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.codeInsight.completion.JavaCompletionTestCase;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Irina.Chernushina on 12/5/2016.
  */
-public abstract class JsonSchemaHeavyAbstractTest extends JavaCompletionTestCase {
+public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
   private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
+  protected LookupElement[] myItems;
   protected boolean myDoCompletion = true;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     mySchemas = new HashMap<>();
     myDoCompletion = true;
   }
 
   @Override
   public void tearDown() throws Exception {
+    myItems = null;
     try {
-      //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
       instance.setState(Collections.emptyMap());
     }
@@ -54,6 +64,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends JavaCompletionTestCase
     return PathManager.getHomePath() + "/community/json" + getBasePath() + "/";
   }
 
+  @Override
   protected abstract String getBasePath();
 
   protected void skeleton(@NotNull final Callback callback)  throws Exception {
@@ -62,23 +73,15 @@ public abstract class JsonSchemaHeavyAbstractTest extends JavaCompletionTestCase
     JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(mySchemas);
     JsonSchemaService.Impl.get(getProject()).reset();
     getPsiManager().dropPsiCaches();
-    doHighlighting();
-    if (myDoCompletion) complete();
+    myFixture.doHighlighting();
+    if (myDoCompletion) {
+      complete();
+    }
     callback.doCheck();
   }
 
-  @NotNull
-  protected static String getModuleDir(@NotNull final Project project) {
-    String moduleDir = null;
-    VirtualFile[] children = project.getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        break;
-      }
-    }
-    Assert.assertNotNull(moduleDir);
-    return moduleDir;
+  protected void complete() {
+    myItems = myFixture.complete(CompletionType.BASIC);
   }
 
   protected interface Callback {
@@ -89,5 +92,36 @@ public abstract class JsonSchemaHeavyAbstractTest extends JavaCompletionTestCase
 
   protected void addSchema(@NotNull final UserDefinedJsonSchemaConfiguration schema) {
     mySchemas.put(schema.getName(), schema);
+  }
+
+  protected void assertStringItems(String... strings) {
+    assertNotNull(myItems);
+    List<String> actual = ContainerUtil.map(myItems, element -> element.getLookupString());
+    assertOrderedEquals(actual, strings);
+  }
+
+  protected void selectItem(LookupElement item, char ch) {
+    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(getProject()).getActiveLookup();
+    assert lookup != null;
+    lookup.setCurrentItem(item);
+    lookup.finishLookup(ch);
+  }
+
+  protected void checkResultByFile(String testDataFile) throws Exception {
+    String path = getTestDataPath();
+    path = StringUtil.trimEnd(path, "/");
+    path = StringUtil.trimEnd(path, "\\");
+    myFixture.checkResult(PlatformTestUtil.loadFileText(path + File.separator + StringUtil.trimStart(testDataFile, "/")), false);
+  }
+
+  protected String getUrlUnderTestRoot(String path) {
+    return JsonSchemaObject.TEMP_URL + "src/" + StringUtil.trimStart(path, "/");
+  }
+
+  @NotNull
+  protected VirtualFile locateFileUnderTestRoot(String path) {
+    final VirtualFile schemaFile = TempFileSystem.getInstance().findFileByPath("/src/" + path);
+    Assert.assertNotNull(schemaFile);
+    return schemaFile;
   }
 }

@@ -11,7 +11,10 @@ import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -158,7 +161,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
 
   private inner class RightClickSelectionListener : MouseAdapter() {
     override fun mousePressed(e: MouseEvent) {
-      if (JBSwingUtilities.isRightMouseButton(e)) {
+      if (SwingUtilities.isRightMouseButton(e)) {
         val row = locationToIndex(e.point)
         if (row != -1) selectionModel.setSelectionInterval(row, row)
       }

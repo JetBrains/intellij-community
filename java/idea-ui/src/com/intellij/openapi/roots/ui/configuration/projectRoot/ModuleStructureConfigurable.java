@@ -97,9 +97,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private final List<RemoveConfigurableHandler<?>> myRemoveHandlers;
 
-  public ModuleStructureConfigurable(Project project, ModuleManager manager) {
+  public ModuleStructureConfigurable(Project project) {
     super(project);
-    myModuleManager = manager;
+
+    myModuleManager = ModuleManager.getInstance(myProject);
     myRemoveHandlers = new ArrayList<>();
     myRemoveHandlers.add(new ModuleRemoveHandler());
     myRemoveHandlers.add(new FacetInModuleRemoveHandler());

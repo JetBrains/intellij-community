@@ -55,12 +55,12 @@ public class Replacer {
   }
 
   public static int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
-   if (!image.isEmpty()) {
-     result.insert(offset + info.getStartIndex(), image);
-     offset += image.length();
-   }
-   return offset;
- }
+    if (!image.isEmpty()) {
+      result.insert(offset + info.getStartIndex(), image);
+      offset += image.length();
+    }
+    return offset;
+  }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions options, Project project)  {
     return testReplace(in, what, by, options, project, false);
@@ -238,8 +238,7 @@ public class Replacer {
     final PsiElement lastChild = el.getLastChild();
     if (lastChild instanceof PsiComment &&
         replacementInfo.getVariableName(lastChild) == null &&
-        !(replacement.getLastChild() instanceof PsiComment)
-      ) {
+        !(replacement.getLastChild() instanceof PsiComment)) {
       PsiElement firstElementAfterStatementEnd = lastChild;
       for(PsiElement curElement=firstElementAfterStatementEnd.getPrevSibling();curElement!=null;curElement = curElement.getPrevSibling()) {
         if (!(curElement instanceof PsiWhiteSpace) && !(curElement instanceof PsiComment)) break;
@@ -251,8 +250,7 @@ public class Replacer {
     final PsiElement firstChild = el.getFirstChild();
     if (firstChild instanceof PsiComment &&
         !(firstChild instanceof PsiDocCommentBase) &&
-        replacementInfo.getVariableName(firstChild) == null
-        ) {
+        replacementInfo.getVariableName(firstChild) == null) {
       PsiElement lastElementBeforeStatementStart = firstChild;
 
       for(PsiElement curElement=lastElementBeforeStatementStart.getNextSibling();curElement!=null;curElement = curElement.getNextSibling()) {

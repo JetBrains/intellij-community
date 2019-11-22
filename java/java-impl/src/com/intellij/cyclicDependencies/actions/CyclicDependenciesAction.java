@@ -58,35 +58,34 @@ public class CyclicDependenciesAction extends AnAction{
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+    }
     final Module module = LangDataKeys.MODULE.getData(dataContext);
-    if (project != null) {
-      AnalysisScope scope = getInspectionScope(dataContext);
-      if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
-        ProjectModuleOrPackageDialog dlg = null;
-        if (module != null) {
-          dlg = new ProjectModuleOrPackageDialog(
-            ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
-          if (!dlg.showAndGet()) {
-            return;
-          }
-        }
-        if (dlg == null || dlg.isProjectScopeSelected()) {
-          scope = getProjectScope(dataContext);
-        }
-        else {
-          if (dlg.isModuleScopeSelected()) {
-            scope = getModuleScope(dataContext);
-          }
-        }
-        if (scope != null) {
-          scope.setIncludeTestSource(dlg != null && dlg.isIncludeTestSources());
+    AnalysisScope scope = getInspectionScope(dataContext);
+    if (scope == null || scope.getScopeType() != AnalysisScope.MODULES) {
+      ProjectModuleOrPackageDialog dlg = null;
+      if (module != null) {
+        dlg = new ProjectModuleOrPackageDialog(
+          ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
+        if (!dlg.showAndGet()) {
+          return;
         }
       }
-
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      new CyclicDependenciesHandler(project, scope).analyze();
+      if (dlg == null || dlg.isProjectScopeSelected()) {
+        scope = getProjectScope(dataContext);
+      }
+      else if (dlg.isModuleScopeSelected()) {
+        scope = getModuleScope(dataContext);
+      }
+      if (scope != null) {
+        scope.setIncludeTestSource(dlg != null && dlg.isIncludeTestSources());
+      }
     }
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    new CyclicDependenciesHandler(project, scope).analyze();
   }
 
 
@@ -124,7 +123,7 @@ public class CyclicDependenciesAction extends AnAction{
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
       return new AnalysisScope(psiDirectory);
     }
-    else if (psiTarget instanceof PsiPackage) {
+    if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs.length == 0) return null;
@@ -135,7 +134,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
   @Nullable
-  private static AnalysisScope getProjectScope(DataContext dataContext) {
+  private static AnalysisScope getProjectScope(@NotNull DataContext dataContext) {
     final Project data = CommonDataKeys.PROJECT.getData(dataContext);
     if (data == null) {
       return null;
@@ -173,7 +172,7 @@ public class CyclicDependenciesAction extends AnAction{
       setHorizontalStretch(1.75f);
     }
 
-    public boolean isIncludeTestSources() {
+    boolean isIncludeTestSources() {
       return myIncludeTestSourcesCb.isSelected();
     }
 
@@ -196,9 +195,11 @@ public class CyclicDependenciesAction extends AnAction{
       }
       if (mySelectedScope != null) {
         mySelectedScopeButton.setSelected(true);
-      } else if (myModuleName != null) {
+      }
+      else if (myModuleName != null) {
         myModuleButton.setSelected(true);
-      } else {
+      }
+      else {
         myProjectButton.setSelected(true);
       }
       return myWholePanel;
@@ -209,7 +210,7 @@ public class CyclicDependenciesAction extends AnAction{
     }
 
     public boolean isModuleScopeSelected() {
-      return myModuleButton != null ? myModuleButton.isSelected() : false;
+      return myModuleButton != null && myModuleButton.isSelected();
     }
 
   }

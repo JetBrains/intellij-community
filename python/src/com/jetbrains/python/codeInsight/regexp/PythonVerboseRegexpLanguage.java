@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.lang.Language;
+import com.jetbrains.python.PyNames;
 import org.intellij.lang.regexp.RegExpLanguage;
 
 /**
@@ -25,6 +26,6 @@ public class PythonVerboseRegexpLanguage extends Language {
   public static final PythonVerboseRegexpLanguage INSTANCE = new PythonVerboseRegexpLanguage();
 
   public PythonVerboseRegexpLanguage() {
-    super(RegExpLanguage.INSTANCE, "PythonVerboseRegExp");
+    super(RegExpLanguage.INSTANCE, PyNames.VERBOSE_REG_EXP_LANGUAGE_ID);
   }
 }

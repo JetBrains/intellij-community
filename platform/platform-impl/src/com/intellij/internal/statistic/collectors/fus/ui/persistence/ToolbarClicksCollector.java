@@ -17,6 +17,6 @@ public class ToolbarClicksCollector {
   public static void record(@NotNull AnAction action, String place, @NotNull InputEvent inputEvent, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       inputEvent, place, null, dataContext, false, true);
-    ActionsCollectorImpl.record("toolbar", event.getProject(), action, event, null);
+    ActionsCollectorImpl.record("toolbar", "clicked", event.getProject(), action, event, null);
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.lang;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
@@ -110,7 +109,7 @@ public abstract class ASTFactory {
   }
   
   public static class DefaultFactoryHolder {
-    public static final ASTFactory DEFAULT = (ASTFactory)ServiceManager.getService(DefaultASTFactory.class);
+    public static final ASTFactory DEFAULT = new DefaultASTFactoryImpl();
 
     private DefaultFactoryHolder() {
     }

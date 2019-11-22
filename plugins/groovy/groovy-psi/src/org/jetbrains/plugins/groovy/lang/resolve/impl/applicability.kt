@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiElement
@@ -43,7 +43,7 @@ fun argumentApplicability(parameterType: PsiType?, argumentType: PsiType?, conte
     return Applicability.canBeApplicable
   }
 
-  val assignability = TypesUtil.canAssign(parameterType, argumentType, context, GrTypeConverter.ApplicableTo.METHOD_PARAMETER)
+  val assignability = TypesUtil.canAssign(parameterType, argumentType, context, GrTypeConverter.Position.METHOD_PARAMETER)
   if (assignability == ConversionResult.ERROR) {
     return Applicability.inapplicable
   }

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +118,7 @@ public class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    ArrayList<AnAction> toolbarActions = ContainerUtilRt.newArrayList(myActions);
+    ArrayList<AnAction> toolbarActions = ContainerUtil.newArrayList(myActions);
     for (int i = 0; i < toolbarActions.size(); i++) {
         if (toolbarActions.get(i) instanceof AnActionButton.CheckedAnActionButton) {
           toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());

@@ -462,7 +462,7 @@ public class PsiUtilCore {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  static Language narrowLanguage(final Language language, @NotNull Language candidate) {
+  public static Language narrowLanguage(final Language language, @NotNull Language candidate) {
     if (candidate.isKindOf(language)) return candidate;
     return language;
   }

@@ -54,6 +54,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
+  /**
+   * @deprecated use {@link #WizardPopup(Project, JBPopup, PopupStep)}
+   */
   @Deprecated
   public WizardPopup(@NotNull PopupStep<Object> aStep) {
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep);

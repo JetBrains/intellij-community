@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author max
  */
-public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
+public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
@@ -47,34 +46,29 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final AtomicNotNullLazyValue<JvmFacadeImpl> myJvmFacade;
   private final JvmPsiConversionHelper myConversionHelper;
 
-  public JavaPsiFacadeImpl(Project project,
-                           PsiManager psiManager,
-                           JavaFileManager javaFileManager,
-                           MessageBus bus) {
+  public JavaPsiFacadeImpl(Project project) {
     myProject = project;
-    myFileManager = javaFileManager;
+    myFileManager = JavaFileManager.getInstance(myProject);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
     myJvmFacade = AtomicNotNullLazyValue.createValue(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
     myConversionHelper = JvmPsiConversionHelper.getInstance(myProject);
 
-    final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
+    final PsiModificationTracker modificationTracker = PsiManager.getInstance(project).getModificationTracker();
 
-    if (bus != null) {
-      bus.connect().subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-        private long lastTimeSeen = -1L;
+    project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
+      private long lastTimeSeen = -1L;
 
-        @Override
-        public void modificationCountChanged() {
-          myClassCache.clear();
-          final long now = modificationTracker.getJavaStructureModificationCount();
-          if (lastTimeSeen != now) {
-            lastTimeSeen = now;
-            myPackageCache.clear();
-            myModuleCache.clear();
-          }
+      @Override
+      public void modificationCountChanged() {
+        myClassCache.clear();
+        final long now = modificationTracker.getJavaStructureModificationCount();
+        if (lastTimeSeen != now) {
+          lastTimeSeen = now;
+          myPackageCache.clear();
+          myModuleCache.clear();
         }
-      });
-    }
+      }
+    });
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
   }

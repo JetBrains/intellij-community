@@ -18,7 +18,7 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
   @Override
   public final Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
     processExternalCommandLine(ArrayUtilRt.toStringArray(args), currentDirectory);
-    return CliResult.ok();
+    return CliResult.OK_FUTURE;
   }
 
   /**

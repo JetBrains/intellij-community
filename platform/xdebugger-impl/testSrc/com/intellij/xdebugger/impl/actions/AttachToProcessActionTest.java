@@ -246,7 +246,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(new TestAttachGroup("group", 0) {
                   @NotNull
                   @Override
-                  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+                  public String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
                     return "custom";
                   }
                 }, "dbg1"));
@@ -639,22 +639,22 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 
   private static class TestDebuggerProvider implements XLocalAttachDebuggerProvider {
     @Nullable private final Integer myFilterPID;
-    @NotNull private final XLocalAttachGroup myGroup;
+    @NotNull private final XAttachPresentationGroup myGroup;
     @NotNull private final List<XLocalAttachDebugger> myDebuggers;
 
     TestDebuggerProvider(@Nullable Integer filterPID,
-                                @NotNull XLocalAttachGroup group,
+                                @NotNull XAttachPresentationGroup group,
                                 @NotNull List<XLocalAttachDebugger> debuggers) {
       myFilterPID = filterPID;
       myGroup = group;
       myDebuggers = debuggers;
     }
 
-    TestDebuggerProvider(@Nullable Integer filterPID, @NotNull XLocalAttachGroup group, String... names) {
+    TestDebuggerProvider(@Nullable Integer filterPID, @NotNull XAttachPresentationGroup group, String... names) {
       this(filterPID, group, createDebuggers(names));
     }
 
-    TestDebuggerProvider(@NotNull XLocalAttachGroup group, String... names) {
+    TestDebuggerProvider(@NotNull XAttachPresentationGroup group, String... names) {
       this(null, group, names);
     }
 
@@ -664,7 +664,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 
     @NotNull
     @Override
-    public XLocalAttachGroup getAttachGroup() {
+    public XAttachPresentationGroup getPresentationGroup() {
       return myGroup;
     }
 

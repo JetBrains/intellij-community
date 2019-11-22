@@ -46,7 +46,7 @@ public final class DocumentUndoProvider implements DocumentListener {
 
     handleBeforeDocumentChange(getUndoManager(null), document);
 
-    ProjectManager projectManager = ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     if (projectManager != null) {
       for (Project project : projectManager.getOpenProjects()) {
         handleBeforeDocumentChange(getUndoManager(project), document);
@@ -55,7 +55,7 @@ public final class DocumentUndoProvider implements DocumentListener {
   }
 
   private static void handleBeforeDocumentChange(@NotNull UndoManagerImpl undoManager, @NotNull Document document) {
-    if (undoManager.isActive() && isUndoable(undoManager, document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) &&
+    if (undoManager.isActive() && isUndoable(undoManager, document) && undoManager.isUndoOrRedoInProgress() &&
         document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
       throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
     }
@@ -69,7 +69,7 @@ public final class DocumentUndoProvider implements DocumentListener {
     }
 
     handleDocumentChanged(getUndoManager(null), document, e);
-    ProjectManager projectManager = ApplicationManager.getApplication().getService(ProjectManager.class, false);
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     if (projectManager != null) {
       for (Project project : projectManager.getOpenProjects()) {
         handleDocumentChanged(getUndoManager(project), document, e);

@@ -30,6 +30,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "intellij.python.pydev")
     productLayout.additionalPlatformJars.putAll("testFramework.jar",
                                                 "intellij.platform.testFramework.core",

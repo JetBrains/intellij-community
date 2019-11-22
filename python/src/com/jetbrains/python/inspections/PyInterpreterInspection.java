@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
 import org.jetbrains.annotations.Nls;
@@ -68,7 +69,7 @@ public class PyInterpreterInspection extends PyInspection {
     public void visitPyFile(PyFile node) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(node);
       if (module == null) return;
-      final Sdk sdk = PythonSdkType.findPythonSdk(module);
+      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
       final boolean pyCharm = PlatformUtils.isPyCharm();
 
@@ -97,7 +98,7 @@ public class PyInterpreterInspection extends PyInspection {
                                  "Pipenv interpreter is not associated with any " + interpreterOwner;
           registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
-        else if (PythonSdkType.isInvalid(sdk)) {
+        else if (PythonSdkUtil.isInvalid(sdk)) {
           registerProblem(node, "Invalid Python interpreter selected for the " + interpreterOwner, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {

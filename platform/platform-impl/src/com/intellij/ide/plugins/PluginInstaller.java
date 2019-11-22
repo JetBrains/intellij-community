@@ -47,7 +47,6 @@ public class PluginInstaller {
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
 
   static final Object ourLock = new Object();
-  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
   private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
   private PluginInstaller() { }
@@ -120,8 +119,7 @@ public class PluginInstaller {
       commands.add(new StartupActionScriptManager.CopyCommand(sourceFile, new File(pluginsPath, sourceFile.getName())));
     }
     else {
-      commands
-        .add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
+      commands.add(new StartupActionScriptManager.DeleteCommand(new File(pluginsPath, rootEntryName(sourceFile))));  // drops stale directory
       commands.add(new StartupActionScriptManager.UnzipCommand(sourceFile, new File(pluginsPath)));
     }
 
@@ -200,6 +198,8 @@ public class PluginInstaller {
         MessagesEx.showErrorDialog(parent, "Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
         return false;
       }
+
+      InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
         String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";

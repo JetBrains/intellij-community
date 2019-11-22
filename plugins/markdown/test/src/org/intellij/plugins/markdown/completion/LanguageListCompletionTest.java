@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.completion;
 
-import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -10,6 +9,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider;
 import org.intellij.plugins.markdown.injection.LanguageGuesser;

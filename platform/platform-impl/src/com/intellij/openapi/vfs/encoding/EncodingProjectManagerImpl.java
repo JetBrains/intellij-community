@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -52,10 +52,17 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   private BOMForNewUTF8Files myBomForNewUtf8Files = BOMForNewUTF8Files.NEVER;
 
-  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
+  public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
-    myIdeEncodingManager = (EncodingManagerImpl)ideEncodingManager;
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(this::reloadAlreadyLoadedDocuments);
+    myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+  }
+
+  // in EDT
+  static final class EncodingProjectManagerStartUpActivity implements StartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments();
+    }
   }
 
   private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();
@@ -131,8 +138,13 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   private void reloadAlreadyLoadedDocuments() {
+    if (myMapping.isEmpty()) {
+      return;
+    }
+
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     for (VirtualFile file : myMapping.keySet()) {
-      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
+      Document cachedDocument = fileDocumentManager.getCachedDocument(file);
       if (cachedDocument != null) {
         reload(file); // reload document in the right encoding if someone sneaky (you, BreakpointManager) managed to load the document before project opened
       }

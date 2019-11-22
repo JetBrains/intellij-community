@@ -410,9 +410,9 @@ public class ShelvedChangesViewManager implements Disposable {
   @NotNull
   public static List<ShelvedChangeList> getShelvedLists(@NotNull final DataContext dataContext) {
     List<ShelvedChangeList> shelvedChangeLists = new ArrayList<>();
-    addAll(shelvedChangeLists, notNullize(SHELVED_CHANGELIST_KEY.getData(dataContext)));
-    addAll(shelvedChangeLists, notNullize(SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext)));
-    addAll(shelvedChangeLists, notNullize(SHELVED_DELETED_CHANGELIST_KEY.getData(dataContext)));
+    shelvedChangeLists.addAll(notNullize(SHELVED_CHANGELIST_KEY.getData(dataContext)));
+    shelvedChangeLists.addAll(notNullize(SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext)));
+    shelvedChangeLists.addAll(notNullize(SHELVED_DELETED_CHANGELIST_KEY.getData(dataContext)));
     return shelvedChangeLists;
   }
 

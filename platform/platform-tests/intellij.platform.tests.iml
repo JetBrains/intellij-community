@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="library" name="Groovy" level="project" />

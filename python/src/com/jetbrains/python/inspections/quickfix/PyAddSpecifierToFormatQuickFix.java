@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.inspections.PyStringFormatParser;
+import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
-import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
+import static com.jetbrains.python.PyStringFormatParser.filterSubstitutions;
+import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
 public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
   @Override

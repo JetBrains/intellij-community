@@ -43,9 +43,6 @@
       <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
       <headless-implementation-class/>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.module.WebModuleTypeRegistrar</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
@@ -302,6 +299,8 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
 
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
@@ -1105,6 +1104,7 @@
              order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
              order="before samePsiMember"/>
+    <completion.ml.model implementation="com.intellij.codeInsight.completion.ml.JavaMLRankingProvider"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.NestedIfJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.BlockJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.ChainCallJoinLinesHandler"/>
@@ -1332,6 +1332,18 @@
                      bundle="messages.InspectionsBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="TextBlockMigration"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids13" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.TextBlockMigrationInspection"
+                     bundle="messages.InspectionsBundle"
+                     key="inspection.text.block.migration.name"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="TextBlockBackwardMigration"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids13" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.TextBlockBackwardMigrationInspection"
+                     bundle="messages.InspectionsBundle"
+                     key="inspection.text.block.backward.migration.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WrapperTypeMayBePrimitive"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"

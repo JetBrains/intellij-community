@@ -83,34 +83,6 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
            && Comparing.equal(configuration1.getPasswordSafe(), configuration2.getPasswordSafe());
   }
 
-  private String generateServerName() {
-    return UniqueNameGenerator.generateUniqueName(myCloudType.getPresentableName(), s -> {
-      for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
-        if (server.getName().equals(s)) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }
-
-  /**
-   * This method is not used anymore and will be removed in 2019.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  @Deprecated
-  protected final RemoteServer<SC> createTempServer() {
-    RemoteServer<SC> tempServer = RemoteServersManager.getInstance().createServer(myCloudType, generateServerName());
-    SC newConfiguration = tempServer.getConfiguration();
-    try {
-      applyCoreTo(newConfiguration, true);
-    }
-    catch (ConfigurationException e) {
-      return null;
-    }
-    return tempServer;
-  }
-
   protected abstract JComponent getMainPanel();
 
   protected abstract JTextField getEmailTextField();

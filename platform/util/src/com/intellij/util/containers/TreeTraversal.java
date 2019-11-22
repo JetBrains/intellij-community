@@ -82,7 +82,7 @@ public abstract class TreeTraversal {
    */
   @NotNull
   public final TreeTraversal unique() {
-    return unique(Function.ID);
+    return unique(Functions.identity());
   }
 
   /**

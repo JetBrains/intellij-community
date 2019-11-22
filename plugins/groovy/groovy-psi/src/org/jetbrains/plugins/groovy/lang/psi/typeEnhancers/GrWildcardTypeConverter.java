@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesKt
 public class GrWildcardTypeConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+  public boolean isApplicableTo(@NotNull Position position) {
     switch (position) {
       case METHOD_PARAMETER:
       case GENERIC_PARAMETER:
@@ -27,10 +27,10 @@ public class GrWildcardTypeConverter extends GrTypeConverter {
 
   @Override
   @Nullable
-  public ConversionResult isConvertibleEx(@NotNull PsiType ltype,
-                                          @NotNull PsiType rtype,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo position) {
+  public ConversionResult isConvertible(@NotNull PsiType ltype,
+                                        @NotNull PsiType rtype,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
     PsiType lBound = TypesKt.promoteLowerBoundWildcard(ltype, context);
     PsiType rBound = TypesKt.promoteLowerBoundWildcard(rtype, context);
     if (lBound == null || rBound == null) return null;

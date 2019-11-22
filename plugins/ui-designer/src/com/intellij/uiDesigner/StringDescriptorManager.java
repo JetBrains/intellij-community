@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner;
 
@@ -15,7 +15,6 @@ import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +28,9 @@ public class StringDescriptorManager {
   private Module myModule;
   private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();
 
-  public StringDescriptorManager(final Module module, MessageBus bus) {
+  public StringDescriptorManager(@NotNull Module module) {
     myModule = module;
-    bus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    module.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull final ModuleRootEvent event) {
         synchronized(myPropertiesFileCache) {

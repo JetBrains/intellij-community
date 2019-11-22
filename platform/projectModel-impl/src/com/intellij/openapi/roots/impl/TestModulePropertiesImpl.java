@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -20,13 +20,11 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "TestModuleProperties")
 class TestModulePropertiesImpl extends TestModuleProperties implements PersistentStateComponent<TestModulePropertiesImpl.TestModulePropertiesState>,
                                                                        ProjectModelElement {
-  private final ModulePointerManager myModulePointerManager;
   private ModulePointer myProductionModulePointer;
   private final Module myModule;
 
-  TestModulePropertiesImpl(@NotNull Module module, @NotNull ModulePointerManager modulePointerManager) {
+  TestModulePropertiesImpl(@NotNull Module module) {
     myModule = module;
-    myModulePointerManager = modulePointerManager;
   }
 
   @Nullable
@@ -43,7 +41,7 @@ class TestModulePropertiesImpl extends TestModuleProperties implements Persisten
 
   @Override
   public void setProductionModuleName(@Nullable String moduleName) {
-    myProductionModulePointer = moduleName != null ? myModulePointerManager.create(moduleName) : null;
+    myProductionModulePointer = moduleName != null ? ModulePointerManager.getInstance(myModule.getProject()).create(moduleName) : null;
   }
 
   @Nullable

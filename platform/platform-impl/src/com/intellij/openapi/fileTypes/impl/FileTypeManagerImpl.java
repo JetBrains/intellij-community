@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
@@ -80,6 +81,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.StreamSupport;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
@@ -96,16 +98,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  private static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
-
-  static {
-    List<String> strings = StringUtil.split(DEFAULT_IGNORED, ";");
-    for (int i = 0; i < strings.size(); i++) {
-      String string = strings.get(i);
-      String prev = i==0?"":strings.get(i-1);
-      assert prev.compareTo(string) < 0 : "DEFAULT_IGNORED must be sorted, but got: '"+prev+"' >= '"+string+"'";
-    }
-  }
+  static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<>();
@@ -275,7 +268,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
-    FileTypeDetector.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<FileTypeDetector>() {
+    FileTypeDetector.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeDetector>() {
       @Override
       public void extensionAdded(@NotNull FileTypeDetector extension, @NotNull PluginDescriptor pluginDescriptor) {
         synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
@@ -289,9 +282,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           myFileTypeDetectorMap = null;
         }
       }
-    }, false, this);
+    }, this);
 
-    EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
       @Override
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         fireBeforeFileTypesChanged();
@@ -307,11 +300,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (fileType instanceof LanguageFileType) {
           final LanguageFileType languageFileType = (LanguageFileType)fileType;
           if (!languageFileType.isSecondary()) {
+            IElementType.unregisterElementTypes(languageFileType.getLanguage());
             Language.unregisterLanguage(languageFileType.getLanguage());
           }
         }
       }
-    }, false, this);
+    }, this);
   }
 
   @VisibleForTesting
@@ -1001,9 +995,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
         int fileLength = (int)file.getLength();
 
+        int bufferLength = StreamSupport.stream(detectors.spliterator(), false)
+          .map(FileTypeDetector::getDesiredContentPrefixLength)
+          .max(Comparator.naturalOrder())
+          .orElse(FileUtilRt.getUserContentLoadLimit());
         byte[] buffer = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
                         ? FileUtilRt.getThreadLocalBuffer()
-                        : new byte[Math.min(fileLength, FileUtilRt.getUserContentLoadLimit())];
+                        : new byte[Math.min(fileLength, bufferLength)];
 
         int n = readSafely(inputStream, buffer, 0, buffer.length);
         fileType = detect(file, buffer, n, detectors);
@@ -1201,8 +1199,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
+  @Deprecated
   public void registerFileType(@NotNull FileType fileType) {
-    //noinspection deprecation
     registerFileType(fileType, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 

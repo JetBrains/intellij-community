@@ -10,6 +10,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -67,7 +68,9 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
 
   override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, launchTask: (() -> Unit)?) {
     AppUIUtil.invokeOnEdt(Runnable {
-      if (!showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: "Unknown error", project, noText = IdeBundle.message("button.fix"))) {
+      if (showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: "Unknown error", project,
+                         okText = IdeBundle.message("button.fix"),
+                         noText = Messages.OK_BUTTON)) {
         val browserSettings = BrowserSettings()
         if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser?.let { Runnable { browserSettings.selectBrowser(it) } })) {
           launchTask?.invoke()

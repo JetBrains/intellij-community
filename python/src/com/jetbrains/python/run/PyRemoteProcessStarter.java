@@ -44,31 +44,24 @@ public class PyRemoteProcessStarter {
                                            @Nullable Project project,
                                            @Nullable PyRemotePathMapper pathMapper)
     throws ExecutionException {
-    PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-    if (manager != null) {
-      ProcessHandler processHandler;
+    ProcessHandler processHandler;
 
-      try {
-        processHandler = doStartRemoteProcess(sdk, commandLine, manager, project, pathMapper);
-      }
-      catch (ExecutionException e) {
-        final Application application = ApplicationManager.getApplication();
-        if (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment())) {
-          throw new RuntimeException(e);
-        }
-        throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage(), e);
-      }
-      ProcessTerminatedListener.attach(processHandler);
-      return processHandler;
+    try {
+      processHandler = doStartRemoteProcess(sdk, commandLine, project, pathMapper);
     }
-    else {
-      throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
+    catch (ExecutionException e) {
+      final Application application = ApplicationManager.getApplication();
+      if (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment())) {
+        throw new RuntimeException(e);
+      }
+      throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage(), e);
     }
+    ProcessTerminatedListener.attach(processHandler);
+    return processHandler;
   }
 
   protected ProcessHandler doStartRemoteProcess(@NotNull Sdk sdk,
                                                 @NotNull final GeneralCommandLine commandLine,
-                                                @NotNull final PythonRemoteInterpreterManager manager,
                                                 @Nullable final Project project,
                                                 @Nullable PyRemotePathMapper pathMapper)
     throws ExecutionException {
@@ -76,12 +69,13 @@ public class PyRemoteProcessStarter {
     assert data instanceof PyRemoteSdkAdditionalDataBase;
     final PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase = (PyRemoteSdkAdditionalDataBase)data;
 
-    final PyRemotePathMapper extendedPathMapper = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, pathMapper);
+    final PyRemotePathMapper extendedPathMapper =
+      PythonRemoteInterpreterManager.appendBasicMappings(project, pathMapper, pyRemoteSdkAdditionalDataBase);
 
     try {
       return PyRemoteProcessStarterManagerUtil
-        .getManager(pyRemoteSdkAdditionalDataBase).startRemoteProcess(project, commandLine, manager, pyRemoteSdkAdditionalDataBase,
-                                                     extendedPathMapper);
+        .getManager(pyRemoteSdkAdditionalDataBase)
+        .startRemoteProcess(project, commandLine, pyRemoteSdkAdditionalDataBase, extendedPathMapper);
     }
     catch (InterruptedException e) {
       throw new ExecutionException(e);

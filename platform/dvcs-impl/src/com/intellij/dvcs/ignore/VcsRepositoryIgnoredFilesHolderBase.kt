@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.update.ComparableObject
@@ -254,53 +253,21 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   companion object {
     @JvmStatic
     fun getAffectedFilePaths(event: VFileEvent): Set<FilePath> {
-      val affectedFilePaths = hashSetOf<FilePath>()
-      return runReadAction {
-        when {
-          event is VFileCreateEvent && event.parent.isValid -> {
-            val path = event.file.toFilePath()
-            if (path != null) {
-              affectedFilePaths.add(path)
-            }
-          }
-          event is VFileDeleteEvent -> {
-            val path = event.file.toFilePath()
-            if (path != null) {
-              affectedFilePaths.add(path)
-            }
-          }
-          event is VFileMoveEvent -> {
-            val isDirectory = event.file.isDirectory
-            val oldPath = VcsUtil.getFilePath(event.oldPath, isDirectory)
-            val newPath = VcsUtil.getFilePath(event.file.path, isDirectory)
-            if (oldPath != null) {
-              affectedFilePaths.add(oldPath)
-            }
-            if (newPath != null) {
-              affectedFilePaths.add(newPath)
-            }
-          }
-          event is VFilePropertyChangeEvent && event.isRename -> {
-            val oldPath = VcsUtil.getFilePath(event.oldPath, event.file.isDirectory)
-            val newPath = event.file.toFilePath()
-            if (oldPath != null) {
-              affectedFilePaths.add(oldPath)
-            }
-            if (newPath != null) {
-              affectedFilePaths.add(newPath)
-            }
-          }
-          event is VFileCopyEvent && event.newParent.isValid -> {
-            val path = event.newParent.findChild(event.newChildName).toFilePath()
-            if (path != null) {
-              affectedFilePaths.add(path)
-            }
-          }
-        }
-        affectedFilePaths
-      }
-    }
+      if (event is VFileContentChangeEvent) return emptySet()
 
-    private fun VirtualFile?.toFilePath() = if (this != null) VcsUtil.getFilePath(this) else null
+      val affectedFilePaths = HashSet<FilePath>(2)
+      val isDirectory = if (event is VFileCreateEvent) event.isDirectory else event.file!!.isDirectory
+
+      affectedFilePaths.add(VcsUtil.getFilePath(event.path, isDirectory))
+
+      if (event is VFileMoveEvent) {
+        affectedFilePaths.add(VcsUtil.getFilePath(event.oldPath, isDirectory))
+      }
+      else if (event is VFilePropertyChangeEvent && event.isRename) {
+        affectedFilePaths.add(VcsUtil.getFilePath(event.oldPath, isDirectory))
+      }
+
+      return affectedFilePaths
+    }
   }
 }

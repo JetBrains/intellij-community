@@ -35,12 +35,12 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THash;
+import gnu.trove.THashSet;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.tooling.model.DomainObjectSet;
@@ -77,7 +77,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.set;
+import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
@@ -175,7 +175,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         sourceSetData.setTargetCompatibility(sourceSet.getTargetCompatibility());
         sourceSetData.setSdkName(jdkName);
 
-        final Set<File> artifacts = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY);
+        final Set<File> artifacts = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
         if ("main".equals(sourceSet.getName())) {
           final Set<File> defaultArtifacts = externalProject.getArtifactsByConfiguration().get("default");
           if (defaultArtifacts != null) {
@@ -412,7 +412,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       .flatMap(ss -> ss.getSources().entrySet().stream()
         .filter(e -> !e.getKey().isResource())
         .flatMap(e -> e.getValue().getSrcDirs().stream()))
-      .collect(Collectors.toCollection(() -> ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY)));
+      .collect(Collectors.toCollection(() -> new THashSet<>(FileUtil.FILE_HASHING_STRATEGY)));
   }
 
   private static void removeAll(List<? extends IdeaSourceDirectory> list, List<? extends IdeaSourceDirectory> toRemove) {
@@ -551,9 +551,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @Nullable
-  private static File getGradleOutputDir(@NotNull ExternalProject externalProject,
-                                         @NotNull String sourceSetName,
-                                         @NotNull ExternalSystemSourceType sourceType) {
+  public static File getGradleOutputDir(@NotNull ExternalProject externalProject,
+                                        @NotNull String sourceSetName,
+                                        @NotNull ExternalSystemSourceType sourceType) {
     ExternalSourceSet sourceSet = externalProject.getSourceSets().get(sourceSetName);
     if (sourceSet == null) return null;
     return getGradleOutputDir(sourceSet.getSources().get(sourceType));
@@ -736,9 +736,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return set(
+    return newLinkedHashSet(
       BuildScriptClasspathModel.class,
-      ModuleExtendedModel.class,
       GradleExtensions.class,
       ExternalTestsModel.class,
       IntelliJProjectSettings.class,
@@ -749,13 +748,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public ProjectImportModelProvider getModelProvider() {
-    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), set(ExternalProject.class, IdeaProject.class));
+    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), newLinkedHashSet(ExternalProject.class, IdeaProject.class));
   }
 
   @NotNull
   @Override
   public Set<Class> getToolingExtensionsClasses() {
-    return set(
+    return newLinkedHashSet(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
@@ -777,7 +776,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public Set<Class> getTargetTypes() {
-    return set(
+    return newLinkedHashSet(
       ExternalProjectDependency.class,
       ExternalLibraryDependency.class,
       FileCollectionDependency.class,

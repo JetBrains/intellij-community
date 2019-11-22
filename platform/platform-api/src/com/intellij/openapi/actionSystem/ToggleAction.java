@@ -28,7 +28,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     final boolean state = !isSelected(e);
     setSelected(e, state);
     final Presentation presentation = e.getPresentation();
-    presentation.putClientProperty(SELECTED_PROPERTY, state);
+    Toggleable.setSelected(presentation, state);
   }
 
   /**
@@ -49,7 +49,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public void update(@NotNull final AnActionEvent e){
     boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
-    presentation.putClientProperty(SELECTED_PROPERTY, selected);
+    Toggleable.setSelected(presentation, selected);
     if (e.isFromContextMenu()) {
       //force to show check marks instead of toggled icons in context menu
       presentation.setIcon(null);

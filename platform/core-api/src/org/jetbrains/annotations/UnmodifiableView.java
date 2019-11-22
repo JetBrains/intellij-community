@@ -20,6 +20,6 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.TYPE_USE})
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public @interface UnmodifiableView {
 }

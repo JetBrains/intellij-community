@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import java.awt.*;
 
 /**
- * Preserved for API compatibility
+ * @deprecated Preserved for API compatibility
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")

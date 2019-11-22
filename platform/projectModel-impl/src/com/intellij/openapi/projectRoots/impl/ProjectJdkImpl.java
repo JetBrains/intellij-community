@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,8 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     myName = name;
 
     myRoots = new RootsAsVirtualFilePointers(true, tellAllProjectsTheirRootsAreGoingToChange, this);
-    Disposer.register(ApplicationManager.getApplication(), this);
+    // register on VirtualFilePointerManager because we want our virtual pointers to be disposed before VFPM to avoid "pointer leaked" diagnostics fired
+    Disposer.register((Disposable)VirtualFilePointerManager.getInstance(), this);
   }
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType, String homePath, String version) {

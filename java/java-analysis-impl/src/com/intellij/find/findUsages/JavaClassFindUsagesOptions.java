@@ -46,13 +46,13 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
   @Override
   protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
     super.setDefaults(properties, prefix);
-    isMethodsUsages = properties.getBoolean(prefix + "isMethodsUsages", false);
-    isFieldsUsages = properties.getBoolean(prefix + "isFieldsUsages", false);
-    isDerivedClasses = properties.getBoolean(prefix + "isDerivedClasses", false);
-    isImplementingClasses = properties.getBoolean(prefix + "isImplementingClasses", false);
-    isDerivedInterfaces = properties.getBoolean(prefix + "isDerivedInterfaces", false);
+    isMethodsUsages = properties.getBoolean(prefix + "isMethodsUsages");
+    isFieldsUsages = properties.getBoolean(prefix + "isFieldsUsages");
+    isDerivedClasses = properties.getBoolean(prefix + "isDerivedClasses");
+    isImplementingClasses = properties.getBoolean(prefix + "isImplementingClasses");
+    isDerivedInterfaces = properties.getBoolean(prefix + "isDerivedInterfaces");
     isCheckDeepInheritance = properties.getBoolean(prefix + "isCheckDeepInheritance", true);
-    isIncludeInherited = properties.getBoolean(prefix + "isIncludeInherited", false);
+    isIncludeInherited = properties.getBoolean(prefix + "isIncludeInherited");
   }
 
   @Override

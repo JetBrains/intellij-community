@@ -19,19 +19,15 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.util.containers.ContainerUtil.newTroveMap;
-import static java.util.Collections.synchronizedMap;
-
 public class JrtFileSystemImpl extends JrtFileSystem {
-  private final Map<String, ArchiveHandler> myHandlers = synchronizedMap(newTroveMap(FileUtil.PATH_HASHING_STRATEGY));
+  private final Map<String, ArchiveHandler> myHandlers =
+    Collections.synchronizedMap(new THashMap<>(FileUtil.PATH_HASHING_STRATEGY));
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
 
   @NotNull

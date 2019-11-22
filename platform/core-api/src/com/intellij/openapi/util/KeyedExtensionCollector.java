@@ -25,8 +25,6 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(KeyedExtensionCollector.class);
 
   protected final String myLock;
-  @Nullable
-  private final Disposable myParentDisposable;
 
   /** Guarded by {@link #myLock} */
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -38,14 +36,13 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
   protected final AtomicBoolean myEpListenerAdded = new AtomicBoolean();
 
-  public KeyedExtensionCollector(@NotNull String epName) {
-    this(epName, null);
+  public KeyedExtensionCollector(@NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
+    this(epName.getName());
   }
 
-  public KeyedExtensionCollector(@NotNull String epName, @Nullable Disposable parentDisposable) {
+  public KeyedExtensionCollector(@NotNull String epName) {
     myEpName = epName;
     myLock = "lock for KeyedExtensionCollector " + epName;
-    myParentDisposable = parentDisposable;
   }
 
   @TestOnly
@@ -59,30 +56,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       return;
     }
 
-    point.addExtensionPointListener(new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
-      @Override
-      public void extensionAdded(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
-        synchronized (myLock) {
-          if (bean.getKey() == null) {
-            throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(), pluginDescriptor.getPluginId());
-          }
-          invalidateCacheForExtension(bean.getKey());
-        }
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
-        synchronized (myLock) {
-          invalidateCacheForExtension(bean.getKey());
-        }
-      }
-
-      @Override
-      public void areaReplaced(@NotNull ExtensionsArea area) {
-        myCache.clear();
-        myTracker.incModificationCount();
-      }
-    }, false, myParentDisposable);
+    point.addExtensionPointListener(new MyExtensionPointListener(), false, null);
   }
 
   protected void invalidateCacheForExtension(String key) {
@@ -264,6 +238,31 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       for (KeyedLazyInstance<T> bean : point.getExtensionList()) {
         bean.getInstance();
       }
+    }
+  }
+
+  private class MyExtensionPointListener implements ExtensionPointAndAreaListener<KeyedLazyInstance<T>>, ExtensionPointPriorityListener {
+    @Override
+    public void extensionAdded(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
+      synchronized (myLock) {
+        if (bean.getKey() == null) {
+          throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(), pluginDescriptor.getPluginId());
+        }
+        invalidateCacheForExtension(bean.getKey());
+      }
+    }
+
+    @Override
+    public void extensionRemoved(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
+      synchronized (myLock) {
+        invalidateCacheForExtension(bean.getKey());
+      }
+    }
+
+    @Override
+    public void areaReplaced(@NotNull ExtensionsArea area) {
+      myCache.clear();
+      myTracker.incModificationCount();
     }
   }
 }

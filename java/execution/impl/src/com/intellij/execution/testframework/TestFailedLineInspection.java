@@ -9,6 +9,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.stacktrace.StackTraceLine;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,8 @@ public class TestFailedLineInspection extends LocalInspectionTool {
 
         TestStateStorage.Record state = TestFailedLineManager.getInstance(holder.getProject()).getFailedLineState(call);
         if (state == null) return;
+        if (state.magnitude <= TestStateInfo.Magnitude.IGNORED_INDEX.getValue())
+          return;
 
         LocalQuickFix[] fixes = {new DebugFailedTestFix(call, state.topStacktraceLine),
           new RunActionFix(call, DefaultRunExecutor.EXECUTOR_ID)};

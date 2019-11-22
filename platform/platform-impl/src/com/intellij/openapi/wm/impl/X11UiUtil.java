@@ -6,8 +6,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +19,7 @@ import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -312,10 +312,14 @@ public class X11UiUtil {
   public static boolean isFullScreenSupported() {
     if (X11 == null) return false;
 
-    IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
-    if (frames.length == 0) return true;  // no frame to check the property so be optimistic here
+    List<ProjectFrameHelper> frames = WindowManagerEx.getInstanceEx().getProjectFrameHelpers();
+    // no frame to check the property so be optimistic here
+    if (frames.isEmpty()) {
+      return true;
+    }
 
-    return frames[0] instanceof JFrame && hasWindowProperty((JFrame)frames[0], X11.NET_WM_ALLOWED_ACTIONS, X11.NET_WM_ACTION_FULLSCREEN);
+    IdeFrameImpl frame = frames.get(0).getFrame();
+    return hasWindowProperty(frame, X11.NET_WM_ALLOWED_ACTIONS, X11.NET_WM_ACTION_FULLSCREEN);
   }
 
   public static boolean isInFullScreenMode(JFrame frame) {

@@ -25,6 +25,7 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +120,7 @@ public class SphinxBaseCommand {
   }
 
   protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
-    Sdk sdk = PythonSdkType.findPythonSdk(module);
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk == null) {
       throw new ExecutionException("No sdk specified");
     }
@@ -131,7 +132,7 @@ public class SphinxBaseCommand {
     GeneralCommandLine cmd = new GeneralCommandLine();
     if (sdkHomePath != null) {
       final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
-      String executablePath = PythonSdkType.getExecutablePath(sdkHomePath, runnerName);
+      String executablePath = PythonSdkUtil.getExecutablePath(sdkHomePath, runnerName);
       if (executablePath != null) {
         cmd.setExePath(executablePath);
       }
@@ -165,7 +166,7 @@ public class SphinxBaseCommand {
 
     PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdkHomePath, true);
+    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdk);
     BuildoutFacet facet = BuildoutFacet.getInstance(module);
     if (facet != null) {
       facet.patchCommandLineForBuildout(cmd);

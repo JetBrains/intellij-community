@@ -16,13 +16,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
@@ -55,7 +51,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
       }
     }
 
-    AbstractVcsHelper.getInstance(project).showMergeDialog(newArrayList(conflictedFiles), vcs.getMergeProvider());
+    AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<>(conflictedFiles), vcs.getMergeProvider());
   }
 
   private static boolean isEnabled(@NotNull Project project) {

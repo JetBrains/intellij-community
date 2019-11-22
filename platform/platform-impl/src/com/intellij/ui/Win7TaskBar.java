@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.io.jna.DisposableMemory;
 import com.sun.jna.Function;
 import com.sun.jna.Memory;
@@ -14,16 +13,17 @@ import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
-import java.awt.*;
+import javax.swing.*;
 import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Method;
 
 /**
  * @author Alexander Lobas
  */
-class Win7TaskBar {
+final class Win7TaskBar {
   private static final Logger LOG = Logger.getInstance("Win7TaskBar");
 
   private static final int TaskBarList_Methods = 21;
@@ -101,8 +101,8 @@ class Win7TaskBar {
     return true;
   }
 
-  static void setProgress(IdeFrame frame, double value, boolean isOk) {
-    if (!ourInitialized) {
+  static void setProgress(@Nullable JFrame frame, double value, boolean isOk) {
+    if (!ourInitialized || frame == null) {
       return;
     }
 
@@ -111,7 +111,7 @@ class Win7TaskBar {
     mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
   }
 
-  static void hideProgress(IdeFrame frame) {
+  static void hideProgress(@NotNull JFrame frame) {
     if (!ourInitialized) {
       return;
     }
@@ -119,7 +119,7 @@ class Win7TaskBar {
     mySetProgressState.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), TBPF_NOPROGRESS});
   }
 
-  static void setOverlayIcon(IdeFrame frame, WinDef.HICON icon, boolean dispose) {
+  static void setOverlayIcon(@NotNull JFrame frame, WinDef.HICON icon, boolean dispose) {
     if (!ourInitialized) {
       return;
     }
@@ -154,7 +154,7 @@ class Win7TaskBar {
     }
   }
 
-  static void attention(IdeFrame frame) {
+  static void attention(@NotNull JFrame frame) {
     if (!ourInitialized) {
       return;
     }
@@ -162,10 +162,9 @@ class Win7TaskBar {
     User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
   }
 
-  private static WinDef.HWND getHandle(@NotNull IdeFrame frame) {
-    Component component = (Component)frame;
+  private static WinDef.HWND getHandle(@NotNull JFrame frame) {
     try {
-      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(component);
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       Method getHWnd = peer.getClass().getMethod("getHWnd");
       return new WinDef.HWND(new Pointer((Long)getHWnd.invoke(peer)));
     }

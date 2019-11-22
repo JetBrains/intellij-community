@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +39,10 @@ public abstract class DeploymentConfigurationManager {
   public abstract List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType);
 
   /**
-   * Will be removed after 173, use more granular methods added @since 173
+   * @deprecated Will be removed after 173, use more granular methods added @since 173
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
   public abstract void createAndRunConfiguration(@NotNull ServerType<?> serverType,
                                                  @Nullable RemoteServer<?> remoteServer);
 

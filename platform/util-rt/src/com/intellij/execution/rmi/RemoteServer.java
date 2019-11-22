@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.execution.rmi.ssl.SslKeyStore;
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
+import com.intellij.execution.rmi.ssl.SslTrustStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,8 +141,15 @@ public class RemoteServer {
     boolean caCert = System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null;
     boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
     boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
-    if (caCert || clientCert && clientKey) {
-      Security.setProperty("ssl.SocketFactory.provider", "com.intellij.execution.rmi.ssl.SslSocketFactory");
+    boolean useFactory = "true".equals(System.getProperty(SslSocketFactory.SSL_USE_FACTORY));
+    if (useFactory) {
+      if (caCert || clientCert && clientKey) {
+        Security.setProperty("ssl.SocketFactory.provider", SslSocketFactory.class.getName());
+      }
+    }
+    else {
+      if (caCert) SslTrustStore.setDefault();
+      if (clientCert && clientKey) SslKeyStore.setDefault();
     }
   }
 

@@ -180,12 +180,12 @@ public class ClasspathCache {
       map.put(hash, loader);
     }
     else if (o instanceof Loader) {
-      if (ClassPath.ourLogTiming) assert loader != o;
+      if (ClassPath.ourClassLoadingInfo) assert loader != o;
       map.put(hash, new Loader[]{(Loader)o, loader});
     }
     else {
       Loader[] loadersArray = (Loader[])o;
-      if (ClassPath.ourLogTiming) assert ArrayUtilRt.find(loadersArray, loader) == -1;
+      if (ClassPath.ourClassLoadingInfo) assert ArrayUtilRt.find(loadersArray, loader) == -1;
       Loader[] newArray = new Loader[loadersArray.length + 1];
       System.arraycopy(loadersArray, 0, newArray, 0, loadersArray.length);
       newArray[loadersArray.length] = loader;

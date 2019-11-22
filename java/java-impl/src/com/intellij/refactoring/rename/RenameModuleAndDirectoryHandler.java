@@ -51,6 +51,11 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
       return false;
     }
     PsiDirectory directory = (PsiDirectory)element;
+    //noinspection deprecation
+    if (directory.getVirtualFile().equals(directory.getProject().getBaseDir())) {
+      // this is project root, we can't rename project root yet
+      return false;
+    }
     if (!PlainDirectoryRenameHandler.isPlainDirectory(directory)) {
       // this is a package
       return false;

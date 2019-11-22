@@ -59,7 +59,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -412,7 +413,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final int compilerSdkVersion = forkSdk == null ? JavaVersion.current().feature : forkSdk.getSecond();
 
       final Pair<List<String>, List<String>> vm_compilerOptions = getCompilationOptions(
-        compilerSdkVersion, context, chunk, profile, hasModules, compilingTool
+        compilerSdkVersion, context, chunk, profile, compilingTool
       );
       final List<String> vmOptions = vm_compilerOptions.first;
       final List<String> options = vm_compilerOptions.second;
@@ -732,7 +733,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                                                         CompileContext context,
                                                                         ModuleChunk chunk,
                                                                         @Nullable ProcessorConfigProfile profile,
-                                                                        boolean withModules,
                                                                         @NotNull JavaCompilingTool compilingTool) {
     final List<String> compilationOptions = new ArrayList<>();
     final List<String> vmOptions = new ArrayList<>();
@@ -810,7 +810,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       vmOptions.addAll(extension.getOptions(compilingTool));
     }
 
-    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile, withModules);
+    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile);
 
     return pair(vmOptions, compilationOptions);
   }
@@ -819,13 +819,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                            CompileContext context,
                                            ModuleChunk chunk,
                                            @Nullable ProcessorConfigProfile profile) {
-    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile, false);
+    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile);
   }
 
   private static void addCompilationOptions(int compilerSdkVersion,
                                             List<? super String> options,
                                             CompileContext context, ModuleChunk chunk,
-                                            @Nullable ProcessorConfigProfile profile, boolean withModules) {
+                                            @Nullable ProcessorConfigProfile profile) {
     if (!options.contains("-encoding")) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -852,7 +852,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (addAnnotationProcessingOptions(options, profile, withModules)) {
+    if (addAnnotationProcessingOptions(options, profile)) {
       final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
       );
@@ -867,9 +867,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   /**
    * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
    */
-  public static boolean addAnnotationProcessingOptions(List<? super String> options,
-                                                       @Nullable AnnotationProcessingConfiguration profile,
-                                                       boolean withModules) {
+  public static boolean addAnnotationProcessingOptions(List<? super String> options, @Nullable AnnotationProcessingConfiguration profile) {
     if (profile == null || !profile.isEnabled()) {
       options.add("-proc:none");
       return false;
@@ -878,7 +876,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // configuring annotation processing
     if (!profile.isObtainProcessorsFromClasspath()) {
       final String processorsPath = profile.getProcessorPath();
-      options.add(withModules ? "--processor-module-path" : "-processorpath");
+      options.add(profile.isUseProcessorModulePath() ? "--processor-module-path" : "-processorpath");
       options.add(FileUtil.toSystemDependentName(processorsPath.trim()));
     }
 

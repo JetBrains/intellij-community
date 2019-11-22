@@ -127,10 +127,8 @@ public class MavenProjectsManagerWatcher {
       @Override
       public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
         // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
-        if (myManager.isMavenizedModule(module)) {
-          MavenProject mavenProject = myManager.findProject(module);
-          if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
-        }
+        MavenProject mavenProject = myManager.findProject(module);
+        if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
       }
     });
 
@@ -269,17 +267,7 @@ public class MavenProjectsManagerWatcher {
                                       boolean force,
                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    if (!forceImportAndResolve) {
-      AsyncPromise<List<Module>> runningPromise = myManager.getRunningImportPromise();
-      if (runningPromise != null) {
-        runningPromise.onSuccess(ignore -> promise.setResult(null)).onError(e -> promise.setError(e));
-        return promise;
-      }
-    }
-
-
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-
     if (LOG.isDebugEnabled()) {
       String withForceOptionMessage = force ? " with force option" : "";
       LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
@@ -340,7 +328,10 @@ public class MavenProjectsManagerWatcher {
         if (!f.isValid()) deletedFiles.add(f);
       }
 
-      scheduleUpdate(newFiles, deletedFiles, false, false);
+      if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
+        scheduleUpdate(newFiles, deletedFiles, false, false);
+      }
+
     }
   }
 

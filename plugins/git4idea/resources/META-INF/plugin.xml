@@ -41,9 +41,9 @@
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" text="Checkout"
            description="Checkout selected revision or a branch on selected commit"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="Branch..."
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
-    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="Tag..."
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert Commit"
@@ -164,11 +164,8 @@
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
-      <group id="Git.Log.CreateNew" text="New" popup="true"
-             description="Create new branch or tag on selected commit">
-        <reference id="Git.CreateNewBranch"/>
-        <reference id="Git.CreateNewTag"/>
-      </group>
+      <reference id="Git.CreateNewBranch"/>
+      <reference id="Git.CreateNewTag"/>
       <separator/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
@@ -192,7 +189,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
-    <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
+    <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider" order="first"/>
     <vcs.checkoutProcessor implementation="git4idea.checkout.GitCheckoutProcessor"/>
     <vcsRootChecker implementation="git4idea.roots.GitRootChecker"/>
     <vcsIgnoreChecker implementation="git4idea.ignore.GitIgnoreChecker"/>
@@ -236,6 +233,7 @@
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
     <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
+    <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -279,6 +277,7 @@
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
+    <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
   </extensions>
 
   <extensionPoints>

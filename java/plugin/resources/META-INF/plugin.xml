@@ -10,6 +10,8 @@
   <depends>com.intellij.modules.vcs</depends>
   <depends>com.intellij.modules.xdebugger</depends>
   <depends>com.intellij.modules.xml</depends>
+  <depends>com.intellij.modules.java-capable</depends>
+  <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>
 
   <xi:include href="/META-INF/JavaPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

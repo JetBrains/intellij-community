@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +39,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class GroovyTypeCheckVisitorHelper {
-
-  @SuppressWarnings("unchecked")
-  private static final Function<PsiType, PsiType> id = (Function<PsiType, PsiType>)Function.ID;
 
   @Nullable
   @Contract("null -> null")
@@ -99,7 +96,7 @@ public class GroovyTypeCheckVisitorHelper {
     final List<GrSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(Collections.singletonList(signature));
     for (GrSignature closureSignature : signatures) {
       final GrClosureSignatureUtil.MapResultWithError map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
-        closureSignature, argumentTypes, id, argumentList, 255
+        closureSignature, argumentTypes, Functions.identity(), argumentList, 255
       );
       if (map != null) {
         final List<Pair<Integer, PsiType>> errors = map.getErrors();

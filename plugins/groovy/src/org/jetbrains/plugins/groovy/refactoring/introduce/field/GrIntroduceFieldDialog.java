@@ -14,7 +14,6 @@ import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -283,7 +282,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     if (var != null) {
       list.add(var.getName());
     }
-    ContainerUtil.addAll(list, suggestNames());
+    list.addAll(suggestNames());
     myNameField = new NameSuggestionsField(ArrayUtilRt.toStringArray(list), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     if (expression != null) {

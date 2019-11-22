@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.PsiFile;
@@ -90,8 +91,11 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   }
 
   private void notifyCachedValueComputed(@NotNull PsiFile file) {
-    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(file.getProject());
-    settingsManager.fireCodeStyleSettingsChanged(file);
+    Project project = file.getProject();
+    if (!project.isDisposed()) {
+      final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+      settingsManager.fireCodeStyleSettingsChanged(file);
+    }
     myComputation.reset();
   }
 

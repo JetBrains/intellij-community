@@ -17,6 +17,7 @@ package com.jetbrains.extenstions
 
 import com.intellij.openapi.util.registry.RegistryValue
 
+//TODO: move to extensions
 
 /**
  * @return list of values in case they are comma separated

@@ -27,7 +27,7 @@ public final class PluginManager extends PluginManagerCore {
 
   @SuppressWarnings("unused")
   public static void processException(@NotNull Throwable t) {
-    MainRunner.processException(t);
+    StartupAbortedException.processException(t);
   }
 
   public static void handleComponentError(@NotNull Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
@@ -36,8 +36,8 @@ public final class PluginManager extends PluginManagerCore {
       ExceptionUtil.rethrow(t);
     }
 
-    if (t instanceof MainRunner.StartupAbortedException) {
-      throw (MainRunner.StartupAbortedException)t;
+    if (t instanceof StartupAbortedException) {
+      throw (StartupAbortedException)t;
     }
 
     if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
@@ -52,10 +52,10 @@ public final class PluginManager extends PluginManagerCore {
     }
 
     if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-      throw new MainRunner.StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
+      throw new StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
     }
     else {
-      throw new MainRunner.StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
+      throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
     }
   }
 }

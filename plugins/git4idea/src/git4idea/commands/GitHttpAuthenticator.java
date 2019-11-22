@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Performs HTTP authentication, i. e. handles "ask username" and "ask password" requests from Git:
- *
- * @author Kirill Likhodedov
  */
 public interface GitHttpAuthenticator {
 
@@ -57,5 +55,10 @@ public interface GitHttpAuthenticator {
    * (in which case the behavior might be different than if a wrong password was provided).
    */
   boolean wasCancelled();
+
+  /**
+   * Checks if the authenticator was requested by Git about a username or a password.
+   */
+  boolean wasRequested();
 
 }

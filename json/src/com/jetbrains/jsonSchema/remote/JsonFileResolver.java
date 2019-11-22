@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
@@ -15,6 +16,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +31,9 @@ public class JsonFileResolver {
 
   @Nullable
   public static VirtualFile urlToFile(@NotNull String urlString) {
+    if (urlString.startsWith(JsonSchemaObject.TEMP_URL)) {
+      return TempFileSystem.getInstance().findFileByPath(urlString.substring(JsonSchemaObject.TEMP_URL.length() - 1));
+    }
     return VirtualFileManager.getInstance().findFileByUrl(replaceUnsafeSchemaStoreUrls(urlString));
   }
 
@@ -56,7 +61,9 @@ public class JsonFileResolver {
     if (StringUtil.startsWithChar(schemaUrl, '.') || !isHttpPath) {
       // relative path
       VirtualFile parent = currentFile == null ? null : currentFile.getParent();
-      schemaUrl = parent == null ? null : VfsUtilCore.pathToUrl(parent.getPath() + File.separator + schemaUrl);
+      schemaUrl = parent == null ? null :
+                  parent.getUrl().startsWith(JsonSchemaObject.TEMP_URL) ? ("temp:///" + parent.getPath() + "/" + schemaUrl) :
+                  VfsUtilCore.pathToUrl(parent.getPath() + File.separator + schemaUrl);
     }
 
     if (schemaUrl != null) {
@@ -88,6 +95,14 @@ public class JsonFileResolver {
   public static boolean isHttpPath(@NotNull String schemaFieldText) {
     Couple<String> couple = UriUtil.splitScheme(schemaFieldText);
     return couple.first.startsWith("http");
+  }
+
+  public static boolean isAbsoluteUrl(@NotNull String path) {
+    return isHttpPath(path) || path.startsWith(JsonSchemaObject.TEMP_URL);
+  }
+
+  public static boolean isTempOrMockUrl(@NotNull String path) {
+    return path.startsWith(JsonSchemaObject.TEMP_URL) || path.startsWith(JsonSchemaObject.MOCK_URL);
   }
 
   public static boolean isSchemaUrl(@Nullable String url) {

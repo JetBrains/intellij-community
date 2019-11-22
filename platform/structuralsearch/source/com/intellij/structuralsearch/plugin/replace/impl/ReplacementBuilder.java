@@ -20,18 +20,16 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.MultiMap;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author maxim
  */
 public final class ReplacementBuilder {
   private final String replacement;
-  private final List<ParameterInfo> parameterizations = new SmartList<>();
+  private final MultiMap<String, ParameterInfo> parameterizations = MultiMap.createLinked();
   private final Map<String, ScriptSupport> replacementVarsMap = new HashMap<>();
   private final ReplaceOptions options;
   private final Project myProject;
@@ -83,7 +81,7 @@ public final class ReplacementBuilder {
       }
       info.setAfterDelimiterPos(pos);
       prevOffset = offset;
-      parameterizations.add(info);
+      parameterizations.putValue(name, info);
     }
 
     final LanguageFileType fileType = options.getMatchOptions().getFileType();
@@ -104,14 +102,17 @@ public final class ReplacementBuilder {
           patternNode.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
             public void visitElement(PsiElement element) {
-              super.visitElement(element);
               final String text = element.getText();
               if (StructuralSearchUtil.isTypedVariable(text)) {
-                final ParameterInfo parameterInfo = findParameterization(Replacer.stripTypedVariableDecoration(text));
-                if (parameterInfo != null && parameterInfo.getElement() == null) {
-                  parameterInfo.setElement(element);
+                final Collection<ParameterInfo> infos = findParameterization(Replacer.stripTypedVariableDecoration(text));
+                for (ParameterInfo info : infos) {
+                  if (info.getElement() == null) {
+                    info.setElement(element);
+                    return;
+                  }
                 }
               }
+              super.visitElement(element);
             }
           });
           profile.provideAdditionalReplaceOptions(patternNode, options, this);
@@ -132,17 +133,18 @@ public final class ReplacementBuilder {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);
     assert profile != null;
 
-    int offset = 0;
-    for (final ParameterInfo info : parameterizations) {
+    List<ParameterInfo> sorted = new SmartList<>(parameterizations.values());
+    Collections.sort(sorted, Comparator.comparingInt(ParameterInfo::getStartIndex).reversed());
+    for (ParameterInfo info : sorted) {
       final MatchResult r = replacementInfo.getNamedMatchResult(info.getName());
       if (info.isReplacementVariable()) {
-        offset = Replacer.insertSubstitution(result, offset, info, generateReplacement(info, match));
+        Replacer.insertSubstitution(result, 0, info, generateReplacement(info, match));
       }
       else if (r != null) {
-        offset = profile.handleSubstitution(info, r, result, offset, replacementInfo);
+        profile.handleSubstitution(info, r, result, replacementInfo);
       }
       else {
-        offset = profile.handleNoSubstitution(info, offset, result);
+        profile.handleNoSubstitution(info, result);
       }
     }
 
@@ -154,23 +156,23 @@ public final class ReplacementBuilder {
 
     if (scriptSupport == null) {
       final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
-      final List<String> variableNames =
-        ContainerUtil.map(options.getVariableDefinitions(), o -> o.getName());
-      scriptSupport = new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames,
-                                        options.getMatchOptions());
+      final List<String> variableNames = ContainerUtil.map(options.getVariableDefinitions(), o -> o.getName());
+      scriptSupport =
+        new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames, options.getMatchOptions());
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate(match, null);
   }
 
-  @Nullable
-  public ParameterInfo findParameterization(String name) {
-    for (final ParameterInfo info : parameterizations) {
-      if (info.getName().equals(name)) {
-        return info;
-      }
-    }
+  public Collection<ParameterInfo> findParameterization(String name) {
+    return parameterizations.get(name);
+  }
 
-    return null;
+  public ParameterInfo findParameterization(PsiElement element) {
+    if (element == null) return null;
+    final String text = element.getText();
+    if (!StructuralSearchUtil.isTypedVariable(text)) return null;
+    return findParameterization(Replacer.stripTypedVariableDecoration(text)).stream()
+      .filter(info -> info.getElement() == element).findFirst().orElse(null);
   }
 }

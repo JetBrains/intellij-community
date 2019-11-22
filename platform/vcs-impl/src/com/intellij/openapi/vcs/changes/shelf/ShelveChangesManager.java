@@ -38,7 +38,6 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -1098,7 +1097,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
     final ShelvedChangeList listCopy =
       new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION, copyBinaryFiles(changeList, targetDir),
-                            ContainerUtilRt.newArrayList(requireNonNull(changeList.getChanges())), changeList.DATE.getTime());
+                            new ArrayList<>(requireNonNull(changeList.getChanges())), changeList.DATE.getTime());
     listCopy.markToDelete(changeList.isMarkedToDelete());
     listCopy.setRecycled(changeList.isRecycled());
     listCopy.setDeleted(changeList.isDeleted());

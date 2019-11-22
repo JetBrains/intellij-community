@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Represents a virtual file system.
+ * Represents a Virtual File System (VFS).
+ * <p>
+ * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a> (SDK docs).
  *
  * @see VirtualFile
  * @see VirtualFileManager

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated to be removed in 2020.1
  * @author yole
  */
-@ApiStatus.ScheduledForRemoval
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 @Deprecated
 public class XmlFileTypeFactory extends FileTypeFactory {
   @Override

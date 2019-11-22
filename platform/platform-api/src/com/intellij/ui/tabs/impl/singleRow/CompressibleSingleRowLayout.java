@@ -64,7 +64,6 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       final TabLabel label = myTabs.myInfo2Label.get(iterator.next());
-      label.setActionPanelVisible(true);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;

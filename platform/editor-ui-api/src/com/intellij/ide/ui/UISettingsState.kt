@@ -127,6 +127,9 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("COLOR_BLINDNESS")
   var colorBlindness by enum<ColorBlindness>()
+  @get:OptionTag("CONTRAST_SCROLLBARS")
+  var useContrastScrollBars by property(false)
+
   @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON")
   var moveMouseOnDefaultButton by property(false)
   @get:OptionTag("ENABLE_ALPHA_MODE")

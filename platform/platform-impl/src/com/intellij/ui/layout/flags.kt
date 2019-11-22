@@ -26,11 +26,6 @@ enum class LCFlags {
    */
   fill, fillX, fillY,
 
-  // temp flag, will be removed or renamed later
-  disableMagic,
-
-  lcWrap,
-
   debug
 }
 

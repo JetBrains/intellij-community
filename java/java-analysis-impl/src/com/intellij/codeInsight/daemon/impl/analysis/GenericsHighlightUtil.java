@@ -28,6 +28,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -916,12 +917,12 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  @Nullable
+  @NotNull
   static Collection<HighlightInfo> checkCatchParameterIsClass(@NotNull PsiParameter parameter) {
-    if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return null;
-    final Collection<HighlightInfo> result = new ArrayList<>();
+    if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return Collections.emptyList();
 
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
+    final Collection<HighlightInfo> result = new ArrayList<>(typeElements.size());
     for (PsiTypeElement typeElement : typeElements) {
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());
       if (aClass instanceof PsiTypeParameter) {
@@ -1133,7 +1134,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  @Nullable
+  @NotNull
   static List<HighlightInfo> checkEnumConstantModifierList(@NotNull PsiModifierList modifierList) {
     List<HighlightInfo> list = null;
     PsiElement[] children = modifierList.getChildren();
@@ -1146,7 +1147,7 @@ public class GenericsHighlightUtil {
         list.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(child).descriptionAndTooltip(description).create());
       }
     }
-    return list;
+    return ObjectUtils.notNull(list, Collections.emptyList());
   }
 
   @Nullable

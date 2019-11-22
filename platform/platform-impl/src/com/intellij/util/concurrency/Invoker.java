@@ -44,7 +44,9 @@ public abstract class Invoker implements Disposable {
 
   private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
     StringBuilder sb = new StringBuilder().append(UID.getAndIncrement()).append(".Invoker.").append(prefix);
-    if (useReadAction != ThreeState.UNSURE) sb.append(".ReadAction=").append(useReadAction);
+    if (useReadAction != ThreeState.UNSURE) {
+      sb.append(".ReadAction=").append(useReadAction);
+    }
     description = sb.append(": ").append(parent).toString();
     this.useReadAction = useReadAction;
     register(parent, this);

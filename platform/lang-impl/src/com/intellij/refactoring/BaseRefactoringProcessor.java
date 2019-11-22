@@ -170,7 +170,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   protected abstract String getCommandName();
 
   protected void doRun() {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    if (!PsiDocumentManager.getInstance(myProject).commitAllDocumentsUnderProgress()) {
+      return;
+    }
     final Ref<UsageInfo[]> refUsages = new Ref<>();
     final Ref<Language> refErrorLanguage = new Ref<>();
     final Ref<Boolean> refProcessCanceled = new Ref<>();

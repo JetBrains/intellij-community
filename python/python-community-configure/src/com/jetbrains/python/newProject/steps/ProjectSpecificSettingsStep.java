@@ -25,10 +25,7 @@ import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.PyLazySdk;
-import com.jetbrains.python.sdk.PySdkSettings;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
 import one.util.streamex.StreamEx;
@@ -190,7 +187,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
       // Framework package check may be heavy in case of remote sdk and should not be called on AWT, pretend everything is OK for
       // remote and check for packages later
-      if (!PythonSdkType.isRemote(sdk)) {
+      if (!PythonSdkUtil.isRemote(sdk)) {
         final Pair<Boolean, List<String>> validationInfo = validateFramework(frameworkGenerator, sdk);
         myInstallFramework = validationInfo.first;
         warnings.addAll(validationInfo.second);
@@ -344,7 +341,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   private static List<Sdk> getValidPythonSdks() {
     return StreamEx
       .of(PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks())
-      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkType.isInvalid(sdk))
+      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkUtil.isInvalid(sdk))
       .sorted(new PreferredSdkComparator())
       .toList();
   }

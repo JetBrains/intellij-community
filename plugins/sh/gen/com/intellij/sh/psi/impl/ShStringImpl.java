@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
-import com.intellij.psi.PsiReference;
 
 public class ShStringImpl extends ShLiteralImpl implements ShString {
 
@@ -66,12 +65,6 @@ public class ShStringImpl extends ShLiteralImpl implements ShString {
   @Nullable
   public PsiElement getRawString() {
     return findChildByType(RAW_STRING);
-  }
-
-  @Override
-  @NotNull
-  public PsiReference[] getReferences() {
-    return ShPsiImplUtil.getReferences(this);
   }
 
 }

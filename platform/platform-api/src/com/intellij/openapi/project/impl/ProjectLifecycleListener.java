@@ -15,15 +15,6 @@ import org.jetbrains.annotations.NotNull;
 public interface ProjectLifecycleListener {
   Topic<ProjectLifecycleListener> TOPIC = Topic.create("Various stages of project lifecycle notifications", ProjectLifecycleListener.class);
 
-  /**
-   * Only in a test mode.
-   *
-   * Invoked after implementation classes for project's components were determined (and loaded),
-   * but before components are instantiated.
-   */
-  default void projectComponentsRegistered(@NotNull Project project) {
-  }
-
   default void projectComponentsInitialized(@NotNull Project project) {
   }
 
@@ -34,12 +25,5 @@ public interface ProjectLifecycleListener {
   }
 
   default void postStartupActivitiesPassed(@NotNull Project project) {
-  }
-
-  /**
-   * @deprecated Use {@link ProjectLifecycleListener}
-   */
-  @Deprecated
-  abstract class Adapter implements ProjectLifecycleListener {
   }
 }

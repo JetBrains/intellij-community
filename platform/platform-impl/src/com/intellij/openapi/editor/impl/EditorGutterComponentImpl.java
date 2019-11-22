@@ -1775,8 +1775,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           usageData.addCurrentFile(file.getLanguage());
         }
       }
+      usageData.addData("icon_id", renderer.getFeatureId());
 
-      FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getFeatureId(), usageData);
+      FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", "clicked", usageData);
 
       performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext());
       repaint();

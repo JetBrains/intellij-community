@@ -54,10 +54,7 @@ import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.io.IOException;
@@ -318,7 +315,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       indicator.setText("Loading components...");
     }
 
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_BEFORE_LOADED);
+    Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
     activity.end();
 
@@ -338,30 +335,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @NotNull
   private static ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
+    Activity activity = StartUpMeasurer.startMainActivity("project instantiation");
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
     return project;
   }
 
   @Override
-  @Nullable
-  public Project loadProject(@NotNull String filePath) throws IOException {
-    return loadProject(Paths.get(filePath).toAbsolutePath(), null);
-  }
-
-  @Override
-  @Nullable
-  public Project loadProject(@NotNull Path file, @Nullable String projectName) throws IOException {
-    try {
-      ProjectImpl project = doCreateProject(projectName, file);
-      initProject(file, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
-      return project;
-    }
-    catch (Throwable t) {
-      LOG.info(t);
-      throw new IOException(t);
-    }
+  @NotNull
+  public Project loadProject(@NotNull Path file, @Nullable String projectName) {
+    ProjectImpl project = doCreateProject(projectName, file);
+    initProject(file, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
+    return project;
   }
 
   @NotNull
@@ -483,26 +468,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     startupManager.runPostStartupActivitiesFromExtensions();
 
     GuiUtils.invokeLaterIfNeeded(() -> {
-      if (!project.isDisposed()) {
-        startupManager.runPostStartupActivities();
-
-        Application application = ApplicationManager.getApplication();
-        if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-          StorageUtilKt.checkUnknownMacros(project, true);
-        }
-        StartUpMeasurer.stopPluginCostMeasurement();
+      if (project.isDisposedOrDisposeInProgress()) {
+        return;
       }
-    }, ModalityState.NON_MODAL);
+
+      startupManager.runPostStartupActivities();
+
+      Application application = ApplicationManager.getApplication();
+      if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
+        StorageUtilKt.checkUnknownMacros(project, true);
+      }
+      StartUpMeasurer.stopPluginCostMeasurement();
+    }, ModalityState.NON_MODAL, project.getDisposedOrDisposeInProgress());
     ApplicationManager.getApplication().invokeLater(() -> {
       LoadingPhase.compareAndSet(LoadingPhase.COMPONENT_LOADED,
                                  DumbService.isDumb(project)
                                  ? LoadingPhase.PROJECT_OPENED
                                  : LoadingPhase.INDEXING_FINISHED);
 
-      if (!project.isDisposed()) {
+      if (!project.isDisposedOrDisposeInProgress()) {
         startupManager.scheduleBackgroundPostStartupActivities();
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.NON_MODAL, project.getDisposedOrDisposeInProgress());
   }
 
   private static void assertInTransaction() {
@@ -631,10 +618,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    * @param path the path to open the project.
    * @return the project, or null if the user has cancelled opening the project.
    */
-  @Override
   @Nullable
-  public Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
+  @ApiStatus.Internal
+  public static Project convertAndLoadProject(@NotNull Path path) throws CannotConvertException {
+    Activity activity = StartUpMeasurer.startMainActivity("project conversion");
     ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();
     if (conversionResult.openingIsCanceled()) {
@@ -753,6 +740,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
+      if (project instanceof ProjectImpl) {
+        ((ProjectImpl)project).stopServicePreloading();
+      }
+
       getPublisher().projectClosingBeforeSave(project);
 
       if (isSaveProject) {
@@ -768,6 +759,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       fireProjectClosing(project);
 
       app.runWriteAction(() -> {
+        if (project instanceof ProjectImpl) {
+          ((ProjectImpl)project).setDisposeInProgress();
+        }
+
         removeFromOpened(project);
 
         fireProjectClosed(project);
@@ -857,7 +852,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     LOG.debug("projectOpened");
 
     LifecycleUsageTriggerCollector.onProjectOpened(project);
-    Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_OPENED_CALLBACKS);
+    Activity activity = StartUpMeasurer.startMainActivity("project opened callbacks");
     getPublisher().projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages
@@ -868,8 +863,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       StartupManagerImpl.runActivity(() -> {
         ClassLoader loader = component.getClass().getClassLoader();
         String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader)loader).getPluginIdString() : null;
-        Activity componentActivity =
-          ParallelActivity.PROJECT_OPEN_HANDLER.start(component.getClass().getName(), StartUpMeasurer.Level.PROJECT, pluginId);
+        Activity componentActivity = StartUpMeasurer.startActivity(component.getClass().getName(), ActivityCategory.PROJECT_OPEN_HANDLER, pluginId);
         component.projectOpened();
         componentActivity.end();
       });

@@ -92,6 +92,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
       K t = get();
+      //noinspection unchecked
       K other = ((KeyReference<K,V>)o).get();
       if (t == null || other == null) return false;
       if (t == other) return true;
@@ -123,7 +124,8 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
      if (o == null) return false;
 
      V v = get();
-     Object thatV = ((ValueReference)o).get();
+     //noinspection unchecked
+     Object thatV = ((ValueReference<K, V>)o).get();
      return v != null && v.equals(thatV);
    }
 
@@ -139,7 +141,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
     WeakKey<K, V> keyReference = new WeakKey<>(k, valueReference, myHashingStrategy, myKeyQueue);
     if (valueReference instanceof SoftValue) {
-      ((SoftValue)valueReference).myKeyReference = keyReference;
+      ((SoftValue<K, V>)valueReference).myKeyReference = keyReference;
     }
     return keyReference;
   }
@@ -201,12 +203,14 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     }
   }
 
-  private static final ThreadLocal<HardKey> HARD_KEY = ThreadLocal.withInitial(HardKey::new);
+  private static final ThreadLocal<HardKey<?,?>> HARD_KEY = ThreadLocal.withInitial(HardKey::new);
 
   @NotNull
   private HardKey<K,V> createHardKey(Object o) {
-    @SuppressWarnings("unchecked") K key = (K)o;
-    @SuppressWarnings("unchecked") HardKey<K,V> hardKey = HARD_KEY.get();
+    //noinspection unchecked
+    K key = (K)o;
+    //noinspection unchecked
+    HardKey<K,V> hardKey = (HardKey<K, V>)HARD_KEY.get();
     hardKey.set(key, myHashingStrategy.computeHashCode(key));
     return hardKey;
   }
@@ -263,12 +267,14 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   private boolean processQueues() {
     boolean removed = false;
     KeyReference<K,V> keyReference;
+    //noinspection unchecked
     while ((keyReference = (KeyReference<K, V>)myKeyQueue.poll()) != null) {
       ValueReference<K, V> valueReference = keyReference.getValueReference();
       removed |= myMap.remove(keyReference, valueReference);
     }
 
     ValueReference<K,V> valueReference;
+    //noinspection unchecked
     while ((valueReference = (ValueReference<K, V>)myValueQueue.poll()) != null) {
       keyReference = valueReference.getKeyReference();
       removed |= myMap.remove(keyReference, valueReference);

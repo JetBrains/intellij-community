@@ -8,8 +8,10 @@ import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
+import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
+import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.*;
@@ -49,11 +51,12 @@ import java.util.Map;
 import static com.intellij.execution.dashboard.RunDashboardContent.RUN_DASHBOARD_CONTENT_TOOLBAR;
 import static com.intellij.execution.dashboard.RunDashboardContent.RUN_DASHBOARD_TREE_TOOLBAR;
 import static com.intellij.execution.dashboard.RunDashboardCustomizer.NODE_LINKS;
+import static com.intellij.execution.dashboard.RunDashboardManagerImpl.findActionToolbar;
 import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.openapi.actionSystem.ActionPlaces.RUN_DASHBOARD_POPUP;
 
 public class RunConfigurationsServiceViewContributor
-  implements ServiceViewGroupingContributor<RunConfigurationsServiceViewContributor.RunConfigurationContributor, RunDashboardGroup> {
+  implements ServiceViewGroupingContributor<RunConfigurationsServiceViewContributor.RunConfigurationContributor, GroupingNode> {
   private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
     new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
       @Override
@@ -91,21 +94,30 @@ public class RunConfigurationsServiceViewContributor
 
   @NotNull
   @Override
-  public List<RunDashboardGroup> getGroups(@NotNull RunConfigurationContributor contributor) {
-    List<RunDashboardGroup> result = new ArrayList<>();
+  public List<GroupingNode> getGroups(@NotNull RunConfigurationContributor contributor) {
+    List<GroupingNode> result = new ArrayList<>();
+    GroupingNode parentGroupNode = null;
     for (RunDashboardGroupingRule groupingRule : RunDashboardGroupingRule.EP_NAME.getExtensions()) {
-      ContainerUtil.addIfNotNull(result, groupingRule.getGroup(contributor.asService()));
+      RunDashboardGroup group = groupingRule.getGroup(contributor.asService());
+      if (group != null) {
+        GroupingNode node = new GroupingNode(contributor.asService().getProject(),
+                                             parentGroupNode == null ? null : parentGroupNode.getGroup(), group);
+        node.setParent(parentGroupNode);
+        result.add(node);
+        parentGroupNode = node;
+      }
     }
     return result;
   }
 
   @NotNull
   @Override
-  public ServiceViewDescriptor getGroupDescriptor(@NotNull RunDashboardGroup group) {
+  public ServiceViewDescriptor getGroupDescriptor(@NotNull GroupingNode node) {
+    RunDashboardGroup group = node.getGroup();
     if (group instanceof FolderDashboardGroup) {
-      return new RunDashboardFolderGroupViewDescriptor((FolderDashboardGroup)group);
+      return new RunDashboardFolderGroupViewDescriptor(node);
     }
-    return new RunDashboardGroupViewDescriptor(group);
+    return new RunDashboardGroupViewDescriptor(node);
   }
 
   @NotNull
@@ -119,13 +131,23 @@ public class RunConfigurationsServiceViewContributor
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
 
+    List<AnAction> leftToolbarActions = null;
     RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
-    if (ui == null) return actionGroup;
+    if (ui != null) {
+      leftToolbarActions = ui.getActions();
+    }
+    else {
+      ActionToolbar toolbar = findActionToolbar(descriptor);
+      if (toolbar != null) {
+        leftToolbarActions = toolbar.getActions();
+      }
+    }
 
-    List<AnAction> leftToolbarActions = ui.getActions();
-    for (AnAction action : leftToolbarActions) {
-      if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
-        actionGroup.add(action);
+    if (leftToolbarActions != null) {
+      for (AnAction action : leftToolbarActions) {
+        if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
+          actionGroup.add(action);
+        }
       }
     }
     return actionGroup;
@@ -226,10 +248,7 @@ public class RunConfigurationsServiceViewContributor
       Content content = myNode.getContent();
       if (content == null) return;
 
-      ContentManager contentManager = content.getManager();
-      if (contentManager == null || content == contentManager.getSelectedContent()) return;
-
-      contentManager.setSelectedContent(content);
+      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).setSelectedContent(content);
     }
 
     @Override
@@ -237,10 +256,7 @@ public class RunConfigurationsServiceViewContributor
       Content content = myNode.getContent();
       if (content == null) return;
 
-      ContentManager contentManager = content.getManager();
-      if (contentManager == null || content != contentManager.getSelectedContent()) return;
-
-      contentManager.removeFromSelection(content);
+      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).removeFromSelection(content);
     }
 
     @Nullable
@@ -359,29 +375,32 @@ public class RunConfigurationsServiceViewContributor
         runManager.fireEndUpdate();
       }
     }
+
+    @Override
+    public boolean isVisible() {
+      RunDashboardStatusFilter statusFilter =
+        ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getStatusFilter();
+      return statusFilter.isVisible(myNode);
+    }
   }
 
   private static class RunDashboardGroupViewDescriptor implements ServiceViewDescriptor, WeighedItem {
     protected final RunDashboardGroup myGroup;
+    private final GroupingNode myNode;
     private final PresentationData myPresentationData;
 
-    protected RunDashboardGroupViewDescriptor(RunDashboardGroup group) {
-      myGroup = group;
+    protected RunDashboardGroupViewDescriptor(GroupingNode node) {
+      myNode = node;
+      myGroup = node.getGroup();
       myPresentationData = new PresentationData();
-      myPresentationData.setPresentableText(group.getName());
-      myPresentationData.setIcon(group.getIcon());
+      myPresentationData.setPresentableText(myGroup.getName());
+      myPresentationData.setIcon(myGroup.getIcon());
     }
 
     @Nullable
     @Override
     public String getId() {
-      if (myGroup instanceof RunDashboardGroupImpl) {
-        Object value = ((RunDashboardGroupImpl)myGroup).getValue();
-        if (value instanceof ConfigurationType) {
-          return ((ConfigurationType)value).getId();
-        }
-      }
-      return myGroup.getName();
+      return getId(myNode);
     }
 
     @Override
@@ -402,17 +421,35 @@ public class RunConfigurationsServiceViewContributor
 
     @Override
     public int getWeight() {
-      Object value = ((RunDashboardGroupImpl)myGroup).getValue();
+      Object value = ((RunDashboardGroupImpl<?>)myGroup).getValue();
       if (value instanceof RunDashboardRunConfigurationStatus) {
         return ((RunDashboardRunConfigurationStatus)value).getPriority();
       }
       return 0;
     }
+
+    private static String getId(GroupingNode node) {
+      AbstractTreeNode<?> parent = node.getParent();
+      if (parent instanceof GroupingNode) {
+        return getId((GroupingNode)parent) + "/" + getId(node.getGroup());
+      }
+      return getId(node.getGroup());
+    }
+
+    private static String getId(RunDashboardGroup group) {
+      if (group instanceof RunDashboardGroupImpl) {
+        Object value = ((RunDashboardGroupImpl<?>)group).getValue();
+        if (value instanceof ConfigurationType) {
+          return ((ConfigurationType)value).getId();
+        }
+      }
+      return group.getName();
+    }
   }
 
   private static class RunDashboardFolderGroupViewDescriptor extends RunDashboardGroupViewDescriptor implements ServiceViewDnDDescriptor {
-    RunDashboardFolderGroupViewDescriptor(FolderDashboardGroup group) {
-      super(group);
+    RunDashboardFolderGroupViewDescriptor(GroupingNode node) {
+      super(node);
     }
 
     @Nullable

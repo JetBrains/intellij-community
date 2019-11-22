@@ -113,9 +113,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   @Override
   public int getPopState() {
     if (myAction instanceof Toggleable) {
-      Boolean selected = (Boolean)myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
-      boolean flag1 = selected != null && selected.booleanValue();
-      return getPopState(flag1);
+      return getPopState(Toggleable.isSelected(myPresentation));
     }
     else {
       return getPopState(false);
@@ -156,7 +154,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       JBPopup prevLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
       actionPerformed(event);
       JBPopup curLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
-      if (curLast != null && curLast != prevLast) {
+      if (curLast != null && curLast != prevLast && !curLast.isDisposed()) {
         ((ActionManagerImpl)manager).addActionPopup(curLast);
         curLast.addListener(new JBPopupAdapter() {
           @Override

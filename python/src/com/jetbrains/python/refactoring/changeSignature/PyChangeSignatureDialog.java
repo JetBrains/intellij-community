@@ -32,10 +32,7 @@ import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
@@ -130,34 +127,34 @@ public class PyChangeSignatureDialog extends
       final String name = parameter.getName();
       final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
       if (parameterNames.contains(nameWithoutStars)) {
-        return PyBundle.message("ANN.duplicate.param.name");
+        return PyPsiBundle.message("ANN.duplicate.param.name");
       }
       parameterNames.add(nameWithoutStars);
 
       if (name.equals("*")) {
         hadSingleStar = true;
         if (index == parametersLength - 1) {
-          return PyBundle.message("ANN.named.parameters.after.star");
+          return PyPsiBundle.message("ANN.named.parameters.after.star");
         }
       }
       else if (name.equals("/")) {
         if (hadSlash) {
-          return PyBundle.message("ANN.multiple.slash");
+          return PyPsiBundle.message("ANN.multiple.slash");
         }
         hadSlash = true;
         if (hadPositionalContainer) {
-          return PyBundle.message("ANN.slash.param.after.vararg");
+          return PyPsiBundle.message("ANN.slash.param.after.vararg");
         }
         else if (hadKeywordContainer) {
-          return PyBundle.message("ANN.slash.param.after.keyword");
+          return PyPsiBundle.message("ANN.slash.param.after.keyword");
         }
         if (index == 0) {
-          return PyBundle.message("ANN.named.parameters.before.slash");
+          return PyPsiBundle.message("ANN.named.parameters.before.slash");
         }
       }
       else if (name.startsWith("*") && !name.startsWith("**")) {
         if (hadKeywordContainer) {
-          return PyBundle.message("ANN.starred.param.after.kwparam");
+          return PyPsiBundle.message("ANN.starred.param.after.kwparam");
         }
         if (hadSingleStar || hadPositionalContainer) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
@@ -169,7 +166,7 @@ public class PyChangeSignatureDialog extends
       }
       else if (name.startsWith("**")) {
         if (hadSingleStar && !hadParamsAfterSingleStar) {
-          return PyBundle.message("ANN.named.parameters.after.star");
+          return PyPsiBundle.message("ANN.named.parameters.after.star");
         }
         if (hadKeywordContainer) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star");
@@ -187,10 +184,10 @@ public class PyChangeSignatureDialog extends
           hadParamsAfterSingleStar = true;
         }
         if (hadPositionalContainer && languageLevel.isPython2()) {
-          return PyBundle.message("ANN.regular.param.after.vararg");
+          return PyPsiBundle.message("ANN.regular.param.after.vararg");
         }
         else if (hadKeywordContainer) {
-          return PyBundle.message("ANN.regular.param.after.keyword");
+          return PyPsiBundle.message("ANN.regular.param.after.keyword");
         }
         final String defaultValue = info.getDefaultValue();
         if (defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue) && parameter.getDefaultInSignature()) {
@@ -198,7 +195,7 @@ public class PyChangeSignatureDialog extends
         }
         else {
           if (hadDefaultValue && !hadSingleStar && (languageLevel.isPython2() || !hadPositionalContainer)) {
-            return PyBundle.message("ANN.non.default.param.after.default");
+            return PyPsiBundle.message("ANN.non.default.param.after.default");
           }
         }
       }

@@ -8,13 +8,12 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.LogTableColumn;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,9 +73,9 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         Set<Integer> currentColumns = new HashSet<>(properties.get(COLUMN_ORDER));
         Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(COLUMN_ORDER));
-        for (int column : GraphTableModel.DYNAMIC_COLUMNS) {
-          String columnName = StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]);
-          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column),
+        for (LogTableColumn column : LogTableColumn.DYNAMIC_COLUMNS) {
+          String columnName = column.getStableName();
+          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column.ordinal()),
                            "column", new FeatureUsageData().addData("name", columnName));
         }
 

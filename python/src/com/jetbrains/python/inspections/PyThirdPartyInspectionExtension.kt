@@ -2,8 +2,8 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.util.containers.ContainerUtil
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassParameters
-import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
+import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
@@ -36,7 +36,8 @@ class PyThirdPartyInspectionExtension : PyInspectionExtension() {
   override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {
     return name == "__attrs_attrs__" &&
            type is PyClassType &&
-           parseDataclassParameters(type.pyClass, context)?.type == PyDataclassParameters.Type.ATTRS
+           parseDataclassParameters(type.pyClass,
+                                                                     context)?.type == PyDataclassParameters.Type.ATTRS
   }
 
   private fun resolvesTo(expression: PyExpression, qualifiedName: String, resolveContext: PyResolveContext): Boolean {

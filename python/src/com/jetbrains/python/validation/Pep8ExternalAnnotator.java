@@ -50,9 +50,7 @@ import com.jetbrains.python.inspections.quickfix.RemoveTrailingBlankLinesFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,10 +191,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   private static void reportMissingInterpreter() {
     LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
-    List<Sdk> allSdks = PythonSdkType.getAllSdks();
+    List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
     Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {
-      LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkType.isRemote(sdk));
+      LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkUtil.isRemote(sdk));
     }
     LOG.info("]");
   }

@@ -3,7 +3,7 @@ package org.intellij.plugins.markdown.lang
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
-import com.intellij.lang.StdLanguages
+import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -41,7 +41,7 @@ class MarkdownFileViewProvider(manager: PsiManager, virtualFile: VirtualFile, ev
 
   override fun getLanguages(): Set<Language> = myRelevantLanguages
 
-  override fun getTemplateDataLanguage(): Language = StdLanguages.HTML
+  override fun getTemplateDataLanguage(): Language = HTMLLanguage.INSTANCE
 
   override fun cloneInner(fileCopy: VirtualFile): MultiplePsiFilesPerDocumentFileViewProvider =
     MarkdownFileViewProvider(manager, fileCopy, false)

@@ -81,6 +81,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return false;
   }
 
+  /**
+   * Tool ID passed to {@link InspectionSuppressor}.
+   */
   @NonNls
   @NotNull
   protected String getSuppressId() {

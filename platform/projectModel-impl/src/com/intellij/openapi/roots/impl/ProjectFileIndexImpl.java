@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -23,11 +22,22 @@ import java.util.List;
 import java.util.Set;
 
 public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIndex {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectFileIndexImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectFileIndexImpl.class);
   private final Project myProject;
 
-  public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
-    super(directoryIndex, fileTypeManager);
+  public ProjectFileIndexImpl(@NotNull Project project) {
+    super(DirectoryIndex.getInstance(project));
+
+    myProject = project;
+  }
+
+  /**
+   * @deprecated Do not pass DirectoryIndex explicitly.
+   */
+  @Deprecated
+  public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex index, @NotNull FileTypeRegistry fileTypeManager) {
+    super(index);
+
     myProject = project;
   }
 
@@ -218,7 +228,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
   }
-  
+
   @Override
   protected boolean isScopeDisposed() {
     return myProject.isDisposed();

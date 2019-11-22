@@ -505,4 +505,21 @@ class A {
     myFixture.configureByText "b.java", 'import foo.*; <selection>@Anno(value="")</selection> class T {}'
     assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno(value="")'
   }
+
+  void "test reformat with virtual space"() {
+    myFixture.configureByText 'a.java', '''class C {
+    public static void main(String ...args) {
+        <caret>
+    }
+}'''
+    getEditor().getSettings().setVirtualSpace(true)
+    myFixture.type('iter\t')
+    myFixture.checkResult '''class C {
+    public static void main(String ...args) {
+        for (String arg : args) {
+            
+        }
+    }
+}'''
+  }
 }

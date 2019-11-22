@@ -3,9 +3,10 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -119,7 +120,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       }
 
 
-      CommonCodeStyleSettings settings = context.getCodeStyleSettings();
+      CommonCodeStyleSettings settings = CompletionStyleUtil.getCodeStyleSettings(context);
       ParenthesesInsertHandler.getInstance(MethodParenthesesHandler.hasParams(item, context.getElements(), true, method),
                                            settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
                                            settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
@@ -157,7 +158,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
 
     if (context.getCompletionChar() == '=') {
       context.setAddCompletionChar(false);
-      TailType.EQ.processTail(context.getEditor(), context.getTailOffset());
+      EqTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
       return;
     }
 

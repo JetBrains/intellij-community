@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiClassType;
@@ -18,7 +16,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 public class GrNullVoidConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
+  public boolean isApplicableTo(@NotNull Position position) {
     switch (position) {
       case RETURN_VALUE:
       case ASSIGNMENT:
@@ -31,21 +29,21 @@ public class GrNullVoidConverter extends GrTypeConverter {
 
   @Nullable
   @Override
-  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
-                                          @NotNull PsiType actualType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
+  public ConversionResult isConvertible(@NotNull PsiType targetType,
+                                        @NotNull PsiType actualType,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
 
     final PsiClassType objectType = TypesUtil.getJavaLangObject(context);
     boolean isCompileStatic = PsiUtil.isCompileStatic(context);
-    if (currentPosition == ApplicableTo.RETURN_VALUE) {
+    if (position == Position.RETURN_VALUE) {
       if (targetType.equals(objectType) && PsiType.VOID.equals(actualType)) {
         return OK;
       }
     }
 
     if (PsiType.VOID.equals(actualType)) {
-      switch (currentPosition) {
+      switch (position) {
         case RETURN_VALUE: {
           // We can return void values from method. But it's very suspicious.
           return WARNING;
@@ -60,7 +58,7 @@ public class GrNullVoidConverter extends GrTypeConverter {
       }
     }
     else if (actualType == PsiType.NULL) {
-      if (currentPosition == ApplicableTo.RETURN_VALUE) {
+      if (position == Position.RETURN_VALUE) {
         // We can return null from method returning primitive type, but runtime error will occur.
         if (targetType instanceof PsiPrimitiveType) return WARNING;
       }

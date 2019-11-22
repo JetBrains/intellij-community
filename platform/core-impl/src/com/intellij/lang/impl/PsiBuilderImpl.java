@@ -718,21 +718,21 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   @Nullable
   @Override
   public IElementType lookAhead(int steps) {
-    if (eof()) {    // ensure we skip over whitespace if it's needed
-      return null;
-    }
-    int cur = myCurrentLexeme;
+    int cur = shiftOverWhitespaceForward(myCurrentLexeme);
 
     while (steps > 0) {
-      ++cur;
-      while (cur < myLexemeCount && whitespaceOrComment(myLexTypes[cur])) {
-        cur++;
-      }
-
+      cur = shiftOverWhitespaceForward(cur + 1);
       steps--;
     }
 
     return cur < myLexemeCount ? myLexTypes[cur] : null;
+  }
+
+  private int shiftOverWhitespaceForward(int lexIndex) {
+    while (lexIndex < myLexemeCount && whitespaceOrComment(myLexTypes[lexIndex])) {
+      lexIndex++;
+    }
+    return lexIndex;
   }
 
   @Override
@@ -764,10 +764,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     ProgressIndicatorProvider.checkCanceled();
 
     if (eof()) return;
-
-    if (!myTokenTypeChecked) {
-      LOG.error("Probably a bug: eating token without its type checking");
-    }
 
     myTokenTypeChecked = false;
     myCurrentLexeme++;
@@ -1117,8 +1113,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       int wsStartIndex = Math.max(lexemeIndex, lastIndex);
       while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
 
-      int wsEndIndex = lexemeIndex;
-      while (wsEndIndex < myLexemeCount && whitespaceOrComment(myLexTypes[wsEndIndex])) wsEndIndex++;
+      int wsEndIndex = shiftOverWhitespaceForward(lexemeIndex);
 
       if (wsStartIndex != wsEndIndex) {
         wsTokens.configure(wsStartIndex, wsEndIndex);

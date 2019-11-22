@@ -17,18 +17,12 @@ package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-
-import java.io.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class Timings {
-  private static final int IO_PROBES = 42;
-
   public static final long CPU_TIMING;
   public static final long IO_TIMING;
 
@@ -46,39 +40,7 @@ public class Timings {
       cpuTiming = cpuTiming * 54 / 31;
     }
     CPU_TIMING = cpuTiming;
-
-    long start = System.nanoTime();
-    for (int i = 0; i < IO_PROBES; i++) {
-      try {
-        final File tempFile = FileUtil.createTempFile("test", "test" + i);
-
-        try (FileWriter writer = new FileWriter(tempFile)) {
-          for (int j = 0; j < 15; j++) {
-            writer.write("test" + j);
-            writer.flush();
-          }
-        }
-
-        try (FileReader reader = new FileReader(tempFile)) {
-          while (reader.read() >= 0) {
-          }
-        }
-
-        if (i == IO_PROBES - 1) {
-          try (FileOutputStream stream = new FileOutputStream(tempFile)) {
-            stream.getFD().sync();
-          }
-        }
-
-        if (!tempFile.delete()) {
-          throw new IOException("Unable to delete: " + tempFile);
-        }
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    IO_TIMING = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    IO_TIMING = IoTimings.calcIoTiming();
   }
 
   /**

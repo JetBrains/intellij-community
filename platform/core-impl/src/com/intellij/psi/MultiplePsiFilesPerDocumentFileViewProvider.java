@@ -43,7 +43,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal;
 
   public MultiplePsiFilesPerDocumentFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, boolean eventSystemEnabled) {
-    super(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
+    super(manager, virtualFile, eventSystemEnabled);
   }
 
   @Override

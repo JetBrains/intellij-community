@@ -60,7 +60,7 @@ public class InterpreterDirectoryMacro extends Macro {
       }
       module = modules[0];
     }
-    Sdk sdk = PythonSdkType.findPythonSdk(module);
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk != null) {
       VirtualFile homeDir = sdk.getHomeDirectory();
       if (homeDir == null) {

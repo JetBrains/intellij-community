@@ -26,9 +26,10 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,9 +59,9 @@ class Pluralizer {
 
   static final Pluralizer PLURALIZER;
 
-  private final Map<String, String> irregularSingles = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final Map<String, String> irregularPlurals = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final Set<String> uncountables = ContainerUtil.newTroveSet(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  private final Map<String, String> irregularSingles = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  private final Map<String, String> irregularPlurals = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  private final Set<String> uncountables = new THashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   private final List<Pair<Pattern, String>> pluralRules = new ArrayList<>();
   private final List<Pair<Pattern, String>> singularRules = new ArrayList<>();
 

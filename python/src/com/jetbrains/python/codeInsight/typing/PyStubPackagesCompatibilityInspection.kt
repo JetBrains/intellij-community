@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -13,6 +13,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
+import com.jetbrains.python.codeInsight.typing.PyStubPackagesInstallingStatus
+import com.jetbrains.python.codeInsight.typing.STUBS_SUFFIX
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyInterpreterInspection
@@ -20,7 +22,7 @@ import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import javax.swing.JComponent
 
 class PyStubPackagesCompatibilityInspection : PyInspection() {
@@ -65,7 +67,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
 
     override fun visitPyFile(node: PyFile) {
       val module = ModuleUtilCore.findModuleForFile(node) ?: return
-      val sdk = PythonSdkType.findPythonSdk(module) ?: return
+      val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
 
       val installedPackages = PyPackageManager.getInstance(sdk).packages ?: emptyList()
       if (installedPackages.isEmpty()) return
@@ -75,7 +77,8 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
 
       val status = ServiceManager.getService(node.project, PyStubPackagesInstallingStatus::class.java)
 
-      findIncompatibleRuntimeToStubPackages(sdk) { stubPkg ->
+      findIncompatibleRuntimeToStubPackages(
+        sdk) { stubPkg ->
         stubPkg.name.let {
           !status.markedAsInstalling(it) && it !in ignoredStubPackages
         }

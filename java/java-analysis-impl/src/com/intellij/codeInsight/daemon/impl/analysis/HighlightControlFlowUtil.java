@@ -13,6 +13,7 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -119,7 +120,7 @@ public class HighlightControlFlowUtil {
     final PsiClass aClass = field.getContainingClass();
     if (aClass != null) {
       // field might be assigned in the other field initializers
-      if (isFieldInitializedInOtherFieldInitializer(aClass, field, isFieldStatic, Condition.TRUE)) return true;
+      if (isFieldInitializedInOtherFieldInitializer(aClass, field, isFieldStatic, Conditions.alwaysTrue())) return true;
     }
     final PsiClassInitializer[] initializers;
     if (aClass != null) {

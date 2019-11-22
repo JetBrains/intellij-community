@@ -81,4 +81,8 @@ public interface ServiceViewDescriptor {
   default Runnable getRemover() {
     return null;
   }
+
+  default boolean isVisible() {
+    return true;
+  }
 }

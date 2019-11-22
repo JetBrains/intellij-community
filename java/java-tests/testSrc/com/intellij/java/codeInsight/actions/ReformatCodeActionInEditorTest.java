@@ -22,9 +22,11 @@ import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.codeInsight.actions.LayoutCodeOptions;
 import com.intellij.codeInsight.actions.ReformatCodeRunOptions;
 import com.intellij.formatting.fileSet.NamedScopeDescriptor;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import static com.intellij.codeInsight.actions.TextRangeType.*;
@@ -124,6 +126,15 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
   public void testFormatSelection_DoNotTouchTrailingWhiteSpaces() {
     //todo actually test is not working, and working test is not working
     doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
+  }
+
+  public void testWrapParamList() {
+    CodeStyleSettings temp = new CodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = temp.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.KEEP_LINE_BREAKS = false;
+    javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    javaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED | CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT)));
   }
 
   public void testDisabledFormatting() {

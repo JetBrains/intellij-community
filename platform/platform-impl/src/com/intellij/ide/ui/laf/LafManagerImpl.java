@@ -20,6 +20,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -83,7 +84,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
-  private UIManager.LookAndFeelInfo[] myLaFs;
+  private List<UIManager.LookAndFeelInfo> myLaFs;
   private final UIManager.LookAndFeelInfo myDefaultLightTheme;
   private final UIManager.LookAndFeelInfo myDefaultDarkTheme;
   private final UIDefaults ourDefaults;
@@ -128,16 +129,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    lafList.add(myDefaultDarkTheme = new DarculaLookAndFeelInfo());
+    myDefaultDarkTheme = new DarculaLookAndFeelInfo();
+    lafList.add(myDefaultDarkTheme);
 
-
-    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getExtensionList()) {
-      UITheme x = provider.createTheme();
-      if (x != null) {
-        lafList.add(new UIThemeBasedLookAndFeelInfo(x));
+    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getIterable()) {
+      UITheme theme = provider.createTheme();
+      if (theme != null) {
+        lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
       }
     }
-    myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
+    myLaFs = lafList;
 
     sortThemesIfNecessary();
 
@@ -145,16 +146,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void sortThemesIfNecessary() {
-    if (!SystemInfo.isMac) {
-      // do not sort LaFs on mac - the order is determined as Default, Darcula.
-      // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
-
-      Arrays.sort(myLaFs, (obj1, obj2) -> {
-        String name1 = obj1.getName();
-        String name2 = obj2.getName();
-        return name1.compareToIgnoreCase(name2);
-      });
+    // do not sort LaFs on mac - the order is determined as Default, Darcula.
+    // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
+    if (SystemInfo.isMac) {
+      return;
     }
+
+    myLaFs.sort((obj1, obj2) -> {
+      String name1 = obj1.getName();
+      String name2 = obj2.getName();
+      return name1.compareToIgnoreCase(name2);
+    });
   }
 
   @Override
@@ -189,7 +191,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     updateUI();
 
-    UIThemeProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<UIThemeProvider>() {
+    UIThemeProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<UIThemeProvider>() {
       @Override
       public void extensionAdded(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         for (UIManager.LookAndFeelInfo feel : getInstalledLookAndFeels()) {
@@ -200,11 +202,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
         UITheme theme = provider.createTheme();
         if (theme != null) {
-          UIManager.LookAndFeelInfo[] newLafs = new UIManager.LookAndFeelInfo[myLaFs.length + 1];
-          System.arraycopy(myLaFs, 0, newLafs, 0, myLaFs.length);
+          List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>(myLaFs.size() + 1);
+          newLaFs.addAll(myLaFs);
+          String editorScheme = theme.getEditorScheme();
+          if (editorScheme != null) {
+            ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemeManager()
+              .loadBundledScheme(editorScheme, theme);
+          }
+
           UIThemeBasedLookAndFeelInfo newTheme = new UIThemeBasedLookAndFeelInfo(theme);
-          newLafs[newLafs.length - 1] = newTheme;
-          myLaFs = newLafs;
+          newLaFs.add(newTheme);
+          myLaFs = newLaFs;
           sortThemesIfNecessary();
           setCurrentLookAndFeel(newTheme);
           updateUI();
@@ -214,7 +222,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       @Override
       public void extensionRemoved(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         UIManager.LookAndFeelInfo switchLafTo = null;
-        ArrayList<UIManager.LookAndFeelInfo> lafs = new ArrayList<>();
+        List<UIManager.LookAndFeelInfo> list = new ArrayList<>();
         for (UIManager.LookAndFeelInfo lookAndFeel : getInstalledLookAndFeels()) {
           if (lookAndFeel instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme().getId().equals(provider.id)) {
             if (lookAndFeel == getCurrentLookAndFeel()) {
@@ -222,27 +230,29 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             }
             continue;
           }
-          lafs.add(lookAndFeel);
+          list.add(lookAndFeel);
         }
-        myLaFs = lafs.toArray(new UIManager.LookAndFeelInfo[0]);
+        myLaFs = list;
         if (switchLafTo != null) {
           setCurrentLookAndFeel(switchLafTo);
           updateUI();
         }
       }
-    }, false, this);
+    }, this);
   }
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
-    if (WelcomeWizardUtil.getWizardLAF() != null) {
-      if (StartupUiUtil.isUnderDarcula()) {
-        DarculaInstaller.install();
-      }
-      else if (wasUnderDarcula) {
-        DarculaInstaller.uninstall();
-      }
-      WelcomeWizardUtil.setWizardLAF(null);
+    if (WelcomeWizardUtil.getWizardLAF() == null) {
+      return;
     }
+
+    if (StartupUiUtil.isUnderDarcula()) {
+      DarculaInstaller.install();
+    }
+    else if (wasUnderDarcula) {
+      DarculaInstaller.uninstall();
+    }
+    WelcomeWizardUtil.setWizardLAF(null);
   }
 
   @Override
@@ -250,7 +260,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public void loadState(@NotNull final Element element) {
+  public void loadState(@NotNull Element element) {
     String className = null;
     UIManager.LookAndFeelInfo laf = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
@@ -262,9 +272,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       String themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
       if (themeId != null) {
-        laf = Arrays.stream(myLaFs).
-          filter(l -> l instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)l).getTheme().getId().equals(themeId)).
-          findFirst().orElse(null);
+        for (UIManager.LookAndFeelInfo l : myLaFs) {
+          if (l instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)l).getTheme().getId().equals(themeId)) {
+            laf = l;
+            break;
+          }
+        }
       }
     }
 
@@ -304,7 +317,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NotNull
   @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
-    return myLaFs.clone();
+    return myLaFs.toArray(new UIManager.LookAndFeelInfo[0]);
   }
 
   @Override
@@ -342,10 +355,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private UIManager.LookAndFeelInfo findLaf(@Nullable String className) {
-    return Arrays.stream(myLaFs).
-      filter(l -> !(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)).
-      findFirst().
-      orElse(null);
+    for (UIManager.LookAndFeelInfo l : myLaFs) {
+      if (!(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)) {
+        return l;
+      }
+    }
+    return null;
   }
 
   /**
@@ -528,6 +543,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixOptionButton(uiDefaults);
 
+    fixMacOSDarkThemeDecorations();
+
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }
@@ -536,12 +553,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
   }
 
+  private void fixMacOSDarkThemeDecorations() {
+     if (!SystemInfo.isMacOSMojave) return;
+
+    if (myCurrentLaf == myDefaultDarkTheme
+        || (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark())) {
+      //todo[fokin]: apply dark decorators and dark file choosers if macOS Dark theme is enabled
+    }
+  }
+
   @NotNull
   private static FontUIResource getFont(String yosemite, int size, @JdkConstants.FontStyle int style) {
     if (SystemInfo.isMacOSElCapitan) {
       // Text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
-      Font font = new Font(".SF NS Text", style, size);
+      Font font = new Font(SystemInfo.isMacOSCatalina ? ".AppleSystemUIFont" : ".SF NS Text", style, size);
       if (!StartupUiUtil.isDialogFont(font)) {
         return new FontUIResource(font);
       }
@@ -621,14 +647,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
+    patchRowHeight(defaults, "List.rowHeight", prevScale);
+    patchRowHeight(defaults, "Table.rowHeight", prevScale);
+    patchRowHeight(defaults, "Tree.rowHeight", prevScale);
+
     if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
-                                           "Tree.rowHeight",
-                                           "SettingsTree.rowHeight",
-                                           "Table.rowHeight",
-                                           "List.rowHeight");
+                                           "SettingsTree.rowHeight");
 
     List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
                                                  "Slider.verticalSize",
@@ -656,6 +683,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
     defaults.put("hidpi.scaleFactor", JBUIScale.scale(1f));
+  }
+
+  private static void patchRowHeight(UIDefaults defaults, String key, float prevScale) {
+    Object value = defaults.get(key);
+    int rowHeight = value instanceof Integer ? (Integer)value : 0;
+    if (rowHeight <= 0) {
+      LOG.warn(key + " = " + value + " in " + UIManager.getLookAndFeel().getName() + "; it may lead to performance degradation");
+    }
+    defaults.put(key, rowHeight <= 0 ? 0 : JBUIScale.scale((int)(rowHeight / prevScale)));
   }
 
   private static void fixMenuIssues(@NotNull UIDefaults uiDefaults) {

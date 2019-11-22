@@ -339,6 +339,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
     @Override
     public void start() {
       myCanceled.set(false);
+      dontStartActivity();
       super.start();
       SwingUtilities.invokeLater(() -> myWrapperLayout.show(myButtonWrapper, "progress"));
     }

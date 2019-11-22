@@ -267,13 +267,4 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public static BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #getComponents()} (since IDEA 2016, a build number may contain more than two parts) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  public int getBuildNumber() {
-    return myComponents[1];
-  }
-  //</editor-fold>
 }

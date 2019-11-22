@@ -44,36 +44,30 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   public void apply() {
     myRepository.setSearchQuery(mySearchQueryField.getText());
     super.apply();
-    enableJqlSearchIfSupported();
+    adjustSettingsForServerProperties();
   }
 
   @Override
   protected void afterTestConnection(boolean connectionSuccessful) {
     super.afterTestConnection(connectionSuccessful);
     if (connectionSuccessful) {
-      enableJqlSearchIfSupported();
+      adjustSettingsForServerProperties();
     }
-    updateNote();
   }
 
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
     mySearchQueryField = new LanguageTextField(JqlLanguage.INSTANCE, myProject, myRepository.getSearchQuery());
-    enableJqlSearchIfSupported();
     installListener(mySearchQueryField);
     mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
     myNoteLabel = new JBLabel();
     myNoteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
-    updateNote();
+    adjustSettingsForServerProperties();
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(mySearchLabel, mySearchQueryField)
       .addComponentToRightColumn(myNoteLabel)
       .getPanel();
-  }
-
-  private void updateNote() {
-    myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
   }
 
   @Override
@@ -82,7 +76,24 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     mySearchLabel.setAnchor(anchor);
   }
 
-  private void enableJqlSearchIfSupported() {
-    mySearchQueryField.setEnabled(myRepository.isJqlSupported());
+  private void adjustSettingsForServerProperties() {
+    if (myRepository.isJqlSupported()) {
+      mySearchQueryField.setEnabled(true);
+      myNoteLabel.setVisible(false);
+    }
+    else {
+      mySearchQueryField.setEnabled(false);
+      myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
+      myNoteLabel.setVisible(true);
+    }
+
+    if (myRepository.isInCloud()) {
+      myUsernameLabel.setText("Email:");
+      myPasswordLabel.setText("API Token:");
+    }
+    else {
+      myUsernameLabel.setText("Username:");
+      myPasswordLabel.setText("Password:");
+    }
   }
 }

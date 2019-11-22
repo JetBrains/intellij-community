@@ -155,7 +155,6 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private void setUpProject() {
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(myName);
-    tempDirectory.toFile().mkdirs();
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
     myFilesToDelete.add(tempDirectory);
     myProject = HeavyPlatformTestCase.createProject(generateProjectPath(tempDirectory));

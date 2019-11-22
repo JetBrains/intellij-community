@@ -54,7 +54,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
 
   protected void updateCustomComponent(JCheckBox checkBox, Presentation presentation) {
     updateCheckboxPresentation(checkBox, presentation);
-    checkBox.setSelected(Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY)));
+    checkBox.setSelected(Toggleable.isSelected(presentation));
   }
 
   static void updateCheckboxPresentation(JCheckBox checkBox, Presentation presentation) {

@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
@@ -92,10 +93,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       }
       if (window == null) {
-        IdeFrame[] frames = myWindowManager.getAllProjectFrames();
-        for (IdeFrame frame : frames) {
-          if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
-            window = (IdeFrameImpl)frame;
+        for (ProjectFrameHelper frameHelper : myWindowManager.getProjectFrameHelpers()) {
+          if (frameHelper.getFrame().isActive()) {
+            window = frameHelper.getFrame();
             break;
           }
         }
@@ -662,9 +662,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null) {
           final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
-          if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
+          //if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
-          if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
+          //if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
@@ -748,8 +748,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper wrapper = getDialogWrapper();
       if (wrapper != null) wrapper.disposeIfNeeded();
 
-      DialogWrapper.cleanupWindowListeners(this);
-
       final BufferStrategy strategy = getBufferStrategy();
       if (strategy != null) {
         strategy.dispose();
@@ -758,6 +756,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       removeAll();
       DialogWrapper.cleanupRootPane(rootPane);
+      DialogWrapper.cleanupWindowListeners(this);
       rootPane = null;
 
     }

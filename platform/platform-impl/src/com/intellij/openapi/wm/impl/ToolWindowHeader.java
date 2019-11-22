@@ -178,9 +178,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     if (actions.length > 0) {
       myActionGroup.addSeparator();
     }
-    if (myToolbar != null) {
-      myToolbar.updateActionsImmediately();
-    }
   }
 
   @Override

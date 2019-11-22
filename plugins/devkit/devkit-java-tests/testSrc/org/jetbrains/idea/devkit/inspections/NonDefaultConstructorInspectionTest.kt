@@ -35,4 +35,17 @@ class NonDefaultConstructorInspectionTest : LightJavaCodeInsightFixtureTestCase(
     myFixture.addClass("package com.intellij.openapi.components; public @interface Service {}")
     myFixture.testHighlighting("ProjectServiceNonAllowedCtorArg.java")
   }
+
+  fun `test allow MessageBus and Project`() {
+    myFixture.addClass("package com.intellij.openapi.components; public @interface Service {}")
+    myFixture.addClass("package com.intellij.openapi.project; public class Project {}")
+    myFixture.addClass("package com.intellij.util.messages; public class MessageBus {}")
+    myFixture.testHighlighting("CustomConstructorMessageBusAndProject.java")
+  }
+
+  fun `test allow MessageBus`() {
+    myFixture.addClass("package com.intellij.openapi.components; public @interface Service {}")
+    myFixture.addClass("package com.intellij.util.messages; public class MessageBus {}")
+    myFixture.testHighlighting("CustomConstructorMessageBus.java")
+  }
 }

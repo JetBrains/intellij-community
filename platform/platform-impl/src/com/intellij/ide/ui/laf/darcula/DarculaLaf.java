@@ -102,7 +102,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       final UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       final UIDefaults defaults = base.getDefaults();
       if (SystemInfo.isLinux) {
-        if (!Registry.is("darcula.use.native.fonts.on.linux")) {
+        if (!Registry.is("darcula.use.native.fonts.on.linux", true)) {
           Font font = findFont("DejaVu Sans");
           if (font != null) {
             for (Object key : defaults.keySet()) {
@@ -380,7 +380,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     callInit("initClassDefaults", defaults);
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public void initialize() {
     myDisposable = Disposer.newDisposable();
@@ -398,15 +397,20 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
-        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
-        myMnemonicAlarm.cancelAllRequests();
-        final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (focusOwner != null) {
-          myMnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
-        }
+        processAltKey((KeyEvent)e);
       }
       return false;
     }, myDisposable);
+  }
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  private void processAltKey(KeyEvent e) {
+    myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+    myMnemonicAlarm.cancelAllRequests();
+    final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner != null) {
+      myMnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
+    }
   }
 
   public static boolean isAltPressed() {

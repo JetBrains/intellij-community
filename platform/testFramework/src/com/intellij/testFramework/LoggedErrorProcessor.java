@@ -43,7 +43,6 @@ public class LoggedErrorProcessor {
     logger.warn(message, t);
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
     if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && ArrayUtil.isEmpty(details)) {
       throw (TestLoggerAssertionError)t;
@@ -52,16 +51,7 @@ public class LoggedErrorProcessor {
     message += DefaultLogger.attachmentsToString(t);
     logger.info(message, t);
 
-    if (DefaultLogger.shouldDumpExceptionToStderr()) {
-      System.err.println("ERROR: " + message);
-      if (t != null) t.printStackTrace(System.err);
-      if (details != null && details.length > 0) {
-        System.err.println("details: ");
-        for (String detail : details) {
-          System.err.println(detail);
-        }
-      }
-    }
+    DefaultLogger.dumpExceptionsToStderr(message, t, details);
 
     throw new TestLoggerAssertionError(message, t);
   }

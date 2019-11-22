@@ -32,10 +32,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<? super VirtualFile> processor);
 
   /**
-   * Returns the <code>ProjectLevelVcsManager<code> instance for the specified project.
-   *
-   * @param project the project for which the instance is requested.
-   * @return the manager instance.
+   * Returns the instance for the specified project.
    */
   public static ProjectLevelVcsManager getInstance(Project project) {
     return project.getService(ProjectLevelVcsManager.class);
@@ -45,9 +42,6 @@ public abstract class ProjectLevelVcsManager {
    * Gets the instance of the component if the project wasn't disposed. If the project was
    * disposed, throws ProcessCanceledException. Should only be used for calling from background
    * threads (for example, committed changes refresh thread).
-   *
-   * @param project the project for which the component instance should be retrieved.
-   * @return component instance
    */
   public static ProjectLevelVcsManager getInstanceChecked(final Project project) {
     return ReadAction.compute(() -> {
@@ -58,36 +52,29 @@ public abstract class ProjectLevelVcsManager {
 
   /**
    * Returns the list of all registered version control systems.
-   *
-   * @return the list of registered version control systems.
    */
   public abstract VcsDescriptor[] getAllVcss();
 
   /**
    * Returns the version control system with the specified name.
    *
-   * @param name the name of the VCS to find.
-   * @return the VCS instance, or null if none is found.
+   * @return the VCS instance, or {@code null} if none was found.
    */
   @Nullable
   public abstract AbstractVcs findVcsByName(@NonNls String name);
 
   @Nullable
   public abstract VcsDescriptor getDescriptor(final String name);
+
   /**
-   * Checks if all files in the specified array are managed by the specified VCS.
-   *
-   * @param abstractVcs the VCS to check.
-   * @param files       the files to check.
-   * @return true if all files are managed by the VCS, false otherwise.
+   * Checks if all given files are managed by the specified VCS.
    */
   public abstract boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
 
   /**
    * Returns the VCS managing the specified file.
-   *
-   * @param file the file to check.
-   * @return the VCS instance, or null if the file does not belong to any module or the module
+
+   * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
   @Nullable
@@ -96,8 +83,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Returns the VCS managing the specified file path.
    *
-   * @param file the file to check.
-   * @return the VCS instance, or null if the file does not belong to any module or the module
+   * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
   @Nullable
@@ -106,8 +92,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Return the parent directory of the specified file which is mapped to a VCS.
    *
-   * @param file the file for which the root is requested.
-   * @return the root, or null if the specified file is not in a VCS-managed directory.
+   * @return the root, or {@code null} if the specified file is not in a VCS-managed directory.
    */
   @Nullable
   public abstract VirtualFile getVcsRootFor(@Nullable VirtualFile file);
@@ -115,8 +100,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Return the parent directory of the specified file path which is mapped to a VCS.
    *
-   * @param file the file for which the root is requested.
-   * @return the root, or null if the specified file is not in a VCS-managed directory.
+   * @return the root, or {@code null} if the specified file is not in a VCS-managed directory.
    */
   @Nullable
   public abstract VirtualFile getVcsRootFor(FilePath file);
@@ -129,24 +113,16 @@ public abstract class ProjectLevelVcsManager {
 
   /**
    * Checks if the specified VCS is used by any of the modules in the project.
-   *
-   * @param vcs the VCS to check.
-   * @return true if the VCS is used by any of the modules, false otherwise
    */
   public abstract boolean checkVcsIsActive(AbstractVcs vcs);
 
   /**
    * Checks if the VCS with the specified name is used by any of the modules in the project.
-   *
-   * @param vcsName the name of the VCS to check.
-   * @return true if the VCS is used by any of the modules, false otherwise
    */
   public abstract boolean checkVcsIsActive(@NonNls String vcsName);
 
   /**
    * Returns the list of VCSes used by at least one module in the project.
-   *
-   * @return the list of VCSes used in the project.
    */
   @NotNull
   public abstract AbstractVcs[] getAllActiveVcss();
@@ -155,6 +131,9 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract boolean hasAnyMappings();
 
+  /**
+   * @deprecated use {@link #addMessageToConsoleWindow(String, ConsoleViewContentType)}
+   */
   @Deprecated
   public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);
 
@@ -178,7 +157,6 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Adds a listener for receiving notifications about changes in VCS configuration for the project.
    *
-   * @param listener the listener instance.
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    */
   @Deprecated
@@ -187,7 +165,6 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Removes a listener for receiving notifications about changes in VCS configuration for the project.
    *
-   * @param listener the listener instance.
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    */
   @Deprecated
@@ -205,8 +182,6 @@ public abstract class ProjectLevelVcsManager {
 
   /**
    * Checks if a background VCS operation (commit or update) is currently in progress.
-   *
-   * @return true if a background operation is in progress, false otherwise.
    */
   public abstract boolean isBackgroundVcsOperationRunning();
 

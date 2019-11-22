@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,7 +72,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     AsyncEventSupport.startListening();
 
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("PersistentFS#FSRecords.connect");
+    Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
     FSRecords.connect();
     activity.end();
   }
@@ -1055,12 +1055,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                      @NotNull NewVirtualFileSystem delegate) {
     for (VFileCreateEvent createEvent : createEvents) {
       ChildInfo[] children = createEvent.getChildren();
-      if (children == null) continue;
+      if (children == null || !createEvent.isDirectory()) continue;
       // todo avoid expensive findFile
-      VirtualFile createdFile = createEvent.getFile();
-      if (createdFile instanceof VirtualDirectoryImpl) {
+      VirtualFile createdDir = createEvent.getFile();
+      if (createdDir instanceof VirtualDirectoryImpl) {
         Queue<Pair<VirtualDirectoryImpl, ChildInfo[]>> queue = new ArrayDeque<>();
-        queue.add(Pair.create((VirtualDirectoryImpl)createdFile, children));
+        queue.add(Pair.create((VirtualDirectoryImpl)createdDir, children));
         while (!queue.isEmpty()) {
           Pair<VirtualDirectoryImpl, ChildInfo[]> queued = queue.remove();
           VirtualDirectoryImpl directory = queued.first;

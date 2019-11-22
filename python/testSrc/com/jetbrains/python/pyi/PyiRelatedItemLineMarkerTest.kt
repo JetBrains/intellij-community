@@ -110,13 +110,13 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
     assertEmpty(getMarkers(elementName, pyi))
   }
 
-  private fun getMarkers(elementName: String, pyi: Boolean): List<LineMarkerInfo<PsiElement>> {
+  private fun getMarkers(elementName: String, pyi: Boolean): List<LineMarkerInfo<*>> {
     myFixture.copyDirectoryToProject(getTestName(false), "")
     myFixture.configureByFile(if (pyi) "b.pyi" else "a.py")
     return getMarkersInCurrentFile(elementName)
   }
 
-  private fun getMarkersInCurrentFile(elementName: String): List<LineMarkerInfo<PsiElement>> {
+  private fun getMarkersInCurrentFile(elementName: String): List<LineMarkerInfo<*>> {
     val functions = PsiTreeUtil.findChildrenOfType(myFixture.file, PyFunction::class.java)
     functions.forEach { assertEquals(elementName, it.name) }
     assertNotEmpty(functions)

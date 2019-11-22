@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.jetbrains.python.inspections.PyStringFormatParser.*;
+import static com.jetbrains.python.PyStringFormatParser.*;
 
 /**
  * @author vlan

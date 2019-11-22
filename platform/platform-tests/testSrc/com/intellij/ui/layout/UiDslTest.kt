@@ -8,6 +8,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import javax.swing.JPanel
+import javax.swing.JTable
 
 /**
  * Set `test.update.snapshots=true` to automatically update snapshots if need.
@@ -31,6 +32,8 @@ abstract class UiDslTest {
   fun afterMethod() {
     System.clearProperty("idea.ui.comment.copyable")
   }
+
+  private val dummyTextBinding = PropertyBinding({ "" }, {})
 
   @Test
   fun `align fields in the nested grid`() {
@@ -80,6 +83,34 @@ abstract class UiDslTest {
   @Test
   fun `titled row`() {
     doTest { titledRow() }
+  }
+
+  @Test
+  fun scrollPaneNoGrow() {
+    doTest {
+      panel {
+        row {
+          scrollPane(JTable())
+        }
+        row {
+          scrollPane(JTable()).noGrowY()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun hideableRow() {
+    doTest {
+      panel {
+        row("Foo") {
+          textField(dummyTextBinding)
+        }
+        hideableRow("Bar") {
+          textField(dummyTextBinding)
+        }
+      }
+    }
   }
 
   protected abstract fun doTest(panelCreator: () -> JPanel)

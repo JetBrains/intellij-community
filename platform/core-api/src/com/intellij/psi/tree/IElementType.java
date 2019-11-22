@@ -63,6 +63,15 @@ public class IElementType {
     }
   }
 
+  public static void unregisterElementTypes(@NotNull Language language) {
+    for (int i = 0; i < ourRegistry.length; i++) {
+      IElementType type = ourRegistry[i];
+      if (type != null && type.getLanguage().equals(language)) {
+        ourRegistry[i] = null;
+      }
+    }
+  }
+
   private final short myIndex;
   @NotNull
   private final String myDebugName;

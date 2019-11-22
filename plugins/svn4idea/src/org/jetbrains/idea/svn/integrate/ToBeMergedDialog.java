@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -53,7 +54,6 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
-import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.getBunchSize;
@@ -300,7 +300,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private List<Change> getAlreadyMergedPaths(@NotNull SvnChangeList svnChangeList) {
     Collection<String> notMerged = myMergeChecker.getNotMergedPaths(svnChangeList);
 
-    return isEmpty(notMerged) ? emptyList() : svnChangeList.getAffectedPaths().stream()
+    return isEmpty(notMerged) ? ContainerUtil.emptyList() : svnChangeList.getAffectedPaths().stream()
       .filter(path -> !notMerged.contains(path))
       .map(svnChangeList::getByPath)
       .collect(Collectors.toList());
@@ -452,7 +452,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     private void setEmptyData() {
-      myLists = emptyList();
+      myLists = ContainerUtil.emptyList();
       myIsLastListLoaded = false;
     }
 

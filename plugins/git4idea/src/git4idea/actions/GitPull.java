@@ -62,7 +62,7 @@ public class GitPull extends GitMergeAction {
     final List<String> urls = remote == null ? Collections.singletonList(remoteOrUrl) : remote.getUrls();
     Computable<GitLineHandler> handlerProvider = () -> dialog.makeHandler(urls);
     return new DialogState(dialog.gitRoot(), GitBundle.message("pulling.title", dialog.getRemote()), handlerProvider,
-                           dialog.getSelectedBranches());
+                           dialog.getSelectedBranches(), dialog.isCommitAfterMerge());
   }
 
   @Override

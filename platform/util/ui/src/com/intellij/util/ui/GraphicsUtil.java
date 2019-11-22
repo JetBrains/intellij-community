@@ -27,13 +27,11 @@ public final class GraphicsUtil {
   /** This method is intended to use when user settings are not accessible yet.
    *  Use it to set up default RenderingHints.
    */
-  public static void applyRenderingHints(@NotNull Graphics g) {
-    Graphics2D g2d = (Graphics2D)g;
+  public static void applyRenderingHints(@NotNull Graphics2D g) {
     Toolkit tk = Toolkit.getDefaultToolkit();
-    //noinspection HardCodedStringLiteral
     Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
-      g2d.addRenderingHints(map);
+      g.addRenderingHints(map);
     }
   }
 

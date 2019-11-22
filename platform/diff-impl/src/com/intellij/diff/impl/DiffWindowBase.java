@@ -56,7 +56,7 @@ public abstract class DiffWindowBase {
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
       .setOnShowCallback(() -> myProcessor.updateRequest())
       .build();
-    myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS);
+    myWrapper.setImages(DiffUtil.Lazy.DIFF_FRAME_ICONS);
     Disposer.register(myWrapper, myProcessor);
 
     Consumer<WindowWrapper> wrapperHandler = myHints.getWindowConsumer();

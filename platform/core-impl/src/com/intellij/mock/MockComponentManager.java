@@ -55,7 +55,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return myExtensionArea;
   }
 
-  private void registerComponentInDisposer(@Nullable Object o) {
+  protected void registerComponentInDisposer(@Nullable Object o) {
     if (o instanceof Disposable && o != this && !(o instanceof MessageBus) && myDisposableComponents.add(o)) {
       Disposer.register(this, (Disposable)o);
     }

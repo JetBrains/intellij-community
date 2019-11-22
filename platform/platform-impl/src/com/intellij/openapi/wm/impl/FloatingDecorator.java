@@ -52,16 +52,12 @@ public final class FloatingDecorator extends JDialog {
   private int myCurrentFrame; // current frame in transparency animation
   private float myStartRatio;
   private float myEndRatio; // start and end alpha ratio for transparency animation
-  private IdeFrameImpl myIdeFrame;
 
 
-  FloatingDecorator(final IdeFrameImpl owner, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator){
-    // Due to JDK's bug #8029387 we want floating tool windows to be parent-less on Mac.
-    // On Windows and Linux we want a parent since the task bar will otherwise show the floating tool windows as independent frames.
-    super(SystemInfo.isMac ? null : owner, internalDecorator.getToolWindow().getId());
+  FloatingDecorator(@NotNull JFrame owner, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator){
+    super(owner,internalDecorator.getToolWindow().getId());
     MnemonicHelper.init(getContentPane());
     myInternalDecorator=internalDecorator;
-    myIdeFrame=owner;
 
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
     final JComponent cp=(JComponent)getContentPane();
@@ -107,14 +103,6 @@ public final class FloatingDecorator extends JDialog {
     }, myDisposable);
 
     apply(info);
-  }
-
-  @Override
-  public Container getParent() {
-    // Due to JDK's bug #8029387 we specify floating tool windows to be parent-less on Mac.
-    // This method is a hack to allow the retrieval of data through the parent hierarchy on Mac.
-    // Without this some of the debugger toolbar icons will not show up.
-    return myIdeFrame;
   }
 
   @Override

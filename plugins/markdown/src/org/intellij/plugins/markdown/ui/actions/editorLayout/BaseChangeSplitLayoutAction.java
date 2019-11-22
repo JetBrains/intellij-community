@@ -23,7 +23,7 @@ abstract class BaseChangeSplitLayoutAction extends AnAction implements DumbAware
     e.getPresentation().setEnabled(splitFileEditor != null);
 
     if (myLayoutToSet != null && splitFileEditor != null) {
-      e.getPresentation().putClientProperty(SELECTED_PROPERTY, splitFileEditor.getCurrentEditorLayout() == myLayoutToSet);
+      Toggleable.setSelected(e.getPresentation(), splitFileEditor.getCurrentEditorLayout() == myLayoutToSet);
     }
   }
 
@@ -37,7 +37,7 @@ abstract class BaseChangeSplitLayoutAction extends AnAction implements DumbAware
       }
       else {
         splitFileEditor.triggerLayoutChange(myLayoutToSet, true);
-        e.getPresentation().putClientProperty(SELECTED_PROPERTY, true);
+        Toggleable.setSelected(e.getPresentation(), true);
       }
     }
   }

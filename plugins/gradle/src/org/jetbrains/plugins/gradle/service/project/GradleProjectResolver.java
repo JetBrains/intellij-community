@@ -319,10 +319,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
 
     final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
-      ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+      new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
     final Map<String/* artifact path */, String /* module id*/> artifactsMap =
-      ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+      new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
     projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
 
     // import modules data
@@ -413,9 +413,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     for (GradleProjectResolverExtension resolver = tracedResolverChain; resolver != null; resolver = resolver.getNext()) {
-      if (resolver instanceof AbstractProjectResolverExtension) {
-        ((AbstractProjectResolverExtension)resolver).onResolveEnd(projectDataNode);
-      }
+      resolver.resolveFinished(projectDataNode);
     }
 
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, null);

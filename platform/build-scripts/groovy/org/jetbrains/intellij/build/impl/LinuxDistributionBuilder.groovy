@@ -120,10 +120,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     JvmArchitecture.values().each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
-                      " -Dawt.useSystemAAFontSettings=lcd" +
-                      " -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine" +
-                      " -Dsun.tools.attach.tmp.only=true"
-      new File(unixDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
+                      ['-Dawt.useSystemAAFontSettings=lcd',
+                       '-Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine',
+                       '-Dsun.tools.attach.tmp.only=true']
+      new File(unixDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
     }
   }
 

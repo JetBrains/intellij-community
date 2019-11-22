@@ -52,7 +52,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
-import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
@@ -170,7 +170,7 @@ private fun getFolderFromMatcher(matcher: Matcher, module: Module): String? {
   }
   val folder = matcher.group(1)
   val sdk = module.getSdk()
-  if (sdk != null && PySdkUtil.isRemote(sdk)) {
+  if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
     return sdk.getMapping(module.project).find { it.canReplaceRemote(folder) }?.mapToLocal(folder)
   }
   else {

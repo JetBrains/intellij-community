@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,8 +176,8 @@ public class VfsImplUtil {
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
-  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
-  private static final Map<String, Set<String>> ourDominatorsMap = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlers = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+  private static final Map<String, Set<String>> ourDominatorsMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
 
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,

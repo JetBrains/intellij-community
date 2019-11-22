@@ -25,6 +25,7 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.extensions.ModuleExtKt;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
@@ -173,7 +174,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   protected String getFilePath(@NotNull final String path) {
     final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(path);
-    assert virtualFile != null && virtualFile.exists() : String.format("No file in %s", myFixture.getTempDirPath());
+    assert virtualFile != null && virtualFile.exists() : String.format("No file '%s' in %s", path,  myFixture.getTempDirPath());
     return virtualFile.getPath();
   }
 
@@ -249,7 +250,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static class PlatformPythonModuleType extends PythonModuleTypeBase<EmptyModuleBuilder> {
     @NotNull
     public static PlatformPythonModuleType getInstance() {
-      return (PlatformPythonModuleType)ModuleTypeManager.getInstance().findByID(PYTHON_MODULE);
+      return (PlatformPythonModuleType)ModuleTypeManager.getInstance().findByID(PyNames.PYTHON_MODULE_ID);
     }
 
 

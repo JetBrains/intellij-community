@@ -31,7 +31,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
     Disposer.register(testRootDisposable, Disposable {
       area.unregisterExtensionPoint(myExtensionPointName)
     })
-    extension = LanguageExtension(myExtensionPointName, null, testRootDisposable)
+    extension = LanguageExtension(myExtensionPointName, null)
   }
 
   private fun registerExtension(languageID: String, implementationFqn: String) {

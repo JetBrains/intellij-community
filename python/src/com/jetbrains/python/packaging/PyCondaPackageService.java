@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
@@ -173,7 +173,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
         final VirtualFile bin = binFolder.findChild(condaName);
         if (bin != null) {
           String directoryPath = bin.getPath();
-          final String executableFile = PythonSdkType.getExecutablePath(directoryPath, condaName);
+          final String executableFile = PythonSdkUtil.getExecutablePath(directoryPath, condaName);
           if (executableFile != null) {
             return executableFile;
           }

@@ -33,9 +33,9 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.env.PyEnvTaskRunner
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import org.junit.After
@@ -64,7 +64,7 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
     val newSdk = if (cachedSdk == null) createSdk(sdkPath, project) else null
     val sdk = cachedSdk ?: newSdk ?: return
     sdkCache[sdkPath] = sdk
-    val skeletonsDir = PySdkUtil.findSkeletonsDir(sdk)
+    val skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk)
     if (skeletonsDir == null || skeletonsDir.children?.isEmpty() ?: true) {
       PySdkTools.generateTempSkeletonsOrPackages(sdk, true, module)
     }
@@ -85,7 +85,7 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
     })
     val sdk = sdkVar ?: return null
     val modificator = sdk.sdkModificator
-    val paths = PythonSdkType.getSysPathsFromScript(sdkPath)
+    val paths = PythonSdkType.getSysPathsFromScript(sdk)
     PythonSdkUpdater.filterRootPaths(sdk, paths, project).forEach {
       modificator.addRoot(it, OrderRootType.CLASSES)
     }
@@ -110,7 +110,7 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
       return getPythonRoots()
         .asSequence()
         .filter { PyEnvTaskRunner.isSuitableForTags(loadEnvTags(it), tags) }
-        .map { PythonSdkType.getPythonExecutable(it) }
+        .map { PythonSdkUtil.getPythonExecutable(it) }
         .filterNotNull()
         .toList()
     }

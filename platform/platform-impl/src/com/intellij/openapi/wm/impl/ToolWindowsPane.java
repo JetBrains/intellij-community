@@ -50,7 +50,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
   public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
 
-  private final IdeFrameImpl myFrame;
+  private final JFrame myFrame;
 
   private final Map<String, StripeButton> myId2Button = new HashMap<>();
   private final Map<String, InternalDecorator> myId2Decorator = new HashMap<>();
@@ -85,7 +85,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private boolean myLeftHorizontalSplit;
   private boolean myRightHorizontalSplit;
 
-  ToolWindowsPane(@NotNull IdeFrameImpl frame, @NotNull ToolWindowManagerImpl manager) {
+  ToolWindowsPane(@NotNull JFrame frame, @NotNull ToolWindowManagerImpl manager) {
     myManager = manager;
 
     setOpaque(false);
@@ -195,7 +195,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   public Project getProject() {
-    return myFrame.getProject();
+    return myManager.getProject();
   }
 
   @Override
@@ -286,9 +286,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
 
-    WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
-
     if (info.isDocked()) {
+      WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
       return sideInfo == null
              ? new RemoveDockedComponentCmd(info, dirtyMode, finishCallBack)
              : new RemoveSplitAndDockedComponentCmd(info, dirtyMode, finishCallBack);
@@ -321,7 +320,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myLayeredPane;
   }
 
-  private InternalDecorator getDecoratorById(final String id) {
+  InternalDecorator getDecoratorById(final String id) {
     return myId2Decorator.get(id);
   }
 

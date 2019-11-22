@@ -13,7 +13,7 @@ import java.lang.management.ManagementFactory
 /**
  * @author yole
  */
-class MemorySizeConfigurator : StartupActivity {
+class MemorySizeConfigurator : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) return
 

@@ -50,7 +50,8 @@ class ConcurrentIntKeyWeakValueHashMap<V> extends ConcurrentIntKeyRefValueHashMa
       if (!(obj instanceof MyRef)) {
         return false;
       }
-      MyRef other = (MyRef)obj;
+      //noinspection unchecked
+      MyRef<V> other = (MyRef<V>)obj;
       return other.hash == hash && key == other.getKey() && Comparing.equal(v, other.get());
     }
 

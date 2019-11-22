@@ -16,17 +16,21 @@
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 
 import static com.intellij.psi.codeStyle.CodeStyleScheme.CODE_STYLE_TAG_NAME;
 
@@ -76,11 +80,25 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
     assertNotNull(codeStyle);
   }
 
+  @NotNull
   @Override
-  protected void setupProject() throws Exception {
-    LegacyCodeStyleSettingsManager legacyCodeStyleSettingsManager = ServiceManager.getService(getProject(), LegacyCodeStyleSettingsManager.class);
-    Document document = JDOMUtil.loadDocument(new File(getTestDataPath() + getTestName(true) + ".xml"));
-    legacyCodeStyleSettingsManager.loadState(document.getRootElement());
+  protected LightProjectDescriptor getProjectDescriptor() {
+    setupLegacyManager();
+    return super.getProjectDescriptor();
+  }
+
+  private void setupLegacyManager() {
+    ProjectServiceContainerCustomizer.getEp().maskAll(Collections.singletonList(project -> {
+      try {
+        LegacyCodeStyleSettingsManager legacyCodeStyleSettingsManager = new LegacyCodeStyleSettingsManager();
+        Document document = JDOMUtil.loadDocument(new File(getTestDataPath() + getTestName(true) + ".xml"));
+        legacyCodeStyleSettingsManager.loadState(document.getRootElement());
+        ServiceContainerUtil.registerServiceInstance(project, LegacyCodeStyleSettingsManager.class, legacyCodeStyleSettingsManager);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }), getTestRootDisposable(), false);
   }
 
   @Nullable

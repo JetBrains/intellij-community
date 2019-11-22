@@ -10,15 +10,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
+import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.junit.Assert.assertArrayEquals;
-
 public class ContainerUtilTest extends TestCase {
   public void testFindInstanceOf() {
-    Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList(), "1").iterator();
+    Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList<>(), "1").iterator();
     String string = ContainerUtil.findInstance(iterator, String.class);
     assertEquals("1", string);
   }
@@ -115,7 +114,7 @@ public class ContainerUtilTest extends TestCase {
       log.append(s);
     }
 
-    assertEquals("abc" + "cba", log.toString());
+    assertEquals("abccba", log.toString());
   }
 
   public void testLockFreeSingleThreadPerformance() {
@@ -190,7 +189,7 @@ public class ContainerUtilTest extends TestCase {
     assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, objects);
 
     Iterator<Object> iterator = my.iterator();
-    assertSame(EmptyIterator.getInstance(), iterator);
+    assertSame(Collections.emptyIterator(), iterator);
   }
 
   public void testIdenticalItemsInLockFreeCOW() {
@@ -316,9 +315,9 @@ public class ContainerUtilTest extends TestCase {
     int[] a1 = {0, 4};
     int[] a2 = {4};
     int[] m = ArrayUtil.mergeSortedArrays(a1, a2, true);
-    assertArrayEquals(new int[]{0, 4}, m);
+    Assert.assertArrayEquals(new int[]{0, 4}, m);
     m = ArrayUtil.mergeSortedArrays(a2, a1, true);
-    assertArrayEquals(new int[]{0, 4}, m);
+    Assert.assertArrayEquals(new int[]{0, 4}, m);
   }
 
   public void testImmutableListSubList() {

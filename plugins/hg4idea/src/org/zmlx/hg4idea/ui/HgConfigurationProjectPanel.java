@@ -16,6 +16,8 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -75,17 +77,30 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
   }
 
   private void testExecutable(@NotNull String executable) {
-    HgVersion version;
-    try {
-      version = HgVersion.identifyVersion(executable);
-    }
-    catch (Exception exception) {
-      Messages.showErrorDialog(myMainPanel, exception.getMessage(), HgVcsMessages.message("hg4idea.run.failed.title"));
-      return;
-    }
-    Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
-                             HgVcsMessages.message("hg4idea.run.success.title")
-    );
+    new Task.Modal(myProject, "Identifying Mercurial Version", true) {
+      HgVersion version;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          version = HgVersion.identifyVersion(executable);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
+                                 HgVcsMessages.message("hg4idea.run.success.title"));
+      }
+
+      @Override
+      public void onThrowable(@NotNull Throwable error) {
+        Messages.showErrorDialog(myMainPanel, error.getCause().getMessage(), HgVcsMessages.message("hg4idea.run.failed.title"));
+      }
+    }.queue();
   }
 
   @Override

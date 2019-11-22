@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,7 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GrConstraintFormula;
+
+import java.util.Collection;
 
 /**
  * @author peter
@@ -35,10 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public abstract class GrTypeConverter {
 
   public static final ExtensionPointName<GrTypeConverter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.typeConverter");
-
-  protected static boolean isMethodCallConversion(GroovyPsiElement context) {
-    return PsiUtil.isInMethodCallContext(context);
-  }
 
   @Nullable
   protected static GrLiteral getLiteral(@NotNull GroovyPsiElement context) {
@@ -61,64 +45,31 @@ public abstract class GrTypeConverter {
     return expression instanceof GrLiteral ? (GrLiteral)expression : null;
   }
 
-  /**
-   * @deprecated see {@link #isApplicableTo(org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo)}
-   */
-  @Deprecated
-  public boolean isAllowedInMethodCall() {
-    return false;
-  }
-
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    switch (position) {
-      case EXPLICIT_CAST:
-        return false;
-      case ASSIGNMENT:
-        return true;
-      case METHOD_PARAMETER:
-        //noinspection deprecation
-        return isAllowedInMethodCall();
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+  public boolean isApplicableTo(@NotNull Position position) {
+    return position == Position.ASSIGNMENT || position == Position.RETURN_VALUE;
   }
 
   /**
-   * @deprecated see {@link #isConvertibleEx(com.intellij.psi.PsiType, com.intellij.psi.PsiType, org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement, org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo)}
+   * Checks if {@code actualType} can be converted to {@code targetType} in given {@code position}.
    */
-  @Deprecated
   @Nullable
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
+  public abstract ConversionResult isConvertible(@NotNull PsiType targetType,
+                                                 @NotNull PsiType actualType,
+                                                 @NotNull Position position,
+                                                 @NotNull GroovyPsiElement context);
+
+  @Nullable
+  public Collection<GrConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
+                                                              @NotNull PsiType rightType,
+                                                              @NotNull Position position) {
     return null;
   }
 
-  /**
-   * Checks if {@code actualType} can be converted to {@code targetType}.
-   *
-   * @param targetType target type
-   * @param actualType actual type
-   * @param context    context
-   * @return {@link ConversionResult conversion result }
-   */
-  @Nullable
-  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
-                                          @NotNull PsiType actualType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
-    //noinspection deprecation
-    final Boolean result = isConvertible(targetType, actualType, context);
-    return result == null ? null
-                          : result ? ConversionResult.OK
-                                   : ConversionResult.ERROR;
-  }
-
-  public enum ApplicableTo {
+  public enum Position {
     EXPLICIT_CAST,
     ASSIGNMENT,
     METHOD_PARAMETER,
     GENERIC_PARAMETER,
-    RETURN_VALUE
+    RETURN_VALUE,
   }
 }

@@ -74,7 +74,9 @@ public class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
   }
 
   @Override
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
+  protected int getMinimumHeight(int originHeight) {
+    JComponent component = getComponent();
+    Insets insets = component.getInsets();
+    return MINIMUM_HEIGHT.get() + insets.top + insets.bottom;
   }
 }

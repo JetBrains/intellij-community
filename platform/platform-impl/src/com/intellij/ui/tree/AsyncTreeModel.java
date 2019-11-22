@@ -4,6 +4,7 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.Consumer;
@@ -580,8 +581,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
       if (model instanceof ChildrenProvider) {
-        //noinspection unchecked
-        ChildrenProvider<Object> provider = (ChildrenProvider)model;
+        ChildrenProvider<?> provider = (ChildrenProvider<?>)model;
         List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
@@ -593,13 +593,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
 
     @Nullable
-    private List<Node> load(int count, @NotNull IntFunction function) {
+    private List<Node> load(int count, @NotNull IntFunction<?> function) {
       if (count < 0) LOG.warn("illegal child count: " + count);
       if (count <= 0) return emptyList();
 
       SmartHashSet<Object> set = new SmartHashSet<>(count);
       List<Node> children = new ArrayList<>(count);
       for (int i = 0; i < count; i++) {
+        ProgressManager.checkCanceled();
         if (isObsolete()) return null;
         Object child = function.apply(i);
         if (child == null) {

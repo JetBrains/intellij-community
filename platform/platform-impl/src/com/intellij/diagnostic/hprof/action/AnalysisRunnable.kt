@@ -115,8 +115,10 @@ class AnalysisRunnable(val hprofPath: Path,
     private var reportShown = false
 
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      val parentComponent = WindowManager.getInstance().getFrame(e.project)
-      if (reportShown) return
+      val parentComponent = WindowManager.getInstance().getFrame(e.project) ?: return
+      if (reportShown) {
+        return
+      }
 
       reportShown = true
       UIUtil.invokeLaterIfNeeded {

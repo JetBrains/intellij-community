@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,7 @@ public class ProcessWaitFor {
   @Deprecated
   public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor) {
     this(process, executor, "");
+    DeprecatedMethodException.report("Use ProcessWaitFor(Process, TaskExecutor, String) instead");
   }
 
   public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor, @NotNull final String presentableName) {

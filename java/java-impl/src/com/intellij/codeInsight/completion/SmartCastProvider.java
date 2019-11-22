@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
+import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -177,7 +178,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
                                 context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
         }
 
-        final CommonCodeStyleSettings csSettings = context.getCodeStyleSettings();
+        final CommonCodeStyleSettings csSettings = CompletionStyleUtil.getCodeStyleSettings(context);
         final int oldTail = context.getTailOffset();
         context.setTailOffset(RParenthTailType.addRParenth(editor, oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
-   * @deprecated
+   * @deprecated use other CTORs
    */
   @Deprecated
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
@@ -46,12 +46,11 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   /**
-   * @deprecated
-   * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
+   * @deprecated use other CTORs
    */
   @Deprecated
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
-                              final ExecutionEnvironment environment,
+                              @SuppressWarnings("unused") final ExecutionEnvironment environment,
                               @Nullable final String splitterProperty) {
     super(consoleProperties, null);
     mySplitterProperty = splitterProperty;
@@ -62,7 +61,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   /**
-   * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
+   * @param splitterProperty Key to store (project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
                               @Nullable final String splitterProperty) {
@@ -107,8 +106,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   /**
    * Prints a given string of a given type on the root node.
    * Note: it's a permanent printing, as opposed to calling the same method on {@link #getConsole()} instance.
-   * @param s            given string
-   * @param contentType  given type
    */
   @Override
   public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
@@ -123,8 +120,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   /**
    * Prints a given hyperlink on the root node.
    * Note: it's a permanent printing, as opposed to calling the same method on {@link #getConsole()} instance.
-   * @param hyperlinkText hyperlink text
-   * @param info          HyperlinkInfo
    */
   @Override
   public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {

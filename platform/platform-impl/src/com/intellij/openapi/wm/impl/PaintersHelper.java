@@ -17,7 +17,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,6 @@ import java.util.*;
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Anchor.*;
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.SCALE;
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill.TILE;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getBackgroundSpec;
 
 final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
@@ -172,9 +171,9 @@ final class PaintersHelper implements Painter.Listener {
       }
 
       boolean ensureImageLoaded() {
-        IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)rootComponent);
+        IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, rootComponent);
         Project project = frame == null ? null : frame.getProject();
-        String value = getBackgroundSpec(project, propertyName);
+        String value = IdeBackgroundUtil.getBackgroundSpec(project, propertyName);
         if (!Comparing.equal(value, current)) {
           current = value;
           loadImageAsync(value);
@@ -196,7 +195,7 @@ final class PaintersHelper implements Painter.Listener {
         if (prevOk || newOk) {
           ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
           if (modalityState.dominates(ModalityState.NON_MODAL)) {
-            UIUtil.getActiveWindow().repaint();
+            ComponentUtil.getActiveWindow().repaint();
           }
           else {
             IdeBackgroundUtil.repaintAllWindows();
@@ -317,19 +316,19 @@ final class PaintersHelper implements Painter.Listener {
         if (fillType == SCALE) {
           gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                               RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-          UIUtil.drawImage(gg, image, dst0, src0, null);
+          StartupUiUtil.drawImage(gg, image, dst0, src0, null);
         }
         else if (fillType == TILE) {
           Rectangle r = new Rectangle(0, 0, 0, 0);
           for (int x = 0; x < dst0.width; x += w) {
             for (int y = 0; y < dst0.height; y += h) {
               r.setBounds(dst0.x + x, dst0.y + y, src0.width, src0.height);
-              UIUtil.drawImage(gg, image, r, src0, null);
+              StartupUiUtil.drawImage(gg, image, r, src0, null);
             }
           }
         }
         else {
-          UIUtil.drawImage(gg, image, dst0, src0, null);
+          StartupUiUtil.drawImage(gg, image, dst0, src0, null);
         }
         gg.dispose();
         repaint = false;
@@ -347,7 +346,7 @@ final class PaintersHelper implements Painter.Listener {
 
       float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? 0.65f * alpha : alpha;
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
-      UIUtil.drawImage(g, scaled, dst, src, null, null);
+      StartupUiUtil.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
     }
 

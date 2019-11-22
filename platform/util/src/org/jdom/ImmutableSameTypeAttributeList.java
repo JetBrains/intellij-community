@@ -3,7 +3,6 @@ package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.EmptyIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -76,7 +75,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   @NotNull
   @Override
   public Iterator<Attribute> iterator() {
-    if (isEmpty()) return EmptyIterator.getInstance();
+    if (isEmpty()) return Collections.emptyIterator();
     return new Iterator<Attribute>() {
       int i;
       @Override

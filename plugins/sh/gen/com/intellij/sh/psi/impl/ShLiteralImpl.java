@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
+import com.intellij.psi.PsiReference;
 
 public class ShLiteralImpl extends ShSimpleCommandElementImpl implements ShLiteral {
 
@@ -29,6 +30,12 @@ public class ShLiteralImpl extends ShSimpleCommandElementImpl implements ShLiter
   @Nullable
   public PsiElement getWord() {
     return findChildByType(WORD);
+  }
+
+  @Override
+  @NotNull
+  public PsiReference[] getReferences() {
+    return ShPsiImplUtil.getReferences(this);
   }
 
 }

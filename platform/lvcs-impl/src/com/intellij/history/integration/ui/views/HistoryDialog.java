@@ -83,7 +83,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     setProject(project);
     setDimensionKey(getPropertiesKey());
-    setImages(DiffUtil.DIFF_FRAME_ICONS);
+    setImages(DiffUtil.Lazy.DIFF_FRAME_ICONS);
     closeOnEsc();
 
     if (doInit) init();

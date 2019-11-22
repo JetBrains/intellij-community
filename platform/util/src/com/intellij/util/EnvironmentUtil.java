@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -25,6 +24,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +54,7 @@ public class EnvironmentUtil {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(() -> unmodifiableMap(setCharsetVar(getShellEnv())));
     }
     else {
-      ourEnvGetter = new FixedFuture<>(getSystemEnv());
+      ourEnvGetter = CompletableFuture.completedFuture(getSystemEnv());
     }
   }
 

@@ -27,7 +27,6 @@ import java.io.IOException;
 /**
  * @author Eugene Zhuravlev
  */
-@ApiStatus.Experimental
 public interface IndexStorage<Key, Value> extends Flushable {
   
   void addValue(Key key, int inputId, Value value) throws StorageException;

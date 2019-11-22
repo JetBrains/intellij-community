@@ -3,7 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -294,12 +294,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
     if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) fullName += " (" + myCodeName + ")";
     return fullName;
-  }
-
-  @Nullable
-  @Override
-  public String getHelpURL() {
-    return null;
   }
 
   @Override
@@ -626,15 +620,22 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
-    if (ourShadowInstance == null) {
-      //noinspection SynchronizeOnThis
-      synchronized (ApplicationInfoImpl.class) {
-        Activity activity = ParallelActivity.PREPARE_APP_INIT.start("load app info");
-        ourShadowInstance = new ApplicationInfoImpl();
+    ApplicationInfoImpl result = ourShadowInstance;
+    if (result != null) {
+      return result;
+    }
+
+    //noinspection SynchronizeOnThis
+    synchronized (ApplicationInfoImpl.class) {
+      result = ourShadowInstance;
+      if (result == null) {
+        Activity activity = StartUpMeasurer.startActivity("app info loading");
+        result = new ApplicationInfoImpl();
+        ourShadowInstance = result;
         activity.end();
       }
     }
-    return ourShadowInstance;
+    return result;
   }
 
   /**

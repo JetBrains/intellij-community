@@ -65,9 +65,9 @@ public class LibraryTableImplUtil {
       return name != null && table.getLibraryByName(name) == library;
     }
 
-    if (!(library instanceof LibraryImpl)) return false;
+    if (!(library instanceof LibraryEx)) return false;
 
-    Module module = ((LibraryImpl)library).getModule();
+    Module module = ((LibraryEx)library).getModule();
     if (module == null) return false;
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == library) {

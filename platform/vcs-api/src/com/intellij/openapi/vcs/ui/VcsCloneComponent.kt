@@ -22,4 +22,6 @@ interface VcsCloneComponent {
   fun doValidateAll(): List<ValidationInfo>
 
   fun getOkButtonText(): String = "Clone"
+
+  fun getPreferredFocusedComponent(): JComponent?
 }

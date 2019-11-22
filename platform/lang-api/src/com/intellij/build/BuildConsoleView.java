@@ -16,11 +16,9 @@
 package com.intellij.build;
 
 import com.intellij.openapi.ui.ComponentContainer;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildConsoleView extends ComponentContainer, BuildProgressListener {
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.sam
 
 import com.intellij.psi.PsiClassType
@@ -8,17 +8,19 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.*
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.*
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 
 class ClosureToSamConverter : GrTypeConverter() {
 
   private val myPositions = setOf(ASSIGNMENT, RETURN_VALUE, METHOD_PARAMETER)
 
-  override fun isApplicableTo(position: ApplicableTo): Boolean = position in myPositions
+  override fun isApplicableTo(position: Position): Boolean = position in myPositions
 
-  override fun isConvertibleEx(targetType: PsiType, actualType: PsiType, context: GroovyPsiElement,
-                               currentPosition: ApplicableTo): ConversionResult? {
+  override fun isConvertible(targetType: PsiType,
+                             actualType: PsiType,
+                             position: Position,
+                             context: GroovyPsiElement): ConversionResult? {
     if (targetType !is PsiClassType ||
         actualType !is GrClosureType && !TypesUtil.isClassType(actualType, GROOVY_LANG_CLOSURE)) return null
 

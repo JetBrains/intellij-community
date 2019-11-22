@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.ClassConditionKey;
@@ -52,7 +53,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
 
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
-    final CommonCodeStyleSettings settings = context.getCodeStyleSettings();
+    final CommonCodeStyleSettings settings = CompletionStyleUtil.getCodeStyleSettings(context);
     String spaceWithin = settings.SPACE_WITHIN_CAST_PARENTHESES ? " " : "";
     String spaceAfter = settings.SPACE_AFTER_TYPE_CAST ? " " : "";
     final Editor editor = context.getEditor();

@@ -3,6 +3,7 @@ package com.intellij.diagnostic.tracing;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -80,7 +81,7 @@ public class MethodTracer {
     }
 
     private static long toMillis(long time) {
-        return time / 1_000_000;
+        return TimeUnit.NANOSECONDS.toMillis(time);
     }
 
     private static final MyConcurrentMap<String, MethodTracer> tracersMap = new MyConcurrentMap<>();

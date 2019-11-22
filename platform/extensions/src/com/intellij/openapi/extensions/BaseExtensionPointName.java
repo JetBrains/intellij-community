@@ -27,6 +27,6 @@ public abstract class BaseExtensionPointName {
   protected static <T> T findExtension(@NotNull BaseExtensionPointName pointName, @NotNull Class<T> instanceOf, @Nullable AreaInstance areaInstance, boolean isRequired) {
     ExtensionPointImpl<T> point = ((ExtensionsAreaImpl)(areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea())).getExtensionPoint(pointName.getName());
     // find by isAssignableFrom to preserve old behaviour
-    return point.findExtension(instanceOf, isRequired, /* strictMatch = */ false);
+    return point.findExtension(instanceOf, isRequired, false);
   }
 }

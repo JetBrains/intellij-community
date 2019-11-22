@@ -15,8 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +54,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
                                                     int generatorVersion,
                                                     boolean withMinorVersion,
                                                     boolean withExtension) {
-    if (PySdkUtil.isRemote(sdk)) {
+    if (PythonSdkUtil.isRemote(sdk)) {
       return null;
     }
 
@@ -63,7 +62,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
     if (versionString == null) {
       return null;
     }
-    if (PythonSdkType.isConda(sdk)) {
+    if (PythonSdkUtil.isConda(sdk)) {
       versionString = "Anaconda-" + versionString;
     }
 

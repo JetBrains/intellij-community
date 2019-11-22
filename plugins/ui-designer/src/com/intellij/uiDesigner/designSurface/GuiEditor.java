@@ -284,7 +284,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
         if (!myInsideChange) {
           UndoManager undoManager = UndoManager.getInstance(getProject());
           alarm.cancelAllRequests();
-          alarm.addRequest(new MySynchronizeRequest(undoManager.isUndoInProgress() || undoManager.isRedoInProgress()),
+          alarm.addRequest(new MySynchronizeRequest(undoManager.isUndoOrRedoInProgress()),
                            100/*any arbitrary delay*/, ModalityState.stateForComponent(GuiEditor.this));
         }
       }
@@ -991,8 +991,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   public boolean isUndoRedoInProgress() {
-    UndoManager undoManager = UndoManager.getInstance(getProject());
-    return undoManager.isUndoInProgress() || undoManager.isRedoInProgress();
+    return UndoManager.getInstance(getProject()).isUndoOrRedoInProgress();
   }
 
   void hideIntentionHint() {

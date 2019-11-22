@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 
 public class BrowserUtil {
   // The pattern for 'scheme' mainly according to RFC1738.
@@ -88,7 +87,7 @@ public class BrowserUtil {
       return Collections.singletonList(browserPathOrName);
     }
     else if (SystemInfo.isMac) {
-      List<String> command = newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
+      List<String> command = ContainerUtil.newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
       if (newWindowIfPossible) {
         command.add("-n");
       }

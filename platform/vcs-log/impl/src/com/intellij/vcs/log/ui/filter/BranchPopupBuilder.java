@@ -113,7 +113,9 @@ public abstract class BranchPopupBuilder {
       new TreeMap<>();
   }
 
-  private static void putActionsForReferences(@NotNull VcsLogDataPack pack, @NotNull List<? extends RefGroup> references, @NotNull Groups actions) {
+  private static void putActionsForReferences(@NotNull VcsLogDataPack pack,
+                                              @NotNull List<? extends RefGroup> references,
+                                              @NotNull Groups actions) {
     for (RefGroup refGroup : references) {
       if (refGroup instanceof SingletonRefGroup) {
         VcsRef ref = ((SingletonRefGroup)refGroup).getRef();
@@ -146,7 +148,9 @@ public abstract class BranchPopupBuilder {
     append(map, key, Collections.singleton(value));
   }
 
-  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map, @NotNull String key, @NotNull Collection<? extends T> values) {
+  private static <T> void append(@NotNull TreeMap<String, Collection<T>> map,
+                                 @NotNull String key,
+                                 @NotNull Collection<? extends T> values) {
     map.computeIfAbsent(key, k -> new HashSet<>()).addAll(values);
   }
 }

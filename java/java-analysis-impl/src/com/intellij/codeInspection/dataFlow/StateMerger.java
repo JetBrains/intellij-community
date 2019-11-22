@@ -254,6 +254,7 @@ class StateMerger {
     DfaMemoryStateImpl copy = map.get(var);
     if (copy == null) {
       copy = state.createCopy();
+      copy.setVariableState(var, copy.createVariableState(var));
       copy.flushVariable(var);
       map.put(var, copy);
     }

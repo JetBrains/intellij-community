@@ -67,6 +67,9 @@ public class StreamChainInliner implements CallInliner {
           staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1));
   private static final CallMatcher MAP_COLLECTOR =
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toConcurrentMap", "toUnmodifiableMap");
+  private static final CallMatcher NOT_NULL_COLLECTORS =
+    staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining", "maxBy", "minBy", "averagingInt", "averagingLong", "averagingDouble",
+               "summingInt", "summingLong", "summingDouble", "summarizingInt", "summarizingLong", "summarizingDouble");
 
   private static final CallMatcher SKIP_STEP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "unordered", "parallel", "sequential").parameterCount(0);
@@ -172,9 +175,14 @@ public class StreamChainInliner implements CallInliner {
       else {
         DfaValue resultValue =
           builder.getFactory().createTypeValue(myCall.getType(),
-                                               DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod()));
+                                               getNullability());
         builder.push(resultValue, myCall);
       }
+    }
+
+    @NotNull
+    Nullability getNullability() {
+      return DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod());
     }
 
     boolean expectNotNull() {
@@ -183,8 +191,11 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static class UnknownTerminalStep extends Step {
-    UnknownTerminalStep(PsiMethodCallExpression call) {
+    private final boolean myNotNullResult;
+
+    UnknownTerminalStep(PsiMethodCallExpression call, boolean notNullResult) {
       super(call, null, null);
+      myNotNullResult = notNullResult;
     }
 
     @Override
@@ -199,6 +210,12 @@ public class StreamChainInliner implements CallInliner {
     void iteration(CFGBuilder builder) {
       // Stream variable is on stack
       builder.pop().flushFields();
+    }
+
+    @NotNull
+    @Override
+    Nullability getNullability() {
+      return myNotNullResult ? Nullability.NOT_NULL : super.getNullability();
     }
   }
 
@@ -820,7 +837,7 @@ public class StreamChainInliner implements CallInliner {
 
   private static Step createTerminalStep(PsiMethodCallExpression call) {
     Step step = TERMINAL_STEP_MAPPER.mapFirst(call);
-    return step == null ? new UnknownTerminalStep(call) : step;
+    return step == null ? new UnknownTerminalStep(call, false) : step;
   }
 
   private static Step createTerminalFromCollector(PsiMethodCallExpression call) {
@@ -845,7 +862,8 @@ public class StreamChainInliner implements CallInliner {
                              "toUnmodifiableMap".equals(collectorCall.getMethodExpression().getReferenceName()));
       }
     }
-    return new UnknownTerminalStep(call);
+
+    return new UnknownTerminalStep(call, NOT_NULL_COLLECTORS.test(collectorCall));
   }
 
   @Override

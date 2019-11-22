@@ -34,8 +34,8 @@ public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> im
 
     PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     checkBox(PyBundle.message("smartKeys.insert.backslash.in.statement.on.enter"), ()->settings.INSERT_BACKSLASH_ON_WRAP, v-> settings.INSERT_BACKSLASH_ON_WRAP=v);
-    checkBox(PyBundle.message("smartKeys.insert.self.in.method"), ()->settings.INSERT_SELF_FOR_METHODS, v->settings.INSERT_SELF_FOR_METHODS=v);
-    checkBox(PyBundle.message("smartKeys.insert.type.placeholder.in.docstring.stub"), ()->settings.INSERT_TYPE_DOCSTUB, v->settings.INSERT_TYPE_DOCSTUB=v);
+    checkBox(PyBundle.message("smartKeys.insert.self.in.method"), ()->settings.INSERT_SELF_FOR_METHODS, v-> settings.INSERT_SELF_FOR_METHODS=v);
+    checkBox(PyBundle.message("smartKeys.insert.type.placeholder.in.docstring.stub"), ()->settings.INSERT_TYPE_DOCSTUB, v-> settings.INSERT_TYPE_DOCSTUB=v);
   }
 
   @Nls(capitalization = Nls.Capitalization.Title)

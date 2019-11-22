@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
@@ -28,13 +28,13 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
-public class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState> {
+public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState> {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
-  public ResourceBundleManager(final PsiManager manager) {
-    manager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+  public ResourceBundleManager(@NotNull Project project) {
+    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void childMoved(@NotNull final PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();

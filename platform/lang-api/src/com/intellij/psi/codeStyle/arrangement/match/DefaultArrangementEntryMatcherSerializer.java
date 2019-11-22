@@ -26,11 +26,11 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -190,7 +190,8 @@ public class DefaultArrangementEntryMatcherSerializer {
       Element composite = new Element(COMPOSITE_CONDITION_NAME);
       register(composite);
       parent = composite;
-      List<ArrangementMatchCondition> operands = ContainerUtilRt.newArrayList(condition.getOperands());
+      List<ArrangementMatchCondition> operands =
+        new ArrayList<>(condition.getOperands());
       ContainerUtil.sort(operands, CONDITION_COMPARATOR);
       for (ArrangementMatchCondition c : operands) {
         c.invite(this);

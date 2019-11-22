@@ -1,4 +1,6 @@
-from _pydevd_bundle.pydevd_constants import dict_iter_values, IS_PY24
+import sys
+
+from _pydevd_bundle.pydevd_constants import dict_iter_values, IS_PY24, get_global_debugger, original_excepthook, dummy_excepthook
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
@@ -105,19 +107,23 @@ def get_exception_breakpoint(exctype, exceptions):
 def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
     from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, handle_breakpoint_expression
     exctype, value, tb = arg
+
+    if exctype in (KeyboardInterrupt, SystemExit):
+        return
+
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
     if break_on_uncaught_exceptions:
         exception_breakpoint = get_exception_breakpoint(exctype, break_on_uncaught_exceptions)
     else:
         exception_breakpoint = None
 
+    original_excepthook(exctype, value, tb)
+    disable_excepthook()  # Avoid printing the exception for the second time.
+
     if not exception_breakpoint:
         return
 
     if tb is None:  # sometimes it can be None, e.g. with GTK
-        return
-
-    if exctype in (KeyboardInterrupt, SystemExit):
         return
 
     frames = []
@@ -154,6 +160,31 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
     pydev_log.debug('Handling post-mortem stop on exception breakpoint %s' % (exception_breakpoint.qname,))
 
     py_db.stop_on_unhandled_exception(thread, frame, frames_byid, arg)
+
+
+def _fallback_excepthook(exctype, value, tb):
+    pydev_log.debug("Handling the uncaught exception in the fallback exception hook")
+    try:
+        debugger = get_global_debugger()
+        if debugger and debugger.break_on_uncaught_exceptions:
+            thread = threading.currentThread()
+            additional_info = getattr(thread, 'additional_info', None)
+            if not thread or additional_info is None:
+                return
+            debugger.disable_tracing()
+            stop_on_unhandled_exception(debugger, thread, additional_info, (exctype, value, tb))
+    finally:
+        if sys.excepthook != dummy_excepthook:
+            original_excepthook(exctype, value, tb)
+        sys.exit(1)
+
+
+def set_fallback_excepthook():
+    sys.excepthook = _fallback_excepthook
+
+
+def disable_excepthook():
+    sys.excepthook = dummy_excepthook
 
 
 def get_exception_class(kls):

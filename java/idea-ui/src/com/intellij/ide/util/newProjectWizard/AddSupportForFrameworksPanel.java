@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -370,7 +369,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     if (myRoots != null) {
       addChildFrameworks(myRoots, list);
     }
-    list.addAll(ContainerUtil.mapNotNull(myAssociatedFrameworks, new Function.InstanceOf<>(FrameworkSupportNode.class)));
+    list.addAll(ContainerUtil.findAll(myAssociatedFrameworks, FrameworkSupportNode.class));
     return list;
   }
 

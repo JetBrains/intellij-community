@@ -60,7 +60,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
                                                       //some libraries store native libraries inside their JAR files and unpack them dynamically so we should detect such JARs as classes roots
                                                       || file.getFileSystem() instanceof JarFileSystem && isNativeLibrary(file)));
     results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
-    ContainerUtil.addAll(results, LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR.getExtensionList());
+    results.addAll(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR.getExtensionList());
     results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"));
     results.add(new JavadocRootDetector());
     results.add(new DescendentBasedRootFilter(AnnotationOrderRootType.getInstance(), false, "external annotations",

@@ -40,8 +40,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Override
   protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl.IntervalNode<T> i1, @NotNull IntervalTreeImpl.IntervalNode<T> i2) {
-    RMNode o1 = (RMNode)i1;
-    RMNode o2 = (RMNode)i2;
+    RMNode<?> o1 = (RMNode<?>)i1;
+    RMNode<?> o2 = (RMNode<?>)i2;
     boolean greedyL1 = o1.isGreedyToLeft();
     boolean greedyL2 = o2.isGreedyToLeft();
     if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
@@ -117,8 +117,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Override
   protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
-    //noinspection unchecked
-    ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
+    ((RangeMarkerImpl)key).myNode = (RMNode<RangeMarkerEx>)intervalNode;
   }
 
   static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
@@ -214,7 +213,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
           }
           else {
             node.setValid(false);
-            ((RMNode)node).onRemoved();
+            ((RMNode<?>)node).onRemoved();
           }
         }
       }
@@ -330,7 +329,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         }
         else {
           node.setValid(false);
-          ((RMNode)node).onRemoved();
+          ((RMNode<?>)node).onRemoved();
         }
       }
     }

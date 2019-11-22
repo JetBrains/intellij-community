@@ -108,7 +108,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.syntaxHighlighterFactory"
-                    beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP">
+                    beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"/>
     </extensionPoint>
 
@@ -368,5 +369,7 @@
     <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener"/>
 
     <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler"/>
+    <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.ProjectServiceContainerCustomizer"/>
+    <extensionPoint name="virtualFileManagerListener" interface="com.intellij.openapi.vfs.VirtualFileManagerListener"/>
   </extensionPoints>
 </idea-plugin>

@@ -44,7 +44,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   private JPanel myImportsLayoutPanel;
   private JPanel myWholePanel;
   private ImportLayoutPanel myImportLayoutPanel;
-  private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
 
   public CodeStyleImportsPanelBase() {
     setLayout(new BorderLayout());

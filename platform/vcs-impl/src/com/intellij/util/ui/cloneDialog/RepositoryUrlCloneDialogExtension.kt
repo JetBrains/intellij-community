@@ -18,7 +18,9 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import java.util.*
+import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
@@ -63,21 +65,24 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       mainPanel.add(northPanel, BorderLayout.NORTH)
       mainPanel.add(centerPanel, BorderLayout.CENTER)
 
+      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
+      val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
+      providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
+      comboBox.model = DefaultComboBoxModel(providers).apply {
+        selectedItem = null
+      }
       comboBox.addItemListener { e: ItemEvent ->
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
-          centerPanel.setContent(vcsComponents[provider]?.getView())
+          centerPanel.setContent(vcsComponents.getOrPut(provider, {
+            provider.buildVcsCloneComponent(project)
+          }).getView())
           centerPanel.revalidate()
           centerPanel.repaint()
           onComponentSelected()
         }
       }
-
-      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions.sortedArrayWith(CheckoutProvider.CheckoutProviderComparator())
-      for (checkoutProvider in providers) {
-        vcsComponents[checkoutProvider] = checkoutProvider.buildVcsCloneComponent(project)
-        comboBox.addItem(checkoutProvider)
-      }
+      comboBox.selectedItem = selectedByDefaultProvider
     }
 
     override fun getView() = mainPanel
@@ -95,6 +100,8 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     override fun doValidateAll(): List<ValidationInfo> {
       return getCurrentVcsComponent()?.doValidateAll() ?: emptyList()
     }
+
+    override fun getPreferredFocusedComponent(): JComponent? = getCurrentVcsComponent()?.getPreferredFocusedComponent()
 
     private fun getCurrentVcsComponent() = vcsComponents[comboBox.selectedItem as CheckoutProvider]
   }

@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Functions.identity
 import com.intellij.util.PairConsumer
-import com.intellij.util.containers.ContainerUtil.addAll
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
 import com.intellij.util.containers.notNullize
 import com.intellij.util.containers.stream
@@ -58,10 +58,10 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val toAdd = HashSet<FilePath>()
 
     val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
-    addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator())
+    ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator())
 
     val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize()
-    addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator())
+    ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator())
 
     val unversionedFiles = getUnversionedFiles(e, project).toList()
 

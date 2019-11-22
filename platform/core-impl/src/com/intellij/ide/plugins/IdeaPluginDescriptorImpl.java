@@ -869,14 +869,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  public Boolean getSkipped() {
-    return mySkipped;
-  }
-
-  public void setSkipped(final Boolean skipped) {
-    mySkipped = skipped;
-  }
-
   @Override
   public boolean isBundled() {
     return myBundled;

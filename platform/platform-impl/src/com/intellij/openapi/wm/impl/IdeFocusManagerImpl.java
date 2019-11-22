@@ -14,18 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class IdeFocusManagerImpl extends IdeFocusManager {
-
-  static class IdeProjectFocusManagerImpl extends IdeFocusManagerImpl {
-    private final Project myProject;
-    IdeProjectFocusManagerImpl(Project project) {
-      myProject = project;
-    }
-    public Project getProject() {
-      return myProject;
-    }
-  }
-
+public final class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
@@ -101,10 +90,5 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public void toFront(JComponent c) {
     getGlobalInstance().toFront(c);
-  }
-
-  @Override
-  public Project getProject() {
-    return null;
   }
 }

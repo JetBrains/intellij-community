@@ -629,7 +629,7 @@ public final class EventLog {
   static final class MyNotificationListener implements Notifications {
     @Override
     public void notify(@NotNull Notification notification) {
-      ProjectManager projectManager = ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+      ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
       Project[] openProjects = projectManager == null ? null : ProjectManager.getInstance().getOpenProjects();
       if (openProjects == null || openProjects.length == 0) {
         getApplicationService().myModel.addNotification(notification);

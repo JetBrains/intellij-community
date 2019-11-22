@@ -60,7 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.inspections.PyStringFormatParser.*;
+import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -197,7 +197,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         return super.add(s);
       }
     };
-    String text = expression.getText();
+    String text = PyStringLiteralUtil.getStringValue(expression);
     final Pair<PsiElement, TextRange> selection = expression.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
     if (selection != null) {
       text = selection.getSecond().substring(selection.getFirst().getText());
@@ -236,6 +236,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           .map(mapping -> mapping.getMappedParameters().get(expression))
           .nonNull()
           .map(PyCallableParameter::getName)
+          .nonNull()
           .forEach(candidates::add)
       );
 

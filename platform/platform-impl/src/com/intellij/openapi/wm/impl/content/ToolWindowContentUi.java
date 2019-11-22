@@ -26,7 +26,6 @@ import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.JBUI;
@@ -43,6 +42,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -54,6 +54,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   public static final String POPUP_PLACE = ActionPlaces.TOOLWINDOW_POPUP;
   // when client property is put in toolwindow component, hides toolwindow label
   public static final String HIDE_ID_LABEL = "HideIdLabel";
+  private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
 
   ContentManager myManager;
 
@@ -88,7 +89,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         @Override
         public Iterator<JComponent> iterator() {
           if (myManager == null || myManager.getContentCount() == 0) {
-            return EmptyIterator.getInstance();
+            return Collections.emptyIterator();
           }
           return JBIterable.of(myManager.getContents())
             .map(content -> {
@@ -348,7 +349,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {
-    if (c.getClientProperty(ui) != null) return;
+    if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) return;
 
     MouseAdapter mouseAdapter = new MouseAdapter() {
       final Ref<Point> myLastPoint = Ref.create();
@@ -479,7 +480,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
     });
 
-    c.putClientProperty(ui, Boolean.TRUE);
+    c.putClientProperty(TOOLWINDOW_UI_INSTALLED, Boolean.TRUE);
   }
 
   private void initActionGroup(DefaultActionGroup group, final Content content) {

@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -43,6 +42,7 @@ import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -629,34 +629,35 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  public static void confirmDisablePlugins(Project project, Collection<IdeaPluginDescriptor> plugins) {
-    Ref<Boolean> hasDependants = new Ref<>(false);
-    for (IdeaPluginDescriptor plugin: plugins) {
-      PluginManagerCore.checkDependants(plugin, PluginManagerCore::getPlugin, dependantId -> {
-        if (PluginManagerCore.CORE_PLUGIN_ID.equals(dependantId.getIdString())) {
-          return true;
+  public static void confirmDisablePlugins(@Nullable Project project, @NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
+    boolean hasDependents = false;
+    JBTreeTraverser<PluginId> traverser = PluginManagerCore.pluginIdTraverser();
+    main: for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      if (!plugin.isEnabled()) continue;
+      if (pluginsToDisable.contains(plugin)) continue;
+      for (IdeaPluginDescriptor toDisable : pluginsToDisable) {
+        if (traverser.withRoot(plugin.getPluginId()).unique().traverse().contains(toDisable.getPluginId())) {
+          hasDependents = true;
+          break main;
         }
-        else {
-          hasDependants.set(true);
-          return false;
-        }
-      });
+      }
     }
+
     boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
 
     String message;
-    if (plugins.size() == 1) {
-      IdeaPluginDescriptor plugin = plugins.iterator().next();
+    if (pluginsToDisable.size() == 1) {
+      IdeaPluginDescriptor plugin = pluginsToDisable.iterator().next();
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
-                DiagnosticBundle.message(hasDependants.get() ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
+                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
                 DiagnosticBundle.message(canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
                 "</html>";
     }
     else {
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt.multiple") + "<br/>" +
-                DiagnosticBundle.message(hasDependants.get() ? "error.dialog.disable.prompt.deps.multiple" : "error.dialog.disable.prompt.lone.multiple") + "<br/><br/>" +
+                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps.multiple" : "error.dialog.disable.prompt.lone.multiple") + "<br/><br/>" +
                 DiagnosticBundle.message(canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
                 "</html>";
     }
@@ -678,7 +679,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     if (doDisable) {
-      for (IdeaPluginDescriptor plugin: plugins) {
+      for (IdeaPluginDescriptor plugin: pluginsToDisable) {
         PluginManagerCore.disablePlugin(plugin.getPluginId().getIdString());
       }
       if (doRestart) {

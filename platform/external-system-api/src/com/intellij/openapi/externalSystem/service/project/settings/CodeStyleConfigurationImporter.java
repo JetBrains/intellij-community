@@ -6,12 +6,15 @@ package com.intellij.openapi.externalSystem.service.project.settings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated Intellij supports .editorconfig files instead. To be removed in 2020.1+
+ * @param <T>
+ */
+@Deprecated
 public interface CodeStyleConfigurationImporter<T extends CustomCodeStyleSettings> {
   ExtensionPointName<CodeStyleConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.codeStyleConfigurationImporter");
   void processSettings(@NotNull T settings, @NotNull Map config);

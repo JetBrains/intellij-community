@@ -3,9 +3,9 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class PathReferenceTest extends LightCodeInsightFixtureTestCase {
+public class PathReferenceTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPathReference() {
 

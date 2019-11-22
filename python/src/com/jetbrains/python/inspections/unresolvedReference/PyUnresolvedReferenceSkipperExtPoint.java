@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
+@Deprecated
+//TODO: switch to PyInspectionExtension
 public interface PyUnresolvedReferenceSkipperExtPoint {
   @NotNull
   ExtensionPointName<PyUnresolvedReferenceSkipperExtPoint> EP_NAME = ExtensionPointName.create("Pythonid.unresolvedReferenceSkipper");

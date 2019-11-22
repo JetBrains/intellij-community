@@ -876,4 +876,16 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       assertNotSame(p2, pj2);
     });
   }
+
+  @Test
+  public void testCrazyMoronicPointersWithEmptyPathDontCrashAnything() {
+    VirtualFilePointer p = myVirtualFilePointerManager.create("file:/", disposable, null);
+    assertEquals("file:/", p.getUrl());
+    p = myVirtualFilePointerManager.create("file://", disposable, null);
+    assertEquals("file://", p.getUrl());
+    p = myVirtualFilePointerManager.create("file:///", disposable, null);
+    assertEquals("file://", p.getUrl());
+    p = myVirtualFilePointerManager.create("file:////", disposable, null);
+    assertEquals("file://", p.getUrl());
+  }
 }

@@ -10,8 +10,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     final PyFunction problemFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (problemFunction == null) return;
-    final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
+    final List<UsageInfo> usages = PyCodeFragmentUtil.findUsages(problemFunction, false);
 
     final PyParameter[] parameters = problemFunction.getParameterList().getParameters();
     if (parameters.length > 0) {

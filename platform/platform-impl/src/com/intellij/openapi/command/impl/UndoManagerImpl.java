@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -99,12 +100,8 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  public UndoManagerImpl() {
-    this(null);
-  }
-
-  public UndoManagerImpl(@Nullable ProjectEx project) {
-    myProject = project;
+  private UndoManagerImpl(@Nullable ComponentManager componentManager) {
+    myProject = componentManager instanceof ProjectEx ? (ProjectEx)componentManager : null;
     myMerger = new CommandMerger(this);
 
     if (myProject != null && myProject.isDefault()) {
@@ -349,25 +346,25 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   private void undoOrRedo(final FileEditor editor, final boolean isUndo) {
     myCurrentOperationState = isUndo ? OperationState.UNDO : OperationState.REDO;
-
-    final RuntimeException[] exception = new RuntimeException[1];
-    Runnable executeUndoOrRedoAction = () -> {
-      try {
-        CopyPasteManager.getInstance().stopKillRings();
-        myMerger.undoOrRedo(editor, isUndo);
-      }
-      catch (RuntimeException ex) {
-        exception[0] = ex;
-      }
-      finally {
-        myCurrentOperationState = OperationState.NONE;
-      }
-    };
-
-    String name = getUndoOrRedoActionNameAndDescription(editor, isUndoInProgress()).second;
-    CommandProcessor.getInstance()
-      .executeCommand(myProject, executeUndoOrRedoAction, name, null, myMerger.getUndoConfirmationPolicy());
-    if (exception[0] != null) throw exception[0];
+    try {
+      final RuntimeException[] exception = new RuntimeException[1];
+      Runnable executeUndoOrRedoAction = () -> {
+        try {
+          CopyPasteManager.getInstance().stopKillRings();
+          myMerger.undoOrRedo(editor, isUndo);
+        }
+        catch (RuntimeException ex) {
+          exception[0] = ex;
+        }
+      };
+      String name = getUndoOrRedoActionNameAndDescription(editor, isUndoInProgress()).second;
+      CommandProcessor.getInstance()
+        .executeCommand(myProject, executeUndoOrRedoAction, name, null, myMerger.getUndoConfirmationPolicy());
+      if (exception[0] != null) throw exception[0];
+    }
+    finally {
+      myCurrentOperationState = OperationState.NONE;
+    }
   }
 
   @Override

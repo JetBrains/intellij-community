@@ -17,6 +17,7 @@ import java.util.*;
 /**
  * @deprecated Use {@link ChangesTree} or {@link ChangesTreeImpl}
  */
+@Deprecated
 public abstract class ChangesTreeList<T> extends ChangesTree {
   @NotNull private final List<T> myRawChanges = new ArrayList<>();
 

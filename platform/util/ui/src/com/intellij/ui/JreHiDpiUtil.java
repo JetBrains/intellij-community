@@ -18,7 +18,6 @@ import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class JreHiDpiUtil {
-  // accessed from com.intellij.util.ui.TestScaleHelper via reflect
   private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<>();
   private static volatile boolean jreHiDPI_earlierVersion;
 

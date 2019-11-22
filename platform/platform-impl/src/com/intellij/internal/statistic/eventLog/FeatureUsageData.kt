@@ -45,7 +45,7 @@ class FeatureUsageData {
   companion object {
     // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
     val platformDataKeys: MutableList<String> = Arrays.asList(
-      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place"
+      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place", "file_path"
     )
   }
 
@@ -189,6 +189,11 @@ class FeatureUsageData {
     return addData("executor", executor.id)
   }
 
+  fun addAnonymizedPath(path: String): FeatureUsageData {
+    data["file_path"] = EventLogConfiguration.anonymize(path)
+    return this
+  }
+
   fun addValue(value: Any): FeatureUsageData {
     if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
       return addDataInternal("value", value)
@@ -225,6 +230,13 @@ class FeatureUsageData {
   }
 
   fun addData(key: String, value: String): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  /**
+   * This method has been added to support stack trace logging and should NOT be used for regular events.
+   * */
+  fun addData(key: String, value: List<String>): FeatureUsageData {
     return addDataInternal(key, value)
   }
 

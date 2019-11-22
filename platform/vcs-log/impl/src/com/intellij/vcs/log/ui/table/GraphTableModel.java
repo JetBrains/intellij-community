@@ -11,7 +11,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.exception.FrequentErrorLogger;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
@@ -24,20 +24,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
+/**
+ * Columns correspond exactly to {@link LogTableColumn} enum
+ */
 public class GraphTableModel extends AbstractTableModel {
-  public static final int ROOT_COLUMN = 0;
-  public static final int COMMIT_COLUMN = 1;
-  public static final int AUTHOR_COLUMN = 2;
-  public static final int DATE_COLUMN = 3;
-  public static final int HASH_COLUMN = 4;
-  private static final int COLUMN_COUNT = HASH_COLUMN + 1;
-  public static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date", "Hash"};
-  public static final int[] DYNAMIC_COLUMNS = {AUTHOR_COLUMN, DATE_COLUMN, HASH_COLUMN};
-
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
@@ -109,7 +106,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public final int getColumnCount() {
-    return COLUMN_COUNT;
+    return LogTableColumn.count();
   }
 
   /**
@@ -125,24 +122,29 @@ public class GraphTableModel extends AbstractTableModel {
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
+    return getValueAt(rowIndex, LogTableColumn.fromOrdinal(columnIndex));
+  }
+
+  @NotNull
+  public final Object getValueAt(int rowIndex, @NotNull LogTableColumn column) {
     if (rowIndex >= getRowCount() - 1 && canRequestMore()) {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
     VcsShortCommitDetails data = getCommitMetadata(rowIndex);
-    switch (columnIndex) {
-      case ROOT_COLUMN:
+    switch (column) {
+      case ROOT:
         return getRootSafely(rowIndex);
-      case COMMIT_COLUMN:
+      case COMMIT:
         return getCommitCellSafely(rowIndex, data);
-      case AUTHOR_COLUMN:
+      case AUTHOR:
         return getAuthorSafely(data);
-      case DATE_COLUMN:
+      case DATE:
         return getDateSafely(data);
-      case HASH_COLUMN:
+      case HASH:
         return getHashSafely(data);
       default:
-        throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (getColumnCount() - 1));
+        throw new IllegalStateException("Unexpected value: " + column);
     }
   }
 
@@ -166,7 +168,8 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   private static String getDateSafely(@NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" : DateFormatUtil.formatDateTime(data.getAuthorTime()), "");
+    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" :
+                                       JBDateFormat.getFormatter("vcs.log").formatDateTime(data.getAuthorTime()), "");
   }
 
   @NotNull
@@ -197,23 +200,12 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public Class<?> getColumnClass(int column) {
-    switch (column) {
-      case ROOT_COLUMN:
-        return FilePath.class;
-      case COMMIT_COLUMN:
-        return GraphCommitCell.class;
-      case AUTHOR_COLUMN:
-      case DATE_COLUMN:
-      case HASH_COLUMN:
-        return String.class;
-      default:
-        throw new IllegalArgumentException("columnIndex is " + column + " > " + (getColumnCount() - 1));
-    }
+    return LogTableColumn.fromOrdinal(column).getContentClass();
   }
 
   @Override
   public String getColumnName(int column) {
-    return COLUMN_NAMES[column];
+    return LogTableColumn.fromOrdinal(column).getName();
   }
 
   public void setVisiblePack(@NotNull VisiblePack visiblePack) {

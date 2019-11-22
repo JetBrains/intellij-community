@@ -34,6 +34,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
@@ -41,7 +42,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,7 +210,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   public List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
     if (file != null) {
       file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
-      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(file, false);
+      final List<UsageInfo> usages = PyCodeFragmentUtil.findUsages(file, false);
       for (UsageInfo usage : usages) {
         final PsiElement element = usage.getElement();
         if (element != null) {

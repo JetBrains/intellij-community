@@ -52,7 +52,6 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   /**
    * Adds the given widget on the right.
    *
-   * @param widget Widget to add.
    * @deprecated Use {@link StatusBarWidgetProvider}
    */
   @Deprecated
@@ -60,10 +59,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void addWidget(@NotNull StatusBarWidget widget);
 
   /**
-   * Adds the given widget positioned according to given anchor.
-   *
-   * @param widget Widget to add.
-   * @param anchor Anchor, see {@link Anchors}.
+   * Adds the given widget positioned according to given anchor (see {@link Anchors}).
    *
    * @deprecated Use {@link StatusBarWidgetProvider}
    */

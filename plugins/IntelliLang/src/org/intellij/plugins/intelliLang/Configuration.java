@@ -318,7 +318,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
           return Comparing.compare(o11.getElementPattern().toString(), o22.getElementPattern().toString());
         });
     };
-    for (String key : ContainerUtil.newTreeSet(myInjections.keySet())) {
+    for (String key : new TreeSet<>(myInjections.keySet())) {
       Set<BaseInjection> injections = new HashSet<>(myInjections.get(key));
       injections.removeAll(getDefaultInjections());
       for (BaseInjection injection : ContainerUtil.sorted(injections, comparator)) {

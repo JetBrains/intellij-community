@@ -23,7 +23,7 @@ import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import junit.framework.TestCase
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,7 +47,7 @@ class PyTypeShedTestDataTest(path: String, sdkPath: String) : PyTypeShedTestCase
       fixture?.enableInspections(PyUnresolvedReferencesInspection::class.java)
       fixture?.enableInspections(PyTypeCheckerInspection::class.java)
       fixture?.checkHighlighting(true, false, true)
-      val moduleSdk = PythonSdkType.findPythonSdk(fixture?.module)
+      val moduleSdk = PythonSdkUtil.findPythonSdk(fixture?.module)
       TestCase.assertNotNull(moduleSdk)
     })
   }

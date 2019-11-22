@@ -27,8 +27,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -88,7 +88,7 @@ public class PyCythonExtensionWarning {
     }
     AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
     // Temporarily disable notification for Remote interpreters
-    return PySdkUtil.isRemote(runConfiguration.getSdk());
+    return PythonSdkUtil.isRemote(runConfiguration.getSdk());
   }
 
   private static void showErrorDialog(Project project, String message) {

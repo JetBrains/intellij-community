@@ -123,8 +123,10 @@ class MultilinePopupBuilder {
     @Nullable
     @Override
     public String getPrefix(@NotNull String text, int offset) {
-      if (myCompletionPrefixProvider != null) return myCompletionPrefixProvider.getPrefix(text, offset);
-      else return super.getPrefix(text, offset);
+      if (myCompletionPrefixProvider != null) {
+        return myCompletionPrefixProvider.getPrefix(text, offset);
+      }
+      return super.getPrefix(text, offset);
     }
 
     @Nullable

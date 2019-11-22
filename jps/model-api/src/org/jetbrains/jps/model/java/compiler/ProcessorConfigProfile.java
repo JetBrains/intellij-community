@@ -38,6 +38,8 @@ public interface ProcessorConfigProfile extends AnnotationProcessingConfiguratio
 
   void setProcessorPath(@Nullable String processorPath);
 
+  void setUseProcessorModulePath(boolean isModulePath);
+
   void setObtainProcessorsFromClasspath(boolean value);
 
   void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName, boolean forTests);

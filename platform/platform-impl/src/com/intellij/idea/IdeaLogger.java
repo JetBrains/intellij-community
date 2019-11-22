@@ -18,14 +18,13 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.spi.ThrowableRenderer;
 import org.apache.log4j.spi.ThrowableRendererSupport;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
  */
-public class IdeaLogger extends Log4jBasedLogger {
+public final class IdeaLogger extends Log4jBasedLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;  // when not null, holds the first of errors that occurred
 
@@ -51,16 +50,6 @@ public class IdeaLogger extends Log4jBasedLogger {
       }
       return lines;
     };
-  }
-
-  /**
-   * @deprecated returns {@code null} always
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Deprecated
-  @Nullable
-  public static String getOurCompilationTimestamp() {
-    return null;
   }
 
   @NotNull
@@ -139,7 +128,7 @@ public class IdeaLogger extends Log4jBasedLogger {
         myLogger.error("Last Action: " + lastPreformedActionId);
       }
 
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      CommandProcessor commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
       if (commandProcessor != null) {
         String currentCommandName = commandProcessor.getCurrentCommandName();
         if (currentCommandName != null) {

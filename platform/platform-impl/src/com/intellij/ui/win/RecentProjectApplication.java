@@ -24,6 +24,6 @@ final class RecentProjectApplication extends ApplicationStarterBase {
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
     ProjectUtil.openProject(args.get(1), null, false);
-    return CliResult.ok();
+    return CliResult.OK_FUTURE;
   }
 }

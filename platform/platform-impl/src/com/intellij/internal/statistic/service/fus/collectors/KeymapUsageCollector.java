@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -11,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey;
-
 
 public class KeymapUsageCollector extends ApplicationUsagesCollector {
   @NotNull
@@ -21,31 +20,30 @@ public class KeymapUsageCollector extends ApplicationUsagesCollector {
     return "keymaps.name";
   }
 
-  @Nullable
   @Override
-  public FeatureUsageData getData() {
-    return new FeatureUsageData().addOS();
+  public int getVersion() {
+    return 2;
   }
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
+  public Set<MetricEvent> getMetrics() {
     KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null)
-      return Collections.emptySet();
+    if (keymapManager == null) return Collections.emptySet();
 
     Keymap keymap = keymapManager.getActiveKeymap();
-    String keymapName;
+    FeatureUsageData data = new FeatureUsageData().
+      addData("keymap_name", getKeymapName(keymap));
+
     if (keymap.canModify()) {
-      Keymap parent = keymap.getParent();
-      if (parent != null && !parent.canModify()) {
-        keymapName = "Custom (Based on " + parent.getName() + " keymap)";
-      } else {
-        keymapName = "Custom (Based on unknown)";
-      }
-    } else {
-      keymapName = keymap.getName();
+      data.addData("based_on", getKeymapName(keymap.getParent()));
     }
-    return Collections.singleton(new UsageDescriptor(ensureProperKey(keymapName)));
+    return Collections.singleton(MetricEventFactoryKt.newMetric("ide.keymap", data));
+  }
+
+  @NotNull
+  private static String getKeymapName(@Nullable Keymap keymap) {
+    if (keymap == null) return "unknown";
+    return keymap.canModify() ? "custom" : keymap.getName();
   }
 }

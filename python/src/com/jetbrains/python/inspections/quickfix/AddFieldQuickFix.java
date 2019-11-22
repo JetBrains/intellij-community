@@ -20,12 +20,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.introduce.field.PyIntroduceFieldHandler;
+import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +74,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
       selfName = params[0].getName();
     }
     final PyStatement newStmt = callback.fun(selfName);
-    final PsiElement result = PyUtil.addElementToStatementList(newStmt, statementList, true);
+    final PsiElement result = PyRefactoringUtil.addElementToStatementList(newStmt, statementList, true);
     PyPsiUtils.removeRedundantPass(statementList);
     return result;
   }
@@ -92,14 +96,14 @@ public class AddFieldQuickFix implements LocalQuickFix {
       else {
         PyStatement field = PyElementGenerator.getInstance(project)
           .createFromText(LanguageLevel.getDefault(), PyStatement.class, myIdentifier + " = " + myInitializer);
-        initStatement = PyUtil.addElementToStatementList(field, cls.getStatementList(), true);
+        initStatement = PyRefactoringUtil.addElementToStatementList(field, cls.getStatementList(), true);
       }
       if (initStatement != null) {
         showTemplateBuilder(initStatement, cls.getContainingFile());
         return;
       }
       // somehow we failed. tell about this
-      PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
+      PyUiUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
     });
   }
 
@@ -161,7 +165,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         PyStatementList clsContent = cls.getStatementList();
         newInit = (PyFunction) clsContent.addAfter(newInit, addAnchor);
 
-        PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName), MessageType.INFO);
+        PyUiUtil.showBalloon(project, PyPsiBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName), MessageType.INFO);
         final PyStatementList statementList = newInit.getStatementList();
         final PyStatement[] statements = statementList.getStatements();
         return statements.length != 0 ? statements[0] : null;

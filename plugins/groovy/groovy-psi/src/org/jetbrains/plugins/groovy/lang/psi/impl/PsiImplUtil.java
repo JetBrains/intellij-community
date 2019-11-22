@@ -160,14 +160,14 @@ public class PsiImplUtil {
 
     //check priorities    
     if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
-      GrExpression addedParenth = checkPrecedence(newExpr, oldExpr) ? parenthesize(newExpr) : newExpr;
+      GrExpression addedParenth = checkPrecedence(newExpr, oldExpr) ? parenthesize(newExpr, oldExpr.getContext()) : newExpr;
       if (newExpr != addedParenth) {
         return oldExpr.replaceWithExpression(addedParenth, removeUnnecessaryParentheses);
       }
     }
 
     if (oldParent instanceof GrForInClause) {
-      return (GrExpression) oldExpr.replace(parenthesize(newExpr));
+      return (GrExpression) oldExpr.replace(parenthesize(newExpr, oldExpr.getContext()));
     }
 
     //if replace closure argument with expression

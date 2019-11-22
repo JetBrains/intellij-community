@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.uiDesigner.LoaderFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +52,8 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
   public ClientPropertiesManager() {
   }
 
-  private ClientPropertiesManager(final Map<String, List<ClientProperty>> propertyMap) {
+  @NonInjectable
+  private ClientPropertiesManager(@NotNull Map<String, List<ClientProperty>> propertyMap) {
     this();
     myPropertyMap.putAll(propertyMap);
   }

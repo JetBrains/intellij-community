@@ -85,11 +85,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     createComponents(null);
   }
 
-  @Nullable
   @Override
-  protected ProgressIndicator getProgressIndicator() {
-    // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
-    return null;
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    // Component loading progress is not reported for module, because at this stage minimal reporting unit it is the module itself.
+    // Stage "Loading modules" — progress reported for each loaded module and module component count doesn't matter.
   }
 
   @Override

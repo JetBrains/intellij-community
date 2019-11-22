@@ -91,7 +91,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
     public TestCaseBuider withLines(String... lines) {
       List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
-      ContainerUtil.addAll(myLines, joinedAndSplitted);
+      myLines.addAll(joinedAndSplitted);
       return this;
     }
 

@@ -90,7 +90,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         consumer.consume(item);
         return true;
       });
-      for (String name : CompletionUtil.sortMatching(matcher, annoMap.keySet())) {
+      for (String name : matcher.sortMatching(annoMap.keySet())) {
         if (!ContainerUtil.process(annoMap.get(name), processor)) break;
       }
       return;

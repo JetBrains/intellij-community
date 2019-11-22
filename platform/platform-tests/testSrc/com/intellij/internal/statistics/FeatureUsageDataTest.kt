@@ -47,6 +47,13 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
+  fun `test put int array data`() {
+    val build = FeatureUsageData().addData("key", listOf("1", "2", "3")).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertEquals(build["key"], listOf("1", "2", "3"))
+  }
+
+  @Test
   fun `test put os data`() {
     val build = FeatureUsageData().addOS().build()
     Assert.assertTrue(build.size == 1)

@@ -156,7 +156,9 @@ public class InferenceSession {
 
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
-          addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
+          if (!ignoreLambdaConstraintTree(args[i])) {
+            addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
+          }
         }
       }
     }
@@ -490,7 +492,9 @@ public class InferenceSession {
       }
     }
     else if (returnExpression instanceof PsiLambdaExpression) {
-      collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)returnExpression, functionalType, myErased, initialSubstitutor);
+      if (!ignoreLambdaConstraintTree(returnExpression)) {
+        collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)returnExpression, functionalType, myErased, initialSubstitutor);
+      }
     }
   }
 
@@ -1344,8 +1348,11 @@ public class InferenceSession {
 
   public void addConstraint(ConstraintFormula constraint) {
     if (myConstraintsCopy.add(constraint)) {
-        myConstraints.add(constraint);
+      if (constraint instanceof ExpressionCompatibilityConstraint && ignoreLambdaConstraintTree(((ExpressionCompatibilityConstraint)constraint).getExpression())) {
+        LOG.error("Should have been stopped at lambda under overload guard");
       }
+      myConstraints.add(constraint);
+    }
   }
 
   private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints, Set<ConstraintFormula> ignoredConstraints) {

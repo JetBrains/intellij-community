@@ -315,6 +315,7 @@
       <action id="EditorMoveToPageBottomWithSelection" class="com.intellij.openapi.editor.actions.PageBottomWithSelectionAction"/>
       <action id="EditorEnter" class="com.intellij.openapi.editor.actions.EnterAction"/>
       <action id="EditorEscape" class="com.intellij.openapi.editor.actions.EscapeAction"/>
+      <action id="FocusEditor" class="com.intellij.ide.actions.FocusEditorAction"/>
       <action id="EditorUp" class="com.intellij.openapi.editor.actions.MoveCaretUpAction"/>
       <action id="EditorDown" class="com.intellij.openapi.editor.actions.MoveCaretDownAction"/>
       <action id="EditorLeft" class="com.intellij.openapi.editor.actions.MoveCaretLeftAction"/>
@@ -999,8 +1000,6 @@
 
     <group id="MaintenanceGroup">
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
-      <action id="SwitchBootJdk" class="com.intellij.ide.actions.SwitchBootJdkAction"/>
-      <action id="SwitchBootRuntime" class="com.intellij.bootRuntime.SwitchBootRuntimeAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
       <action id="ShowExperiments" class="com.intellij.application.ShowExperimentsAction"/>
     </group>
@@ -1138,6 +1137,8 @@
                 class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"
                 text="Show Statistics Event Log">
         </action>
+        <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"
+                text="Configure Whitelist"/>
       </group>
 
       <group id="Internal.PMM" popup="true" text="PMM Utils">

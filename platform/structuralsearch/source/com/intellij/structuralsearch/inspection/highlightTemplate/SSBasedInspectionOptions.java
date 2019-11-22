@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -10,9 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -152,23 +150,11 @@ public class SSBasedInspectionOptions {
       return;
     }
     final SearchContext searchContext = new SearchContext(project);
-    final Configuration newConfiguration;
-    if (Registry.is("ssr.use.new.search.dialog")) {
-      final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
-      dialog.loadConfiguration(configuration);
-      dialog.setUseLastConfiguration(true);
-      if (!dialog.showAndGet()) return;
-      newConfiguration = dialog.getConfiguration();
-    }
-    else {
-      final SearchDialog dialog = configuration instanceof SearchConfiguration
-                                  ? new SearchDialog(searchContext, false, false)
-                                  : new ReplaceDialog(searchContext, false, false);
-      dialog.setValuesFromConfig(configuration);
-      dialog.setUseLastConfiguration(true);
-      if (!dialog.showAndGet()) return;
-      newConfiguration = dialog.getConfiguration();
-    }
+    final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
+    dialog.loadConfiguration(configuration);
+    dialog.setUseLastConfiguration(true);
+    if (!dialog.showAndGet()) return;
+    final Configuration newConfiguration = dialog.getConfiguration();
     final int index = myConfigurations.indexOf(configuration);
     myConfigurations.set(index, newConfiguration);
     configurationsChanged(project);
@@ -204,16 +190,9 @@ public class SSBasedInspectionOptions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final SearchContext context = new SearchContext(e.getDataContext());
-      if (Registry.is("ssr.use.new.search.dialog")) {
-        final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
-        if (!dialog.showAndGet()) return;
-        addTemplate(dialog.getConfiguration(), e.getProject());
-      }
-      else {
-        final SearchDialog dialog = myReplace ? new ReplaceDialog(context, false, false) : new SearchDialog(context, false, false);
-        if (!dialog.showAndGet()) return;
-        addTemplate(dialog.getConfiguration(), e.getProject());
-      }
+      final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
+      if (!dialog.showAndGet()) return;
+      addTemplate(dialog.getConfiguration(), e.getProject());
     }
   }
 }

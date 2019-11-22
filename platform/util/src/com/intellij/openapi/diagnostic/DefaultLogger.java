@@ -45,10 +45,20 @@ public class DefaultLogger extends Logger {
   }
 
   @Override
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     t = checkException(t);
     message += attachmentsToString(t);
+    dumpExceptionsToStderr(message, t, details);
+
+    AssertionError error = new AssertionError(message);
+    error.initCause(t);
+    throw error;
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void dumpExceptionsToStderr(String message,
+                                            @Nullable Throwable t,
+                                            @NotNull String... details) {
     if (shouldDumpExceptionToStderr()) {
       System.err.println("ERROR: " + message);
       if (t != null) t.printStackTrace(System.err);
@@ -59,10 +69,6 @@ public class DefaultLogger extends Logger {
         }
       }
     }
-
-    AssertionError error = new AssertionError(message);
-    error.initCause(t);
-    throw error;
   }
 
   @Override

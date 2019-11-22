@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.concurrency.JobScheduler
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
@@ -16,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture
@@ -40,7 +36,7 @@ object GithubUtil {
   }
 
   private fun addCancellationListener(indicator: ProgressIndicator, thread: Thread): ScheduledFuture<*> {
-    return addCancellationListener({ if (indicator.isCanceled) thread.interrupt() })
+    return addCancellationListener { if (indicator.isCanceled) thread.interrupt() }
   }
 
   @Throws(IOException::class)
@@ -55,7 +51,7 @@ object GithubUtil {
       return task.compute()
     }
     finally {
-      if (future != null) future.cancel(true)
+      future?.cancel(true)
       Thread.interrupted()
     }
   }
@@ -110,29 +106,6 @@ object GithubUtil {
       }
   }
 
-  //region Deprecated
-  @JvmStatic
-  @Deprecated("{@link GithubAuthenticationManager}")
-  @Throws(IOException::class)
-  fun getValidAuthDataHolderFromConfig(project: Project,
-                                       authLevel: AuthLevel,
-                                       indicator: ProgressIndicator): GithubAuthDataHolder {
-    val authManager = GithubAuthenticationManager.getInstance()
-    var account = authManager.getSingleOrDefaultAccount(project)
-    if (account == null) {
-      account = invokeAndWaitIfNeeded(ModalityState.any()) { authManager.requestNewAccount(project) }
-    }
-    if (account == null) throw ProcessCanceledException()
-
-    return if (authLevel.authType == GithubAuthData.AuthType.ANONYMOUS) {
-      GithubAuthDataHolder(GithubAuthData.createAnonymous(account.server.toString()))
-    }
-    else {
-      val token = authManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
-      GithubAuthDataHolder(GithubAuthData.createTokenAuth(account.server.toString(), token, true))
-    }
-  }
-
   @JvmStatic
   @Deprecated("{@link GithubGitHelper}", ReplaceWith("GithubGitHelper.findGitRepository(project, file)",
                                                      "org.jetbrains.plugins.github.util.GithubGitHelper"))
@@ -143,7 +116,7 @@ object GithubUtil {
   @Suppress("MemberVisibilityCanBePrivate")
   @JvmStatic
   @Deprecated("{@link GithubGitHelper}")
-  fun findGithubRemoteUrl(repository: GitRepository): String? {
+  private fun findGithubRemoteUrl(repository: GitRepository): String? {
     val remote = findGithubRemote(repository) ?: return null
     return remote.getSecond()
   }
@@ -151,7 +124,7 @@ object GithubUtil {
   @Suppress("MemberVisibilityCanBePrivate")
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}, {@link GithubGitHelper}")
-  fun findGithubRemote(repository: GitRepository): Pair<GitRemote, String>? {
+  private fun findGithubRemote(repository: GitRepository): Pair<GitRemote, String>? {
     val server = GithubAuthenticationManager.getInstance().getSingleOrDefaultAccount(repository.project)?.server ?: return null
 
     var githubRemote: Pair<GitRemote, String>? = null
@@ -172,30 +145,10 @@ object GithubUtil {
     return githubRemote
   }
 
-  @JvmStatic
-  @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}, {@link GithubGitHelper}")
-  fun findUpstreamRemote(repository: GitRepository): String? {
-    val server = GithubAuthenticationManager.getInstance().getSingleOrDefaultAccount(repository.project)?.server ?: return null
-
-    for (gitRemote in repository.remotes) {
-      val remoteName = gitRemote.name
-      if ("upstream" == remoteName) {
-        for (remoteUrl in gitRemote.urls) {
-          if (server.matches(remoteUrl)) {
-            return remoteUrl
-          }
-        }
-        return gitRemote.firstUrl
-      }
-    }
-    return null
-  }
-
   @Suppress("DeprecatedCallableAddReplaceWith")
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}")
   fun isRepositoryOnGitHub(repository: GitRepository): Boolean {
     return findGithubRemoteUrl(repository) != null
   }
-  //endregion
 }

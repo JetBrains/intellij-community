@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.editor;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -22,6 +23,15 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
                                 @NotNull PsiFile file,
                                 @NotNull FileType fileType) {
     if (fileType == TextMateFileType.INSTANCE) {
+      if (c == '\'' || c == '"' || c == '`') {
+        if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) {
+          return Result.CONTINUE;
+        }
+      }
+      else if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+        return Result.CONTINUE;
+      }
+
       final int offset = editor.getCaretModel().getOffset();
       CharSequence scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
 

@@ -44,7 +44,7 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
     if (handler == null) return;
     boolean selected = !handler.isPinned;
     handler.setPinned(selected);
-    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+    Toggleable.setSelected(e.getPresentation(), selected);
   }
 
   @Override
@@ -54,7 +54,7 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
     boolean selected = enabled && handler.isPinned;
 
     e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.General.Pin_tab : null);
-    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+    Toggleable.setSelected(e.getPresentation(), selected);
 
     String text;
     // add the word "active" if the target tab is not current

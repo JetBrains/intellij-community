@@ -18,6 +18,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,7 +232,7 @@ public class UserDefinedJsonSchemaConfiguration {
       // mock URLs of fragments editor
       return StringUtil.startsWith(path, "http:")
              || StringUtil.startsWith(path, "https:")
-             || StringUtil.startsWith(path, "mock:");
+             || JsonFileResolver.isTempOrMockUrl(path);
     }
 
     @NotNull

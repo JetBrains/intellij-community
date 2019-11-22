@@ -131,7 +131,11 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
       data = HashMap()
     }
 
-    val escapedValue = if (value is String) StatisticsEventEscaper.escape(value) else value
+    val escapedValue = when (value) {
+      is String -> StatisticsEventEscaper.escape(value)
+      is List<*> -> value.map { if (it is String) StatisticsEventEscaper.escape(it) else it }
+      else -> value
+    }
     data[escapeFieldName(key)] = escapedValue
   }
 

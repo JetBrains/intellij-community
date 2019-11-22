@@ -50,7 +50,8 @@ class ConcurrentIntKeySoftValueHashMap<V> extends ConcurrentIntKeyRefValueHashMa
       if (!(obj instanceof MyRef)) {
         return false;
       }
-      MyRef other = (MyRef)obj;
+      //noinspection unchecked
+      MyRef<V> other = (MyRef<V>)obj;
       return other.valueHash == valueHash && key == other.getKey() && Comparing.equal(v, other.get());
     }
 

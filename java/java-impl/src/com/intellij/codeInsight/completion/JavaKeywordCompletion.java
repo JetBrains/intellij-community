@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
@@ -522,7 +523,7 @@ public class JavaKeywordCompletion {
               PsiInstanceOfExpression expr =
                 PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiInstanceOfExpression.class, false);
               if (expr != null) {
-                String space = context.getCodeStyleSettings().SPACE_WITHIN_PARENTHESES ? " " : "";
+                String space = CompletionStyleUtil.getCodeStyleSettings(context).SPACE_WITHIN_PARENTHESES ? " " : "";
                 context.getDocument().insertString(expr.getTextRange().getStartOffset(), "!(" + space);
                 context.getDocument().insertString(context.getTailOffset(), space + ")");
               }

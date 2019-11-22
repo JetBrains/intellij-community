@@ -10,8 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.PathMappingProvider;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +30,8 @@ public class PyRemoteAnalyzeStacktraceFilter extends PythonTracebackFilter {
       return vFile;
     }
     for (Module m: ModuleManager.getInstance(getProject()).getModules()) {
-      Sdk s = PythonSdkType.findPythonSdk(m);
-      if (PySdkUtil.isRemote(s)) {
+      Sdk s = PythonSdkUtil.findPythonSdk(m);
+      if (PythonSdkUtil.isRemote(s)) {
         PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase) s.getSdkAdditionalData();
 
         if (data != null) {

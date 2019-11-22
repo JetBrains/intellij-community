@@ -3422,9 +3422,9 @@ public class StringUtil extends StringUtilRt {
     return bytes;
   }
 
-  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
+  /** @deprecated use {@link #startsWithConcatenation(String, String...)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }

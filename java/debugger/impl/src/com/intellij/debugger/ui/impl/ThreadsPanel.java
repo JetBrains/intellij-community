@@ -23,6 +23,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -128,6 +129,10 @@ public class ThreadsPanel extends DebuggerTreePanel{
   public void dispose() {
     Disposer.dispose(myUpdateLabelsAlarm);
     super.dispose();
+  }
+
+  public JComponent getDefaultFocusedComponent() {
+    return getThreadsTree();
   }
 
   private static void updateNodeLabels(DebuggerTreeNodeImpl from) {

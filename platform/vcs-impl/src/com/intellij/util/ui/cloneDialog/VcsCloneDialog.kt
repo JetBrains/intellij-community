@@ -78,6 +78,8 @@ class VcsCloneDialog private constructor(private val project: Project,
     return getSelectedComponent()?.doValidateAll() ?: emptyList()
   }
 
+  override fun getPreferredFocusedComponent(): JComponent? = getSelectedComponent()?.getPreferredFocusedComponent()
+
   fun doClone() {
     getSelectedComponent()?.doClone()
   }

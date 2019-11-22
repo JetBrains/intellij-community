@@ -56,29 +56,13 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   public SingleRootFileViewProvider(@NotNull PsiManager manager,
                                     @NotNull VirtualFile virtualFile,
                                     final boolean eventSystemEnabled) {
-    this(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), virtualFile.getFileType()));
   }
-
-  public SingleRootFileViewProvider(@NotNull PsiManager manager,
-                                    @NotNull VirtualFile virtualFile,
-                                    final boolean eventSystemEnabled,
-                                    @NotNull final FileType fileType) {
-    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType), fileType);
-  }
-
   protected SingleRootFileViewProvider(@NotNull PsiManager manager,
                                        @NotNull VirtualFile virtualFile,
                                        final boolean eventSystemEnabled,
                                        @NotNull Language language) {
-    this(manager, virtualFile, eventSystemEnabled, language, virtualFile.getFileType());
-  }
-
-  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
-                                       @NotNull VirtualFile virtualFile,
-                                       final boolean eventSystemEnabled,
-                                       @NotNull Language language,
-                                       @NotNull FileType type) {
-    super(manager, virtualFile, eventSystemEnabled, type);
+    super(manager, virtualFile, eventSystemEnabled);
     myBaseLanguage = language;
   }
 

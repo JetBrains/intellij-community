@@ -10,11 +10,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
-import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import gnu.trove.THashSet
 import java.util.function.Function
@@ -106,11 +104,5 @@ class InvokeQuickListAction(private val myQuickList: QuickList) : QuickSwitchSch
         }
       }
     }
-  }
-}
-
-internal class QuickListPreloader : PreloadingActivity() {
-  override fun preload(indicator: ProgressIndicator) {
-    QuickListsManager.instance
   }
 }

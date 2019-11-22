@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.onlinecompletion;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
@@ -14,10 +13,7 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MavenCompletionProviderFactory implements DependencyCompletionProviderFactory {
 
@@ -61,7 +57,7 @@ public class MavenCompletionProviderFactory implements DependencyCompletionProvi
     Set<Pair<String, String>> result = new THashSet<>();
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenProjectsManager.getInstance(project).getRemoteRepositories());
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
-      ContainerUtil.addAll(remoteRepositories, repositoryProvider.getRemoteRepositories(project));
+      remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
     }
     for (MavenRemoteRepository each : remoteRepositories) {
       String id = each.getId();

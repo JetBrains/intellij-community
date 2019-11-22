@@ -6,7 +6,6 @@ import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
@@ -21,8 +20,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -50,18 +47,16 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
-import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.*;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
@@ -88,7 +83,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
-  private volatile boolean myDisposeInProgress;
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
@@ -98,9 +92,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   public ApplicationImpl(boolean isInternal,
-                           boolean isUnitTestMode,
-                           boolean isHeadless,
-                           boolean isCommandLine) {
+                         boolean isUnitTestMode,
+                         boolean isHeadless,
+                         boolean isCommandLine) {
     super(null);
 
     // reset back to null only when all components already disposed
@@ -113,7 +107,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
 
-    AWTExceptionHandler.register(); // do not crash AWT on exceptions
+    // do not crash AWT on exceptions
+    AWTExceptionHandler.register();
 
     Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
@@ -130,7 +125,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
-    Activity activity = StartUpMeasurer.start("instantiate AppDelayQueue");
+    Activity activity = StartUpMeasurer.startMainActivity("AppDelayQueue instantiation");
     Ref<Thread> result = new Ref<>();
     Runnable runnable = () -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
@@ -148,17 +143,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
-  }
-
-  @ApiStatus.Internal
-  public static void patchSystem() {
-    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
-             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
-             "; factory: " + ForkJoinPool.commonPool().getFactory());
-
-    // replaces system event queue
-    //noinspection ResultOfMethodCallIgnored
-    IdeEventQueue.getInstance();
   }
 
   /**
@@ -182,25 +166,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isInImpatientReader();
   }
 
-  private boolean disposeSelf(final boolean checkCanCloseProject) {
-    final ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-    SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
+  private boolean disposeSelf(boolean checkCanCloseProject) {
+    ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
     if (manager != null) {
-      final boolean[] canClose = {true};
       try {
-        CommandProcessor.getInstance().executeCommand(null, () -> {
-          if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
-            canClose[0] = false;
-          }
-        }, ApplicationBundle.message("command.exit"), null);
+        if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
+          return false;
+        }
       }
       catch (Throwable e) {
         LOG.error(e);
       }
-      if (!canClose[0]) {
-        return false;
-      }
     }
+
+    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
     runWriteAction(() -> Disposer.dispose(this));
 
     Disposer.assertIsEmpty();
@@ -249,6 +228,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
+        if (isDisposedOrDisposeInProgress()) {
+          LOG.debug("Task to execute on pooled thread is skipped because app is being disposed: " + this.getClass().getName());
+          return;
+        }
+
         // see the comment in "executeOnPooledThread(Callable)"
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           action.run();
@@ -333,20 +317,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public final void load(@Nullable String configPath) {
-    registerComponents(PluginManagerCore.getLoadedPlugins());
-
+    List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+    registerComponents(plugins);
     ApplicationLoader.initConfigurationStore(this, configPath);
-
-    MutablePicoContainer picoContainer = getPicoContainer();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
-      for (ServiceDescriptor service : ((IdeaPluginDescriptorImpl)plugin).getApp().getServices()) {
-        if (service.preload) {
-          picoContainer.getComponentInstance(service.getInterface());
-        }
-      }
-    }
-
+    preloadServices(plugins);
     loadComponents(null);
+    ApplicationLoader.callAppInitialized(this);
   }
 
   @ApiStatus.Internal
@@ -360,49 +336,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       else {
         ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
       }
-
-      executeOnPooledThread(() -> createLocatorFile());
-
       LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
-
-      Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
-      for (ApplicationInitializedListener listener : getExtensionArea().<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
-        if (listener == null) {
-          break;
-        }
-
-        try {
-          listener.componentsInitialized();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-      activity.end();
     }
     finally {
       token.finish();
-    }
-  }
-
-  @Override
-  @Nullable
-  protected ProgressIndicator getProgressIndicator() {
-    // could be called before full initialization
-    ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
-    return progressManager == null ? null : progressManager.getProgressIndicator();
-  }
-
-  private static void createLocatorFile() {
-    Path locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME);
-    try {
-      Files.write(locatorFile, PathManager.getHomePath().getBytes(StandardCharsets.UTF_8));
-    }
-    catch (IOException e) {
-      LOG.warn("can't store a location in '" + locatorFile + "'", e);
     }
   }
 
@@ -697,14 +634,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecycleListener.appClosing();
 
-      myDisposeInProgress = true;
-
       if (!force && !canExit()) {
         return;
       }
 
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
+
+      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
@@ -728,7 +665,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       System.exit(exitCode);
     }
     finally {
-      myDisposeInProgress = false;
       myExitInProgress = false;
     }
   }
@@ -825,7 +761,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+    if (projectManager == null) {
+      return true;
+    }
+
     Project[] projects = projectManager.getOpenProjects();
     for (Project project : projects) {
       if (!projectManager.canClose(project)) {
@@ -1331,7 +1271,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isDisposeInProgress() {
-    return myDisposeInProgress || ShutDownTracker.isShutdownHookRunning();
+    return myContainerState == ContainerState.DISPOSE_IN_PROGRESS || ShutDownTracker.isShutdownHookRunning();
   }
 
   @Override
@@ -1342,13 +1282,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @TestOnly
   public void setDisposeInProgress(boolean disposeInProgress) {
-    myDisposeInProgress = disposeInProgress;
+    myContainerState = disposeInProgress ? ContainerState.DISPOSE_IN_PROGRESS : ContainerState.ACTIVE;
   }
 
   @Override
   public String toString() {
-    return "Application" +
-           (isDisposed() ? " (Disposed)" : "") +
+    return "Application (containerState=" + myContainerState.name() + ") " +
            (isUnitTestMode() ? " (Unit test)" : "") +
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +
@@ -1369,16 +1308,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  protected void logMessageBusDelivery(@NotNull Topic<?> topic, String messageName, @NotNull Object handler, long durationInNano) {
-    super.logMessageBusDelivery(topic, messageName, handler, durationInNano);
+  protected void logMessageBusDelivery(@NotNull Topic<?> topic, String messageName, @NotNull Object handler, long duration) {
+    super.logMessageBusDelivery(topic, messageName, handler, duration);
 
     if (topic == ProjectManager.TOPIC) {
-      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationInNano, handler.getClass(), StartUpMeasurer.Level.PROJECT);
+      long start = StartUpMeasurer.getCurrentTime() - duration;
+      StartUpMeasurer.addCompletedActivity(start, handler.getClass(), ActivityCategory.PROJECT_OPEN_HANDLER, null);
     }
     else if (topic == VirtualFileManager.VFS_CHANGES) {
-      if (TimeUnit.NANOSECONDS.toMillis(durationInNano) > 50) {
+      if (TimeUnit.NANOSECONDS.toMillis(duration) > 50) {
         LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(
-          durationInNano)));
+          duration)));
       }
     }
   }

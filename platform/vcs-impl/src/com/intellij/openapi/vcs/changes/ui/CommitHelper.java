@@ -14,6 +14,9 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
+/**
+ * @deprecated use Committer directly
+ */
 @Deprecated
 public class CommitHelper {
   @NotNull private final String myActionName;

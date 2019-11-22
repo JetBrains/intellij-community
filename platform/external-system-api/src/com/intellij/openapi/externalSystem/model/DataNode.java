@@ -341,15 +341,13 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   }
 
   public final void visit(@NotNull Consumer<? super DataNode<?>> consumer) {
-    ArrayDeque<List<DataNode<?>>> toProcess = new ArrayDeque<>();
-    toProcess.add(Collections.singletonList(this));
-    List<DataNode<?>> nodes;
-    while ((nodes = toProcess.pollFirst()) != null) {
-      nodes.forEach(consumer);
-      for (DataNode<?> node : nodes) {
-        if (node.children != null) {
-          toProcess.add(node.children);
-        }
+    ArrayDeque<DataNode<?>> toProcess = new ArrayDeque<>();
+    toProcess.add(this);
+    DataNode<?> node;
+    while ((node = toProcess.pollFirst()) != null) {
+      consumer.accept(node);
+      if (node.children != null) {
+        toProcess.addAll(node.children);
       }
     }
   }

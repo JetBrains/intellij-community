@@ -23,11 +23,13 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class LiteralSelectioner extends BasicSelectioner {
   @Override
@@ -53,7 +55,14 @@ public class LiteralSelectioner extends BasicSelectioner {
                                                   new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
                                                   result);
 
-    result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
+    PsiLiteralExpressionImpl literalExpression = tryCast(e, PsiLiteralExpressionImpl.class);
+    if (literalExpression == null) literalExpression = tryCast(e.getParent(), PsiLiteralExpressionImpl.class);
+    if (literalExpression != null && literalExpression.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      result.add(new TextRange(range.getStartOffset() + 3, range.getEndOffset() - 3));
+    }
+    else {
+      result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
+    }
 
     return result;
   }

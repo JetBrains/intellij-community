@@ -2,16 +2,16 @@
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
+import com.jetbrains.jsonSchema.JsonSchemaInjectionTest;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
+import org.jetbrains.yaml.psi.YAMLFile;
 
 public class YamlByJsonSchemaInjectionTest extends JsonSchemaHighlightingTestBase {
   @Override
@@ -30,13 +30,12 @@ public class YamlByJsonSchemaInjectionTest extends JsonSchemaHighlightingTestBas
   }
 
   @SuppressWarnings("SameParameterValue")
-  private void doTest(@Language("JSON") String schema, @Language("YAML") String text, boolean shouldHaveInjection) throws Exception {
+  private void doTest(@Language("JSON") String schema, @Language("YAML") String text, boolean shouldHaveInjection) {
     final PsiFile file = configureInitially(schema, text, "json");
-    PsiElement injectedElement = InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(file, getEditor().getCaretModel().getOffset());
-    assertSame(shouldHaveInjection, injectedElement != null);
+    JsonSchemaInjectionTest.checkInjection(shouldHaveInjection, file, YAMLFile.class);
   }
 
-  public void testXml() throws Exception {
+  public void testXml() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"X\": {\n" +
@@ -46,7 +45,7 @@ public class YamlByJsonSchemaInjectionTest extends JsonSchemaHighlightingTestBas
            "}", "X: <a<caret>></a>", true);
   }
 
-  public void testNoInjection() throws Exception {
+  public void testNoInjection() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"X\": {\n" +

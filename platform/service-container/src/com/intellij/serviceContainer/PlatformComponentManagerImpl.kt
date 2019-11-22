@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.Disposable
@@ -19,52 +21,27 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.pico.DefaultPicoContainer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentMap
+
+internal val LOG = logger<PlatformComponentManagerImpl>()
 
 abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManager?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
   companion object {
-    private val LOG = logger<PlatformComponentManagerImpl>()
-
-    private val constructorParameterResolver = PlatformConstructorParameterResolver(isExtensionSupported = false)
-    private val heavyConstructorParameterResolver = PlatformConstructorParameterResolver(isExtensionSupported = true)
-
-    private class PlatformConstructorParameterResolver(private val isExtensionSupported: Boolean) : ConstructorParameterResolver() {
-      override fun isResolvable(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Boolean {
-        if (isLightService(expectedType) || super.isResolvable(componentManager, requestorKey, expectedType)) {
-          return true
-        }
-        return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
-      }
-
-      override fun resolveInstance(componentManager: PlatformComponentManagerImpl, requestorKey: Any, expectedType: Class<*>): Any? {
-        if (isLightService(expectedType)) {
-          return componentManager.getLightService(componentManager.lightServices!!, expectedType, true)
-        }
-
-        val result = super.resolveInstance(componentManager, requestorKey, expectedType)
-        if (result == null && isExtensionSupported) {
-          val extension = componentManager.extensionArea.findExtensionByClass(expectedType)
-          if (extension != null) {
-            LOG.warn("Do not use constructor injection to get extension instance (requestorKey=$requestorKey, extensionClass=${expectedType.name})")
-          }
-          return extension
-        }
-        return result
-      }
-    }
+    private val constructorParameterResolver = ConstructorParameterResolver()
 
     @JvmStatic
     protected val fakeCorePluginDescriptor = object : PluginDescriptor {
@@ -78,6 +55,9 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   private val extensionArea = ExtensionsAreaImpl(this)
 
   private var handlingInitComponentError = false
+
+  @Volatile
+  private var isServicePreloadingCancelled = false
 
   var componentCreated = false
     private set
@@ -103,45 +83,28 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     @Suppress("UNCHECKED_CAST")
     plugins as List<IdeaPluginDescriptorImpl>
     val activityNamePrefix = activityNamePrefix()
-    val parallelActivity = if (activityNamePrefix == null) null else ParallelActivity.PREPARE_APP_INIT
-    parallelActivity.run("${activityNamePrefix}service and ep registration") {
-      // register services before registering extensions because plugins can access services in their
-      // extensions which can be invoked right away if the plugin is loaded dynamically
-      for (plugin in plugins) {
-        val containerDescriptor = getContainerDescriptor(plugin)
-        registerServices(containerDescriptor.services, plugin)
-
-        containerDescriptor.extensionPoints?.let {
-          extensionArea.registerExtensionPoints(plugin, it, this)
-        }
-      }
-    }
-
-    parallelActivity.run("${activityNamePrefix}extension registration") {
-      val notifyListeners = LoadingPhase.isStartupComplete()
-      for (descriptor in plugins) {
-        descriptor.registerExtensions(extensionArea, this, notifyListeners)
-      }
-    }
 
     val app = getApplication()
     val headless = app == null || app.isHeadlessEnvironment
-
+    var componentConfigCount = 0
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
     val isHeadlessMode = app?.isHeadlessEnvironment == true
     val isUnitTestMode = app?.isUnitTestMode == true
 
-    var componentConfigCount = 0
+    var activity = if (activityNamePrefix == null) null else StartUpMeasurer.startMainActivity("${activityNamePrefix}service and ep registration")
+    // register services before registering extensions because plugins can access services in their
+    // extensions which can be invoked right away if the plugin is loaded dynamically
     for (plugin in plugins) {
       val containerDescriptor = getContainerDescriptor(plugin)
+      registerServices(containerDescriptor.services, plugin)
 
-      for (config in containerDescriptor.components) {
-        if (!config.prepareClasses(headless) || !isComponentSuitable(config)) {
+      for (descriptor in containerDescriptor.components) {
+        if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
           continue
         }
 
         try {
-          registerComponent(config, plugin)
+          registerComponent(descriptor, plugin)
           componentConfigCount++
         }
         catch (e: Throwable) {
@@ -149,7 +112,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         }
       }
 
-      val listeners = containerDescriptor.listeners
+      val listeners = getContainerDescriptor(plugin).listeners
       if (listeners.isNotEmpty()) {
         if (map == null) {
           map = ContainerUtil.newConcurrentMap()
@@ -163,7 +126,21 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
           map.getOrPut(listener.topicClassName) { SmartList() }.add(listener)
         }
       }
+
+      containerDescriptor.extensionPoints?.let {
+        extensionArea.registerExtensionPoints(plugin, it, this)
+      }
     }
+
+    if (activity != null) {
+      activity = activity.endAndStart("${activityNamePrefix}extension registration")
+    }
+
+    val notifyListeners = LoadingPhase.PROJECT_OPENED.isComplete
+    for (descriptor in plugins) {
+      descriptor.registerExtensions(extensionArea, this, notifyListeners)
+    }
+    activity?.end()
 
     if (myComponentConfigCount <= 0) {
       myComponentConfigCount = componentConfigCount
@@ -192,7 +169,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val activityNamePrefix = activityNamePrefix()
     val activity = when (activityNamePrefix) {
       null -> null
-      else -> StartUpMeasurer.start("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
+      else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
     }
 
     for (componentAdapter in myPicoContainer.componentAdapters) {
@@ -217,7 +194,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   @TestOnly
-  fun <T : Any> registerComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?): T? {
+  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?): T? {
     val adapter = myPicoContainer.getComponentAdapter(componentKey) as MyComponentAdapter
     return adapter.replaceInstance(componentImplementation, parentDisposable)
   }
@@ -241,7 +218,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
-  internal fun getApplication(): Application? = if (this is Application) this else ApplicationManager.getApplication()
+  internal open fun getApplication(): Application? = if (this is Application) this else ApplicationManager.getApplication()
 
   private fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
     val picoContainer = myPicoContainer
@@ -302,7 +279,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun <T : Any> getService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val lightServices = lightServices
     if (lightServices != null && isLightService(serviceClass)) {
-      return getLightService(lightServices, serviceClass, createIfNeeded)
+      return getLightService(serviceClass, createIfNeeded)
     }
 
     val key = serviceClass.name
@@ -311,7 +288,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       return adapter.getInstance(this, createIfNeeded)
     }
 
-    ProgressManager.checkCanceled()
+    checkCanceledIfNotInClassInit()
 
     if (parent != null) {
       val result = parent.getService(serviceClass, createIfNeeded)
@@ -328,7 +305,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return result
   }
 
-  private fun <T : Any> getLightService(lightServices: ConcurrentMap<Class<*>, Any>, serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+  internal fun <T : Any> getLightService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+    val lightServices = lightServices!!
     @Suppress("UNCHECKED_CAST")
     val result = lightServices.get(serviceClass) as T?
     if (result != null || !createIfNeeded) {
@@ -395,10 +373,10 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     return messageBus
   }
 
-  protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, durationInNano: Long) {
+  protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
     val pluginId = if (loader is PluginClassLoader) loader.pluginIdString else PluginManagerCore.CORE_PLUGIN_ID
-    StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationInNano)
+    StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
   /**
@@ -459,21 +437,13 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     initializeComponent(result, null)
-    ParallelActivity.SERVICE.record(startTime, serviceClass, getActivityLevel())
+    val pluginClassLoader = serviceClass.classLoader as? PluginClassLoader
+    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getServiceActivityCategory(this), pluginClassLoader?.pluginIdString)
     return result
   }
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId?): T {
-    try {
-      ProgressManager.checkCanceled()
-    }
-    catch (e: ProcessCanceledException) {
-      // otherwise ExceptionInInitializerError happens and the class is screwed forever
-      @Suppress("SpellCheckingInspection")
-      if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
-        throw e
-      }
-    }
+    checkCanceledIfNotInClassInit()
 
     try {
       if (parent == null) {
@@ -526,40 +496,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
   }
 
-  final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId?): T {
-    // constructorParameterResolver is very expensive, because pico container behaviour is to find greediest satisfiable constructor,
-    // so, if class has constructors (Project) and (Project, Foo, Bar), then Foo and Bar unrelated classes will be searched for.
-    // To avoid this expensive nearly linear search of extension, first resolve without our logic, and in case of error try expensive.
-    try {
-      return instantiateUsingPicoContainer(aClass, key, this, constructorParameterResolver)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: ExtensionNotApplicableException) {
-      throw e
-    }
-    catch (e: IncorrectOperationException) {
-      throw e
-    }
-    catch (e: Exception) {
-      if (lightServices == null) {
-        throw e
-      }
-      else {
-        assertExtensionInjection(pluginId, e)
-        return instantiateUsingPicoContainer(aClass, key, this, heavyConstructorParameterResolver)
-      }
-    }
+  final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
+    return instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
   }
 
-  protected open fun assertExtensionInjection(pluginId: PluginId?, e: Exception) {
-    val app = getApplication()
-    @Suppress("SpellCheckingInspection")
-    if (app != null && app.isUnitTestMode && pluginId?.idString != "org.jetbrains.kotlin" && pluginId?.idString != "Lombook Plugin") {
-      throw UnsupportedOperationException("In tests deprecated constructor injection for extension is disabled", e)
-    }
-  }
+  internal open val isGetComponentAdapterOfTypeCheckEnabled: Boolean
+    get() = true
 
   final override fun <T : Any> instantiateExtensionWithPicoContainerOnlyIfNeeded(className: String?, pluginDescriptor: PluginDescriptor?): T {
     val pluginId = pluginDescriptor?.pluginId ?: PluginId.getId("unknown")
@@ -632,9 +574,6 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
 
   @Internal
-  fun getActivityLevel(): StartUpMeasurer.Level = DefaultPicoContainer.getActivityLevel(myPicoContainer)
-
-  @Internal
   fun unloadServices(containerDescriptor: ContainerDescriptor): List<Any> {
     val unloadedInstances = ArrayList<Any>()
     for (service in containerDescriptor.services) {
@@ -649,12 +588,44 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   @Internal
-  fun precreateService(serviceClass: String) {
-    (myPicoContainer.getServiceAdapter(serviceClass) as ServiceComponentAdapter?)?.getInstance<Any>(this)
+  open fun activityNamePrefix(): String? = null
+
+  @ApiStatus.Internal
+  fun preloadServices(plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
+    @Suppress("UNCHECKED_CAST")
+    plugins as List<IdeaPluginDescriptorImpl>
+
+    val futures = mutableListOf<CompletableFuture<Void>>()
+    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+    for (plugin in plugins) {
+      for (service in getContainerDescriptor(plugin).services) {
+        if (service.preload) {
+          futures.add(CompletableFuture.runAsync(Runnable {
+            if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
+              (myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter?)?.getInstance<Any>(this)
+            }
+          }, executor))
+        }
+      }
+    }
+    executor.shutdown()
+    return CompletableFuture.allOf(*futures.toTypedArray())
+  }
+
+  // this method is required because of ProjectImpl.temporarilyDisposed (a lot of failed tests if check temporarilyDisposed)
+  internal fun isContainerDisposedOrDisposeInProgress(): Boolean {
+    return myContainerState.ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
+  }
+
+  // todo fix tests to use this implementation in `isContainerDisposed`
+  override fun isDisposedOrDisposeInProgress(): Boolean {
+    return isContainerDisposedOrDisposeInProgress()
   }
 
   @Internal
-  open fun activityNamePrefix(): String? = null
+  fun stopServicePreloading() {
+    isServicePreloadingCancelled = true
+  }
 }
 
 private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId): RuntimeException {
@@ -664,6 +635,19 @@ private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId):
   }
 }
 
-private fun <T> isLightService(serviceClass: Class<T>): Boolean {
+internal fun <T> isLightService(serviceClass: Class<T>): Boolean {
   return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
+}
+
+internal fun checkCanceledIfNotInClassInit() {
+  try {
+    ProgressManager.checkCanceled()
+  }
+  catch (e: ProcessCanceledException) {
+    // otherwise ExceptionInInitializerError happens and the class is screwed forever
+    @Suppress("SpellCheckingInspection")
+    if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
+      throw e
+    }
+  }
 }

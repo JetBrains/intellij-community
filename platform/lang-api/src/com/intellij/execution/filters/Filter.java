@@ -161,15 +161,7 @@ public interface Filter {
       }
     }
 
-    /**
-     * @deprecated use getter, the visibility of this field will be decreased.
-     */
-    @Deprecated
     private final int highlightStartOffset;
-    /**
-     * @deprecated use getter, the visibility of this field will be decreased.
-     */
-    @Deprecated
     private final int highlightEndOffset;
     /**
      * @deprecated use {@link #getHighlightAttributes()} instead, the visibility of this field will be decreased.
@@ -269,7 +261,7 @@ public interface Filter {
    * @param line         The line to be filtered. Note that the line must contain a line
    *                     separator at the end.
    * @param entireLength The length of the entire text including the line passed for filtration.
-   * @return <tt>null</tt>, if there was no match, otherwise, an instance of {@link Result}
+   * @return {@code null} if there was no match. Otherwise, an instance of {@link Result}
    */
   @Nullable
   Result applyFilter(@NotNull String line, int entireLength);

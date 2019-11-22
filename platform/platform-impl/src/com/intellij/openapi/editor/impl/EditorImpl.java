@@ -490,7 +490,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (component != null && component.getParent() == null) {
           return Collections.singleton(component).iterator();
         }
-        return ContainerUtil.emptyIterator();
+        return Collections.emptyIterator();
       });
 
     myHeaderPanel = new MyHeaderPanel();
@@ -2394,8 +2394,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void processMouseDragged(@NotNull MouseEvent e) {
-    if (!JBSwingUtilities.isLeftMouseButton(e) && !JBSwingUtilities.isMiddleMouseButton(e)
-        || (Registry.is("editor.disable.drag.with.right.button") && JBSwingUtilities.isRightMouseButton(e))) {
+    if (!SwingUtilities.isLeftMouseButton(e) && !SwingUtilities.isMiddleMouseButton(e)
+        || (Registry.is("editor.disable.drag.with.right.button") && SwingUtilities.isRightMouseButton(e))) {
       return;
     }
 

@@ -543,8 +543,8 @@ public class VcsUtil {
     return idx > 0;
   }
 
-  public static String getPathForProgressPresentation(@NotNull final File file) {
-    return file.getName() + " (" + file.getParent() + ")";
+  public static String getPathForProgressPresentation(@NotNull File file) {
+    return file.getName() + " (" + FileUtil.getLocationRelativeToUserHome(file.getParent()) + ")";
   }
 
   @NotNull

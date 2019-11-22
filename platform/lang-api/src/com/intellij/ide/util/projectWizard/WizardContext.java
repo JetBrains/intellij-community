@@ -63,6 +63,10 @@ public class WizardContext extends UserDataHolderBase {
     myProjectStorageFormat = format;
   }
 
+  /**
+   * @deprecated useless
+   */
+  @Deprecated
   public boolean isNewWizard() {
     return true;
   }

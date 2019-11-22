@@ -36,6 +36,8 @@ import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkType
 
+//TODO: move to extensions
+
 interface ContextAnchor {
   val sdk: Sdk?
   val project: Project
@@ -142,7 +144,7 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
     }
 
     if (element == null) { // Resolve against roots
-      element = resolveQualifiedNameWithClasses(currentName, resolveContext).firstOrNull()
+      element = resolveQualifiedName(currentName, resolveContext).firstOrNull()
     }
 
     if (element != null || stopOnFirstFail) {

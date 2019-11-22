@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -222,7 +221,7 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   protected void fillState(@NotNull State<PS> state) {
-    state.setLinkedExternalProjectsSettings(ContainerUtilRt.newTreeSet(myLinkedProjectsSettings.values()));
+    state.setLinkedExternalProjectsSettings(new TreeSet<>(myLinkedProjectsSettings.values()));
   }
 
   protected void loadState(@NotNull State<PS> state) {

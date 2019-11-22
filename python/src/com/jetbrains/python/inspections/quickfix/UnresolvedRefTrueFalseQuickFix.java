@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +44,9 @@ public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    PyExpression expression = elementGenerator.createExpressionFromText(newName);
     final PsiElement element = myElement.getElement();
     if (element != null) {
+      PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), newName);
       element.replace(expression);
     }
   }

@@ -54,14 +54,17 @@ public abstract class DependenciesBuilder {
     return myTotalFileCount;
   }
 
+  @NotNull
   public Map<PsiFile, Set<PsiFile>> getDependencies() {
     return myDependencies;
   }
 
+  @NotNull
   public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
     return getDependencies();
   }
 
+  @NotNull
   public AnalysisScope getScope() {
     return myScope;
   }
@@ -74,6 +77,7 @@ public abstract class DependenciesBuilder {
     return null;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

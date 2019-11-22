@@ -42,6 +42,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
 
   private RunConfigurationOptions myOptions;
 
+  @NotNull
   private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
   protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, @Nullable String name) {

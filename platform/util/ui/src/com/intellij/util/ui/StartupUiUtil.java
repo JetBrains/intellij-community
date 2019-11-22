@@ -2,8 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivitySubNames;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JreHiDpiUtil;
@@ -13,6 +12,7 @@ import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,6 +26,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -49,8 +50,9 @@ public class StartupUiUtil {
       // installation in order to let it properly scale default font
       // based on Xft.dpi value.
       try {
+        @SuppressWarnings("SpellCheckingInspection")
         String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-        Class cls = Class.forName(name);
+        Class<?> cls = Class.forName(name);
         LookAndFeel laf = (LookAndFeel)cls.newInstance();
         // if gtk lib is available
         if (laf.isSupportedLookAndFeel()) {
@@ -71,10 +73,7 @@ public class StartupUiUtil {
 
     blockATKWrapper();
 
-    // separate activity to make clear that it is not our code takes time
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
-    Toolkit.getDefaultToolkit();
-    activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
+    Activity activity = StartUpMeasurer.startActivity("LaF initialization");
     UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }
@@ -84,7 +83,7 @@ public class StartupUiUtil {
       return;
     }
 
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("configure html kit");
+    Activity activity = StartUpMeasurer.startActivity("html kit configuration");
 
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();
@@ -102,12 +101,41 @@ public class StartupUiUtil {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
   }
 
+  @ApiStatus.Internal
+  public static int doGetLcdContrastValueForSplash(boolean isUnderDarcula) {
+    if (SystemInfo.isMacIntel64) {
+      return isUnderDarcula ? 140 : 230;
+    }
+    else {
+      @SuppressWarnings({"unchecked", "SpellCheckingInspection"})
+      Map<Object, Object> map = (Map<Object, Object>)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+      if (map == null) {
+        return 140;
+      }
+      else {
+        Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+        if (o == null) {
+          return 140;
+        }
+        else {
+          int lcdContrastValue = (Integer)o;
+          return normalizeLcdContrastValue(lcdContrastValue);
+        }
+      }
+    }
+  }
+
+  protected static int normalizeLcdContrastValue(int lcdContrastValue) {
+    return (lcdContrastValue < 100 || lcdContrastValue > 250) ? 140 : lcdContrastValue;
+  }
+
   /*
    * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
    * which is called from Toolkit.getDefaultToolkit().
    */
   private static void blockATKWrapper() {
     // registry must be not used here, because this method called before application loading
+    //noinspection SpellCheckingInspection
     if (!SystemInfo.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
       return;
     }

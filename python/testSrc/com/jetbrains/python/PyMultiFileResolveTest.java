@@ -19,7 +19,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -429,8 +429,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testEmptyModuleNamesake() {
     final PsiElement module = doResolve();
     assertNotNull(module);
-    final Sdk moduleSdk = PythonSdkType.findPythonSdk(myFixture.getModule());
-    assertFalse(PythonSdkType.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
+    final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertFalse(PythonSdkUtil.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
   }
 
   // PY-18626
@@ -466,8 +466,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   // PY-28321
-  // TODO: The test should be turned on as soon as PY-16688 and PY-23087 are implemented
-  public void ignoreTestImportManySourceRootsReverseRootOrder() {
+  public void testImportManySourceRootsReverseRootOrder() {
     myFixture.copyDirectoryToProject("importManySourceRoots", "");
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
@@ -475,6 +474,38 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       assertInstanceOf(ref, PsiPolyVariantReference.class);
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(0, elements.size());
+    });
+  }
+
+  // PY-16688
+  public void testPkgResourcesNamespace() {
+    myFixture.copyDirectoryToProject("pkgResourcesNamespace", "");
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(1, elements.size());
+      PsiFile root1 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root1/pkg/__init__.py"));
+      PsiFile root2 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root2/pkg/__init__.py"));
+      assertNotParsed(root1);
+      assertNotParsed(root2);
+    });
+  }
+
+  // PY-23087
+  public void testPkgutilNamespace() {
+    myFixture.copyDirectoryToProject("pkgutilNamespace", "");
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(1, elements.size());
+      PsiFile root1 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root1/pkg/__init__.py"));
+      PsiFile root2 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root2/pkg/__init__.py"));
+      assertNotParsed(root1);
+      assertNotParsed(root2);
     });
   }
 
@@ -503,9 +534,14 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-19989
   public void testAmbiguousImplicitRelativeImport() {
-    prepareTestDirectory();
-    assertSameElements(doMultiResolveAndGetFileUrls("pkg2/__init__.py"), "pkg2/mod.py");
-    assertSameElements(doMultiResolveAndGetFileUrls("pkg/__init__.py"), "pkg/mod.py");
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON27,
+      () -> {
+        prepareTestDirectory();
+        assertSameElements(doMultiResolveAndGetFileUrls("pkg2/__init__.py"), "pkg2/mod.py");
+        assertSameElements(doMultiResolveAndGetFileUrls("pkg/__init__.py"), "pkg/mod.py");
+      }
+    );
   }
 
   // PY-21088

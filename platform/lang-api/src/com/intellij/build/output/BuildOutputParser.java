@@ -2,14 +2,12 @@
 package com.intellij.build.output;
 
 import com.intellij.build.events.BuildEvent;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.Consumer;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildOutputParser {
   boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer);
 }

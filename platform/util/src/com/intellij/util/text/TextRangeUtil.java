@@ -19,13 +19,11 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
- * @author Rustam Vishnyakov
+ * Miscellaneous utility methods to manipulate lists of text ranges.
+ * @see TextRange
  */
 public class TextRangeUtil {
 
@@ -46,7 +44,7 @@ public class TextRangeUtil {
    * @param excludedRanges The list of ranges to exclude.
    * @return A list of ranges after excluded ranges have been applied.
    */
-  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
+  public static Collection<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
       if (excludedRanges.size() > 1) {
         excludedRanges.sort(RANGE_COMPARATOR);
@@ -88,6 +86,36 @@ public class TextRangeUtil {
       upperBound = Math.max(upperBound, textRange.getEndOffset());
     }
     return new TextRange(lowerBound, upperBound);
+  }
+
+  /**
+   * Checks that the given range intersects one of the ranges in the list by performing a binary search.
+   * @param range     The range to check.
+   * @param rangeList The range list. <b>The list must be ordered by range start offset.</b>
+   * @return True if the range intersects at least one range in the list.
+   */
+  public static boolean intersectsOneOf(TextRange range, List<? extends TextRange> rangeList) {
+    return rangesContain(rangeList, range.getStartOffset()) || rangesContain(rangeList, range.getEndOffset());
+  }
+
+  /**
+   * Checks that the given offset is contained in one of the ranges in the list by performing a binary search.
+   * @param range     The range to check.
+   * @param rangeList The range list. <b>The list must be ordered by range start offset.</b>
+   * @return True if the range intersects at least one range in the list.
+   */
+  public static boolean rangesContain(List<? extends TextRange> rangeList, int offset) {
+    return rangesContain(rangeList, 0, rangeList.size() - 1, offset);
+  }
+
+  private static boolean rangesContain(List<? extends TextRange> ranges, int startIndex, int endIndex, int offset) {
+    if (endIndex < startIndex || ranges.size() <= startIndex || ranges.size() <= endIndex) return false;
+    int startOffset = ranges.get(startIndex).getStartOffset();
+    int endOffset = ranges.get(endIndex).getEndOffset();
+    if (offset < startOffset || offset > endOffset) return false;
+    if (startIndex == endIndex) return true;
+    int midIndex = (endIndex + startIndex) / 2;
+    return rangesContain(ranges, startIndex, midIndex, offset)  || rangesContain(ranges, midIndex  + 1, endIndex, offset);
   }
 
   public static int getDistance(@NotNull Segment r2, @NotNull Segment r1) {

@@ -6,9 +6,11 @@ import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
@@ -17,6 +19,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.reflect.KMutableProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
 
@@ -44,19 +47,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     // as static method to ensure that members of current row are not used
     private fun configureSeparatorRow(row: MigLayoutRow, title: String?) {
       val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
-      val cc = CC()
-      val spacing = row.spacing
-      cc.vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
-      if (title == null) {
-        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
-        row.isTrailingSeparator = true
-      }
-      else {
-        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
-        // TitledSeparator doesn't grow by default opposite to SeparatorComponent
-        cc.growX()
-      }
-      row.addComponent(separatorComponent, lazyOf(cc))
+      row.addTitleComponent(separatorComponent, isEmpty = title == null)
     }
   }
 
@@ -156,6 +147,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
+    return createChildRow(indent, label, isSeparated, noGrid, title)
+  }
+
+  private fun createChildRow(indent: Int,
+                             label: JLabel? = null,
+                             isSeparated: Boolean = false,
+                             noGrid: Boolean = false,
+                             title: String? = null): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
 
     val row = MigLayoutRow(this, builder,
@@ -188,6 +187,38 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     return row
+  }
+
+  private fun <T : JComponent> addTitleComponent(titleComponent: T, isEmpty: Boolean) {
+    val cc = CC().apply {
+      vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
+      if (isEmpty) {
+        vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+        isTrailingSeparator = true
+      }
+      else {
+        vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
+        // TitledSeparator doesn't grow by default opposite to SeparatorComponent
+        growX()
+      }
+    }
+    addComponent(titleComponent, lazyOf(cc))
+  }
+
+  override fun hideableRow(title: String, init: Row.() -> Unit): Row {
+    val titledSeparator = HideableTitledSeparator(title)
+    val separatorRow = createChildRow()
+    separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
+    builder.hideableRowNestingLevel++
+    try {
+      val panelRow = createChildRow(indent + spacing.indentLevel).apply(init)
+      titledSeparator.row = panelRow
+      titledSeparator.collapse()
+      return panelRow
+    }
+    finally {
+      builder.hideableRowNestingLevel--
+    }
   }
 
   private fun getOrCreateSubRowsList(): MutableList<MigLayoutRow> {
@@ -280,6 +311,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
     }
 
+    if (builder.hideableRowNestingLevel > 0) {
+      cc.value.hideMode = 0
+    }
+
     // if this row is not labeled and:
     // a. previous row is labeled and first component is a "Remember" checkbox, skip one column (since this row doesn't have a label)
     // b. some previous row is labeled and first component is a checkbox, span (since this checkbox should span across label and content cells)
@@ -368,13 +403,23 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     row.addComponent(component, lazyOf(cc))
     return row
   }
+
+  override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
+    return super.radioButton(text, comment).also { attachSubRowsEnabled(it.component) }
+  }
+
+  override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
+    return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
+  }
 }
 
 class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,
   override val component: T
-) : CellBuilder<T>, CheckboxCellBuilder {
+) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
+  private var applyIfEnabled = false
+
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
     row.addCommentRow(component, text, maxLineLength)
     return this
@@ -420,8 +465,25 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     return this
   }
 
+  override fun applyIfEnabled(): CellBuilder<T> {
+    applyIfEnabled = true
+    return this
+  }
+
+  override fun shouldSaveOnApply(): Boolean {
+    if (applyIfEnabled && !component.isEnabled) return false
+    return true
+  }
+
   override fun actsAsLabel() {
     builder.updateComponentConstraints(component) { spanX = 1 }
+  }
+
+  override fun noGrowY() {
+    builder.updateComponentConstraints(component) {
+      growY(0.0f)
+      pushY(0.0f)
+    }
   }
 }
 

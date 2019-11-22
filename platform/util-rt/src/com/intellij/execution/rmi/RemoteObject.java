@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.rmi;
 
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +68,10 @@ public class RemoteObject implements Remote, Unreferenced {
     if (children.isEmpty()) return;
     final ArrayList<RemoteObject> list = new ArrayList<RemoteObject>(children.size());
     for (WeakReference<? extends RemoteObject> child : children) {
-      ContainerUtilRt.addIfNotNull(list, child.get());
+      RemoteObject element = child.get();
+      if (element != null) {
+        list.add(element);
+      }
     }
     myChildren.keySet().removeAll(list);
     for (RemoteObject child : list) {

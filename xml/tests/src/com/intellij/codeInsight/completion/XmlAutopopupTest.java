@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
 
 public class XmlAutopopupTest extends CompletionAutoPopupTestCase {
   public void testDoNotShowPopupInText() {

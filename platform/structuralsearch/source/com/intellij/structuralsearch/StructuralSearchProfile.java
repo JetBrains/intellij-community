@@ -234,11 +234,7 @@ public abstract class StructuralSearchProfile {
 
   public void provideAdditionalReplaceOptions(@NotNull PsiElement node, ReplaceOptions options, ReplacementBuilder builder) {}
 
-  public int handleSubstitution(final ParameterInfo info,
-                                MatchResult match,
-                                StringBuilder result,
-                                int offset,
-                                ReplacementInfo replacementInfo) {
+  public void handleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       final String replacementString;
       boolean removeSemicolon = false;
@@ -271,27 +267,22 @@ public abstract class StructuralSearchProfile {
         replacementString = match.getMatchImage();
       }
 
-      offset = Replacer.insertSubstitution(result, offset, info, replacementString);
+      int offset = Replacer.insertSubstitution(result, 0, info, replacementString);
       if (info.isStatementContext() &&
           (removeSemicolon || StringUtil.endsWithChar(replacementString, ';') || StringUtil.endsWithChar(replacementString, '}'))) {
         final int start = info.getStartIndex() + offset;
         result.delete(start, start + 1);
-        offset--;
       }
     }
-    return offset;
   }
 
-  public int handleNoSubstitution(ParameterInfo info, int offset, StringBuilder result) {
+  public void handleNoSubstitution(ParameterInfo info, StringBuilder result) {
     if (info.isHasCommaBefore()) {
-      result.delete(info.getBeforeDelimiterPos() + offset, info.getBeforeDelimiterPos() + 1 + offset);
-      --offset;
+      result.delete(info.getBeforeDelimiterPos(), info.getBeforeDelimiterPos() + 1);
     }
     else if (info.isHasCommaAfter()) {
-      result.delete(info.getAfterDelimiterPos() + offset, info.getAfterDelimiterPos() + 1 + offset);
-      --offset;
+      result.delete(info.getAfterDelimiterPos(), info.getAfterDelimiterPos() + 1);
     }
-    return offset;
   }
 
   @Contract("null -> false")

@@ -65,6 +65,6 @@ public class IssueLinkHtmlRenderer {
 
   @NotNull
   public static String formatTextWithLinks(@NotNull Project project, @NotNull final String c) {
-    return formatTextWithLinks(project, c, Convertor.SELF);
+    return formatTextWithLinks(project, c, Convertor.self());
   }
 }

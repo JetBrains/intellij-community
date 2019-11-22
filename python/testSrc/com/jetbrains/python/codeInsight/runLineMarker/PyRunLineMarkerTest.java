@@ -24,16 +24,16 @@ import java.util.List;
 
 public class PyRunLineMarkerTest extends PyTestCase {
   public void testRunnableMain() {
-    List<LineMarkerInfo> infos = getInfos("runnable.py");
+    List<LineMarkerInfo<?>> infos = getInfos("runnable.py");
     assertEquals("Wrong number of line markers", 1, infos.size());
-    LineMarkerInfo lineMarkerInfo = infos.get(0);
+    LineMarkerInfo<?> lineMarkerInfo = infos.get(0);
     PsiElement elementWithInfo = lineMarkerInfo.getElement();
     assertNotNull(elementWithInfo);
     assertTrue(elementWithInfo.getParent().getText().startsWith("if"));
   }
 
   public void testWithManyIfs() {
-    List<LineMarkerInfo> infos = getInfos("runnable_with_ifs.py");
+    List<LineMarkerInfo<?>> infos = getInfos("runnable_with_ifs.py");
     assertEquals("There should be only one marker", 1, infos.size());
   }
 
@@ -42,11 +42,11 @@ public class PyRunLineMarkerTest extends PyTestCase {
   }
 
   public void testIncorrectName() {
-    List<LineMarkerInfo> infos = getInfos("wrong_spelling.py");
+    List<LineMarkerInfo<?>> infos = getInfos("wrong_spelling.py");
     assertEmpty("Should not be runnable", infos);
   }
 
-  private List<LineMarkerInfo> getInfos(String fileName) {
+  private List<LineMarkerInfo<?>> getInfos(String fileName) {
     myFixture.configureByFile(fileName);
     myFixture.doHighlighting();
     return DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.getEditor().getDocument(), myFixture.getProject());

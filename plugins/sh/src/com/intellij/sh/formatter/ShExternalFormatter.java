@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
+import com.intellij.sh.ShSupport;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
@@ -46,7 +47,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
   @Override
   public boolean activeForFile(@NotNull PsiFile file) {
-    return file instanceof ShFile;
+    return ShSupport.getInstance().isExternalFormatterEnabled() && file instanceof ShFile;
   }
 
   @Nullable

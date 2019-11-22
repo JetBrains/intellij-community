@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +30,15 @@ class MyTestLanguage extends Language {
 
   private MyTestLanguage() {
     super(MyBaseLanguage.INSTANCE, "L1");
+  }
+}
+
+class MyTestLanguage2 extends Language {
+
+  public static final Language INSTANCE = new MyTestLanguage2();
+
+  private MyTestLanguage2() {
+    super(MyTestLanguage.INSTANCE, "L2");
   }
 }
 

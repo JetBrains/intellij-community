@@ -17,7 +17,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.text.LiteralFormatUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +153,8 @@ public class PsiLiteralExpressionImpl
     return null;
   }
 
-  private String getTextBlockText() {
+  @Nullable
+  public String getTextBlockText() {
     String[] lines = getTextBlockLines();
     if (lines == null) return null;
 
@@ -201,13 +201,6 @@ public class PsiLiteralExpressionImpl
       if (!Character.isWhitespace(c) || start == rawText.length()) return null;
     }
     return rawText.substring(start, rawText.length() - 3).split("\n", -1);
-  }
-
-  /** @deprecated to be removed in IDEA 2019.3 */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public String getRawString() {
-    return null;
   }
 
   @Nullable

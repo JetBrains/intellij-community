@@ -18,7 +18,6 @@ package com.intellij.vcs.log.paint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
@@ -237,7 +236,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     for (PrintElement printElement : printElements) {
       if (printElement.isSelected()) {
         selected.add(printElement); // to draw later
-      } else {
+      }
+      else {
         drawElement(g2, printElement, false);
       }
     }

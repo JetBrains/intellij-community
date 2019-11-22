@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.*;
@@ -35,22 +33,20 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
-  private final ModuleManager myModuleManager;
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;
   @NonNls private static final String NO_FRAMEWORKS_NODE = "No facets are configured";
   private boolean myTreeWasInitialized;
 
-  public FacetStructureConfigurable(final Project project, ModuleManager moduleManager) {
+  public FacetStructureConfigurable(@NotNull Project project) {
     super(project);
-    myModuleManager = moduleManager;
   }
 
   @Override
@@ -164,7 +160,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     List<ProjectStructureElement> elements = new ArrayList<>();
-    for (Module module : myModuleManager.getModules()) {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       Facet[] facets = FacetManager.getInstance(module).getAllFacets();
       for (Facet facet : facets) {
         elements.add(new FacetProjectStructureElement(myContext, facet));

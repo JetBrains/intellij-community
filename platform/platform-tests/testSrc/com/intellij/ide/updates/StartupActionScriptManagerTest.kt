@@ -99,7 +99,7 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
       StartupActionScriptManager.CopyCommand(copySource, copyDestinationInOld),
       StartupActionScriptManager.UnzipCommand(unzipSource, oldTarget),
       StartupActionScriptManager.DeleteCommand(deleteInOld)))
-    StartupActionScriptManager.executeActionScript(scriptFile, oldTarget.toPath(), newTarget)
+    StartupActionScriptManager.executeActionScript(scriptFile.toFile(), oldTarget, newTarget)
 
     assertFalse(copyDestinationInOld.exists())
     assertTrue(copyDestinationInNew.exists())

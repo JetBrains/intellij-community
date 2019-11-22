@@ -145,7 +145,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.syntaxHighlighter"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
     </extensionPoint>
 
@@ -356,17 +357,14 @@
     <extensionPoint name="scopeDescriptorProvider" interface="com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider"/>
     <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 
-    <extensionPoint name="localInspection"
-                    beanClass="com.intellij.codeInspection.LocalInspectionEP">
+    <extensionPoint name="localInspection" beanClass="com.intellij.codeInspection.LocalInspectionEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
     </extensionPoint>
 
-    <extensionPoint name="globalInspection"
-                    beanClass="com.intellij.codeInspection.InspectionEP">
+    <extensionPoint name="globalInspection" beanClass="com.intellij.codeInspection.InspectionEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
     </extensionPoint>
-    <extensionPoint name="inspectionToolProvider"
-                    interface="com.intellij.codeInspection.InspectionToolProvider"/>
+    <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory"/>
 
     <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider"/>
@@ -554,6 +552,8 @@
     <extensionPoint name="completion.ml.contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider"/>
 
     <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
@@ -984,8 +984,6 @@
 
     <extensionPoint name="defaultHighlightingSettingProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider"/>
-
-    <extensionPoint name="sdkResolveScopeProvider" interface="com.intellij.psi.SdkResolveScopeProvider"/>
 
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier"/>

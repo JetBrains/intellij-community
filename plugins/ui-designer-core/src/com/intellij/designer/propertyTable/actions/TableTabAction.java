@@ -70,7 +70,7 @@ public class TableTabAction extends ToggleAction implements DumbAware {
   }
 
   public void updateState() {
-    getTemplatePresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, Boolean.valueOf(isSelected()));
+    Toggleable.setSelected(getTemplatePresentation(), isSelected());
     myButton.repaint();
   }
 }

@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
@@ -38,7 +37,7 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class MvcProjectWithoutLibraryNotificator implements StartupActivity, DumbAware {
+public class MvcProjectWithoutLibraryNotificator implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;

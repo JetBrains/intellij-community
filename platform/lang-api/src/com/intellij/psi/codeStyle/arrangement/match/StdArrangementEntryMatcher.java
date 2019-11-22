@@ -11,7 +11,6 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,7 +155,8 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     @Nullable
     @Override
     public Collection<ArrangementEntryMatcher> buildMatchers() {
-      List<ArrangementEntryMatcher> result = ContainerUtilRt.newArrayList(myMatchers);
+      List<ArrangementEntryMatcher> result =
+        new ArrayList<>(myMatchers);
       Collection<ArrangementAtomMatchCondition> entryTokens = context.get(StdArrangementTokenType.ENTRY_TYPE);
       if (entryTokens!= null) {
         result.add(new ByTypeArrangementEntryMatcher(entryTokens));
