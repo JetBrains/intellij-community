@@ -31,10 +31,22 @@ import java.util.concurrent.TimeUnit;
  *   {@link FUCounterUsageLogger#logEvent(String, String)} or
  *   {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)};
  *   </li>
- *   <li>Register collector in XML as {@code <statistics.counterUsagesCollector groupId="ID" version="VERSION"/>};</li>
+ *   <li>Register collector in plugin.xml as {@code <statistics.counterUsagesCollector groupId="ID" version="1"/>};</li>
  *   <li>Specify collectors data scheme and implement custom validation rules if necessary.<br/>
  *   For more information see {@link SensitiveDataValidator};</li>
  *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> to add group, its data scheme and description to the whitelist;</li>
+ * </ol>
+ *
+ * To test collector:
+ * <ol>
+ *  <li>
+ *    If group is not whitelisted, add it to local whitelist with "Add Test Group to Local Whitelist" action.<br/>
+ *    {@link com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction}
+ *  </li>
+ *  <li>
+ *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>
+ *    {@link com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction}
+ *  </li>
  * </ol>
  *
  * @see ApplicationUsagesCollector

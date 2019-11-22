@@ -16,6 +16,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * Action adds not whitelisted statistics group to a local whitelist for testing.
+ *
+ * If "Add custom validation rules" is disabled, all event id and event data values from the group will be allowed.
+ */
 public class AddTestGroupToLocalWhitelistAction extends AnAction {
 
   @Override
@@ -55,6 +60,6 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
   protected void showNotification(@NotNull Project project,
                                   @NotNull NotificationType type,
                                   @NotNull String message) {
-    Notifications.Bus.notify(new Notification("FeatureUsageStatistics", "Feature Usage Statistics", message, type), project);
+    Notifications.Bus.notify(new Notification("FeatureUsageStatistics", "Feature usage statistics", message, type), project);
   }
 }

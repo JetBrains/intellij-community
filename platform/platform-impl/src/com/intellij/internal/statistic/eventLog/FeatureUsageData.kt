@@ -223,32 +223,53 @@ class FeatureUsageData {
     return addData("count", count)
   }
 
+  /**
+   * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
   fun addData(key: String, value: Boolean): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  /**
+   * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
   fun addData(key: String, value: Int): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  /**
+   * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
   fun addData(key: String, value: Long): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  /**
+   * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
   fun addData(key: String, value: Float): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  /**
+   * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
   fun addData(key: String, value: Double): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  /**
+   * @param key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   * @param value can contain "-", "_", ".", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
   fun addData(key: String, value: String): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
   /**
    * The data reported by this method will be available ONLY for ad-hoc analysis.
+   *
+   * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
   fun addData(key: String, value: List<String>): FeatureUsageData {
     return addDataInternal(key, value)

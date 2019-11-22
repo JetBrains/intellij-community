@@ -3,7 +3,9 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.internal.statistic.eventLog.EventLogFile;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -19,6 +21,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Collects the data from all state collectors and record it in event log.
+ *
+ * @see ApplicationUsagesCollector
+ * @see ProjectUsagesCollector
+ */
 public class RecordStateStatisticsEventLogAction extends AnAction {
   private static class Holder {
     private static final FUStateUsagesLogger myStatesLogger = new FUStateUsagesLogger();
@@ -42,7 +50,7 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
 
         ApplicationManager.getApplication().invokeLater(
           () -> {
-            Notification notification = new Notification("FeatureUsageStatistics", "Feature Usage Statistics",
+            Notification notification = new Notification("FeatureUsageStatistics", "Feature usage statistics",
                                                          "Finished collecting and recording events", NotificationType.INFORMATION);
             if (logVFile != null) {
               notification.addAction(NotificationAction.createSimple("Show Log File", () -> {
