@@ -52,7 +52,7 @@
 
     <!-- listen VFS_CHANGES - it is core service, so, don't want use lazy message bus listener without a reason -->
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
-                        serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl" preload="await"/>
+                        serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
     <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
