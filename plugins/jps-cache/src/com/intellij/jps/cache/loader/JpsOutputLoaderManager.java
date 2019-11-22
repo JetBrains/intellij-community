@@ -259,7 +259,7 @@ public class JpsOutputLoaderManager {
   }
 
   private static int getThreadPoolSize() {
-    return (Runtime.getRuntime().availableProcessors() / 2) > 3 ? 3 : 1;
+    return (Runtime.getRuntime().availableProcessors()) > 3 ? 3 : 2;
   }
 
   private void onFail() {
