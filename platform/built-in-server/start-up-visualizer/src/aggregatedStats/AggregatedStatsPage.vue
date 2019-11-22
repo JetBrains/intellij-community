@@ -133,7 +133,7 @@
 <style>
 .aggregatedChart {
   width: 100%;
-  height: 340px;
+  height: 300px;
 }
 
 table.chartTooltip td {

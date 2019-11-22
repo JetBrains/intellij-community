@@ -40,5 +40,8 @@
     "last 2 versions",
     "not ie <= 8",
     "not dead"
-  ]
+  ],
+  "resolutions": {
+    "chokidar": "^3.3.0"
+  }
 }
