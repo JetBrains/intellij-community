@@ -28,10 +28,11 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/org/sonatype/aether/aether-util/1.13.1:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-cipher/1.4:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-sec-dispatcher/1.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/sonatype/sisu/sisu-guava/0.9.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/sonatype/sisu/sisu-guice/3.1.0:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/sisu/sisu-inject-bean/2.3.0:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/sisu/sisu-inject-plexus/2.3.0:jar",
+        "//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar",
+        "//prebuilts/tools/common/m2/repository/org/sonatype/sisu/sisu-guava/0.9.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/sonatype/sisu/sisu-guice/3.1.0:jar",
         "//tools/idea/plugins/maven/artifact-resolver/common:intellij.maven.artifactResolver.common[module]",
     ],
 )

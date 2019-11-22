@@ -61,6 +61,8 @@ iml_module(
         "//tools/idea/.idea/libraries:XStream",
         "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi[module]",
         "//tools/idea/plugins/maven:intellij.maven[module]",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
+        "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
     ],
 )
 

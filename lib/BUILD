@@ -21,13 +21,6 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "serviceMessages",
-    jars = ["serviceMessages.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "ecj-4.10",
     jars = ["ecj-4.10.jar"],
     visibility = ["//visibility:public"],

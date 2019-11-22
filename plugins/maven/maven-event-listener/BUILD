@@ -9,12 +9,9 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//prebuilts/tools/common/m2/repository/aopalliance/aopalliance/1.0:jar",
         "//prebuilts/tools/common/m2/repository/com/google/guava/guava/18.0:jar",
-        "//prebuilts/tools/common/m2/repository/com/google/inject/guice/4.0:jar",
         "//prebuilts/tools/common/m2/repository/javax/annotation/jsr250-api/1.0:jar",
         "//prebuilts/tools/common/m2/repository/javax/enterprise/cdi-api/1.0:jar",
-        "//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-aether-provider/3.3.9:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.3.9:jar",
@@ -38,6 +35,7 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.2:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-cipher/1.4:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-sec-dispatcher/1.3:jar",
-        "//tools/idea/.idea/libraries:javax-inject",
+        "//prebuilts/tools/common/m2/repository/com/google/inject/guice/4.0:jar",
+        "//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar",
     ],
 )

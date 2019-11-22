@@ -457,9 +457,9 @@ iml_project(
         "//tools/idea/plugins/settings-repository:intellij.settingsRepository.tests",
         "//tools/idea/plugins/sh:intellij.sh",
         "//tools/idea/plugins/stats-collector/completion-ranker:intellij.statsCollector.completionRanker",
-        "//tools/idea/plugins/stats-collector/features:intellij.statsCollector.features",
         "//tools/idea/plugins/stats-collector/log-events:intellij.statsCollector.logEvents",
         "//tools/idea/plugins/stats-collector:intellij.statsCollector",
+        "//tools/idea/plugins/stats-collector:intellij.statsCollector.tests",
         "//tools/idea/plugins/stream-debugger:intellij.java.debugger.streams",
         "//tools/idea/plugins/svn4idea:intellij.vcs.svn",
         "//tools/idea/plugins/svn4idea:intellij.vcs.svn.tests",
@@ -722,6 +722,8 @@ iml_module(
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl[module]",
         "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.0.7:jar",
+        "//tools/idea/plugins/copyright:intellij.copyright[module]",
     ],
 )
 
@@ -971,6 +973,7 @@ iml_module(
         "//tools/idea/platform/build-scripts:intellij.platform.images.build[module, test]",
         "//tools/idea/plugins/devkit/devkit-java-tests:intellij.devkit.java.tests[module, test]",
         "//tools/idea/plugins/testng_rt/tests:intellij.testng.rt.tests[module, test]",
+        "//tools/idea/plugins/stats-collector:intellij.statsCollector.tests[module, test]",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.idea[module]",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.extensions[module]",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.output.parser[module]",

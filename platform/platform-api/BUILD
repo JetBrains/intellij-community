@@ -66,5 +66,6 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
         "//tools/idea/platform/platform-util-io:intellij.platform.ide.util.io[module]",
+        "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

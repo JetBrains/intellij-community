@@ -5,10 +5,7 @@ iml_module(
     name = "intellij.platform.vcs.tests",
     iml_files = ["intellij.platform.vcs.tests.iml"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/xml/relaxng:intellij.relaxng",
-    ],
+    test_runtime_deps = ["//tools/idea/xml/relaxng:intellij.relaxng"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

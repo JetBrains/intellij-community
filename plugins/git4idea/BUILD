@@ -17,7 +17,6 @@ iml_module(
     ],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/xml/relaxng:intellij.relaxng",
     ],

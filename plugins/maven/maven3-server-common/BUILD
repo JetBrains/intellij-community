@@ -49,7 +49,6 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/org/slf4j/slf4j-api/1.7.25:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-cipher/1.4:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-sec-dispatcher/1.4:jar",
-        "//prebuilts/tools/common/m2/repository/aopalliance/aopalliance/1.0:jar",
         "//prebuilts/tools/common/m2/repository/com/google/code/findbugs/jsr305/3.0.2:jar",
         "//prebuilts/tools/common/m2/repository/com/google/errorprone/error_prone_annotations/2.1.3:jar",
         "//prebuilts/tools/common/m2/repository/com/google/guava/guava/25.1-android:jar",

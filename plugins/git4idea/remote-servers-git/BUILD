@@ -7,7 +7,6 @@ iml_module(
     iml_files = ["intellij.platform.remoteServers.git.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/xml/relaxng:intellij.relaxng",
     ],
