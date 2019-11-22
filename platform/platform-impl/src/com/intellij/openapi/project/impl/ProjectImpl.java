@@ -322,9 +322,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     double modulesPart = ourClassesAreLoaded || editors == 0 ? toDistribute : toDistribute * 0.5;
     if (modulesCount != 0) {
-
-      double step = modulesPart / modulesCount;
-      ((ModuleManagerImpl)moduleManager).setProgressStep(step);
+      ((ModuleManagerImpl)moduleManager).setProgressStep(modulesPart / modulesCount);
     }
 
     if (editors != 0) {
