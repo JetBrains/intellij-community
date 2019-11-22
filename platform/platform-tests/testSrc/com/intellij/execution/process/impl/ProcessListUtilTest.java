@@ -210,13 +210,16 @@ public class ProcessListUtilTest extends TestCase {
     List<ProcessInfo> infos = ProcessListUtil.parseWinProcessListHelperOutput(
       "19608\n" +
       "SourceTree.exe\n" +
-      "\"C:\\Users\\grahams\\AppData\\Local\\SourceTree\\app-3.1.3\\SourceTree.exe\" \n" +
+      "\"\"C:\\\\Users\\\\grahams\\\\AppData\\\\Local\\\\SourceTree\\\\app-3.1.3\\\\SourceTree.exe\"\"\n" +
       "12300\n" +
       "conhost.exe\n" +
-      "\\??\\C:\\Windows\\system32\\conhost.exe 0x4\n" +
+      "\"\\\\??\\\\C:\\\\Windows\\\\system32\\\\conhost.exe 0x4\"\n" +
       "26284\n" +
       "Unity Hub.exe\n" +
-      "\"C:\\Program Files\\Unity Hub\\Unity Hub.exe\" --no-sandbox --lang=en-US --node-integration=true /prefetch:1\n"
+      "\"\"C:\\\\Program Files\\\\Unity Hub\\\\Unity Hub.exe\" --no-sandbox --lang=en-US --node-integration=true /prefetch:1\"\n" +
+      "25064\n" +
+      "cmd.exe\n" +
+      "\"\"C:\\\\WINDOWS\\\\system32\\\\cmd.exe\" /c \"pause\\necho 123\"\"\n"
     );
     assertOrderedEquals(
       infos,
@@ -225,7 +228,11 @@ public class ProcessListUtilTest extends TestCase {
       new ProcessInfo(26284,
                       "\"C:\\Program Files\\Unity Hub\\Unity Hub.exe\" --no-sandbox --lang=en-US --node-integration=true /prefetch:1",
                       "Unity Hub.exe",
-                      "--no-sandbox --lang=en-US --node-integration=true /prefetch:1")
+                      "--no-sandbox --lang=en-US --node-integration=true /prefetch:1"),
+      new ProcessInfo(25064,
+                      "\"C:\\WINDOWS\\system32\\cmd.exe\" /c \"pause\necho 123\"",
+                      "cmd.exe",
+                      "/c \"pause\necho 123\"")
     );
 
     assertNull(ProcessListUtil.parseWinProcessListHelperOutput(""));
