@@ -140,6 +140,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
+  override var subRowIndent: Int = -1
+
   internal val isLabeledIncludingSubRows: Boolean
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
@@ -160,7 +162,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = indent + computeChildRowIndent(isSeparated))
+                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else indent + computeChildRowIndent(isSeparated))
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, builder, indent = indent, noGrid = true)
