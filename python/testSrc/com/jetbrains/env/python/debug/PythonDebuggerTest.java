@@ -212,43 +212,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
-  public void testDebugConsole() {
-    runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 3);
-        setWaitForTermination(false);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-
-        eval("i").hasValue("0");
-
-        resume();
-
-        waitForPause();
-
-        consoleExec("'i=%d'%i");
-
-        waitForOutput("'i=1'");
-
-        consoleExec("x");
-
-        waitForOutput("name 'x' is not defined");
-
-        consoleExec("1-;");
-
-        waitForOutput("SyntaxError");
-
-        resume();
-      }
-    });
-  }
-
-  @Test
   public void testDebugCompletion() {
     runPythonTest(new PyDebuggerTask("/debug", "test4.py") {
       @Override

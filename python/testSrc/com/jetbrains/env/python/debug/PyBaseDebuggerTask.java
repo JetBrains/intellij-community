@@ -71,6 +71,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
    * The value must align with the one from the pydevd_resolver.py module.
    */
   protected static final int MAX_ITEMS_TO_HANDLE = 100;
+  private static final int TIMEOUT = 25000;
 
   protected PyBaseDebuggerTask(@Nullable final String relativeTestDataPath) {
     super(relativeTestDataPath);
@@ -414,8 +415,14 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return result.first;
   }
 
-  protected void consoleExec(String command) throws PyDebuggerException {
-    // We can't wait for result with a callback, because console just prints it to output
+  /**
+   * Run a command in the debugger console without waiting for the result.
+   *
+   * @param command to run.
+   *
+   * @see #consoleExecAndWait(String)
+   */
+  protected void consoleExec(String command) {
     myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
       @Override
       public void ok(String value) {
@@ -427,7 +434,30 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     });
   }
 
-  protected Variable eval(String name) throws InterruptedException {
+  /**
+   * Run a command in the debugger console and wait until it is executed. It raises the assertion error if the command
+   * hasn't finished withing {@link #TIMEOUT} milliseconds. It doesn't matter if the command itself
+   * has finished successfully or failed (e.g. incorrect commands can be used in tests in purpose).
+   *
+   * @param command to run.
+   */
+  protected void consoleExecAndWait(String command) {
+    EvaluationCallback<String> callback = new EvaluationCallback<>();
+    myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
+      @Override
+      public void ok(String value) {
+        callback.evaluated(value);
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+        callback.errorOccurred(exception.getMessage());
+      }
+    });
+    callback.waitFor(TIMEOUT);
+  }
+
+  protected Variable eval(String name) {
     Assert.assertTrue("Eval works only while suspended", mySession.isSuspended());
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
     Assert.assertNotNull("There is no variable named " + name, var);
