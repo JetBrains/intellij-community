@@ -1764,7 +1764,7 @@ def pydevd_find_thread_by_id(thread_id):
 
         # This can happen when a request comes for a thread which was previously removed.
         pydevd_log(1, "Could not find thread %s\n" % thread_id)
-        pydevd_log(1, "Available: %s\n" % [get_thread_id(t) for t in threads] % thread_id)
+        pydevd_log(1, "Available: %s\n" % [get_thread_id(t) for t in threads])
     except:
         traceback.print_exc()
 
