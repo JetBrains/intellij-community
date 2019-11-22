@@ -426,7 +426,7 @@ public class JBTabsImpl extends JComponent
     return false;
   }
 
-  boolean supportsCompression() {
+  public boolean supportsCompression() {
     return mySupportsCompression;
   }
 
@@ -2642,7 +2642,7 @@ public class JBTabsImpl extends JComponent
     return myPosition;
   }
 
-  TimedDeadzone.Length getTabActionsMouseDeadzone() {
+  public TimedDeadzone.Length getTabActionsMouseDeadzone() {
     return myTabActionsMouseDeadzone;
   }
 
@@ -2665,7 +2665,7 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  boolean isTabDraggingEnabled() {
+  public boolean isTabDraggingEnabled() {
     return myTabDraggingEnabled && !mySplitter.isDragging();
   }
 
