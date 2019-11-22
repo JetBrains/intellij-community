@@ -610,5 +610,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("rd-swing"),
     jetbrainsLibrary("rd-text"),
     jetbrainsLibrary("tcServiceMessages"),
+    jetbrainsLibrary("tips-idea-ce"),
   ] as List<LibraryLicense>
 }
