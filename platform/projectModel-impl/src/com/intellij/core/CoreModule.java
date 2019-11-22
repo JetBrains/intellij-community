@@ -39,9 +39,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     myProject = project;
     myPath = moduleFilePath;
 
-    //noinspection TestOnlyProblems
-    getExtensionArea()
-      .registerExtensionPoint(ModuleExtension.EP_NAME, ModuleExtension.class.getName(), ExtensionPoint.Kind.INTERFACE, parentDisposable);
     initModuleExtensions();
 
     final ModuleRootManagerImpl moduleRootManager =
