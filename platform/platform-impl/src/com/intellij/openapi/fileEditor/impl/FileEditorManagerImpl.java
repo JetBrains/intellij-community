@@ -226,7 +226,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   public void initDockableContentFactory() {
-    if (myContentFactory != null) return;
+    if (myContentFactory != null) {
+      return;
+    }
 
     myContentFactory = new DockableEditorContainerFactory(myProject, this);
     myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory);
@@ -260,7 +262,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         all.add(((DockableEditorTabbedContainer)each).getSplitters());
       }
     }
-
     return Collections.unmodifiableSet(all);
   }
 
@@ -1235,15 +1236,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   @Override
-  public boolean isFileOpen(@NotNull final VirtualFile file) {
-    return ContainerUtil.exists(myOpenedEditors, composite -> composite.getFile().equals(file));
+  public boolean isFileOpen(@NotNull VirtualFile file) {
+    for (EditorComposite editor : myOpenedEditors) {
+      if (editor.getFile().equals(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    Set<VirtualFile> files = new HashSet<>();
-    myOpenedEditors.forEach(composite -> files.add(composite.getFile()));
+    Set<VirtualFile> files = new LinkedHashSet<>();
+    for (EditorComposite composite : myOpenedEditors) {
+      files.add(composite.getFile());
+    }
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
@@ -1268,7 +1276,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     for (EditorsSplitters each : getAllSplitters()) {
       ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
     }
-
     return selectedEditors.toArray(new FileEditor[0]);
   }
 
