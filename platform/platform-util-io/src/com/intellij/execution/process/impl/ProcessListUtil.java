@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -266,12 +268,61 @@ public final class ProcessListUtil {
     return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput);
   }
 
+  private static void logErrorTestSafe(String message) {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isUnitTestMode()) {
+      LOG.warn(message);
+    } else {
+      LOG.error(message);
+    }
+  }
+
+  @Nullable
+  private static String unescapeString(String str, boolean quoted) {
+    StringBuilder builder = new StringBuilder();
+    if (quoted) {
+      str = str.substring(1, str.length() - 1);
+    }
+    for (int index = 0; index < str.length(); index++) {
+      if (str.charAt(index) == '\\') {
+        if (index == str.length() - 1) {
+          logErrorTestSafe("Invalid escaped string: backslash at the last position");
+          LOG.debug(str);
+          return null;
+        }
+        switch (str.charAt(index + 1)) {
+          case '\\': {
+            builder.append('\\');
+            break;
+          }
+          case 'n': {
+            builder.append('\n');
+            break;
+          }
+          case 'r': {
+            builder.append('\r');
+            break;
+          }
+          default: {
+            logErrorTestSafe("Invalid character after an escape symbol: " + str.charAt(index + 1));
+            LOG.debug(str);
+            return null;
+          }
+        }
+        index++;
+        continue;
+      }
+      builder.append(str.charAt(index));
+    }
+    return builder.toString();
+  }
+
   @Nullable
   static List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
     if (lines.length % 3 != 0) {
-      LOG.error("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
+      logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
       LOG.debug(output);
       return null;
     }
@@ -280,16 +331,26 @@ public final class ProcessListUtil {
       int offset = i * 3;
       int id = StringUtil.parseInt(lines[offset], -1);
       if (id == -1) {
-        LOG.error("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
+        logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
         LOG.debug(output);
         return null;
       }
       if (id == 0) continue;
 
-      String name = StringUtil.unescapeStringCharacters(lines[offset + 1]);
-      if (StringUtil.isEmpty(name)) continue;
+      String name = unescapeString(lines[offset + 1], false);
+      if (name == null) {
+        logErrorTestSafe("Failed to unescape a process name: " + lines[offset + 1]);
+        LOG.debug(output);
+        return null;
+      }
+      if (name.isEmpty()) continue;
 
-      String commandLine = StringUtil.unescapeStringCharacters(StringUtil.unquoteString(lines[offset + 2], '"'));
+      String commandLine = unescapeString(lines[offset + 2], true);
+      if (commandLine == null) {
+        logErrorTestSafe("Failed to unescape a process command line: " + lines[offset + 2]);
+        LOG.debug(output);
+        return null;
+      }
       String args;
       if (commandLine.isEmpty()) {
         commandLine = name;
