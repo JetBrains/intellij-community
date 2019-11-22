@@ -69,7 +69,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
 
   private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T? {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    checkContainerIsActive(componentManager, indicator)
+    checkContainerIsActive(componentManager)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
@@ -100,7 +100,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         val implementationClass = getImplementationClass() as Class<T>
 
         // check after loading class once again
-        checkContainerIsActive(componentManager, indicator)
+        checkContainerIsActive(componentManager)
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)
         activityCategory?.let { category ->
@@ -119,17 +119,11 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
+  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl) {
     checkCanceledIfNotInClassInit()
 
-    if (componentManager.isContainerDisposedOrDisposeInProgress()) {
-      val error = PluginException("Cannot create ${toString()} because container is already disposed (container=${componentManager})", pluginId)
-      if (indicator == null) {
-        throw error
-      }
-      else {
-        throw ProcessCanceledException(error)
-      }
+    if (componentManager.isDisposed) {
+      throw ProcessCanceledException(RuntimeException("Cannot create ${toString()} because container is already disposed (container=${componentManager})"))
     }
   }
 

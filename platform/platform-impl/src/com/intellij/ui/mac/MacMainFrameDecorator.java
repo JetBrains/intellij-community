@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
@@ -186,7 +185,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     //noinspection Convert2Lambda
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(final UISettings uiSettings) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         if (CURRENT_GETTER != null) {
           //noinspection AssignmentToStaticFieldFromInstanceMethod
           SHOWN = CURRENT_GETTER.get();
@@ -252,7 +251,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
             JRootPane rootPane = frame.getRootPane();
             if (rootPane instanceof IdeRootPane && Registry.is("ide.mac.transparentTitleBarAppearance")) {
               IdeRootPane ideRootPane = (IdeRootPane)rootPane;
-              UIUtil.setCustomTitleBar(frame, ideRootPane, runnable -> Disposer.register(ideRootPane, () -> runnable.run()));
+              UIUtil.setCustomTitleBar(frame, ideRootPane, runnable -> {
+                Disposer.register(parentDisposable, () -> runnable.run());
+              });
             }
             exitFullscreen();
             ActiveWindowsWatcher.addActiveWindow(frame);
@@ -307,8 +308,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
         @Override
         public void openURI(AppEvent.OpenURIEvent event) {
-          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () ->
-            ourProtocolHandler.openLink(event.getURI()));
+          ourProtocolHandler.openLink(event.getURI());
         }
       });
     }

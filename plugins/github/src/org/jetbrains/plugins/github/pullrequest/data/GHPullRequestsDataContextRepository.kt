@@ -8,7 +8,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionListModel
+import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
+import com.intellij.util.messages.MessageBusOwner
 import git4idea.commands.Git
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -51,7 +53,11 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
                              accountDetails.name)
     val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoWithPermissions.path)
 
-    val messageBus = MessageBusFactory.getInstance().createMessageBus(this)
+    val messageBus = MessageBusFactory.getInstance().createMessageBus(object : MessageBusOwner {
+      override fun isDisposed() = project.isDisposed
+
+      override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
+    })
 
     val securityService = GithubPullRequestsSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, repoWithPermissions)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor, repositoryCoordinates)

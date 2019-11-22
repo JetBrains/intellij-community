@@ -32,6 +32,7 @@ import org.picocontainer.ComponentAdapter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager {
   protected final DefaultPicoContainer myPicoContainer;
@@ -40,7 +41,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     ACTIVE, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
-  protected volatile ContainerState myContainerState = ContainerState.ACTIVE;
+  protected final AtomicReference<ContainerState> myContainerState = new AtomicReference<>(ContainerState.ACTIVE);
 
   private volatile MessageBus myMessageBus;
 
@@ -69,7 +70,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   @Override
   public final MessageBus getMessageBus() {
-    if (isContainerDisposed()) {
+    if (myContainerState.get().ordinal() >= ContainerState.DISPOSED.ordinal()) {
       throwAlreadyDisposed();
     }
 
@@ -94,8 +95,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (isDisposeCompleted()) {
       throwAlreadyDisposed();
     }
-    //noinspection NonPrivateFieldAccessedInSynchronizedContext
-    myContainerState = ContainerState.DISPOSED;
+    myContainerState.set(ContainerState.DISPOSED);
 
     // we cannot use list of component adapters because we must dispose in reverse order of creation
     List<BaseComponent> components = myBaseComponents;
@@ -163,7 +163,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myContainerState = ContainerState.DISPOSE_COMPLETED;
+    myContainerState.set(ContainerState.DISPOSE_COMPLETED);
 
     if (myMessageBus != null) {
       Disposer.dispose(myMessageBus);
@@ -174,26 +174,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     synchronized (this) {
       myNameToComponent.clear();
     }
-  }
-
-  @Override
-  public boolean isDisposed() {
-    return isDisposedOrDisposeInProgress();
-  }
-
-  public final boolean isWorkspaceComponent(@NotNull Class<?> componentImplementation) {
-    MyComponentAdapter adapter = getComponentAdapter(componentImplementation);
-    return adapter != null && adapter.isWorkspaceComponent();
-  }
-
-  @Nullable
-  private MyComponentAdapter getComponentAdapter(@NotNull Class<?> componentImplementation) {
-    for (ComponentAdapter componentAdapter : getPicoContainer().getComponentAdapters()) {
-      if (componentAdapter instanceof MyComponentAdapter && componentAdapter.getComponentImplementation() == componentImplementation) {
-        return (MyComponentAdapter)componentAdapter;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -247,11 +227,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myBaseComponents.add(baseComponent);
   }
 
-  private boolean isContainerDisposed() {
-    return myContainerState.ordinal() >= ContainerState.DISPOSED.ordinal();
-  }
-
   private boolean isDisposeCompleted() {
-    return myContainerState == ContainerState.DISPOSE_COMPLETED;
+    return myContainerState.get() == ContainerState.DISPOSE_COMPLETED;
   }
 }

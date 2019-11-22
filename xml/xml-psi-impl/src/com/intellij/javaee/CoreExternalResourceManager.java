@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javaee;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CoreExternalResourceManager extends ExternalResourceManagerEx {
+public final class CoreExternalResourceManager extends ExternalResourceManagerEx {
   @Override
   public void removeResource(String url, @NotNull Project project) {
     throw new UnsupportedOperationException();
@@ -62,16 +62,6 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
 
   @Override
   public String[] getIgnoredResources() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addExternalResourceListener(ExternalResourceListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeExternalResourceListener(ExternalResourceListener listener) {
     throw new UnsupportedOperationException();
   }
 

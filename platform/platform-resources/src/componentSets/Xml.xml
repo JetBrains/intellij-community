@@ -1,7 +1,0 @@
-<idea-plugin>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
-    </component>
-  </project-components>
-</idea-plugin>

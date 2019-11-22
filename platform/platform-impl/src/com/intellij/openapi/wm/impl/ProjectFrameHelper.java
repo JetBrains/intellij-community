@@ -13,9 +13,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -26,14 +23,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.content.Content;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +56,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
+public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
 
   private static boolean ourUpdatingTitle;
@@ -78,6 +73,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   @Nullable
   private IdeFrameDecorator myFrameDecorator;
 
+  @SuppressWarnings("unused")
   private volatile Image selfie;
 
   private IdeFrameImpl myFrame;
@@ -88,6 +84,8 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     setupCloseAction();
 
     preInit();
+
+    Disposer.register(ApplicationManager.getApplication(), this);
   }
 
   @Nullable
@@ -113,11 +111,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   private void preInit() {
     updateTitle();
 
-    myRootPane = new IdeRootPane(myFrame, this);
+    myRootPane = new IdeRootPane(myFrame, this, this);
     myFrame.setRootPane(myRootPane);
     // NB!: the root pane must be set before decorator,
     // which holds its own client properties in a root pane
-    myFrameDecorator = IdeFrameDecorator.decorate(myFrame, myRootPane);
+    myFrameDecorator = IdeFrameDecorator.decorate(myFrame, this);
 
     myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
       @Nullable
@@ -139,7 +137,12 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
       @Override
       public void dispose() {
-        ProjectFrameHelper.this.dispose();
+        if (isTemporaryDisposed(myFrame)) {
+          myFrame.doDispose();
+          return;
+        }
+
+        Disposer.dispose(ProjectFrameHelper.this);
       }
 
       @Override
@@ -170,23 +173,21 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
         updateTitle();
       }
-
-      @Override
-      public void releaseFrame() {
-        // remove ToolWindowsPane
-        myRootPane.setToolWindowsPane(null);
-        WindowManagerEx.getInstanceEx().releaseFrame(ProjectFrameHelper.this);
-      }
     }, myFrameDecorator);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
     myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
+  public void releaseFrame() {
+    myRootPane.setToolWindowsPane(null);
+    WindowManagerEx.getInstanceEx().releaseFrame(this);
+  }
+
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   public void init() {
-    myRootPane.init(this);
+    myRootPane.init(this, this);
 
     MnemonicHelper.init(myFrame);
 
@@ -205,62 +206,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     MouseGestureManager.getInstance().add(this);
   }
 
-  @Nullable
-  private Component findNextFocusComponent() {
-    if (myProject == null) {
-      return null;
-    }
-
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-    if (ToolWindowManagerEx.getInstanceEx(myProject).fallbackToEditor()) {
-      EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
-      if (currentWindow != null) {
-        EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
-        if (selectedEditor != null) {
-          JComponent preferredFocusedComponent = selectedEditor.getPreferredFocusedComponent();
-          if (preferredFocusedComponent != null) {
-            return preferredFocusedComponent;
-          }
-        }
-      }
-    }
-    else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-      String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
-      ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-      Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
-      if (content != null) {
-        JComponent component = content.getPreferredFocusableComponent();
-        if (component == null) {
-          LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
-                   toolWindowId + " tool window to avoid focus-related problems.");
-        }
-        return component == null ? getComponentToRequestFocus(toolWindow)  : component;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Component getComponentToRequestFocus(ToolWindow toolWindow) {
-    Container container = toolWindow.getComponent();
-    if (container == null || !container.isShowing()) {
-      LOG.warn(toolWindow.getTitle() + " tool window - parent container is hidden");
-      return null;
-    }
-    FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
-    if (policy == null) {
-      LOG.warn(toolWindow.getTitle() + " tool window does not provide focus traversal policy");
-      return null;
-    }
-    Component component = policy.getDefaultComponent(container);
-    if (component == null || !component.isShowing()) {
-      LOG.debug(toolWindow.getTitle() + " tool window - default component is hidden");
-      return null;
-    }
-    return component;
-  }
-
   @Override
   public JComponent getComponent() {
     return myFrame.getRootPane();
@@ -271,13 +216,13 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     CloseProjectWindowHelper helper = new CloseProjectWindowHelper();
     myFrame.addWindowListener(new WindowAdapter() {
       @Override
-      public void windowClosing(@NotNull final WindowEvent e) {
+      public void windowClosing(@NotNull WindowEvent e) {
         if (isTemporaryDisposed(myFrame) || LaterInvocator.isInModalContext()) {
           return;
         }
 
         Application app = ApplicationManager.getApplication();
-        if (app != null && (!app.isDisposeInProgress() && !app.isDisposed())) {
+        if (app != null && !app.isDisposed()) {
           helper.windowClosing(myProject);
         }
       }
@@ -407,7 +352,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
     myProject = project;
     if (project == null) {
-      //already disposed
+      // already disposed
       if (myRootPane != null) {
         myRootPane.deinstallNorthComponents();
       }
@@ -423,7 +368,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     }
 
     installDefaultProjectStatusBarWidgets(myProject);
-    //noinspection CodeBlock2Expr
     StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
       selfie = null;
     });
@@ -460,7 +404,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     addWidget(project, statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
     addWidget(project, statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
-    final Map<StatusBarWidgetProvider, Disposable> providerToWidgetDisposable = new HashMap<>();
+    Map<StatusBarWidgetProvider, Disposable> providerToWidgetDisposable = new HashMap<>();
     StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
       @Override
       public void extensionAdded(@NotNull StatusBarWidgetProvider widgetProvider, @NotNull PluginDescriptor pluginDescriptor) {
@@ -497,13 +441,8 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     return myProject;
   }
 
-  private void dispose() {
-
-    if (isTemporaryDisposed(myFrame)) {
-      myFrame.doDispose();
-      return;
-    }
-
+  @Override
+  public void dispose() {
     MouseGestureManager.getInstance().remove(this);
 
     if (myBalloonLayout != null) {
@@ -517,14 +456,15 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
         myRootPane.removeNotify();
       }
       myFrame.setRootPane(new JRootPane());
-      Disposer.dispose(myRootPane);
       myRootPane = null;
     }
 
-    myFrame.doDispose();
+    if (myFrame != null) {
+      myFrame.doDispose();
+      myFrame.setFrameHelper(null, null);
+      myFrame = null;
+    }
     myFrameDecorator = null;
-    myFrame.setFrameHelper(null, null);
-    myFrame = null;
   }
 
   private static boolean isTemporaryDisposed(@Nullable JFrame frame) {
@@ -537,7 +477,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     return myFrame;
   }
 
-  @NotNull
+  @Nullable
   @ApiStatus.Internal
   IdeRootPane getRootPane() {
     return myRootPane;

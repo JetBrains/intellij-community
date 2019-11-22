@@ -3,7 +3,9 @@ package com.intellij.util.messages;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface LazyListenerCreator {
+public interface MessageBusOwner {
   @NotNull
   Object createListener(@NotNull ListenerDescriptor descriptor);
+
+  boolean isDisposed();
 }

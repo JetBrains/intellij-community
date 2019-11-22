@@ -104,7 +104,7 @@ public final class UIUtil {
     }
   }
 
-  public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, Consumer<Runnable> onDispose) {
+  public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<Runnable> onDispose) {
     if (!SystemInfo.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
       return;
     }
@@ -161,7 +161,7 @@ public final class UIUtil {
     };
     PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
     window.addPropertyChangeListener("title", propertyChangeListener);
-    onDispose.consume(() -> {
+    onDispose.accept(() -> {
       window.removeWindowListener(windowAdapter);
       window.removePropertyChangeListener("title", propertyChangeListener);
     });

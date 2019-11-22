@@ -950,12 +950,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     if (newEditor) {
       getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-                  .fileOpenedSync(this, file, Pair.pair(editors, providers));
+        .fileOpenedSync(this, file, Pair.pair(editors, providers));
 
       notifyPublisher(() -> {
         if (isFileOpen(file)) {
           getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-                      .fileOpened(this, file);
+            .fileOpened(this, file);
         }
       });
     }

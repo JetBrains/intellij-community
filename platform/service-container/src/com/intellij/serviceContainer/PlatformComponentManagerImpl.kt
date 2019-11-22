@@ -47,7 +47,8 @@ import java.util.concurrent.Executor
 
 internal val LOG = logger<PlatformComponentManagerImpl>()
 
-abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: PlatformComponentManagerImpl?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
+abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: PlatformComponentManagerImpl?,
+                                                                      setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), Disposable.Parent, MessageBusOwner {
   companion object {
     private val constructorParameterResolver = ConstructorParameterResolver()
 
@@ -622,7 +623,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         }
 
         val future = CompletableFuture.runAsync(Runnable {
-          if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
+          if (!isServicePreloadingCancelled && !isDisposed) {
             val adapter = myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter? ?: return@Runnable
             try {
               adapter.getInstance<Any>(this)
@@ -645,14 +646,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
                                    syncPreloadedServices = CompletableFuture.allOf(*syncPreloadedServices.toTypedArray()))
   }
 
-  // this method is required because of ProjectImpl.temporarilyDisposed (a lot of failed tests if check temporarilyDisposed)
-  internal fun isContainerDisposedOrDisposeInProgress(): Boolean {
-    return myContainerState.ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
+  override fun isDisposed(): Boolean {
+    return myContainerState.get().ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
   }
 
-  // todo fix tests to use this implementation in `isContainerDisposed`
-  override fun isDisposedOrDisposeInProgress(): Boolean {
-    return isContainerDisposedOrDisposeInProgress()
+  final override fun beforeTreeDispose() {
+    myContainerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)
   }
 
   @Internal
@@ -775,4 +774,14 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   else {
     throw StartupAbortedException("Fatal error initializing '$componentClassName'", t)
   }
+}
+
+@Internal
+fun isWorkspaceComponent(container: PicoContainer, componentImplementation: Class<*>?): Boolean {
+  for (adapter in container.componentAdapters) {
+    if (adapter is MyComponentAdapter && adapter.componentImplementation == componentImplementation) {
+      return adapter.isWorkspaceComponent
+    }
+  }
+  return false
 }

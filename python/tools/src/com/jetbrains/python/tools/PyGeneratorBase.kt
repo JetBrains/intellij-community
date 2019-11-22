@@ -3,13 +3,11 @@ package com.jetbrains.python.tools
 
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.ZipUtil
-import com.intellij.util.ui.UIUtil
 import java.io.File
 
 /**
@@ -53,11 +51,7 @@ open class PyGeneratorBase {
   }
 
   protected fun tearDown() {
-    UIUtil.invokeAndWaitIfNeeded(Runnable {
-      WriteAction.run<Throwable> {
-        app.dispose()
-      }
-    })
+    app.disposeApp()
     FileUtil.delete(File(System.getProperty(PathManager.PROPERTY_PLUGINS_PATH)))
     FileUtil.delete(File(System.getProperty(PathManager.PROPERTY_SYSTEM_PATH)))
   }

@@ -101,13 +101,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  public boolean isDisposed() {
-    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
-  }
-
-  @Override
-  public boolean isDisposedOrDisposeInProgress() {
-    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
+  public final boolean isDisposed() {
+    return super.isDisposed() || temporarilyDisposed;
   }
 
   @Override
@@ -117,9 +112,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   private volatile boolean temporarilyDisposed;
+
   @TestOnly
-  void setTemporarilyDisposed(boolean disposed) {
-    temporarilyDisposed = disposed;
+  void setTemporarilyDisposed(boolean value) {
+    if (!value && super.isDisposed()) {
+      LOG.error("Project was already disposed, flag temporarilyDisposed cannot be set to `true`");
+    }
+    temporarilyDisposed = value;
   }
 
   @TestOnly
@@ -348,7 +347,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
     }
 
-    LOG.assertTrue(myContainerState.ordinal() <= ContainerState.DISPOSED.ordinal(), this + " is disposed already");
+    LOG.assertTrue(myContainerState.get().ordinal() <= ContainerState.DISPOSED.ordinal(), this + " is disposed already");
     disposeComponents();
 
     super.dispose();
@@ -370,7 +369,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project (name=" + myName + ", containerState=" + myContainerState.name() +
+    return "Project (name=" + myName + ", containerState=" + myContainerState.get().name() +
            ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
            (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
@@ -389,6 +388,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @ApiStatus.Internal
   public final void setDisposeInProgress() {
-    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
+    myContainerState.set(ContainerState.DISPOSE_IN_PROGRESS);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.util.SmartList;
@@ -8,6 +8,8 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,12 +18,12 @@ import java.util.List;
  *
  * @author peter
  */
-public class RunAll implements Runnable {
+public final class RunAll implements Runnable {
   private final List<? extends ThrowableRunnable<?>> myActions;
 
   @SafeVarargs
   public RunAll(@NotNull ThrowableRunnable<Throwable>... actions) {
-    this(ContainerUtil.newArrayList(actions));
+    this(Arrays.asList(actions));
   }
 
   private RunAll(@NotNull List<? extends ThrowableRunnable<?>> actions) {
@@ -31,33 +33,38 @@ public class RunAll implements Runnable {
   @SafeVarargs
   @Contract(pure=true)
   public final RunAll append(@NotNull ThrowableRunnable<Throwable>... actions) {
-    return new RunAll(ContainerUtil.concat(myActions, actions.length == 1 ? Collections.singletonList(actions[0]) : ContainerUtil.newArrayList(actions)));
+    return new RunAll(ContainerUtil.concat(myActions, actions.length == 1 ? Collections.singletonList(actions[0]) : Arrays.asList(actions)));
   }
 
   @Override
   public void run() {
     run(Collections.emptyList());
   }
+
   public void run(@NotNull List<? extends Throwable> suppressedExceptions) {
-    List<Throwable> throwables = collectExceptions();
-    throwables.addAll(0, suppressedExceptions);
-    CompoundRuntimeException.throwIfNotEmpty(throwables);
+    CompoundRuntimeException.throwIfNotEmpty(ContainerUtil.concat(suppressedExceptions, collectExceptions()));
   }
 
   @NotNull
   private List<Throwable> collectExceptions() {
-    List<Throwable> errors = new SmartList<>();
+    List<Throwable> result = null;
     for (ThrowableRunnable<?> action : myActions) {
       try {
         action.run();
       }
       catch (CompoundRuntimeException e) {
-        errors.addAll(e.getExceptions());
+        if (result == null) {
+          result = new ArrayList<>();
+        }
+        result.addAll(e.getExceptions());
       }
       catch (Throwable e) {
-        errors.add(e);
+        if (result == null) {
+          result = new SmartList<>();
+        }
+        result.add(e);
       }
     }
-    return errors;
+    return ContainerUtil.notNullize(result);
   }
 }

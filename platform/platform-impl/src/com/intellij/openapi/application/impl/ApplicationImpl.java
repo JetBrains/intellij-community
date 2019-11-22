@@ -175,7 +175,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
+    myContainerState.set(ContainerState.DISPOSE_IN_PROGRESS);
     runWriteAction(() -> Disposer.dispose(this));
 
     Disposer.assertIsEmpty();
@@ -1241,7 +1241,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isDisposeInProgress() {
-    return myContainerState == ContainerState.DISPOSE_IN_PROGRESS || ShutDownTracker.isShutdownHookRunning();
+    return myContainerState.get() == ContainerState.DISPOSE_IN_PROGRESS || ShutDownTracker.isShutdownHookRunning();
   }
 
   @Override
@@ -1252,12 +1252,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @TestOnly
   public void setDisposeInProgress(boolean disposeInProgress) {
-    myContainerState = disposeInProgress ? ContainerState.DISPOSE_IN_PROGRESS : ContainerState.ACTIVE;
+    myContainerState.set(disposeInProgress ? ContainerState.DISPOSE_IN_PROGRESS : ContainerState.ACTIVE);
   }
 
   @Override
   public String toString() {
-    return "Application (containerState=" + myContainerState.name() + ") " +
+    return "Application (containerState=" + myContainerState.get().name() + ") " +
            (isUnitTestMode() ? " (Unit test)" : "") +
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +

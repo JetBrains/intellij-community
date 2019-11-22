@@ -14,10 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.MessageBusFactory;
-import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,9 +23,23 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MessageBusTest extends LightPlatformTestCase {
+import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
+
+public class MessageBusTest extends LightPlatformTestCase implements MessageBusOwner {
   private MessageBusImpl myBus;
   private List<String> myLog;
+  private Disposable myParentDisposable = Disposer.newDisposable();
+
+  @NotNull
+  @Override
+  public Object createListener(@NotNull ListenerDescriptor descriptor) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isDisposed() {
+    return Disposer.isDisposed(myParentDisposable);
+  }
 
   public interface T1Listener {
     void t11();
@@ -78,7 +90,6 @@ public class MessageBusTest extends LightPlatformTestCase {
     }
   }
 
-  private Disposable myParentDisposable = Disposer.newDisposable();
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -301,7 +312,7 @@ public class MessageBusTest extends LightPlatformTestCase {
     final int threadsNumber = 10;
     final AtomicReference<Throwable> exception = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
-    MessageBusImpl parentBus = (MessageBusImpl)MessageBusFactory.newMessageBus("parent");
+    MessageBusImpl parentBus = (MessageBusImpl)MessageBusFactory.newMessageBus(createSimpleMessageBusOwner("parent"));
     Disposer.register(myParentDisposable, parentBus);
     List<Thread> threads = new ArrayList<>();
     final int iterationsNumber = 100;
@@ -315,7 +326,7 @@ public class MessageBusTest extends LightPlatformTestCase {
               if (exception.get() != null) {
                 break;
               }
-              new MessageBusImpl(String.format("child-%s-%s", Thread.currentThread().getName(), remains), parentBus);
+              new MessageBusImpl(createSimpleMessageBusOwner(String.format("child-%s-%s", Thread.currentThread().getName(), remains)), parentBus);
             }
           }
           catch (Throwable e) {
