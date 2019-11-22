@@ -1,7 +1,6 @@
 package com.intellij.jps.cache.client;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.jps.cache.JpsCachesUtils;
 import com.intellij.jps.cache.model.AffectedModule;
@@ -31,41 +30,25 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 
-import static com.intellij.jps.cache.client.ArtifactoryQueryBuilder.Name;
-import static com.intellij.jps.cache.client.ArtifactoryQueryBuilder.Sort;
-
-public class ArtifactoryJpsServerClient implements JpsServerClient {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.ArtifactoryJpsCacheServerClient");
+public class TemporaryCacheServerClient implements JpsServerClient {
+  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  static final ArtifactoryJpsServerClient INSTANCE = new ArtifactoryJpsServerClient();
-  private static final String REPOSITORY_NAME = "intellij-jps-compilation-caches";
-  private static final String CONTENT_TYPE = "text/plain";
-  private final String stringOne;
-  private final String stringTwo;
+  static final TemporaryCacheServerClient INSTANCE = new TemporaryCacheServerClient();
+  private static final String REPOSITORY_NAME = "jps/intellij";
   private final String stringThree;
 
-  private ArtifactoryJpsServerClient() {
-    byte[] decodedBytes = Base64.getDecoder().decode("WC1KRnJvZy1BcnQtQXBp");
-    stringOne = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
-    decodedBytes = Base64.getDecoder().decode("QUtDcDVkTDM5TkJyUXY4ZTlQWDNtUXRHMnBRdDJ4WlZnVVRrWk5jQXFWYVRWUmdqQ3NzRFlSaEFwVW0zdUdON3VmdjN6ZnZFOA==");
-    stringTwo = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
-    decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9yZXBvLmxhYnMuaW50ZWxsaWoubmV0Lw==");
+  private TemporaryCacheServerClient() {
+    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly90ZW1wb3JhcnktY2FjaGUubGFicy5pbnRlbGxpai5uZXQvY2FjaGUv");
     stringThree = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull
   @Override
   public Set<String> getAllCacheKeys() {
-    String searchQuery = new ArtifactoryQueryBuilder()
-      .findRepository(Name.eq(REPOSITORY_NAME))
-      .withPath(Name.match("caches"))
-      .sortBy(Sort.desc("created"))
-      .build();
-    ArtifactoryEntryDto[] responseDtos = doPostRequest(searchQuery, ArtifactoryEntryDto[].class);
+    TemporaryCacheEntryDto[] responseDtos = doGetRequest(TemporaryCacheEntryDto[].class);
     if (responseDtos == null) return Collections.emptySet();
-    return Arrays.stream(responseDtos).map(ArtifactoryEntryDto::getName).collect(Collectors.toSet());
+    return Arrays.stream(responseDtos).map(TemporaryCacheEntryDto::getName).collect(Collectors.toSet());
   }
 
   @Nullable
@@ -185,28 +168,22 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     }
   }
 
-  private <T> T doPostRequest(String searchQuery, Class<T> responseClass) {
+  private <T> T doGetRequest(Class<T> responseClass) {
     try {
-      return HttpRequests.post(stringThree + "api/search/aql", CONTENT_TYPE)
-        .tuner(connection -> connection.addRequestProperty(stringOne, stringTwo))
+      return HttpRequests.request(stringThree + REPOSITORY_NAME + "/caches?json=1")
         .connect(it -> {
-          it.write(searchQuery);
-
           URLConnection connection = it.getConnection();
           if (connection instanceof HttpURLConnection) {
             HttpURLConnection httpConnection = (HttpURLConnection)connection;
             if (httpConnection.getResponseCode() == 200) {
               InputStream inputStream = httpConnection.getInputStream();
-              if (httpConnection.getContentEncoding().equals("gzip")) {
-                try (InputStream gzipInputStream = new GZIPInputStream(inputStream)) {
-                  return parseResponse(gzipInputStream, responseClass);
-                }
-              }
-              return parseResponse(inputStream, responseClass);
+              return OBJECT_MAPPER.readValue(inputStream, responseClass);
             }
+
             else {
               String statusLine = httpConnection.getResponseCode() + " " + httpConnection.getRequestMethod();
-              String errorText = getErrorText(httpConnection);
+              InputStream errorStream = httpConnection.getErrorStream();
+              String errorText = StreamUtil.readText(errorStream, StandardCharsets.UTF_8);
               LOG.debug("Request: " + httpConnection.getRequestMethod() + httpConnection.getURL() + " : Error " + statusLine + " body: " +
                         errorText);
             }
@@ -220,85 +197,53 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     return null;
   }
 
-  private static <T> T parseResponse(InputStream response, Class<T> responseClass) throws IOException {
-    JsonNode jsonNode = OBJECT_MAPPER.readTree(response).findValue("results");
-    return OBJECT_MAPPER.treeToValue(jsonNode, responseClass);
-  }
-
-  private static String getErrorText(HttpURLConnection connection) throws IOException {
-    InputStream errorStream = connection.getErrorStream();
-    if (connection.getContentEncoding() == "gzip") {
-      try (InputStream gzipInputStream = new GZIPInputStream(errorStream)) {
-        return StreamUtil.readText(gzipInputStream, StandardCharsets.UTF_8);
-      }
-    }
-    else {
-      return StreamUtil.readText(errorStream, StandardCharsets.UTF_8);
-    }
-  }
-
-  private static class ArtifactoryEntryDto {
-    private String repo;
-    private String path;
+  private static class TemporaryCacheEntryDto {
     private String name;
     private String type;
-    private Long size;
+    private String mtime;
 
-    public String getRepo() {
-      return repo;
-    }
-
-    public void setRepo(String repo) {
-      this.repo = repo;
-    }
-
-    public String getPath() {
-      return path;
-    }
-
-    public void setPath(String path) {
-      this.path = path;
-    }
-
-    public String getName() {
+    private String getName() {
       return name;
     }
 
-    public void setName(String name) {
+    private void setName(String name) {
       this.name = name;
     }
 
-    public String getType() {
+    private String getType() {
       return type;
     }
 
-    public void setType(String type) {
+    private void setType(String type) {
       this.type = type;
     }
 
-    public Long getSize() {
-      return size;
+    private String getMtime() {
+      return mtime;
     }
 
-    public void setSize(Long size) {
-      this.size = size;
+    private void setMtime(String mtime) {
+      this.mtime = mtime;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      ArtifactoryEntryDto dto = (ArtifactoryEntryDto)o;
-      return Objects.equals(repo, dto.repo) &&
-             Objects.equals(path, dto.path) &&
-             Objects.equals(name, dto.name) &&
-             Objects.equals(type, dto.type) &&
-             Objects.equals(size, dto.size);
+
+      TemporaryCacheEntryDto dto = (TemporaryCacheEntryDto)o;
+      if (name != null ? !name.equals(dto.name) : dto.name != null) return false;
+      if (type != null ? !type.equals(dto.type) : dto.type != null) return false;
+      if (mtime != null ? !mtime.equals(dto.mtime) : dto.mtime != null) return false;
+      return true;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(repo, path, name, type, size);
+      int result = name != null ? name.hashCode() : 0;
+      result = 31 * result + (type != null ? type.hashCode() : 0);
+      result = 31 * result + (mtime != null ? mtime.hashCode() : 0);
+      return result;
     }
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.jps.cache.loader;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.jps.cache.client.ArtifactoryJpsServerClient;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
@@ -58,7 +57,7 @@ public class JpsOutputLoaderManager {
   public JpsOutputLoaderManager(@NotNull Project project) {
     myProject = project;
     hasRunningTask = new AtomicBoolean();
-    myServerClient = ArtifactoryJpsServerClient.INSTANCE;
+    myServerClient = JpsServerClient.getServerClient();
     myMetadataLoader = new JpsMetadataLoader(project, myServerClient);
     // Configure build manager
     BuildManager buildManager = BuildManager.getInstance();
