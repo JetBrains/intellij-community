@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
@@ -42,9 +42,7 @@ import java.util.Set;
 public class PythonPathEditor extends SdkPathEditor {
   private final PathListModel myPathListModel;
 
-  public PythonPathEditor(final String displayName,
-                          @NotNull OrderRootType orderRootType,
-                          final FileChooserDescriptor descriptor) {
+  public PythonPathEditor(String displayName, @NotNull OrderRootType orderRootType, FileChooserDescriptor descriptor) {
     super(displayName, orderRootType, descriptor);
     myPathListModel = new PathListModel(orderRootType, getListModel());
   }
@@ -99,9 +97,9 @@ public class PythonPathEditor extends SdkPathEditor {
   }
 
   @Override
-  protected void doRemoveItems(int[] idxs, JList list) {
+  protected void doRemoveItems(int[] indices, JList<VirtualFile> list) {
     List<Pair<VirtualFile, Integer>> removed = Lists.newArrayList();
-    for (int i : idxs) {
+    for (int i : indices) {
       removed.add(Pair.create(getListModel().get(i), i));
     }
     ListUtil.removeIndices(list, myPathListModel.remove(removed));
@@ -110,40 +108,36 @@ public class PythonPathEditor extends SdkPathEditor {
   }
 
   @Override
-  protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList list) {
+  protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList<VirtualFile> list) {
     return SimpleListCellRenderer.create("", value -> {
       String suffix = myPathListModel.getPresentationSuffix(value);
-      if (suffix.length() > 0) {
-        suffix = "  " + suffix;
-      }
+      if (suffix.length() > 0) suffix = "  " + suffix;
       return getPresentablePath(value) + suffix;
     });
   }
 
   @Override
   protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-    AnActionButton reloadButton = new AnActionButton(PyBundle.message("sdk.paths.dialog.reload.paths"), AllIcons.Actions.Refresh) {
+    toolbarDecorator.addExtraAction(new AnActionButton(PyBundle.message("sdk.paths.dialog.reload.paths"), AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         onReloadButtonClicked();
       }
-    };
-    toolbarDecorator.addExtraAction(reloadButton);
+    });
   }
 
-  protected void onReloadButtonClicked() {
-  }
+  protected void onReloadButtonClicked() { }
 
   private static class PathListModel {
     private Set<VirtualFile> myAdded = Sets.newHashSet();
     private Set<VirtualFile> myExcluded = Sets.newHashSet();
     private final Set<VirtualFile> myFoundFiles = Sets.newHashSet();
     private final List<VirtualFile> myFilteredOut = Lists.newArrayList();
-    private final DefaultListModel myListModel;
+    private final DefaultListModel<VirtualFile> myListModel;
     private final OrderRootType myOrderRootType;
     private final Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
 
-    PathListModel(OrderRootType orderRootType, DefaultListModel listModel) {
+    PathListModel(OrderRootType orderRootType, DefaultListModel<VirtualFile> listModel) {
       myOrderRootType = orderRootType;
       myListModel = listModel;
     }
@@ -153,7 +147,7 @@ public class PythonPathEditor extends SdkPathEditor {
     }
 
     private VirtualFile getValueAt(int row) {
-      return (VirtualFile)myListModel.get(row);
+      return myListModel.get(row);
     }
 
     public boolean add(List<VirtualFile> files) {
@@ -167,7 +161,8 @@ public class PythonPathEditor extends SdkPathEditor {
             myFoundFiles.add(file);
             return true;
           }
-        } else {
+        }
+        else {
           myExcluded.remove(file);
         }
       }
