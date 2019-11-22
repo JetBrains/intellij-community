@@ -165,7 +165,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun removePath(path: String) {
     synchronized(stateLock) {
-      if (state.additionalInfo.remove(path) == null) {
+      if (state.additionalInfo.remove(path) != null) {
         modCounter.incrementAndGet()
       }
       for (group in state.groups) {
