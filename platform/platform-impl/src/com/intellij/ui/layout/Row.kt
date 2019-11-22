@@ -92,6 +92,12 @@ abstract class Row : Cell(), RowBuilder {
 
   abstract var subRowsVisible: Boolean
 
+  /**
+   * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
+   * calculated from row nesting.
+   */
+  abstract var subRowIndent: Int
+
   protected abstract val builder: LayoutBuilderImpl
 
   /**

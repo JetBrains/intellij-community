@@ -113,5 +113,10 @@ abstract class UiDslTest {
     }
   }
 
+  @Test
+  fun subRowsIndent() {
+    doTest { rowWithIndent() }
+  }
+
   protected abstract fun doTest(panelCreator: () -> JPanel)
 }
