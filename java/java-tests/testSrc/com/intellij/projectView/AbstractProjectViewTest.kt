@@ -3,7 +3,10 @@ package com.intellij.projectView
 
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.ProjectViewSettings
-import com.intellij.ide.projectView.impl.*
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane
+import com.intellij.ide.projectView.impl.PackageViewPane
+import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.psi.search.scope.ProblemsScope
 import com.intellij.psi.search.scope.ProjectFilesScope
@@ -11,13 +14,22 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestSourceBasedTestCase
 import com.intellij.ui.tree.TreeTestUtil
+import com.intellij.ui.tree.ui.DefaultTreeUI
 import javax.swing.JTree
+import javax.swing.UIManager
 
 /**
  * @author sergey.malenkov
  */
 abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   override fun getTestPath(): String? = null
+
+  override fun setUp() {
+    // TODO: move the following line to HeadlessLafManagerImpl
+    // TODO: when FilteringTreeBuilderTest#testFilter is fixed
+    UIManager.put("TreeUI", DefaultTreeUI::class.java.name)
+    super.setUp()
+  }
 
   protected val projectView: ProjectViewImpl
     get() = ProjectView.getInstance(project) as ProjectViewImpl
