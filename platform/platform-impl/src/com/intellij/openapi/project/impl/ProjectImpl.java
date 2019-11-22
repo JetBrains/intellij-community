@@ -18,9 +18,6 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -317,16 +314,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     double toDistribute = 1 - indicator.getFraction();
     int modulesCount = ((ModuleManagerImpl)moduleManager).getModulePathsCount();
-    EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
-    int editors = splitters.getEditorsCount();
-
-    double modulesPart = ourClassesAreLoaded || editors == 0 ? toDistribute : toDistribute * 0.5;
     if (modulesCount != 0) {
-      ((ModuleManagerImpl)moduleManager).setProgressStep(modulesPart / modulesCount);
-    }
-
-    if (editors != 0) {
-      splitters.setProgressStep(toDistribute - modulesPart / editors);
+      ((ModuleManagerImpl)moduleManager).setProgressStep(toDistribute / modulesCount);
     }
   }
 

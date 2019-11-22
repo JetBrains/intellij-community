@@ -19,8 +19,6 @@ import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
@@ -280,38 +278,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         window.removeFromSplitter();
       }
     }
-  }
-
-  public int getEditorsCount() {
-    return mySplittersElement == null ? 0 : countFiles(mySplittersElement);
-  }
-
-  private double myProgressStep;
-
-  public void setProgressStep(double step) { myProgressStep = step; }
-
-  private void updateProgress() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null && !indicator.isIndeterminate()) {
-      indicator.setFraction(indicator.getFraction() + myProgressStep);
-    }
-  }
-
-  private static int countFiles(@NotNull Element element) {
-    Integer value = new ConfigTreeReader<Integer>() {
-      @Override
-      protected Integer processFiles(@NotNull List<? extends Element> fileElements, Element parent, @Nullable Integer context) {
-        return fileElements.size();
-      }
-
-      @Override
-      protected Integer processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable Integer context) {
-        Integer first = process(firstChild, null);
-        Integer second = process(secondChild, null);
-        return (first == null ? 0 : first) + (second == null ? 0 : second);
-      }
-    }.process(element, null);
-    return value == null ? 0 : value;
   }
 
   public void readExternal(@NotNull Element element) {
@@ -910,7 +876,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             // and that document will be created only once during file opening
             document.putUserData(DUMMY_KEY, null);
           }
-          updateProgress();
         }
         catch (InvalidDataException e) {
           if (ApplicationManager.getApplication().isUnitTestMode()) {
