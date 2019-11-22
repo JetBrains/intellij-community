@@ -1,4 +1,4 @@
-from _pydevd_bundle.pydevd_constants import dict_keys
+from _pydevd_bundle.pydevd_constants import dict_keys, dict_iter_items
 
 try:
     from code import InteractiveConsole
@@ -229,14 +229,18 @@ def console_exec(thread_id, frame_id, expression, dbg):
     return False
 
 
-def update_frame_local_variables_and_save(frame, var_dict):
-    """Update the frame local variables with the values from `var_dict`, remove those that no longer exist, and save."""
-    for var_name in var_dict:
-        if var_name not in frame.f_globals:
-            frame.f_locals[var_name] = var_dict[var_name]
-        elif var_dict[var_name] is not frame.f_globals[var_name]:
-            frame.f_locals[var_name] = var_dict[var_name]
-    for var_name in frame.f_locals:
-        if var_name not in var_dict:
-            frame.f_locals.pop(var_name)
+def update_frame_local_variables_and_save(frame, values):
+    """Update the frame local variables with the values from `values`, remove those that no longer exist, and save."""
+    # It is important to access to `frame.f_locals` through a local reference.
+    # Any changes done to it will be lost as soon as we access the attribute next time.
+    f_locals, f_globals = frame.f_locals, frame.f_globals
+
+    for key, value in dict_iter_items(values):
+        if key not in f_globals or value is not f_globals[key]:
+            f_locals[key] = value
+
+    for key in dict_keys(f_locals):
+        if key not in values:
+            f_locals.pop(key)
+
     pydevd_save_locals.save_locals(frame)
