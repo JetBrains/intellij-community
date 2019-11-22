@@ -499,10 +499,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(() -> {
-            //doesn't work
-            /*List<Change> selectedChanges = myChangesBrowser.getSelectedChanges();
-            myChangesBrowser.selectEntries(selectedChanges); //select the changes browser, not graph*/
-          });
+            IdeFocusManager.getInstance(project).requestFocus(myChangesBrowser.getPreferredFocusedComponent(), true);
+          }, false);
         }
       };
       action.registerCustomShortcutSet(fileEditors[0].getComponent(), null);
@@ -511,8 +509,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         action.unregisterCustomShortcutSet(fileEditors[0].getComponent());
       });
     }
-
-    FileEditorManager.getInstance(myLogData.getProject()).openFile(previewDiffVirtualFile, false, true);
   }
 
   @Override
