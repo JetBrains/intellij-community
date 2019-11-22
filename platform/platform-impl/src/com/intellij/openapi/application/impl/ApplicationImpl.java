@@ -417,7 +417,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         LOG.debug("Starting process with progress from within write action makes no sense");
       }
       try {
-        ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
+        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        ProgressManager.getInstance().runProcess(process, progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator);
       }
       catch (ProcessCanceledException e) {
         // ok to ignore.
