@@ -39,7 +39,7 @@ public class DirectoryAccessChecker {
   private static final Path USER_HOME_DIR = Paths.get(System.getProperty("user.home"));
   private static final long REFRESH_RATE_MS = 60_000;
 
-  private static volatile DirectoryFilter instance = IS_ENABLED ? getChain() : DirectoryFilter.ACCEPTING_FILTER;
+  private static volatile DirectoryFilter instance = DirectoryFilter.ACCEPTING_FILTER;
   private static volatile long instanceEOL = 0;
 
   public static @NotNull FilenameFilter getFileFilter(File directory) {
