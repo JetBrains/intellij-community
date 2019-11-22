@@ -767,11 +767,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     switch (role) {
       case ChildRole.REFERENCE_NAME:
         TreeElement lastChild = getLastChildNode();
-        return getChildRole(lastChild) == role ? lastChild : findChildByType(JavaTokenType.IDENTIFIER);
+        return lastChild == null || getChildRole(lastChild) == role ? lastChild : findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
         TreeElement firstChild = getFirstChildNode();
-        return getChildRole(firstChild) == ChildRole.QUALIFIER ? firstChild : null;
+        return firstChild != null && getChildRole(firstChild) == ChildRole.QUALIFIER ? firstChild : null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
         return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);
