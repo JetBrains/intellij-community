@@ -299,7 +299,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return value == null ? 0 : value;
   }
 
-  public void readExternal(final Element element) {
+  public void readExternal(@NotNull Element element) {
     mySplittersElement = element;
   }
 

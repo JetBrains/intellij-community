@@ -242,15 +242,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public JComponent getComponent() {
-    initUI();
-    return mySplitters;
+    return initUI();
   }
 
   @NotNull
   public EditorsSplitters getMainSplitters() {
-    initUI();
-
-    return mySplitters;
+    return initUI();
   }
 
   @NotNull
@@ -315,18 +312,25 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private final Object myInitLock = new Object();
 
-  private void initUI() {
-    if (mySplitters == null) {
-      synchronized (myInitLock) {
-        if (mySplitters == null) {
-          final JPanel panel = new JPanel(new BorderLayout());
-          panel.setOpaque(false);
-          panel.setBorder(new MyBorder());
-          mySplitters = new EditorsSplitters(this, true);
-          Disposer.register(this, mySplitters);
-        }
+  @NotNull
+  private EditorsSplitters initUI() {
+    EditorsSplitters result = mySplitters;
+    if (result != null) {
+      return result;
+    }
+
+    synchronized (myInitLock) {
+      result = mySplitters;
+      if (result == null) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
+        panel.setBorder(new MyBorder());
+        result = new EditorsSplitters(this, true);
+        mySplitters = result;
+        Disposer.register(this, mySplitters);
       }
     }
+    return result;
   }
 
   private static class MyBorder implements Border {

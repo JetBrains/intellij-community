@@ -31,15 +31,14 @@ final class OpenFilesActivity implements StartupActivity.DumbAware {
     manager.getMainSplitters().openFiles();
     manager.initDockableContentFactory();
 
-    if (manager.getOpenFiles().length == 0 && 
-        !ApplicationManager.getApplication().isHeadlessEnvironment() && 
+    if (manager.getOpenFiles().length == 0 &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment() &&
         Registry.is("ide.open.readme.md.on.startup")) {
-      RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart",
-                                    () -> findAndOpenReadme(project, manager));
+      RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
     }
   }
 
-  private static void findAndOpenReadme(@NotNull Project project, FileEditorManagerImpl manager) {
+  private static void findAndOpenReadme(@NotNull Project project, @NotNull FileEditorManagerImpl manager) {
     VirtualFile dir = ProjectUtil.guessProjectDir(project);
     if (dir != null) {
       VirtualFile readme = dir.findChild("README.md");
