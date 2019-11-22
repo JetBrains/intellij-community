@@ -7,5 +7,6 @@ class X {
         int posBounded = s.substring(10, 20).indexOf("foo");
         int posChar = s.indexOf('f', 10);
         int posIdx = s.substring(10).indexOf('f', 2);
+        int posFromZero = s.indexOf("xyzt") > 0;
     }
 }

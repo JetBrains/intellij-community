@@ -1143,10 +1143,19 @@ public class ExpressionUtils {
     diff = PsiUtil.skipParenthesizedExprDown(diff);
     if (diff == null) return false;
     if (isZero(from) && PsiEquivalenceUtil.areElementsEquivalent(to, diff)) return true;
+    EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
     if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)diff).getROperand();
-      if (right != null && PsiEquivalenceUtil.areElementsEquivalent(to, left) && PsiEquivalenceUtil.areElementsEquivalent(from, right)) {
+      if (right != null && eq.expressionsAreEquivalent(to, left) && eq.expressionsAreEquivalent(from, right)) {
+        return true;
+      }
+    }
+    if (to instanceof PsiBinaryExpression && ((PsiBinaryExpression)to).getOperationTokenType().equals(JavaTokenType.PLUS)) {
+      PsiExpression left = ((PsiBinaryExpression)to).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)to).getROperand();
+      if (right != null && (eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff)) ||
+          (eq.expressionsAreEquivalent(right, from) && eq.expressionsAreEquivalent(left, diff))) {
         return true;
       }
     }
