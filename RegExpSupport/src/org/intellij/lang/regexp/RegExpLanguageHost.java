@@ -78,6 +78,10 @@ public interface RegExpLanguageHost {
 
   boolean isValidCategory(@NotNull String category);
 
+  default boolean isValidPropertyName(@NotNull String name) {
+    return true;
+  }
+
   default boolean isValidPropertyValue(@NotNull String propertyName, @NotNull String value){
     return true;
   }
