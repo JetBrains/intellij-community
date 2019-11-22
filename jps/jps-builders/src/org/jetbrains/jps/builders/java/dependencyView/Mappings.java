@@ -2177,7 +2177,7 @@ public class Mappings {
       debug("End of removed classes processing.");
     }
 
-    private void processAddedClasses(final DiffState state, File srcFile) {
+    private void processAddedClasses(DiffState state) {
       final Collection<ClassRepr> addedClasses = state.myClassDiff.added();
       if (addedClasses.isEmpty()) {
         return;
@@ -2407,7 +2407,7 @@ public class Mappings {
             }
 
             processRemovedClases(state, fileName);
-            processAddedClasses(state, fileName);
+            processAddedClasses(state);
 
             if (!myEasyMode) {
               calculateAffectedFiles(state);
@@ -2579,7 +2579,6 @@ public class Mappings {
         }
       }
     }
-
   }
 
   public void differentiateOnRebuild(final Mappings delta) {
