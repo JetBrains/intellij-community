@@ -2,6 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -85,8 +86,16 @@ public class TipUIUtil {
   }
 
   @Nullable
-  public static TipAndTrickBean getTip(String tipFileName) {
-    TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
+  public static TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
+    if (feature == null) {
+      return null;
+    }
+
+    String tipFileName = feature.getTipFileName();
+    TipAndTrickBean tip = TipAndTrickBean.findByFileName("neue-" + tipFileName);
+    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
+      tip = TipAndTrickBean.findByFileName(tipFileName);
+    }
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
       tip.fileName = tipFileName;
