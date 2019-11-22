@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,7 +30,7 @@ import java.nio.charset.Charset;
 import java.util.Set;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
+  private static final Logger LOG = Logger.getInstance(OSProcessHandler.class);
   private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
   private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
 
@@ -259,13 +260,13 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * In case of pty this process handler will use blocking read because {@link InputStream#available()} doesn't work for pty4j, and there
-   * is no reason to "disconnect" leaving pty alive.
-   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for more info.
-   * The value should be set before
-   * startNotify invocation. It is set by default in case of using GeneralCommandLine based constructor.
+   * <p>In case of PTY this process handler will use blocking read because {@link InputStream#available()} doesn't work for Pty4j, and there
+   * is no reason to "disconnect" leaving PTY alive. See {@link BaseDataReader.SleepingPolicy} for more info.</p>
    *
-   * @param hasPty true if process is pty based
+   * <p>The value should be set before {@link #startNotify()} invocation.
+   * It is set by default in case of using GeneralCommandLine based constructor.</p>
+   *
+   * @param hasPty {@code true} if process is PTY-based.
    */
   public void setHasPty(boolean hasPty) {
     myHasPty = hasPty;
@@ -273,7 +274,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   /**
    * Rule of thumb: use {@link BaseOutputReader.Options#BLOCKING} for short-living process that you never want to "disconnect" from.
-   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for the whole story.
+   * See {@link BaseDataReader.SleepingPolicy} for the whole story.
    */
   @NotNull
   @Override
