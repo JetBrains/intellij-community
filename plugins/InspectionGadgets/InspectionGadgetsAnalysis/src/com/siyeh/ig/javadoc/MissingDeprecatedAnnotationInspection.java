@@ -33,12 +33,10 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MissingDeprecatedAnnotationInspection extends BaseInspection {
-
+final class MissingDeprecatedAnnotationInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
 
   @Override
@@ -56,7 +54,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
            : InspectionGadgetsBundle.message("missing.deprecated.tag.problem.descriptor");
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missing.deprecated.tag.option"),
