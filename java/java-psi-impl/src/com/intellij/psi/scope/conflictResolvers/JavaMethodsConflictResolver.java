@@ -574,7 +574,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     final boolean varargs1 = info1.isVarargs();
     final boolean varargs2 = info2.isVarargs();
-    if (varargs1 ^ varargs2) {
+    if (varargs1 != varargs2) {
       return varargs1 ? Specifics.SECOND : Specifics.FIRST;
     }
 
@@ -600,7 +600,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     ProgressManager.checkCanceled();
     final boolean isExpressionTypePrimitive = argType != null ? argType instanceof PsiPrimitiveType
                                                               : PsiPolyExpressionUtil.isExpressionOfPrimitiveType(arg);
-    return parameterType instanceof PsiPrimitiveType ^ isExpressionTypePrimitive;
+    return parameterType instanceof PsiPrimitiveType != isExpressionTypePrimitive;
   }
 
   /**
