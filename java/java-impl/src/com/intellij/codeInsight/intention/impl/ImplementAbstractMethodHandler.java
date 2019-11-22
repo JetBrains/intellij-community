@@ -114,7 +114,8 @@ public class ImplementAbstractMethodHandler {
           if (!selectedValues.isEmpty()) {
             implementInClass(ArrayUtil.toObjectArray(selectedValues));
           }
-        });
+        })
+      .withHintUpdateSupply();
     elementListCellRenderer.installSpeedSearch(builder);
     builder.createPopup().showInBestPositionFor(myEditor);
   }
