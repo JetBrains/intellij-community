@@ -1060,7 +1060,7 @@ public class PlatformTestUtil {
     return configuration != null ? configuration.getConfiguration() : null;
   }
 
-  public static RunContentDescriptor executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1098,7 +1098,7 @@ public class PlatformTestUtil {
       LOG.warn(capturingProcessAdapter.getOutput().getStderr());
     }
 
-    return refRunContentDescriptor.get();
+    return executionEnvironment;
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
