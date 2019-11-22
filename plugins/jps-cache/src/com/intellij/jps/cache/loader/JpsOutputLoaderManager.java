@@ -99,7 +99,7 @@ public class JpsOutputLoaderManager {
           notification.expire();
           load(false);
         }));
-        Notifications.Bus.notify(notification);
+        Notifications.Bus.notify(notification, myProject);
       });
     });
   }
@@ -225,7 +225,7 @@ public class JpsOutputLoaderManager {
       String message = "Update compiler caches completed successfully in " + endTime + " s";
       Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compiler Caches Loader", message,
                                                                              NotificationType.INFORMATION, null);
-      Notifications.Bus.notify(notification);
+      Notifications.Bus.notify(notification, myProject);
     });
     LOG.info("Loading finished");
   }
@@ -262,11 +262,11 @@ public class JpsOutputLoaderManager {
     return (Runtime.getRuntime().availableProcessors() / 2) > 3 ? 3 : 1;
   }
 
-  private static void onFail() {
+  private void onFail() {
     ApplicationManager.getApplication().invokeLater(() -> {
       Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compiler Caches Loader", "Update compiler caches failed",
                                                                              NotificationType.WARNING, null);
-      Notifications.Bus.notify(notification);
+      Notifications.Bus.notify(notification, myProject);
     });
   }
 }
