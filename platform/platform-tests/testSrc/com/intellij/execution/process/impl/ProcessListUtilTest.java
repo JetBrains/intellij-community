@@ -239,10 +239,10 @@ public class ProcessListUtilTest extends TestCase {
     assertNull(ProcessListUtil.parseWinProcessListHelperOutput("Hello"));
     assertNull(ProcessListUtil.parseWinProcessListHelperOutput("12345\n" +
                                                                "git.exe\n" +
-                                                               "git.exe fetch\n" +
+                                                               "\"git.exe fetch\"\n" +
                                                                "1x\n" +
                                                                "node.exe\n" +
-                                                               "node.exe qq\n"
+                                                               "\"node.exe qq\"\n"
     ));
   }
 }
