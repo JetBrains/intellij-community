@@ -170,7 +170,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
 
   private <T> T doGetRequest(Class<T> responseClass) {
     try {
-      return HttpRequests.request(stringThree + REPOSITORY_NAME + "/caches?json=1")
+      return HttpRequests.request(stringThree + REPOSITORY_NAME + "/caches/?json=1")
         .connect(it -> {
           URLConnection connection = it.getConnection();
           if (connection instanceof HttpURLConnection) {
