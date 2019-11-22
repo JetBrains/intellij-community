@@ -1,21 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListUtil;
@@ -31,8 +27,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * @author MYakovlev
@@ -293,47 +291,26 @@ public class PathEditor {
     setModified(true);
   }
 
-  private static boolean isJarFile(final VirtualFile file) {
-    return ReadAction.compute(() -> {
-      VirtualFile tempFile = file;
-      if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
-        //[myakovlev] It was bug - directories with *.jar extensions was saved as files of JarFileSystem.
-        //    so we can not just return true, we should filter such directories.
-        String path = file.getPath().substring(0, file.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
-        tempFile = LocalFileSystem.getInstance().findFileByPath(path);
-      }
-      if (tempFile != null && !tempFile.isDirectory()) {
-        return Boolean.valueOf(FileTypeRegistry.getInstance().isFileOfType(tempFile, ArchiveFileType.INSTANCE));
-      }
-      return Boolean.FALSE;
-    }).booleanValue();
-  }
-
-  private static Icon getIconForRoot(Object projectRoot) {
-    if (projectRoot instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)projectRoot;
-      if (!file.isValid()) {
-        return AllIcons.Nodes.PpInvalid;
-      }
-      else if (file.getFileSystem() instanceof HttpFileSystem) {
-        return PlatformIcons.WEB_ICON;
-      }
-      else if (isJarFile(file)) {
-        return PlatformIcons.JAR_ICON;
-      }
-      return PlatformIcons.FILE_ICON;
-    }
-
-    return AllIcons.Nodes.EmptyNode;
-  }
-
   protected static class PathCellRenderer extends DefaultListCellRenderer {
     protected String getItemText(Object value) {
       return value instanceof VirtualFile ? ((VirtualFile)value).getPresentableUrl() : "UNKNOWN OBJECT";
     }
 
     protected Icon getItemIcon(Object value) {
-      return getIconForRoot(value);
+      if (!(value instanceof VirtualFile)) {
+        return AllIcons.Nodes.EmptyNode;
+      }
+      VirtualFile file = (VirtualFile)value;
+      if (!file.isValid()) {
+        return AllIcons.Nodes.PpInvalid;
+      }
+      if (file.getFileSystem() instanceof HttpFileSystem) {
+        return PlatformIcons.WEB_ICON;
+      }
+      if (file.getFileSystem() instanceof ArchiveFileSystem) {
+        return PlatformIcons.JAR_ICON;
+      }
+      return PlatformIcons.FILE_ICON;
     }
 
     @Override
