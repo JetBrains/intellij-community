@@ -266,7 +266,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     if (attributes.isDirectory() && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
       // when creating empty directory we need to make sure
-      // every file crested inside will fire "file created" event
+      // every file created inside will fire "file created" event
       // in order to virtual file pointer manager get those events
       // to update its pointers properly
       // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons)
