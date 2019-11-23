@@ -501,7 +501,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   internal open val isGetComponentAdapterOfTypeCheckEnabled: Boolean
-    get() = true
+    get() = false  // Android Studio: b/145809499
 
   final override fun <T : Any> instantiateExtensionWithPicoContainerOnlyIfNeeded(className: String?, pluginDescriptor: PluginDescriptor?): T {
     val pluginId = pluginDescriptor?.pluginId ?: PluginId.getId("unknown")
