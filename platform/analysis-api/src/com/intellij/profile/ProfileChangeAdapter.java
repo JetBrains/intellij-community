@@ -16,7 +16,4 @@ public interface ProfileChangeAdapter {
 
   default void profilesInitialized() {
   }
-
-  default void profilesShutdown() {
-  }
 }

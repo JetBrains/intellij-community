@@ -115,8 +115,6 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
         val cleanupInspectionProfilesRunnable = {
           cleanupSchemes(project)
           (ServiceManager.getServiceIfCreated(InspectionProfileManager::class.java) as BaseInspectionProfileManager?)?.cleanupSchemes(project)
-          this@ProjectInspectionProfileManager.project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesShutdown()
-          Unit
         }
 
         if (app.isUnitTestMode || app.isHeadlessEnvironment) {
