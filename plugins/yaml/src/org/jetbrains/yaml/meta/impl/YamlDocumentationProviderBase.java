@@ -40,7 +40,8 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+                                                  @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     if (contextElement == null || !isRelevant(contextElement)) {
       return null;
     }

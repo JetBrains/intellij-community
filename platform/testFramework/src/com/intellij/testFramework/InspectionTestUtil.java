@@ -155,7 +155,7 @@ public class InspectionTestUtil {
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
-      HighlightDisplayKey.register(shortName);
+      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), toolWrapper.getID());
     }
 
     globalContext.doInspections(scope);

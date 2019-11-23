@@ -33,7 +33,7 @@ import java.util.*;
  */
 public abstract class XDebuggerTreeNode implements TreeNode {
   protected final XDebuggerTree myTree;
-  private final XDebuggerTreeNode myParent;
+  protected final XDebuggerTreeNode myParent;
   private boolean myLeaf;
   protected final SimpleColoredText myText = new SimpleColoredText();
   private Icon myIcon;

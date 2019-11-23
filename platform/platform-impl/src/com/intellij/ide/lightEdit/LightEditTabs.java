@@ -10,9 +10,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
@@ -37,12 +36,11 @@ class LightEditTabs extends JBEditorTabs {
     });
   }
 
-  void addEditorTab(@NotNull Editor editor, @NotNull VirtualFile file) {
-    TabInfo tabInfo = new TabInfo(createEditorContainer(editor))
-      .setText(file.getPresentableName())
+  void addEditorTab(@NotNull LightEditorInfo editorInfo) {
+    TabInfo tabInfo = new TabInfo(createEditorContainer(editorInfo.getEditor()))
+      .setText(editorInfo.getFile().getPresentableName())
       .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
-    final LightEditorInfo editorInfo = new LightEditorInfo(editor, file);
     tabInfo.setObject(editorInfo);
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -51,6 +49,7 @@ class LightEditTabs extends JBEditorTabs {
     tabInfo.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
     addTabSilently(tabInfo, -1);
     select(tabInfo, true);
+    myEditorManager.fireEditorSelected(editorInfo);
   }
 
   private static JComponent createEditorContainer(@NotNull Editor editor) {
@@ -68,6 +67,12 @@ class LightEditTabs extends JBEditorTabs {
       }
     }
     myEditorManager.fireEditorSelected(selectedEditorInfo);
+  }
+
+  void selectTab(@NotNull LightEditorInfo info) {
+    getTabs().stream()
+      .filter(tabInfo -> tabInfo.getObject().equals(info))
+      .findFirst().ifPresent(tabInfo -> select(tabInfo, true));
   }
 
   private class CloseTabAction extends DumbAwareAction {
@@ -89,12 +94,16 @@ class LightEditTabs extends JBEditorTabs {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setIcon(AllIcons.Actions.Close);
+      e.getPresentation().setIcon(getIcon());
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
       e.getPresentation().setText("Close. Alt-Click to Close Others.");
     }
 
+    private Icon getIcon() {
+      return
+        isUnsaved(myEditorInfo) ? AllIcons.General.Modified : AllIcons.Actions.Close;
+    }
 
     private void closeCurrentTab() {
       TabInfo tabInfo = findInfo(myEditorInfo);
@@ -112,6 +121,10 @@ class LightEditTabs extends JBEditorTabs {
     private void closeTab(@NotNull TabInfo tabInfo) {
       removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
     }
+  }
+
+  private static boolean isUnsaved(@NotNull LightEditorInfo info) {
+    return FileDocumentManager.getInstance().isFileModified(info.getFile());
   }
 
 }

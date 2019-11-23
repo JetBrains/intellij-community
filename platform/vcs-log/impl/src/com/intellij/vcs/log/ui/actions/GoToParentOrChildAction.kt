@@ -7,18 +7,18 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
-    val ui = e.getData(VcsLogDataKeys.VCS_LOG_UI)
-    if (ui == null || ui !is AbstractVcsLogUi) {
+    val ui = e.getData(VcsLogInternalDataKeys.LOG_UI_EX)
+    if (ui == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -35,7 +35,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     triggerUsage(e)
 
-    val ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI) as AbstractVcsLogUi
+    val ui = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_EX)
     val rows = getRowsToJump(ui)
 
     if (rows.isEmpty()) {
@@ -54,7 +54,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
   }
 
-  private fun createGroup(ui: AbstractVcsLogUi, rows: List<Int>): ActionGroup {
+  private fun createGroup(ui: VcsLogUiEx, rows: List<Int>): ActionGroup {
     val actions = rows.mapTo(mutableListOf()) { row ->
       val text = getActionText(ui.table.model.getCommitMetadata(row))
       object : DumbAwareAction(text, "Navigate to $text", null) {
@@ -79,7 +79,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     return text
   }
 
-  private fun getRowsToJump(ui: AbstractVcsLogUi): List<Int> {
+  private fun getRowsToJump(ui: VcsLogUiEx): List<Int> {
     val selectedRows = ui.table.selectedRows
     if (selectedRows.size != 1) return emptyList()
     return ui.dataPack.visibleGraph.getRowInfo(selectedRows.single()).getAdjacentRows(parent).sorted()

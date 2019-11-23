@@ -29,7 +29,9 @@ public interface FrameworkOrGroup {
   @NotNull
   String getId();
 
+  @NotNull
   String getPresentableName();
 
+  @NotNull
   Icon getIcon();
 }

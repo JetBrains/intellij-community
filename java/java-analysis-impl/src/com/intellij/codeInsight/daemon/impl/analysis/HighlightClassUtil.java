@@ -44,7 +44,6 @@ public class HighlightClassUtil {
   /**
    * new ref(...) or new ref(..) { ... } where ref is abstract class
    */
-  @Nullable
   static HighlightInfo checkAbstractInstantiation(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
     HighlightInfo highlightInfo = null;
@@ -57,12 +56,10 @@ public class HighlightClassUtil {
     return highlightInfo;
   }
 
-  @Nullable
   private static HighlightInfo checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull TextRange range) {
     return checkClassWithAbstractMethods(aClass, aClass, range);
   }
 
-  @Nullable
   static HighlightInfo checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiElement implementsFixElement, @NotNull TextRange range) {
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
 
@@ -104,7 +101,6 @@ public class HighlightClassUtil {
     return errorResult;
   }
 
-  @Nullable
   static HighlightInfo checkClassMustBeAbstract(@NotNull PsiClass aClass, @NotNull TextRange textRange) {
     if (aClass.isEnum()) {
       if (hasEnumConstantsWithInitializer(aClass)) return null; 
@@ -115,7 +111,6 @@ public class HighlightClassUtil {
     return checkClassWithAbstractMethods(aClass, textRange);
   }
 
-  @Nullable
   static HighlightInfo checkInstantiationOfAbstractClass(@NotNull PsiClass aClass, @NotNull PsiElement highlightElement) {
     HighlightInfo errorResult = null;
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
@@ -148,7 +143,6 @@ public class HighlightClassUtil {
 
   }
 
-  @Nullable
   static HighlightInfo checkDuplicateTopLevelClass(@NotNull PsiClass aClass) {
     if (!(aClass.getParent() instanceof PsiFile)) return null;
     String qualifiedName = aClass.getQualifiedName();
@@ -186,7 +180,6 @@ public class HighlightClassUtil {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(message).create();
   }
 
-  @Nullable
   static HighlightInfo checkDuplicateNestedClass(@NotNull PsiClass aClass) {
     PsiElement parent = aClass;
     if (aClass.getParent() instanceof PsiDeclarationStatement) {
@@ -229,7 +222,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkPublicClassInRightFile(@NotNull PsiClass aClass) {
     PsiFile containingFile = aClass.getContainingFile();
     if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile)) return null;
@@ -271,7 +263,6 @@ public class HighlightClassUtil {
     return null;
   }
   
-  @Nullable
   static HighlightInfo checkClassAndPackageConflict(@NotNull PsiClass aClass) {
     String name = aClass.getQualifiedName();
 
@@ -298,14 +289,13 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   private static HighlightInfo checkStaticFieldDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
     if (getEnclosingStaticClass(keyword, PsiField.class) == null) {
       return null;
     }
 
     PsiField field = (PsiField)keyword.getParent().getParent();
-    if (PsiUtilCore.hasErrorElementChild(field) || PsiUtil.isCompileTimeConstant((PsiVariable)field)) {
+    if (PsiUtilCore.hasErrorElementChild(field) || PsiUtil.isCompileTimeConstant(field)) {
       return null;
     }
 
@@ -324,7 +314,6 @@ public class HighlightClassUtil {
     }
   }
 
-  @Nullable
   private static HighlightInfo checkStaticMethodDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
     if (getEnclosingStaticClass(keyword, PsiMethod.class) == null) {
       return null;
@@ -338,7 +327,6 @@ public class HighlightClassUtil {
     return result;
   }
 
-  @Nullable
   private static HighlightInfo checkStaticInitializerDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
     if (getEnclosingStaticClass(keyword, PsiClassInitializer.class) == null) {
       return null;
@@ -363,7 +351,6 @@ public class HighlightClassUtil {
       .getElement();
   }
 
-  @Nullable
   private static HighlightInfo checkStaticClassDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
     // keyword points to 'class' or 'interface' or 'enum'
     if (new PsiMatcherImpl(keyword)
@@ -403,7 +390,6 @@ public class HighlightClassUtil {
     return info;
   }
 
-  @Nullable
   static HighlightInfo checkStaticDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
     HighlightInfo errorResult = checkStaticFieldDeclarationInInnerClass(keyword);
     if (errorResult != null) return errorResult;
@@ -412,11 +398,9 @@ public class HighlightClassUtil {
     errorResult = checkStaticClassDeclarationInInnerClass(keyword);
     if (errorResult != null) return errorResult;
     errorResult = checkStaticInitializerDeclarationInInnerClass(keyword);
-    if (errorResult != null) return errorResult;
-    return null;
+    return errorResult;
   }
 
-  @Nullable
   static HighlightInfo checkExtendsAllowed(@NotNull PsiReferenceList list) {
     if (list.getParent() instanceof PsiClass) {
       PsiClass aClass = (PsiClass)list.getParent();
@@ -431,7 +415,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkImplementsAllowed(@NotNull PsiReferenceList list) {
     if (list.getParent() instanceof PsiClass) {
       PsiClass aClass = (PsiClass)list.getParent();
@@ -452,7 +435,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkExtendsClassAndImplementsInterface(@NotNull PsiReferenceList referenceList,
                                                                @NotNull JavaResolveResult resolveResult,
                                                                @NotNull PsiJavaCodeReferenceElement ref) {
@@ -473,7 +455,6 @@ public class HighlightClassUtil {
     return errorResult;
   }
 
-  @Nullable
   static HighlightInfo checkCannotInheritFromFinal(@NotNull PsiClass superClass, @NotNull PsiElement elementToHighlight) {
     HighlightInfo errorResult = null;
     if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
@@ -485,7 +466,6 @@ public class HighlightClassUtil {
     return errorResult;
   }
 
-  @Nullable
   static HighlightInfo checkAnonymousInheritFinal(@NotNull PsiNewExpression expression) {
     PsiAnonymousClass aClass = PsiTreeUtil.getChildOfType(expression, PsiAnonymousClass.class);
     if (aClass == null) return null;
@@ -495,7 +475,6 @@ public class HighlightClassUtil {
     return checkCannotInheritFromFinal(baseClass, aClass.getBaseClassReference());
   }
 
-  @Nullable
   private static String checkDefaultConstructorThrowsException(@NotNull PsiMethod constructor, @NotNull PsiClassType[] handledExceptions) {
     PsiClassType[] referencedTypes = constructor.getThrowsList().getReferencedTypes();
     List<PsiClassType> exceptions = new ArrayList<>();
@@ -510,7 +489,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkClassDoesNotCallSuperConstructorOrHandleExceptions(@NotNull PsiClass aClass,
                                                                                @Nullable RefCountHolder refCountHolder,
                                                                                @NotNull PsiResolveHelper resolveHelper) {
@@ -583,7 +561,6 @@ public class HighlightClassUtil {
     return info;
   }
 
-  @Nullable
   static HighlightInfo checkInterfaceCannotBeLocal(@NotNull PsiClass aClass) {
     if (PsiUtil.isLocalClass(aClass)) {
       TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
@@ -593,7 +570,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkCyclicInheritance(@NotNull PsiClass aClass) {
     PsiClass circularClass = InheritanceUtil.getCircularClass(aClass);
     if (circularClass != null) {
@@ -604,7 +580,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkExtendsDuplicate(@NotNull PsiJavaCodeReferenceElement element, @Nullable PsiElement resolved, @NotNull PsiFile containingFile) {
     if (!(element.getParent() instanceof PsiReferenceList)) return null;
     PsiReferenceList list = (PsiReferenceList)element.getParent();
@@ -627,7 +602,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkClassAlreadyImported(@NotNull PsiClass aClass, @NotNull PsiElement elementToHighlight) {
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
@@ -648,7 +622,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkClassExtendsOnlyOneClass(@NotNull PsiReferenceList list) {
     PsiClassType[] referencedTypes = list.getReferencedTypes();
     PsiElement parent = list.getParent();
@@ -665,14 +638,12 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkThingNotAllowedInInterface(@NotNull PsiElement element, @Nullable PsiClass aClass) {
     if (aClass == null || !aClass.isInterface()) return null;
     String description = JavaErrorMessages.message("not.allowed.in.interface");
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
   }
 
-  @Nullable
   static HighlightInfo checkQualifiedNew(@NotNull PsiNewExpression expression, @Nullable PsiType type, @Nullable PsiClass aClass) {
     PsiExpression qualifier = expression.getQualifier();
     if (qualifier == null) return null;
@@ -720,7 +691,6 @@ public class HighlightClassUtil {
    * @param extendRef points to the class in the extends list
    * @param resolved  extendRef resolved
    */
-  @Nullable
   static HighlightInfo checkClassExtendsForeignInnerClass(@NotNull PsiJavaCodeReferenceElement extendRef, final PsiElement resolved) {
     PsiElement parent = extendRef.getParent();
     if (!(parent instanceof PsiReferenceList)) {
@@ -808,7 +778,6 @@ public class HighlightClassUtil {
     return true;
   }
 
-  @Nullable
   static HighlightInfo checkCreateInnerClassFromStaticContext(@NotNull PsiNewExpression expression, @Nullable PsiType type, @Nullable PsiClass aClass) {
     if (type == null || type instanceof PsiArrayType || type instanceof PsiPrimitiveType) return null;
     if (aClass == null) return null;
@@ -821,7 +790,6 @@ public class HighlightClassUtil {
     return checkCreateInnerClassFromStaticContext(expression, qualifier, aClass);
   }
 
-  @Nullable
   public static HighlightInfo checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
                                                                      @Nullable PsiExpression qualifier,
                                                                      @Nullable PsiClass aClass) {
@@ -836,7 +804,6 @@ public class HighlightClassUtil {
     return checkCreateInnerClassFromStaticContext(element, placeToSearchEnclosingFrom, aClass);
   }
 
-  @Nullable
   static HighlightInfo checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
                                                               @Nullable PsiElement placeToSearchEnclosingFrom,
                                                               @Nullable PsiClass aClass) {
@@ -849,7 +816,6 @@ public class HighlightClassUtil {
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
   }
 
-  @Nullable
   static HighlightInfo checkSuperQualifierType(@NotNull Project project, @NotNull PsiMethodCallExpression superCall) {
     if (!JavaPsiConstructorUtil.isSuperConstructorCall(superCall)) return null;
     PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
@@ -874,7 +840,6 @@ public class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo reportIllegalEnclosingUsage(PsiElement place,
                                                    @Nullable PsiClass aClass,
                                                    @Nullable PsiClass outerClass,

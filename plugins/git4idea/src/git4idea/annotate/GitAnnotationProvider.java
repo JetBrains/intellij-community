@@ -35,6 +35,7 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
+import git4idea.annotate.GitFileAnnotation.CommitInfo;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
 import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
@@ -263,19 +264,20 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
     try {
       List<LineInfo> lines = new ArrayList<>();
-      HashMap<String, LineInfo> commits = new HashMap<>();
+      HashMap<String, CommitInfo> commits = new HashMap<>();
       for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
         // parse header line
         String commitHash = s.spaceToken();
         if (commitHash.equals(GitRevisionNumber.NOT_COMMITTED_HASH)) {
           commitHash = null;
         }
-        s.spaceToken(); // skip revision line number
+        String s0 = s.spaceToken();
+        int originalLineNum = Integer.parseInt(s0);
         String s1 = s.spaceToken();
         int lineNum = Integer.parseInt(s1);
-        s.nextLine();
+        s.nextLine(); // skip number of lines in this group (if present)
         // parse commit information
-        LineInfo commit = commits.get(commitHash);
+        CommitInfo commit = commits.get(commitHash);
         if (commit != null || commitHash == null) {
           while (s.hasMoreData() && !s.startsWith('\t')) {
             s.nextLine();
@@ -336,7 +338,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           filePath = pathInterner.intern(filePath);
           if (previousFilePath != null) previousFilePath = pathInterner.intern(previousFilePath);
 
-          commit = new LineInfo(myProject, revisionNumber, filePath, committerDate, authorDate, author, subject,
+          commit = new CommitInfo(myProject, revisionNumber, filePath, committerDate, authorDate, author, subject,
                                 previousRevisionNumber, previousFilePath);
           commits.put(commitHash, commit);
         }
@@ -347,7 +349,8 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           throw new VcsException("Adding for info for line " + lineNum + " but we are expecting it to be for " + expectedLineNum);
         }
 
-        lines.add(commit);
+        LineInfo lineInfo = new LineInfo(commit, lineNum, originalLineNum);
+        lines.add(lineInfo);
       }
       return new GitFileAnnotation(myProject, file, revision, lines);
     }

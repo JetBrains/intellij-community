@@ -26,6 +26,7 @@ import javax.swing.*;
  *
  * @author Konstantin Bulenkov
  * @see DialogWrapper#doValidate()
+ * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
  */
 public final class ValidationInfo {
   @NotNull

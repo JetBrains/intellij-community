@@ -127,7 +127,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
-    DataFlowRunner runner = new StandardDataFlowRunner(false, expressionToAnalyze);
+    DataFlowRunner runner = new DataFlowRunner(expressionToAnalyze);
     Map<PsiExpression, ThreeState> values = new HashMap<>();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
       @Override

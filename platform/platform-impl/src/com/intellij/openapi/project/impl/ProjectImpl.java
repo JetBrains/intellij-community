@@ -4,7 +4,6 @@ package com.intellij.openapi.project.impl;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -19,9 +18,6 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -105,13 +101,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  public boolean isDisposed() {
-    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
-  }
-
-  @Override
-  public boolean isDisposedOrDisposeInProgress() {
-    return super.isDisposedOrDisposeInProgress() || temporarilyDisposed;
+  public final boolean isDisposed() {
+    return super.isDisposed() || temporarilyDisposed;
   }
 
   @Override
@@ -121,9 +112,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   private volatile boolean temporarilyDisposed;
+
   @TestOnly
-  void setTemporarilyDisposed(boolean disposed) {
-    temporarilyDisposed = disposed;
+  void setTemporarilyDisposed(boolean value) {
+    if (!value && super.isDisposed()) {
+      LOG.error("Project was already disposed, flag temporarilyDisposed cannot be set to `true`");
+    }
+    temporarilyDisposed = value;
   }
 
   @TestOnly
@@ -245,7 +240,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public final void registerComponents() {
     String activityNamePrefix = activityNamePrefix();
-    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
+    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
     //noinspection unchecked
     registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
@@ -318,18 +313,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     double toDistribute = 1 - indicator.getFraction();
     int modulesCount = ((ModuleManagerImpl)moduleManager).getModulePathsCount();
-    EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
-    int editors = splitters.getEditorsCount();
-
-    double modulesPart = ourClassesAreLoaded || editors == 0 ? toDistribute : toDistribute * 0.5;
     if (modulesCount != 0) {
-
-      double step = modulesPart / modulesCount;
-      ((ModuleManagerImpl)moduleManager).setProgressStep(step);
-    }
-
-    if (editors != 0) {
-      splitters.setProgressStep(toDistribute - modulesPart / editors);
+      ((ModuleManagerImpl)moduleManager).setProgressStep(toDistribute / modulesCount);
     }
   }
 
@@ -362,7 +347,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
     }
 
-    LOG.assertTrue(myContainerState.ordinal() <= ContainerState.DISPOSED.ordinal(), this + " is disposed already");
+    LOG.assertTrue(myContainerState.get().ordinal() <= ContainerState.DISPOSED.ordinal(), this + " is disposed already");
     disposeComponents();
 
     super.dispose();
@@ -384,7 +369,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project (name=" + myName + ", containerState=" + myContainerState.name() +
+    return "Project (name=" + myName + ", containerState=" + myContainerState.get().name() +
            ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
            (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
@@ -403,6 +388,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @ApiStatus.Internal
   public final void setDisposeInProgress() {
-    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
+    myContainerState.set(ContainerState.DISPOSE_IN_PROGRESS);
   }
 }

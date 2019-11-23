@@ -34,7 +34,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
   }
 
   @Nullable
-  protected final Editor getEditor() {
+  protected Editor getEditor() {
     final Project project = getProject();
     if (project.isDisposed()) return null;
 
@@ -78,7 +78,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     return true;
   }
 
-  boolean isOurEditor(Editor editor) {
+  public boolean isOurEditor(Editor editor) {
     return editor != null &&
            editor.getComponent().isShowing() &&
            !Boolean.TRUE.equals(editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY)) &&

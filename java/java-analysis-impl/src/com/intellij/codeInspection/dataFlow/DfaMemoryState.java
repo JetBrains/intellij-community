@@ -75,9 +75,9 @@ public interface DfaMemoryState {
    * @return a relation (EQ, NE, GT, LT), or null if not known.
    */
   @Nullable
-  DfaRelationValue.RelationType getRelation(DfaValue left, DfaValue right);
+  RelationType getRelation(DfaValue left, DfaValue right);
 
-  boolean applyCondition(DfaValue dfaCond);
+  boolean applyCondition(DfaCondition dfaCond);
 
   /**
    * Returns true if given two values are known to be equal
@@ -88,7 +88,7 @@ public interface DfaMemoryState {
    */
   boolean areEqual(@NotNull DfaValue value1, @NotNull DfaValue value2);
 
-  boolean applyContractCondition(DfaValue dfaCond);
+  boolean applyContractCondition(DfaCondition dfaCond);
 
   /**
    * Returns a value fact about supplied value within the context of current memory state.

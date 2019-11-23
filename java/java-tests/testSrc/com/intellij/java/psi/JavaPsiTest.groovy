@@ -2,6 +2,7 @@
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
@@ -137,6 +138,11 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert ref instanceof PsiClassReferenceType
 
     IdempotenceChecker.checkEquivalence((PsiType)immediate, (PsiType)ref, getClass(), null) // shouldn't throw
+
+    DefaultLogger.disableStderrDumping(testRootDisposable)
+    assertThrows(Throwable, "Non-idempotent") {
+      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiType.VOID, getClass(), null)
+    }
   }
 
   private PsiJavaFile configureFile(String text) {

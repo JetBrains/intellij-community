@@ -191,7 +191,9 @@ class JpsEntitiesSerializationData(fileSerializers: List<JpsFileEntitiesSerializ
       saveEntitiesList(it, storage, writer)
     }
 
-    saveEntities(storage, fileSerializersByUrl.values().mapTo(HashSet()) { it.entitySource }, writer)
+    val allSources = fileSerializersByUrl.values().mapTo(HashSet<EntitySource>()) { it.entitySource }
+    allSources += IdeUiEntitySource
+    saveEntities(storage, allSources, writer)
   }
 
   fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter): List<Pair<TypedEntity, JpsFileEntitySource>> {
@@ -289,7 +291,7 @@ class JpsEntitiesSerializationData(fileSerializers: List<JpsFileEntitiesSerializ
     })
     return entities.map {
       @Suppress("UNCHECKED_CAST")
-      val fileName = nameGenerator.generateUniqueName(factory.getDefaultFileName(it as E), "", ".xml")
+      val fileName = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(factory.getDefaultFileName(it as E)), "", ".xml")
       val entityMap = mapOf<Class<out TypedEntity>, List<TypedEntity>>(factory.entityClass to listOf(it))
       Pair(factory.createSerializer("${factory.directoryUrl}/$fileName"), entityMap)
     }

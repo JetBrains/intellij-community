@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.workspace.api.EntityStoreChanged
 import com.intellij.workspace.bracket
@@ -21,11 +22,15 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
 
     bus.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: EntityStoreChanged) {
+        if (myProject.isDisposed || Disposer.isDisposing(myProject)) return
         getBatchSession(false).beforeRootsChanged()
       }
 
-      override fun changed(event: EntityStoreChanged) = LOG.bracket("ProjectRootManager.EntityStoreChange") {
-        getBatchSession(false).rootsChanged()
+      override fun changed(event: EntityStoreChanged) {
+        if (myProject.isDisposed || Disposer.isDisposing(myProject)) return
+        LOG.bracket("ProjectRootManager.EntityStoreChange") {
+          getBatchSession(false).rootsChanged()
+        }
       }
     })
 

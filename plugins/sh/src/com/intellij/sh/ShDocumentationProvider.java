@@ -66,11 +66,11 @@ public class ShDocumentationProvider extends AbstractDocumentationProvider {
 
   @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement) {
+  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     ASTNode node = contextElement == null ? null : contextElement.getNode();
     if (node == null || (TreeUtil.isWhitespaceOrComment(node) || node.getElementType() == ShTypes.LINEFEED)) {
-      int offset = editor.getCaretModel().getPrimaryCaret().getOffset();
-      PsiElement at = offset > 0 ? file.findElementAt(offset - 1) : null;
+      PsiElement at = targetOffset > 0 ? file.findElementAt(targetOffset - 1) : null;
       if (wordWithDocumentation(at)) return at;
     }
     return contextElement;

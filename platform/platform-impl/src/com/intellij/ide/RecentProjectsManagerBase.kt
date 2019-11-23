@@ -104,6 +104,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun getState(): RecentProjectManagerState {
     synchronized(stateLock) {
+      // https://youtrack.jetbrains.com/issue/TBX-3756
       @Suppress("DEPRECATION")
       state.recentPaths.clear()
       @Suppress("DEPRECATION")
@@ -126,17 +127,26 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     synchronized(stateLock) {
       this.state = state
       state.pid = null
+
       @Suppress("DEPRECATION")
-      val openPaths = state.openPaths
-      if (openPaths.isNotEmpty()) {
-        migrateOpenPaths(openPaths)
+      migrateOpenPaths(state.openPaths)
+
+      // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
+      @Suppress("DEPRECATION")
+      if (state.recentPaths.isNotEmpty() && state.recentPaths.size != state.additionalInfo.size) {
+        val existingPaths = state.recentPaths.toSet()
+        state.additionalInfo.keys.removeIf { !existingPaths.contains(it) }
       }
     }
   }
 
   // reorder according to openPaths order and mark as opened
   private fun migrateOpenPaths(openPaths: MutableList<String>) {
-    val oldInfoMap: MutableMap<String, RecentProjectMetaInfo> = THashMap()
+    if (openPaths.isEmpty()) {
+      return
+    }
+
+    val oldInfoMap = mutableMapOf<String, RecentProjectMetaInfo>()
     for (path in openPaths) {
       val info = state.additionalInfo.remove(path)
       if (info != null) {
@@ -144,7 +154,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       }
     }
 
-    for (path in ContainerUtil.reverse(openPaths)) {
+    for (path in openPaths.asReversed()) {
       val info = oldInfoMap.get(path) ?: RecentProjectMetaInfo()
       info.opened = true
       state.additionalInfo.put(path, info)
@@ -153,13 +163,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     modCounter.incrementAndGet()
   }
 
-  override fun removePath(path: String?) {
-    if (path == null) {
-      return
-    }
-
+  override fun removePath(path: String) {
     synchronized(stateLock) {
-      state.additionalInfo.remove(path)
+      if (state.additionalInfo.remove(path) != null) {
+        modCounter.incrementAndGet()
+      }
       for (group in state.groups) {
         if (group.removeProject(path)) {
           modCounter.incrementAndGet()
@@ -221,9 +229,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   private fun getDuplicateProjectNames(openedPaths: Set<String>, recentPaths: Set<String>): Set<String> {
-    val names: MutableSet<String> = THashSet()
-    val duplicates: MutableSet<String> = THashSet()
-    for (path in ContainerUtil.union(openedPaths, recentPaths)) {
+    val names = mutableSetOf<String>()
+    val duplicates = mutableSetOf<String>()
+    for (path in ContainerUtil.concat(openedPaths, recentPaths)) {
       val name = getProjectName(path)
       if (!names.add(name)) {
         duplicates.add(name)
@@ -232,19 +240,19 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return duplicates
   }
 
-  override fun getRecentProjectsActions(forMainMenu: Boolean): Array<AnAction?> {
+  override fun getRecentProjectsActions(forMainMenu: Boolean): Array<AnAction> {
     return getRecentProjectsActions(forMainMenu, false)
   }
 
-  override fun getRecentProjectsActions(forMainMenu: Boolean, useGroups: Boolean): Array<AnAction?> {
+  override fun getRecentProjectsActions(forMainMenu: Boolean, useGroups: Boolean): Array<AnAction> {
     var paths: MutableSet<String>
     synchronized(stateLock) {
       state.validateRecentProjects(modCounter)
-      paths = LinkedHashSet(ContainerUtil.reverse(state.additionalInfo.keys.toList()))
+      paths = LinkedHashSet(state.additionalInfo.keys.toList().asReversed())
     }
 
-    val openedPaths = THashSet<String>()
-    for (openProject in ProjectManager.getInstance().openProjects) {
+    val openedPaths = mutableSetOf<String>()
+    for (openProject in ProjectUtil.getOpenProjects()) {
       ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject))
     }
 
@@ -255,7 +263,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         state.groups.toMutableList()
       }
 
-      val projectPaths: List<String?> = ArrayList(paths)
+      val projectPaths = paths.toMutableList()
       groups.sortWith(object : Comparator<ProjectGroup> {
         override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
           val ind1 = getGroupIndex(o1)
@@ -298,10 +306,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       actions.add(createOpenAction(path, duplicates))
     }
 
-    return when {
-      actions.isEmpty() -> AnAction.EMPTY_ARRAY
-      else -> actions.toArray(AnAction.EMPTY_ARRAY)
-    }
+    @Suppress("USELESS_CAST")
+    return actions.toArray(AnAction.EMPTY_ARRAY) as Array<AnAction>
   }
 
   // for Rider
@@ -484,7 +490,17 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun removeGroup(group: ProjectGroup) {
     synchronized(stateLock) {
+      for (path in group.projects) {
+        state.additionalInfo.remove(path)
+        for (anotherGroup in state.groups) {
+          if (anotherGroup !== group) {
+            group.removeProject(path)
+          }
+        }
+      }
+
       state.groups.remove(group)
+      modCounter.incrementAndGet()
     }
   }
 

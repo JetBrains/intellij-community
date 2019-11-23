@@ -150,9 +150,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
-    def tarRoot = !buildContext.productProperties.includeVersionToInstallDir ?
-                  buildContext.applicationInfo.productName :
-                  customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+    def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
     def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
     def paths = [buildContext.paths.distAll, unixDistPath]

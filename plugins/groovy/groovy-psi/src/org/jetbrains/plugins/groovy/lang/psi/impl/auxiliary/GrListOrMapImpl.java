@@ -10,7 +10,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -20,6 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrLiteralConstructorReference;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
 
   private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
 
-  private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
+  private final GroovyConstructorReference myConstructorReference = new GrLiteralConstructorReference(this);
   private volatile GrExpression[] myInitializers;
   private volatile GrNamedArgument[] myNamedArguments;
 
@@ -127,7 +128,13 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
 
   @Override
   public PsiReference getReference() {
-    return myLiteralReference;
+    return getConstructorReference();
+  }
+
+  @Nullable
+  @Override
+  public GroovyConstructorReference getConstructorReference() {
+    return myConstructorReference.resolveClass() != null ? myConstructorReference : null;
   }
 
   @Override

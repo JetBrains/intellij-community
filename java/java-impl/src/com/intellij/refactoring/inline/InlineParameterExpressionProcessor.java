@@ -54,6 +54,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   public static final Key<Boolean> CREATE_LOCAL_FOR_TESTS = Key.create("CREATE_INLINE_PARAMETER_LOCAL_FOR_TESTS");
 
   private final PsiCallExpression myMethodCall;
+  @NotNull
   private final PsiMethod myMethod;
   private final PsiParameter myParameter;
   private PsiExpression myInitializer;
@@ -65,7 +66,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private UsageInfo[] myChangeSignatureUsages;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
-                                            final PsiMethod method,
+                                            @NotNull PsiMethod method,
                                             final PsiParameter parameter,
                                             final PsiExpression initializer,
                                             boolean createLocal) {

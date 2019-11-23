@@ -57,19 +57,25 @@ public class BuildOperations {
         configuration.save(context);
       }
     }
-    else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
-      initTargetFSState(context, target, true);
-      if (!readOnly) {
-        if (!context.getScope().isBuildForced(target)) {
-          // case when target build is forced, is handled separately
-          IncProjectBuilder.clearOutputFiles(context, target);
+    else {
+      boolean isTargetDirty = false;
+      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || configuration.outputRootWasDeleted(context)) {
+        if (isTargetDirty) {
+          configuration.logDiagnostics(context);
         }
-        pd.dataManager.cleanTargetStorages(target);
-        configuration.save(context);
+        initTargetFSState(context, target, true);
+        if (!readOnly) {
+          if (!context.getScope().isBuildForced(target)) {
+            // case when target build is forced, is handled separately
+            IncProjectBuilder.clearOutputFiles(context, target);
+          }
+          pd.dataManager.cleanTargetStorages(target);
+          configuration.save(context);
+        }
       }
-    }
-    else if (!pd.fsState.isInitialScanPerformed(target)) {
-      initTargetFSState(context, target, false);
+      else if (!pd.fsState.isInitialScanPerformed(target)) {
+        initTargetFSState(context, target, false);
+      }
     }
   }
 

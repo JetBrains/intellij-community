@@ -41,7 +41,8 @@ public final class ReflectedProject {
     new ArrayList<>();
 
   private static final ReentrantLock ourProjectsLock = new ReentrantLock();
-  
+  public static final String ANT_PROJECT_CLASS = "org.apache.tools.ant.Project";
+
   private final Object myProject;
   private Hashtable myTaskDefinitions;
   private Hashtable myDataTypeDefinitions;
@@ -83,7 +84,7 @@ public final class ReflectedProject {
   ReflectedProject(final ClassLoader classLoader) {
     Object project = null;
     try {
-      final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
+      final Class projectClass = classLoader.loadClass(ANT_PROJECT_CLASS);
       if (projectClass != null) {
         project = projectClass.newInstance();
         Method method = projectClass.getMethod("init");

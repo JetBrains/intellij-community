@@ -31,11 +31,16 @@ public abstract class ContractValue {
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
   
-  public DfaValue fromCall(DfaValueFactory factory, PsiCallExpression call) {
+  @NotNull
+  DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
+    return DfaCondition.getUnknown();
+  }
+  
+  public DfaCondition fromCall(DfaValueFactory factory, PsiCallExpression call) {
     PsiMethod method = call.resolveMethod();
-    if (method == null) return DfaUnknownValue.getInstance();
+    if (method == null) return DfaCondition.getUnknown();
     PsiExpressionList argumentList = call.getArgumentList();
-    if (argumentList == null) return DfaUnknownValue.getInstance();
+    if (argumentList == null) return DfaCondition.getUnknown();
     DfaValue qualifierValue = null;
     if (call instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
@@ -58,7 +63,7 @@ public abstract class ContractValue {
       }
       argValues[i] = argValue;
     }
-    return makeDfaValue(factory, new DfaCallArguments(qualifierValue, argValues, JavaMethodContractUtil.isPure(method)));
+    return makeCondition(factory, new DfaCallArguments(qualifierValue, argValues, JavaMethodContractUtil.isPure(method)));
   }
 
   /**
@@ -132,7 +137,7 @@ public abstract class ContractValue {
     return IndependentValue.ZERO;
   }
 
-  public static ContractValue condition(ContractValue left, DfaRelationValue.RelationType relation, ContractValue right) {
+  public static ContractValue condition(ContractValue left, RelationType relation, ContractValue right) {
     return new Condition(left, relation, right);
   }
 
@@ -258,9 +263,9 @@ public abstract class ContractValue {
 
   private static class Condition extends ContractValue {
     private final ContractValue myLeft, myRight;
-    private final DfaRelationValue.RelationType myRelationType;
+    private final RelationType myRelationType;
 
-    Condition(ContractValue left, DfaRelationValue.RelationType type, ContractValue right) {
+    Condition(ContractValue left, RelationType type, ContractValue right) {
       myLeft = left;
       myRight = right;
       myRelationType = type;
@@ -320,7 +325,7 @@ public abstract class ContractValue {
 
     @Override
     public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
-      if (myRelationType == DfaRelationValue.RelationType.equivalence(equal)) {
+      if (myRelationType == RelationType.equivalence(equal)) {
         ContractValue other;
         if (myLeft == value) {
           other = myRight;
@@ -343,6 +348,12 @@ public abstract class ContractValue {
 
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
+      return DfaUnknownValue.getInstance();
+    }
+
+    @NotNull
+    @Override
+    DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
       if (left instanceof DfaConstValue && left.getType() instanceof PsiPrimitiveType) {
@@ -351,7 +362,7 @@ public abstract class ContractValue {
       if (right instanceof DfaConstValue && right.getType() instanceof PsiPrimitiveType) {
         left = DfaUtil.boxUnbox(left, right.getType());
       }
-      return factory.createCondition(left, myRelationType, right);
+      return left.cond(myRelationType, right);
     }
 
     @Override

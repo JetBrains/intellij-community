@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl.libraries;
 
@@ -190,7 +188,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
   }
 
-  private void fireAfterLibraryRemoved(Library library) {
+  private void fireAfterLibraryRemoved(@NotNull Library library) {
     myDispatcher.getMulticaster().afterLibraryRemoved(library);
   }
 

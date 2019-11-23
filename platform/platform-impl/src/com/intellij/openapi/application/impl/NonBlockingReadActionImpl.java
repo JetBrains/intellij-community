@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -49,13 +50,14 @@ public class NonBlockingReadActionImpl<T>
   extends ExpirableConstrainedExecution<NonBlockingReadActionImpl<T>>
   implements NonBlockingReadAction<T> {
   private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
+  private static final Executor SYNC_DUMMY_EXECUTOR = __ -> { throw new UnsupportedOperationException(); };
 
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
   private final @Nullable List<Object> myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
   private final Callable<T> myComputation;
 
-  private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
+  private static final Set<NonBlockingReadActionImpl<?>.Submission> ourTasks = ContainerUtil.newConcurrentSet();
   private static final Map<List<Object>, NonBlockingReadActionImpl<?>.Submission> ourTasksByEquality = new HashMap<>();
   private static final AtomicInteger ourUnboundedSubmissionCount = new AtomicInteger();
 
@@ -152,55 +154,21 @@ public class NonBlockingReadActionImpl<T>
 
     ProgressIndicator outerIndicator = myProgressIndicator != null ? myProgressIndicator
                                                                    : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    Executor dummyExecutor = __ -> { throw new UnsupportedOperationException(); };
-    return new Submission(new AsyncPromise<>(), dummyExecutor, outerIndicator).executeSynchronously();
-  }
-
-  private static void waitForSemaphore(@Nullable ProgressIndicator indicator, @NotNull Semaphore semaphore) {
-    while (!semaphore.waitFor(10)) {
-      if (indicator != null && indicator.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
-    }
+    return new Submission(SYNC_DUMMY_EXECUTOR, outerIndicator).executeSynchronously();
   }
 
   @Override
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
-    AsyncPromise<T> promise = new AsyncPromise<>();
-    trackSubmission(backgroundThreadExecutor, promise);
-    Submission submission = new Submission(promise, backgroundThreadExecutor, myProgressIndicator);
+    Submission submission = new Submission(backgroundThreadExecutor, myProgressIndicator);
     if (myCoalesceEquality == null) {
       submission.transferToBgThread();
     } else {
       submission.submitOrScheduleCoalesced(myCoalesceEquality);
     }
-    return promise;
+    return submission;
   }
 
-  private void trackSubmission(@NotNull Executor backgroundThreadExecutor, AsyncPromise<T> promise) {
-    if (backgroundThreadExecutor == AppExecutorUtil.getAppExecutorService()) {
-      preventTooManySubmissions(promise);
-    }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      rememberSubmissionInTests(promise);
-    }
-  }
-
-  private static void preventTooManySubmissions(AsyncPromise<?> promise) {
-    if (ourUnboundedSubmissionCount.incrementAndGet() % 107 == 0) {
-      LOG.error("Too many non-blocking read actions submitted at once. " +
-                "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.");
-    }
-    promise.onProcessed(__ -> ourUnboundedSubmissionCount.decrementAndGet());
-  }
-
-  private static void rememberSubmissionInTests(AsyncPromise<?> promise) {
-    ourTasks.add(promise);
-    promise.onProcessed(__ -> ourTasks.remove(promise));
-  }
-
-  private class Submission {
-    private final AsyncPromise<T> promise;
+  private class Submission extends AsyncPromise<T> {
     @NotNull private final Executor backendExecutor;
     private volatile ProgressIndicator currentIndicator;
     private final ModalityState creationModality = ModalityState.defaultModalityState();
@@ -212,26 +180,84 @@ public class NonBlockingReadActionImpl<T>
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
     private int myUseCount;
 
-    Submission(AsyncPromise<T> promise, @NotNull Executor backgroundThreadExecutor, @Nullable ProgressIndicator outerIndicator) {
-      this.promise = promise;
+    private final AtomicBoolean myCleaned = new AtomicBoolean();
+    private final Expiration.Handle myExpirationHandle;
+
+    Submission(@NotNull Executor backgroundThreadExecutor, @Nullable ProgressIndicator outerIndicator) {
       backendExecutor = backgroundThreadExecutor;
-      promise.onError(__ -> {
-        ProgressIndicator indicator = currentIndicator;
-        if (indicator != null) {
-          indicator.cancel();
-        }
-      });
       if (myCoalesceEquality != null) {
         acquire();
-        promise.onProcessed(__ -> release());
-      }
-      final Expiration expiration = composeExpiration();
-      if (expiration != null) {
-        final Expiration.Handle expirationHandle = expiration.invokeOnExpiration(promise::cancel);
-        promise.onProcessed(value -> expirationHandle.unregisterHandler());
       }
       myExpireCondition = composeCancellationCondition();
       myProgressIndicator = outerIndicator;
+      if (hasUnboundedExecutor()) {
+        preventTooManySubmissions();
+      }
+      if (shouldTrackInTests()) {
+        ourTasks.add(this);
+      }
+      Expiration expiration = composeExpiration();
+      myExpirationHandle = expiration == null ? null : expiration.invokeOnExpiration(this::cancel);
+    }
+
+    private boolean shouldTrackInTests() {
+      return backendExecutor != SYNC_DUMMY_EXECUTOR && ApplicationManager.getApplication().isUnitTestMode();
+    }
+
+    private boolean hasUnboundedExecutor() {
+      return backendExecutor == AppExecutorUtil.getAppExecutorService();
+    }
+
+    private void preventTooManySubmissions() {
+      if (ourUnboundedSubmissionCount.incrementAndGet() % 107 == 0) {
+        LOG.error("Too many non-blocking read actions submitted at once. " +
+                  "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.");
+      }
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      boolean result = super.cancel(mayInterruptIfRunning);
+      cleanupIfNeeded();
+      return result;
+    }
+
+    @Override
+    public void setResult(@Nullable T t) {
+      super.setResult(t);
+      cleanupIfNeeded();
+    }
+
+    @Override
+    public boolean setError(@NotNull Throwable error) {
+      boolean result = super.setError(error);
+      cleanupIfNeeded();
+      return result;
+    }
+
+    private void cleanupIfNeeded() {
+      if (myCleaned.compareAndSet(false, true)) {
+        cleanup();
+      }
+    }
+
+    private void cleanup() {
+      ProgressIndicator indicator = currentIndicator;
+      if (indicator != null) {
+        indicator.cancel();
+      }
+      if (myCoalesceEquality != null) {
+        release();
+      }
+      if (myExpirationHandle != null) {
+        myExpirationHandle.unregisterHandler();
+      }
+      if (hasUnboundedExecutor()) {
+        ourUnboundedSubmissionCount.decrementAndGet();
+      }
+      if (shouldTrackInTests()) {
+        ourTasks.remove(this);
+      }
     }
 
     private void acquire() {
@@ -251,7 +277,7 @@ public class NonBlockingReadActionImpl<T>
     }
 
     private void scheduleReplacementIfAny() {
-      if (myReplacement == null || myReplacement.promise.isDone()) {
+      if (myReplacement == null || myReplacement.isDone()) {
         ourTasksByEquality.remove(myCoalesceEquality, this);
       } else {
         ourTasksByEquality.put(myCoalesceEquality, myReplacement);
@@ -261,7 +287,7 @@ public class NonBlockingReadActionImpl<T>
 
     void submitOrScheduleCoalesced(@NotNull List<Object> coalesceEquality) {
       synchronized (ourTasksByEquality) {
-        if (promise.isDone()) return;
+        if (isDone()) return;
 
         NonBlockingReadActionImpl<?>.Submission current = ourTasksByEquality.get(coalesceEquality);
         if (current == null) {
@@ -272,11 +298,11 @@ public class NonBlockingReadActionImpl<T>
             reportCoalescingConflict(current);
           }
           if (current.myReplacement != null) {
-            current.myReplacement.promise.cancel();
+            current.myReplacement.cancel();
             assert current == ourTasksByEquality.get(coalesceEquality);
           }
           current.myReplacement = this;
-          current.promise.cancel();
+          current.cancel();
         }
       }
     }
@@ -325,11 +351,11 @@ public class NonBlockingReadActionImpl<T>
       while (true) {
         attemptComputation();
 
-        if (promise.isCancelled()) {
+        if (isCancelled()) {
           throw new ProcessCanceledException();
         }
-        if (promise.isDone()) {
-          return promise.get();
+        if (isDone()) {
+          return get();
         }
 
         Semaphore semaphore = new Semaphore(1);
@@ -340,8 +366,8 @@ public class NonBlockingReadActionImpl<T>
             scheduleWithinConstraints(semaphore::up, null);
           }
         });
-        waitForSemaphore(myProgressIndicator, semaphore);
-        if (promise.isCancelled()) {
+        ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
+        if (isCancelled()) {
           throw new ProcessCanceledException();
         }
       }
@@ -378,7 +404,7 @@ public class NonBlockingReadActionImpl<T>
     }
 
     private void rescheduleLater() {
-      if (Promises.isPending(promise)) {
+      if (Promises.isPending(this)) {
         dispatchLaterUnconstrained(() -> reschedule());
       }
     }
@@ -405,35 +431,35 @@ public class NonBlockingReadActionImpl<T>
         if (myEdtFinish != null) {
           safeTransferToEdt(result, myEdtFinish);
         } else {
-          promise.setResult(result);
+          setResult(result);
         }
       }
       catch (ProcessCanceledException e) {
         if (!indicator.isCanceled()) {
-          promise.setError(e); // don't restart after a manually thrown PCE
+          setError(e); // don't restart after a manually thrown PCE
         }
         throw e;
       }
       catch (Throwable e) {
-        promise.setError(e);
+        setError(e);
       }
     }
 
     private boolean checkObsolete() {
-      if (Promises.isRejected(promise)) return true;
+      if (Promises.isRejected(this)) return true;
       if (myExpireCondition != null && myExpireCondition.getAsBoolean()) {
-        promise.cancel();
+        cancel();
         return true;
       }
       if (myProgressIndicator != null && myProgressIndicator.isCanceled()) {
-        promise.cancel();
+        cancel();
         return true;
       }
       return false;
     }
 
     private void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish) {
-      if (Promises.isRejected(promise)) return;
+      if (Promises.isRejected(this)) return;
 
       long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
 
@@ -447,9 +473,9 @@ public class NonBlockingReadActionImpl<T>
           return;
         }
 
-        promise.setResult(result);
+        setResult(result);
 
-        if (promise.isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
+        if (isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
           edtFinish.second.accept(result);
         }
       }, edtFinish.first);
@@ -470,13 +496,13 @@ public class NonBlockingReadActionImpl<T>
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    for (CancellablePromise<?> task : ourTasks) {
+    for (NonBlockingReadActionImpl<?>.Submission task : ourTasks) {
       waitForTask(task);
     }
   }
 
   @TestOnly
-  private static void waitForTask(@NotNull CancellablePromise<?> task) {
+  private static void waitForTask(@NotNull NonBlockingReadActionImpl<?>.Submission task) {
     int iteration = 0;
     while (!task.isDone() && iteration++ < 60_000) {
       UIUtil.dispatchAllInvocationEvents();
@@ -493,7 +519,7 @@ public class NonBlockingReadActionImpl<T>
     if (!task.isDone()) {
       //noinspection UseOfSystemOutOrSystemErr
       System.err.println(ThreadDumper.dumpThreadsToString());
-      throw new AssertionError("Too long async task");
+      throw new AssertionError("Too long async task " + task.getComputationOrigin());
     }
   }
 

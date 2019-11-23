@@ -437,7 +437,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     List<FilePatch> patches = new ArrayList<>();
     int batchIndex = 0;
     int baseContentsPreloadSize = Registry.intValue("git.shelve.load.base.in.batches", -1);
-    int partitionSize = baseContentsPreloadSize > 0 ? baseContentsPreloadSize : textChanges.size();
+    int partitionSize = baseContentsPreloadSize > 0 ? baseContentsPreloadSize : Math.max(textChanges.size(), 1);
     List<List<Change>> partition = Lists.partition(textChanges, partitionSize);
     for (List<Change> list : partition) {
       batchIndex++;

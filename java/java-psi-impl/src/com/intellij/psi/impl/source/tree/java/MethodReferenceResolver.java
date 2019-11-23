@@ -199,7 +199,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     private MethodReferenceConflictResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                             PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                             @Nullable MethodSignature signature, PsiMethod interfaceMethod) {
-      super(referenceExpression, signature != null ? signature.getParameterTypes() : PsiType.EMPTY_ARRAY, PsiUtil.getLanguageLevel(referenceExpression));
+      super(referenceExpression, signature != null ? signature.getParameterTypes() : PsiType.EMPTY_ARRAY, PsiUtil.getLanguageLevel(referenceExpression), referenceExpression.getContainingFile());
       myReferenceExpression = referenceExpression;
       myQualifierResolveResult = qualifierResolveResult;
       myFunctionalMethodVarArgs =  interfaceMethod != null && interfaceMethod.isVarArgs();

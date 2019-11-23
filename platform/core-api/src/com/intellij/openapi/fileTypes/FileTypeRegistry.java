@@ -46,13 +46,11 @@ public abstract class FileTypeRegistry {
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
   /**
-   * Checks if the given file has the given file type. This is faster than getting the file type
-   * and comparing it, because for file types that are identified by virtual file, it will only
-   * check if the given file type matches, and will not run other detectors. However, this can
-   * lead to inconsistent results if two file types report the same file as matching (which should
-   * generally be avoided).
+   * Checks if the given file has the given file type.
    */
-  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
+    return file.getFileType() == type;
+  }
 
   @Nullable
   public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {
@@ -137,7 +135,10 @@ public abstract class FileTypeRegistry {
   public interface FileTypeDetector {
     ExtensionPointName<FileTypeDetector> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeDetector");
     /**
-     * Detects file type by its content
+     * Detects file type by its (may be binary) content on disk.
+     * Your detector must be as light as possible.
+     * In particular, it must not perform any heavy processing, e.g. PSI access, indices, Documents etc.
+     * The detector must refrain from throwing exceptions (including pervasive {@link com.intellij.openapi.progress.ProcessCanceledException})
      * @param file to analyze
      * @param firstBytes of the file for identifying its file type
      * @param firstCharsIfText - characters, converted from first bytes parameter if the file content was determined to be text, or null otherwise

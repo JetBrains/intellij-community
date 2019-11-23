@@ -362,7 +362,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
           // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
           processorCanceled = !ContainerUtil.process(files, localProcessor);
-          if (processorCanceled) stopped.set(true);
+          if (processorCanceled) {
+            stopped.set(true);
+          }
           processedFiles.addAll(files);
         }
         else if (app.isWriteActionPending()) {
@@ -374,26 +376,24 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             ProgressManager.checkCanceled();
             // optimisation: avoid unnecessary processing if it's doomed to fail because some other task has failed already,
             // and bail out of fork/join task as soon as possible
-            if (!someTaskFailed.get()) {
-              try {
-                // wrap in unconditional impatient reader to bail early at write action start,
-                // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
-                app.executeByImpatientReader(() -> {
-                  if (!localProcessor.process(vfile)) {
-                    stopped.set(true);
-                  }
-                  else {
-                    processedFiles.add(vfile);
-                  }
-                });
-              }
-              catch (ProcessCanceledException e) {
-                someTaskFailed.set(true);
-                throw e;
-              }
-            }
-            else {
+            if (someTaskFailed.get()) {
               return false;
+            }
+            try {
+              // wrap in unconditional impatient reader to bail early at write action start,
+              // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
+              app.executeByImpatientReader(() -> {
+                if (localProcessor.process(vfile)) {
+                  processedFiles.add(vfile);
+                }
+                else {
+                  stopped.set(true);
+                }
+              });
+            }
+            catch (ProcessCanceledException e) {
+              someTaskFailed.set(true);
+              throw e;
             }
             return !stopped.get();
           };
@@ -422,7 +422,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       // run read action in our thread instead to wait for a write action to complete and resume parallel processing
       DumbService.getInstance(project).runReadActionInSmartMode(EmptyRunnable.getInstance());
       Set<VirtualFile> t = new THashSet<>(files);
-      t.removeAll(processedFiles);
+      synchronized (processedFiles) {
+        t.removeAll(processedFiles);
+      }
       files = new ArrayList<>(t);
     }
     return true;
@@ -1051,18 +1053,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processFilesContainingAllKeys(@NotNull Project project,
                                                        @NotNull final GlobalSearchScope scope,
                                                        @Nullable final Condition<? super Integer> checker,
-                                                       @NotNull final Collection<? extends IdIndexEntry> keys,
+                                                       @NotNull final Collection<IdIndexEntry> keys,
                                                        @NotNull final Processor<? super VirtualFile> processor) {
     Computable<Boolean> query =
       () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
 
     Boolean[] result = {null};
-    if (FileBasedIndex.indexAccessDuringDumbModeEnabled()) {
-      ReadAction.run(() -> {
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-          result[0] = Boolean.valueOf(query.compute());
-        }, project);
-      });
+    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
+      ReadAction.nonBlocking(() -> {
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project);
+      }).executeSynchronously();
     }
     return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
   }

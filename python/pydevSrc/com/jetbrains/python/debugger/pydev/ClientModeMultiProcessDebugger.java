@@ -298,6 +298,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     if (!isDebuggersEmpty()) {
       //here we add process id to thread name in case there are more then one process
       return Collections.unmodifiableCollection(Collections2.transform(threads, t -> {
+        if (t == null) return null;
         String threadName = ThreadRegistry.threadName(t.getName(), t.getId());
         PyThreadInfo newThread =
           new PyThreadInfo(t.getId(), threadName, t.getFrames(),

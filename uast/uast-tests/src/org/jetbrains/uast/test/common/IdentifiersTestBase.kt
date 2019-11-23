@@ -7,6 +7,7 @@ import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiElement
 import junit.framework.TestCase
 import org.jetbrains.uast.*
+import org.jetbrains.uast.util.IndentedPrintingVisitor
 import kotlin.reflect.KClass
 
 

@@ -63,7 +63,7 @@ public class MismatchedCollectionQueryUpdateInspection
     CollectionUtils.DERIVED_COLLECTION,
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "subList"),
     CallMatcher.instanceCall("java.util.SortedMap", "headMap", "tailMap", "subMap"),
-    CallMatcher.instanceCall("java.util.SortedSet", "headSet", "tailSet", "subSet"));
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_SORTED_SET, "headSet", "tailSet", "subSet"));
   private static final CallMatcher COLLECTION_SAFE_ARGUMENT_METHODS =
     CallMatcher.anyOf(
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll", "removeAll", "containsAll", "remove"),

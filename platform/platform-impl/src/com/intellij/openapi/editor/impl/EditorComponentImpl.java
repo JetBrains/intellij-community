@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Activity;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
@@ -238,6 +240,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
+
+    Activity activity = ApplicationManager.getApplication().getUserData(EditorsSplitters.OPEN_FILES_ACTIVITY);
+    if (activity != null) {
+      activity.end();
+      ApplicationManager.getApplication().putUserData(EditorsSplitters.OPEN_FILES_ACTIVITY, null);
+    }
   }
 
   public void repaintEditorComponent() {

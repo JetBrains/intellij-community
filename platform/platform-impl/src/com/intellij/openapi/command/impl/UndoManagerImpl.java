@@ -41,7 +41,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public final class UndoManagerImpl extends UndoManager implements Disposable {
+// Android team doesn't want to use new mockito for now, so, class cannot be final
+public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
   @TestOnly

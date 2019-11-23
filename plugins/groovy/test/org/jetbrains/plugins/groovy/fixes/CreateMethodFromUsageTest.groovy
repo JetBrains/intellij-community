@@ -175,6 +175,18 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
   void testSuperConstructorInvocation() {
     doTest(CREATE_CONSTRUCTOR, 1, BEFORE)
   }
+
+  void testSameParameterNames1() {
+    doTest()
+  }
+
+  void testSameParameterNames2() {
+    doTest()
+  }
+
+  void testSameParameterNames3() {
+    doTest()
+  }
 }
 
 

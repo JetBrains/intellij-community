@@ -21,9 +21,9 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -156,25 +156,14 @@ public class MyPsiUtil {
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
             public void visitElement(PsiElement element) {
-                annotator.annotate(element, new AnnotationHolderImpl(new AnnotationSession(file)) {
-                    @Override
-                    public Annotation createErrorAnnotation(@NotNull ASTNode astNode, String string) {
-                        error[0] = string;
-                        return super.createErrorAnnotation(astNode, string);
+                AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
+                annotator.annotate(element, holder);
+                for (Annotation annotation : holder) {
+                    if (annotation.getSeverity() == HighlightSeverity.ERROR) {
+                        error[0] = annotation.getMessage();
+                        break;
                     }
-
-                    @Override
-                    public Annotation createErrorAnnotation(@NotNull PsiElement element, String string) {
-                        error[0] = string;
-                        return super.createErrorAnnotation(element, string);
-                    }
-
-                    @Override
-                    public Annotation createErrorAnnotation(@NotNull TextRange textRange, String string) {
-                        error[0] = string;
-                        return super.createErrorAnnotation(textRange, string);
-                    }
-                });
+                }
                 super.visitElement(element);
             }
         });

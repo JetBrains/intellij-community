@@ -17,7 +17,6 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -33,7 +32,10 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SuspiciousComparatorCompareInspection extends BaseInspection {
 
@@ -118,15 +120,14 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameterListOwner owner, PsiParameter[] parameters, PsiElement body) {
-      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, body) {
+      DataFlowRunner runner = new DataFlowRunner(body) {
         @NotNull
         @Override
         protected DfaMemoryState createMemoryState() {
           DfaMemoryState state = super.createMemoryState();
           DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0]);
           DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1]);
-          DfaValue condition = getFactory().createCondition(var1, DfaRelationValue.RelationType.EQ, var2);
-          state.applyCondition(condition);
+          state.applyCondition(var1.eq(var2));
           return state;
         }
       };

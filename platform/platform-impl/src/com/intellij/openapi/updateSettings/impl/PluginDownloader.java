@@ -129,10 +129,17 @@ public final class PluginDownloader {
   }
 
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
+    return prepareToInstallAndLoadDescriptor(indicator) != null;
+  }
+
+  @Nullable
+  public IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator) throws IOException {
     myShownErrors = false;
 
     if (myFile != null) {
-      return true;
+      IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile.toPath());
+      myDescriptor = actualDescriptor;
+      return actualDescriptor;
     }
 
     IdeaPluginDescriptor descriptor = null;
@@ -143,7 +150,7 @@ public final class PluginDownloader {
       LOG.assertTrue(descriptor != null);
       if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-        return false;
+        return null;
       }
       myOldFile = descriptor.isBundled() ? null : descriptor.getPath();
     }
@@ -169,20 +176,20 @@ public final class PluginDownloader {
         String title = IdeBundle.message("title.failed.to.download");
         app.invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
       }
-      return false;
+      return null;
     }
 
     IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile.toPath());
     if (actualDescriptor != null) {
       InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
       if (state != null && state.wasUpdated(actualDescriptor.getPluginId())) {
-        return false; //already updated
+        return null; //already updated
       }
 
       myPluginVersion = actualDescriptor.getVersion();
       if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-        return false; //was not updated
+        return null; //was not updated
       }
 
       myDescriptor = actualDescriptor;
@@ -190,11 +197,11 @@ public final class PluginDownloader {
       if (PluginManagerCore.isIncompatible(actualDescriptor, myBuildNumber)) {
         LOG.info("Plugin " + myPluginId + " is incompatible with current installation " +
                  "(since:" + actualDescriptor.getSinceBuild() + " until:" + actualDescriptor.getUntilBuild() + ")");
-        return false; //host outdated plugins, no compatible plugin for new version
+        return null; //host outdated plugins, no compatible plugin for new version
       }
     }
 
-    return true;
+    return actualDescriptor;
   }
 
   public static int compareVersionsSkipBrokenAndIncompatible(@NotNull IdeaPluginDescriptor existingPlugin, String newPluginVersion) {

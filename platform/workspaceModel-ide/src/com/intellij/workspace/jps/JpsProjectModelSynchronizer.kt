@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -39,7 +40,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
 
   init {
-    if (!project.isDefault) {
+    if (!project.isDefault && enabled) {
       project.messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
           if (project === this@JpsProjectModelSynchronizer.project) {
@@ -51,6 +52,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   internal fun needToReloadProjectEntities(): Boolean {
+    if (!enabled) return false
     if (StoreReloadManager.getInstance().isReloadBlocked()) return false
     if (serializationData.get() == null) return false
 
@@ -60,6 +62,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   internal fun reloadProjectEntities() {
+    if (!enabled) return
+
     if (StoreReloadManager.getInstance().isReloadBlocked()) return
     val data = serializationData.get() ?: return
     val changes = getAndResetIncomingChanges() ?: return
@@ -126,6 +130,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
+    if (!enabled) return
+
     val data = serializationData.get() ?: return
     val storage = WorkspaceModel.getInstance(project).entityStore.current
     val affectedSources = synchronized(sourcesToSave) {
@@ -178,6 +184,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   companion object {
     fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)
+
+    var enabled = Registry.`is`("ide.workspace.model.jps.enabled")
   }
 }
 

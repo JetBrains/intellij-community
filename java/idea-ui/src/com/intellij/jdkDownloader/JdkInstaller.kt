@@ -12,8 +12,13 @@ import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import java.io.File
 import java.io.IOException
-import java.lang.RuntimeException
+import java.util.*
 import kotlin.math.absoluteValue
+
+data class JdkInstallRequest(
+  val item: JdkItem,
+  val targetDir: File
+)
 
 object JdkInstaller {
   private val LOG = logger<JdkInstaller>()
@@ -34,12 +39,11 @@ object JdkInstaller {
     return targetDir to null
   }
 
-  fun installJdk(item: JdkItem, selectedPath: String, indicator: ProgressIndicator?): File {
+  fun installJdk(request: JdkInstallRequest, indicator: ProgressIndicator?) {
+    val item = request.item
     indicator?.text = "Installing ${item.fullPresentationText}..."
 
-    val (targetDir, error) = validateInstallDir(selectedPath)
-    if (targetDir == null || error != null) throw RuntimeException(error ?: "Invalid Target Directory")
-
+    val targetDir = request.targetDir
     val url = Urls.parse(item.url, false) ?: error("Cannot parse download URL: ${item.url}")
     if (!url.scheme.equals("https", ignoreCase = true)) error("URL must use https:// protocol, but was: $url")
 
@@ -89,6 +93,24 @@ object JdkInstaller {
     finally {
       FileUtil.delete(downloadFile)
     }
-    return targetDir
+  }
+
+  /**
+   * executed synchronously to prepare Jdk installation process, that would run in the future
+   */
+  fun prepareJdkInstallation(jdkItem: JdkItem, targetPath: String): JdkInstallRequest {
+    val (home, error) = validateInstallDir(targetPath)
+    if (home == null || error != null) throw RuntimeException(error ?: "Invalid Target Directory")
+
+    FileUtil.createDirectory(home)
+    if (!home.isDirectory) {
+      throw IOException("Failed to create home directory: $home")
+    }
+
+    val markerFile = File(home, "intellij-downloader-info.json")
+    markerFile.writeText("Download started on ${Date()}\n$jdkItem")
+
+    return JdkInstallRequest(jdkItem, home)
   }
 }
+

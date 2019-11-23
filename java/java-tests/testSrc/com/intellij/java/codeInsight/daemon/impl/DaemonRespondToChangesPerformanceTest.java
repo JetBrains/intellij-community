@@ -26,6 +26,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @HardwareAgentRequired
 public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCase {
-  public void testSOEInEndlessAppendChainPerformance() {
+  public void testHugeAppendChainDoesNotCauseSOE() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
       text.append(".append(").append(i).append(")\n");
@@ -58,9 +59,10 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
 
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
     String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
+    @Language("JAVA")
     String text = "class S { " +
-                  "String[] s = {" + listBody + "};\n" +
-                  "void foo(String... s) { foo(" + listBody + "); }\n" +
+                  "  String[] s = {" + listBody + "};\n" +
+                  "  void foo(String... s) { foo(" + listBody + "); }\n" +
                   "}";
     configureByText(StdFileTypes.JAVA, text);
 

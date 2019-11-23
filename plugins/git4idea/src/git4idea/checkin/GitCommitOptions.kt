@@ -188,7 +188,7 @@ class GitCommitOptionsUi(
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData(getAuthor(), authorDate))
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(getAuthor(), authorDate))
   }
 
   private fun updateRenamesCheckboxState() {

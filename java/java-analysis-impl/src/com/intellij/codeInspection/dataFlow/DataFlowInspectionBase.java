@@ -97,7 +97,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         if (aClass instanceof PsiTypeParameter) return;
         if (PsiUtil.isLocalOrAnonymousClass(aClass) && !(aClass instanceof PsiEnumConstantInitializer)) return;
 
-        final StandardDataFlowRunner runner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, aClass);
+        final DataFlowRunner runner = new DataFlowRunner(aClass, TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, IGNORE_ASSERT_STATEMENTS);
         DataFlowInstructionVisitor visitor =
           analyzeDfaWithNestedClosures(aClass, holder, runner, Collections.singletonList(runner.createMemoryState()));
         List<DfaMemoryState> states = visitor.getEndOfInitializerStates();
@@ -121,11 +121,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       @Override
       public void visitMethod(PsiMethod method) {
         if (method.isConstructor()) return;
-        final StandardDataFlowRunner runner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, method.getBody());
+        final DataFlowRunner runner = new DataFlowRunner(method.getBody(), TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, IGNORE_ASSERT_STATEMENTS);
         analyzeMethod(method, runner, Collections.singletonList(runner.createMemoryState()));
       }
 
-      private void analyzeMethod(PsiMethod method, StandardDataFlowRunner runner, List<DfaMemoryState> initialStates) {
+      private void analyzeMethod(PsiMethod method, DataFlowRunner runner, List<DfaMemoryState> initialStates) {
         PsiCodeBlock scope = method.getBody();
         if (scope == null) return;
         PsiClass containingClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
@@ -202,10 +202,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
   private DataFlowInstructionVisitor analyzeDfaWithNestedClosures(PsiElement scope,
                                                                   ProblemsHolder holder,
-                                                                  StandardDataFlowRunner dfaRunner,
+                                                                  DataFlowRunner dfaRunner,
                                                                   Collection<? extends DfaMemoryState> initialStates) {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
+    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, initialStates);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.wasForciblyMerged() &&
           (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("ide.dfa.report.imprecise"))) {
@@ -270,7 +270,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return null;
   }
 
-  private void createDescription(StandardDataFlowRunner runner,
+  private void createDescription(DataFlowRunner runner,
                                  ProblemsHolder holder,
                                  final DataFlowInstructionVisitor visitor,
                                  PsiElement scope) {

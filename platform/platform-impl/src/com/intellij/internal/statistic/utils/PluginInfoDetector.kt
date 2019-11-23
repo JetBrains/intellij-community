@@ -18,7 +18,7 @@ fun getPluginInfo(clazz: Class<*>): PluginInfo {
       return getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
     }
     PluginManagerCore.isRunningFromSources() && !PluginManagerCore.isUnitTestMode -> {
-      return unknownPlugin
+      return builtFromSources
     }
     else -> {
       return getPluginInfo(clazz.name)
@@ -75,10 +75,10 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 }
 
 enum class PluginType {
-  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN;
+  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES;
 
   private fun isPlatformOrJBBundled(): Boolean {
-    return this == PLATFORM || this == JB_BUNDLED
+    return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES
   }
 
   fun isDevelopedByJetBrains(): Boolean {
@@ -119,3 +119,6 @@ class PluginInfo(val type: PluginType, val id: String?) {
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null)
 val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null)
 val notListedPlugin: PluginInfo = PluginInfo(PluginType.NOT_LISTED, null)
+
+// Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
+val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null)

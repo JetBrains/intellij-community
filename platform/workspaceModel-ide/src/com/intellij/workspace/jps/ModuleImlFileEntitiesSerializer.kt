@@ -66,7 +66,10 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
                                             sourceRootElement.getAttributeValue(RELATIVE_OUTPUT_PATH_ATTRIBUTE) ?: "", source)
         }
         else {
-          builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(sourceRootElement), source)
+          val elem = sourceRootElement.clone()
+          elem.removeAttribute(URL_ATTRIBUTE)
+          elem.removeAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE)
+          builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem), source)
         }
       }
       val excludeRootsUrls = contentElement.getChildren(EXCLUDE_FOLDER_TAG)

@@ -3,8 +3,6 @@ package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -14,9 +12,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.graph.actions.GraphAction;
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
@@ -36,12 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.List;
 
-public class VcsLogUiImpl extends AbstractVcsLogUi {
+public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   private static final String HELP_ID = "reference.changesToolWindow.log";
 
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -92,39 +85,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myMainFrame;
   }
 
-  private void performLongAction(@NotNull final GraphAction graphAction, @NotNull final String title) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      final GraphAnswer<Integer> answer = myVisiblePack.getVisibleGraph().getActionController().performAction(graphAction);
-      final Runnable updater = answer.getGraphUpdater();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        assert updater != null : "Action:" +
-                                 title +
-                                 "\nController: " +
-                                 myVisiblePack.getVisibleGraph().getActionController() +
-                                 "\nAnswer:" +
-                                 answer;
-        updater.run();
-        getTable().handleAnswer(answer);
-      });
-    }, title, false, null, myMainFrame.getMainComponent());
-  }
-
-  public void expandAll() {
-    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND),
-                      "Expanding " +
-                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
-                       ? "merges..."
-                       : "linear branches..."));
-  }
-
-  public void collapseAll() {
-    performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE),
-                      "Collapsing " +
-                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
-                       ? "merges..."
-                       : "linear branches..."));
-  }
-
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId,
                                           boolean commitExists,
@@ -139,7 +99,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       @Override
       public void run() {
         getFilterUi().setFilter(null);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()),
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false),
                        pack -> pack.getFilters().isEmpty());
       }
     });
@@ -148,9 +108,9 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
-          VcsLogUiImpl ui = projectLog.openLogTab(VcsLogFilterObject.collection());
+          MainVcsLogUi ui = projectLog.openLogTab(VcsLogFilterObject.collection());
           if (ui != null) {
-            ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
+            ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false),
                               pack -> pack.getFilters().isEmpty());
           }
         }
@@ -175,6 +135,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     toolbar.repaint();
   }
 
+  @Override
   public void addFilterListener(@NotNull VcsLogFilterListener listener) {
     myFilterListenerDispatcher.addListener(listener);
   }
@@ -187,8 +148,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
   @NotNull
   @Override
-  public Component getMainComponent() {
-    return myMainFrame.getMainComponent();
+  public JComponent getMainComponent() {
+    return myMainFrame;
   }
 
   @NotNull
@@ -197,6 +158,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myMainFrame.getFilterUi();
   }
 
+  @Override
   @NotNull
   public JComponent getToolbar() {
     return myMainFrame.getToolbar();
@@ -272,9 +234,5 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       myVisiblePack.getVisibleGraph().getActionController()
         .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
-  }
-
-  public interface VcsLogFilterListener extends EventListener {
-    void onFiltersChanged();
   }
 }

@@ -33,10 +33,6 @@ public class IdeaMenuUI extends BasicMenuUI{
   private static final Rectangle ourIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
 
-  private Border mySelectedBackgroundPainter;
-  private Icon myInvertedArrowIcon;
-  private Icon myDisabledArrowIcon;
-
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
     return new IdeaMenuUI();
@@ -44,12 +40,6 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   public IdeaMenuUI() {
     myMaxGutterIconWidth = JBUIScale.scale(18);
-
-    if (UIUtil.isUnderIntelliJLaF()) {
-      mySelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
-      myInvertedArrowIcon = (Icon) UIManager.get("Menu.invertedArrowIcon");
-      myDisabledArrowIcon = (Icon) UIManager.get("Menu.disabledArrowIcon");
-    }
   }
 
   @Override
@@ -168,18 +158,9 @@ public class IdeaMenuUI extends BasicMenuUI{
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
         g.setColor(selectionForeground);
       }
-      if (useCheckAndArrow()){
-        try {
-          if (SystemInfo.isMac && myInvertedArrowIcon != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && UIUtil.isUnderIntelliJLaF()) {
-            myInvertedArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-          } else if (SystemInfo.isMac && myDisabledArrowIcon != null && !buttonmodel.isEnabled() && UIUtil.isUnderIntelliJLaF()) {
-            myDisabledArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-          } else arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-        }
-        catch (NullPointerException npe) {
-          // GTKIconFactory$MenuArrowIcon.paintIcon since it doesn't expect to be given a null instead of SynthContext
-          // http://www.jetbrains.net/jira/browse/IDEADEV-22360
-        }
+
+      if (useCheckAndArrow()) {
+        arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
       }
     }
     g.setColor(mainColor);

@@ -17,6 +17,7 @@ import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -153,7 +154,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
                               @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                               @NotNull DescriptorLoadingContext context,
                               @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
-    // root element always `!isIncludeElement` and it means that result always is a singleton list
+    // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
       markAsIncomplete(context);
@@ -256,7 +257,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
             boolean isAvailable = true;
             IdeaPluginDescriptorImpl dependencyDescriptor = null;
-            if (context.isPluginDisabled(dependencyId)) {
+            if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
               if (!isOptional) {
                 context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is disabled)");
                 markAsIncomplete(context);
@@ -349,29 +350,42 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   private boolean checkCompatibility(@NotNull DescriptorLoadingContext context) {
-    if (isBundled() || (mySinceBuild == null && myUntilBuild == null)) {
+    String since = mySinceBuild;
+    String until = myUntilBuild;
+    if (isBundled() || (since == null && until == null)) {
       return true;
     }
 
-    String message = PluginManagerCore.isIncompatible(PluginManagerCore.getBuildNumber(), mySinceBuild, myUntilBuild);
+    String message = PluginManagerCore.isIncompatible(context.parentContext.result.productBuildNumber, since, until);
     if (message == null) {
       return true;
     }
 
     markAsIncomplete(context);
 
-    String since = mySinceBuild;
     if (since == null) {
       since = "0.0";
     }
 
-    String until = myUntilBuild;
     if (until == null) {
-      since = "*.*";
+      until = "*.*";
     }
-    context.parentContext.result.errors.add("Plugin " + myName + " (id=" + myId + ", path=" + myPath + ") is incompatible (target build " +
-                                            (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")");
+    context.parentContext.result.errors.put(getPluginId(), formatErrorMessage("is incompatible (target build " +
+                                            (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")"));
     return false;
+  }
+
+  @NotNull
+  String formatErrorMessage(@NotNull String message) {
+    String path = myPath.toString();
+    StringBuilder builder = new StringBuilder();
+    builder.append("Plugin ").append(myName).append(" (id=").append(myId).append(", path=");
+    builder.append(FileUtil.getLocationRelativeToUserHome(path, false));
+    if (myVersion != null && !isBundled() && !myVersion.equals(PluginManagerCore.getBuildNumber().asString())) {
+      builder.append(", version=").append(myVersion);
+    }
+    builder.append(") ").append(message);
+    return builder.toString();
   }
 
   private void markAsIncomplete(@NotNull DescriptorLoadingContext context) {

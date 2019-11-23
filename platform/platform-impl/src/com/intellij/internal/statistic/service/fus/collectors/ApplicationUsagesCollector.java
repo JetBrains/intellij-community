@@ -19,10 +19,26 @@ import java.util.stream.Collectors;
  *
  * To implement a new collector:
  * <ol>
- *   <li>Inherit the class, implement {@link ApplicationUsagesCollector#getMetrics()} and register collector in XML;</li>
+ *   <li>Inherit the class, implement {@link ApplicationUsagesCollector#getMetrics()} and register collector in plugin.xml;</li>
  *   <li>Specify collectors data scheme and implement custom validation rules if necessary.<br/>
  *   For more information see {@link SensitiveDataValidator};</li>
  *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> to add group, its data scheme and description to the whitelist;</li>
+ * </ol>
+ *
+ * To test collector:
+ * <ol>
+ *  <li>
+ *    If group is not whitelisted, add it to local whitelist with "Add Test Group to Local Whitelist" action.<br/>
+ *    {@link com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction}
+ *  </li>
+ *  <li>
+ *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>
+ *    {@link com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction}
+ *  </li>
+ *  <li>
+ *    Record all state collectors with "Record State Collectors to Event Log" action.<br/>
+ *    {@link com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction}
+ *  </li>
  * </ol>
  *
  * @see ProjectUsagesCollector

@@ -10,7 +10,7 @@ import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.codeStyle.VariableKind
+import com.intellij.psi.codeStyle.VariableKind.PARAMETER
 import com.intellij.psi.util.createSmartPointer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -18,6 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import kotlin.math.max
+import kotlin.math.min
 
 internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
   call: T,
@@ -29,7 +31,7 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
   protected val call: T get() = callPointer.element ?: error("dead pointer")
 
-  abstract fun getArguments() : List<Argument>?
+  abstract fun getArguments(): List<Argument>?
 
   override fun isValid() = callPointer.element != null
 
@@ -43,10 +45,14 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
     val argumentTypes = getArgumentTypes() ?: return emptyList()
 
     val codeStyleManager: JavaCodeStyleManager = project.service()
-    return argumentTypes.map {(type, _) ->
-      //if (expression != null) codeStyleManager.suggestSemanticNames(expression) //TODO add semantic names based on expression
-      val names = codeStyleManager.suggestNames(emptyList(), VariableKind.PARAMETER, type).names
-      expectedParameter(expectedTypes(type, ExpectedType.Kind.SUPERTYPE), names.toList())
+
+    val names = argumentTypes.map { (type, _) -> type to codeStyleManager.suggestNames(emptyList(), PARAMETER, type).names.toList() }
+
+    val nameSupplier = ParametersNameSupplier(names)
+
+    return names.map { (type, names) ->
+      //TODO add semantic names based on expression
+      expectedParameter(expectedTypes(type, ExpectedType.Kind.SUPERTYPE), names.map { nameSupplier.supplyName(it) })
     }
   }
 
@@ -67,4 +73,38 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
   }
 
   override fun getParameters() = getParameters(expectedParameters, project)
+
+  private class ParametersNameSupplier(suggested: List<Pair<PsiType, List<String>>>) {
+
+    private val namesCount = suggested
+      .flatMap { it.second }
+      .groupingBy { it }
+      .eachCount()
+      .mapValues { min(it.value - 1, 1) }
+      .toMutableMap()
+
+    private val usedNames = mutableSetOf<String>()
+
+    fun supplyName(suggestion: String): String {
+      val usageCount = namesCount[suggestion] ?: return suggestion
+      if (usageCount == 0 && suggestion !in usedNames) {
+        usedNames.add(suggestion)
+        return suggestion
+      }
+
+      val index = nextIndex(suggestion, usageCount)
+      val name = "$suggestion$index"
+      namesCount[suggestion] = index + 1
+      usedNames.add(name)
+      return name
+    }
+
+    private fun nextIndex(suggestion: String, start: Int): Int {
+      var index = max(start, 1)
+      while ("$suggestion$index" in usedNames) {
+        index++
+      }
+      return index
+    }
+  }
 }

@@ -100,7 +100,7 @@ public class RevealFileAction extends DumbAwareAction {
 
   @NotNull
   public static String getFileManagerName() {
-    return fileManagerName.getValue();
+    return Holder.fileManagerName;
   }
 
   @Nullable
@@ -172,7 +172,7 @@ public class RevealFileAction extends DumbAwareAction {
         spawn("open", dir);
       }
     }
-    else if ((fmApp = fileManagerApp.getValue()) != null) {
+    else if ((fmApp = Holder.fileManagerApp) != null) {
       if (fmApp.endsWith("dolphin") && toSelect != null) {
         spawn(fmApp, "--select", toSelect);
       }
@@ -235,26 +235,18 @@ public class RevealFileAction extends DumbAwareAction {
     });
   }
 
-  private static final NullableLazyValue<String> fileManagerApp = new AtomicNullableLazyValue<String>() {
-    @Override
-    protected String compute() {
-      return readDesktopEntryKey("Exec")
+  private static class Holder {
+    private static final String fileManagerApp =
+      readDesktopEntryKey("Exec")
         .map(line -> line.split(" ")[0])
         .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
         .orElse(null);
-    }
-  };
 
-  private static final NotNullLazyValue<String> fileManagerName = new AtomicNotNullLazyValue<String>() {
-    @NotNull
-    @Override
-    protected String compute() {
-      if (SystemInfo.isMac) return "Finder";
-      if (SystemInfo.isWindows) return "Explorer";
-      return readDesktopEntryKey("Name").orElse("File Manager");
-    }
-  };
-
+    private static final String fileManagerName =
+      SystemInfo.isMac ? "Finder" :
+      SystemInfo.isWindows ? "Explorer" :
+      readDesktopEntryKey("Name").orElse("File Manager");
+  }
   private static Optional<String> readDesktopEntryKey(String key) {
     if (SystemInfo.hasXdgMime()) {
       String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));

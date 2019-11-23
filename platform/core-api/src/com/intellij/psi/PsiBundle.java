@@ -29,6 +29,7 @@ import java.util.ResourceBundle;
  */
 public class PsiBundle {
 
+  @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }

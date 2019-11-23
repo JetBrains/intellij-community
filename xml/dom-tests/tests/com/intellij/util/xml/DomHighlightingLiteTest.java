@@ -157,12 +157,11 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
   public void testHolderRecreationAfterChange() {
     myAnnotationsManager.appendProblems(myElement, createHolder(), MyDomElementsInspection.class);
-    assertTrue(DomElementAnnotationsManagerImpl.isHolderUpToDate(myElement));
+    assertTrue(myAnnotationsManager.isHolderUpToDate(myElement));
     final DomElementsProblemsHolder holder = myAnnotationsManager.getProblemHolder(myElement);
 
-    myElement.incModificationCount();
-    assertFalse(DomElementAnnotationsManagerImpl.isHolderUpToDate(myElement));
-    assertSame(holder, myAnnotationsManager.getProblemHolder(myElement));
+    getPsiManager().dropPsiCaches();
+    assertFalse(myAnnotationsManager.isHolderUpToDate(myElement));
 
     myAnnotationsManager.appendProblems(myElement, createHolder(), MyDomElementsInspection.class);
     assertNotSame(holder, assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement)));
@@ -254,7 +253,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     final String shortName = inspection.getShortName();
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
-      HighlightDisplayKey.register(shortName);
+      HighlightDisplayKey.register(shortName, shortName, inspection.getID());
     }
   }
 

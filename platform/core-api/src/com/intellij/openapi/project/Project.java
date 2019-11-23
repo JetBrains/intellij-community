@@ -3,9 +3,11 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.SystemIndependent;
 
 /**
  * An object representing an IntelliJ project.
@@ -107,13 +109,4 @@ public interface Project extends ComponentManager, AreaInstance {
   boolean isInitialized();
 
   boolean isDefault();
-
-  /**
-   * @deprecated Use {@link #getDisposed()} instead
-   */
-  @NotNull
-  @Deprecated
-  default Condition<?> getDisposedOrDisposeInProgress() {
-    return getDisposed();
-  }
 }

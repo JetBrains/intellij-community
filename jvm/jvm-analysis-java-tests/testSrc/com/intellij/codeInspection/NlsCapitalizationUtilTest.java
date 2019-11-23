@@ -59,6 +59,11 @@ public class NlsCapitalizationUtilTest extends TestCase {
   public void testSentenceTooManyUppercaseWords() {
     assertNotCapitalization("Four Upper Case Words two lowercase", Nls.Capitalization.Sentence);
   }
+
+  public void testiOSDoesntNeedCapitalization() {
+    assertTitle("iOS");
+  }
+
   public void testTitle() {
     assertTitle("Word");
     assertTitle("Word Two");

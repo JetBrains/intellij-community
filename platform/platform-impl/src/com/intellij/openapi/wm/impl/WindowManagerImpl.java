@@ -124,7 +124,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         // but later, when getStateModificationCount or getState is called, may be no frame at all.
         defaultFrameInfoHelper.updateFrameInfo(frameHelper);
       }
-      else {
+      else if (!project.isDisposed()) {
         ProjectFrameBounds projectFrameBounds = ProjectFrameBounds.getInstance(project);
         projectFrameBounds.markDirty(FrameInfoHelper.isMaximized(extendedState) ? null : bounds);
       }
@@ -341,12 +341,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) {
-    if (c == null) return;
+    if (c == null) {
+      return;
+    }
 
-    Window wnd = SwingUtilities.getWindowAncestor(c);
-
-    if (wnd instanceof JWindow) {
-      JBPopup popup = (JBPopup)((JWindow)wnd).getRootPane().getClientProperty(JBPopup.KEY);
+    Window window = SwingUtilities.getWindowAncestor(c);
+    if (window instanceof JWindow) {
+      JBPopup popup = (JBPopup)((JWindow)window).getRootPane().getClientProperty(JBPopup.KEY);
       if (popup != null) {
         if (oldSize.height < newSize.height) {
           Dimension size = popup.getSize();
@@ -609,7 +610,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     Project project = frameHelper.getProject();
     LOG.assertTrue(project != null);
 
-    frameHelper.getFrame().removeWindowListener(myActivationListener);
+    frame.removeWindowListener(myActivationListener);
     proceedDialogDisposalQueue(project);
 
     frameHelper.setProject(null);
@@ -625,16 +626,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       if (statusBar != null) {
         Disposer.dispose(statusBar);
       }
-      frame.dispose();
+      Disposer.dispose(frameHelper);
     }
   }
 
   public final void disposeRootFrame() {
     if (myProjectToFrame.size() == 1) {
-      final ProjectFrameHelper rootFrame = removeAndGetRootFrame();
+      ProjectFrameHelper rootFrame = removeAndGetRootFrame();
       if (rootFrame != null) {
-        // disposing last frame if quitting
-        rootFrame.getFrame().dispose();
+        Disposer.dispose(rootFrame);
       }
     }
   }

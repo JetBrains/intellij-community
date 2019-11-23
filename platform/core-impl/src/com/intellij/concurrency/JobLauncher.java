@@ -26,8 +26,12 @@ public abstract class JobLauncher {
   }
 
   /**
-   * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
-   * With checkCanceled in each thread delegated to our current progress
+   * Schedules concurrent execution of {@code thingProcessor} over each element of {@code things} and waits for completion
+   * with checkCanceled in each thread delegated to the {@code progress} (or the current global progress if null).
+   * Note: When the {@code thingProcessor} throws an exception or returns {@code false}  or the current indicator is canceled,
+   * the method is finished with {@code false} as soon as possible,
+   * which means some workers might still be in flight to completion. On the other hand, when the method returns {@code true},
+   * it's guaranteed that the whole list was processed and all tasks completed.
    *
    * @param things                      data to process concurrently
    * @param progress                    progress indicator

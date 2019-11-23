@@ -254,8 +254,7 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.sam.ClosureToSamConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCollectionToArrayConverter"/>
-
-    <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.typing.GrCollectionConstructorConverter"/>
 
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
@@ -555,7 +554,6 @@
 
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.GroovyDebuggerSettings"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyGenerationSettingsProvider"/>
     <externalSystem.codeStyleConfigurationImporter implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleImporter"/>
 
@@ -645,8 +643,6 @@
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyTraitFieldSearcher"/>
 
-    <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
-
     <fileIconProvider implementation="org.jetbrains.plugins.groovy.GroovyFileIconProvider"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
@@ -659,7 +655,7 @@
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedReferenceContributor"/>
 
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>
-    <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyResolveScopeProvider"/>
+    <resolveScopeEnlarger implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyResolveScopeProvider"/>
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyLightInnerClassFinder"/>
@@ -1199,9 +1195,6 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedImplicitUsageProvider"/>
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
-    <psi.referenceContributor language="Groovy"
-                              implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
-
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>

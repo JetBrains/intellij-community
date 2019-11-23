@@ -72,7 +72,10 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       Sdk sdk = model.getSdk();
       if (sdk != null) {
         // first, remove bundled JDK Annotations because they are too thorough - can't infer them automatically yet
-        sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> modificator.removeRoots(AnnotationOrderRootType.getInstance()));
+        sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
+          modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
+          modificator.removeRoots(AnnotationOrderRootType.getInstance());
+        });
 
         sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
         model.setSdk(sdk);

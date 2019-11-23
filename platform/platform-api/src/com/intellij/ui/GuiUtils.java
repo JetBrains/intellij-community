@@ -321,7 +321,8 @@ public final class GuiUtils {
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().invokeLater(runnable, modalityState);
     }
   }
@@ -329,7 +330,8 @@ public final class GuiUtils {
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().invokeLater(runnable, modalityState, expired);
     }
   }

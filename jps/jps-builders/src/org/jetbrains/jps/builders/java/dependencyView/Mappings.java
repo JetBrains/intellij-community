@@ -857,11 +857,6 @@ public class Mappings {
         this.rootClass = rootClass.name;
       }
 
-      public InheritanceConstraint(final int rootClass) {
-        super(ClassRepr.getPackageName(myContext.getValue(rootClass)));
-        this.rootClass = rootClass;
-      }
-
       @Override
       public boolean checkResidence(final int residence) {
         final Boolean inheritorOf = isInheritorOf(residence, rootClass, null);
@@ -2177,7 +2172,7 @@ public class Mappings {
       debug("End of removed classes processing.");
     }
 
-    private void processAddedClasses(final DiffState state, File srcFile) {
+    private void processAddedClasses(DiffState state) {
       final Collection<ClassRepr> addedClasses = state.myClassDiff.added();
       if (addedClasses.isEmpty()) {
         return;
@@ -2407,7 +2402,7 @@ public class Mappings {
             }
 
             processRemovedClases(state, fileName);
-            processAddedClasses(state, fileName);
+            processAddedClasses(state);
 
             if (!myEasyMode) {
               calculateAffectedFiles(state);
@@ -2579,7 +2574,6 @@ public class Mappings {
         }
       }
     }
-
   }
 
   public void differentiateOnRebuild(final Mappings delta) {

@@ -8,7 +8,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,30 +36,41 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
   private static final int MERGING_BACK_BRANCHES_THRESHOLD = 50;
+  // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
+  // is executed more than this limit times.
+  static final int MAX_STATES_PER_BRANCH = 300;
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
+  private final boolean myIgnoreAssertions;
   private boolean myInlining = true;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
-  // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
-  // is executed more than this limit times.
-  static final int MAX_STATES_PER_BRANCH = 300;
-  private TimeStats myStats;
+  private final TimeStats myStats = createStatistics();
 
-  protected DataFlowRunner() {
-    this(false, null);
+  public DataFlowRunner() {
+    this(null);
   }
 
-  protected DataFlowRunner(boolean unknownMembersAreNullable, PsiElement context) {
+  public DataFlowRunner(@Nullable PsiElement context) {
+    this(context, false, false);
+  }
+
+  /**
+   * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust 
+   *                field initializers (e.g. we usually cannot if context is a constructor) 
+   * @param unknownMembersAreNullable if true every parameter or method return value without nullity annotation is assumed to be nullable
+   * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
+   */
+  public DataFlowRunner(@Nullable PsiElement context, boolean unknownMembersAreNullable, boolean ignoreAssertions) {
     myValueFactory = new DfaValueFactory(context, unknownMembersAreNullable);
+    myIgnoreAssertions = ignoreAssertions;
   }
 
   @NotNull
@@ -72,7 +82,7 @@ public class DataFlowRunner {
    * Call this method from the visitor to cancel analysis (e.g. if wanted fact is already established and subsequent analysis
    * is useless). In this case {@link RunnerResult#CANCELLED} will be returned.
    */
-  public void cancel() {
+  public final void cancel() {
     myCancelled = true;
   }
 
@@ -117,7 +127,7 @@ public class DataFlowRunner {
   @NotNull
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, false);
-    return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, false, initialStates);
+    return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, initialStates);
   }
 
   /**
@@ -137,39 +147,25 @@ public class DataFlowRunner {
     if (initialStates.isEmpty()) {
       return RunnerResult.OK;
     }
-    return analyzeMethod(psiBlock, visitor, false, initialStates);
+    return analyzeMethod(psiBlock, visitor, initialStates);
   }
 
-  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
-                                             @NotNull InstructionVisitor visitor,
-                                             Consumer<? super DfaMemoryState> initialStateAdjuster) {
-    final DfaMemoryState state = createMemoryState();
-    initialStateAdjuster.accept(state);
-    return analyzeMethod(block, visitor, false, Collections.singleton(state));
+  /**
+   * Analyze given code-block without analyzing any parent and children context
+   * @param block block to analyze
+   * @param visitor visitor to use
+   * @return result status
+   */
+  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull InstructionVisitor visitor) {
+    return analyzeMethod(block, visitor, Collections.singleton(createMemoryState()));
   }
 
   @NotNull
   final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
                                    @NotNull InstructionVisitor visitor,
-                                   boolean ignoreAssertions,
                                    @NotNull Collection<? extends DfaMemoryState> initialStates) {
-    ControlFlow flow = null;
-    try {
-      myStats = new TimeStats();
-      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
-      myStats.endFlow();
-      if (flow == null) return RunnerResult.NOT_APPLICABLE;
-
-      new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
-      myStats.endLVA();
-    }
-    catch (ProcessCanceledException ex) {
-      throw ex;
-    }
-    catch (RuntimeException | AssertionError e) {
-      reportDfaProblem(psiBlock, flow, null, e);
-      return RunnerResult.ABORTED;
-    }
+    ControlFlow flow = buildFlow(psiBlock);
+    if (flow == null) return RunnerResult.NOT_APPLICABLE;
     List<DfaInstructionState> startingStates = createInitialInstructionStates(psiBlock, initialStates, flow);
     if (startingStates.isEmpty()) {
       return RunnerResult.ABORTED;
@@ -178,11 +174,33 @@ public class DataFlowRunner {
     return interpret(psiBlock, visitor, flow, startingStates);
   }
 
+  @Nullable
+  protected final ControlFlow buildFlow(@NotNull PsiElement psiBlock) {
+    ControlFlow flow = null;
+    try {
+      myStats.reset();
+      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, myIgnoreAssertions, myInlining).buildControlFlow();
+      myStats.endFlow();
+
+      if (flow != null) {
+        new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
+      }
+      myStats.endLVA();
+    }
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
+    catch (RuntimeException | AssertionError e) {
+      reportDfaProblem(psiBlock, flow, null, e);
+    }
+    return flow;
+  }
+
   @NotNull
-  private RunnerResult interpret(@NotNull PsiElement psiBlock,
-                                 @NotNull InstructionVisitor visitor,
-                                 @NotNull ControlFlow flow,
-                                 @NotNull List<DfaInstructionState> startingStates) {
+  protected final RunnerResult interpret(@NotNull PsiElement psiBlock,
+                                         @NotNull InstructionVisitor visitor,
+                                         @NotNull ControlFlow flow,
+                                         @NotNull List<DfaInstructionState> startingStates) {
     int endOffset = flow.getInstructionCount();
     myInstructions = flow.getInstructions();
     DfaInstructionState lastInstructionState = null;
@@ -391,22 +409,23 @@ public class DataFlowRunner {
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
-  public RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, StandardInstructionVisitor visitor, boolean ignoreAssertions) {
+  @NotNull
+  public RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull StandardInstructionVisitor visitor) {
     Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
-    return analyzeBlockRecursively(block, states, visitor, ignoreAssertions);
+    return analyzeBlockRecursively(block, states, visitor);
   }
 
+  @NotNull
   public RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
-                                              Collection<? extends DfaMemoryState> states,
-                                              StandardInstructionVisitor visitor,
-                                              boolean ignoreAssertions) {
-    RunnerResult result = analyzeMethod(block, visitor, ignoreAssertions, states);
+                                              @NotNull Collection<? extends DfaMemoryState> states,
+                                              @NotNull StandardInstructionVisitor visitor) {
+    RunnerResult result = analyzeMethod(block, visitor, states);
     if (result != RunnerResult.OK) return result;
 
     Ref<RunnerResult> ref = Ref.create(RunnerResult.OK);
     forNestedClosures((closure, nestedStates) -> {
-      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor, ignoreAssertions);
+      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor);
       if (res != RunnerResult.OK) {
         ref.set(res);
       }
@@ -416,7 +435,7 @@ public class DataFlowRunner {
 
   private void initializeVariables(@NotNull PsiElement psiBlock,
                                    @NotNull Collection<? extends DfaMemoryState> initialStates,
-                                   ControlFlow flow) {
+                                   @NotNull ControlFlow flow) {
     if (psiBlock instanceof PsiClass) {
       DfaVariableValue thisValue = getFactory().getVarFactory().createThisValue((PsiClass)psiBlock);
       // In class initializer this variable is local until escaped
@@ -562,6 +581,11 @@ public class DataFlowRunner {
   }
 
   @NotNull
+  protected TimeStats createStatistics() {
+    return new TimeStats();
+  }
+
+  @NotNull
   protected DfaMemoryState createMemoryState() {
     return new DfaMemoryStateImpl(myValueFactory);
   }
@@ -632,21 +656,29 @@ public class DataFlowRunner {
     return Pair.create(trueSet, falseSet);
   }
 
-  private static class TimeStats {
+  protected static class TimeStats {
     private static final long DFA_EXECUTION_TIME_TO_REPORT_NANOS = TimeUnit.SECONDS.toNanos(30);
     private final @Nullable ThreadMXBean myMxBean;
-    private final long myStart;
+    private long myStart;
     private long myMergeStart, myFlowTime, myLVATime, myMergeTime, myProcessTime;
 
     TimeStats() {
-      Application application = ApplicationManager.getApplication();
-      if (application.isInternal() || application.isEAP()) {
-        myMxBean = ManagementFactory.getThreadMXBean();
-        myStart = myMxBean.getCurrentThreadCpuTime();
-      } else {
-        myMxBean = null;
+      this(ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
+    }
+
+    public TimeStats(boolean record) {
+      myMxBean = record ? ManagementFactory.getThreadMXBean() : null;
+      reset();
+    }
+
+    void reset() {
+      if (myMxBean == null) {
         myStart = 0;
       }
+      else {
+        myStart = myMxBean.getCurrentThreadCpuTime();
+      }
+      myMergeStart = myFlowTime = myLVATime = myMergeTime = myProcessTime = 0;
     }
 
     void endFlow() {

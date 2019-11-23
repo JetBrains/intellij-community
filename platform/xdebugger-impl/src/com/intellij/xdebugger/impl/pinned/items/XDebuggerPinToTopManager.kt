@@ -44,6 +44,10 @@ open class XDebuggerPinToTopManager {
 
         val valueNode = node as? XValueNodeImpl ?: return
         val pinnedValue = node.valueContainer as? PinToTopMemberValue ?: return
+        if ((valueNode.parent as? XValueNodeImpl)?.valueContainer !is PinToTopParentValue) {
+            return
+        }
+
         if (!pinnedValue.canBePinned() || isItemPinned(node)) {
             return
         }

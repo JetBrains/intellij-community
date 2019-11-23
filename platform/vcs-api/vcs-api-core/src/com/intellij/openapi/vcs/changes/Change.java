@@ -194,7 +194,7 @@ public class Change {
           myMoved = true;
         }
       }
-      if (myMoved && myMoveRelativePath == null && project != null) {
+      if (myMoved && myMoveRelativePath == null && project != null && !project.isDisposed()) {
         myMoveRelativePath = VcsPathPresenter.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
       }
     }

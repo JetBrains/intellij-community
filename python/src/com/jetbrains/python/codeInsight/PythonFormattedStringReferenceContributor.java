@@ -30,25 +30,27 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
 public class PythonFormattedStringReferenceContributor extends PsiReferenceContributor {
-  public static final PsiElementPattern.Capture<PyStringLiteralExpression> PERCENT_STRING_PATTERN =
-    psiElement(PyStringLiteralExpression.class).beforeLeaf(psiElement().withText("%")).withParent(PyBinaryExpression.class);
-  public static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_PATTERN =
-    psiElement(PyStringLiteralExpression.class)
-      .withParent(psiElement(PyReferenceExpression.class)
-                                  .with(new PatternCondition<PyReferenceExpression>("isFormatFunction") {
+  static class Holder {
+    private static final PsiElementPattern.Capture<PyStringLiteralExpression> PERCENT_STRING_PATTERN =
+      psiElement(PyStringLiteralExpression.class).beforeLeaf(psiElement().withText("%")).withParent(PyBinaryExpression.class);
+    static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_PATTERN =
+      psiElement(PyStringLiteralExpression.class)
+        .withParent(psiElement(PyReferenceExpression.class)
+                      .with(new PatternCondition<PyReferenceExpression>("isFormatFunction") {
 
-                                    @Override
-                                    public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {
-                                      String expressionName = expression.getName();
-                                      return expressionName != null && expressionName.equals("format");
-                                    }
-                                  }))
-      .withSuperParent(2, PyCallExpression.class);
+                        @Override
+                        public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {
+                          String expressionName = expression.getName();
+                          return expressionName != null && expressionName.equals("format");
+                        }
+                      }))
+        .withSuperParent(2, PyCallExpression.class);
+  }
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
 
-    registrar.registerReferenceProvider(psiElement().andOr(PERCENT_STRING_PATTERN, FORMAT_STRING_PATTERN), 
+    registrar.registerReferenceProvider(psiElement().andOr(Holder.PERCENT_STRING_PATTERN, Holder.FORMAT_STRING_PATTERN),
                                         new PythonFormattedStringReferenceProvider());
   }
 }

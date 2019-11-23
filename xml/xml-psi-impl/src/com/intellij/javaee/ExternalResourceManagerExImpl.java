@@ -20,7 +20,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
@@ -105,7 +104,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return registrar.getResources();
   }
 
-  private final List<ExternalResourceListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String RESOURCE_ELEMENT = "resource";
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String LOCATION_ATTR = "location";
@@ -529,20 +527,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
-  @Override
-  public void addExternalResourceListener(ExternalResourceListener listener) {
-    myListeners.add(listener);
-  }
-
-  @Override
-  public void removeExternalResourceListener(ExternalResourceListener listener) {
-    myListeners.remove(listener);
-  }
-
   private void fireExternalResourceChanged() {
-    for (ExternalResourceListener listener : myListeners) {
-      listener.externalResourceChanged();
-    }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ExternalResourceListener.TOPIC).externalResourceChanged();
     incModificationCount();
   }
 

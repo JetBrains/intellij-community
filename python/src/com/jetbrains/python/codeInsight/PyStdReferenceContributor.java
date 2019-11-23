@@ -28,17 +28,19 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author yole
  */
 public class PyStdReferenceContributor extends PsiReferenceContributor {
-  public static final PatternCondition<PsiElement> IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT =
-    new PatternCondition<PsiElement>("in optional parenthesis inside assignment") {
-      @Override
-      public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
-        PsiElement parent = element.getParent();
-        while (parent instanceof PyParenthesizedExpression) {
-          parent = parent.getParent();
+  private static class Holder {
+    private static final PatternCondition<PsiElement> IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT =
+      new PatternCondition<PsiElement>("in optional parenthesis inside assignment") {
+        @Override
+        public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+          PsiElement parent = element.getParent();
+          while (parent instanceof PyParenthesizedExpression) {
+            parent = parent.getParent();
+          }
+          return parent instanceof PyAssignmentStatement;
         }
-        return parent instanceof PyAssignmentStatement;
-      }
-    };
+      };
+  }
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -66,7 +68,7 @@ public class PyStdReferenceContributor extends PsiReferenceContributor {
                                                       final PsiReferenceProvider provider) {
     registrar.registerReferenceProvider(psiElement(PyStringLiteralExpression.class)
                                           .withParent(psiElement(PySequenceExpression.class)
-                                                        .with(IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT)
+                                                        .with(Holder.IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT)
                                                         .inside(true, psiElement(PyAssignmentStatement.class)
                                                           .withFirstChild(psiElement(PyTargetExpression.class).withName(name)))), provider);
   }

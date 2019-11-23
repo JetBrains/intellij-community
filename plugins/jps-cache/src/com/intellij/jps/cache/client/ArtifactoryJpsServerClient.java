@@ -3,10 +3,6 @@ package com.intellij.jps.cache.client;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.jps.cache.JpsCachesUtils;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
@@ -43,7 +39,7 @@ import static com.intellij.jps.cache.client.ArtifactoryQueryBuilder.Sort;
 public class ArtifactoryJpsServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.ArtifactoryJpsCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  public static final ArtifactoryJpsServerClient INSTANCE = new ArtifactoryJpsServerClient();
+  static final ArtifactoryJpsServerClient INSTANCE = new ArtifactoryJpsServerClient();
   private static final String REPOSITORY_NAME = "intellij-jps-compilation-caches";
   private static final String CONTENT_TYPE = "text/plain";
   private final String stringOne;
@@ -65,19 +61,6 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     String searchQuery = new ArtifactoryQueryBuilder()
       .findRepository(Name.eq(REPOSITORY_NAME))
       .withPath(Name.match("caches"))
-      .sortBy(Sort.desc("created"))
-      .build();
-    ArtifactoryEntryDto[] responseDtos = doPostRequest(searchQuery, ArtifactoryEntryDto[].class);
-    if (responseDtos == null) return Collections.emptySet();
-    return Arrays.stream(responseDtos).map(ArtifactoryEntryDto::getName).collect(Collectors.toSet());
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getAllBinaryKeys() {
-    String searchQuery = new ArtifactoryQueryBuilder()
-      .findRepository(Name.eq(REPOSITORY_NAME))
-      .withPath(Name.match("binaries"))
       .sortBy(Sort.desc("created"))
       .build();
     ArtifactoryEntryDto[] responseDtos = doPostRequest(searchQuery, ArtifactoryEntryDto[].class);
@@ -202,24 +185,6 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     }
   }
 
-  @Override
-  public void uploadBinaryData(@NotNull File uploadData, @NotNull String moduleName, @NotNull String prefix) {
-    String uploadUrl = stringThree + REPOSITORY_NAME + "/binaries/" + moduleName + "/" + prefix + "/";
-    try {
-      //TODO :: Rewrite from cURL to REST
-      ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine()
-                                            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-                                            .withExePath("/usr/bin/curl")
-                                            .withParameters(Arrays.asList("-T", uploadData.getAbsolutePath(), uploadUrl)));
-      if (processOutput.getExitCode() != 0) {
-        LOG.warn("Couldn't upload binary data: " + uploadUrl + " " + processOutput.getStderr());
-      }
-    }
-    catch (ExecutionException e) {
-      LOG.warn("Couldn't upload binary data: " + uploadUrl, e);
-    }
-  }
-
   private <T> T doPostRequest(String searchQuery, Class<T> responseClass) {
     try {
       return HttpRequests.post(stringThree + "api/search/aql", CONTENT_TYPE)
@@ -269,6 +234,71 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     }
     else {
       return StreamUtil.readText(errorStream, StandardCharsets.UTF_8);
+    }
+  }
+
+  private static class ArtifactoryEntryDto {
+    private String repo;
+    private String path;
+    private String name;
+    private String type;
+    private Long size;
+
+    public String getRepo() {
+      return repo;
+    }
+
+    public void setRepo(String repo) {
+      this.repo = repo;
+    }
+
+    public String getPath() {
+      return path;
+    }
+
+    public void setPath(String path) {
+      this.path = path;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public String getType() {
+      return type;
+    }
+
+    public void setType(String type) {
+      this.type = type;
+    }
+
+    public Long getSize() {
+      return size;
+    }
+
+    public void setSize(Long size) {
+      this.size = size;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ArtifactoryEntryDto dto = (ArtifactoryEntryDto)o;
+      return Objects.equals(repo, dto.repo) &&
+             Objects.equals(path, dto.path) &&
+             Objects.equals(name, dto.name) &&
+             Objects.equals(type, dto.type) &&
+             Objects.equals(size, dto.size);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(repo, path, name, type, size);
     }
   }
 }

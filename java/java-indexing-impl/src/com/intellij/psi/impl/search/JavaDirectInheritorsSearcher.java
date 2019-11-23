@@ -258,7 +258,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           PsiEnumConstantInitializer initializingClass =
             ReadAction.compute(((PsiEnumConstant)field)::getInitializingClass);
           if (initializingClass != null) {
-            result.add(initializingClass); // it surely is an inheritor
+            synchronized (result) {
+              result.add(initializingClass); // it surely is an inheritor
+            }
           }
         }
       }
@@ -268,7 +270,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       info.getHierarchyChildren().filter(element -> element instanceof PsiClass).forEach(aClass -> result.add((PsiClass)aClass));
     }
 
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
+    synchronized (result) {
+      return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
+    }
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {

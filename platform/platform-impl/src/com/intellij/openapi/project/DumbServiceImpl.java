@@ -250,22 +250,27 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
-    if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Scheduling task " + task);
+    }
     if (myProject.isDefault()) {
       LOG.error("No indexing tasks should be created for default project: " + task);
     }
-    final Application application = ApplicationManager.getApplication();
 
+    Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       runTaskSynchronously(task);
-    } else {
+    }
+    else {
       queueAsynchronousTask(task);
     }
   }
 
   private static void runTaskSynchronously(@NotNull DumbModeTask task) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator == null) indicator = new EmptyProgressIndicator();
+    if (indicator == null) {
+      indicator = new EmptyProgressIndicator();
+    }
 
     indicator.pushState();
     ((CoreProgressManager)ProgressManager.getInstance()).suppressPrioritizing();
@@ -286,7 +291,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     Runnable runnable = () -> queueTaskOnEdt(task, modality, trace);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run(); // will log errors if not already in a write-safe context
-    } else {
+    }
+    else {
       TransactionGuard.submitTransaction(myProject, runnable);
     }
   }

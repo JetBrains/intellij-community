@@ -116,6 +116,6 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
   @Override
   public boolean isDumbAware() {
-    return FileBasedIndex.indexAccessDuringDumbModeEnabled();
+    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
   }
 }

@@ -1302,6 +1302,9 @@
       "deprecated": true
     },
     {
+      "key": "Toolbar.Floating.background"
+    },
+    {
       "key": "ToolBar.background"
     },
     {

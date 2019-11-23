@@ -29,7 +29,6 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
 
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
-    <antBuildGen implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactBuildExtension"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPostprocessingPropertiesProvider"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>
     <compileServer.plugin classpath="ant-jps-plugin.jar"/>

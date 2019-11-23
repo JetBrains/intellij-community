@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
@@ -296,6 +297,24 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testOverloadResolutionInsideLambdaInsideNestedCall() {
     doTestAllMethodCallExpressions();
+  }
+
+  public void testResolveDiamondBeforeOuterCall() {
+    configure();
+    PsiNewExpression newExpression = ContainerUtil.getOnlyItem(PsiTreeUtil.findChildrenOfType(getFile(), PsiNewExpression.class));
+    assertNotNull(newExpression);
+    PsiType type = newExpression.getType();
+    assertEquals("TreeSet<? super java.lang.String>", type.getCanonicalText());
+  }
+
+  public void testResolveDiamondReplacementBeforeOuterCall() {
+    configure();
+    PsiMethodCallExpression innerCall =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+
+    assertNotNull(innerCall);
+    PsiType type = innerCall.getType();
+    assertEquals("TreeSet<? super java.lang.String>", type.getCanonicalText());
   }
 
   private void doTestAllMethodCallExpressions() {

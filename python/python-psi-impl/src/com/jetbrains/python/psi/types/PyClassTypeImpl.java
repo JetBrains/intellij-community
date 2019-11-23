@@ -648,8 +648,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   private void processMembers(@NotNull PsiScopeProcessor scopeProcessor, @NotNull Runnable afterClassLevelBeforeInstanceLevel) {
     myClass.processClassLevelDeclarations(scopeProcessor);
-    afterClassLevelBeforeInstanceLevel.run();
-    myClass.processInstanceLevelDeclarations(scopeProcessor, null);
+    if (!isDefinition()) {
+      afterClassLevelBeforeInstanceLevel.run();
+      myClass.processInstanceLevelDeclarations(scopeProcessor, null);
+    }
   }
 
   private void processOwnSlots(@NotNull Processor<String> processor, @NotNull TypeEvalContext context) {
@@ -684,7 +686,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (typeType == null) return;
 
     if (isDefinition()) {
-      typeTypeConsumer.accept(typeType);
+      typeTypeConsumer.accept(typeType.toInstance());
     }
     else if (typeType instanceof PyClassType) {
       for (PyTargetExpression attribute : ((PyClassType)typeType).getPyClass().getInstanceAttributes()) {

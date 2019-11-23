@@ -14,7 +14,10 @@ import git4idea.test.*
 
 abstract class GitRebaseBaseTest : GitPlatformTest() {
 
-  protected val LOCAL_CHANGES_WARNING : String = "Local changes were stashed before rebase."
+  private val saved = getDefaultSaveChangesPolicy().name.toLowerCase().let { save ->
+    if (save.endsWith("e")) "${save}d" else "${save}ed"
+  }
+  protected val LOCAL_CHANGES_WARNING: String = "Local changes were ${saved} before rebase."
 
   override fun createRepository(rootDir: String) = createRepository(project, rootDir, false)
 

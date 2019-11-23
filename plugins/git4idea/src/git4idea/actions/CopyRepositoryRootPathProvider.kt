@@ -4,17 +4,17 @@ package git4idea.actions
 import com.intellij.ide.actions.CopyPathProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.repo.GitRepositoryManager
 
 class CopyPathFromRepositoryRootProvider : CopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? {
     if (virtualFile == null) return null
 
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(virtualFile)
-    if (repository == null) return null
+    val vcsRoot = ProjectLevelVcsManagerImpl.getInstanceImpl(project).getVcsRootObjectFor(virtualFile)
+    if (vcsRoot == null) return null
 
-    return VfsUtilCore.getRelativePath(virtualFile, repository.root)
+    return VfsUtilCore.getRelativePath(virtualFile, vcsRoot.path)
   }
 }

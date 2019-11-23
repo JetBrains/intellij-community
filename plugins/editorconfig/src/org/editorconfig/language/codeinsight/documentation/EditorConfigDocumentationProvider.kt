@@ -32,7 +32,7 @@ class EditorConfigDocumentationProvider : DocumentationProviderEx() {
     else -> null
   }
 
-  override fun getCustomDocumentationElement(editor: Editor, file: PsiFile, contextElement: PsiElement?): PsiElement? {
+  override fun getCustomDocumentationElement(editor: Editor, file: PsiFile, contextElement: PsiElement?, targetOffset: Int): PsiElement? {
     contextElement ?: return null
     if (contextElement !is PsiWhiteSpace) {
       val describable = contextElement.getParentOfType<EditorConfigDescribableElement>()
@@ -40,7 +40,7 @@ class EditorConfigDocumentationProvider : DocumentationProviderEx() {
       return EditorConfigDocumentationHolderElement(file.manager, descriptor)
     }
 
-    val offset = max(0, editor.caretModel.offset - 1)
+    val offset = max(0, targetOffset - 1)
     val psiBeforeCaret = file.findElementAt(offset)
     val describable = psiBeforeCaret?.getParentOfType<EditorConfigDescribableElement>()
     val descriptor = describable?.getDescriptor(false) ?: return null

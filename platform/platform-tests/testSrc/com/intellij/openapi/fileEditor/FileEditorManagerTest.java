@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -288,8 +287,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
                                        "  </component>\n";
 
   private void assertOpenFiles(String... fileNames) {
-    EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
-    List<String> names = ContainerUtil.map(files, composite -> composite.getFile().getName());
+    List<String> names = ContainerUtil.map(myManager.getSplitters().getEditorComposites(), composite -> composite.getFile().getName());
     assertEquals(Arrays.asList(fileNames), names);
   }
 

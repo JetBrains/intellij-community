@@ -610,12 +610,7 @@ public class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      GitNewBranchOptions newBranchOptions =
-        new GitNewBranchDialog(myProject, myRepositories, "Checkout New Branch From " + myBranchName, "", false, true, true)
-          .showAndGetOptions();
-      if (newBranchOptions != null) {
-        checkoutOrReset(myProject, myRepositories, myBranchName + "^0", newBranchOptions);
-      }
+      createOrCheckoutNewBranch(myProject, myRepositories, myBranchName + "^0", "Create New Branch From " + myBranchName);
     }
   }
 

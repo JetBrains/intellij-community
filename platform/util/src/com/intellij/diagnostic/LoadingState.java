@@ -88,7 +88,9 @@ public enum LoadingState {
   private static boolean isKnownViolator() {
     for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
       String className = element.getClassName();
-      if (className.contains("com.intellij.util.indexing.IndexInfrastructure") || className.contains("com.intellij.psi.impl.search.IndexPatternSearcher")) {
+      if (className.contains("com.intellij.util.indexing.IndexInfrastructure")
+          || className.contains("com.intellij.psi.impl.search.IndexPatternSearcher")
+          || className.contains("com.jetbrains.python.conda.InstallCondaUtils")) {
         return true;
       }
     }

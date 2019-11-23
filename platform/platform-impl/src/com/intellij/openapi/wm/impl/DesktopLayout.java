@@ -100,7 +100,7 @@ public final class DesktopLayout {
    * Copy information about non-registered tool windows from the supplied layout
    * @param layout layout to copy from
    */
-  void copyNotRegisteredFrom(DesktopLayout layout) {
+  void copyNotRegisteredFrom(@NotNull DesktopLayout layout) {
     Map<String, WindowInfoImpl> old = new THashMap<>(myIdToInfo);
     for (WindowInfoImpl otherInfo : layout.myIdToInfo.values()) {
       WindowInfoImpl oldInfo = old.get(otherInfo.getId());

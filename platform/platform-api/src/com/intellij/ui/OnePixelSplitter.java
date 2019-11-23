@@ -66,6 +66,7 @@ public class OnePixelSplitter extends JBSplitter {
 
   protected void init() {
     setDividerWidth(1);
+    setFocusable(false);
   }
 
   @Override

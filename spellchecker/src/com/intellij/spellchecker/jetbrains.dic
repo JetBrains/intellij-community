@@ -228,6 +228,7 @@ facelets
 fallthrough
 fastcall
 favicon
+fdatasync
 filename
 fileset
 filesets
@@ -246,6 +247,7 @@ freelists
 freemarker
 freepools
 frontend
+fsync
 ftlvariable
 fulltext
 func

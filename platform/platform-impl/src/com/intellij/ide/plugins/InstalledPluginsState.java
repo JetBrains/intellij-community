@@ -11,10 +11,7 @@ import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A service to hold a state of plugin changes in a current session (i.e. before the changes are applied on restart).
@@ -32,9 +29,9 @@ public final class InstalledPluginsState {
 
   private final Object myLock = new Object();
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = ContainerUtil.newIdentityHashMap();
-  private final Map<PluginId, IdeaPluginDescriptor> myInstalledWithoutRestartPlugins = ContainerUtil.newIdentityHashMap();
-  private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPlugins = ContainerUtil.newIdentityHashMap();
-  private final Map<PluginId, IdeaPluginDescriptor> myUninstalledWithoutRestartPlugins = ContainerUtil.newIdentityHashMap();
+  private final Set<PluginId> myInstalledWithoutRestartPlugins = new HashSet<>();
+  private final Set<PluginId> myUpdatedPlugins = new HashSet<>();
+  private final Set<PluginId> myUninstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
 
   @NotNull
@@ -58,19 +55,19 @@ public final class InstalledPluginsState {
 
   public boolean wasInstalledWithoutRestart(@NotNull PluginId id) {
     synchronized (myLock) {
-      return myInstalledWithoutRestartPlugins.containsKey(id);
+      return myInstalledWithoutRestartPlugins.contains(id);
     }
   }
 
   public boolean wasUninstalledWithoutRestart(@NotNull PluginId id) {
     synchronized (myLock) {
-      return myUninstalledWithoutRestartPlugins.containsKey(id);
+      return myUninstalledWithoutRestartPlugins.contains(id);
     }
   }
 
   public boolean wasUpdated(@NotNull PluginId id) {
     synchronized (myLock) {
-      return myUpdatedPlugins.containsKey(id);
+      return myUpdatedPlugins.contains(id);
     }
   }
 
@@ -106,13 +103,13 @@ public final class InstalledPluginsState {
     synchronized (myLock) {
       myOutdatedPlugins.remove(id.getIdString());
       if (isUpdate) {
-        myUpdatedPlugins.put(id, descriptor);
+        myUpdatedPlugins.add(id);
       }
       else if (restartNeeded) {
         myInstalledPlugins.put(id, descriptor);
       }
       else {
-        myInstalledWithoutRestartPlugins.put(id, descriptor);
+        myInstalledWithoutRestartPlugins.add(id);
       }
     }
   }
@@ -122,7 +119,7 @@ public final class InstalledPluginsState {
     PluginId id = descriptor.getPluginId();
     synchronized (myLock) {
       if (!restartNeeded) {
-        myUninstalledWithoutRestartPlugins.put(id, descriptor);
+        myUninstalledWithoutRestartPlugins.add(id);
       }
     }
   }

@@ -55,7 +55,7 @@ public abstract class Task implements TaskInfo, Progressive {
   private String myCancelText = CommonBundle.getCancelButtonText();
   private String myCancelTooltipText = CommonBundle.getCancelButtonText();
 
-  public Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+  private Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
     myProject = project;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;

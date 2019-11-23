@@ -8,8 +8,12 @@ import java.util.concurrent.atomic.AtomicReference
 interface TypedEntityStore {
   val version: Long
   val current: TypedEntityStorage
+
   fun <R> cachedValue(value: CachedValue<R>): R
+  fun <R> clearCachedValue(value: CachedValue<R>)
+
   fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R
+  fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P)
 }
 
 internal class ValuesCache {
@@ -46,6 +50,14 @@ internal class ValuesCache {
       return newValue
     }
   }
+
+  fun <R> clearCachedValue(value: CachedValue<R>) {
+    cachedValues.invalidate(value)
+  }
+
+  fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {
+    cachedValuesWithParameter.invalidate(value to parameter)
+  }
 }
 
 class EntityStoreOnBuilder(private val builder: TypedEntityStorageBuilder): TypedEntityStore {
@@ -73,6 +85,10 @@ class EntityStoreOnBuilder(private val builder: TypedEntityStorageBuilder): Type
 
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
     valuesCache.cachedValue(value, parameter, version, current)
+
+  override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
+  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
+    valuesCache.clearCachedValue(value, parameter)
 }
 
 class EntityStoreOnStorage(private val storage: TypedEntityStorage): TypedEntityStore {
@@ -93,6 +109,10 @@ class EntityStoreOnStorage(private val storage: TypedEntityStorage): TypedEntity
 
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
     valuesCache.cachedValue(value, parameter, version, current)
+
+  override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
+  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
+    valuesCache.clearCachedValue(value, parameter)
 }
 
 // Note: `source` may be called multiple times and even in parallel
@@ -118,6 +138,10 @@ open class EntityStoreImpl(initialStorage: TypedEntityStorage) : TypedEntityStor
 
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
     valuesCache.cachedValue(value, parameter, version, current)
+
+  override fun <R> clearCachedValue(value: CachedValue<R>) = valuesCache.clearCachedValue(value)
+  override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
+    valuesCache.clearCachedValue(value, parameter)
 
   private class Current(val version: Long, val storage: TypedEntityStorage)
 

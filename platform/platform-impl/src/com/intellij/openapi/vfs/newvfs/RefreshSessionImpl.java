@@ -219,13 +219,13 @@ class RefreshSessionImpl extends RefreshSession {
     return myModality;
   }
 
-  @Override
-  public String toString() {
-    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in queue.";
-  }
-
   @NotNull
   List<? extends VFileEvent> getEvents() {
     return new ArrayList<>(new LinkedHashSet<>(myEvents));
+  }
+
+  @Override
+  public String toString() {
+    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in the queue.";
   }
 }

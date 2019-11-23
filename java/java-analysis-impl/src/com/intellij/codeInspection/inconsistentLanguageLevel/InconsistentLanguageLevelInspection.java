@@ -40,6 +40,11 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
     return false;
   }
 
+  @Override
+  public boolean isReadActionNeeded() {
+    return false;
+  }
+
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,

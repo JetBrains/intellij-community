@@ -19,6 +19,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,9 +32,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.picocontainer.PicoContainer
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
@@ -44,7 +47,8 @@ import java.util.concurrent.Executor
 
 internal val LOG = logger<PlatformComponentManagerImpl>()
 
-abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: PlatformComponentManagerImpl?, setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), LazyListenerCreator {
+abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal val parent: PlatformComponentManagerImpl?,
+                                                                      setExtensionsRootArea: Boolean = parent == null) : ComponentManagerImpl(parent), Disposable.Parent, MessageBusOwner {
   companion object {
     private val constructorParameterResolver = ConstructorParameterResolver()
 
@@ -168,7 +172,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     val activity = when (val activityNamePrefix = activityNamePrefix()) {
       null -> null
-      else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
+      else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
     }
 
     for (componentAdapter in myPicoContainer.componentAdapters) {
@@ -619,7 +623,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         }
 
         val future = CompletableFuture.runAsync(Runnable {
-          if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
+          if (!isServicePreloadingCancelled && !isDisposed) {
             val adapter = myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter? ?: return@Runnable
             try {
               adapter.getInstance<Any>(this)
@@ -642,19 +646,78 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
                                    syncPreloadedServices = CompletableFuture.allOf(*syncPreloadedServices.toTypedArray()))
   }
 
-  // this method is required because of ProjectImpl.temporarilyDisposed (a lot of failed tests if check temporarilyDisposed)
-  internal fun isContainerDisposedOrDisposeInProgress(): Boolean {
-    return myContainerState.ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
+  override fun isDisposed(): Boolean {
+    return myContainerState.get().ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
   }
 
-  // todo fix tests to use this implementation in `isContainerDisposed`
-  override fun isDisposedOrDisposeInProgress(): Boolean {
-    return isContainerDisposedOrDisposeInProgress()
+  final override fun beforeTreeDispose() {
+    myContainerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)
   }
 
   @Internal
   fun stopServicePreloading() {
     isServicePreloadingCancelled = true
+  }
+}
+
+@Internal
+fun <T : Any> processComponentInstancesOfType(container: PicoContainer, baseClass: Class<T>, processor: (T) -> Unit) {
+  // we must use instances only from our adapter (could be service or something else)
+  for (componentAdapter in container.componentAdapters) {
+    if (componentAdapter is MyComponentAdapter && baseClass.isAssignableFrom(componentAdapter.componentImplementation)) {
+      @Suppress("UNCHECKED_CAST")
+      processor((componentAdapter.getInitializedInstance() ?: continue) as T)
+    }
+  }
+}
+
+@Internal
+fun processAllImplementationClasses(container: PicoContainer, processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Boolean) {
+  val adapters = container.componentAdapters
+  if (adapters.isEmpty()) {
+    return
+  }
+
+  for (o in adapters) {
+    var aClass: Class<*>
+    if (o is ServiceComponentAdapter) {
+      val pluginDescriptor = o.pluginDescriptor
+      // avoid delegation creation & class initialization
+      aClass = try {
+        if (o.isImplementationClassResolved()) {
+          o.getImplementationClass()
+        }
+        else {
+          Class.forName(o.descriptor.implementation, false, pluginDescriptor.pluginClassLoader)
+        }
+      }
+      catch (e: Throwable) {
+        // well, component registered, but required jar is not added to classpath (community edition or junior IDE)
+        LOG.warn(e)
+        continue
+      }
+
+      if (!processor(aClass, pluginDescriptor)) {
+        break
+      }
+    }
+    else if (o !is ExtensionComponentAdapter) {
+      val pluginDescriptor = if (o is BaseComponentAdapter) o.pluginDescriptor else null
+      // allow InstanceComponentAdapter without pluginId to test
+      if (pluginDescriptor != null || o is DefaultPicoContainer.InstanceComponentAdapter) {
+        aClass = try {
+          o.componentImplementation
+        }
+        catch (e: Throwable) {
+          LOG.warn(e)
+          continue
+        }
+
+        if (!processor(aClass, pluginDescriptor)) {
+          break
+        }
+      }
+    }
   }
 }
 
@@ -711,4 +774,14 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   else {
     throw StartupAbortedException("Fatal error initializing '$componentClassName'", t)
   }
+}
+
+@Internal
+fun isWorkspaceComponent(container: PicoContainer, componentImplementation: Class<*>?): Boolean {
+  for (adapter in container.componentAdapters) {
+    if (adapter is MyComponentAdapter && adapter.componentImplementation == componentImplementation) {
+      return adapter.isWorkspaceComponent
+    }
+  }
+  return false
 }

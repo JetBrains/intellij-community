@@ -36,11 +36,6 @@ public final class CompletionParameters {
   }
 
   @NotNull
-  public CompletionParameters delegateToClassName() {
-    return withType(CompletionType.CLASS_NAME).withInvocationCount(myInvocationCount - 1);
-  }
-
-  @NotNull
   public CompletionParameters withType(@NotNull CompletionType type) {
     return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor, myProcess);
   }

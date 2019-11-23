@@ -352,9 +352,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
     PsiFile psiFile = null;
     for (UsageInfo info : infos) {
-      PsiElement element = info.getElement();
-      if (element == null) continue;
-      PsiFile file = element.getContainingFile();
+      PsiFile file = info.getFile();
       if (psiFile == null) {
         psiFile = file;
       } else {

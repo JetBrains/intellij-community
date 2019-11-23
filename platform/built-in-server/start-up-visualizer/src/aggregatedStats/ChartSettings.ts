@@ -10,5 +10,7 @@ export class ChartSettings {
   aggregationOperator: "median" | "min" | "max" | "quantile" = DEFAULT_AGGREGATION_OPERATOR
   quantile: number = 50
 
+  granularity: "as is" | "hour" | "day" | "week" | "month" = "hour"
+
   showScrollbarXPreview: boolean = false
 }

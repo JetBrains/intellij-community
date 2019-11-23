@@ -106,8 +106,12 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
         }
     }
 
-    project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
-      override fun projectClosed(project: Project) {
+    app.messageBus.connect(project).subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
+      override fun projectClosed(eventProject: Project) {
+        if (project !== eventProject) {
+          return
+        }
+
         val cleanupInspectionProfilesRunnable = {
           cleanupSchemes(project)
           (ServiceManager.getServiceIfCreated(InspectionProfileManager::class.java) as BaseInspectionProfileManager?)?.cleanupSchemes(project)

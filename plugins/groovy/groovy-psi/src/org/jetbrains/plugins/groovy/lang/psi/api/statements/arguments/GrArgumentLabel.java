@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference;
 
 /**
  * @author ilyas
@@ -36,4 +37,11 @@ public interface GrArgumentLabel extends GroovyPsiElement, GroovyReference {
   PsiType getExpectedArgumentType();
 
   GrNamedArgument getNamedArgument();
+
+  /**
+   * @return not-null value if this label is a reference to property in map-constructor invocation,
+   * e.g. {@code Person p = [<ref>name</ref>: "John"]} or {@code def p = [<ref>name</ref>: "John"] as Person}
+   */
+  @Nullable
+  GroovyPropertyWriteReference getConstructorPropertyReference();
 }

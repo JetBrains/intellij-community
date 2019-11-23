@@ -44,7 +44,7 @@ public class TypeCheckedAnnotationChecker extends CustomAnnotationChecker {
           "2.1.0".equals(sdkVersion))) return false;
 
     GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    Pair<PsiElement, String> r = checkAnnotationArguments((PsiClass)resolved, classReference, attributes, false);
+    Pair.NonNull<PsiElement, String> r = checkAnnotationArguments((PsiClass)resolved, classReference, attributes, false);
     if (r != null && r.getFirst() != null) {
       holder.createErrorAnnotation(r.getFirst(), r.getSecond());
     }

@@ -177,13 +177,21 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
 /**
  * Add one-time projectOpened listener.
  */
-fun Project.runWhenProjectOpened(handler: Runnable): Unit = runWhenProjectOpened(this) { handler.run() }
+fun runWhenProjectOpened(project : Project, handler: Runnable) {
+  runWhenProjectOpened(project) {
+    handler.run()
+  }
+}
 
 /**
  * Add one-time first projectOpened listener.
  */
 @JvmOverloads
-fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>): Unit = runWhenProjectOpened(project) { handler.accept(it) }
+fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) {
+  runWhenProjectOpened(project) {
+    handler.accept(it)
+  }
+}
 
 /**
  * Add one-time projectOpened listener.

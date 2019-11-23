@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.runActivity
@@ -9,7 +10,6 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -30,7 +30,9 @@ import java.nio.file.Path
 
 internal open class ProjectFrameAllocator {
   open fun run(task: Runnable): Boolean {
-    task.run()
+    runInAutoSaveDisabledMode {
+      task.run()
+    }
     return true
   }
 
@@ -59,23 +61,26 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun run(task: Runnable): Boolean {
     var completed = false
-    TransactionGuard.getInstance().submitTransactionAndWait {
-      val frame = createFrameIfNeeded()
-      completed = ProgressManager.getInstance().runProcessWithProgressSynchronously({
-        if (frameHelper == null) {
-          ApplicationManager.getApplication().invokeLater {
-            if (cancelled) {
-              return@invokeLater
+    runInAutoSaveDisabledMode {
+      ApplicationManager.getApplication().invokeAndWait {
+        val frame = createFrameIfNeeded()
+        completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+          {
+            if (frameHelper == null) {
+              ApplicationManager.getApplication().invokeLater {
+                if (cancelled) {
+                  return@invokeLater
+                }
+
+                runActivity("project frame initialization") {
+                  initNewFrame(frame)
+                }
+              }
             }
 
-            runActivity("project frame initialization") {
-              initNewFrame(frame)
-            }
-          }
-        }
-
-        task.run()
-      }, "Loading ${projectFile.fileName} Project", true, null, frame.rootPane)
+            task.run()
+          }, "Loading ${projectFile.fileName} Project", true, null, frame.rootPane)
+      }
     }
     return completed
   }

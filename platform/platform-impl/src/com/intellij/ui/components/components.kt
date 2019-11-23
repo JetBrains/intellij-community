@@ -144,7 +144,7 @@ private fun setTitledBorder(title: String, panel: JPanel, hasSeparator: Boolean)
 }
 
 /**
- * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme).
+ * Consider using [UI DSL](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
  */
 @JvmOverloads
 fun dialog(title: String,

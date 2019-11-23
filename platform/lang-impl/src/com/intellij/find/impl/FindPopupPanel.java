@@ -222,7 +222,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         }
       };
       myDialog.setUndecorated(!Registry.is("ide.find.as.popup.decorated"));
-      myProject.getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
           closeImmediately();
@@ -1758,7 +1758,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private class MyPinAction extends ToggleAction {
-    private MyPinAction() {super(null, "Pin Window", AllIcons.General.Pin_tab);}
+    private MyPinAction() {super("Pin Window", "Pin Window", AllIcons.General.Pin_tab);}
 
     @Override
     public boolean isDumbAware() {

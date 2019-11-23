@@ -1968,19 +1968,19 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceExtraSemicolon() {
-    String s1 = "try {\n" +
+    String in = "try {\n" +
                 "      String[] a = {\"a\"};\n" +
                 "      System.out.println(\"blah\");\n" +
                 "} finally {\n" +
                 "}\n";
-    String s2 = "try {\n" + " '_statement*;\n" + "} finally {\n" + "  \n" + "}";
+    String what = "try {\n" + " '_statement*;\n" + "} finally {\n" + "  \n" + "}";
     String replacement = "$statement$;";
     String expected = "String[] a = {\"a\"};\n" +
                 "      System.out.println(\"blah\");\n";
 
-    assertEquals(expected, replace(s1, s2, replacement));
+    assertEquals(expected, replace(in, what, replacement));
 
-    String s1_2 = "try {\n" +
+    String in2 = "try {\n" +
                   "    if (args == null) return ;\n" +
                   "    while(true) return ;\n" +
                   "    System.out.println(\"blah2\");\n" +
@@ -1990,9 +1990,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                   "    while(true) return ;\n" +
                   "    System.out.println(\"blah2\");";
 
-    assertEquals(expected_2, replace(s1_2, s2, replacement));
+    assertEquals(expected_2, replace(in2, what, replacement));
 
-    String s1_3 = "{\n" +
+    String in3 = "{\n" +
                   "    try {\n" +
                   "        System.out.println(\"blah1\");\n" +
                   "\n" +
@@ -2005,9 +2005,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                   "\n" +
                   "        System.out.println(\"blah2\");\n" +
                   "}";
-    assertEquals(expected_3, replace(s1_3, s2, replacement));
+    assertEquals(expected_3, replace(in3, what, replacement));
 
-    String s1_4 = "{\n" +
+    String in4 = "{\n" +
                   "    try {\n" +
                   "        System.out.println(\"blah1\");\n" +
                   "        // indented comment\n" +
@@ -2020,7 +2020,31 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                   "        // indented comment\n" +
                   "        System.out.println(\"blah2\");\n" +
                   "}";
-    assertEquals(expected_4, replace(s1_4, s2, replacement));
+    assertEquals(expected_4, replace(in4, what, replacement));
+
+    String in5 = "class X {\n" +
+                 "    public void visitDocTag(String tag) {\n" +
+                 "        String psiDocTagValue = null;\n" +
+                 "        boolean isTypedValue = false;\n" +
+                 "        {}\n" +
+                 "    }\n" +
+                 "}";
+    String what5 = "void '_m('_T '_p) {\n" +
+                   "  '_st*;\n" +
+                   "}";
+    String replacement5 = "    void $m$($T$ $p$) {\n" +
+                          "        System.out.println();\n" +
+                          "        $st$;\n" +
+                          "    }";
+    String expected5 = "class X {\n" +
+                       "    public void visitDocTag(String tag) {\n" +
+                       "        System.out.println();\n" +
+                       "        String psiDocTagValue = null;\n" +
+                       "        boolean isTypedValue = false;\n" +
+                       "        {}\n" +
+                       "    }\n" +
+                       "}";
+    assertEquals(expected5, replace(in5, what5, replacement5));
   }
 
   public void testReplaceFinalModifier() {
@@ -2742,5 +2766,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  }" +
                  "}",
                  replace(in, "'_Instance?.'_MethodCall('_arguments*)", "$Instance$.$MethodCall$($arguments$)", true));
+  }
+
+  public void testKeepModifierFormatting() {
+    String in = "@Deprecated\n" +
+                "public class X {}";
+    final String what = "class '_X {}";
+    final String replacement = "/** comment */\n" +
+                               "class $X$ {}";
+    final String expected = "/** comment */\n" +
+                            "@Deprecated\n" +
+                            "public class X {}";
+    assertEquals("keep newline in modifier list",
+                 expected, replace(in, what, replacement, true));
   }
 }

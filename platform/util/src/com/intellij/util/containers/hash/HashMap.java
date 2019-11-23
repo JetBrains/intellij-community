@@ -17,13 +17,14 @@ package com.intellij.util.containers.hash;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
  * @deprecated Use {@link java.util.HashMap}
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private Entry<K, V>[] table;
   private int capacity;

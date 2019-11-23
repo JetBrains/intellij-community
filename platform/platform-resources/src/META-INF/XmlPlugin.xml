@@ -1,9 +1,11 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.xml"/>
 
-  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
+    </component>
+  </project-components>
   <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
@@ -33,7 +35,7 @@
                     interface="com.intellij.xml.XmlAttributeDescriptorsProvider"
                     dynamic="true"/>
     <extensionPoint name="xml.elementDescriptorProvider"
-                    interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider"/>
+                    interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider" dynamic="true"/>
     <extensionPoint name="xml.util.htmlDoctypeProvider"
                     interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
 
@@ -294,7 +296,6 @@
     <lang.ast.factory language="XHTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
     <lang.ast.factory language="JAVA_HOLDER_METHOD_TREE" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.XmlCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.HtmlCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettings"/>
 
@@ -325,11 +326,6 @@
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlPiTypedHandler" id="xmlDecl"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlAutoPopupHandler" id="xmlAuto"/>
-
-    <!--
-    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.XmlCopyPastePreProcessor"/>
-    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.HtmlCopyPastePreProcessor"/>
-    -->
 
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>

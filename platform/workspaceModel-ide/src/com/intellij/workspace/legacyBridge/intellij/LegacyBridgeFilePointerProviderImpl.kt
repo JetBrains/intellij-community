@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspace.api.VirtualFileUrl
-import com.intellij.workspace.api.virtualFileUrl
+import com.intellij.workspace.virtualFileUrl
 import org.jdom.Element
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.locks.ReentrantLock

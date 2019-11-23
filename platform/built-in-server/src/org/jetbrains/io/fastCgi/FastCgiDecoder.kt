@@ -16,7 +16,7 @@ private enum class DecodeRecordState {
   CONTENT
 }
 
-internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Void> {
+internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Boolean> {
   private var state = DecodeRecordState.HEADER
 
   private enum class ProtocolStatus {
@@ -67,7 +67,9 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
 
         DecodeRecordState.CONTENT -> {
           if (contentLength > 0) {
-            readContent(input, context, contentLength, this)
+            if (readContent(input, context, contentLength, this) == null) {
+              return
+            }
           }
           state = DecodeRecordState.HEADER
         }
@@ -95,7 +97,7 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
     }
   }
 
-  override fun contentReceived(buffer: ByteBuf, context: ChannelHandlerContext, isCumulateBuffer: Boolean): Void? {
+  override fun contentReceived(buffer: ByteBuf, context: ChannelHandlerContext, isCumulateBuffer: Boolean): Boolean {
     when (type) {
       RecordType.STDOUT -> {
         var data = dataBuffers.get(id)
@@ -108,8 +110,9 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
           }
           else -> {
             if (sliced is CompositeByteBuf) {
+              val readable = data.readableBytes()
               data = sliced.addComponent(0, data)
-              data.writerIndex(data.writerIndex() + data.readableBytes())
+              data.writerIndex(data.writerIndex() + readable)
             }
             else {
               // must be computed here before we set data to new composite buffer
@@ -152,6 +155,6 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
         LOG.error("Unknown type $type")
       }
     }
-    return null
+    return true
   }
 }

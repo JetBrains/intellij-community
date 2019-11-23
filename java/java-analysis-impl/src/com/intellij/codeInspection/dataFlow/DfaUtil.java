@@ -160,7 +160,7 @@ public class DfaUtil {
     PsiElement body = owner.getBody();
     if (body == null) return Nullability.UNKNOWN;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner();
     class BlockNullabilityVisitor extends StandardInstructionVisitor {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
@@ -305,7 +305,7 @@ public class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor, boolean)}) to cover 
+   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover 
    * given expression.
    *
    * @param expression expression to cover
@@ -369,7 +369,7 @@ public class DfaUtil {
     Object computed = ExpressionUtils.computeConstantExpression(expression);
     if (computed != null) return computed;
 
-    DataFlowRunner runner = new StandardDataFlowRunner(false, expression);
+    DataFlowRunner runner = new DataFlowRunner(expression);
     class Visitor extends StandardInstructionVisitor {
       Object exprValue;
 
@@ -417,13 +417,13 @@ public class DfaUtil {
       LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
       if (fromAnnotation.min() > fromType.min()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), DfaRelationValue.RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }
       if (fromAnnotation.max() < fromType.max()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), DfaRelationValue.RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }

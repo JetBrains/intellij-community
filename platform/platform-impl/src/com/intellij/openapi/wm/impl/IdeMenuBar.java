@@ -443,7 +443,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private void updateMnemonicsVisibility() {
     final boolean enabled = !UISettings.getInstance().getDisableMnemonics();
     for (int i = 0; i < getMenuCount(); i++) {
-      ((ActionMenu)getMenu(i)).setMnemonicEnabled(enabled);
+      JMenu menu = getMenu(i);
+      if (menu instanceof ActionMenu) {
+        ((ActionMenu)menu).setMnemonicEnabled(enabled);
+      }
     }
   }
 

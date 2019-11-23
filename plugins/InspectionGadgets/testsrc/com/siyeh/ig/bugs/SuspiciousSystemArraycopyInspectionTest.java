@@ -71,7 +71,7 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
   public void testRangesIntersect() {
     doMemberTest("    public void rangesIntersects() {\n" +
                  "        int[] src = new int[] { 1, 2, 3, 4 };\n" +
-                 "        System./*Ranges always intersect*/arraycopy/**/(src, 0, src, 1, 2);\n" +
+                 "        System./*Copying to the same array with intersecting ranges*/arraycopy/**/(src, 0, src, 1, 2);\n" +
                  "    }");
   }
 

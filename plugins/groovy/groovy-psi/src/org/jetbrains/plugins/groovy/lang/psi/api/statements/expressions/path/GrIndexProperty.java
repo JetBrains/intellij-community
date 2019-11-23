@@ -4,9 +4,9 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 /**
  * Index access expression: {@code foo[bar]} or {@code foo[bar] = baz}.
@@ -41,7 +41,7 @@ public interface GrIndexProperty extends GrExpression {
    * @see #getLValueReference()
    */
   @Nullable
-  GroovyReference getRValueReference();
+  GroovyMethodCallReference getRValueReference();
 
   /**
    * @return reference to a {@code putAt} method if this expression is an l-value, e.g. {@code foo[bar] = baz},
@@ -52,5 +52,5 @@ public interface GrIndexProperty extends GrExpression {
    * @see #getRValueReference()
    */
   @Nullable
-  GroovyReference getLValueReference();
+  GroovyMethodCallReference getLValueReference();
 }

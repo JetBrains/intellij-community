@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
@@ -44,7 +43,6 @@ public class DfaValueFactory {
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
-    myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
     myFactFactory = new DfaFactMapValue.Factory(this);
     myBinOpFactory = new DfaBinOpValue.Factory(this);
@@ -142,96 +140,6 @@ public class DfaValueFactory {
     return getConstFactory().create(literal);
   }
 
-  /**
-   * Create condition (suitable to pass into {@link DfaMemoryState#applyCondition(DfaValue)}),
-   * evaluating it statically if possible.
-   *
-   * @param dfaLeft      left operand
-   * @param relationType relation
-   * @param dfaRight     right operand
-   * @return resulting condition: either {@link DfaRelationValue} or {@link DfaConstValue} (true or false) or {@link DfaUnknownValue}.
-   */
-  @NotNull
-  public DfaValue createCondition(@NotNull DfaValue dfaLeft, @NotNull RelationType relationType, @NotNull DfaValue dfaRight) {
-    DfaConstValue value = tryEvaluate(dfaLeft, relationType, dfaRight);
-    if (value != null) return value;
-    DfaRelationValue relation = getRelationFactory().createRelation(dfaLeft, relationType, dfaRight);
-    if (relation != null) return relation;
-    return DfaUnknownValue.getInstance();
-  }
-
-  @Nullable
-  private DfaConstValue tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
-    DfaConstValue sentinel = getConstFactory().getSentinel();
-    if ((dfaLeft == sentinel) != (dfaRight == sentinel)) {
-      return getBoolean(relationType == RelationType.NE);
-    }
-    if (dfaRight instanceof DfaFactMapValue && dfaLeft == getConstFactory().getNull()) {
-      return tryEvaluate(dfaRight, relationType, dfaLeft);
-    }
-    if (dfaLeft instanceof DfaFactMapValue &&
-        dfaRight == getConstFactory().getNull() &&
-        DfaNullability.isNotNull(((DfaFactMapValue)dfaLeft).getFacts())) {
-      if (relationType == RelationType.EQ) {
-        return getConstFactory().getFalse();
-      }
-      if (relationType == RelationType.NE) {
-        return getConstFactory().getTrue();
-      }
-    }
-
-    if(dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
-      if(relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
-        DfaFactMap leftFacts = ((DfaFactMapValue)dfaLeft).getFacts();
-        DfaFactMap rightFacts = ((DfaFactMapValue)dfaRight).getFacts();
-        boolean isSuperState = rightFacts.isSuperStateOf(leftFacts);
-        if (isSuperState) {
-          return getBoolean(relationType == RelationType.IS);
-        }
-        boolean isDistinct = rightFacts.intersect(leftFacts) == null;
-        if (isDistinct) {
-          return getBoolean(relationType == RelationType.IS_NOT);
-        }
-      }
-    }
-    if (relationType == RelationType.EQ || relationType == RelationType.NE) {
-      SpecialField leftSpecialField = SpecialField.fromQualifier(dfaLeft);
-      if (leftSpecialField != null) {
-        SpecialField rightSpecialField = SpecialField.fromQualifier(dfaRight);
-        if (rightSpecialField == leftSpecialField) {
-          DfaValue leftValue = leftSpecialField.createValue(this, dfaLeft);
-          DfaValue rightValue = leftSpecialField.createValue(this, dfaRight);
-          DfaConstValue specialFieldComparison = tryEvaluate(leftValue, RelationType.EQ, rightValue);
-          if (specialFieldComparison != null && Boolean.FALSE.equals(specialFieldComparison.getValue())) {
-            return getBoolean(relationType == RelationType.NE);
-          }
-        }
-      }
-    }
-
-    LongRangeSet leftRange = LongRangeSet.fromDfaValue(dfaLeft);
-    LongRangeSet rightRange = LongRangeSet.fromDfaValue(dfaRight);
-    if (leftRange != null && rightRange != null) {
-      LongRangeSet constraint = rightRange.fromRelation(relationType);
-      if (constraint != null && !constraint.intersects(leftRange)) {
-        return getConstFactory().getFalse();
-      }
-      LongRangeSet revConstraint = rightRange.fromRelation(relationType.getNegated());
-      if (revConstraint != null && !revConstraint.intersects(leftRange)) {
-        return getConstFactory().getTrue();
-      }
-    }
-
-    if(dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue &&
-       (relationType == RelationType.EQ || relationType == RelationType.NE)) {
-      return getBoolean(dfaLeft == dfaRight ^
-                        !DfaUtil.isNaN(((DfaConstValue)dfaLeft).getValue()) ^
-                        relationType == RelationType.EQ);
-    }
-
-    return null;
-  }
-
   public DfaConstValue getBoolean(boolean value) {
     return value ? getConstFactory().getTrue() : getConstFactory().getFalse();
   }
@@ -256,7 +164,6 @@ public class DfaValueFactory {
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
   private final DfaBinOpValue.Factory myBinOpFactory;
-  private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
   private final DfaFactMapValue.Factory myFactFactory;
 
@@ -272,11 +179,6 @@ public class DfaValueFactory {
   @NotNull
   public DfaBoxedValue.Factory getBoxedFactory() {
     return myBoxedFactory;
-  }
-
-  @NotNull
-  public DfaRelationValue.Factory getRelationFactory() {
-    return myRelationFactory;
   }
 
   @NotNull

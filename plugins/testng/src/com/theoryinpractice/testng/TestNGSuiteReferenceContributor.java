@@ -25,43 +25,46 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.XmlPatterns.*;
 
 public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
-  private static final XmlAttributeValuePattern ourTestClassPattern =
-    xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("class")
-                        .withParent(xmlTag().withName("classes")
-                                      .withParent(xmlTag().withName("test").withParent(xmlTag().withName("suite"))))));
+  private static class Holder {
+    private static final XmlAttributeValuePattern ourTestClassPattern =
+      xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("class")
+                                                          .withParent(xmlTag().withName("classes")
+                                                                        .withParent(xmlTag().withName("test")
+                                                                                      .withParent(xmlTag().withName("suite"))))));
 
-  private static final XmlAttributeValuePattern ourListenerClassPattern =
-    xmlAttributeValue(xmlAttribute("class-name").withParent(xmlTag().withName("listener")
-                                                              .withParent(xmlTag().withName("listeners")
-                                                                            .withParent(xmlTag().withName("suite")))));
+    private static final XmlAttributeValuePattern ourListenerClassPattern =
+      xmlAttributeValue(xmlAttribute("class-name").withParent(xmlTag().withName("listener")
+                                                                .withParent(xmlTag().withName("listeners")
+                                                                              .withParent(xmlTag().withName("suite")))));
 
-  private static final XmlAttributeValuePattern ourMethodSelectorPattern =
-    xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("selector-class")
-                                                        .withParent(xmlTag().withName("method-selector")
-                                                                      .withParent(xmlTag().withName("method-selectors")
-                                                                                    .withParent(
-                                                                                      xmlTag().withName(string().oneOf("suite", "test")))))));
+    private static final XmlAttributeValuePattern ourMethodSelectorPattern =
+      xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("selector-class")
+                                                          .withParent(xmlTag().withName("method-selector")
+                                                                        .withParent(xmlTag().withName("method-selectors")
+                                                                                      .withParent(
+                                                                                        xmlTag()
+                                                                                          .withName(string().oneOf("suite", "test")))))));
 
-  private static final XmlAttributeValuePattern ourPackagePattern =
-    xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("package")
-                                                        .withParent(xmlTag().withName("packages")
-                                                                      .withParent(xmlTag().withName("suite")))));
+    private static final XmlAttributeValuePattern ourPackagePattern =
+      xmlAttributeValue(xmlAttribute("name").withParent(xmlTag().withName("package")
+                                                          .withParent(xmlTag().withName("packages")
+                                                                        .withParent(xmlTag().withName("suite")))));
 
-  private static final XmlAttributeValuePattern ourSuiteFilePattern =
-    xmlAttributeValue(xmlAttribute("path").withParent(xmlTag().withName("suite-file")
-                                                        .withParent(xmlTag().withName("suite-files")
-                                                                      .withParent(xmlTag().withName("suite")))));
-
+    private static final XmlAttributeValuePattern ourSuiteFilePattern =
+      xmlAttributeValue(xmlAttribute("path").withParent(xmlTag().withName("suite-file")
+                                                          .withParent(xmlTag().withName("suite-files")
+                                                                        .withParent(xmlTag().withName("suite")))));
+  }
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(ourTestClassPattern, new JavaClassReferenceProvider());
-    registrar.registerReferenceProvider(ourListenerClassPattern, new JavaClassReferenceProvider());
+    registrar.registerReferenceProvider(Holder.ourTestClassPattern, new JavaClassReferenceProvider());
+    registrar.registerReferenceProvider(Holder.ourListenerClassPattern, new JavaClassReferenceProvider());
 
     final JavaClassReferenceProvider methodSelectorProvider = new JavaClassReferenceProvider();
     methodSelectorProvider.setOption(JavaClassReferenceProvider.EXTEND_CLASS_NAMES, new String[]{"org.testng.IMethodSelector"});
-    registrar.registerReferenceProvider(ourMethodSelectorPattern, methodSelectorProvider);
+    registrar.registerReferenceProvider(Holder.ourMethodSelectorPattern, methodSelectorProvider);
 
-    registrar.registerReferenceProvider(ourSuiteFilePattern, new PathListReferenceProvider(){
+    registrar.registerReferenceProvider(Holder.ourSuiteFilePattern, new PathListReferenceProvider(){
       @Override
       protected boolean disableNonSlashedPaths() {
         return false;

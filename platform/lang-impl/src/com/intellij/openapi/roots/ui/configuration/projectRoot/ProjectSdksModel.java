@@ -80,7 +80,9 @@ public class ProjectSdksModel implements SdkModel {
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       try {
-        myProjectSdks.put(sdk, (Sdk)sdk.clone());
+        Sdk editable = (Sdk)sdk.clone();
+        myProjectSdks.put(sdk, editable);
+        SdkDownloadTracker.getInstance().registerEditableSdk(sdk, editable);
       }
       catch (CloneNotSupportedException e) {
         LOG.error(e);
@@ -156,6 +158,7 @@ public class ProjectSdksModel implements SdkModel {
         if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
           jdkTable.addJdk(projectJdk);
           jdkTable.updateJdk(projectJdk, myProjectSdks.get(projectJdk));
+          SdkDownloadTracker.getInstance().startSdkDownloadIfNeeded(projectJdk);
         }
       }
     });
@@ -218,6 +221,7 @@ public class ProjectSdksModel implements SdkModel {
     }
     if (projectJdk != null) {
       myProjectSdks.remove(projectJdk);
+      SdkDownloadTracker.getInstance().onSdkRemoved(projectJdk);
       mySdkEventsDispatcher.getMulticaster().beforeSdkRemove(projectJdk);
       myModified = true;
     }
@@ -243,7 +247,25 @@ public class ProjectSdksModel implements SdkModel {
     for (final SdkType type : types) {
       if (!type.allowCreationByUser()) continue;
       if (filter != null && !filter.value(type)) continue;
-      final AnAction addAction = new DumbAwareAction(type.getPresentableName(), null, type.getIconForAddAction()) {
+
+      SdkDownload downloadExtension = SdkDownload.EP_NAME.findFirstSafe(it -> it.supportsDownload(type));
+      if (downloadExtension != null) {
+        String downloadText = ProjectBundle.message("sdk.configure.download.action", type.getPresentableName());
+
+        AnAction downloadAction = new DumbAwareAction(downloadText, null, downloadExtension.getIconForDownloadAction(type)) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            doDownload(downloadExtension, parent, selectedSdk, type, updateTree);
+          }
+        };
+        group.add(downloadAction);
+      }
+
+      String addOnDiskText = !type.supportsCustomCreateUI() && downloadExtension != null
+                             ? ProjectBundle.message("sdk.configure.add.fromDisk.action", type.getPresentableName())
+                             : ProjectBundle.message("sdk.configure.add.default.action", type.getPresentableName());
+
+      AnAction addAction = new DumbAwareAction(addOnDiskText, null, type.getIconForAddAction()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           doAdd(parent, selectedSdk, type, updateTree);
@@ -255,6 +277,17 @@ public class ProjectSdksModel implements SdkModel {
 
   public void doAdd(@NotNull JComponent parent, @NotNull final SdkType type, @NotNull final Consumer<? super Sdk> callback) {
     doAdd(parent, null, type, callback);
+  }
+
+  public void doDownload(@NotNull SdkDownload downloadExtension,
+                         @NotNull JComponent parent,
+                         @Nullable final Sdk selectedSdk,
+                         @NotNull final SdkType type,
+                         @NotNull final Consumer<? super Sdk> callback) {
+    LOG.assertTrue(downloadExtension.supportsDownload(type));
+    myModified = true;
+
+    downloadExtension.showDownloadUI(type, this, parent, selectedSdk, sdk -> setupInstallableSdk(type, sdk, callback));
   }
 
   public void doAdd(@NotNull JComponent parent, @Nullable final Sdk selectedSdk, @NotNull final SdkType type, @NotNull final Consumer<? super Sdk> callback) {
@@ -275,9 +308,43 @@ public class ProjectSdksModel implements SdkModel {
   @NotNull
   public Sdk createSdk(@NotNull SdkType type, @NotNull String home) {
     String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
+    return createSdkInternal(type, newSdkName, home);
+  }
+
+  @NotNull
+  public Sdk createSdk(@NotNull SdkType type, @NotNull String suggestedName, @NotNull String home) {
+    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, myProjectSdks.values());
+    return createSdkInternal(type, newSdkName, home);
+  }
+
+  @NotNull
+  private static Sdk createSdkInternal(@NotNull SdkType type,
+                                       @NotNull String newSdkName,
+                                       @NotNull String home) {
     final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
     newJdk.setHomePath(home);
     return newJdk;
+  }
+
+  public void setupInstallableSdk(@NotNull SdkType type,
+                                  @NotNull SdkDownloadTask item,
+                                  @Nullable Consumer<? super Sdk> callback) {
+    // we do not ask the SdkType to set up the SDK for us, instead, we return an incomplete SDK to the
+    // model with an expectation it would be updated later on
+    String suggestedName = item.getSuggestedSdkName();
+    String homeDir = item.getPlannedHomeDir();
+    Sdk sdk = createSdk(type, suggestedName, homeDir);
+
+    SdkModificator modificator = sdk.getSdkModificator();
+    modificator.setVersionString(item.getPlannedVersion());
+    modificator.commitChanges();
+
+    SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
+    tracker.registerSdkDownload(sdk, item);
+    Sdk editableSdk = doAddInternal(sdk, callback);
+    if (editableSdk != null) {
+      tracker.registerEditableSdk(sdk, editableSdk);
+    }
   }
 
   private void setupSdk(@NotNull Sdk newJdk, @Nullable Consumer<? super Sdk> callback) {
@@ -299,6 +366,11 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void doAdd(@NotNull Sdk newSdk, @Nullable Consumer<? super Sdk> updateTree) {
+    doAddInternal(newSdk, updateTree);
+  }
+
+  @Nullable
+  private Sdk doAddInternal(@NotNull Sdk newSdk, @Nullable Consumer<? super Sdk> updateTree) {
     myModified = true;
     try {
       Sdk editableCopy = (Sdk)newSdk.clone();
@@ -307,9 +379,11 @@ public class ProjectSdksModel implements SdkModel {
         updateTree.consume(editableCopy);
       }
       mySdkEventsDispatcher.getMulticaster().sdkAdded(editableCopy);
+      return editableCopy;
     }
     catch (CloneNotSupportedException e) {
       LOG.error(e);
+      return null;
     }
   }
 

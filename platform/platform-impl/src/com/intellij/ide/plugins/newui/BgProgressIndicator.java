@@ -24,20 +24,4 @@ public class BgProgressIndicator extends AbstractProgressIndicatorExBase {
   @Override
   public void setText2(String text) {
   }
-
-  public void removeStateDelegate(@Nullable ProgressIndicatorEx delegate) {
-    List<ProgressIndicatorEx> stateDelegates =
-      ReflectionUtil.getField(AbstractProgressIndicatorExBase.class, this, List.class, "myStateDelegates");
-    synchronized (getLock()) {
-      if (stateDelegates == null) {
-        return;
-      }
-      if (delegate == null) {
-        stateDelegates.clear();
-      }
-      else {
-        stateDelegates.remove(delegate);
-      }
-    }
-  }
 }

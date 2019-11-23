@@ -11,12 +11,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
-import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +35,9 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
-  @Nullable private Consumer<? super VcsLogUiImpl> myOnCreatedListener;
+  @Nullable private Consumer<? super MainVcsLogUi> myOnCreatedListener;
 
-  @Nullable private VcsLogUiImpl myUi;
+  @Nullable private MainVcsLogUi myUi;
   @Nullable private Content myContent;
 
   public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
@@ -64,7 +63,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   @Nullable
-  public VcsLogUiImpl getUi() {
+  public MainVcsLogUi getUi() {
     return myUi;
   }
 
@@ -89,7 +88,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
-      myUi = logManager.createLogUi(VcsLogProjectTabsProperties.MAIN_LOG_ID, true, false);
+      myUi = logManager.createLogUi(VcsLogProjectTabsProperties.MAIN_LOG_ID, VcsLogManager.LogWindowKind.TOOL_WINDOW, false);
       VcsLogPanel panel = createPanel(logManager, myUi);
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);
@@ -104,12 +103,12 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   private void updateDisplayName() {
     if (myContent != null && myUi != null) {
-      myContent.setDisplayName(ContentUtilEx.getFullName(TAB_NAME, VcsLogTabsManager.generateDisplayName(myUi)));
+      myContent.setDisplayName(VcsLogTabsManager.generateDisplayName(myUi));
     }
   }
 
   @NotNull
-  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager, @NotNull AbstractVcsLogUi ui) {
+  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager, @NotNull VcsLogUiEx ui) {
     return new VcsLogPanel(logManager, ui);
   }
 
@@ -121,7 +120,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     DataManager.removeDataProvider(myContainer);
     myOnCreatedListener = null;
     if (myUi != null) {
-      VcsLogUiImpl ui = myUi;
+      MainVcsLogUi ui = myUi;
       myUi = null;
       Disposer.dispose(ui);
     }
@@ -134,7 +133,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
    * @param consumer consumer to execute.
    */
   @CalledInAwt
-  public void executeOnMainUiCreated(@NotNull Consumer<? super VcsLogUiImpl> consumer) {
+  public void executeOnMainUiCreated(@NotNull Consumer<? super MainVcsLogUi> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     if (myUi == null) {

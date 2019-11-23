@@ -24,8 +24,8 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
     try {
       T result = evaluate(getDebuggerContext().createEvaluationContext());
 
-      if (myProgressIndicator.isCanceled()) throw new ProcessCanceledException();
+      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
 
       return result;
     } catch (final EvaluateException e) {

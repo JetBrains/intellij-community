@@ -324,14 +324,14 @@ public enum SpecialField implements VariableDescriptor {
   public MethodContract[] getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);
     return new MethodContract[]{
-      MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), returnTrue()),
+      MethodContract.singleConditionContract(thisValue, RelationType.EQ, ContractValue.zero(), returnTrue()),
       MethodContract.trivialContract(returnFalse())};
   }
 
   public MethodContract[] getEqualsContracts() {
     return new MethodContract[]{new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
                          MethodContract.singleConditionContract(
-                           ContractValue.qualifier().specialField(this), DfaRelationValue.RelationType.NE,
+                           ContractValue.qualifier().specialField(this), RelationType.NE,
                            ContractValue.argument(0).specialField(this), returnFalse())};
   }
 

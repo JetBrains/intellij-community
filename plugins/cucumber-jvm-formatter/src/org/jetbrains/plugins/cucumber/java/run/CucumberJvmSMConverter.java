@@ -32,7 +32,7 @@ public class CucumberJvmSMConverter {
     outCommand(TEMPLATE_SCENARIO_COUNTING_STARTED, "0", getCurrentTime());
   }
 
-  protected void handleTestCaseStarted(CucumberJvmTestCase testCase) {
+  public void handleTestCaseStarted(CucumberJvmTestCase testCase) {
     String uri = testCase.getUri();
     if (currentFilePath == null) {
       outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri, getFeatureFileDescription(uri));
@@ -65,25 +65,25 @@ public class CucumberJvmSMConverter {
                getScenarioName(testCase));
   }
 
-  protected void handleTestCaseFinished(CucumberJvmTestCase testCase) {
+  public void handleTestCaseFinished(CucumberJvmTestCase testCase) {
     outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getScenarioName(testCase));
     outCommand(TEMPLATE_SCENARIO_FINISHED, getCurrentTime());
   }
 
-  protected void handleTestRunFinished() {
+  public void handleTestRunFinished() {
     closeCurrentScenarioOutline();
     outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getFeatureFileDescription(currentFilePath));
   }
 
-  protected void handleWriteEvent(CucumberJvmWriteEvent event) {
+  public void handleWriteEvent(CucumberJvmWriteEvent event) {
     myOut.println(event.getText());
   }
 
-  protected void handleTestStepStarted(CucumberJvmTestStep testStep) {
+  public void handleTestStepStarted(CucumberJvmTestStep testStep) {
     outCommand(TEMPLATE_TEST_STARTED, getCurrentTime(), testStep.getLocation(), testStep.getStepName());
   }
 
-  protected void handleTestStepFinished(CucumberJvmTestStepFinishedEvent event) {
+  public void handleTestStepFinished(CucumberJvmTestStepFinishedEvent event) {
     if (event.getResult() == CucumberJvmTestStepFinishedEvent.Status.PASSED) {
       // write nothing
     }
@@ -106,7 +106,7 @@ public class CucumberJvmSMConverter {
     outCommand(TEMPLATE_TEST_FINISHED, getCurrentTime(), String.valueOf(event.getDuration()), event.getTestStep().getStepName());
   }
 
-  protected void handleTestSourceRead(CucumberJvmTestSourceReadEvent event) {
+  public void handleTestSourceRead(CucumberJvmTestSourceReadEvent event) {
     closeCurrentScenarioOutline();
     pathToDescription.put(event.getUri(), getFeatureName(event.getSource()));
   }

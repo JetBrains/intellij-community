@@ -144,7 +144,7 @@ public class PluginManagerTest {
   private static PluginLoadingResult loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
-    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), true));
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
 
@@ -154,9 +154,8 @@ public class PluginManagerTest {
       String url = element.getAttributeValue("url");
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
       descriptor.readExternal(element, Paths.get(url), context.pathResolver, context, descriptor);
-      parentContext.result.add(descriptor);
+      parentContext.result.add(descriptor, parentContext);
     }
-    parentContext.result.finishLoading();
     PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
     return parentContext.result;
   }

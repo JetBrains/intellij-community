@@ -7,6 +7,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
+import com.intellij.util.xmlb.SerializationFilter
 
 class NewInlayProviderSettingsModel<T : Any>(
   private val providerWithSettings: ProviderWithSettings<T>,
@@ -24,7 +25,7 @@ class NewInlayProviderSettingsModel<T : Any>(
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
   override fun collectAndApply(editor: Editor, file: PsiFile) {
-    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApply(editor, file)
+    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApply(editor, file, isEnabled)
   }
 
   override val cases: List<ImmediateConfigurable.Case>
@@ -52,7 +53,8 @@ class NewInlayProviderSettingsModel<T : Any>(
   override fun reset() {
     // Workaround for deep copy
     val obj = providerWithSettings.provider.getActualSettings(config, providerWithSettings.language)
-    serialize(obj)?.deserializeInto(providerWithSettings.settings)
+    val element = serialize(obj, SerializationFilter { _, _ -> true })
+    element?.deserializeInto(providerWithSettings.settings)
     providerWithSettings.configurable.reset()
     isEnabled = config.hintsEnabled(providerWithSettings.provider.key, providerWithSettings.language)
   }

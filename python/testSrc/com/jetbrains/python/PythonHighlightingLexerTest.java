@@ -127,6 +127,33 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
 
+  public void testFromFuturePrint() {
+    doTest(LanguageLevel.PYTHON27, "from __future__ import print_function\n" +
+                                   "print(1)",
+           "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LINE_BREAK",
+           "Py:IDENTIFIER", "Py:LPAR", "Py:INTEGER_LITERAL", "Py:RPAR");
+  }
+
+  public void testWithoutFromFuturePrint() {
+    doTest(LanguageLevel.PYTHON27, "print(1)", "Py:PRINT_KEYWORD", "Py:LPAR", "Py:INTEGER_LITERAL", "Py:RPAR");
+  }
+
+  public void testFromFuturePrintAndUnicode() {
+    doTest(LanguageLevel.PYTHON27, "from __future__ import unicode_literals, print_function\n" +
+                                   "print(\"some string\")",
+           "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COMMA", "Py:SPACE", "Py:IDENTIFIER", "Py:LINE_BREAK",
+           "Py:IDENTIFIER", "Py:LPAR", "Py:SINGLE_QUOTED_UNICODE", "Py:RPAR");
+  }
+
+  public void testFromFuturePrintNotFirstFail() {
+    doTest(LanguageLevel.PYTHON27, "a = 2\n" +
+                                   "from __future__ import print_function\n" +
+                                   "print(1)",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE","Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LINE_BREAK",
+           "Py:PRINT_KEYWORD", "Py:LPAR", "Py:INTEGER_LITERAL", "Py:RPAR");
+  }
+
   public void testUnicode30() {
     doTest(LanguageLevel.PYTHON34, "s = \"some string\"",
                       "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");

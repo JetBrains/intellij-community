@@ -2,6 +2,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaTestApplication;
@@ -17,7 +18,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -55,6 +56,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("TestOnlyProblems")
 final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
   private Project myProject;
+  private volatile Module myModule;
   private final Set<Path> myFilesToDelete = new HashSet<>();
   private IdeaTestApplication myApplication;
   private final Set<ModuleFixtureBuilder<?>> myModuleFixtureBuilders = new LinkedHashSet<>();
@@ -162,6 +164,14 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       myFilesToDelete.add(tempDirectory);
     }
     myProject = HeavyPlatformTestCase.createProject(generateProjectPath(tempDirectory));
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      @Override
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+        if (myModule == null) {
+          myModule = module;
+        }
+      }
+    });
 
     EdtTestUtil.runInEdtAndWait(() -> {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
@@ -194,8 +204,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   @Override
   public Module getModule() {
-    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    return modules.length == 0 ? null : modules[0];
+    return myModule;
   }
 
   private class MyDataProvider implements DataProvider {

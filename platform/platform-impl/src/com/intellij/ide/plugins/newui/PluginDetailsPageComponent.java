@@ -24,6 +24,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -32,12 +33,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.Element;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
@@ -182,10 +187,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
     myNameAndButtons.addButtonComponent(myUpdateButton = new UpdateButton());
-    myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
+    myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
 
     myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(true));
-    myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
+    myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
 
     myEnableDisableButton = new JButton();
     myEnableDisableButton.addActionListener(e -> changeEnableDisable());
@@ -282,7 +287,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myBottomScrollPane = new JBScrollPane(bottomPanel);
     myBottomScrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
-    myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myBottomScrollPane.setBorder(null);
     myPanel.add(myBottomScrollPane);
 
@@ -293,7 +297,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     bottomPanel.add(new JLabel());
 
     Object constraints = JBUIScale.scale(700);
-    bottomPanel.add(myDescriptionComponent = createDescriptionComponent(), constraints);
+    bottomPanel.add(myDescriptionComponent = createDescriptionComponent(view -> {
+      float width = view.getPreferredSpan(View.X_AXIS);
+      if (width < 0 || width > myBottomScrollPane.getWidth()) {
+        myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+      }
+    }), constraints);
     myChangeNotesPanel = new ChangeNotesPanel(bottomPanel, constraints, myDescriptionComponent);
 
     JLabel separator = new JLabel();
@@ -306,10 +315,32 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @NotNull
-  public static JEditorPane createDescriptionComponent() {
+  public static JEditorPane createDescriptionComponent(@Nullable Consumer<View> imageViewHandler) {
     JEditorPane editorPane = new JEditorPane();
 
-    HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
+    HTMLEditorKit kit;
+    if (imageViewHandler == null) {
+      kit = UIUtil.getHTMLEditorKit();
+    }
+    else {
+      kit = new JBHtmlEditorKit() {
+        private final ViewFactory myFactory = new JBHtmlFactory() {
+          @Override
+          public View create(Element e) {
+            View view = super.create(e);
+            if (view instanceof javax.swing.text.html.ImageView) {
+              imageViewHandler.accept(view);
+            }
+            return view;
+          }
+        };
+
+        @Override
+        public ViewFactory getViewFactory() {
+          return myFactory;
+        }
+      };
+    }
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
     sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
@@ -412,6 +443,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
     myDate.setText(date);
     myDate.setVisible(date != null);
+
+    myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
     String description = getDescription();
     if (description != null) {

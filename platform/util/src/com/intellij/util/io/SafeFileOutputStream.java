@@ -69,11 +69,6 @@ public class SafeFileOutputStream extends OutputStream {
   }
 
   @Override
-  public void write(byte[] b) throws IOException {
-    myBuffer.write(b);
-  }
-
-  @Override
   public void write(byte[] b, int off, int len) throws IOException {
     myBuffer.write(b, off, len);
   }

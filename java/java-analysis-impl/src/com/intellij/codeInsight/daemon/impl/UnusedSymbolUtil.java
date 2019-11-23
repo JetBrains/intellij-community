@@ -35,9 +35,7 @@ public class UnusedSymbolUtil {
     return EntryPointsManagerBase.getInstance(project).isEntryPoint(modifierListOwner);
   }
 
-  public static boolean isImplicitUsage(@NotNull Project project,
-                                        @NotNull PsiModifierListOwner element,
-                                        @Nullable ProgressIndicator progress) {
+  public static boolean isImplicitUsage(@NotNull Project project, @NotNull PsiModifierListOwner element) {
     if (isInjected(project, element)) return true;
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
@@ -50,10 +48,10 @@ public class UnusedSymbolUtil {
   }
 
   public static boolean isImplicitRead(@NotNull PsiVariable variable) {
-    return isImplicitRead(variable.getProject(), variable, null);
+    return isImplicitRead(variable.getProject(), variable);
   }
 
-  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @Nullable ProgressIndicator progress) {
+  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element) {
     for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       if (provider.isImplicitRead(element)) {
@@ -64,12 +62,10 @@ public class UnusedSymbolUtil {
   }
 
   public static boolean isImplicitWrite(@NotNull PsiVariable variable) {
-    return isImplicitWrite(variable.getProject(), variable, null);
+    return isImplicitWrite(variable.getProject(), variable);
   }
 
-  public static boolean isImplicitWrite(@NotNull Project project,
-                                        @NotNull PsiVariable element,
-                                        @Nullable ProgressIndicator progress) {
+  public static boolean isImplicitWrite(@NotNull Project project, @NotNull PsiVariable element) {
     for(ImplicitUsageProvider provider: ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       if (provider.isImplicitWrite(element)) {
@@ -126,7 +122,7 @@ public class UnusedSymbolUtil {
       if (isIntentionalPrivateConstructor(method, containingClass)) {
         return true;
       }
-      if (isImplicitUsage(project, method, progress)) {
+      if (isImplicitUsage(project, method)) {
         return true;
       }
       if (!helper.isCurrentFileAlreadyChecked()) {
@@ -139,7 +135,7 @@ public class UnusedSymbolUtil {
           isClassUsed(project, containingFile, containingClass, progress, helper)) {
         return true;
       }
-      if (isImplicitUsage(project, method, progress)) return true;
+      if (isImplicitUsage(project, method)) return true;
 
       if (!method.isConstructor() && FindSuperElementsHelper.findSuperElements(method).length != 0) {
         return true;
@@ -303,7 +299,7 @@ public class UnusedSymbolUtil {
                                       @NotNull PsiClass aClass,
                                       @NotNull ProgressIndicator progress,
                                       @NotNull GlobalUsageHelper helper) {
-    if (isImplicitUsage(project, aClass, progress) || helper.isLocallyUsed(aClass)) return true;
+    if (isImplicitUsage(project, aClass) || helper.isLocallyUsed(aClass)) return true;
     if (helper.isCurrentFileAlreadyChecked()) {
       if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE) ||
              aClass.getParent() instanceof PsiDeclarationStatement ||

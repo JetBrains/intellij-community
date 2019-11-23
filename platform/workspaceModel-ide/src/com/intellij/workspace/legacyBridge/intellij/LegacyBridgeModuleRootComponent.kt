@@ -89,7 +89,10 @@ class LegacyBridgeModuleRootComponent(
 
   override fun dispose() = Unit
 
-  override fun dropCaches() = orderRootsCache.clearCache()
+  override fun dropCaches() {
+    orderRootsCache.clearCache()
+    modelValue.dropCache()
+  }
 
   override fun getModificationCountForTests(): Long = legacyBridgeModule.entityStore.version
 

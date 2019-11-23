@@ -14,7 +14,6 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.DependencyConfigurable;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
@@ -23,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
 
@@ -38,13 +35,10 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final JButton editDependencies = new JButton(InspectionsBundle.message("inspection.dependency.configure.button.text"));
-    editDependencies.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
-        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-        ShowSettingsUtil.getInstance().editConfigurable(editDependencies, new DependencyConfigurable(project));
-      }
+    editDependencies.addActionListener(__ -> {
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
+      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+      ShowSettingsUtil.getInstance().editConfigurable(editDependencies, new DependencyConfigurable(project));
     });
 
     JPanel depPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -94,19 +88,15 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
     }
 
     final List<ProblemDescriptor> problems = new SmartList<>();
-    DependenciesBuilder.analyzeFileDependencies(file, new DependenciesBuilder.DependencyProcessor() {
-      private final Map<PsiFile, DependencyRule[]> violations =
-        FactoryMap.create(dependencyFile -> validationManager.getViolatorDependencyRules(file, dependencyFile));
-
-      @Override
-      public void process(PsiElement place, PsiElement dependency) {
-        PsiFile dependencyFile = dependency.getContainingFile();
-        if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
-          for (DependencyRule dependencyRule : violations.get(dependencyFile)) {
-            String message = InspectionsBundle.message("inspection.dependency.violator.problem.descriptor", dependencyRule.getDisplayText());
-            LocalQuickFix[] fixes = createEditDependencyFixes(dependencyRule);
-            problems.add(manager.createProblemDescriptor(place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-          }
+    final Map<PsiFile, DependencyRule[]> violations =
+      FactoryMap.create(dependencyFile -> validationManager.getViolatorDependencyRules(file, dependencyFile));
+    DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
+      PsiFile dependencyFile = dependency.getContainingFile();
+      if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
+        for (DependencyRule dependencyRule : violations.get(dependencyFile)) {
+          String message = InspectionsBundle.message("inspection.dependency.violator.problem.descriptor", dependencyRule.getDisplayText());
+          LocalQuickFix[] fixes = createEditDependencyFixes(dependencyRule);
+          problems.add(manager.createProblemDescriptor(place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
     });

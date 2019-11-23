@@ -72,10 +72,11 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
                                                   @NotNull final PsiFile file,
-                                                  @Nullable final PsiElement contextElement) {
+                                                  @Nullable final PsiElement contextElement,
+                                                  int targetOffset) {
 
     // First we try to find required parent for context element. Then, for element to the left of caret to support case "command<caret>"
-    for (final PsiElement element : Arrays.asList(contextElement, file.findElementAt(editor.getCaretModel().getOffset() - 1))) {
+    for (final PsiElement element : Arrays.asList(contextElement, file.findElementAt(targetOffset - 1))) {
       final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(element, CommandLineElement.class);
       if (commandLineElement != null) {
         return commandLineElement;

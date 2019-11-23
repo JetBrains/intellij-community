@@ -137,12 +137,12 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   public void testProhibitCoalescingByCommonObjects() {
     NonBlockingReadAction<Void> ra = ReadAction.nonBlocking(() -> {});
     String shouldBeUnique = "Equality should be unique";
-    assertThrows(shouldBeUnique, () -> { ra.coalesceBy((Object)null); });
-    assertThrows(shouldBeUnique, () -> { ra.coalesceBy(getProject()); });
-    assertThrows(shouldBeUnique, () -> { ra.coalesceBy(new DocumentImpl("")); });
-    assertThrows(shouldBeUnique, () -> { ra.coalesceBy(PsiUtilCore.NULL_PSI_ELEMENT); });
-    assertThrows(shouldBeUnique, () -> { ra.coalesceBy(getClass()); });
-    assertThrows(shouldBeUnique, () -> { ra.coalesceBy(""); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy((Object)null); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(getProject()); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(new DocumentImpl("")); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(PsiUtilCore.NULL_PSI_ELEMENT); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(getClass()); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(""); });
   }
 
   public void testReportConflictForSameCoalesceFromDifferentPlaces() {
@@ -156,21 +156,10 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
     Promise<?> p = WriteAction.compute(() -> {
       Promise<?> p1 = ReadAction.nonBlocking(() -> {}).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
-      assertThrows("Same coalesceBy arguments", () -> new Inner().run());
+      assertThrows(Throwable.class, "Same coalesceBy arguments", () -> new Inner().run());
       return p1;
     });
     waitForPromise(p);
-  }
-
-  private static void assertThrows(String messagePart, Runnable runnable) {
-    try {
-      runnable.run();
-    }
-    catch (Throwable e) {
-      assertTrue(e.getMessage(), e.getMessage().contains(messagePart));
-      return;
-    }
-    fail();
   }
 
   public void testDoNotBlockExecutorThreadDuringWriteAction() throws Exception {
@@ -296,7 +285,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     setupUncommittedDocument();
     waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ReadAction.run(() -> {
-        assertThrows("cannot be satisfied", () -> ReadAction.nonBlocking(() -> "a").withDocumentsCommitted(getProject()).executeSynchronously());
+        assertThrows(IllegalStateException.class, "cannot be satisfied", () -> ReadAction.nonBlocking(() -> "a").withDocumentsCommitted(getProject()).executeSynchronously());
       });
     }));
   }
@@ -329,5 +318,15 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
         });
       }, outer);
     }));
+  }
+
+  public void testCancellationPerformance() {
+    PlatformTestUtil.startPerformanceTest("NBRA cancellation", 500, () -> {
+      WriteAction.run(() -> {
+        for (int i = 0; i < 100_000; i++) {
+          ReadAction.nonBlocking(() -> {}).coalesceBy(this).submit(AppExecutorUtil.getAppExecutorService()).cancel();
+        }
+      });
+    }).assertTiming();
   }
 }

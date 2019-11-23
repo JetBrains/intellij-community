@@ -587,7 +587,7 @@ public class InferenceSession {
 
   public InferenceVariable[] initBounds(PsiElement context,
                                         final PsiSubstitutor siteSubstitutor,
-                                        PsiTypeParameter... typeParameters) {
+                                        @NotNull PsiTypeParameter... typeParameters) {
     List<InferenceVariable> result = new ArrayList<>(typeParameters.length);
     for (PsiTypeParameter parameter : typeParameters) {
       String name = parameter.getName();

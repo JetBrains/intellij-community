@@ -50,7 +50,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
       PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
 
-      registrar.register(new RenameWrongRefFix(refExpr));
+      registrar.register(fixRange, new RenameWrongRefFix(refExpr), null);
       PsiExpression qualifier = ((PsiReferenceExpression)ref).getQualifierExpression();
       if (qualifier == null) {
         registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);

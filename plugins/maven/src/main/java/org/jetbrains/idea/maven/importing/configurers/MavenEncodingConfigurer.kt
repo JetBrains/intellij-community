@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing.configurers
 
-import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -47,7 +47,7 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
 
     newMap.putAll(leaveAsIsMap)
 
-    TransactionGuard.getInstance().submitTransactionAndWait {
+    ApplicationManager.getApplication().invokeAndWait {
       projectManagerImpl.setMapping(newMap)
     }
   }

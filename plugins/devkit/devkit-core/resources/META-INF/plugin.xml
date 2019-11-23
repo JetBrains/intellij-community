@@ -37,7 +37,6 @@
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
-    <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
     <xmlStructureViewBuilderProvider
@@ -399,6 +398,10 @@
 
     <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"
             text="Analyze EP Usage">
+      <add-to-group group-id="Internal.DevKit"/>
+    </action>
+    <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"
+            text="Analyze EP Usage (Do not Follow Safe Types)">
       <add-to-group group-id="Internal.DevKit"/>
     </action>
 

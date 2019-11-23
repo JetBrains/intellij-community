@@ -336,10 +336,10 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     assertCompletionVariantsInclude(myProjectPom, "project-group:m1:1");
 
-    myProjectsManager.listenForExternalChanges();
     WriteAction.runAndWait(() -> m.delete(null));
 
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    importProject();
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

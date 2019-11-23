@@ -484,14 +484,8 @@ public class JavaCoverageEngine extends CoverageEngine {
       else if (parent instanceof PsiSwitchStatement) {
         condition = ((PsiSwitchStatement)parent).getExpression();
       }
-      else if (parent instanceof PsiDoWhileStatement) {
-        condition = ((PsiDoWhileStatement)parent).getCondition();
-      }
-      else if (parent instanceof PsiForStatement) {
-        condition = ((PsiForStatement)parent).getCondition();
-      }
-      else if (parent instanceof PsiWhileStatement) {
-        condition = ((PsiWhileStatement)parent).getCondition();
+      else if (parent instanceof PsiConditionalLoopStatement) {
+        condition = ((PsiConditionalLoopStatement)parent).getCondition();
       }
       else if (parent instanceof PsiForeachStatement) {
         condition = ((PsiForeachStatement)parent).getIteratedValue();

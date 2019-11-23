@@ -19,8 +19,8 @@ class GitVcsOptions : BaseState() {
   val previousCommitAuthors by list<String>()
 
   // The policy that specifies how files are saved before update or rebase
-  @get:OptionTag("UPDATE_CHANGES_POLICY")
-  var updateChangesPolicy by enum(GitVcsSettings.UpdateChangesPolicy.STASH)
+  @get:OptionTag("SAVE_CHANGES_POLICY")
+  var saveChangesPolicy by enum(GitVcsSettings.SaveChangesPolicy.SHELVE)
 
   @get:OptionTag("UPDATE_TYPE")
   @com.intellij.configurationStore.Property(description = "Update method")

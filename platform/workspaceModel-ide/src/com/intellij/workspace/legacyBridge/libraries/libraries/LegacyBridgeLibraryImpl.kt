@@ -48,26 +48,33 @@ class LegacyBridgeLibraryImpl(
 
     fun generateLibraryEntityName(legacyLibraryName: String?, exists: (String) -> Boolean): String {
       if (legacyLibraryName == null) {
-        for (index in 1..10000) {
+        // TODO Make it O(1) if required
+
+        var index = 1
+        while (true) {
           val candidate = "$UNNAMED_LIBRARY_NAME_PREFIX$index"
           if (!exists(candidate)) {
             return candidate
           }
+
+          index++
         }
 
+        @Suppress("UNREACHABLE_CODE")
         error("Unable to suggest unique name for unnamed module library")
       }
 
       if (!exists(legacyLibraryName)) return legacyLibraryName
 
-      for (index in 1..10000) {
+      var index = 1
+      while (true) {
         val candidate = "$legacyLibraryName${UNIQUE_INDEX_LIBRARY_NAME_SUFFIX}$index"
         if (!exists(candidate)) {
           return candidate
         }
-      }
 
-      error("Unable to suggest unique name for module library '$legacyLibraryName'")
+        index++
+      }
     }
   }
 

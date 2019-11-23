@@ -2,6 +2,8 @@
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -10,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,8 +20,10 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -26,6 +31,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * extension point in a thread safe way.
  */
 public class VcsRepositoryManager implements Disposable, VcsListener {
+  private static final Logger LOG = Logger.getInstance(VcsRepositoryManager.class);
+
   public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
     Topic.create("VCS repository mapping updated", VcsRepositoryMappingListener.class);
 
@@ -39,6 +46,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @NotNull private final Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
   @NotNull private final List<VcsRepositoryCreator> myRepositoryCreators;
 
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile boolean myDisposed;
 
   @NotNull
@@ -68,7 +76,8 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @Override
   public void directoryMappingChanged() {
-    checkAndUpdateRepositoriesCollection(null);
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoriesCollection(null), 0);
   }
 
   @Nullable
@@ -129,6 +138,11 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @Nullable
   private Repository getRepositoryForRoot(@Nullable VirtualFile root, boolean updateIfNeeded) {
     if (root == null) return null;
+
+    if (updateIfNeeded && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      updateIfNeeded = false;
+      LOG.error("Do not call synchronous root update under write lock");
+    }
 
     REPO_LOCK.readLock().lock();
     try {
@@ -302,5 +316,15 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @NotNull
   public String toString() {
     return "RepositoryManager{myRepositories: " + myRepositories + '}';
+  }
+
+  @TestOnly
+  public void waitForAsyncTaskCompletion() {
+    try {
+      myUpdateAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 }

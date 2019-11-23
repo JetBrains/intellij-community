@@ -50,6 +50,7 @@ final class OpenEditorsContextProvider extends WorkingContextProvider {
       fileEditorManager.loadState(element);
       fileEditorManager.getMainSplitters().openFiles();
     }
+
     Element dockState = element.getChild("DockManager");
     if (dockState != null) {
       DockManagerImpl dockManager = (DockManagerImpl)DockManager.getInstance(project);

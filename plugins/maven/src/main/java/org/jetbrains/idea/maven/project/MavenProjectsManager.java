@@ -526,6 +526,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myWatcher.start();
   }
 
+  @TestOnly
+  public void enableAutoImportInTests() {
+    assert isInitialized();
+    listenForExternalChanges();
+    myWatcher.enableAutoImportInTests();
+  }
+
   @Override
   public void projectClosed() {
     initLock.lock();
@@ -886,11 +893,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenServerManager.getInstance().showMavenNotifications(getSyncConsole());
     MavenSyncConsole console = getSyncConsole();
+    fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
       completeMavenSyncOnImportCompletion(console);
     });
-    fireImportAndResolveScheduled();
     return promise;
   }
 
@@ -929,6 +936,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
       if(toResolve.isEmpty()) {
         result.setResult(Collections.emptyList());
+        fireProjectImportCompleted();
         return;
       }
 
@@ -939,6 +947,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         }
         else {
           result.setResult(Collections.emptyList());
+          fireProjectImportCompleted();
         }
       };
 
@@ -1066,12 +1075,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     scheduleImport();
   }
 
+  // TODO merge [result] promises (now, promise will be lost after merge of import requests)
   private Promise<List<Module>> scheduleImport() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<>();
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
       public void run() {
         result.setResult(importProjects());
+        fireProjectImportCompleted();
       }
     }));
     return result;
@@ -1342,6 +1353,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
+  private void fireProjectImportCompleted() {
+    for (Listener each : myManagerListeners) {
+      each.projectImportCompleted();
+    }
+  }
+
   public interface Listener {
     default void activated() {
     }
@@ -1350,6 +1367,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     default void importAndResolveScheduled() {
+    }
+
+    default void projectImportCompleted() {
     }
   }
 

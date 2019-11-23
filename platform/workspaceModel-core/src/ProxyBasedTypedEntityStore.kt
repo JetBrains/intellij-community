@@ -9,9 +9,6 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.lang.JavaVersion
-import gnu.trove.THashSet
-import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.annotations.TestOnly
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.*
@@ -160,7 +157,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
            storage.metaDataRegistry)
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
-  private var modificationCount: Long = 0
+  override var modificationCount: Long = 0
+    private set
 
   private val changeLog: List<ChangeEntry>
     get() = changeLogImpl
@@ -171,7 +169,6 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
   }
 
   override fun isEmpty(): Boolean = changeLog.isEmpty()
-  override fun getModificationCount(): Long = modificationCount
 
   override fun <E : TypedEntity> createReference(e: E): EntityReference<E> = ProxyBasedEntityReferenceImpl((e as ProxyBasedEntity).id)
 

@@ -6,6 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.LocalSearchScope;
@@ -124,6 +126,14 @@ public abstract class XmlExtension {
   @Nullable
   public XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
     return element.getNSDescriptor(namespace, strict);
+  }
+
+  @NotNull
+  public XmlNSDescriptor wrapNSDescriptor(@NotNull XmlTag element, @NotNull XmlNSDescriptor descriptor) {
+    if (element instanceof HtmlTag && !(descriptor instanceof HtmlNSDescriptorImpl)) {
+      return new HtmlNSDescriptorImpl(descriptor);
+    }
+    return descriptor;
   }
 
   @Nullable

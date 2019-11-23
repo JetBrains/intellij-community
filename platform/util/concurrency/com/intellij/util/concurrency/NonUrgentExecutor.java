@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.Executor;
 
 /**
- * A common executor for non-urgent tasks, which are expected to be fast most of the time.
+ * A common executor for non-urgent tasks, which are expected to be fast (preferably not more than 10 seconds) most of the time.
  * Used to avoid spawning a lot of threads by different subsystems all reacting to the same event,
  * when all they have to do is several short PSI/index queries in reaction to a file or project model change,
  * or on project opening. If you're using {@link com.intellij.openapi.application.ReadAction#nonBlocking},

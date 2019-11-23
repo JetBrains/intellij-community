@@ -6,8 +6,10 @@ import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.workspace.api.*
 import com.intellij.util.ArrayUtilRt
+import com.intellij.workspace.api.*
+import com.intellij.workspace.virtualFile
+import com.intellij.workspace.virtualFileUrl
 import java.util.*
 
 class LegacyBridgeCompilerModuleExtension(

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruct
 import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiTreeUtil;

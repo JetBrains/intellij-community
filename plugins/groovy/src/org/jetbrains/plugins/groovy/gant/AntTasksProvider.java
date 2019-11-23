@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -43,8 +43,6 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author ilyas, peter
@@ -107,6 +105,13 @@ public class AntTasksProvider {
       }
     }
 
+    if (JavaPsiFacade.getInstance(project).findClass(ReflectedProject.ANT_PROJECT_CLASS, groovyFile.getResolveScope()) == null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Ant library not available in " + groovyFile.getVirtualFile().getPath() + "; urls=" + urls);
+      }
+      return Collections.emptyMap();
+    }
+
     AntClassLoader loader;
     synchronized (ourLock) {
       final Map<List<URL>, AntClassLoader> map = CachedValuesManager.getManager(project).getParameterizedCachedValue(project, KEY,
@@ -159,23 +164,8 @@ public class AntTasksProvider {
     }
 
     @NotNull
-    public Map<String, Class> getAntObjects() {
-      while (true) {
-        try {
-          final Map<String, Class> map = myFuture.get(100, TimeUnit.MILLISECONDS);
-          if (map != null) {
-            return map;
-          }
-        }
-        catch (TimeoutException ignore) {
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          break;
-        }
-        ProgressManager.checkCanceled();
-      }
-      return Collections.emptyMap();
+    Map<String, Class> getAntObjects() {
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
     }
   }
 }

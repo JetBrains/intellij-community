@@ -1322,14 +1322,8 @@ public final class PsiUtil extends PsiUtilCore {
     if (parent instanceof PsiIfStatement) {
       return checkSameExpression(expr, ((PsiIfStatement)parent).getCondition());
     }
-    if (parent instanceof PsiWhileStatement) {
-      return checkSameExpression(expr, ((PsiWhileStatement)parent).getCondition());
-    }
-    if (parent instanceof PsiForStatement) {
-      return checkSameExpression(expr, ((PsiForStatement)parent).getCondition());
-    }
-    if (parent instanceof PsiDoWhileStatement) {
-      return checkSameExpression(expr, ((PsiDoWhileStatement)parent).getCondition());
+    if (parent instanceof PsiConditionalLoopStatement) {
+      return checkSameExpression(expr, ((PsiConditionalLoopStatement)parent).getCondition());
     }
     if (parent instanceof PsiConditionalExpression) {
       return checkSameExpression(expr, ((PsiConditionalExpression)parent).getCondition());

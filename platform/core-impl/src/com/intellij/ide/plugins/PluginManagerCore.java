@@ -71,6 +71,7 @@ public final class PluginManagerCore {
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
   public static final String CORE_PLUGIN_ID = "com.intellij";
 
+  private static final PluginId JAVA_PLUGIN_ID = PluginId.getId("com.intellij.java");
   private static final PluginId JAVA_MODULE_ID = PluginId.getId("com.intellij.modules.java");
 
   public static final String PLUGIN_XML = "plugin.xml";
@@ -553,30 +554,22 @@ public final class PluginManagerCore {
   private static IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor,
                                                                 @Nullable IdeaPluginDescriptorImpl javaDep,
                                                                 boolean hasAllModules) {
-    // Skip our plugins as expected to be up-to-date whether bundled or not.
-    if (descriptor.getPluginId() == CORE_ID || descriptor == javaDep ||
+    // skip our plugins as expected to be up-to-date whether bundled or not
+    if (descriptor.getPluginId() == CORE_ID || descriptor.getPluginId() == JAVA_PLUGIN_ID ||
         VENDOR_JETBRAINS.equals(descriptor.getVendor()) ||
         !hasAllModules ||
         javaDep == null) {
       return null;
     }
 
-    if (!descriptor.isBundled()) {
-      return javaDep;
-    }
-
     // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
     // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
-    boolean isLegacyPlugin = !hasModuleDependencies(descriptor);
-    // Many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency
-    // on some other platform modules). This is definitely a misconfiguration but lets temporary add the Java plugin to their dependencies
-    // to avoid breaking compatibility.
-    return isLegacyPlugin ? javaDep : null;
+    return hasModuleDependencies(descriptor) ? null : javaDep;
   }
 
-  private static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
+  static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
     for (PluginId depId : descriptor.getDependentPluginIds()) {
-      if (isModuleDependency(depId)) {
+      if (depId == JAVA_PLUGIN_ID || depId == JAVA_MODULE_ID || isModuleDependency(depId)) {
         return true;
       }
     }
@@ -1065,7 +1058,7 @@ public final class PluginManagerCore {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
-        context.result.add(descriptor);
+        context.result.add(descriptor, context);
       }
     }
   }
@@ -1105,45 +1098,57 @@ public final class PluginManagerCore {
     try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true, new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL);
     }
-    context.result.finishLoading();
-    return context.result.plugins;
+    return Arrays.asList(context.result.finishLoading());
   }
 
   @TestOnly
   @NotNull
-  public static PluginLoadingResult testLoadDescriptorsFromDir(@NotNull Path dir)
-    throws ExecutionException, InterruptedException {
-    DescriptorListLoadingContext context = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+  public static PluginLoadingResult testLoadDescriptorsFromDir(@NotNull Path dir, @NotNull BuildNumber buildNumber)
+    throws IOException {
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), buildNumber));
     context.usePluginClassLoader = true;
     PluginLoadingResult result = context.result;
-    loadDescriptorsFromDir(dir, true, context);
-    context.result.finishLoading();
+
+    // constant order in tests
+    List<Path> paths;
+    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
+      paths = ContainerUtil.collect(dirStream.iterator());
+    }
+    paths.sort(null);
+
+    for (Path file : paths) {
+      IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, /* isBundled */ false, context);
+      if (descriptor != null) {
+        context.result.add(descriptor, context);
+      }
+    }
+
     initializePlugins(context, UrlClassLoader.build().get(), false);
     return result;
   }
 
   private static void loadDescriptorsFromClassPath(@NotNull Map<URL, String> urls,
-                                                   @NotNull DescriptorLoadingContext loadingContext,
+                                                   @NotNull DescriptorLoadingContext context,
                                                    @Nullable URL platformPluginURL) throws ExecutionException, InterruptedException {
     if (urls.isEmpty()) {
       return;
     }
 
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(urls.size());
-    ExecutorService executorService = loadingContext.parentContext.getExecutorService();
+    ExecutorService executorService = context.parentContext.getExecutorService();
     for (Map.Entry<URL, String> entry : urls.entrySet()) {
       URL url = entry.getKey();
       tasks.add(executorService.submit(() -> {
-        return loadDescriptorFromResource(url, entry.getValue(), loadingContext.copy(url.equals(platformPluginURL)));
+        return loadDescriptorFromResource(url, entry.getValue(), context.copy(url.equals(platformPluginURL)));
       }));
     }
 
-    PluginLoadingResult result = loadingContext.parentContext.result;
+    PluginLoadingResult result = context.parentContext.result;
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
         descriptor.setUseCoreClassLoader();
-        result.add(descriptor);
+        result.add(descriptor, context.parentContext);
       }
     }
   }
@@ -1168,18 +1173,9 @@ public final class PluginManagerCore {
     }
 
     try {
-      boolean skipPythonCommunity = isRunningFromSources && PlatformUtils.PYCHARM_PREFIX.equals(platformPrefix);
       Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
       while (enumeration.hasMoreElements()) {
-        URL url = enumeration.nextElement();
-        if (skipPythonCommunity) {
-          String file = url.getFile();
-          if (file.endsWith("/classes/production/intellij.python.community.plugin/META-INF/plugin.xml") ||
-              file.endsWith("/classes/production/intellij.pycharm.community.customization/META-INF/plugin.xml")) {
-            continue;
-          }
-        }
-        urls.put(url, PLUGIN_XML);
+        urls.put(enumeration.nextElement(), PLUGIN_XML);
       }
     }
     catch (IOException e) {
@@ -1258,7 +1254,7 @@ public final class PluginManagerCore {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl descriptor = loadDescriptor(Paths.get(s), false, context);
       if (descriptor != null) {
-        result.add(descriptor);
+        result.add(descriptor, context);
       }
     }
   }
@@ -1271,7 +1267,7 @@ public final class PluginManagerCore {
   @NotNull
   @ApiStatus.Internal
   public static List<? extends IdeaPluginDescriptor> loadUncachedDescriptors() {
-    return loadDescriptors(isRunningFromSources()).result.plugins;
+    return Arrays.asList(loadDescriptors(isRunningFromSources()).result.finishLoading());
   }
 
   @NotNull
@@ -1300,7 +1296,7 @@ public final class PluginManagerCore {
         loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
       }
 
-      if (isUnitTestMode && result.plugins.size() <= 1) {
+      if (isUnitTestMode && result.enabledPluginCount() <= 1) {
         // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         context.usePluginClassLoader = true;
         loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
@@ -1313,7 +1309,6 @@ public final class PluginManagerCore {
       context.close();
     }
 
-    result.finishLoading();
     return context;
   }
 
@@ -1402,7 +1397,7 @@ public final class PluginManagerCore {
     processAllDependencies(rootDescriptor, true, idMap, descriptor -> {
       ClassLoader loader = descriptor.getPluginClassLoader();
       if (loader == null) {
-        getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+        getLogger().error(rootDescriptor.formatErrorMessage("requires missing class loader for " + toPresentableName(descriptor)));
       }
       else {
         loaders.add(loader);
@@ -1439,9 +1434,6 @@ public final class PluginManagerCore {
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
-    boolean checkModuleDependencies = coreDescriptor != null &&
-                                      !coreDescriptor.getModules().isEmpty() && !coreDescriptor.getModules().contains(ALL_MODULES_MARKER);
-
     Set<IdeaPluginDescriptor> explicitlyEnabled = null;
     if (selectedIds != null) {
       Set<PluginId> set = new HashSet<>();
@@ -1501,12 +1493,6 @@ public final class PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         errorSuffix = "is skipped (plugins loading disabled)";
-      }
-      else if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
-        // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-        // If a plugin does not include any module dependency tags in its plugin.xml,
-        // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
-        errorSuffix = "defines no module dependencies (supported only in IntelliJ IDEA)";
       }
       else {
         errorSuffix = null;
@@ -1587,8 +1573,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   static void initializePlugins(@NotNull DescriptorListLoadingContext context, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
     PluginLoadingResult loadingResult = context.result;
-    List<String> errors = new ArrayList<>(loadingResult.errors);
-    Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
+    List<String> errors = new ArrayList<>(loadingResult.getErrors());
 
     if (loadingResult.duplicateModuleMap != null) {
       loadingResult.duplicateModuleMap.forEach((id, values) -> {
@@ -1596,16 +1581,18 @@ public final class PluginManagerCore {
       });
     }
 
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
     if (checkEssentialPlugins && coreDescriptor == null) {
       throw new EssentialPluginMissingException(Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
-    disableIncompatiblePlugins(loadingResult.plugins, idMap, errors);
-    checkPluginCycles(loadingResult.plugins, idMap, errors);
+    List<IdeaPluginDescriptorImpl> descriptors = Arrays.asList(loadingResult.finishLoading());
+    disableIncompatiblePlugins(descriptors, idMap, errors);
+    checkPluginCycles(descriptors, idMap, errors);
 
     // topological sort based on required dependencies only
-    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(loadingResult.plugins, idMap, false));
+    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap, false));
 
     Set<PluginId> enabledIds = new LinkedHashSet<>();
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
@@ -1679,7 +1666,7 @@ public final class PluginManagerCore {
         for (IdeaPluginDescriptorImpl descriptor : dependencies) {
           ClassLoader loader = descriptor.getPluginClassLoader();
           if (loader == null) {
-            getLogger().error("Plugin " + toPresentableName(rootDescriptor) + " requires missing class loader for " + toPresentableName(descriptor));
+            getLogger().error(rootDescriptor.formatErrorMessage("requires missing class loader for " + toPresentableName(descriptor)));
           }
           else {
             loaders.add(loader);
@@ -1779,13 +1766,12 @@ public final class PluginManagerCore {
         disabledRequiredIds.add(dep.getPluginId());
       }
 
-      String name = descriptor.getName();
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
-        errors.add("Plugin " + toPresentableName(name) + " requires missing " + toPresentableName(depId.getIdString()));
+        errors.add(descriptor.formatErrorMessage("requires missing " + toPresentableName(depId.getIdString())));
       }
       else {
-        errors.add("Plugin " + toPresentableName(name) + " requires disabled " + toPresentableName(depName));
+        errors.add(descriptor.formatErrorMessage("requires disabled " + toPresentableName(depName)));
       }
     }
     return result;
@@ -1866,7 +1852,7 @@ public final class PluginManagerCore {
       }
 
       loadPluginsActivity.end();
-      loadPluginsActivity.setDescription("plugin count: " + result.plugins.size());
+      loadPluginsActivity.setDescription("plugin count: " + ourLoadedPlugins.size());
     }
     catch (ExtensionInstantiationException e) {
       throw new PluginException(e, e.getExtensionOwnerId());

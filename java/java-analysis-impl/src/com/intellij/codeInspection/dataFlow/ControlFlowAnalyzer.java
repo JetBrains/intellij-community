@@ -31,6 +31,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -2014,7 +2015,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     DfaValue dfaValue = myFactory.createLiteralValue(expression);
     addInstruction(new PushInstruction(dfaValue, expression));
-    if (dfaValue == myFactory.getConstFactory().getNull()) {
+    if (DfaConstValue.isConstant(dfaValue, null)) {
       addNullCheck(expression);
     }
 
@@ -2043,6 +2044,24 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override public void visitClass(PsiClass aClass) {
+  }
+
+  @Contract("null -> false")
+  final boolean wasAdded(PsiElement element) {
+    return element != null && 
+           myCurrentFlow.getStartOffset(element).getInstructionOffset() > -1 &&
+           myCurrentFlow.getEndOffset(element).getInstructionOffset() > -1;
+  }
+
+  public void removeLambda(@NotNull PsiLambdaExpression lambda) {
+    int start = myCurrentFlow.getStartOffset(lambda).getInstructionOffset();
+    int end = myCurrentFlow.getEndOffset(lambda).getInstructionOffset();
+    for (int i = start; i < end; i++) {
+      Instruction inst = myCurrentFlow.getInstruction(i);
+      if (inst instanceof EscapeInstruction || inst instanceof LambdaInstruction) {
+        myCurrentFlow.makeNop(i);
+      }
+    }
   }
 
   /**

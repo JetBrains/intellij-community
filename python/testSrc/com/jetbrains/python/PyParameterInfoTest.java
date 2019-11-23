@@ -1021,6 +1021,85 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-36008
+  public void testInitializingTypedDictBasedType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(2);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, name: str, year: int",
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(test.get("<arg2>").getTextOffset()).check("<no parameters>",
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                             new String[]{"<no parameters>"});
+      }
+    );
+  }
+
+  // PY-36008
+  public void testInitializingTypedDictBasedTypeWithTotal() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(2);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, name: str=..., year: int=...",
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, name: str, year: int",
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
+  // PY-36008
+  public void testInitializingInheritedTypedDictType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(2);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, name: str, year: int, based_on: str=...",
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, name: str, year: int, based_on: str=..., rating: float",
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY,
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
+  // PY-36008
+  public void testDefiningTypedDictTypeAlternativeSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(1);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("name: str, fields: Dict[str, Any], total: bool=True",
+                                                             new String[]{"name: str, "},
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictGet() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(1);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("key: str, default=None",
+                                                             new String[]{"key: str, "},
+                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
   // PY-37802
   public void testPydanticInitializingDataclass() {
     runWithLanguageLevel(

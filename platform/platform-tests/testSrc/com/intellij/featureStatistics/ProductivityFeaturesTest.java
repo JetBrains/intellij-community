@@ -80,7 +80,7 @@ public class ProductivityFeaturesTest extends LightPlatformTestCase {
     try {
       Registry.get("ide.javafx.tips").setValue(false);//Don't test JavaFX case as is it triggers 'Thread leaked' failure
       TipUIUtil.Browser browser = TipUIUtil.createBrowser();
-      TipUIUtil.openTipInBrowser(TipUIUtil.getTip(featureDescriptor.getTipFileName()), browser);
+      TipUIUtil.openTipInBrowser(TipUIUtil.getTip(featureDescriptor), browser);
       //if (Registry.is("ide.javafx.tips")) {
       //  assertEquals("<html><body>Test Tip</body></html>", browser.getText());
       //}

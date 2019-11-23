@@ -51,7 +51,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class DebuggerAction extends AnAction {
-  private static final DebuggerTreeNodeImpl[] EMPTY_TREE_NODE_ARRAY = new DebuggerTreeNodeImpl[0];
+  private static class Holder {
+    private static final DebuggerTreeNodeImpl[] EMPTY_TREE_NODE_ARRAY = new DebuggerTreeNodeImpl[0];
+  }
 
   @Nullable
   public static DebuggerTree getTree(DataContext dataContext){
@@ -88,7 +90,7 @@ public abstract class DebuggerAction extends AnAction {
     if(tree == null) return null;
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) {
-      return EMPTY_TREE_NODE_ARRAY;
+      return Holder.EMPTY_TREE_NODE_ARRAY;
     }
     List<DebuggerTreeNodeImpl> nodes = new ArrayList<>(paths.length);
     for (TreePath path : paths) {

@@ -749,9 +749,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType == null) {
         return getOrDetectFromContent(file, content);
       }
-      if (mightBeReplacedByDetectedFileType(fileType)) {
+      if (mightBeReplacedByDetectedFileType(fileType) && isDetectable(file)) {
         FileType detectedFromContent = getOrDetectFromContent(file, content);
-        if (detectedFromContent != UnknownFileType.INSTANCE && detectedFromContent != PlainTextFileType.INSTANCE) {
+        // unknown file type means that it was detected as binary, it's better to keep it binary
+        if (detectedFromContent != PlainTextFileType.INSTANCE) {
           return detectedFromContent;
         }
       }
@@ -855,7 +856,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private static String readableFlags(long flags) {
     String result = "";
-    if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += (result.isEmpty() ? "" :" | ") + "ATTRIBUTES_WERE_LOADED_MASK";
+    if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += "ATTRIBUTES_WERE_LOADED_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECT_WAS_RUN_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECTED_AS_BINARY_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECTED_AS_TEXT_MASK";
@@ -1064,6 +1065,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           try {
             detected = detector.detect(file, firstBytes, text);
           }
+          catch (ProcessCanceledException e) {
+            LOG.error("Detector " + detector + " (" + detector.getClass() + ") threw PCE. Bad detector, bad!", new RuntimeException(e));
+          }
           catch (Exception e) {
             LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
           }
@@ -1135,69 +1139,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       return myFileTypeDetectorMap.get(fileType);
     }
-  }
-
-  @Override
-  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-    if (mightBeReplacedByDetectedFileType(type) || type.equals(UnknownFileType.INSTANCE)) {
-      // a file has unknown file type if none of file type detectors matched it
-      // for plain text file type, we run file type detection based on content
-
-      return file.getFileType().equals(type);
-    }
-
-    if (file instanceof LightVirtualFile) {
-      FileType assignedFileType = ((LightVirtualFile)file).getAssignedFileType();
-      if (assignedFileType != null) {
-        return type.equals(assignedFileType);
-      }
-    }
-
-    FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny((overrider) -> overrider.getOverriddenFileType(file));
-    if (overriddenFileType != null) {
-      return overriddenFileType.equals(type);
-    }
-
-    if (type instanceof FileTypeIdentifiableByVirtualFile &&
-        ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file)) {
-      return true;
-    }
-
-    FileType fileTypeByFileName = getFileTypeByFileName(file.getNameSequence());
-    if (fileTypeByFileName == type) {
-      return true;
-    }
-    if (fileTypeByFileName != UnknownFileType.INSTANCE) {
-      return false;
-    }
-    if (file instanceof StubVirtualFile || !isDetectable(file)) {
-      return false;
-    }
-
-    FileType detectedFromContentFileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
-    if (detectedFromContentFileType != null) {
-      return detectedFromContentFileType.equals(type);
-    }
-
-    Collection<FileTypeDetector> detectors = getDetectorsForType(type);
-    if (detectors != null || !myUntypedFileTypeDetectors.isEmpty()) {
-      Iterable<FileTypeDetector> applicableDetectors =
-        detectors != null ? ContainerUtil.concat(detectors, myUntypedFileTypeDetectors) : myUntypedFileTypeDetectors;
-
-      try {
-        FileType detectedType = detectFromContent(file, null, applicableDetectors);
-        if (detectedType != UnknownFileType.INSTANCE && detectedType != PlainTextFileType.INSTANCE) {
-          cacheAutoDetectedFileType(file, detectedType);
-        }
-        if (detectedType.equals(type)) {
-          return true;
-        }
-      }
-      catch (IOException ignored) {
-      }
-    }
-
-    return false;
   }
 
   @Override

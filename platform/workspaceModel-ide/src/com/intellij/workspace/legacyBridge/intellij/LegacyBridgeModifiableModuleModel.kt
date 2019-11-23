@@ -67,7 +67,7 @@ class LegacyBridgeModifiableModuleModel(
       source = entitySource
     )
 
-    val moduleInstance = LegacyBridgeModuleManagerComponent.createModuleInstance(project, moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
+    val moduleInstance = moduleManager.createModuleInstance(project, moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
     myModulesToAdd[moduleName] = moduleInstance
 
     moduleInstance.setModuleType(moduleTypeId)

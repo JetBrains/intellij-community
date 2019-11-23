@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
@@ -44,8 +43,10 @@ public class LightEditService implements Disposable, LightEditorListener {
 
   public void showEditorWindow() {
     init();
-    myWrapper.show();
-    myWrapper.setTitle(getAppName());
+    if (!myWrapper.getWindow().isShowing()) {
+      myWrapper.show();
+      myWrapper.setTitle(getAppName());
+    }
   }
 
   private static String getAppName() {
@@ -54,9 +55,15 @@ public class LightEditService implements Disposable, LightEditorListener {
 
   public void openFile(@NotNull VirtualFile file) {
     showEditorWindow();
-    Editor editor = myEditorManager.createEditor(file);
-    if (editor != null) {
-      getEditPanel().addEditorTab(editor, file);
+    LightEditorInfo openEditorInfo = myEditorManager.findOpen(file);
+    if (openEditorInfo == null) {
+      LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
+      if (newEditorInfo != null) {
+        getEditPanel().getTabs().addEditorTab(newEditorInfo);
+      }
+    }
+    else {
+      getEditPanel().getTabs().selectTab(openEditorInfo);
     }
   }
 

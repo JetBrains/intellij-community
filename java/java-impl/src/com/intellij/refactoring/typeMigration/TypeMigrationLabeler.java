@@ -964,14 +964,8 @@ public class TypeMigrationLabeler {
 
   private static PsiExpression getContainingCondition(PsiElement root, PsiStatement statement) {
     PsiExpression condition = null;
-    if (statement instanceof PsiWhileStatement) {
-      condition = ((PsiWhileStatement)statement).getCondition();
-    }
-    else if (statement instanceof PsiDoWhileStatement) {
-      condition = ((PsiDoWhileStatement)statement).getCondition();
-    }
-    else if (statement instanceof PsiForStatement) {
-      condition = ((PsiForStatement)statement).getCondition();
+    if (statement instanceof PsiConditionalLoopStatement) {
+      condition = ((PsiConditionalLoopStatement)statement).getCondition();
     }
     else if (statement instanceof PsiIfStatement) {
       condition = ((PsiIfStatement)statement).getCondition();
@@ -1091,11 +1085,6 @@ public class TypeMigrationLabeler {
 
     myDialogSemaphore.waitFor();
     checkInterrupted();
-  }
-
-  @NotNull
-  private PsiReference[] findReferences(PsiElement element) {
-    return ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(PsiReference.EMPTY_ARRAY);
   }
 
   public TypeEvaluator getTypeEvaluator() {

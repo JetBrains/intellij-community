@@ -51,6 +51,13 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   @Deprecated
   public abstract Collection<OptionDescription> getOptions(@Nullable Project project);
 
+  public static void invalidateCachedOptions(Class<? extends OptionsTopHitProvider.ApplicationLevelProvider> providerClass) {
+    CachedOptions cache = ApplicationManager.getApplication().getUserData(CachedOptions.KEY);
+    if (cache != null) {
+      cache.map.remove(providerClass);
+    }
+  }
+
   @NotNull
   private static Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
                                                                 @Nullable Project project,

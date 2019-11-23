@@ -16,6 +16,7 @@ internal class ShowcaseUiDslAction : DumbAwareAction() {
     tabs.presentation.setAlphabeticalMode(false)
 
     tabs.addTab(TabInfo(secondColumnSmallerPanel()).setText("Second Column Smaller"))
+    tabs.addTab(TabInfo(rowWithIndent()).setText("Row with Indent"))
 
     val dialog = dialog("UI DSL Showcase", tabs.component)
     Disposer.register(dialog.disposable, disposable)

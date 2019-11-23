@@ -542,7 +542,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
       }
       else {
-        key = HighlightDisplayKey.register(shortName, computable);
+        key = HighlightDisplayKey.register(shortName, computable, shortName);
       }
     }
 

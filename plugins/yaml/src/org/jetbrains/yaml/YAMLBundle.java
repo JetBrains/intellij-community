@@ -13,6 +13,7 @@ import java.util.ResourceBundle;
  * @author oleg
  */
 public class YAMLBundle {
+  @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
@@ -27,6 +28,7 @@ public class YAMLBundle {
   /*
      * This method added for jruby access
      */
+  @NotNull
   public static String message(@PropertyKey(resourceBundle = BUNDLE) String key) {
     return CommonBundle.message(getBundle(), key);
   }

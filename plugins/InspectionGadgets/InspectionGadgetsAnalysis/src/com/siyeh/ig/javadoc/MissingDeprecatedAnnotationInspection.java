@@ -23,6 +23,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,12 +33,10 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MissingDeprecatedAnnotationInspection extends BaseInspection {
-
+final class MissingDeprecatedAnnotationInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
 
   @Override
@@ -55,7 +54,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
            : InspectionGadgetsBundle.message("missing.deprecated.tag.problem.descriptor");
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missing.deprecated.tag.option"),
@@ -239,7 +238,8 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
         return true;
       }
       for (PsiElement element : deprecatedTag.getDataElements()) {
-        if (element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+        if (element instanceof PsiDocTagValue ||
+            element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
           return true;
         }
       }

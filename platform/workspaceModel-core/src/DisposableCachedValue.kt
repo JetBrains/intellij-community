@@ -22,10 +22,15 @@ class DisposableCachedValue<R : Disposable>(private val entityStore: () -> Typed
       return currentValue
     }
 
-  @Synchronized
   override fun dispose() {
+    dropCache()
+  }
+
+  @Synchronized
+  fun dropCache() {
     val oldValue = latestValue
     if (oldValue != null) {
+      entityStore().clearCachedValue(cachedValue)
       Disposer.dispose(oldValue)
       latestValue = null
     }

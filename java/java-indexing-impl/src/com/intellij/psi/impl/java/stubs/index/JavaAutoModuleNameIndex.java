@@ -21,19 +21,14 @@ import static java.util.Collections.singletonMap;
 public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.auto.module.name");
 
-  private final FileBasedIndex.InputFilter myFilter =
-    new DefaultFileTypeSpecificInputFilter(ArchiveFileType.INSTANCE) {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
-        return file.isDirectory() &&
-               file.getParent() == null &&
-               "jar".equalsIgnoreCase(file.getExtension()) &&
-               JavaModuleNameIndex.descriptorFile(file) == null;
-      }
-    };
+  private final FileBasedIndex.InputFilter myFilter = new DefaultFileTypeSpecificInputFilter(ArchiveFileType.INSTANCE) {
+    @Override
+    public boolean acceptInput(@NotNull VirtualFile f) {
+      return f.isDirectory() && f.getParent() == null && "jar".equalsIgnoreCase(f.getExtension());
+    }
+  };
 
-  private final DataIndexer<String, Void, FileContent> myIndexer =
-    data -> singletonMap(LightJavaModule.moduleName(data.getFile()), null);
+  private final DataIndexer<String, Void, FileContent> myIndexer = data -> singletonMap(LightJavaModule.moduleName(data.getFile()), null);
 
   @Override
   public boolean indexDirectories() {
@@ -48,7 +43,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   @NotNull
@@ -82,7 +77,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static Collection<VirtualFile> getFilesByKey(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, scope);
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleName, new JavaAutoModuleFilterScope(scope));
   }
 
   @NotNull

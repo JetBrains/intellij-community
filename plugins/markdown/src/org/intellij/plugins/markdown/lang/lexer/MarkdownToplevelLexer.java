@@ -5,6 +5,7 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.markdown.ast.ASTNode;
 import org.intellij.markdown.ast.ASTNodeKt;
 import org.intellij.markdown.ast.visitors.RecursiveVisitor;
+import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
 import org.intellij.plugins.markdown.lang.MarkdownElementType;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +25,23 @@ public class MarkdownToplevelLexer extends LexerBase {
 
   private int myLexemeIndex;
 
+  @NotNull final MarkdownFlavourDescriptor myFlavour;
+
+  public MarkdownToplevelLexer() {
+    this(MarkdownParserManager.FLAVOUR);
+  }
+
+  public MarkdownToplevelLexer(@NotNull MarkdownFlavourDescriptor flavour) {
+    myFlavour = flavour;
+  }
+
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myBufferStart = startOffset;
     myBufferEnd = endOffset;
 
-    final ASTNode parsedTree = MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset));
+    final ASTNode parsedTree = MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset), myFlavour);
     myLexemes = new ArrayList<>();
     myStartOffsets = new ArrayList<>();
     myEndOffsets = new ArrayList<>();

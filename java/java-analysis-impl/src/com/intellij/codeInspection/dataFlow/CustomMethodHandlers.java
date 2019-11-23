@@ -251,15 +251,18 @@ class CustomMethodHandlers {
     DfaValue qualifier = args.myQualifier;
     DfaValue[] arguments = args.myArguments;
     if (arguments.length < 1 || arguments.length > 2 || arguments[0] == null) return null;
-    LongRangeSet fromPos = state.getValueFact(arguments[0], DfaFactType.RANGE);
-    if (fromPos == null) return null;
+    DfaValue from = arguments[0];
+    DfaValue to = arguments.length == 1 ? STRING_LENGTH.createValue(factory, qualifier) : arguments[1];
+    DfaValue lengthVal = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
+    LongRangeSet resultLen = state.getValueFact(lengthVal, DfaFactType.RANGE);
+    if (resultLen == null) {
+      resultLen = LongRangeSet.point(0).fromRelation(RelationType.GE);
+    } else {
+      resultLen = resultLen.intersect(LongRangeSet.point(0).fromRelation(RelationType.GE));
+    }
     LongRangeSet length = state.getValueFact(STRING_LENGTH.createValue(factory, qualifier), DfaFactType.RANGE);
-    LongRangeSet toPos = arguments.length == 1 ? length : state.getValueFact(arguments[1], DfaFactType.RANGE);
-    if (toPos == null) return null;
-    LongRangeSet resultLen = toPos.minus(fromPos, false)
-      .intersect(LongRangeSet.point(0).fromRelation(DfaRelationValue.RelationType.GE));
     if (length != null) {
-      resultLen = resultLen.intersect(length.fromRelation(DfaRelationValue.RelationType.LE));
+      resultLen = resultLen.intersect(length.fromRelation(RelationType.LE));
     }
     return getStringValue(factory, stringType, resultLen);
   }

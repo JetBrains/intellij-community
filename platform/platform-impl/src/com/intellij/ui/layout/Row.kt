@@ -38,13 +38,13 @@ interface RowBuilder : BaseBuilder {
   }
 
   /**
-   * Creates row with hideable decorator
+   * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
   fun hideableRow(title: String, init: Row.() -> Unit): Row
 
   /**
-   * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
+   * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
    */
   fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
@@ -92,6 +92,12 @@ abstract class Row : Cell(), RowBuilder {
 
   abstract var subRowsVisible: Boolean
 
+  /**
+   * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
+   * calculated from row nesting.
+   */
+  abstract var subRowIndent: Int
+
   protected abstract val builder: LayoutBuilderImpl
 
   /**
@@ -110,7 +116,7 @@ abstract class Row : Cell(), RowBuilder {
   /**
    * Shares cell between components.
    *
-   * @param isFullWidth If true, the cell occupies the full width of the enclosing component.
+   * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)

@@ -351,7 +351,7 @@ public class XmlUtil {
       if (type instanceof ComplexTypeDescriptor) {
         final XmlTag[] simpleContent = new XmlTag[1];
 
-        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
+        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor<PsiElement>() {
           @Override
           public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlTag) {
@@ -766,7 +766,7 @@ public class XmlUtil {
 
     if (type == null) {
       String ns = xmlTag.getNamespace();
-      if (ourSchemaUrisList.indexOf(ns) >= 0) {
+      if (ourSchemaUrisList.contains(ns)) {
         type = xmlTag.getAttributeValue("type", null);
       }
     }
@@ -1007,7 +1007,7 @@ public class XmlUtil {
 
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
-      processXmlElements((XmlFile)currentElement, new PsiElementProcessor() {
+      processXmlElements((XmlFile)currentElement, new PsiElementProcessor<PsiElement>() {
         @Override
         public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof PsiNamedElement) {
@@ -1040,7 +1040,7 @@ public class XmlUtil {
 
   public static boolean isUrlText(final String s, Project project) {
     final boolean surelyUrl = HtmlUtil.hasHtmlPrefix(s) || s.startsWith(URN);
-    if (surelyUrl) return surelyUrl;
+    if (surelyUrl) return true;
     int protocolIndex = s.indexOf(":/");
     if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
     return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;

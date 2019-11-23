@@ -51,6 +51,10 @@ public interface PyCallExpression extends PyCallSiteExpression {
         return null;
       }
 
+      if (resolvedCallee != null && PyNames.CALL.equals(resolvedCallee.getName()) && !PyNames.CALL.equals(qualifiedCallee.getName())) {
+        return qualifiedCallee;
+      }
+
       return qualifiedCallee.getQualifier();
     }
 

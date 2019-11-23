@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 // use only JDK classes here (avoid StringUtil and so on)
 public final class ActivityImpl implements Activity {
@@ -26,6 +28,10 @@ public final class ActivityImpl implements Activity {
   @Nullable
   private final String pluginId;
 
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static volatile Consumer<ActivityImpl> listener;
+
   ActivityImpl(@Nullable String name, @Nullable String pluginId) {
     this(name, StartUpMeasurer.getCurrentTime(), null, pluginId);
   }
@@ -39,6 +45,11 @@ public final class ActivityImpl implements Activity {
     Thread thread = Thread.currentThread();
     threadId = thread.getId();
     threadName = thread.getName();
+
+    Consumer<ActivityImpl> listener = ActivityImpl.listener;
+    if (listener != null) {
+      listener.accept(this);
+    }
   }
 
   @NotNull
@@ -107,6 +118,11 @@ public final class ActivityImpl implements Activity {
     assert end == 0 : "not started or already ended";
     end = StartUpMeasurer.getCurrentTime();
     StartUpMeasurer.addActivity(this);
+
+    Consumer<ActivityImpl> listener = ActivityImpl.listener;
+    if (listener != null) {
+      listener.accept(this);
+    }
   }
 
   @Override

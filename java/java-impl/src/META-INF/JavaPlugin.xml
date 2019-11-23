@@ -51,9 +51,6 @@
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
     </component>
     <component>
@@ -72,6 +69,10 @@
       <headless-implementation-class/>
     </component>
   </project-components>
+
+  <projectListeners>
+    <listener class="com.intellij.lang.java.JavaModuleRenameListener" topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.methodImplementor" interface="com.intellij.codeInsight.MethodImplementor"/>
@@ -144,12 +145,6 @@
     <extensionPoint qualifiedName="com.intellij.jreProvider" interface="com.intellij.execution.ui.JreProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
     <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
-
-    <extensionPoint qualifiedName="com.intellij.antBuildGen"
-                    interface="com.intellij.compiler.ant.ChunkBuildExtension"/>
-
-    <extensionPoint qualifiedName="com.intellij.antCustomCompiler"
-                    interface="com.intellij.compiler.ant.ChunkCustomCompilerExtension"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.buildTargetScopeProvider"
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
@@ -288,8 +283,8 @@
 
     <sdkType implementation="com.intellij.openapi.projectRoots.impl.JavaSdkImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.projectRoots.impl.JdkDownloaderService"
-                        serviceImplementation="com.intellij.jdkDownloader.JdkDownloaderUI"/>
+    <sdkDownload implementation="com.intellij.jdkDownloader.JdkDownloader" />
+    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.JdksDetector" />
     <registryKey key="jdk.downloader.ui" defaultValue="true" description="Use the list of JDKs to download and install in one click"/>
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
 
@@ -358,7 +353,6 @@
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
 
-    <appStarter implementation="com.intellij.compiler.ant.GenerateAntMain"/>
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.RenameModuleAndDirectoryHandler"/>
     <renameHandler implementation="com.intellij.openapi.roots.impl.libraries.RenameLibraryHandler"/>
@@ -383,8 +377,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.deployment.DeploymentUtil"
                         serviceImplementation="com.intellij.openapi.deployment.DeploymentUtilImpl"/>
-    <applicationService serviceInterface="com.intellij.compiler.ant.BuildTargetsFactory"
-                        serviceImplementation="com.intellij.compiler.ant.BuildTargetsFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibrariesHelper"
                         serviceImplementation="com.intellij.openapi.roots.libraries.LibrariesHelperImpl"/>
@@ -409,6 +401,7 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
 
+    <statistics.counterUsagesCollector groupId="java.find.usages" version="1"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
 
@@ -521,7 +514,6 @@
                                        order="first"/>
 
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
-    <postStartupActivity implementation="com.intellij.lang.java.JavaModuleRenameListener"/>
 
     <bundledKeymap file="Visual Studio.xml"/>
     <bundledKeymap file="Eclipse.xml"/>

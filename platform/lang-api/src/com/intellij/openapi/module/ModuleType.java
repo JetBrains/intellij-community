@@ -7,6 +7,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,22 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 
+/**
+ * Defines a technology (language, framework, etc) to which a particular {@link Module} instance is related. Each {@link Module} belongs to
+ * some type (see {@link ModuleType#get(Module)}) and it can be used to provide custom UI for New Project and Project Structure dialogs, and
+ * to customize other feature of the IDE (e.g. enable some actions only for files in modules of a specific type).
+ * <p>
+ * <strong>Module Type concept is considered as outdated.</strong> Enabling some features only in modules of a specific type makes it harder
+ * to mix different technologies in the same source directory, and cause conflicts in configuration files when the same directory is opened
+ * in different IDEs.
+ * </p>
+ * If you need
+ * to show special kinds of projects in New Project wizard, register an implementation of {@link ModuleBuilder} as an extension instead. If you
+ * need to allow users to configure something related to some technology in the IDE, use {@link com.intellij.openapi.options.Configurable projectConfigurable}
+ * for project-level settings and {@link com.intellij.facet.Facet} or {@link ModuleConfigurationEditorProvider} for module-level settings.
+ * If you need to make an action enabled in presence of a specific technology only, do this by looking for required files in the project
+ * directories, not by checking type of the current module.
+ */
 public abstract class ModuleType<T extends ModuleBuilder> {
   public static final ModuleType<?> EMPTY;
 

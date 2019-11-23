@@ -1,9 +1,5 @@
 package com.intellij.workspace.api
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -38,11 +34,6 @@ object VirtualFileUrlManager {
     }()
   }
 
-  fun fromVirtualFile(virtualFile: VirtualFile): VirtualFileUrl {
-    // TODO: use segment names from virtualFiles?
-    return fromUrl(virtualFile.url)
-  }
-
   internal fun getUrlById(id: Int): String = if (id <= 0) "" else buildString {
     // capture maps into stack for performance
     buildUrlById(id, id2parent, id2segment)
@@ -70,22 +61,31 @@ object VirtualFileUrlManager {
     }
   }
 
-  // TODO In the future it may be optimised by caching virtualFile in every trie node
-  internal fun getVirtualFileById(id: Int): VirtualFile? = VirtualFileManager.getInstance().findFileByUrl(getUrlById(id))
-/*
-    TODO It may look like this + caching + invalidating
-    val segmentName = getSegmentName(id).toString()
+  internal fun isEqualOrParentOf(parent: VirtualFileUrl, child: VirtualFileUrl): Boolean {
+    if (parent.id == 0 && child.id == 0) return true
 
-    val parent = id2parent.getValue(id)
-    val parentParent = id2parent.getValue(parent)
-    return if (parentParent <= 0) {
-      val fileSystem = VirtualFileManager.getInstance().getFileSystem(getSegmentName(parent).toString())
-      fileSystem?.findFileByPath(segmentName)
-    } else {
-      getVirtualFileById(parent)?.findChild(segmentName)
+    var current = child.id
+    while (current > 0) {
+      if (parent.id == current) return true
+      current = id2parent[current] ?: return false
     }
+    return false
   }
-*/
+
+    /*
+        TODO It may look like this + caching + invalidating
+        val segmentName = getSegmentName(id).toString()
+
+        val parent = id2parent.getValue(id)
+        val parentParent = id2parent.getValue(parent)
+        return if (parentParent <= 0) {
+          val fileSystem = VirtualFileManager.getInstance().getFileSystem(getSegmentName(parent).toString())
+          fileSystem?.findFileByPath(segmentName)
+        } else {
+          getVirtualFileById(parent)?.findChild(segmentName)
+        }
+      }
+    */
 }
 
 // TODO Do we want to make it inline?
@@ -100,20 +100,23 @@ data class VirtualFileUrl(internal val id: Int)
   val filePath: String?
     get() {
       val calculatedUrl = url
-      val path = VfsUtilCore.urlToPath(calculatedUrl)
-      if (path == calculatedUrl || path.isEmpty()) return null
-      return path
+
+      if (calculatedUrl.isEmpty()) return null
+
+      if (calculatedUrl.startsWith("file://")) {
+        return calculatedUrl.substring("file://".length)
+      }
+      else if (calculatedUrl.startsWith("jar://")) {
+        val removedSuffix = calculatedUrl.removeSuffix("!/").removeSuffix("!")
+        if (removedSuffix.contains('!')) return null
+
+        return removedSuffix.substring("jar://".length)
+      }
+
+      return null
     }
 
-  val virtualFile
-    get() = VirtualFileUrlManager.getVirtualFileById(id)
-
-  // TODO: Rewrite
-  fun isEqualOrParentOf(other: VirtualFileUrl): Boolean {
-    val path = VfsUtilCore.urlToPath(other.url)
-    val rootPath = VfsUtilCore.urlToPath(url)
-    return FileUtil.isAncestor(rootPath, path, false)
-  }
+  fun isEqualOrParentOf(other: VirtualFileUrl): Boolean = VirtualFileUrlManager.isEqualOrParentOf(this, other)
 
   //override fun equals(other: Any?): Boolean = id == (other as? VirtualFileUrl)?.id
   //override fun hashCode(): Int = id
@@ -125,6 +128,3 @@ fun File.toVirtualFileUrl(): VirtualFileUrl =
   VirtualFileUrlManager.fromUrl("file://${absolutePath.replace('\\', '/')}")
 
 fun Path.toVirtualFileUrl(): VirtualFileUrl = toFile().toVirtualFileUrl()
-
-val VirtualFile.virtualFileUrl
-  get() = VirtualFileUrlManager.fromVirtualFile(this)

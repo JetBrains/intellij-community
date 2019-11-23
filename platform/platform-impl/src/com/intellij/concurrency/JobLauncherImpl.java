@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,9 +85,13 @@ public class JobLauncherImpl extends JobLauncher {
       throw e;
     }
     catch (ProcessCanceledException e) {
-      LOG.debug(e);
-      // task1.processor returns false and the task cancels the indicator
-      // then task2 calls checkCancel() and get here
+      // We should distinguish between genuine 'progress' cancellation and optimization when
+      // task1.processor returns false and the task cancels the indicator then task2 calls checkCancel() and get here.
+      // The former requires to re-throw PCE, the latter should just return false.
+      if (progress != null) {
+        progress.checkCanceled();
+      }
+      ProgressManager.checkCanceled();
       return false;
     }
     catch (RuntimeException | Error e) {
@@ -189,7 +194,6 @@ public class JobLauncherImpl extends JobLauncher {
     private void submit() {
       ForkJoinPool.commonPool().execute(myForkJoinTask);
     }
-    //////////////// Job
 
     // when canceled in the middle of the execution returns false until finished
     @Override
@@ -224,6 +228,9 @@ public class JobLauncherImpl extends JobLauncher {
             ForkJoinPool.commonPool().awaitQuiescence(millis, TimeUnit.MILLISECONDS);
             if (!isDone()) throw new TimeoutException();
           }
+        }
+        catch (ExecutionException e) {
+          ExceptionUtil.rethrow(e.getCause());
         }
       }
     }

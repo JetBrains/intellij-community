@@ -11,7 +11,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -439,14 +438,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                                   @NotNull final Project project) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
-    Application application = ApplicationManager.getApplication();
-    int delay = application.isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       RESTART_REQUESTS.decrementAndGet();
       if (!project.isDisposed()) {
         DaemonCodeAnalyzer.getInstance(project).restart();
       }
-    }, delay, TimeUnit.MILLISECONDS);
+    }
+    else {
+      int delay = RESTART_DAEMON_RANDOM.nextInt(100);
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+        RESTART_REQUESTS.decrementAndGet();
+        if (!project.isDisposed()) {
+          DaemonCodeAnalyzer.getInstance(project).restart();
+        }
+      }, delay, TimeUnit.MILLISECONDS);
+    }
     throw new ProcessCanceledException();
   }
 
@@ -481,6 +487,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           queueInfoToUpdateIncrementally(info);
         }
         queued = size();
+      }
+
+      @Override
+      public void clear() {
+        super.clear();
+        queued = 0;
       }
     };
   }

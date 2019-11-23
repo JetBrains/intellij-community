@@ -588,19 +588,4 @@ public final class JavaSdkImpl extends JavaSdk {
            type == JavadocOrderRootType.getInstance() ||
            type == AnnotationOrderRootType.getInstance();
   }
-
-  @Override
-  public boolean supportsCustomCreateUI() {
-    return JdkDownloaderService.isEnabled();
-  }
-
-  @Override
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
-                                 @NotNull JComponent parentComponent,
-                                 @Nullable Sdk selectedSdk,
-                                 @NotNull Consumer<Sdk> sdkCreatedCallback) {
-    JdkDownloaderService instance = JdkDownloaderService.getInstanceIfEnabled();
-    if (instance == null) return;
-    instance.downloadOrSelectJdk(this, sdkModel, parentComponent, sdkCreatedCallback);
-  }
 }

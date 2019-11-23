@@ -38,7 +38,7 @@ public class InstallPluginInfo {
 
   public synchronized void toBackground(@Nullable StatusBarEx statusBar) {
     myPluginModel = null;
-    indicator.removeStateDelegate(null);
+    indicator.removeStateDelegates();
     if (statusBar != null) {
       String title = (install ? "Installing plugin " : "Update plugin ") + myDescriptor.getName();
       statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task(title));

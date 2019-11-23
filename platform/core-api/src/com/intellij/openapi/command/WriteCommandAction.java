@@ -231,7 +231,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
     else {
       try {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> performWriteCommandAction(result));
+        ApplicationManager.getApplication().invokeAndWait(() -> performWriteCommandAction(result));
       }
       catch (ProcessCanceledException ignored) {
       }

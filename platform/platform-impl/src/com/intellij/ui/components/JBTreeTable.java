@@ -3,6 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBDefaultTreeCellRenderer;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -146,9 +147,10 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
         tablePane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       }
     });
-    treePane.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
+    int scrollMode = !SystemInfo.isMac ? JViewport.SIMPLE_SCROLL_MODE : JViewport.BLIT_SCROLL_MODE;
+    treePane.getViewport().setScrollMode(scrollMode);
     tablePane.setVerticalScrollBar(treePane.getVerticalScrollBar());
-    tablePane.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
+    tablePane.getViewport().setScrollMode(scrollMode);
 
     myTree.getSelectionModel().addTreeSelectionListener(selection);
     myTable.getSelectionModel().addListSelectionListener(selection);

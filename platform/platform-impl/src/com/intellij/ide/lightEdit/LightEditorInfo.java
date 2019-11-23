@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-class LightEditorInfo {
+public class LightEditorInfo {
 
   private final Editor myEditor;
   private final VirtualFile myFile;
@@ -16,12 +16,12 @@ class LightEditorInfo {
   }
 
   @NotNull
-  Editor getEditor() {
+  public Editor getEditor() {
     return myEditor;
   }
 
   @NotNull
-  VirtualFile getFile() {
+  public VirtualFile getFile() {
     return myFile;
   }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.*;
@@ -36,6 +37,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -78,7 +80,10 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -1071,9 +1076,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       };
 
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+      layeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
       myPanel.add(layeredPane);
-
-      new ContextMenuImpl(layeredPane, myScrollPane, this);
     }
     else {
       myPanel.add(myScrollPane);
@@ -1177,7 +1181,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private boolean mayShowToolbar() {
-    return !isEmbeddedIntoDialogWrapper() && !isOneLineMode() && ContextMenuImpl.mayShowToolbar(myDocument);
+    return !isEmbeddedIntoDialogWrapper() && !isOneLineMode() && !DiffUtil.isDiffEditor(this) && isFileEditor();
+  }
+
+  private boolean isFileEditor() {
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    VirtualFile virtualFile = documentManager.getFile(myDocument);
+    return virtualFile != null && virtualFile.isValid();
   }
 
   @Override
@@ -1872,7 +1882,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
     }
-    if (myUpdateCursor) {
+    if (myUpdateCursor && !myPurePaintingMode) {
       setCursorPosition();
       myUpdateCursor = false;
     }
@@ -3141,7 +3151,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public PasteProvider getPasteProvider() {
-
     return getViewer();
   }
 

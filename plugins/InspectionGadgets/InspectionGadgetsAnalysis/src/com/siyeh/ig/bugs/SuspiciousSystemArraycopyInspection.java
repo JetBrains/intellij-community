@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -124,13 +123,11 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       if (result == null) return;
       SpecialFieldValue srcFact = result.getExpressionFact(src, DfaFactType.SPECIAL_FIELD_VALUE);
       if (srcFact == null) return;
-      SpecialField srcLengthField = srcFact.getField();
       SpecialFieldValue destFact = result.getExpressionFact(dest, DfaFactType.SPECIAL_FIELD_VALUE);
       if (destFact == null) return;
-      SpecialField destLengthField = destFact.getField();
 
-      LongRangeSet srcLengthSet = DfaFactType.RANGE.fromDfaValue(srcLengthField.extract(srcFact));
-      LongRangeSet destLengthSet = DfaFactType.RANGE.fromDfaValue(destLengthField.extract(destFact));
+      LongRangeSet srcLengthSet = DfaFactType.RANGE.fromDfaValue(SpecialField.ARRAY_LENGTH.extract(srcFact));
+      LongRangeSet destLengthSet = DfaFactType.RANGE.fromDfaValue(SpecialField.ARRAY_LENGTH.extract(destFact));
       LongRangeSet srcPosSet = result.getExpressionFact(srcPos, DfaFactType.RANGE);
       LongRangeSet destPosSet = result.getExpressionFact(destPos, DfaFactType.RANGE);
       LongRangeSet lengthSet = result.getExpressionFact(length, DfaFactType.RANGE);
@@ -152,7 +149,6 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       if (!isTheSameArray(src, dest)) return;
       LongRangeSet srcRange = getDefiniteRange(srcPosSet, lengthSet);
       LongRangeSet destRange = getDefiniteRange(destPosSet, lengthSet);
-      if (srcRange == null || destRange == null) return;
       if (srcRange.intersects(destRange)) {
         PsiElement name = call.getMethodExpression().getReferenceNameElement();
         PsiElement elementToHighlight = name == null ? call : name;
@@ -161,11 +157,12 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       }
     }
 
+    @NotNull
     private static LongRangeSet getDefiniteRange(@NotNull LongRangeSet startSet, @NotNull LongRangeSet lengthSet) {
       long maxLeftBorder = startSet.max();
       LongRangeSet lengthMinusOne = lengthSet.minus(LongRangeSet.point(1), false);
       long minRightBorder = startSet.plus(lengthMinusOne, false).min();
-      if (maxLeftBorder > minRightBorder) return null;
+      if (maxLeftBorder > minRightBorder) return LongRangeSet.empty();
       return LongRangeSet.range(maxLeftBorder, minRightBorder);
     }
 

@@ -108,7 +108,7 @@ public final class MemoryUsagePanel extends JButton implements CustomStatusBarWi
   }
 
   private static Font getWidgetFont() {
-    return JBUI.Fonts.label(11);
+    return JBUI.Fonts.label();
   }
 
   @Override

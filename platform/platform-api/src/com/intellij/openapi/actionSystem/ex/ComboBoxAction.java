@@ -36,9 +36,12 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Path2D;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static Icon myIcon = null;
-  private static Icon myDisabledIcon = null;
-  private static Icon myWin10ComboDropTriangleIcon = null;
+  private static Icon myIcon;
+  private static Icon myDisabledIcon;
+  private static Icon myWin10ComboDropTriangleIcon;
+  private static class Holder {
+    private static final JBValue ICON_SIZE = new JBValue.Float(16);
+  }
 
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
@@ -53,11 +56,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
     return enabled ? myIcon : myDisabledIcon;
   }
-
   private boolean mySmallVariant = true;
   private String myPopupTitle;
 
-  private static final JBValue ICON_SIZE = new JBValue.Float(16);
 
   protected ComboBoxAction() {
   }
@@ -144,7 +145,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
-    private boolean myForcePressed = false;
+    private boolean myForcePressed;
     private String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
@@ -301,7 +302,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       Dimension prefSize = super.getPreferredSize();
       int width = prefSize.width
                   + (myPresentation != null && isArrowVisible(myPresentation) ?
-                     (UIUtil.isUnderWin10LookAndFeel() ? getArrowIcon(isEnabled()).getIconWidth() + JBUIScale.scale(6) : ICON_SIZE.get()) : 0)
+                     (UIUtil.isUnderWin10LookAndFeel() ? getArrowIcon(isEnabled()).getIconWidth() + JBUIScale.scale(6) : Holder.ICON_SIZE.get()) : 0)
                   + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0);
 
       Dimension size = new Dimension(width, isSmallVariant() ? JBUIScale.scale(24) : Math.max(JBUIScale.scale(24), prefSize.height));
@@ -340,7 +341,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       else {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
-          int iconSize = ICON_SIZE.get();
+          int iconSize = Holder.ICON_SIZE.get();
           int x = getWidth() - iconSize - getInsets().right - getMargin().right; // Different icons correction
           int y = (getHeight() - iconSize)/2;
 

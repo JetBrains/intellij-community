@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -35,17 +36,15 @@ public class PostponableLogRefresher implements VcsLogRefresher {
 
   @NotNull
   public Disposable addLogWindow(@NotNull VcsLogWindow window) {
+    LOG.assertTrue(!ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId())),
+                   "Log window with id '" + window.getId() + "' was already added.");
+
     myLogWindows.add(window);
     refresherActivated(window.getRefresher(), true);
     return () -> {
       LOG.debug("Removing disposed log window " + window.toString());
       myLogWindows.remove(window);
     };
-  }
-
-  @NotNull
-  public Disposable addLogWindow(@NotNull String id, @NotNull VisiblePackRefresher refresher) {
-    return addLogWindow(new VcsLogWindow(id, refresher));
   }
 
   public static boolean keepUpToDate() {
@@ -76,12 +75,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible) {
-    if (!visible) {
-      refresher.setValid(false, true);
-    }
-    else {
-      refresher.onRefresh();
-    }
+    refresher.setValid(visible, true);
   }
 
   @Override

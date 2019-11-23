@@ -67,9 +67,10 @@ data class JdkItem(
   val isDefaultItem: Boolean = false,
 
   private val jdkMajorVersion: Int,
-  private val jdkVersion: String,
+  val jdkVersion: String,
   private val jdkVendorVersion: String?,
   private val vendorVersion: String?,
+  val suggestedSdkName: String,
 
   val arch: String,
   val packageType: JdkPackageType,
@@ -97,15 +98,13 @@ data class JdkItem(
   }
 
   val versionPresentationText: String
-    get() = buildString {
-      append(jdkVersion)
-      append(" (")
-      append(StringUtil.formatFileSize(archiveSize))
-      append(")")
-    }
+    get() = jdkVersion
+
+  val downloadSizePresentationText: String
+    get() = StringUtil.formatFileSize(archiveSize)
 
   val fullPresentationText: String
-    get() = product.packagePresentationText + " " + versionPresentationText
+    get() = product.packagePresentationText + " " + jdkVersion
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
@@ -211,22 +210,8 @@ data class JdkPredicate(
   }
 }
 
-object JdkListDownloader {
-  private val feedUrl: String
-    get() {
-      val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
-      if (!registry.isNullOrBlank()) return registry
-      return "https://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
-    }
-
-  private fun downloadJdkList(feedUrl: String, progress: ProgressIndicator?): ByteArray {
-    //timeouts are handled inside
-    return HttpRequests
-      .request(feedUrl)
-      .productNameAsUserAgent()
-      .readBytes(progress)
-      .unXZ()
-  }
+object JdkListParser {
+  fun readTree(rawData: ByteArray) = ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
 
   fun parseJdkList(tree: ObjectNode, filters: JdkPredicate): List<JdkItem> {
     val items = tree["jdks"] as? ArrayNode ?: error("`jdks` element is missing")
@@ -253,6 +238,7 @@ object JdkListDownloader {
                         jdkVersion = item["jdk_version"]?.asText() ?: continue,
                         jdkVendorVersion = item["jdk_vendor_version"]?.asText(),
                         vendorVersion = item["vendor_version"]?.asText(),
+                        suggestedSdkName = item["suggested_sdk_name"]?.asText() ?: continue,
 
                         arch = pkg["arch"]?.asText() ?: continue,
                         packageType = pkg["package_type"]?.asText()?.let(JdkPackageType.Companion::findType) ?: continue,
@@ -269,18 +255,46 @@ object JdkListDownloader {
 
     return result.toList()
   }
+}
+
+object JdkListDownloader {
+  private val feedUrl: String
+    get() {
+      val registry = runCatching { Registry.get("jdk.downloader.url").asString() }.getOrNull()
+      if (!registry.isNullOrBlank()) return registry
+      return "https://download.jetbrains.com/jdk/feed/v1/jdks.json.xz"
+    }
+
+  private fun downloadJdkList(feedUrl: String, progress: ProgressIndicator?) =
+    HttpRequests
+      .request(feedUrl)
+      .productNameAsUserAgent()
+      //timeouts are handled inside
+      .readBytes(progress)
+
 
   fun downloadModel(progress: ProgressIndicator?, feedUrl: String = JdkListDownloader.feedUrl): List<JdkItem> {
     // download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
-    val rawData = try {
+    val rawDataXZ = try {
       downloadJdkList(feedUrl, progress)
     }
     catch (t: IOException) {
-      throw RuntimeException("Failed to download list of available JDKs from $feedUrl. ${t.message}", t)
+      throw RuntimeException("Failed to download the list of available JDKs from $feedUrl. ${t.message}", t)
+    }
+
+    val rawData = try {
+      ByteArrayInputStream(rawDataXZ).use { input ->
+        XZInputStream(input).use {
+          it.readBytes()
+        }
+      }
+    }
+    catch (t: Throwable) {
+      throw RuntimeException("Failed to unpack the list of available JDKs from $feedUrl. ${t.message}", t)
     }
 
     val json = try {
-      ObjectMapper().readTree(rawData) as? ObjectNode ?: error("Unexpected JSON data")
+      JdkListParser.readTree(rawData)
     }
     catch (t: Throwable) {
       throw RuntimeException("Failed to parse the downloaded list of available JDKs. ${t.message}", t)
@@ -293,14 +307,10 @@ object JdkListDownloader {
         SystemInfo.isLinux -> "linux"
         else -> error("Unsupported OS")
       }
-      return parseJdkList(json, JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS))
+      return JdkListParser.parseJdkList(json, JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, expectedOS))
     }
     catch (t: Throwable) {
       throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)
     }
-  }
-
-  private fun ByteArray.unXZ() = ByteArrayInputStream(this).use { input ->
-    XZInputStream(input).use { it.readBytes() }
   }
 }

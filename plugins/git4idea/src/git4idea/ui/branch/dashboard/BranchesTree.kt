@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
-import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.tree.TreeUtil
@@ -27,6 +24,7 @@ import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.TransferHandler
+import javax.swing.border.Border
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreePath
@@ -35,6 +33,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
 
   var doubleClickHandler: (BranchTreeNode) -> Unit = {}
   var keyPressHandler: (BranchTreeNode) -> Unit = {}
+  var searchField: SearchTextField? = null
 
   init {
     setCellRenderer(BranchTreeCellRenderer(project))
@@ -69,7 +68,11 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
         append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
     }
+
+    override fun calcFocusedState() = super.calcFocusedState() || searchField?.textEditor?.hasFocus() ?: false
   }
+
+  override fun hasFocus() = super.hasFocus() || searchField?.textEditor?.hasFocus() ?: false
 
   private fun installDoubleClickHandler() {
     object : DoubleClickListener() {
@@ -153,6 +156,12 @@ internal class FilteringBranchesTree(project: Project,
       PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
       setupTreeExpansionListener()
     }
+  }
+
+  override fun installSearchField(isOpaque: Boolean, textFieldBorder: Border?): SearchTextField {
+    val searchField = super.installSearchField(isOpaque, textFieldBorder)
+    component.searchField = searchField
+    return searchField
   }
 
   private fun setupTreeExpansionListener() {

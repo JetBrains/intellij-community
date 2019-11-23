@@ -17,7 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -143,8 +143,8 @@ public class EquivalenceChecker {
     if (statement1 instanceof PsiDeclarationStatement) {
       return declarationStatementsMatch((PsiDeclarationStatement)statement1, (PsiDeclarationStatement)statement2);
     }
-    if (statement1 instanceof PsiDoWhileStatement) {
-      return doWhileStatementsMatch((PsiDoWhileStatement)statement1, (PsiDoWhileStatement)statement2);
+    if (statement1 instanceof PsiConditionalLoopStatement) {
+      return conditionalLoopStatementsMatch((PsiConditionalLoopStatement)statement1, (PsiConditionalLoopStatement)statement2);
     }
     if (statement1 instanceof PsiEmptyStatement) {
       return EXACT_MATCH;
@@ -154,9 +154,6 @@ public class EquivalenceChecker {
     }
     if (statement1 instanceof PsiExpressionStatement) {
       return expressionStatementsMatch((PsiExpressionStatement)statement1, (PsiExpressionStatement)statement2);
-    }
-    if (statement1 instanceof PsiForStatement) {
-      return forStatementsMatch((PsiForStatement)statement1, (PsiForStatement)statement2);
     }
     if (statement1 instanceof PsiForeachStatement) {
       return forEachStatementsMatch((PsiForeachStatement)statement1, (PsiForeachStatement)statement2);
@@ -184,9 +181,6 @@ public class EquivalenceChecker {
     }
     if (statement1 instanceof PsiTryStatement) {
       return tryStatementsMatch((PsiTryStatement)statement1, (PsiTryStatement)statement2);
-    }
-    if (statement1 instanceof PsiWhileStatement) {
-      return whileStatementsMatch((PsiWhileStatement)statement1, (PsiWhileStatement)statement2);
     }
     final String text1 = statement1.getText();
     final String text2 = statement2.getText();
@@ -314,7 +308,20 @@ public class EquivalenceChecker {
     return type1Text.equals(type2Text);
   }
 
-  protected Match whileStatementsMatch(@NotNull PsiWhileStatement statement1, @NotNull PsiWhileStatement statement2) {
+  protected Match conditionalLoopStatementsMatch(@NotNull PsiConditionalLoopStatement statement1,
+                                                 @NotNull PsiConditionalLoopStatement statement2) {
+    if (statement1 instanceof PsiForStatement) {
+      final PsiStatement initialization1 = ((PsiForStatement)statement1).getInitialization();
+      final PsiStatement initialization2 = ((PsiForStatement)statement2).getInitialization();
+      if (!statementsMatch(initialization1, initialization2).isExactMatch()) {
+        return EXACT_MISMATCH;
+      }
+      final PsiStatement update1 = ((PsiForStatement)statement1).getUpdate();
+      final PsiStatement update2 = ((PsiForStatement)statement2).getUpdate();
+      if (!statementsMatch(update1, update2).isExactMatch()) {
+        return EXACT_MISMATCH;
+      }
+    }
     final PsiExpression condition1 = statement1.getCondition();
     final PsiExpression condition2 = statement2.getCondition();
     final PsiStatement body1 = statement1.getBody();
@@ -323,27 +330,6 @@ public class EquivalenceChecker {
     final Match bodyEquivalence = statementsMatch(body1, body2);
 
     return getComplexElementDecision(bodyEquivalence, conditionEquivalence, body1, body2, condition1, condition2);
-  }
-
-  protected Match forStatementsMatch(@NotNull PsiForStatement statement1, @NotNull PsiForStatement statement2) {
-    final PsiExpression condition1 = statement1.getCondition();
-    final PsiExpression condition2 = statement2.getCondition();
-    if (!expressionsMatch(condition1, condition2).isExactMatch()) {
-      return EXACT_MISMATCH;
-    }
-    final PsiStatement initialization1 = statement1.getInitialization();
-    final PsiStatement initialization2 = statement2.getInitialization();
-    if (!statementsMatch(initialization1, initialization2).isExactMatch()) {
-      return EXACT_MISMATCH;
-    }
-    final PsiStatement update1 = statement1.getUpdate();
-    final PsiStatement update2 = statement2.getUpdate();
-    if (!statementsMatch(update1, update2).isExactMatch()) {
-      return EXACT_MISMATCH;
-    }
-    final PsiStatement body1 = statement1.getBody();
-    final PsiStatement body2 = statement2.getBody();
-    return statementsMatch(body1, body2).partialIfExactMismatch(body1, body2);
   }
 
   protected Match forEachStatementsMatch(@NotNull PsiForeachStatement statement1, @NotNull PsiForeachStatement statement2) {
@@ -377,16 +363,6 @@ public class EquivalenceChecker {
     final PsiExpression switchExpression1 = switchBlock1.getExpression();
     final PsiExpression switchExpression2 = switchBlock2.getExpression();
     return expressionsMatch(switchExpression1, switchExpression2).partialIfExactMismatch(switchExpression1, switchExpression2);
-  }
-
-  protected Match doWhileStatementsMatch(@NotNull PsiDoWhileStatement statement1, @NotNull PsiDoWhileStatement statement2) {
-    final PsiExpression condition1 = statement1.getCondition();
-    final PsiExpression condition2 = statement2.getCondition();
-    final PsiStatement body1 = statement1.getBody();
-    final PsiStatement body2 = statement2.getBody();
-    final Match conditionEq = expressionsMatch(condition1, condition2);
-    final Match bodyEq = statementsMatch(body1, body2);
-    return getComplexElementDecision(bodyEq, conditionEq, body1, body2, condition1, condition2);
   }
 
   protected Match assertStatementsMatch(@NotNull PsiAssertStatement statement1, @NotNull PsiAssertStatement statement2) {
@@ -1016,8 +992,8 @@ public class EquivalenceChecker {
     }
     if (!tokenType1.equals(tokenType2)) {
       // process matches like "a < b" and "b > a"
-      final DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(tokenType1);
-      final DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(tokenType2);
+      final RelationType rel1 = RelationType.fromElementType(tokenType1);
+      final RelationType rel2 = RelationType.fromElementType(tokenType2);
       if(rel1 != null && rel2 != null && rel1.getFlipped() == rel2) {
         return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {right2, left2}, false);
       }

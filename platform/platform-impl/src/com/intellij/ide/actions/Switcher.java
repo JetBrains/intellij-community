@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,10 +28,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,7 +57,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +74,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.ide.actions.RecentLocationsAction.SHORTCUT_HEX_COLOR;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -198,16 +194,7 @@ public class Switcher extends AnAction implements DumbAware {
     Project project = e.getProject();
     if (SWITCHER != null) {
       final boolean sameShortcut = Comparing.equal(SWITCHER.myTitle, title);
-      if (SWITCHER.isCheckboxMode()) {
-        if (sameShortcut) {
-          SWITCHER.toggleShowEditedFiles();
-        }
-        else {
-          SWITCHER.setShowOnlyEditedFiles(onlyEdited);
-        }
-        return null;
-      }
-      else if (sameShortcut) {
+      if (sameShortcut) {
         SWITCHER.goForward();
         return null;
       }
@@ -226,6 +213,7 @@ public class Switcher extends AnAction implements DumbAware {
         SWITCHER.cancel();
       }
       SWITCHER = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
+      project.putUserData(SWITCHER_KEY, SWITCHER);
       return SWITCHER;
     }
   }
@@ -252,7 +240,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
-                                                              QuickSearchComponent {
+                                                              QuickSearchComponent, Disposable {
     static final Object RECENT_LOCATIONS = new Object();
     final JBPopup myPopup;
     final JBList<Object> toolWindows;
@@ -609,6 +597,7 @@ public class Switcher extends AnAction implements DumbAware {
           SWITCHER = null;
           return true;
         }).createPopup();
+      Disposer.register(myPopup, this);
 
       if (isPinnedMode()) {
         new DumbAwareAction(null, null, null) {
@@ -653,6 +642,14 @@ public class Switcher extends AnAction implements DumbAware {
 
       fromListToList(toolWindows, files);
       fromListToList(files, toolWindows);
+    }
+
+    @Override
+    public void dispose() {
+      synchronized (Switcher.class) {
+        SWITCHER = null;
+        project.putUserData(SWITCHER_KEY, null);
+      }
     }
 
     @NotNull
@@ -740,6 +737,7 @@ public class Switcher extends AnAction implements DumbAware {
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       final ArrayList<FileInfo> filesData = new ArrayList<>();
       final ArrayList<FileInfo> editors = new ArrayList<>();
+      LinkedHashSet<VirtualFile> addedFiles = new LinkedHashSet<>();
       if (!pinned) {
         for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
           editors.add(new FileInfo(pair.first, pair.second, project));
@@ -747,7 +745,10 @@ public class Switcher extends AnAction implements DumbAware {
       }
       if (editors.size() < 2 || pinned) {
         if (pinned && editors.size() > 1) {
-          filesData.addAll(editors);
+          for (FileInfo fileInfo : editors) {
+            if (addedFiles.add(fileInfo.first))
+              filesData.add(fileInfo);
+          }
         }
         int maxFiles = Math.max(editors.size(), filesForInit.size());
         int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
@@ -773,20 +774,26 @@ public class Switcher extends AnAction implements DumbAware {
             }
           }
           if (add) {
-            filesData.add(info);
-            if (!firstRecentMarked && !info.first.equals(currentFile)) {
-              selectionIndex = filesData.size() - 1;
-              firstRecentMarked = true;
+            if (addedFiles.add(info.first)) {
+              filesData.add(info);
+              if (!firstRecentMarked && !info.first.equals(currentFile)) {
+                selectionIndex = filesData.size() - 1;
+                firstRecentMarked = true;
+              }
             }
           }
         }
         //if (editors.size() == 1) selectionIndex++;
         if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
-          filesData.add(0, editors.get(0));
+          if (addedFiles.add(editors.get(0).first)) {
+            filesData.add(0, editors.get(0));
+          }
         }
       } else {
         for (int i = 0; i < Math.min(30, editors.size()); i++) {
-          filesData.add(editors.get(i));
+          if (addedFiles.add(editors.get(i).first)) {
+            filesData.add(editors.get(i));
+          }
         }
       }
 
@@ -1179,6 +1186,9 @@ public class Switcher extends AnAction implements DumbAware {
     @Nullable
     private static EditorWindow findAppropriateWindow(@NotNull FileInfo info) {
       if (info.second == null) return null;
+      if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
+        return info.second.getOwner().getCurrentWindow();
+      }
       final EditorWindow[] windows = info.second.getOwner().getWindows();
       return ArrayUtil.contains(info.second, windows) ? info.second : windows.length > 0 ? windows[0] : null;
     }
@@ -1370,7 +1380,7 @@ public class Switcher extends AnAction implements DumbAware {
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
       return "<html>"
              + IdeBundle.message("recent.files.checkbox.label")
-             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+             + " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
              + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
              + "</html>";
     }

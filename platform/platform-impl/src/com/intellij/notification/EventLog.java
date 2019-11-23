@@ -8,6 +8,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
@@ -35,7 +36,6 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -449,23 +449,28 @@ public final class EventLog {
       myProjectModel = new LogModel(project, project);
       myProject = project;
 
-      EventLog appService = ApplicationManager.getApplication().getServiceIfCreated(EventLog.class);
+      Application app = ApplicationManager.getApplication();
+      EventLog appService = app.getServiceIfCreated(EventLog.class);
       if (appService != null) {
         for (Notification notification : appService.myModel.takeNotifications()) {
           printNotification(notification);
         }
       }
 
-      MessageBusConnection connection = project.getMessageBus().connect();
-      connection.subscribe(Notifications.TOPIC, new Notifications() {
+      project.getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {
         @Override
         public void notify(@NotNull Notification notification) {
           printNotification(notification);
         }
       });
-      connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+
+      app.getMessageBus().connect(project).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
-        public void projectClosed(@NotNull Project project) {
+        public void projectClosed(@NotNull Project eventProject) {
+          if (eventProject != project) {
+            return;
+          }
+
           getApplicationService().myModel.setStatusMessage(null, 0);
           StatusBar.Info.set("", null, LOG_REQUESTOR);
         }

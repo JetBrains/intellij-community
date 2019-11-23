@@ -11,9 +11,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
-import com.intellij.util.messages.LazyListenerCreator;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusOwner;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
 
@@ -60,15 +60,14 @@ public class MessageBusImpl implements MessageBus {
 
   private final RootBus myRootBus;
 
-  //is used for debugging purposes
-  private final Object myOwner;
+  private final MessageBusOwner myOwner;
   private boolean myDisposed;
   private final Disposable myConnectionDisposable;
   private MessageDeliveryListener myMessageDeliveryListener;
 
   private final MessageBusConnectionImpl myLazyConnection;
 
-  public MessageBusImpl(@NotNull Object owner, @NotNull MessageBusImpl parentBus) {
+  public MessageBusImpl(@NotNull MessageBusOwner owner, @NotNull MessageBusImpl parentBus) {
     myOwner = owner;
     myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
     myParentBus = parentBus;
@@ -84,7 +83,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   // root message bus constructor
-  private MessageBusImpl(@NotNull Object owner) {
+  private MessageBusImpl(@NotNull MessageBusOwner owner) {
     myOwner = owner;
     myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
@@ -110,7 +109,7 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   public String toString() {
-    return super.toString() + "; owner=" + myOwner + (myDisposed ? "; disposed" : "");
+    return super.toString() + "; owner=" + myOwner + (isDisposed() ? "; disposed" : "");
   }
 
   /**
@@ -205,11 +204,10 @@ public class MessageBusImpl implements MessageBus {
 
     List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
     if (listenerDescriptors != null) {
-      LazyListenerCreator listenerCreator = (LazyListenerCreator)myOwner;
       List<Object> listeners = new ArrayList<>(listenerDescriptors.size());
       for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
         try {
-          listeners.add(listenerCreator.createListener(listenerDescriptor));
+          listeners.add(myOwner.createListener(listenerDescriptor));
         }
         catch (ExtensionNotApplicableException ignore) {
         }
@@ -245,7 +243,10 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   public void dispose() {
-    checkNotDisposed();
+    if (myDisposed) {
+      LOG.error("Already disposed: " + this);
+    }
+
     myDisposed = true;
 
     for (MessageBusImpl childBus : myChildBuses) {
@@ -269,13 +270,14 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   public boolean isDisposed() {
-    return myDisposed;
+    return myDisposed || myOwner.isDisposed();
   }
 
   @Override
   public boolean hasUndeliveredEvents(@NotNull Topic<?> topic) {
-    if (myDisposed) return false;
-    if (!isDispatchingAnything()) return false;
+    if (isDisposed() || !isDispatchingAnything()) {
+      return false;
+    }
 
     for (MessageBusConnectionImpl connection : getTopicSubscribers(topic)) {
       if (connection.containsMessage(topic)) {
@@ -291,7 +293,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void checkNotDisposed() {
-    if (myDisposed) {
+    if (isDisposed()) {
       LOG.error("Already disposed: " + this);
     }
   }
@@ -324,12 +326,20 @@ public class MessageBusImpl implements MessageBus {
   private void postMessage(@NotNull Message message) {
     checkNotDisposed();
     List<MessageBusConnectionImpl> topicSubscribers = getTopicSubscribers(message.getTopic());
-    if (!topicSubscribers.isEmpty()) {
-      for (MessageBusConnectionImpl subscriber : topicSubscribers) {
-        subscriber.getBus().myMessageQueue.get().offer(new DeliveryJob(subscriber, message));
-        subscriber.getBus().notifyPendingJobChange(1);
-        subscriber.scheduleMessageDelivery(message);
+    if (topicSubscribers.isEmpty()) {
+      return;
+    }
+
+    for (MessageBusConnectionImpl subscriber : topicSubscribers) {
+      MessageBusImpl bus = subscriber.getBus();
+      // maybe temporarily disposed (light test project)
+      if (bus.isDisposed()) {
+        continue;
       }
+
+      bus.myMessageQueue.get().offer(new DeliveryJob(subscriber, message));
+      bus.notifyPendingJobChange(1);
+      subscriber.scheduleMessageDelivery(message);
     }
   }
 
@@ -393,7 +403,9 @@ public class MessageBusImpl implements MessageBus {
   private static void pumpWaitingBuses(@NotNull List<? extends MessageBusImpl> buses) {
     List<Throwable> exceptions = null;
     for (MessageBusImpl bus : buses) {
-      if (bus.myDisposed) continue;
+      if (bus.isDisposed()) {
+        continue;
+      }
 
       exceptions = appendExceptions(exceptions, bus.doPumpMessages());
     }
@@ -418,7 +430,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private static boolean ensureAlive(@NotNull Map<MessageBusImpl, Integer> map, @NotNull MessageBusImpl bus) {
-    if (bus.myDisposed) {
+    if (bus.isDisposed()) {
       map.remove(bus);
       LOG.error("Accessing disposed message bus " + bus);
       return false;
@@ -472,7 +484,9 @@ public class MessageBusImpl implements MessageBus {
     for (List<MessageBusConnectionImpl> topicSubscribers : mySubscribers.values()) {
       topicSubscribers.remove(connection);
     }
-    if (myDisposed) return;
+    if (isDisposed()) {
+      return;
+    }
     myRootBus.clearSubscriberCache();
 
     final Iterator<DeliveryJob> i = myMessageQueue.get().iterator();
@@ -538,7 +552,7 @@ public class MessageBusImpl implements MessageBus {
       myClearedSubscribersCache = true;
     }
 
-    RootBus(@NotNull Object owner) {
+    RootBus(@NotNull MessageBusOwner owner) {
       super(owner);
     }
   }

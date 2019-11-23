@@ -14,13 +14,13 @@ import java.util.Set;
 public interface JpsServerClient {
   @NotNull
   Set<String> getAllCacheKeys();
-  @NotNull
-  Set<String> getAllBinaryKeys();
   @Nullable
   File downloadMetadataById(@NotNull String metadataId, @NotNull File targetDir);
   Pair<Boolean, File> downloadCacheById(@NotNull SegmentedProgressIndicatorManager indicatorManager,
                                         @NotNull String cacheId, @NotNull File targetDir);
   Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager indicatorManager,
                                                            @NotNull List<AffectedModule> affectedModules);
-  void uploadBinaryData(@NotNull File uploadData, @NotNull String moduleName, @NotNull String prefix);
+  static JpsServerClient getServerClient() {
+    return TemporaryCacheServerClient.INSTANCE;
+  }
 }

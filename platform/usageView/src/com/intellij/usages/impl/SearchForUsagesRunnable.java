@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -246,8 +245,7 @@ class SearchForUsagesRunnable implements Runnable {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         if (e.getDescription().equals(FIND_OPTIONS_HREF_TARGET)) {
-          TransactionGuard.getInstance().submitTransactionAndWait(
-            () -> FindManager.getInstance(myProject).showSettingsAndFindUsages(targets));
+          FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
         }
       }
     };
@@ -260,8 +258,7 @@ class SearchForUsagesRunnable implements Runnable {
         if (e.getDescription().equals(SEARCH_IN_PROJECT_HREF_TARGET)) {
           PsiElement psiElement = getPsiElement(mySearchFor);
           if (psiElement != null) {
-            TransactionGuard.getInstance().submitTransactionAndWait(
-              () -> FindManager.getInstance(myProject).findUsagesInScope(psiElement, GlobalSearchScope.projectScope(myProject)));
+            FindManager.getInstance(myProject).findUsagesInScope(psiElement, GlobalSearchScope.projectScope(myProject));
           }
         }
       }

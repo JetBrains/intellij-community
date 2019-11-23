@@ -320,7 +320,7 @@ public class PlatformTestUtil {
 
   public static void waitForCallback(@NotNull ActionCallback callback) {
     AsyncPromise<?> promise = new AsyncPromise<>();
-    callback.doWhenDone(() -> promise.setResult(null));
+    callback.doWhenDone(() -> promise.setResult(null)).doWhenRejected(() -> promise.cancel());
     waitForPromise(promise);
   }
 
@@ -667,7 +667,7 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        String s = e.getMessage() + "\n  " + attempts + " attempts remain";
+        String s = e.getMessage() + "\n  " + attempts + " " + StringUtil.pluralize("attempt", attempts) + " remain";
         TeamCityLogger.warning(s, null);
         System.err.println(s);
       }
@@ -1060,7 +1060,7 @@ public class PlatformTestUtil {
     return configuration != null ? configuration.getConfiguration() : null;
   }
 
-  public static RunContentDescriptor executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1098,7 +1098,7 @@ public class PlatformTestUtil {
       LOG.warn(capturingProcessAdapter.getOutput().getStderr());
     }
 
-    return refRunContentDescriptor.get();
+    return executionEnvironment;
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {

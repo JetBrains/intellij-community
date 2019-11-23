@@ -341,14 +341,8 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
       if (targetStatement instanceof PsiIfStatement) {
         return moveToIf((PsiIfStatement)targetStatement);
       }
-      if (targetStatement instanceof PsiForStatement) {
-        return moveToFor((PsiForStatement)targetStatement);
-      }
-      if (targetStatement instanceof PsiWhileStatement) {
-        return moveToWhile((PsiWhileStatement)targetStatement);
-      }
-      if (targetStatement instanceof PsiDoWhileStatement) {
-        return moveToDoWhile((PsiDoWhileStatement)targetStatement);
+      if (targetStatement instanceof PsiConditionalLoopStatement) {
+        return moveToConditionalLoop((PsiConditionalLoopStatement)targetStatement);
       }
       if (targetStatement instanceof PsiForeachStatement) {
         return moveToForeach((PsiForeachStatement)targetStatement);
@@ -405,19 +399,9 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
       return thenPart && elsePart;
     }
 
-    private boolean moveToFor(@NotNull PsiForStatement targetStatement) {
-      moveToBreaks(targetStatement, false);
-      return isAlwaysTrue(targetStatement.getCondition(), true);
-    }
-
-    private boolean moveToDoWhile(@NotNull PsiDoWhileStatement targetStatement) {
-      moveToBreaks(targetStatement, false);
-      return isAlwaysTrue(targetStatement.getCondition(), false);
-    }
-
-    private boolean moveToWhile(@NotNull PsiWhileStatement targetStatement) {
-      moveToBreaks(targetStatement, false);
-      return isAlwaysTrue(targetStatement.getCondition(), false);
+    private boolean moveToConditionalLoop(@NotNull PsiConditionalLoopStatement loop) {
+      moveToBreaks(loop, false);
+      return isAlwaysTrue(loop.getCondition(), loop instanceof PsiForStatement);
     }
 
     private boolean moveToForeach(@NotNull PsiForeachStatement targetStatement) {

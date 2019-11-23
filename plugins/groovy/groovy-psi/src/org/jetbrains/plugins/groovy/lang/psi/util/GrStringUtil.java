@@ -193,13 +193,11 @@ public class GrStringUtil {
       if (ch == '/') {
         buffer.append("\\/");
       }
+      else if (Character.isISOControl(ch) && ch != '\n' || ch == '$') {
+        appendUnicode(buffer, ch);
+      }
       else {
-        if (Character.isISOControl(ch) || ch == '$') {
-          appendUnicode(buffer, ch);
-        }
-        else {
-          buffer.append(ch);
-        }
+        buffer.append(ch);
       }
     }
   }
@@ -243,7 +241,7 @@ public class GrStringUtil {
           continue;
         }
       }
-      if (Character.isISOControl(ch)) {
+      if (Character.isISOControl(ch) && ch != '\n') {
         appendUnicode(buffer, ch);
       }
       else {
@@ -281,7 +279,7 @@ public class GrStringUtil {
     final StringBuilder builder = new StringBuilder();
     escapeStringCharacters(s.length(), s, isSingleLine ? "'" : "", isSingleLine, true, builder);
     if (!forInjection) {
-      unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", true);
+      unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", !isSingleLine);
     }
     if (!isSingleLine) escapeLastSymbols(builder, '\'');
     return builder.toString();
@@ -912,19 +910,9 @@ public class GrStringUtil {
     }
   }
 
-  public static boolean isPlainStringLiteral(ASTNode node) {
-    String text = node.getText();
-    return text.length() < 3 && text.equals("''") || text.length() >= 3 && !text.startsWith("'''");
-  }
-
   public static boolean isMultilineStringLiteral(GrLiteral literal) {
     String quote = getStartQuote(literal.getText());
     return TRIPLE_QUOTES.equals(quote) || TRIPLE_DOUBLE_QUOTES.equals(quote) || SLASH.equals(quote) || DOLLAR_SLASH.equals(quote);
-  }
-
-  public static boolean isSinglelineStringLiteral(GrLiteral literal) {
-    String quote = getStartQuote(literal.getText());
-    return QUOTE.equals(quote) || DOUBLE_QUOTES.equals(quote);
   }
 
   public static StringBuilder getLiteralTextByValue(String value) {
@@ -940,14 +928,6 @@ public class GrStringUtil {
       buffer.append("'");
     }
     return buffer;
-  }
-
-  public static PsiElement findContainingLiteral(PsiElement token) {
-
-    PsiElement parent = token.getParent();
-    if (parent instanceof GrStringContent) parent = parent.getParent();
-
-    return parent;
   }
 
   /**

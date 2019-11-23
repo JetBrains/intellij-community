@@ -112,11 +112,6 @@ public final class DfaVariableValue extends DfaValue {
   }
 
   @Override
-  public DfaValue createNegated() {
-    return myFactory.createCondition(this, DfaRelationValue.RelationType.EQ, myFactory.getBoolean(false));
-  }
-
-  @Override
   public boolean dependsOn(DfaVariableValue other) {
     return other == this || (myQualifier != null && myQualifier.dependsOn(other));
   }

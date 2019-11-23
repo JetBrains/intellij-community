@@ -7,8 +7,8 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMethodReferenceExpressionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMethodReferenceExpressionImpl.Companion.CONSTRUCTOR_REFERENCE_NAME
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType
+import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructorResults
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodReferenceProcessor
 
 internal object GrMethodReferenceResolver : GroovyResolver<GrMethodReferenceExpressionImpl> {
@@ -27,7 +27,7 @@ internal object GrMethodReferenceResolver : GroovyResolver<GrMethodReferenceExpr
 
     val constructors = if (name == CONSTRUCTOR_REFERENCE_NAME) {
       when (unwrapped) {
-        is PsiClassType -> getConstructorCandidates(unwrapped, null, ref).toList()
+        is PsiClassType -> getAllConstructorResults(unwrapped, ref).toList()
         is PsiArrayType -> fakeArrayConstructors(unwrapped, ref.manager)
         else -> emptyList()
       }

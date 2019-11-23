@@ -248,25 +248,15 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    DfaValue cond = memState.pop();
+    DfaCondition condTrue = memState.pop().eq(runner.getFactory().getBoolean(!instruction.isNegated()));
+    DfaCondition condFalse = condTrue.negate();
 
-    DfaValue condTrue;
-    DfaValue condFalse;
-
-    if (instruction.isNegated()) {
-      condFalse = cond;
-      condTrue = cond.createNegated();
-    } else {
-      condTrue = cond;
-      condFalse = cond.createNegated();
-    }
-
-    if (condTrue == runner.getFactory().getConstFactory().getTrue()) {
+    if (condTrue == DfaCondition.getTrue()) {
       markBranchReachable(instruction, true);
       return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(instruction.getOffset()), memState)};
     }
 
-    if (condFalse == runner.getFactory().getConstFactory().getTrue()) {
+    if (condFalse == DfaCondition.getTrue()) {
       markBranchReachable(instruction, false);
       return nextInstruction(instruction, runner, memState);
     }

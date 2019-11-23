@@ -43,7 +43,7 @@ public class AnnotationCollectorChecker extends CustomAnnotationChecker {
     final PsiClass clazz = (PsiClass)annotation.getClassReference().resolve();
     if (clazz == null) return true;
     final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    Pair<PsiElement, String> r =
+    Pair.NonNull<PsiElement, String> r =
       CustomAnnotationChecker.checkAnnotationArguments(clazz, annotation.getClassReference(), attributes, false);
     if (r != null && r.getFirst() != null) {
       holder.createErrorAnnotation(r.getFirst(), r.getSecond());

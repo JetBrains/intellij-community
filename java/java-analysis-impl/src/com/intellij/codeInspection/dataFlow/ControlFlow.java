@@ -130,6 +130,12 @@ public class ControlFlow {
     return result.toString();
   }
 
+  void makeNop(int index) {
+    SpliceInstruction instruction = new SpliceInstruction(0);
+    instruction.setIndex(index);
+    myInstructions.set(index, instruction);
+  }
+
   public abstract static class ControlFlowOffset {
     public abstract int getInstructionOffset();
 

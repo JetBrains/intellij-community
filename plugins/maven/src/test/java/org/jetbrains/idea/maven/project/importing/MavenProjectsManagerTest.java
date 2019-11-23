@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
+import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
@@ -76,12 +78,12 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "<modules>" +
                   "  <module>m</module>" +
                   "</modules>");
-
     assertEquals(1, myProjectsTree.getRootProjects().size());
 
     WriteCommandAction.writeCommandAction(myProject).run(() -> myProjectPom.delete(this));
 
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    scheduleProjectImportAndWait();
 
     assertEquals(0, myProjectsTree.getRootProjects().size());
 
@@ -92,7 +94,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>m</module>" +
                      "</modules>");
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     assertEquals(1, myProjectsTree.getRootProjects().size());
   }
@@ -111,21 +113,17 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertEquals(2, myProjectsTree.getRootProjects().size());
 
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      p2.rename(this, "foo.bar");
-      waitForReadingCompletion();
+    runWriteAction(() -> p2.rename(this, "foo.bar"));
+    configConfirmationForYesAnswer();
+    scheduleProjectImportAndWait();
+    assertEquals(1, myProjectsTree.getRootProjects().size());
 
-      assertEquals(1, myProjectsTree.getRootProjects().size());
-
-      p2.rename(this, "pom.xml");
-    });
-
-    waitForReadingCompletion();
-
+    runWriteAction(() -> p2.rename(this, "pom.xml"));
+    scheduleProjectImportAndWait();
     assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
-  public void testUpdatingProjectsWhenMoving() throws IOException {
+  public void testUpdatingProjectsWhenMoving() throws IOException, InterruptedException {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>project1</artifactId>" +
@@ -138,24 +136,17 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     importProjects(p1, p2);
 
     final VirtualFile oldDir = p2.getParent();
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot);
-      VirtualFile newDir = myProjectRoot.createChildDirectory(this, "foo");
+    runWriteAction(() -> VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot));
+    VirtualFile newDir = runWriteAction(() -> myProjectRoot.createChildDirectory(this, "foo"));
+    assertEquals(2, myProjectsTree.getRootProjects().size());
 
-      assertEquals(2, myProjectsTree.getRootProjects().size());
-
-      p2.move(this, newDir);
-      VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot);
-      waitForReadingCompletion();
-    });
+    runWriteAction(() -> p2.move(this, newDir));
+    configConfirmationForYesAnswer();
+    scheduleProjectImportAndWait();
     assertEquals(1, myProjectsTree.getRootProjects().size());
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      p2.move(this, oldDir);
-    });
 
-
-    waitForReadingCompletion();
-
+    runWriteAction(() -> p2.move(this, oldDir));
+    scheduleProjectImportAndWait();
     assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
@@ -184,19 +175,20 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
       assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
       m.move(this, newDir);
-      waitForReadingCompletion();
+      scheduleProjectImportAndWait();
 
       assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
       m.move(this, oldDir);
-      waitForReadingCompletion();
+      scheduleProjectImportAndWait();
 
       assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
       m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
     });
 
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    scheduleProjectImportAndWait();
 
     assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
   }
@@ -221,7 +213,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<groupId>test</groupId>" +
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     List<MavenProject> children = myProjectsTree.getModules(roots.get(0));
     assertEquals(1, children.size());
@@ -306,7 +298,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     "<groupId>test</groupId>" +
                                     "<artifactId>m</artifactId>" +
                                     "<version>1</version>");
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     assertEquals(1, myProjectsTree.getRootProjects().size());
     assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
@@ -322,7 +314,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
                      "");
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     assertEquals(2, myProjectsTree.getRootProjects().size());
     assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
@@ -605,13 +597,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "    <prop>value2</prop>" +
                               "  </properties>" +
                               "</profile>");
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
 
     deleteProfilesXml();
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
@@ -625,7 +617,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "    <prop>value2</prop>" +
                               "  </properties>" +
                               "</profile>");
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
@@ -648,14 +640,15 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>dir/module</module>" +
                      "</modules>");
-    waitForReadingCompletion();
+    scheduleProjectImportAndWait();
 
     assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size());
 
     final VirtualFile dir = myProjectRoot.findChild("dir");
     WriteCommandAction.writeCommandAction(myProject).run(() -> dir.delete(null));
 
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    scheduleProjectImportAndWait();
 
     assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
   }
@@ -736,12 +729,10 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.performScheduledImportInTests(); // ensure no pending requests
     assertModules("project", "m");
 
+    runWriteAction(() -> m.delete(this));
+
     configConfirmationForYesAnswer();
-    WriteCommandAction.writeCommandAction(myProject).run(() -> m.delete(this));
-
-    waitForReadingCompletion();
-
-    resolveDependenciesAndImport();
+    scheduleProjectImportAndWait();
     assertModules("project");
   }
 
@@ -789,8 +780,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                           "  </dependency>" +
                           "</dependencies>");
 
-    waitForReadingCompletion();
-    resolveDependenciesAndImport();
+    scheduleProjectImportAndWait();
 
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
@@ -842,9 +832,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
 
     configConfirmationForYesAnswer();// should update deps even if module is not removed
-
-    waitForReadingCompletion();
-    resolveDependenciesAndImport();
+    scheduleProjectImportAndWait();
 
     assertModules("project", "m1");
 
@@ -1023,9 +1011,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-
-    myProjectsManager.performScheduledImportInTests();
-    assertFalse(myProjectsManager.hasScheduledImportsInTests());
+    assertFalse(hasProjectsToBeImported());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1043,9 +1029,10 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "    </plugin>" +
                      "  </plugins>" +
                      "</build>");
-    myProjectsManager.waitForResolvingCompletion();
+    assertTrue(hasProjectsToBeImported());
 
-    assertTrue(myProjectsManager.hasScheduledImportsInTests());
+    scheduleProjectImportAndWait();
+    assertFalse(hasProjectsToBeImported());
   }
 
   public void testScheduleReimportWhenPluginConfigurationChangesInValue() {
@@ -1065,9 +1052,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-
-    myProjectsManager.performScheduledImportInTests();
-    assertFalse(myProjectsManager.hasScheduledImportsInTests());
+    assertFalse(hasProjectsToBeImported());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1085,9 +1070,10 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                      "    </plugin>" +
                      "  </plugins>" +
                      "</build>");
-    myProjectsManager.waitForResolvingCompletion();
+    assertTrue(hasProjectsToBeImported());
 
-    assertTrue(myProjectsManager.hasScheduledImportsInTests());
+    scheduleProjectImportAndWait();
+    assertFalse(hasProjectsToBeImported());
   }
 
   public void testIgnoringProjectsForDeletedModules() {
@@ -1207,4 +1193,20 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     };
   }
 
+  @Override
+  protected void doImportProjects(List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
+    super.doImportProjects(files, failOnReadingError, profiles);
+    resolveDependenciesAndImport(); // wait of full import completion
+  }
+
+  private boolean hasProjectsToBeImported() {
+    return ProjectNotificationAware.getInstance(myProject).isNotificationVisible();
+  }
+
+  private void scheduleProjectImportAndWait() {
+    assertTrue(hasProjectsToBeImported()); // otherwise all imports will be skip
+    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
+    resolveDependenciesAndImport();
+    assertFalse(hasProjectsToBeImported()); // otherwise project settings was modified while importing
+  }
 }

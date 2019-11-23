@@ -28,7 +28,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsManagerWatcher;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -119,6 +118,8 @@ public class MavenModuleBuilderHelper {
       }
     }
 
+    MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+
     // execute when current dialog is closed (e.g. Project Structure)
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
       if (!pom.isValid()) {
@@ -162,16 +163,10 @@ public class MavenModuleBuilderHelper {
       }
 
       for (VirtualFile v : pomFiles) {
-        v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
-        try {
-          Document doc = FileDocumentManager.getInstance().getDocument(v);
-          if (doc != null) {
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-            FileDocumentManager.getInstance().saveDocument(doc);
-          }
-        }
-        finally {
-          v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
+        Document doc = FileDocumentManager.getInstance().getDocument(v);
+        if (doc != null) {
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+          FileDocumentManager.getInstance().saveDocument(doc);
         }
       }
     });

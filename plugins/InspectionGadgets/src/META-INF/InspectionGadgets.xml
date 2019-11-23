@@ -264,11 +264,11 @@
                      implementationClass="com.siyeh.ig.bugs.InstanceofIncompatibleInterfaceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InstantiationOfUtilityClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instantiation.utility.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.InstantiationOfUtilityClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IteratorHasNextCallsIteratorNext" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="iterator.hasnext.which.calls.next.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.IteratorHasNextCallsIteratorNextInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="IteratorNextCanNotThrowNoSuchElementException" shortName="IteratorNextDoesNotThrowNoSuchElementException"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="iterator.next.does.not.throw.nosuchelementexception.display.name"
@@ -2311,14 +2311,14 @@
                      key="extends.object.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.style.ExtendsObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FieldMayBeFinal" bundle="com.siyeh.InspectionGadgetsBundle" key="field.may.be.final.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.FieldMayBeFinalInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ImplicitCallToSuper" bundle="com.siyeh.InspectionGadgetsBundle" key="implicit.call.to.super.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.ImplicitCallToSuperInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ListIndexOfReplaceableByContains" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="list.indexof.replaceable.by.contains.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.style.ListIndexOfReplaceableByContainsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LiteralAsArgToStringEquals" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="literal.as.arg.to.string.equals.display.name" groupBundle="messages.InspectionsBundle"
@@ -2531,7 +2531,7 @@
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.AwaitWithoutCorrespondingSignalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BusyWait" bundle="com.siyeh.InspectionGadgetsBundle" key="busy.wait.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.BusyWaitInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CallToNativeMethodWhileLocked" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="call.to.native.method.while.locked.display.name" groupBundle="messages.InspectionsBundle"

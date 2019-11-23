@@ -55,4 +55,9 @@ class Debugger {
    */
   @Deprecated
   public void getCurrentSession() {}
+
+  /**
+   * @deprecated use {@link #CONTENT_ROOT_ICON_CLOSED}
+   */
+  @Deprecated String CONTENT_ROOT_ICON_OPEN = null;
 }

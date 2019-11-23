@@ -30,8 +30,10 @@ import java.util.Date;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Collect Zipped Logs", NotificationDisplayType.BALLOON, true);
+  private static class Holder {
+    private static final NotificationGroup NOTIFICATION_GROUP =
+      new NotificationGroup("Collect Zipped Logs", NotificationDisplayType.BALLOON, true);
+  }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -59,7 +61,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           RevealFileAction.openFile(zippedLogsFile);
         }
         else {
-          final Notification logNotification = new Notification(NOTIFICATION_GROUP.getDisplayId(),
+          final Notification logNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
                                                                 "Log file is created: " + zippedLogsFile.getAbsolutePath(),
                                                                 NotificationType.INFORMATION);
@@ -67,7 +69,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
         }
       }
       catch (final IOException exception) {
-        final Notification errorNotification = new Notification(NOTIFICATION_GROUP.getDisplayId(),
+        final Notification errorNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
                                                                 "Can't create zip file with logs: " + exception.getLocalizedMessage(),
                                                                 NotificationType.ERROR);

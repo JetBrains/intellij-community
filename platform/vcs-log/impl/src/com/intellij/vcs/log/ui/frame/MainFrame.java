@@ -226,26 +226,24 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         instance.openFile(file, false, true);
       }
     }, this);
-
-    new AnAction() {
-      {
-        setShortcutSet(CommonShortcuts.ESCAPE);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        openLogEditorTab();
-      }
-    }.registerCustomShortcutSet(myChangesBrowser, this);
   }
 
   private void installGraphView() {
     if (Registry.is("show.log.as.editor.tab")) {
       DataManager.registerDataProvider(myToolbarsAndTable, this);
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        openLogEditorTab();
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(this::openLogEditorTab, ModalityState.NON_MODAL);
+
+      new AnAction() {
+        {
+          setShortcutSet(CommonShortcuts.ESCAPE);
+        }
+
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          openLogEditorTab();
+        }
+      }.registerCustomShortcutSet(myChangesBrowser, this);
     }
     else {
       myChangesBrowserSplitter.setFirstComponent(myToolbarsAndTable);
@@ -330,6 +328,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myFilterUi;
   }
 
+  @NotNull
   private JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
@@ -376,11 +375,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar;
-  }
-
-  @NotNull
-  public JComponent getMainComponent() {
-    return this;
   }
 
   @Nullable
@@ -546,7 +540,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull private final Runnable myRefresh;
 
     MyVcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData) {
-      super(ui, logData, ui::requestMore);
+      super(ui.getId(), logData, ui.getProperties(), ui.getColorManager(), ui::requestMore, ui);
       myRefresh = () -> ui.getRefresher().onRefresh();
     }
 

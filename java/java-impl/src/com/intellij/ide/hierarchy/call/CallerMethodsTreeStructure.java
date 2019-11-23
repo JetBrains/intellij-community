@@ -35,7 +35,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
    * @deprecated use CallerMethodsTreeStructure#CallerMethodsTreeStructure(Project, PsiMember, String)
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
     this(project, ((PsiMember)method), scopeType);
   }

@@ -149,7 +149,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     mySplitter.setDividerWidth(3);
 
     myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
-    Disposer.register(this, myToolbarWrapper);
 
     final JPanel result = new JPanel(new BorderLayout());
     result.add(myToolbarWrapper, BorderLayout.NORTH);

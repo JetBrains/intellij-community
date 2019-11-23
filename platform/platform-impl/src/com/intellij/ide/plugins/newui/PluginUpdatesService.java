@@ -116,6 +116,19 @@ public class PluginUpdatesService {
     }
   }
 
+  public void finishUpdate() {
+    checkAccess();
+
+    if (!myPrepared || myCache == null) {
+      return;
+    }
+
+    Integer countValue = getCount();
+    for (PluginUpdatesService service : SERVICES) {
+      service.runCountCallbacks(countValue);
+    }
+  }
+
   public void recalculateUpdates() {
     checkAccess();
 

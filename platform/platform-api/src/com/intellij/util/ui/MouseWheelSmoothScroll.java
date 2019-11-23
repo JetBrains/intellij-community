@@ -25,6 +25,8 @@ import static java.lang.Math.*;
 public class MouseWheelSmoothScroll {
 
   private final InertialAnimator horizontal = new InertialAnimator(), vertical = new InertialAnimator();
+  private final FlingDetector horizontalFling = new FlingDetector(), verticalFling = new FlingDetector();
+  private final EventCounter touchpadRecognizer = new EventCounter(100);
   private final @NotNull Supplier<Boolean> myScrollEnabled;
 
   public static MouseWheelSmoothScroll create() {
@@ -51,23 +53,63 @@ public class MouseWheelSmoothScroll {
       return;
     }
 
-    InertialAnimator animator = isHorizontalScroll(e) ? horizontal : vertical;
-    int delta = (int)round(getDelta(bar, e));
     int value = bar.getValue();
-    int minimum = bar.getMinimum();
-    int maximum = bar.getMaximum();
-    if (abs(delta) > 0.01) { // ignore small delta event
-      animator.start(value, value + delta, bar::setValue, (v) -> {
-        return v - bar.getValue() != 0 || minimum != bar.getMinimum() || maximum != bar.getMaximum() || !bar.isShowing();
-      });
-      e.consume();
+    int delta = (int)round(getDelta(bar, e));
+    int targetValue = value + delta;
+
+    if (TouchScrollUtil.isUpdate(e)) {
+      bar.setValue(targetValue);
+      FlingDetector fling = isHorizontalScroll(e) ? horizontalFling : verticalFling;
+      fling.updateDelta(delta);
+    } else if (TouchScrollUtil.isEnd(e)) {
+      startFling(getEventVerticalScrollBar(e), verticalFling, vertical);
+      startFling(getEventHorizontalScrollBar(e), horizontalFling, horizontal);
+    } else if (abs(delta) != 0) { // ignore small delta event
+      InertialAnimator animator = isHorizontalScroll(e) ? horizontal : vertical;
+      touchpadRecognizer.addTime(System.currentTimeMillis());
+      if (touchpadRecognizer.getSize() >= getTouchpadThreshold()) {
+        bar.setValue(targetValue);
+        animator.stop();
+      } else {
+        animator.start(value, targetValue, new ScrollAnimationSettings(), bar::setValue, shouldStop(bar));
+      }
+    }
+
+    e.consume();
+  }
+
+  public void startFling(JScrollBar bar, FlingDetector fling, InertialAnimator animator) {
+    if (bar != null && fling.shouldStart()) {
+      animator.stop();
+      int value = bar.getValue();
+      int targetValue = fling.getTargetValue(value);
+      animator.start(value, targetValue, new FlingAnimationSettings(), bar::setValue, shouldStop(bar));
     }
   }
 
-  public static @Nullable JScrollBar getEventScrollBar(@NotNull MouseWheelEvent e) {
-    JScrollPane scroller = (JScrollPane) e.getComponent();
-    if (scroller == null) return null;
-    return isHorizontalScroll(e) ? scroller.getHorizontalScrollBar() : scroller.getVerticalScrollBar();
+  public static @Nullable
+  JScrollBar getEventScrollBar(@NotNull MouseWheelEvent e) {
+    return isHorizontalScroll(e) ? getEventHorizontalScrollBar(e) : getEventVerticalScrollBar(e);
+  }
+
+  public static @Nullable
+  JScrollBar getEventHorizontalScrollBar(@NotNull MouseWheelEvent e) {
+    JScrollPane scroller = (JScrollPane)e.getComponent();
+    return scroller == null ? null : scroller.getHorizontalScrollBar();
+  }
+
+  public static @Nullable
+  JScrollBar getEventVerticalScrollBar(@NotNull MouseWheelEvent e) {
+    JScrollPane scroller = (JScrollPane)e.getComponent();
+    return scroller == null ? null : scroller.getVerticalScrollBar();
+  }
+
+  private static Predicate<Integer> shouldStop(JScrollBar bar) {
+    int minimum = bar.getMinimum();
+    int maximum = bar.getMaximum();
+    return (v) -> {
+      return v - bar.getValue() != 0 || minimum != bar.getMinimum() || maximum != bar.getMaximum() || !bar.isShowing();
+    };
   }
 
   public static boolean isHorizontalScroll(@NotNull MouseWheelEvent e) {
@@ -78,7 +120,14 @@ public class MouseWheelSmoothScroll {
     return Registry.intValue("idea.inertial.smooth.scrolling.unit.increment");
   }
 
+  public int getTouchpadThreshold() {
+    return Registry.intValue("idea.inertial.smooth.scrolling.touchpad.threshold");
+  }
+
   public static double getDelta(@NotNull JScrollBar bar, @NotNull MouseWheelEvent event) {
+    if (TouchScrollUtil.isTouchScroll(event)) {
+      return TouchScrollUtil.getDelta(event);
+    }
     double rotation = event.getPreciseWheelRotation();
     int direction = rotation < 0 ? -1 : 1;
     // bar.getUnitIncrement can return -1 for top bound value. Fix it
@@ -87,7 +136,7 @@ public class MouseWheelSmoothScroll {
     return unitIncrement * rotation * event.getScrollAmount();
   }
 
-  private final static class InertialAnimator implements ActionListener {
+  private static class InertialAnimator implements ActionListener {
 
     private final static int REFRESH_TIME = 1000 / 60; // 60 Hz
     private final static double VELOCITY_THRESHOLD = 0.001;
@@ -100,31 +149,20 @@ public class MouseWheelSmoothScroll {
     private @NotNull Consumer<Integer> myConsumer = BLACK_HOLE;
     private final Predicate<Integer> FALSE_PREDICATE = (value) -> false;
     private @NotNull Predicate<Integer> myShouldStop = FALSE_PREDICATE;
+    private AnimationSettings myAnimationSettings = null;
 
     private final Timer myTimer = TimerUtil.createNamedTimer("Inertial Animation Timer", REFRESH_TIME, this);
-    private final EventCounter myTouchpadRecognizer = new EventCounter(100);
 
     private InertialAnimator() {
       myTimer.setInitialDelay(0);
     }
 
-    public double getDuration() {
-      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.duration")), 0);
-    }
-
-    public double getDecayDuration() {
-      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.decay.duration")), 0);
-    }
-
-    public int getTouchpadThreshold() {
-      return Registry.intValue("idea.inertial.smooth.scrolling.touchpad.threshold");
-    }
-
-    public final void start(int initValue, int targetValue, @NotNull Consumer<Integer> consumer, @Nullable Predicate<Integer> shouldStop) {
-      long currentEventTime = System.currentTimeMillis();
-      myTouchpadRecognizer.addTime(currentEventTime);
-      double duration = getDuration();
-      if (duration == 0 || myTouchpadRecognizer.getSize() >= getTouchpadThreshold()) {
+    public final void start(int initValue, int targetValue,
+                            @NotNull AnimationSettings animationSettings,
+                            @NotNull Consumer<Integer> consumer,
+                            @Nullable Predicate<Integer> shouldStop) {
+      double duration = animationSettings.getDuration();
+      if (duration == 0) {
         consumer.accept(targetValue);
         stop();
         return;
@@ -137,11 +175,12 @@ public class MouseWheelSmoothScroll {
         myTargetValue = targetValue;
       }
 
-      myLastEventTime = currentEventTime - myTimer.getDelay();
+      myLastEventTime = System.currentTimeMillis() - myTimer.getDelay();
       myVelocity = (myTargetValue - initValue) / duration;
       myLambda = 1.0;
       myConsumer = Objects.requireNonNull(consumer);
       myShouldStop = shouldStop == null ? FALSE_PREDICATE : shouldStop;
+      myAnimationSettings = animationSettings;
       myCurrentValue = initValue;
       myTimer.start();
     }
@@ -163,7 +202,7 @@ public class MouseWheelSmoothScroll {
 
       // slowdown the animation
       double animationTimeLeft = (myTargetValue - myCurrentValue) / myVelocity;
-      if (myLambda == 1.0 && animationTimeLeft > REFRESH_TIME && animationTimeLeft < getDecayDuration()) {
+      if (myLambda == 1.0 && animationTimeLeft > REFRESH_TIME && animationTimeLeft < myAnimationSettings.getDecayDuration()) {
         // find q of geometric progression using n-th member formulae
         myLambda = pow(abs(VELOCITY_THRESHOLD / myVelocity), 1.0 / (animationTimeLeft / REFRESH_TIME));
       }
@@ -189,10 +228,62 @@ public class MouseWheelSmoothScroll {
     }
   }
 
+  private static class FlingDetector {
+    private int lastDelta = 0;
+
+    public void updateDelta(int delta) {
+      lastDelta = delta;
+    }
+
+    private static int getPixelThreshold() {
+      return Registry.intValue("idea.inertial.smooth.scrolling.touch.pixel.threshold");
+    }
+
+    private static int getFlingMultiplier() {
+      return Registry.intValue("idea.inertial.smooth.scrolling.touch.multiplier");
+    }
+
+    public boolean shouldStart() {
+      return abs(lastDelta) >= getPixelThreshold();
+    }
+
+    public int getTargetValue(int initValue) {
+      return initValue + lastDelta * getFlingMultiplier();
+    }
+  }
+
+  private interface AnimationSettings {
+    double getDuration();
+    double getDecayDuration();
+  }
+
+  private static class ScrollAnimationSettings implements AnimationSettings {
+    @Override
+    public double getDuration() {
+      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.duration")), 0);
+    }
+
+    @Override
+    public double getDecayDuration() {
+      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.decay.duration")), 0);
+    }
+  }
+
+  private static class FlingAnimationSettings implements AnimationSettings {
+    @Override
+    public double getDuration() {
+      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.touch.duration")), 0);
+    }
+
+    @Override
+    public double getDecayDuration() {
+      return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.touch.decay")), 0);
+    }
+  }
+
   private final static class EventCounter {
     private final List<Long> myValues = new LinkedList<>();
     private final long myDuration;
-
 
     private EventCounter(long duration) {
       myDuration = max(duration, 1);

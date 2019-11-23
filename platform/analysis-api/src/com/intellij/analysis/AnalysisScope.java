@@ -365,7 +365,8 @@ public class AnalysisScope {
           .withDocumentsCommitted(project)
           .inSmartMode(project)
           .executeSynchronously();
-      } else {
+      }
+      else {
         commitAndRunInSmartMode(() -> doProcessFile(visitor, psiManager, vFile), project);
       }
     }

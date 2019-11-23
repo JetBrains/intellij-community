@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.util.RefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -31,11 +32,13 @@ public class LocalVariableOccurrenceManager extends BaseOccurrenceManager {
     myLocalVariable = localVariable;
   }
 
+  @NotNull
   @Override
   public PsiExpression[] defaultOccurrences() {
     return PsiExpression.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public PsiExpression[] findOccurrences() {
     return CodeInsightUtil.findReferenceExpressions(RefactoringUtil.getVariableScope(myLocalVariable), myLocalVariable);

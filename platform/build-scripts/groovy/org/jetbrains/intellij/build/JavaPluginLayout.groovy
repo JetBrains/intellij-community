@@ -70,7 +70,6 @@ class JavaPluginLayout {
       withArtifact("debugger-agent-storage", "rt")
       withProjectLibrary("Eclipse")
       withProjectLibrary("jgoodies-common")
-      withProjectLibrary("maven-model")
       withProjectLibrary("debugger-memory-agent")//todo nik: convert to module-level library instead
 
       withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")

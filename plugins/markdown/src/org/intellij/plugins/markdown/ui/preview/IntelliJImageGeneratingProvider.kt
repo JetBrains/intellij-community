@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import org.intellij.markdown.MarkdownElementTypes
@@ -53,7 +52,7 @@ internal abstract class LinkGeneratingProvider(private val baseURI: URI?) : Gene
   }
 }
 
-internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?, private val project: Project) : LinkGeneratingProvider(baseURI) {
+internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) : LinkGeneratingProvider(baseURI) {
   companion object {
     private val REGEX = Regex("[^a-zA-Z0-9 ]")
 
@@ -74,7 +73,7 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?, 
     return super.makeAbsoluteUrl(destinationEx)
   }
 
-  override fun getRenderInfo(text: String, node: ASTNode): LinkGeneratingProvider.RenderInfo? {
+  override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
     node.findChildOfType(MarkdownElementTypes.INLINE_LINK)?.let {
       return inlineLinkProvider.getRenderInfo(text, it)
     }
@@ -85,7 +84,7 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?, 
     }
   }
 
-  override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: LinkGeneratingProvider.RenderInfo) {
+  override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
     visitor.consumeTagOpen(node, "img",
                            "src=\"${makeAbsoluteUrl(info.destination)}\"",
                            "alt=\"${getPlainTextFrom(info.label, text)}\"",
@@ -96,14 +95,14 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?, 
 
 internal class ReferenceLinksGeneratingProvider(private val linkMap: LinkMap, baseURI: URI?)
   : LinkGeneratingProvider(baseURI) {
-  override fun getRenderInfo(text: String, node: ASTNode): LinkGeneratingProvider.RenderInfo? {
+  override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
     val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL }
                 ?: return null
     val linkInfo = linkMap.getLinkInfo(label.getTextInNode(text))
                    ?: return null
     val linkTextNode = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT }
 
-    return LinkGeneratingProvider.RenderInfo(
+    return RenderInfo(
       linkTextNode ?: label,
       EntityConverter.replaceEntities(linkInfo.destination, true, true),
       linkInfo.title?.let { EntityConverter.replaceEntities(it, true, true) }
@@ -112,13 +111,13 @@ internal class ReferenceLinksGeneratingProvider(private val linkMap: LinkMap, ba
 }
 
 internal class InlineLinkGeneratingProvider(baseURI: URI?) : LinkGeneratingProvider(baseURI) {
-  override fun getRenderInfo(text: String, node: ASTNode): LinkGeneratingProvider.RenderInfo? {
+  override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
     val label = node.findChildOfType(MarkdownElementTypes.LINK_TEXT)
                 ?: return null
-    return LinkGeneratingProvider.RenderInfo(
+    return RenderInfo(
       label,
       node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)?.let {
-        LinkMap.normalizeDestination(it)
+        LinkMap.normalizeDestination(it, true)
       } ?: "",
       node.findChildOfType(MarkdownElementTypes.LINK_TITLE)?.getTextInNode(text)?.let {
         LinkMap.normalizeTitle(it)

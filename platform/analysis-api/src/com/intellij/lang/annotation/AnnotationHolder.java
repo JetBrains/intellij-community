@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,4 +161,14 @@ public interface AnnotationHolder {
   AnnotationSession getCurrentAnnotationSession();
 
   boolean isBatchMode();
+
+  /**
+   * Begin creating a new annotation for this range with severity and message.
+   * For example: <p>{@code holder.newAnnotation(elementRange, HighlightSeverity.WARNING, "My warning message").create();}</p>
+   */
+  @Contract(pure=true)
+  @ApiStatus.Experimental
+  default AnnotationBuilder newAnnotation(@NotNull TextRange range, @NotNull HighlightSeverity severity, @NotNull String message) {
+    throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
+  }
 }

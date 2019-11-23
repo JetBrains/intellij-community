@@ -217,25 +217,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       setEverywhereAuto(false);
     }
 
-    if (mySearchField instanceof ExtendableTextField) {
-      ExtendableTextField textField = (ExtendableTextField)mySearchField;
-
-      Boolean commandsSupported = mySelectedTab.getContributor()
-        .map(contributor -> !contributor.getSupportedCommands().isEmpty())
-        .orElse(true);
-      if (commandsSupported) {
-        textField.addExtension(hintExtension);
-      }
-      else {
-        textField.removeExtension(hintExtension);
-      }
-
-      textField.removeExtension(myAdvertisement);
-      if (!commandsSupported) {
-        tab.getContributor().map(c -> c.getAdvertisement()).
-          ifPresent(s -> textField.addExtension(myAdvertisement.withText(s)));
-      }
-    }
+    rebuildSearchFieldExtensions();
 
     if (prevTabIsAll != nextTabIsAll) {
       //reset cell renderer to show/hide group titles in "All" tab
@@ -246,6 +228,26 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
     repaint();
     rebuildList();
+  }
+
+  private void rebuildSearchFieldExtensions() {
+    if (mySearchField != null) {
+      Boolean commandsSupported = mySelectedTab.getContributor()
+        .map(contributor -> !contributor.getSupportedCommands().isEmpty())
+        .orElse(true);
+      if (commandsSupported) {
+        mySearchField.addExtension(hintExtension);
+      }
+      else {
+        mySearchField.removeExtension(hintExtension);
+      }
+
+      mySearchField.removeExtension(myAdvertisement);
+      if (!commandsSupported) {
+        mySelectedTab.getContributor().map(c -> c.getAdvertisement()).
+          ifPresent(s -> mySearchField.addExtension(myAdvertisement.withText(s)));
+      }
+    }
   }
 
   private final MyAdvertisement myAdvertisement = new MyAdvertisement();
@@ -701,7 +703,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     projectBusConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void exitDumbMode() {
-        ApplicationManager.getApplication().invokeLater(() -> rebuildList());
+        ApplicationManager.getApplication().invokeLater(() -> {
+          rebuildSearchFieldExtensions();
+          rebuildList();
+        });
       }
     });
     projectBusConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {

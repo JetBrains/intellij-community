@@ -91,7 +91,7 @@ public abstract class PsiShortNamesCache {
    * @deprecated use {@link #processAllClassNames}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public void getAllClassNames(@NotNull HashSet<String> dest) {
     processAllClassNames(new CommonProcessors.CollectProcessor<>(dest));
   }

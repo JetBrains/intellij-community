@@ -30,7 +30,7 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-    if (PythonFormattedStringReferenceContributor.FORMAT_STRING_PATTERN.accepts(element)) {
+    if (PythonFormattedStringReferenceContributor.Holder.FORMAT_STRING_PATTERN.accepts(element)) {
       return getReferencesFromFormatString((PyStringLiteralExpression)element);
     }
     else {

@@ -576,7 +576,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       myLength++;
     }
 
-    public void stopAndReportError(RegExpElement element, String message) {
+    public void stopAndReportError(RegExpElement element, @NotNull String message) {
       myHolder.createErrorAnnotation(element, message);
       myStop = true;
     }

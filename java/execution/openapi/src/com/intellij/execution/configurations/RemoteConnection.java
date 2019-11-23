@@ -13,9 +13,9 @@ public class RemoteConnection {
   private boolean myServerMode;
 
   private String myApplicationHostName;
-  private String myApplicationPort;
+  private String myApplicationAddress;
   private String myDebuggerHostName;
-  private String myDebuggerPort;
+  private String myDebuggerAddress;
 
   public static final String ONTHROW = ",onthrow=<FQ exception class name>";
   public static final String ONUNCAUGHT = ",onuncaught=<y/n>";
@@ -25,8 +25,8 @@ public class RemoteConnection {
     myServerMode = serverMode;
     myApplicationHostName = hostName;
     myDebuggerHostName = hostName;
-    myApplicationPort = address;
-    myDebuggerPort = address;
+    myApplicationAddress = address;
+    myDebuggerAddress = address;
   }
 
   public boolean isUseSockets() {
@@ -55,12 +55,12 @@ public class RemoteConnection {
   }
 
   /**
-   * @deprecated use {@link #getApplicationPort()} or {@link #getDebuggerPort()} instead depending on your needs
+   * @deprecated use {@link #getApplicationAddress()} or {@link #getDebuggerAddress()} instead depending on your needs
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public String getAddress() {
-    return myApplicationPort;
+    return myApplicationAddress;
   }
 
   /**
@@ -74,13 +74,13 @@ public class RemoteConnection {
   }
 
   /**
-   * @deprecated use {@link #setApplicationPort(String)} or {@link #setDebuggerPort(String)} instead depending on your needs
+   * @deprecated use {@link #setApplicationAddress(String)} or {@link #setDebuggerAddress(String)} instead depending on your needs
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public void setAddress(String address) {
-    myApplicationPort = address;
-    myDebuggerPort = address;
+    myApplicationAddress = address;
+    myDebuggerAddress = address;
   }
 
   public String getApplicationHostName() {
@@ -99,24 +99,24 @@ public class RemoteConnection {
     myDebuggerHostName = debuggerHostName;
   }
 
-  public String getApplicationPort() {
-    return myApplicationPort;
+  public String getApplicationAddress() {
+    return myApplicationAddress;
   }
 
-  public void setApplicationPort(String applicationPort) {
-    myApplicationPort = applicationPort;
+  public void setApplicationAddress(String applicationAddress) {
+    myApplicationAddress = applicationAddress;
   }
 
-  public String getDebuggerPort() {
-    return myDebuggerPort;
+  public String getDebuggerAddress() {
+    return myDebuggerAddress;
   }
 
-  public void setDebuggerPort(String debuggerPort) {
-    myDebuggerPort = debuggerPort;
+  public void setDebuggerAddress(String debuggerAddress) {
+    myDebuggerAddress = debuggerAddress;
   }
 
   public String getLaunchCommandLine() {
-    final String address = getApplicationPort();
+    final String address = getApplicationAddress();
     final boolean shmem = !isUseSockets();
     final boolean serverMode = isServerMode();
 

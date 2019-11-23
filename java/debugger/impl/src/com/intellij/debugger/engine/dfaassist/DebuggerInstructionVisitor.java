@@ -9,6 +9,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,8 +93,23 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
   }
   
   void cleanup() {
-    myHints.values().removeIf(h -> h.getTitle() == null);
-    myHints.keySet().removeIf(expr -> {
+    myHints.entrySet().removeIf(e -> {
+      PsiExpression expr = e.getKey();
+      DfaHint hint = e.getValue();
+      if (hint.getTitle() == null) return true;
+      if (hint == DfaHint.TRUE || hint == DfaHint.FALSE) {
+        if (BoolUtils.isNegated(expr)) {
+          // It's enough to report for parent only
+          return true;
+        }
+        if (expr instanceof PsiPolyadicExpression) {
+          IElementType tokenType = ((PsiPolyadicExpression)expr).getOperationTokenType();
+          if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+            // For polyadic let's report components only, otherwise the report gets cluttered
+            return true;
+          }
+        }
+      }
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expr);
       return result != null && result.getExpressionValues(expr).size() == 1;
     });

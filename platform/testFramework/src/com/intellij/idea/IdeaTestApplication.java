@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +75,12 @@ public final class IdeaTestApplication implements Disposable {
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();
     return ourInstance;
+  }
+
+  public void disposeApp() {
+    WriteAction.runAndWait(() -> {
+      disposeInstance();
+    });
   }
 
   @Override

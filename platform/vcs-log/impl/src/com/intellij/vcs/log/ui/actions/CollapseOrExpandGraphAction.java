@@ -16,15 +16,18 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.actions.ActionController;
+import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
@@ -41,13 +44,12 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    executeAction((VcsLogUiImpl)ui);
+    executeAction(e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI));
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
     if (ui != null && !ui.getDataPack().isEmpty() && properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
@@ -73,8 +75,23 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     e.getPresentation().setDescription(getPrefix() + LINEAR_BRANCHES_DESCRIPTION);
   }
 
-  protected abstract void executeAction(@NotNull VcsLogUiImpl vcsLogUi);
+  protected abstract void executeAction(@NotNull MainVcsLogUi vcsLogUi);
 
   @NotNull
   protected abstract String getPrefix();
+
+  protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull String title) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ActionController<Integer> actionController = logUi.getDataPack().getVisibleGraph().getActionController();
+      GraphAnswer<Integer> answer = actionController.performAction(graphAction);
+      Runnable updater = answer.getGraphUpdater();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        assert updater != null : "Action:" + title +
+                                 "\nController: " + actionController +
+                                 "\nAnswer:" + answer;
+        updater.run();
+        logUi.getTable().handleAnswer(answer);
+      });
+    }, title, false, null, logUi.getMainComponent());
+  }
 }

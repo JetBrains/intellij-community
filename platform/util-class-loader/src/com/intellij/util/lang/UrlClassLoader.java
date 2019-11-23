@@ -67,7 +67,10 @@ public class UrlClassLoader extends ClassLoader {
   @SuppressWarnings("unused")
   void appendToClassPathForInstrumentation(@NotNull String jar) {
     try {
-      addURL(new File(jar).toURI().toURL());
+      URL url = new File(jar).toURI().toURL();
+      //noinspection deprecation
+      getClassPath().addURL(internProtocol(url));
+      myURLs.add(url);
     }
     catch (MalformedURLException ignore) { }
   }
@@ -82,7 +85,6 @@ public class UrlClassLoader extends ClassLoader {
   /**
    * See com.intellij.TestAll#getClassRoots()
    */
-  @SuppressWarnings("unused")
   @NotNull
   public List<URL> getBaseUrls() {
     return myClassPath.getBaseUrls();
@@ -107,8 +109,10 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myErrorOnMissingJar = true;
     private boolean myLazyClassloadingCaches;
     private boolean myLogJarAccess;
-    private @Nullable CachePoolImpl myCachePool;
-    private @Nullable CachingCondition myCachingCondition;
+    @Nullable
+    private CachePoolImpl myCachePool;
+    @Nullable
+    private CachingCondition myCachingCondition;
 
     private boolean myUrlsInterned;
 
@@ -273,6 +277,7 @@ public class UrlClassLoader extends ClassLoader {
 
   /**
    * Interns a value of the {@link URL#protocol} ("file" or "jar") and {@link URL#host} (empty string) fields.
+   * @return interned URL or null if URL was malformed
    */
   @Nullable
   public static URL internProtocol(@NotNull URL url) {
@@ -301,7 +306,6 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public void addURL(@NotNull URL url) {
     getClassPath().addURL(internProtocol(url));
     myURLs.add(url);
@@ -426,7 +430,6 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
-  @SuppressWarnings("unused")
   @NotNull
   protected Object getClassLoadingLock(String className) {
     return myClassLoadingLocks != null ? myClassLoadingLocks.getOrCreateLock(className) : this;

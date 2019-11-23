@@ -30,8 +30,8 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -55,10 +55,10 @@ public class RefreshLogAction extends RefreshAction {
 
     // diagnostic for possible refresh problems
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui instanceof AbstractVcsLogUi) {
-      VisiblePackRefresher refresher = ((AbstractVcsLogUi)ui).getRefresher();
+    if (ui instanceof VcsLogUiEx) {
+      VisiblePackRefresher refresher = ((VcsLogUiEx)ui).getRefresher();
       if (!refresher.isValid()) {
-        String message = "Trying to refresh invalid log tab.";
+        String message = "Trying to refresh invalid log tab '" + ui.getId() + "'.";
         if (!logManager.getDataManager().getProgress().isRunning()) {
           LOG.error(message, collectDiagnosticInformation(e.getProject(), logManager));
         }

@@ -23,8 +23,8 @@ import com.intellij.util.ui.StatusText.DEFAULT_EMPTY_TEXT
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.CheckoutLocalBranchOnDoubleClickHandler
@@ -50,7 +50,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
   private val branchesSearchFieldPanel = simplePanel()
   private val branchesSearchField = Wrapper(tree.installSearchField(false, JBUI.Borders.emptyLeft(5)))
 
-  lateinit var logUi: VcsLogUiImpl
+  lateinit var logUi: MainVcsLogUi
 
   private val vcsLogListener = object : VcsProjectLog.ProjectLogListener {
     override fun logCreated(manager: VcsLogManager) {
@@ -78,9 +78,9 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
   @CalledInAwt
   private fun initLogUi(logManager: VcsLogManager) {
-    val ui = logManager.createLogUi("BRANCHES_LOG", true, false)
+    val ui = logManager.createLogUi("BRANCHES_LOG", VcsLogManager.LogWindowKind.TOOL_WINDOW, false)
     Disposer.register(this, ui)
-    uiController.registerDataPackListener(ui.logData)
+    uiController.registerDataPackListener(logManager.dataManager)
     branchViewSplitter.secondComponent = VcsLogPanel(logManager, ui)
     logUi = ui
     branchesSearchField.setVerticalSizeReferent(ui.toolbar)
@@ -141,7 +141,9 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
   private fun initLogUiWhenLogIsReady() {
     VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
-      initLogUi(logManager)
+      if (!::logUi.isInitialized) { //logUi can be already initialized in ProjectLogListener
+        initLogUi(logManager)
+      }
       updateBranchesTree(true)
     } // schedule initialization: need the log for other actions
   }
@@ -166,7 +168,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     tree.update(initial)
   }
 
-  fun refreshTree(){
+  fun refreshTree() {
     tree.refreshTree()
   }
 

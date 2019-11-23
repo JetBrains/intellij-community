@@ -264,6 +264,6 @@ public class GitConflictResolver {
     }
 
     List<FilePath> files = GitChangeUtils.getUnmergedFiles(repository);
-    return ContainerUtil.map(files, it -> LocalFileSystem.getInstance().refreshAndFindFileByPath(it.getPath()));
+    return ContainerUtil.mapNotNull(files, it -> LocalFileSystem.getInstance().refreshAndFindFileByPath(it.getPath()));
   }
 }

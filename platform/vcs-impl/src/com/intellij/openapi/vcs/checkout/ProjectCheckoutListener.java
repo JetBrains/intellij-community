@@ -5,14 +5,12 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsBundle;
 
 import java.io.File;
 
 /**
- * @author yole
+ * Open project with {@code project.ipr}.
  */
 public class ProjectCheckoutListener implements CheckoutListener {
   public ProjectCheckoutListener() { }
@@ -21,10 +19,7 @@ public class ProjectCheckoutListener implements CheckoutListener {
   public boolean processCheckedOutDirectory(Project project, File directory) {
     File[] files = directory.listFiles((dir, name) -> dir.isFile() && name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION));
     if (files != null && files.length > 0) {
-      String message = VcsBundle.message("checkout.open.project.prompt", getProductNameWithArticle(), files[0].getPath());
-      if (Messages.showYesNoDialog(project, message, VcsBundle.message("checkout.title"), Messages.getQuestionIcon()) == Messages.YES) {
-        ProjectUtil.openProject(files[0].getPath(), project, false);
-      }
+      ProjectUtil.openProject(files[0].getPath(), project, false);
       return true;
     }
     return false;

@@ -1036,9 +1036,8 @@ public class ChangeListWorker {
       if (b1 != null && b2 != null) {
         final VcsRevisionNumber rn1 = b1.getRevisionNumber();
         final VcsRevisionNumber rn2 = b2.getRevisionNumber();
-        final boolean isBinary1 = (b1 instanceof BinaryContentRevision);
-        final boolean isBinary2 = (b2 instanceof BinaryContentRevision);
-        return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL && rn1.compareTo(rn2) == 0 && isBinary1 == isBinary2;
+        return rn1 != VcsRevisionNumber.NULL && rn2 != VcsRevisionNumber.NULL &&
+               b1.getClass() == b2.getClass() && rn1.compareTo(rn2) == 0;
       }
       return b1 == null && b2 == null;
     }

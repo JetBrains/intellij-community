@@ -61,18 +61,19 @@ import java.awt.*;
 
 public class AnnotateDiffViewerAction {
   private static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
+  private static class Holder {
+    private static final Key<boolean[]> ANNOTATIONS_SHOWN_KEY = Key.create("Diff.AnnotateAction.AnnotationShown");
 
-  private static final Key<boolean[]> ANNOTATIONS_SHOWN_KEY = Key.create("Diff.AnnotateAction.AnnotationShown");
-
-  private static final ViewerAnnotatorFactory[] ANNOTATORS = new ViewerAnnotatorFactory[]{
-    new TwosideAnnotatorFactory(), new OnesideAnnotatorFactory(), new UnifiedAnnotatorFactory(),
-    new ThreesideAnnotatorFactory(), new TextMergeAnnotatorFactory()
-  };
+    private static final ViewerAnnotatorFactory[] ANNOTATORS = new ViewerAnnotatorFactory[]{
+      new TwosideAnnotatorFactory(), new OnesideAnnotatorFactory(), new UnifiedAnnotatorFactory(),
+      new ThreesideAnnotatorFactory(), new TextMergeAnnotatorFactory()
+    };
+  }
 
   @Nullable
   @SuppressWarnings("unchecked")
   private static ViewerAnnotator getAnnotator(@NotNull DiffViewerBase viewer, @NotNull Editor editor) {
-    for (ViewerAnnotatorFactory annotator : ANNOTATORS) {
+    for (ViewerAnnotatorFactory annotator : Holder.ANNOTATORS) {
       if (annotator.getViewerClass().isInstance(viewer)) return annotator.createAnnotator(viewer, editor);
     }
     return null;
@@ -308,7 +309,7 @@ public class AnnotateDiffViewerAction {
     public void onInit() {
       if (myViewer.getProject() == null) return;
 
-      for (ViewerAnnotatorFactory annotator : ANNOTATORS) {
+      for (ViewerAnnotatorFactory annotator : Holder.ANNOTATORS) {
         if (annotator.getViewerClass().isInstance(myViewer)) annotator.showRememberedAnnotations(myViewer);
       }
     }
@@ -318,7 +319,7 @@ public class AnnotateDiffViewerAction {
     public void onDispose() {
       if (myViewer.getProject() == null) return;
 
-      for (ViewerAnnotatorFactory annotator : ANNOTATORS) {
+      for (ViewerAnnotatorFactory annotator : Holder.ANNOTATORS) {
         if (annotator.getViewerClass().isInstance(myViewer)) annotator.rememberShownAnnotations(myViewer);
       }
     }
@@ -555,7 +556,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void showRememberedAnnotations(@NotNull T viewer) {
-      boolean[] annotationsShown = viewer.getRequest().getUserData(ANNOTATIONS_SHOWN_KEY);
+      boolean[] annotationsShown = viewer.getRequest().getUserData(Holder.ANNOTATIONS_SHOWN_KEY);
       if (annotationsShown == null || annotationsShown.length != 2) return;
       if (annotationsShown[0]) {
         ViewerAnnotator annotator = createAnnotator(viewer, Side.LEFT);
@@ -573,7 +574,7 @@ public class AnnotateDiffViewerAction {
       annotationsShown[0] = isAnnotationShown(viewer, Side.LEFT);
       annotationsShown[1] = isAnnotationShown(viewer, Side.RIGHT);
 
-      viewer.getRequest().putUserData(ANNOTATIONS_SHOWN_KEY, annotationsShown);
+      viewer.getRequest().putUserData(Holder.ANNOTATIONS_SHOWN_KEY, annotationsShown);
     }
 
     @Nullable
@@ -639,7 +640,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void showRememberedAnnotations(@NotNull T viewer) {
-      boolean[] annotationsShown = viewer.getRequest().getUserData(ANNOTATIONS_SHOWN_KEY);
+      boolean[] annotationsShown = viewer.getRequest().getUserData(Holder.ANNOTATIONS_SHOWN_KEY);
       if (annotationsShown == null || annotationsShown.length != 3) return;
       if (annotationsShown[0]) {
         ViewerAnnotator annotator = createAnnotator(viewer, ThreeSide.LEFT);
@@ -662,7 +663,7 @@ public class AnnotateDiffViewerAction {
       annotationsShown[1] = isAnnotationShown(viewer, ThreeSide.BASE);
       annotationsShown[2] = isAnnotationShown(viewer, ThreeSide.RIGHT);
 
-      viewer.getRequest().putUserData(ANNOTATIONS_SHOWN_KEY, annotationsShown);
+      viewer.getRequest().putUserData(Holder.ANNOTATIONS_SHOWN_KEY, annotationsShown);
     }
 
     @Nullable

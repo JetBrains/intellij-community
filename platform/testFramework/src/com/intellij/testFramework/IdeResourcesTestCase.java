@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.util.TipAndTrickBean;
+import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
 
@@ -25,7 +26,7 @@ public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
     Collection<String> errors = new TreeSet<>();
     for (String id : ids) {
       FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
-      TipAndTrickBean tip = TipAndTrickBean.findByFileName(descriptor.getTipFileName());
+      TipAndTrickBean tip = TipUIUtil.getTip(descriptor);
       if (tip == null) {
         errors.add("<tipAndTrick file=\"" + descriptor.getTipFileName() + "\" feature-id=\"" + id + "\"/>");
       }
