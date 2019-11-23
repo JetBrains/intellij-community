@@ -75,8 +75,10 @@
     </el-row>
 
     <el-tabs value="date" size="small">
-      <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
-                   :key="item.order" :label="item.name" :name="item.order" lazy>
+      <el-tab-pane v-for='item in [
+          {name: "By Date", order: "date"},
+          {name: "By Build", order: "buildNumber"}
+          ]' :key="item.order" :label="item.name" :name="item.order" lazy>
         <keep-alive>
           <div>
             <el-form v-if="item.order === 'date'" :inline="true" size="small">
@@ -99,6 +101,7 @@
                 </el-card>
               </el-col>
             </el-row>
+
             <el-row :gutter="5" style="margin-top: 5px;">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
@@ -106,7 +109,7 @@
                 </el-card>
               </el-col>
               <el-col :span="12">
-                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
                   <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
                 </el-card>
               </el-col>
@@ -121,6 +124,9 @@
         <ul>
           <li>
             <small>Events <code>bootstrap</code> and <code>splash</code> are not available for reports <= v5 (May 2019, Idea 2019.2).</small>
+          </li>
+          <li>
+            <small>Events <code>editorRestoring</code> is reliably reported since 23 November 2019.</small>
           </li>
         </ul>
       </el-col>

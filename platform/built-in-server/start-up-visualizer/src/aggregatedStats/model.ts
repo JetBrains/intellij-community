@@ -24,7 +24,7 @@ export interface GroupedMetricResponse {
 }
 
 export interface DataQuery {
-  fields: Array<string | DataQueryDimension>
+  fields?: Array<string | DataQueryDimension>
 
   filters?: Array<DataQueryFilter>
   order?: Array<string>

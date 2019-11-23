@@ -12,6 +12,7 @@
     "element-ui": "^2.12.0",
     "humanize-duration": "^3.21.0",
     "p-queue": "^6.2.1",
+    "rison-node": "^2.1.0",
     "semver": "^6.3.0",
     "vue": "^2.6.10",
     "vue-class-component": "^7.1.0",

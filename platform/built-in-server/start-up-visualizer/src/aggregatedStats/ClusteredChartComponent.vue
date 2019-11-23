@@ -11,6 +11,8 @@
   import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
   import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
 
+  const rison = require("rison-node")
+
   @Component
   export default class ClusteredChartComponent extends BaseStatChartComponent<ClusteredChartManager> {
     @Watch("chartSettings.aggregationOperator")
@@ -59,7 +61,7 @@
         dataQuery.filters!!.push({field: "generated_time", sql: "> subtractMonths(now(), 1)"})
       }
 
-      const url = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` + encodeURIComponent(JSON.stringify(dataQuery))
+      const url = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` + rison.encode(dataQuery)
 
       const onFinish = () => {
         this.isLoading = false

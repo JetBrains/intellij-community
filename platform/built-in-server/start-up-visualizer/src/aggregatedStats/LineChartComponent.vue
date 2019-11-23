@@ -9,8 +9,10 @@
   import {ChartSettings} from "@/aggregatedStats/ChartSettings"
   import {loadJson} from "@/httpUtil"
   import {SortedByCategory, SortedByDate} from "@/aggregatedStats/ChartConfigurator"
-  import {DataQuery, DataRequest, expandMachine, expandMachineAsFilterValue} from "@/aggregatedStats/model"
+  import {DataQuery, DataQueryDimension, DataRequest, expandMachine, expandMachineAsFilterValue} from "@/aggregatedStats/model"
   import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
+
+  const rison = require("rison-node")
 
   @Component
   export default class LineChartComponent extends BaseStatChartComponent<LineChartManager> {
@@ -55,41 +57,51 @@
           {name: "build_c3"},
         ]
 
-        dataQuery.fields = [{name: "t", sql: `toUnixTimestamp(anyHeavy(generated_time)) * 1000`}]
-        dataQuery.fields = dataQuery.fields.concat(this.metrics)
+        const fields: Array<string | DataQueryDimension> = [{name: "t", sql: `toUnixTimestamp(anyHeavy(generated_time)) * 1000`}]
+        fields.push(...this.metrics)
+        dataQuery.fields = fields
         dataQuery.order = dataQuery.dimensions.map(it => it.name)
       }
-      else if (granularity !== "as is") {
-        let sql: string
-        if (granularity == null || granularity === "hour") {
-          sql = "toStartOfHour(generated_time)"
-        }
-        else if (granularity === "day") {
-          sql = "toStartOfDay(generated_time)"
-        }
-        else if (granularity === "week") {
-          // Monday is the first day of week
-          sql = "toStartOfWeek(generated_time, 1)"
+      else {
+        if (granularity !== "as is") {
+          let sql: string
+          if (granularity == null || granularity === "hour") {
+            sql = "toStartOfHour(generated_time)"
+          }
+          else if (granularity === "day") {
+            sql = "toStartOfDay(generated_time)"
+          }
+          else if (granularity === "week") {
+            // Monday is the first day of week
+            sql = "toStartOfWeek(generated_time, 1)"
+          }
+          else {
+            sql = "toStartOfMonth(generated_time)"
+          }
+
+          dataQuery.dimensions = [
+            // seconds to milliseconds
+            {name: "t", sql: `toUnixTimestamp(${sql}) * 1000`}
+          ]
+
+          dataQuery.fields = ["build_c1", "build_c2", "build_c3"].map(it => {
+            return {name: it, sql: `anyHeavy(${it})`}
+          })
+          dataQuery.fields = dataQuery.fields.concat(this.metrics)
         }
         else {
-          sql = "toStartOfMonth(generated_time)"
+          const fields: Array<string | DataQueryDimension> = [{name: "t", sql: `toUnixTimestamp(generated_time) * 1000`}, "build_c1", "build_c2", "build_c3"]
+          fields.push(...this.metrics)
+          dataQuery.fields = fields
         }
-
-        dataQuery.dimensions = [
-          // seconds to milliseconds
-          {name: "t", sql: `toUnixTimestamp(${sql}) * 1000`}
-        ]
-
-        dataQuery.fields = ["build_c1", "build_c2", "build_c3"].map(it => {
-          return {name: it, sql: `anyHeavy(${it})`}
-        })
-        dataQuery.fields = dataQuery.fields.concat(this.metrics)
         dataQuery.order = ["t"]
       }
 
-      dataQuery.aggregator = "medianTDigest"
+      if (granularity !== "as is") {
+        dataQuery.aggregator = "medianTDigest"
+      }
 
-      const url = `${chartSettings.serverUrl}/api/v1/metrics/` + encodeURIComponent(JSON.stringify(dataQuery))
+      const url = `${chartSettings.serverUrl}/api/v1/metrics/` + rison.encode(dataQuery)
       const reportUrlPrefix = `${chartSettings.serverUrl}/api/v1/report/` + `product=${encodeURIComponent(request.product)}&machine=${encodeURIComponent(expandMachine(request))}`
 
       const onFinish = () => {
