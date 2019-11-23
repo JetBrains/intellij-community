@@ -434,6 +434,22 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
 
     File patchFile = getPatchFileInConfigDir(schemePatchDir);
+    List<FilePatch> patches = new ArrayList<>(buildAndSavePatchInBatches(patchFile, textChanges, honorExcludedFromCommit));
+
+    final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles,
+                                                               createShelvedChangesFromFilePatches(myProject, patchFile.toString(),
+                                                                                                   patches));
+    changeList.markToDelete(markToBeDeleted);
+    changeList.setName(schemePatchDir.getName());
+    ProgressManager.checkCanceled();
+    mySchemeManager.addScheme(changeList, false);
+    totalSW.report(LOG);
+    return changeList;
+  }
+
+  private List<FilePatch> buildAndSavePatchInBatches(@NotNull File patchFile,
+                                                     @NotNull List<Change> textChanges,
+                                                     boolean honorExcludedFromCommit) throws VcsException, IOException {
     List<FilePatch> patches = new ArrayList<>();
     int batchIndex = 0;
     int baseContentsPreloadSize = Registry.intValue("git.shelve.load.base.in.batches", -1);
@@ -473,16 +489,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         totalSw.report(LOG);
       }
     }
-
-    final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles,
-                                                               createShelvedChangesFromFilePatches(myProject, patchFile.toString(),
-                                                                                                   patches));
-    changeList.markToDelete(markToBeDeleted);
-    changeList.setName(schemePatchDir.getName());
-    ProgressManager.checkCanceled();
-    mySchemeManager.addScheme(changeList, false);
-    totalSW.report(LOG);
-    return changeList;
+    return patches;
   }
 
   private void preloadBaseRevisions(@NotNull List<Change> textChanges) {
