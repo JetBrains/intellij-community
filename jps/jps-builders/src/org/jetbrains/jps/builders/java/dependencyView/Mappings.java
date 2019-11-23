@@ -857,11 +857,6 @@ public class Mappings {
         this.rootClass = rootClass.name;
       }
 
-      public InheritanceConstraint(final int rootClass) {
-        super(ClassRepr.getPackageName(myContext.getValue(rootClass)));
-        this.rootClass = rootClass;
-      }
-
       @Override
       public boolean checkResidence(final int residence) {
         final Boolean inheritorOf = isInheritorOf(residence, rootClass, null);
