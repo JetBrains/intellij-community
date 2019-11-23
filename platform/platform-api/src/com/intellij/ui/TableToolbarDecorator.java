@@ -177,8 +177,8 @@ class TableToolbarDecorator extends ToolbarDecorator {
         }
         TableUtil.selectRows(table, idx);
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
-        if (row > 0 && col != -1) {
-          table.editCellAt(row - 1, col);
+        if (row + delta >= 0 && col != -1) {
+          table.editCellAt(row + delta, col);
         }
       }
     }
