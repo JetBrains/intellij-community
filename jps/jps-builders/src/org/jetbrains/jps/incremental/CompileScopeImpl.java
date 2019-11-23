@@ -65,7 +65,7 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isWholeTargetAffected(@NotNull BuildTarget<?> target) {
-    return myFiles.isEmpty() && (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+    return (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target)) && !myFiles.containsKey(target);
   }
 
   @Override
