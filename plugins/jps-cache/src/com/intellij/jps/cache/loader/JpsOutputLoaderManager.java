@@ -95,7 +95,7 @@ public class JpsOutputLoaderManager {
       ApplicationManager.getApplication().invokeLater(() -> {
         Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
                                                                                  NotificationType.INFORMATION, null);
-        notification.addAction(NotificationAction.createSimple("Update caches", () -> {
+        notification.addAction(NotificationAction.createSimple("Update Caches", () -> {
           notification.expire();
           load(false);
         }));
