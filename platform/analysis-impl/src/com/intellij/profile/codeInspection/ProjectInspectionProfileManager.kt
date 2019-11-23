@@ -114,7 +114,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
 
         val cleanupInspectionProfilesRunnable = {
           cleanupSchemes(project)
-          (ServiceManager.getServiceIfCreated(InspectionProfileManager::class.java) as BaseInspectionProfileManager?)?.cleanupSchemes(project)
+          (serviceIfCreated<InspectionProfileManager>() as BaseInspectionProfileManager?)?.cleanupSchemes(project)
         }
 
         if (app.isUnitTestMode || app.isHeadlessEnvironment) {
