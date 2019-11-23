@@ -79,10 +79,10 @@ class EventLogConsole {
 
   private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
-    final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+    EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
     editor.getSettings().setWhitespacesShown(false);
     installNotificationsFont(editor);
-    myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         if (project == myProjectModel.getProject()) {
