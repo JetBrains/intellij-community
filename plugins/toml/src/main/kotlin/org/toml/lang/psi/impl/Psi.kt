@@ -6,10 +6,14 @@
 package org.toml.lang.psi.impl
 
 import com.intellij.lang.ASTFactory
+import com.intellij.lang.psi.SimpleMultiLineTextEscaper
+import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.CompositePsiElement
+import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.toml.lang.psi.*
@@ -34,6 +38,21 @@ class TomlLiteralImpl(type: IElementType) : CompositePsiElement(type), TomlLiter
         = ReferenceProvidersRegistry.getReferencesFromProviders(this)
 
     override fun toString(): String = "TomlLiteral"
+
+    override fun isValidHost(): Boolean =
+        node.findChildByType(TOML_STRING_LITERALS) != null
+
+    override fun updateText(text: String): PsiLanguageInjectionHost {
+        val valueNode = node.firstChildNode
+        assert(valueNode is LeafElement)
+        (valueNode as LeafElement).replaceWithText(text)
+        return this
+    }
+
+    override fun createLiteralTextEscaper(): LiteralTextEscaper<out PsiLanguageInjectionHost> {
+        val tokenType = node.findChildByType(TOML_STRING_LITERALS)?.elementType ?: error("$text is not string literal")
+        return if (tokenType in TOML_BASIC_STRINGS) TomlLiteralTextEscaper(this) else SimpleMultiLineTextEscaper(this)
+    }
 }
 
 class TomlArrayImpl(type: IElementType) : CompositePsiElement(type), TomlArray {

@@ -11,8 +11,8 @@ import com.intellij.lang.lexer.isWhitespaceChar
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil
+import org.toml.lang.psi.TOML_BASIC_STRINGS
 import org.toml.lang.psi.TomlElementTypes.BASIC_STRING
 import org.toml.lang.psi.TomlElementTypes.MULTILINE_BASIC_STRING
 
@@ -110,9 +110,6 @@ class TomlEscapeLexer private constructor(
         /**
          * Set of possible arguments for [of]
          */
-        val ESCAPABLE_LITERALS_TOKEN_SET = TokenSet.create(
-            BASIC_STRING,
-            MULTILINE_BASIC_STRING
-        )
+        val ESCAPABLE_LITERALS_TOKEN_SET = TOML_BASIC_STRINGS
     }
 }
