@@ -16,7 +16,7 @@ class UpdateManagerUsagesCollector : ApplicationUsagesCollector() {
       ExternalUpdateManager.SNAP -> "Snap"
       else -> "IDE"
     }
-    return mutableSetOf(newMetric("Package Manager", updateManager))
+    return mutableSetOf(newMetric("Update Manager", updateManager))
   }
 
   override fun getGroupId(): String {
