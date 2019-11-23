@@ -290,7 +290,11 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Environment variables: $envVariables")
     }
 
-    runJUnitTask(allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
+    if ("android-uitests".equals(mainModule)) {
+      runUiTestTask(allJvmArgs, allSystemProperties, bootstrapClasspath, classpathFile.getAbsolutePath())
+    } else {
+      runJUnitTask(allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
+    }
 
     notifySnapshotBuilt(allJvmArgs)
   }
@@ -449,6 +453,43 @@ class TestingTasksImpl extends TestingTasks {
 
       test(name: options.bootstrapSuite)
     }
+  }
+
+  @CompileDynamic
+  private void runUiTestTask(List<String> jvmArgs, Map<String, String> systemProperties, List<String> bootstrapClasspath, String classpathFile) {
+    defineUiTestTask(context.ant, "$context.paths.communityHome/lib")
+
+    context.ant.uitest(classpathFile: classpathFile, testGroups: options.uiTestGroups) {
+      jvmArgs.each { jvmarg(value: it) }
+      systemProperties.each { key, value ->
+        if (value != null) {
+          jvmarg(value: "-D${key}=${value}")
+        }
+      }
+
+      classpath {
+        bootstrapClasspath.each {
+          pathelement(location: it)
+        }
+      }
+    }
+  }
+
+
+  static boolean uiTaskDefined
+
+  @CompileDynamic
+  static private def defineUiTestTask(AntBuilder ant, String communityLib) {
+    if (uiTaskDefined) return
+    uiTaskDefined = true
+
+    def junitUiTaskLoaderRef = "JUNIT_UITASK_CLASS_LOADER"
+    Path pathJUnit = new Path(ant.project)
+    pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit.jar"))
+    pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit4.jar"))
+    pathJUnit.createPathElement().setLocation(new File("$communityLib/../build/lib/jps/antuitest.jar"))
+    ant.project.addReference(junitUiTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
+    ant.taskdef(name: "uitest", classname: "com.android.antuitest.tasks.UiTestTask", loaderRef: junitUiTaskLoaderRef)
   }
 
   /**
