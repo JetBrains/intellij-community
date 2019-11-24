@@ -35,11 +35,11 @@ public class CommandLineWrapperUtil {
     fillClasspathJarFile(manifest, classPath.toString(), outputJar);
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public static void fillClasspathJarFile(Manifest manifest, String classPath, @NotNull File outputJar)
     throws IOException {
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, classPath);
+    //noinspection IOResourceOpenedButNotSafelyClosed
     new JarOutputStream(new BufferedOutputStream(new FileOutputStream(outputJar)), manifest).close();
   }
 

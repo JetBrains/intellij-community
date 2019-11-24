@@ -17,7 +17,6 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +78,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
           .suspend(true)
           .create(getJavaParameters());
 
-        myRemoteConnection.setApplicationPort(remotePort);
+        myRemoteConnection.setApplicationAddress(remotePort);
         if (java9plus) {
           myRemoteConnection.setApplicationHostName("*");
         }
@@ -105,11 +104,11 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     TargetEnvironmentFactory runner = getRemoteRunner(getEnvironment());
     TargetEnvironmentRequest request = runner.createRequest();
     if (myRemoteConnection != null) {
-      final int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationPort(), -1);
+      final int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationAddress(), -1);
       if (remotePort > 0) {
         request.bindTargetPort(remotePort).promise().onSuccess(it -> {
           myRemoteConnection.setDebuggerHostName("0.0.0.0");
-          myRemoteConnection.setDebuggerPort(String.valueOf(it.getLocalValue()));
+          myRemoteConnection.setDebuggerAddress(String.valueOf(it.getLocalValue()));
         });
       }
     }

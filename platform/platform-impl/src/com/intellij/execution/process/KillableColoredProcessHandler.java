@@ -55,6 +55,10 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
       super(commandLine);
     }
 
+    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset) {
+      super(process, commandLine, charset);
+    }
+
     @NotNull
     @Override
     protected BaseOutputReader.Options readerOptions() {

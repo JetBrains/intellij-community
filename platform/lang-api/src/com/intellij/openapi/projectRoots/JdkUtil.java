@@ -331,31 +331,32 @@ public class JdkUtil {
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
       Promises.collectResults(promises).onSuccess(__ -> {
         List<String> fileArgs = new ArrayList<>();
-          if (dynamicVMOptions) {
-            fileArgs.addAll(vmParameters.getList());
-              
-          }
-          else {
-            appendVmParameters(commandLine, request, vmParameters);
-          }
-          if (classPathParameter != null) {
-            fileArgs.add("-classpath");
-            fileArgs.add(classPathParameter.getTargetValue());
-            
-          }
-          if (modulePathParameter != null) {
-            fileArgs.add("-p");
-            fileArgs.add(modulePathParameter.getTargetValue());
-            
-          }
+        if (dynamicVMOptions) {
+          fileArgs.addAll(vmParameters.getList());
+        }
+        else {
+          appendVmParameters(commandLine, request, vmParameters);
+        }
+        if (classPathParameter != null) {
+          fileArgs.add("-classpath");
+          fileArgs.add(classPathParameter.getTargetValue());
+        }
+        if (modulePathParameter != null) {
+          fileArgs.add("-p");
+          fileArgs.add(modulePathParameter.getTargetValue());
+        }
 
-          for (TargetValue<String> mainClassParameter : mainClassParameters) {
-            fileArgs.add(mainClassParameter.getTargetValue());
-          }
-          if (dynamicParameters) {
-            fileArgs.addAll(javaParameters.getProgramParametersList().getList());
-          }
+        for (TargetValue<String> mainClassParameter : mainClassParameters) {
+          fileArgs.add(mainClassParameter.getTargetValue());
+        }
+        if (dynamicParameters) {
+          fileArgs.addAll(javaParameters.getProgramParametersList().getList());
+        }
+        try {
           CommandLineWrapperUtil.writeArgumentsFile(argFile, fileArgs, cs);
+        }
+        catch (IOException e) {
+          //todo[remoteServers]: interrupt preparing environment
         }
       });
 
@@ -418,7 +419,12 @@ public class JdkUtil {
         for (TargetValue<String> parameter : classPathParameters) {
           pathList.add(parameter.getTargetValue());
         }
-        CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, cs);
+        try {
+          CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, cs);
+        }
+        catch (IOException e) {
+          //todo[remoteServers]: interrupt preparing environment
+        }
       });
 
       Map<String, String> map = new HashMap<>();
