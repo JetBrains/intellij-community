@@ -65,7 +65,7 @@ import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgr
 /**
  * @author yole
  */
-public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable, DecoratorManager {
+public class CommittedChangesTreeBrowser extends JPanel implements DataProvider, Disposable, DecoratorManager {
   private static final Border RIGHT_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
 
   private final Project myProject;
@@ -413,35 +413,33 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return ActionManager.getInstance().createActionToolbar("CommittedChangesTree", toolbarGroup, true);
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (key.equals(VcsDataKeys.CHANGES)) {
-      final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[0]));
-    } else if (key.equals(VcsDataKeys.HAVE_SELECTED_CHANGES)) {
-      final int count = myChangesTree.getSelectionCount();
-      sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, count > 0);
+  public Object getData(@NotNull String dataId) {
+    if (VcsDataKeys.CHANGES.is(dataId)) {
+      return collectChanges(getSelectedChangeLists(), false).toArray(new Change[0]);
     }
-    else if (key.equals(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN)) {
-      final Collection<Change> changes = collectChanges(getSelectedChangeLists(), true);
-      sink.put(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN, changes.toArray(new Change[0]));
+    if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
+      return myChangesTree.getSelectionCount() > 0;
     }
-    else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
-      final List<CommittedChangeList> lists = getSelectedChangeLists();
-      if (!lists.isEmpty()) {
-        sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[0]));
-      }
+    if (VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN.is(dataId)) {
+      return collectChanges(getSelectedChangeLists(), true).toArray(new Change[0]);
     }
-    else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
+    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+      List<CommittedChangeList> changeLists = getSelectedChangeLists();
+      return !changeLists.isEmpty() ? changeLists.toArray(new CommittedChangeList[0]) : null;
+    }
+    if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.is(dataId)) {
+      return myDetailsView.getSelectedChanges().toArray(new Change[0]);
+    }
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getFiles(changes.stream())));
+      return getNavigatableArray(myProject, getFiles(changes.stream()));
     }
-    else if (key.equals(PlatformDataKeys.HELP_ID)) {
-      sink.put(PlatformDataKeys.HELP_ID, myHelpId);
-    } else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
-      final List<Change> selectedChanges = myDetailsView.getSelectedChanges();
-      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[0]));
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myHelpId;
     }
+    return null;
   }
 
   public TreeExpander getTreeExpander() {
@@ -521,13 +519,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     public void stateChanged(ChangeEvent e) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
         updateModel();
-      } else {
+      }
+      else {
         ApplicationManager.getApplication().invokeLater(() -> updateModel());
       }
     }
   }
 
-  private class ChangesBrowserTree extends Tree implements TypeSafeDataProvider {
+  private class ChangesBrowserTree extends Tree implements DataProvider {
     ChangesBrowserTree() {
       super(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
     }
@@ -537,23 +536,17 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       return true;
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
-        sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+    public Object getData(@NotNull String dataId) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) return myCopyProvider;
+      if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return myTreeExpander;
+      if (VcsDataKeys.SELECTED_CHANGES.is(dataId) ||
+          VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId) ||
+          CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
+        return myDetailsView.getData(dataId);
       }
-      else if (key.equals(PlatformDataKeys.TREE_EXPANDER)) {
-        sink.put(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
-      } else {
-        final String name = key.getName();
-        if (VcsDataKeys.SELECTED_CHANGES.is(name) || VcsDataKeys.CHANGE_LEAD_SELECTION.is(name) ||
-            CommittedChangesBrowserUseCase.DATA_KEY.is(name)) {
-          final Object data = myDetailsView.getData(name);
-          if (data != null) {
-            sink.put(key, data);
-          }
-        }
-      }
+      return null;
     }
 
     public void invalidateNodeSizes() {

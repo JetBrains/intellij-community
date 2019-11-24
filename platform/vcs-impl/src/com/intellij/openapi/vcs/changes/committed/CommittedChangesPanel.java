@@ -30,9 +30,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER;
+import static com.intellij.openapi.vcs.VcsDataKeys.REMOTE_HISTORY_LOCATION;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
-public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
+public class CommittedChangesPanel extends JPanel implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(CommittedChangesPanel.class);
 
   private final CommittedChangesTreeBrowser myBrowser;
@@ -203,16 +205,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (key.equals(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER)) {
-      sink.put(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER, myIfNotCachedReloader);
-    } else if (VcsDataKeys.REMOTE_HISTORY_LOCATION.equals(key)) {
-      sink.put(VcsDataKeys.REMOTE_HISTORY_LOCATION, myLocation);
-    }
-    //if (key.equals(VcsDataKeys.CHANGES) || key.equals(VcsDataKeys.CHANGE_LISTS)) {
-      myBrowser.calcData(key, sink);
-    //}
+  public Object getData(@NotNull String dataId) {
+    if (REMOTE_HISTORY_CHANGED_LISTENER.is(dataId)) return myIfNotCachedReloader;
+    if (REMOTE_HISTORY_LOCATION.is(dataId)) return myLocation;
+    return myBrowser.getData(dataId);
   }
 
   @Override
