@@ -44,8 +44,9 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
-  protected TargetedCommandLine createNewCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                     @Nullable TargetEnvironmentConfiguration configuration) throws ExecutionException {
+  @NotNull
+  protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                          @Nullable TargetEnvironmentConfiguration configuration) throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
@@ -57,7 +58,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     LocalTargetEnvironmentFactory runner = new LocalTargetEnvironmentFactory();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
     TargetEnvironmentRequest request = runner.createRequest();
-    TargetedCommandLine targetedCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
+    TargetedCommandLine targetedCommandLine = createTargetedCommandLine(request, runner.getTargetConfiguration());
     return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
       .createGeneralCommandLine(targetedCommandLine)
       .withRedirectErrorStream(redirectErrorStream);

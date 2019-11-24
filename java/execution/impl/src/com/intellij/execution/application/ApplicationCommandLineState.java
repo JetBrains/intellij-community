@@ -6,7 +6,6 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ConfigurationWithCommandLineShortener;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -14,6 +13,9 @@ import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -25,6 +27,7 @@ import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.util.PathsList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -65,10 +68,12 @@ public abstract class ApplicationCommandLineState<T extends
     return params;
   }
 
-  //todo[remoteServers]: support COMMAND_LINE_CONTENT 
+  @NotNull
   @Override
-  protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    GeneralCommandLine line = super.createCommandLine();
+  protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                          @Nullable TargetEnvironmentConfiguration configuration)
+    throws ExecutionException {
+    TargetedCommandLine line = super.createTargetedCommandLine(request, configuration);
     Map<String, String> content = line.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));

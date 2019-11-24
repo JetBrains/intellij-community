@@ -5,6 +5,7 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import java.util.Map;
  * Exe-path, working-directory and other properties are initialized in a lazy way,
  * that allows to create a command line before creating a target where it should be run.
  */
-public class TargetedCommandLine {
+public class TargetedCommandLine extends UserDataHolderBase {
   private TargetValue<String> myExePath = TargetValue.empty();
   private TargetValue<String> myWorkingDirectory = TargetValue.empty();
   private TargetValue<String> myInputFilePath = TargetValue.empty();

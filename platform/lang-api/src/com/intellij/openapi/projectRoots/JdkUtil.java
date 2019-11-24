@@ -299,7 +299,8 @@ public class JdkUtil {
                                        boolean dynamicParameters,
                                        Charset cs) throws CantRunException {
     try {
-      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
+      Platform platform = request.getTargetPlatform().getPlatform();
+      String pathSeparator = String.valueOf(platform.pathSeparator);
       Collection<Promise<TargetValue<String>>> promises = new ArrayList<>();
       TargetValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
@@ -328,6 +329,8 @@ public class JdkUtil {
 
       promises.addAll(ContainerUtil.map(mainClassParameters, TargetValue::promise));
 
+      HashMap<String, String> commandLineContent = new HashMap<>();
+      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
       Promises.collectResults(promises).onSuccess(__ -> {
         List<String> fileArgs = new ArrayList<>();
@@ -353,7 +356,8 @@ public class JdkUtil {
           fileArgs.addAll(javaParameters.getProgramParametersList().getList());
         }
         try {
-          CommandLineWrapperUtil.writeArgumentsFile(argFile, fileArgs, cs);
+          CommandLineWrapperUtil.writeArgumentsFile(argFile, fileArgs, platform.lineSeparator, cs);
+          commandLineContent.put(argFile.getAbsolutePath(), FileUtil.loadFile(argFile));
         }
         catch (IOException e) {
           //todo[remoteServers]: interrupt preparing environment
@@ -363,8 +367,6 @@ public class JdkUtil {
       appendEncoding(javaParameters, commandLine, vmParameters);
       TargetValue<String> argFileParameter = request.createUpload(argFile.getAbsolutePath());
       commandLine.addParameter(TargetValue.map(argFileParameter, s -> "@" + s));
-      //todo[remoteServers]: support COMMAND_LINE_CONTENT
-      //commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(argFile.getAbsolutePath(), FileUtil.loadFile(argFile)));
 
       //todo[remoteServers]: support deleting files on termination
       //OSProcessHandler.deleteFileOnTermination(commandLine, argFile);
@@ -384,6 +386,7 @@ public class JdkUtil {
                                                   boolean dynamicParameters,
                                                   Charset cs) throws CantRunException {
     try {
+      String lineSeparator = request.getTargetPlatform().getPlatform().lineSeparator;
       int pseudoUniquePrefix = new Random().nextInt(Integer.MAX_VALUE);
       File vmParamsFile = null;
       if (dynamicVMOptions) {
@@ -397,7 +400,7 @@ public class JdkUtil {
             }
           }if (!toWrite.isEmpty()) {
           vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);
-          CommandLineWrapperUtil.writeWrapperFile(vmParamsFile, toWrite, cs);
+          CommandLineWrapperUtil.writeWrapperFile(vmParamsFile, toWrite, lineSeparator, cs);
         }
       }
       else {
@@ -409,9 +412,12 @@ public class JdkUtil {
       File appParamsFile = null;
       if (dynamicParameters) {
         appParamsFile = FileUtil.createTempFile("idea_app_params" + pseudoUniquePrefix, null);
-        CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.getProgramParametersList().getList(), cs);
+        CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.getProgramParametersList().getList(), lineSeparator, cs);
       }
 
+      Map<String, String> commandLineContent = new HashMap<>();
+      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
+      
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
@@ -419,18 +425,15 @@ public class JdkUtil {
         for (TargetValue<String> parameter : classPathParameters) {
           pathList.add(parameter.getTargetValue());
         }
+
         try {
-          CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, cs);
+          commandLineContent.put(classpathFile.getAbsolutePath(), StringUtil.join(pathList, lineSeparator));
+          CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, lineSeparator, cs);
         }
         catch (IOException e) {
           //todo[remoteServers]: interrupt preparing environment
         }
       });
-
-      Map<String, String> map = new HashMap<>();
-      //Map<String, String> map = ContainerUtil.stringMap(classpathFile.getAbsolutePath(), classPath.getPathsString());
-      //todo[remoteServers]: support COMMAND_LINE_CONTENT
-      //commandLine.putUserData(COMMAND_LINE_CONTENT, map);
 
       Set<TargetValue<String>> classpath = new LinkedHashSet<>();
       classpath.add(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)));
@@ -465,7 +468,7 @@ public class JdkUtil {
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
         commandLine.addParameter(request.createUpload(vmParamsFile.getAbsolutePath()));
-        map.put(vmParamsFile.getAbsolutePath(), FileUtil.loadFile(vmParamsFile));
+        commandLineContent.put(vmParamsFile.getAbsolutePath(), FileUtil.loadFile(vmParamsFile));
         //todo[remoteServers]: support deleting files on termination
         //OSProcessHandler.deleteFileOnTermination(commandLine, vmParamsFile);
       }
@@ -473,7 +476,7 @@ public class JdkUtil {
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
         commandLine.addParameter(request.createUpload(appParamsFile.getAbsolutePath()));
-        map.put(appParamsFile.getAbsolutePath(), FileUtil.loadFile(appParamsFile));
+        commandLineContent.put(appParamsFile.getAbsolutePath(), FileUtil.loadFile(appParamsFile));
         //todo[remoteServers]: support deleting files on termination
         //OSProcessHandler.deleteFileOnTermination(commandLine, appParamsFile);
       }
@@ -521,7 +524,21 @@ public class JdkUtil {
         manifestText += "Program-Parameters: " + ParametersListUtil.join(javaParameters.getProgramParametersList().getList()) + "\n";
       }
 
+      String jarFileContentPrefix = manifestText + "Class-Path: ";
+      Map<String, String> commandLineContent = new HashMap<>();
+      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
+      
       File classpathJarFile = FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
+      String jarFilePath = classpathJarFile.getAbsolutePath();
+      commandLine.addParameter("-classpath");
+      if (dynamicVMOptions || dynamicParameters) {
+        char pathSeparator = request.getTargetPlatform().getPlatform().pathSeparator;
+        commandLine.addParameter(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
+        commandLine.addParameter(request.createUpload(commandLineWrapper.getName()));
+      }
+      commandLine.addParameter(request.createUpload(jarFilePath));
+      
+      
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
         try {
@@ -534,23 +551,12 @@ public class JdkUtil {
             classPath.append(!StringUtil.endsWithChar(url, '/') && new File(parameter.getLocalValue()).isDirectory() ? url + "/" : url);
           }
           CommandLineWrapperUtil.fillClasspathJarFile(manifest, classPath.toString(), classpathJarFile);
+          commandLineContent.put(jarFilePath, jarFileContentPrefix + classPath.toString());
         }
         catch (IOException e) {
           //todo[remoteServers]: interrupt preparing environment
         }
       });
-
-      String jarFilePath = classpathJarFile.getAbsolutePath();
-      commandLine.addParameter("-classpath");
-      if (dynamicVMOptions || dynamicParameters) {
-        char pathSeparator = request.getTargetPlatform().getPlatform().pathSeparator;
-        commandLine.addParameter(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
-        commandLine.addParameter(request.createUpload(commandLineWrapper.getName()));
-      }
-      commandLine.addParameter(request.createUpload(jarFilePath));
-
-      //todo[remoteServers]: support COMMAND_LINE_CONTENT
-      //commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(jarFilePath, manifestText + "Class-Path: " + path.getPathsString()));
 
       //todo[remoteServers]: support deleting files on termination
       //OSProcessHandler.deleteFileOnTermination(commandLine, classpathJarFile);

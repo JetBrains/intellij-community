@@ -58,10 +58,26 @@ public class CommandLineWrapperUtil {
    * @param cs      a character encoding of an output file, must be ASCII-compatible (e.g. UTF-8)
    */
   public static void writeArgumentsFile(@NotNull File argFile, @NotNull List<String> args, @NotNull Charset cs) throws IOException {
+    writeArgumentsFile(argFile, args, System.lineSeparator(), cs);
+  }
+
+  /**
+   * Writes list of Java arguments to the Java Command-Line Argument File
+   * See https://docs.oracle.com/javase/9/tools/java.htm, section "java Command-Line Argument Files"
+   *
+   * @param argFile       a file to write arguments into
+   * @param args          arguments
+   * @param lineSeparator a line separator to use in file
+   * @param cs            a character encoding of an output file, must be ASCII-compatible (e.g. UTF-8)
+   */
+  public static void writeArgumentsFile(@NotNull File argFile,
+                                        @NotNull List<String> args,
+                                        String lineSeparator,
+                                        @NotNull Charset cs) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(argFile), cs))) {
       for (String arg : args) {
         writer.write(quoteArg(arg));
-        writer.write(System.lineSeparator());
+        writer.write(lineSeparator);
       }
     }
   }
@@ -88,15 +104,18 @@ public class CommandLineWrapperUtil {
 
   public static @NotNull File createWrapperFile(@NotNull List<String> classpath, @NotNull Charset cs) throws IOException {
     File file = FileUtil.createTempFile("classpath" + new Random().nextInt(Integer.MAX_VALUE), null, true);
-    writeWrapperFile(file, classpath, cs);
+    writeWrapperFile(file, classpath, System.lineSeparator(), cs);
     return file;
   }
 
-  public static void writeWrapperFile(@NotNull File wrapperFile, @NotNull List<String> classpath, @NotNull Charset cs) throws IOException {
+  public static void writeWrapperFile(@NotNull File wrapperFile,
+                                      @NotNull List<String> classpath,
+                                      @NotNull String lineSeparator, 
+                                      @NotNull Charset cs) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(wrapperFile), cs))) {
       for (String path : classpath) {
         writer.write(path);
-        writer.write(System.lineSeparator());
+        writer.write(lineSeparator);
       }
     }
   }

@@ -26,6 +26,9 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -46,6 +49,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -180,9 +184,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         return javaParameters;
       }
 
+      @NotNull
       @Override
-      protected GeneralCommandLine createCommandLine() throws ExecutionException {
-        return getJavaParameters().toCommandLine();
+      protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                              @Nullable TargetEnvironmentConfiguration configuration)
+        throws ExecutionException {
+        return getJavaParameters().toCommandLine(request, configuration);
       }
     };
 
@@ -241,9 +248,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         return javaParameters;
       }
 
+      @NotNull
       @Override
-      protected GeneralCommandLine createCommandLine() throws ExecutionException {
-        return getJavaParameters().toCommandLine();
+      protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                              @Nullable TargetEnvironmentConfiguration configuration)
+        throws ExecutionException {
+        return getJavaParameters().toCommandLine(request, configuration);
       }
     };
 

@@ -113,13 +113,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
       }
     }
 
-    TargetedCommandLine targetedCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
-
-    File inputFile = InputRedirectAware.getInputFile(myConfiguration);
-    if (inputFile != null) {
-      targetedCommandLine.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
-    }
-
+    TargetedCommandLine targetedCommandLine = createTargetedCommandLine(request, runner.getTargetConfiguration());
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     TargetEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
     Process process = remoteEnvironment.createProcess(targetedCommandLine, indicator);
@@ -152,9 +146,17 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     return myRemoteRunner = new LocalTargetEnvironmentFactory();
   }
 
+  @NotNull
   @Override
-  protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    return super.createCommandLine().withInput(InputRedirectAware.getInputFile(myConfiguration));
+  protected TargetedCommandLine createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                          @Nullable TargetEnvironmentConfiguration configuration)
+    throws ExecutionException {
+    TargetedCommandLine line = super.createTargetedCommandLine(request, configuration);
+    File inputFile = InputRedirectAware.getInputFile(myConfiguration);
+    if (inputFile != null) {
+      line.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+    }
+    return line;
   }
 
   @NotNull
