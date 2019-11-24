@@ -5,6 +5,7 @@ import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
@@ -16,11 +17,13 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -118,6 +121,10 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     TargetEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
     Process process = remoteEnvironment.createProcess(targetedCommandLine, indicator);
 
+    Map<String, String> content = targetedCommandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+    if (content != null) {
+      content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
+    }
     //todo[remoteServers]: invent the new method for building presentation string
     String commandRepresentation = StringUtil.join(targetedCommandLine.prepareCommandLine(remoteEnvironment), " ");
 

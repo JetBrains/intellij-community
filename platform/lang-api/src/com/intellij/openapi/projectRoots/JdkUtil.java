@@ -19,6 +19,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -69,6 +70,7 @@ public class JdkUtil {
 
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
   private static final String JAVAAGENT = "-javaagent";
+  private static final Logger LOG = Logger.getInstance(JdkUtil.class);
 
   private JdkUtil() { }
 
@@ -329,8 +331,6 @@ public class JdkUtil {
 
       promises.addAll(ContainerUtil.map(mainClassParameters, TargetValue::promise));
 
-      HashMap<String, String> commandLineContent = new HashMap<>();
-      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
       Promises.collectResults(promises).onSuccess(__ -> {
         List<String> fileArgs = new ArrayList<>();
@@ -357,16 +357,19 @@ public class JdkUtil {
         }
         try {
           CommandLineWrapperUtil.writeArgumentsFile(argFile, fileArgs, platform.lineSeparator, cs);
-          commandLineContent.put(argFile.getAbsolutePath(), FileUtil.loadFile(argFile));
         }
         catch (IOException e) {
           //todo[remoteServers]: interrupt preparing environment
         }
       });
 
+      HashMap<String, String> commandLineContent = new HashMap<>();
+      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
+
       appendEncoding(javaParameters, commandLine, vmParameters);
       TargetValue<String> argFileParameter = request.createUpload(argFile.getAbsolutePath());
       commandLine.addParameter(TargetValue.map(argFileParameter, s -> "@" + s));
+      addCommandLineContentOnResolve(commandLineContent, argFileParameter);
 
       //todo[remoteServers]: support deleting files on termination
       //OSProcessHandler.deleteFileOnTermination(commandLine, argFile);
@@ -414,9 +417,6 @@ public class JdkUtil {
         appParamsFile = FileUtil.createTempFile("idea_app_params" + pseudoUniquePrefix, null);
         CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.getProgramParametersList().getList(), lineSeparator, cs);
       }
-
-      Map<String, String> commandLineContent = new HashMap<>();
-      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
       
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
@@ -427,7 +427,6 @@ public class JdkUtil {
         }
 
         try {
-          commandLineContent.put(classpathFile.getAbsolutePath(), StringUtil.join(pathList, lineSeparator));
           CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, lineSeparator, cs);
         }
         catch (IOException e) {
@@ -461,22 +460,31 @@ public class JdkUtil {
       commandLine.addParameter(TargetValue.composite(classpath, values -> StringUtil.join(values, pathSeparator)));
 
       commandLine.addParameter(commandLineWrapper.getName());
-      commandLine.addParameter(request.createUpload(classpathFile.getAbsolutePath()));
+
+      Map<String, String> commandLineContent = new HashMap<>();
+      commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
+
+      TargetValue<String> classPathParameter = request.createUpload(classpathFile.getAbsolutePath());
+      commandLine.addParameter(classPathParameter);
+      addCommandLineContentOnResolve(commandLineContent, classPathParameter);
+      
       //todo[remoteServers]: support deleting files on termination
       //OSProcessHandler.deleteFileOnTermination(commandLine, classpathFile);
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
-        commandLine.addParameter(request.createUpload(vmParamsFile.getAbsolutePath()));
-        commandLineContent.put(vmParamsFile.getAbsolutePath(), FileUtil.loadFile(vmParamsFile));
+        TargetValue<String> vmParamsParameter = request.createUpload(vmParamsFile.getAbsolutePath());
+        commandLine.addParameter(vmParamsParameter);
+        addCommandLineContentOnResolve(commandLineContent, vmParamsParameter);
         //todo[remoteServers]: support deleting files on termination
         //OSProcessHandler.deleteFileOnTermination(commandLine, vmParamsFile);
       }
 
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
-        commandLine.addParameter(request.createUpload(appParamsFile.getAbsolutePath()));
-        commandLineContent.put(appParamsFile.getAbsolutePath(), FileUtil.loadFile(appParamsFile));
+        TargetValue<String> appParamsParameter = request.createUpload(appParamsFile.getAbsolutePath());
+        commandLine.addParameter(appParamsParameter);
+        addCommandLineContentOnResolve(commandLineContent, appParamsParameter);
         //todo[remoteServers]: support deleting files on termination
         //OSProcessHandler.deleteFileOnTermination(commandLine, appParamsFile);
       }
@@ -484,6 +492,17 @@ public class JdkUtil {
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
     }
+  }
+
+  private static void addCommandLineContentOnResolve(@NotNull Map<String, String> commandLineContent, @NotNull TargetValue<String> value) {
+    value.promise().onSuccess(resolved -> {
+      try {
+        commandLineContent.put(value.getTargetValue(), FileUtil.loadFile(new File(resolved.getLocalValue())));
+      }
+      catch (IOException e) {
+        LOG.error("Cannot add command line content for value " + resolved, e);
+      }
+    });
   }
 
   private static void setClasspathJarParams(@NotNull TargetedCommandLine commandLine,
@@ -536,9 +555,9 @@ public class JdkUtil {
         commandLine.addParameter(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
         commandLine.addParameter(request.createUpload(commandLineWrapper.getName()));
       }
-      commandLine.addParameter(request.createUpload(jarFilePath));
-      
-      
+      TargetValue<String> jarFileValue = request.createUpload(jarFilePath);
+      commandLine.addParameter(jarFileValue);
+
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
         try {
@@ -551,7 +570,10 @@ public class JdkUtil {
             classPath.append(!StringUtil.endsWithChar(url, '/') && new File(parameter.getLocalValue()).isDirectory() ? url + "/" : url);
           }
           CommandLineWrapperUtil.fillClasspathJarFile(manifest, classPath.toString(), classpathJarFile);
-          commandLineContent.put(jarFilePath, jarFileContentPrefix + classPath.toString());
+
+          jarFileValue.promise().onSuccess(value -> {
+            commandLineContent.put(value.getTargetValue(), jarFileContentPrefix + classPath.toString());
+          });
         }
         catch (IOException e) {
           //todo[remoteServers]: interrupt preparing environment
@@ -644,16 +666,16 @@ public class JdkUtil {
                                                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                               @NotNull SimpleJavaParameters javaParameters) {
     String localJdkPath = ObjectUtils.doIfNotNull(javaParameters.getJdk(), jdk -> jdk.getHomePath());
-    String remoteJdkPath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : "";
+    String remoteJdkPath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : null;
 
     ArrayList<TargetValue<String>> result = new ArrayList<>();
     for (String path : javaParameters.getClassPath().getPathList()) {
-      if (localJdkPath == null || !path.startsWith(localJdkPath)) {
+      if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
         result.add(request.createUpload(path));
       }
       else {
         char separator = request.getTargetPlatform().getPlatform().fileSeparator;
-        result.add(TargetValue.fixed(remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath)));
+        result.add(TargetValue.fixed(FileUtil.toCanonicalPath(remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath), separator)));
       }
     }
     return result;
