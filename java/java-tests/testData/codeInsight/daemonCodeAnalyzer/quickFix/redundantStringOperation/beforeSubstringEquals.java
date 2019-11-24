@@ -9,5 +9,7 @@ class X {
         if (s.substring(0, 4).equals("xyzt")) { }
         if (s.substring(1, 5).equals("xyzt")) { }
         if (s.substring(1, 1+"xyzt".length()).equals("xyzt")) { }
+        if (s.substring(s.length() - 3).equals("...")) {}
+        if (s.substring(s.length() - s2.length()).equals(s2)) {}
     }
 }

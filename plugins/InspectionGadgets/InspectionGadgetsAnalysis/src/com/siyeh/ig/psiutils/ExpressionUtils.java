@@ -4,7 +4,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
@@ -1142,12 +1141,20 @@ public class ExpressionUtils {
   public static boolean isDifference(@NotNull PsiExpression from, @NotNull PsiExpression to, @NotNull PsiExpression diff) {
     diff = PsiUtil.skipParenthesizedExprDown(diff);
     if (diff == null) return false;
-    if (isZero(from) && PsiEquivalenceUtil.areElementsEquivalent(to, diff)) return true;
     EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
+    if (isZero(from) && eq.expressionsAreEquivalent(to, diff)) return true;
+    if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
     if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)diff).getROperand();
       if (right != null && eq.expressionsAreEquivalent(to, left) && eq.expressionsAreEquivalent(from, right)) {
+        return true;
+      }
+    }
+    if (from instanceof PsiBinaryExpression && ((PsiBinaryExpression)from).getOperationTokenType().equals(JavaTokenType.MINUS)) {
+      PsiExpression left = ((PsiBinaryExpression)from).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)from).getROperand();
+      if (right != null && eq.expressionsAreEquivalent(to, left) && eq.expressionsAreEquivalent(diff, right)) {
         return true;
       }
     }

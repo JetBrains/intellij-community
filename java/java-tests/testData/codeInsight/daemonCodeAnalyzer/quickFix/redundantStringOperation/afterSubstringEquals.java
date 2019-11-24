@@ -9,5 +9,7 @@ class X {
         if (s.startsWith("xyzt")) { }
         if (s.startsWith("xyzt", 1)) { }
         if (s.startsWith("xyzt", 1)) { }
+        if (s.endsWith("...")) {}
+        if (s.endsWith(s2)) {}
     }
 }
