@@ -4,6 +4,7 @@ package com.siyeh.ig.redundancy;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -54,6 +56,16 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_INDEX_OF_ONE_ARG = exactInstanceCall(JAVA_LANG_STRING, "indexOf").parameterCount(1);
   private static final CallMatcher STRING_EQUALS = exactInstanceCall(JAVA_LANG_STRING, "equals").parameterTypes(JAVA_LANG_OBJECT);
 
+  public boolean ignoreStringConstructor = false;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), this,
+      "ignoreStringConstructor");
+  }
+
   @Nls
   @NotNull
   @Override
@@ -70,7 +82,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new RedundantStringOperationVisitor(holder, isOnTheFly);
+    return new RedundantStringOperationVisitor(holder, isOnTheFly, this);
   }
 
   private static class RedundantStringOperationVisitor extends JavaElementVisitor {
@@ -88,10 +100,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
+    private final RedundantStringOperationInspection myInspection;
 
-    RedundantStringOperationVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    RedundantStringOperationVisitor(ProblemsHolder holder, boolean isOnTheFly, RedundantStringOperationInspection inspection) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
+      myInspection = inspection;
       myManager = myHolder.getManager();
     }
 
@@ -109,7 +123,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (ConstructionUtils.isReferenceTo(classRef, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
         descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression));
       }
-      else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING)) {
+      else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING) && !myInspection.ignoreStringConstructor) {
         descriptor = getStringConstructorProblem(expression);
       }
       if (descriptor != null) {
@@ -121,20 +135,28 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiExpressionList args = expression.getArgumentList();
       if (args == null) return null;
       if (args.isEmpty()) {
-        return myManager.createProblemDescriptor(expression, InspectionGadgetsBundle.message(
-          "inspection.redundant.string.constructor.message"),
-                                                 new StringConstructorFix(true),
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
+        LocalQuickFix[] fixes = {
+          new StringConstructorFix(true),
+          new SetInspectionOptionFix(
+            myInspection, "ignoreStringConstructor",
+            InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
+        return myManager.createProblemDescriptor(expression, (TextRange)null, 
+                                                 InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);
       }
       if (args.getExpressionCount() == 1) {
         PsiExpression arg = args.getExpressions()[0];
         if (TypeUtils.isJavaLangString(arg.getType()) &&
             (PsiUtil.isLanguageLevel7OrHigher(expression) || !STRING_SUBSTRING.matches(arg))) {
           TextRange range = new TextRange(0, args.getStartOffsetInParent());
+          LocalQuickFix[] fixes = {
+            new StringConstructorFix(false),
+            new SetInspectionOptionFix(
+              myInspection, "ignoreStringConstructor",
+              InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
           return myManager.createProblemDescriptor(expression, range,
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
-                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
-                                                   new StringConstructorFix(false));
+                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly, fixes);
         }
       }
       return null;
