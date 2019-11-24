@@ -36,7 +36,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testDescriptorLoading() {
-    val descriptor = loadDescriptor("asp.jar")
+    val descriptor = loadDescriptorInTest("asp.jar")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo("com.jetbrains.plugins.asp")
     assertThat(descriptor.name).isEqualTo("ASP")
@@ -44,14 +44,14 @@ class PluginDescriptorTest {
 
   @Test
   fun testOptionalDescriptors() {
-    val descriptor = loadDescriptor("family")
+    val descriptor = loadDescriptorInTest("family")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.optionalConfigs.size).isEqualTo(1)
   }
 
   @Test
   fun testMultipleOptionalDescriptors() {
-    val descriptor = loadDescriptor("multipleOptionalDescriptors")
+    val descriptor = loadDescriptorInTest("multipleOptionalDescriptors")
     assertThat(descriptor).isNotNull()
     val ids = descriptor.optionalConfigs.keys
     assertThat(ids).hasSize(2)
@@ -61,20 +61,20 @@ class PluginDescriptorTest {
   @Test
   fun testMalformedDescriptor() {
     @Suppress("GrazieInspection")
-    assertThatThrownBy { loadDescriptor("malformed") }
+    assertThatThrownBy { loadDescriptorInTest("malformed") }
       .hasMessageContaining("Content is not allowed in prolog.")
   }
 
   @Test
   fun testAnonymousDescriptor() {
-    val descriptor = loadDescriptor("anonymous")
+    val descriptor = loadDescriptorInTest("anonymous")
     assertThat(descriptor.pluginId).isNull()
     assertThat(descriptor.name).isNull()
   }
 
   @Test
   fun testCyclicOptionalDeps() {
-    assertThatThrownBy { loadDescriptor("cyclicOptionalDeps") }
+    assertThatThrownBy { loadDescriptorInTest("cyclicOptionalDeps") }
       .hasMessage("Plugin someId optional descriptors form a cycle: a.xml, b.xml")
   }
 
@@ -119,7 +119,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testDuplicateDependency() {
-    val descriptor = loadDescriptor("duplicateDependency")
+    val descriptor = loadDescriptorInTest("duplicateDependency")
     assertThat(descriptor).isNotNull()
     assertThat(
       descriptor.optionalDependentPluginIds).isEmpty()
@@ -129,7 +129,7 @@ class PluginDescriptorTest {
 
   @Test
   fun testPluginNameAsId() {
-    val descriptor = loadDescriptor("noId")
+    val descriptor = loadDescriptorInTest("noId")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.pluginId.idString).isEqualTo(descriptor.name)
   }
@@ -143,7 +143,7 @@ class PluginDescriptorTest {
   <vendor>JetBrains</vendor>
   <product-descriptor code="IJ" release-date="20190811" release-version="42"/>
 </idea-plugin>""")
-    val descriptor = loadDescriptor(pluginFile.parent.parent)
+    val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.vendor).isEqualTo("JetBrains")
     assertThat(SimpleDateFormat("yyyyMMdd", Locale.US).format(descriptor.releaseDate)).isEqualTo("20190811")
@@ -302,14 +302,14 @@ class PluginDescriptorTest {
   fun componentConfig() {
     val pluginFile = inMemoryFs.fs.getPath("/plugin/META-INF/plugin.xml")
     pluginFile.write("<idea-plugin>\n  <id>bar</id>\n  <project-components>\n    <component>\n      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>\n      <option name=\"workspace\" value=\"true\"/>\n    </component>\n\n    \n  </project-components>\n</idea-plugin>")
-    val descriptor = loadDescriptor(pluginFile.parent.parent)
+    val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.projectContainerDescriptor.components!![0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
   }
 
   @Test
   fun testPluginIdAsName() {
-    val descriptor = loadDescriptor("noName")
+    val descriptor = loadDescriptorInTest("noName")
     assertThat(descriptor).isNotNull()
     assertThat(descriptor.name).isEqualTo(descriptor.pluginId.idString)
   }
@@ -357,13 +357,13 @@ class PluginDescriptorTest {
   <id>ID</id>
   <name>A</name>
 </idea-plugin>""")
-    val impl1 = loadDescriptor(fs.getPath("/"))
+    val impl1 = loadDescriptorInTest(fs.getPath("/"))
     tempFile.write("""
 <idea-plugin>
   <id>ID</id>
   <name>B</name>
 </idea-plugin>""")
-    val impl2 = loadDescriptor(fs.getPath("/"))
+    val impl2 = loadDescriptorInTest(fs.getPath("/"))
     TestCase.assertEquals(impl1, impl2)
     TestCase.assertEquals(impl1.hashCode(), impl2.hashCode())
     TestCase.assertNotSame(impl1.name, impl2.name)
@@ -377,11 +377,11 @@ private fun writeDescriptor(id: String, pluginDir: Path, @Language("xml") data: 
 private val testDataPath: String
   get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor"
 
-private fun loadDescriptor(dirName: String): IdeaPluginDescriptorImpl {
-  return loadDescriptor(Paths.get(testDataPath, dirName))
+private fun loadDescriptorInTest(dirName: String): IdeaPluginDescriptorImpl {
+  return loadDescriptorInTest(Paths.get(testDataPath, dirName))
 }
 
-private fun loadDescriptor(dir: Path): IdeaPluginDescriptorImpl {
+internal fun loadDescriptorInTest(dir: Path): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.ourPluginError = null
   val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(emptySet())

@@ -155,7 +155,6 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
-    // todo support lazy listeners for dynamically loaded plugins
     // ensure that messageBus is created, regardless of lazy listeners map state
     val messageBus = messageBus as MessageBusImpl
     if (map != null) {

@@ -28,6 +28,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
+import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.BeanBinding
 import java.text.SimpleDateFormat
@@ -174,6 +175,7 @@ object DynamicPlugins {
       for (appServiceInstance in appServiceInstances) {
         application.stateStore.unloadComponent(appServiceInstance)
       }
+      (application.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
 
       for (project in openProjects) {
         val projectServiceInstances = (project as ProjectImpl).unloadServices(pluginDescriptor.project)
@@ -187,6 +189,8 @@ object DynamicPlugins {
             module.stateStore.unloadComponent(moduleServiceInstance)
           }
         }
+
+        (project.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
       }
     }
 
@@ -217,8 +221,10 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, enable: Boolean) {
-    PluginManagerCore.initClassLoader(pluginDescriptor)
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, wasDisabled: Boolean) {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      PluginManagerCore.initClassLoader(pluginDescriptor)
+    }
 
     val application = ApplicationManager.getApplication() as ApplicationImpl
     application.runWriteAction {
@@ -232,7 +238,7 @@ object DynamicPlugins {
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
 
-    if (enable) {
+    if (wasDisabled) {
       // Update list of disabled plugins
       PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
     }
