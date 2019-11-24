@@ -178,8 +178,8 @@ public class ThreadDumper {
     }
 
     StringBuilder sb = new StringBuilder(200);
-    sb.append(exceptionType + ": ");
-    sb.append(line.substring(1, i)); // append thread name (e.g. AWT-EventQueue-0)
+    sb.append(exceptionType).append(": ");
+    sb.append(line, 1, i); // append thread name (e.g. AWT-EventQueue-0)
 
     line = threadDump.get(1); // e.g. " java.lang.Thread.State: RUNNABLE"
     String[] words = line.trim().split(" ");
