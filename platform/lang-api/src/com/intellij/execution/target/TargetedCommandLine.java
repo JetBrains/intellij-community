@@ -101,11 +101,6 @@ public class TargetedCommandLine extends UserDataHolderBase {
   }
 
   @NotNull
-  public List<String> getParameters() {
-    return ContainerUtil.mapNotNull(myParameters, TargetValue::getTargetValue);
-  }
-
-  @NotNull
   public Map<String, String> getEnvironmentVariables() {
     return ContainerUtil.map2MapNotNull(myEnvironment.entrySet(), e -> {
       String value = e.getValue().getTargetValue();
@@ -116,5 +111,10 @@ public class TargetedCommandLine extends UserDataHolderBase {
   @NotNull
   public Charset getCharset() {
     return myCharset;
+  }
+
+  @NotNull
+  private List<String> getParameters() {
+    return ContainerUtil.mapNotNull(myParameters, TargetValue::getTargetValue);
   }
 }
