@@ -107,7 +107,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
             .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }
         }, pluginDescriptor.pluginId)
         schemeManager.addScheme(keymap)
-        schemeManager.setCurrent(keymap, true, true)
+        // do no set current keymap here, consider: multi-keymap plugins, parent keymaps loading
       }
 
       override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
