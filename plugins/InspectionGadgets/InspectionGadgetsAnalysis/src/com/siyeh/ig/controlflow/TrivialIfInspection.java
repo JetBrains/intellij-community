@@ -17,6 +17,9 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -27,23 +30,33 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
+  public boolean ignoreChainedIf = false;
+
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
     return "RedundantIfStatement";
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), this, "ignoreChainedIf");
   }
 
   @Override
@@ -61,6 +74,20 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("trivial.if.problem.descriptor");
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    boolean chainedIf = (boolean)infos[0];
+    if (chainedIf) {
+      return new InspectionGadgetsFix[]{
+        new TrivialIfFix(),
+        new DelegatingFix(new SetInspectionOptionFix(
+          this, "ignoreChainedIf", InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), true))
+      };
+    }
+    return new InspectionGadgetsFix[]{new TrivialIfFix()};
   }
 
   @Override
@@ -199,22 +226,26 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new TrivialIfVisitor();
-  }
-
-  private static class TrivialIfVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
-      super.visitIfStatement(ifStatement);
-      final PsiExpression condition = ifStatement.getCondition();
-      if (condition == null) {
-        return;
+    return new BaseInspectionVisitor() {
+      @Override
+      public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
+        super.visitIfStatement(ifStatement);
+        boolean chainedIf = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ifStatement) instanceof PsiIfStatement ||
+                            (ifStatement.getParent() instanceof PsiIfStatement &&
+                             ((PsiIfStatement)ifStatement.getParent()).getElseBranch() == ifStatement);
+        if (ignoreChainedIf && chainedIf && !isOnTheFly()) return;
+        final PsiExpression condition = ifStatement.getCondition();
+        if (condition == null) {
+          return;
+        }
+        if (isTrivial(ifStatement)) {
+          PsiElement anchor = Objects.requireNonNull(ifStatement.getFirstChild());
+          ProblemHighlightType level =
+            ignoreChainedIf && chainedIf ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+          registerError(anchor, level, chainedIf);
+        }
       }
-      if (isTrivial(ifStatement)) {
-        registerStatementError(ifStatement);
-      }
-    }
+    };
   }
 
   public static boolean isTrivial(PsiIfStatement ifStatement) {

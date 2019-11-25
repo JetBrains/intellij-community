@@ -16,7 +16,14 @@ can be simplified to
     <b>return</b> foo();
 </pre></code>
 <!-- tooltip end -->
-<p>
+<p>Use an option below to not display warning in case of chaining if statement. E.g.:
+  <code><pre>
+    if (condition1) return true;
+    if (condition2) return false;
+    return true;
+  </pre></code>
+  The fix action will still be available in this case.
+</p>
 
 </body>
 </html>
