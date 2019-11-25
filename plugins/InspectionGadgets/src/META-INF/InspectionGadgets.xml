@@ -662,7 +662,7 @@
                      implementationClass="com.siyeh.ig.controlflow.FallthruInSwitchStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ForLoopReplaceableByWhile" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="for.loop.replaceable.by.while.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.ForLoopReplaceableByWhileInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ForLoopWithMissingComponent" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="for.loop.with.missing.component.display.name" groupBundle="messages.InspectionsBundle"

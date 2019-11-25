@@ -34,7 +34,6 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,8 +45,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreLoopsWithoutConditions = false;
-  public boolean m_ignoreLoopsWithBody = true;
+  public boolean m_ignoreLoopsWithoutConditions = true;
 
   @Override
   @NotNull
@@ -75,14 +73,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message(
       "for.loop.replaceable.by.while.ignore.option"), "m_ignoreLoopsWithoutConditions");
-    panel.addCheckbox("Ignore non-empty for loops", "m_ignoreLoopsWithBody");
     return panel;
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) {
-    defaultWriteSettings(node,"m_ignoreLoopsWithBody");
-    writeBooleanOption(node, "m_ignoreLoopsWithBody", true);
   }
 
   @Override
@@ -194,10 +185,6 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       if (PsiUtilCore.hasErrorElementChild(statement)){
-        return;
-      }
-      if (!m_ignoreLoopsWithBody) {
-        registerStatementError(statement);
         return;
       }
 
