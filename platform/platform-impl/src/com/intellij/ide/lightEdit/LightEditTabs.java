@@ -110,7 +110,12 @@ class LightEditTabs extends JBEditorTabs {
     }
 
     private void closeTab(@NotNull TabInfo tabInfo) {
-      removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
+      Object data = tabInfo.getObject();
+      if (data instanceof LightEditorInfo) {
+        if (!isUnsaved(myEditorInfo) || LightEditUtil.confirmClose((LightEditorInfo)data)) {
+          removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
+        }
+      }
     }
   }
 

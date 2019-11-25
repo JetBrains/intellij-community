@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
@@ -24,6 +25,8 @@ import java.util.List;
 public class LightEditorManager implements Disposable {
   private final List<LightEditorInfo> myEditors = new ArrayList<>();
   private final EventDispatcher<LightEditorListener> myEventDispatcher = EventDispatcher.create(LightEditorListener.class);
+
+  final static Key<Boolean> NO_IMPLICIT_SAVE = Key.create("light.edit.no.implicit.save");
 
   @NotNull
   private LightEditorInfo createEditor(@NotNull Document document, @NotNull VirtualFile file) {
@@ -40,6 +43,7 @@ public class LightEditorManager implements Disposable {
   LightEditorInfo createEditor(@NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
+      document.putUserData(NO_IMPLICIT_SAVE, false);
       LightEditorInfo editorInfo = createEditor(document, file);
       Editor editor = editorInfo.getEditor();
       if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
@@ -87,5 +91,9 @@ public class LightEditorManager implements Disposable {
     return myEditors.stream()
       .filter(editorInfo -> file.getPath().equals(editorInfo.getFile().getPath()))
       .findFirst().orElse(null);
+  }
+
+  boolean isImplicitSaveAllowed(@NotNull Document document) {
+    return ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), true);
   }
 }

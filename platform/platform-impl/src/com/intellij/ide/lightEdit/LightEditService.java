@@ -114,4 +114,9 @@ public class LightEditService implements Disposable, LightEditorListener {
       handleClose();
     }
   }
+
+  @NotNull
+  public LightEditorManager getEditorManager() {
+    return myEditorManager;
+  }
 }
