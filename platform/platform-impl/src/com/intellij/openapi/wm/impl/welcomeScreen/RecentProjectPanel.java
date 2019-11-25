@@ -460,7 +460,7 @@ public class RecentProjectPanel extends JPanel {
     protected boolean myHovered;
 
     /**
-     * Used by IDE Faatures Trainer.
+     * Used by IDE Features Trainer.
      * 
      * @deprecated use empty constructor
      */
