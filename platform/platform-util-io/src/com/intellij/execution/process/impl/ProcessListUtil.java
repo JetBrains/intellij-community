@@ -278,11 +278,9 @@ public final class ProcessListUtil {
   }
 
   @Nullable
-  private static String unescapeString(String str, boolean quoted) {
+  private static String unescapeString(@Nullable String str) {
+    if (str == null) return null;
     StringBuilder builder = new StringBuilder();
-    if (quoted) {
-      str = str.substring(1, str.length() - 1);
-    }
     for (int index = 0; index < str.length(); index++) {
       if (str.charAt(index) == '\\') {
         if (index == str.length() - 1) {
@@ -318,6 +316,16 @@ public final class ProcessListUtil {
   }
 
   @Nullable
+  private static String removePrefix(String str, String prefix) {
+    if (str.startsWith(prefix)) {
+      return str.substring(prefix.length());
+    }
+    logErrorTestSafe("Can't remove prefix \"" + prefix + "\"");
+    LOG.debug(str);
+    return null;
+  }
+
+  @Nullable
   static List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
@@ -329,7 +337,8 @@ public final class ProcessListUtil {
     int processCount = lines.length / 3;
     for (int i = 0; i < processCount; i++) {
       int offset = i * 3;
-      int id = StringUtil.parseInt(lines[offset], -1);
+      String idString = removePrefix(lines[offset], "pid:");
+      int id = StringUtil.parseInt(idString, -1);
       if (id == -1) {
         logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
         LOG.debug(output);
@@ -337,17 +346,17 @@ public final class ProcessListUtil {
       }
       if (id == 0) continue;
 
-      String name = unescapeString(lines[offset + 1], false);
+      String name = unescapeString(removePrefix(lines[offset + 1], "name:"));
       if (name == null) {
-        logErrorTestSafe("Failed to unescape a process name: " + lines[offset + 1]);
+        logErrorTestSafe("Failed to read a process name: " + lines[offset + 1]);
         LOG.debug(output);
         return null;
       }
       if (name.isEmpty()) continue;
 
-      String commandLine = unescapeString(lines[offset + 2], true);
+      String commandLine = unescapeString(removePrefix(lines[offset + 2], "cmd:"));
       if (commandLine == null) {
-        logErrorTestSafe("Failed to unescape a process command line: " + lines[offset + 2]);
+        logErrorTestSafe("Failed to read a process command line: " + lines[offset + 2]);
         LOG.debug(output);
         return null;
       }
