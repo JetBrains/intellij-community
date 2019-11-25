@@ -44,9 +44,7 @@ public class FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
   public static int storeName(@NotNull String name) {
-/* Android Studio: b/144579452
     assertShortFileName(name);
-Android Studio: b/144579452 */
     final int idx = FSRecords.getNameId(name);
     cacheData(name, idx, calcStripeIdFromNameId(idx));
     return idx;

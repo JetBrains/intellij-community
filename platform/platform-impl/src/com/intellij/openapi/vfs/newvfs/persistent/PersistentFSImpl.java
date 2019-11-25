@@ -1175,9 +1175,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         @Nullable @Override public VirtualFile getParent() { return null; }
       });
       if (parentAttributes != null) {
-/* Android Studio: b/144579061
         throw new IllegalArgumentException("Must pass FS root path, but got: '"+path+"' , which has a parent '"+parentPath+"'). Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
-Android Studio: b/144579061 */
       }
     }
 
