@@ -205,11 +205,10 @@ class LegacyBridgeModifiableRootModel(
       error("OrderEntry $item does not belong to modifiableRootModel of module ${legacyBridgeModule.name}")
     }
 
-    updateDependencies { dependencies -> dependencies.filter { it != item } }
-
     if (orderEntry is LibraryOrderEntryViaTypedEntity && orderEntry.isModuleLevel) {
-      val libraryId = (orderEntry.library as LegacyBridgeLibrary).libraryId
-      diff.resolve(libraryId)?.let { diff.removeEntity(it) }
+      moduleLibraryTable.removeLibrary(orderEntry.library as LegacyBridgeLibrary)
+    } else {
+      updateDependencies { dependencies -> dependencies.filter { it != item } }
     }
 
     if (assertChangesApplied && orderEntriesImpl.any { it.item == item })
@@ -574,7 +573,12 @@ class LegacyBridgeModifiableRootModel(
 
       modifiableModel.diff.removeEntity(libraryEntity)
 
-      librariesToRemove.add(library)
+      if (librariesToAdd.remove(library)) {
+        Disposer.dispose(library)
+      }
+      else {
+        librariesToRemove.add(library)
+      }
     }
 
     override fun getLibraries(): Array<Library> = libraries.second
