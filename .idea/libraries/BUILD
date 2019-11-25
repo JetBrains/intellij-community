@@ -1887,3 +1887,11 @@ java_library(
     exports = ["//tools/base/dynamic-layout-inspector/proto:layout_inspector_java_proto"],
     runtime_deps = ["//tools/base/dynamic-layout-inspector/proto:layout_inspector_java_proto"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "live-sql-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/experimental/live-sql-inspector:live_sql_java_proto"],
+    runtime_deps = ["//tools/base/experimental/live-sql-inspector:live_sql_java_proto"],
+)
