@@ -24,7 +24,7 @@ class NewInlayProviderSettingsModel<T : Any>(
     providerWithSettings.configurable.createComponent(onChangeListener!!)
   }
   override fun collectAndApply(editor: Editor, file: PsiFile) {
-    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApply(editor, file)
+    providerWithSettings.getCollectorWrapperFor(file, editor, providerWithSettings.language)?.collectTraversingAndApply(editor, file, isEnabled)
   }
 
   override val cases: List<ImmediateConfigurable.Case>
@@ -35,8 +35,9 @@ class NewInlayProviderSettingsModel<T : Any>(
 
 
   override fun apply() {
-    config.storeSettings(providerWithSettings.provider.key, providerWithSettings.language, providerWithSettings.settings)
-    config.changeHintTypeStatus(providerWithSettings.provider.key, providerWithSettings.language, isEnabled)
+    val copy = providerWithSettings.withSettingsCopy()
+    config.storeSettings(copy.provider.key, copy.language, copy.settings)
+    config.changeHintTypeStatus(copy.provider.key, copy.language, isEnabled)
   }
 
   override fun isModified(): Boolean {

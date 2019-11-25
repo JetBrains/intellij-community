@@ -4,14 +4,18 @@ package com.intellij.codeInsight.hints
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.util.messages.Topic
 import org.jdom.Element
 
 @State(name = "InlayHintsSettings", storages = [Storage("workspace.xml")])
 class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
+  private val listener = ApplicationManager.getApplication().messageBus.syncPublisher(INLAY_SETTINGS_CHANGED)
+
   private var myState = State()
   private val lock = Any()
 
@@ -21,59 +25,103 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var settingsMapElement = Element("settingsMapElement")
 
     var lastViewedProviderKeyId: String? = null
+
+    var isEnabled: Boolean = true
+
+    var disabledLanguages: MutableSet<String> = hashSetOf()
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
 
-  fun changeHintTypeStatus(key: SettingsKey<*>, language: Language, enable: Boolean) = synchronized(lock) {
-    val id = key.getFullId(language)
-    if (enable) {
-      myState.disabledHintProviderIds.remove(id)
-    } else {
-      myState.disabledHintProviderIds.add(id)
+  fun changeHintTypeStatus(key: SettingsKey<*>, language: Language, enable: Boolean) {
+    synchronized(lock) {
+      val id = key.getFullId(language)
+      if (enable) {
+        myState.disabledHintProviderIds.remove(id)
+      } else {
+        myState.disabledHintProviderIds.add(id)
+      }
+    }
+    listener.settingsChanged()
+  }
+
+  fun setHintsEnabledForLanguage(language: Language, enabled: Boolean) {
+    val settingsChanged = synchronized(lock) {
+      val id = language.id
+      if (enabled) {
+        myState.disabledLanguages.remove(id)
+      }
+      else {
+        myState.disabledLanguages.add(id)
+      }
+    }
+    if (settingsChanged) {
+      listener.languageStatusChanged()
+      listener.settingsChanged()
     }
   }
 
   fun saveLastViewedProviderId(providerId: String) = synchronized(lock) {
-    state.lastViewedProviderKeyId = providerId
+    myState.lastViewedProviderKeyId = providerId
   }
 
   fun getLastViewedProviderId() : String? {
-    return state.lastViewedProviderKeyId
+    return myState.lastViewedProviderKeyId
   }
 
-  fun invertHintTypeStatus(key: SettingsKey<*>, language: Language) = synchronized(lock) {
-    val id = key.getFullId(language)
-    if (id in myState.disabledHintProviderIds) {
-      myState.disabledHintProviderIds.remove(id)
+  fun setEnabledGlobally(enabled: Boolean) {
+    val settingsChanged = synchronized(lock) {
+      if (myState.isEnabled != enabled) {
+        myState.isEnabled = enabled
+        listener.globalEnabledStatusChanged(enabled)
+        true
+      } else {
+        false
+      }
     }
-    else {
-      myState.disabledHintProviderIds.add(id)
+    if (settingsChanged) {
+      listener.settingsChanged()
     }
+  }
+
+  fun hintsEnabledGlobally() : Boolean = synchronized(lock) {
+    return myState.isEnabled
   }
 
   /**
-   * @param uninitSettings is a setting, that was obtained from createSettings method of provider
+   * @param createSettings is a setting, that was obtained from createSettings method of provider
    */
-  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, uninitSettings: ()->T): T = synchronized(lock) {
+  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, createSettings: ()->T): T = synchronized(lock) {
     val fullId = key.getFullId(language)
-    return getSettingCached(fullId, uninitSettings)
+    return getSettingCached(fullId, createSettings)
   }
 
-  fun <T: Any> storeSettings(key: SettingsKey<T>, language: Language, value: T) = synchronized(lock){
-    val fullId = key.getFullId(language)
-    myCachedSettingsMap[fullId] = value as Any
-    val element = myState.settingsMapElement.clone()
-    element.removeChild(fullId)
-    val serialized = serialize(value)
-    if (serialized != null) {
-      val storeElement = Element(fullId)
-      val wrappedSettingsElement = storeElement.addContent(serialized)
-      myState.settingsMapElement = element.addContent(wrappedSettingsElement)
-      element.sortAttributes(compareBy { it.name })
-    } else {
-      myState.settingsMapElement = element
+  fun <T: Any> storeSettings(key: SettingsKey<T>, language: Language, value: T) {
+    synchronized(lock){
+      val fullId = key.getFullId(language)
+      myCachedSettingsMap[fullId] = value as Any
+      val element = myState.settingsMapElement.clone()
+      element.removeChild(fullId)
+      val serialized = serialize(value)
+      if (serialized != null) {
+        val storeElement = Element(fullId)
+        val wrappedSettingsElement = storeElement.addContent(serialized)
+        myState.settingsMapElement = element.addContent(wrappedSettingsElement)
+        element.sortAttributes(compareBy { it.name })
+      } else {
+        myState.settingsMapElement = element
+      }
     }
+    listener.settingsChanged()
+  }
+
+  fun hintsEnabled(language: Language) : Boolean = synchronized(lock) {
+    return language.id !in myState.disabledLanguages
+  }
+
+  fun hintsShouldBeShown(language: Language) : Boolean = synchronized(lock) {
+    if (!hintsEnabledGlobally()) return false
+    return hintsEnabled(language)
   }
 
   fun hintsEnabled(key: SettingsKey<*>, language: Language) : Boolean = synchronized(lock) {
@@ -83,6 +131,12 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
       lang = lang.baseLanguage
     }
     return true
+  }
+
+  fun hintsShouldBeShown(key: SettingsKey<*>, language: Language): Boolean = synchronized(lock) {
+    if (!hintsEnabledGlobally()) return false
+    if (!hintsEnabled(language)) return false
+    return hintsEnabled(key, language)
   }
 
   override fun getState(): State = synchronized(lock) {
@@ -120,6 +174,26 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     fun instance(): InlayHintsSettings {
       return ServiceManager.getService(InlayHintsSettings::class.java)
     }
+
+    @JvmStatic
+    val INLAY_SETTINGS_CHANGED: Topic<SettingsListener> = Topic.create("Inlay hints settings changed", SettingsListener::class.java)
+  }
+
+  interface SettingsListener {
+    /**
+     * @param newEnabled whether inlay hints are globally switched on or off now
+     */
+    fun globalEnabledStatusChanged(newEnabled: Boolean) {}
+
+    /**
+     * Called, when hints are enabled/disabled for some language
+     */
+    fun languageStatusChanged() {}
+
+    /**
+     * Called when any settings in inlay hints were changed
+     */
+    fun settingsChanged() {}
   }
 }
 
