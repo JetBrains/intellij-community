@@ -30,6 +30,7 @@ import git4idea.repo.GitRepository
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 private val LOG = logger<GitFetchSupportImpl>()
@@ -42,6 +43,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   private val progressManager get() = ProgressManager.getInstance()
 
   private val fetchQueue = GitRemoteOperationQueueImpl()
+  private val fetchRequestCounter = AtomicInteger()
 
   override fun getDefaultRemoteToFetch(repository: GitRepository): GitRemote? {
     val remotes = repository.remotes
@@ -90,19 +92,25 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   }
 
   private fun fetch(arguments: List<RemoteRefCoordinates>): GitFetchResult {
-    return withIndicator {
-      val activity = IdeActivity.started(project, "vcs", "fetch")
+    try {
+      fetchRequestCounter.incrementAndGet()
+      return withIndicator {
+        val activity = IdeActivity.started(project, "vcs", "fetch")
 
-      val tasks = fetchInParallel(arguments)
-      val results = waitForFetchTasks(tasks)
+        val tasks = fetchInParallel(arguments)
+        val results = waitForFetchTasks(tasks)
 
-      val mergedResults = mutableMapOf<GitRepository, RepoResult>()
-      for (result in results) {
-        val res = mergedResults[result.repository]
-        mergedResults[result.repository] = mergeRepoResults(res, result)
+        val mergedResults = mutableMapOf<GitRepository, RepoResult>()
+        for (result in results) {
+          val res = mergedResults[result.repository]
+          mergedResults[result.repository] = mergeRepoResults(res, result)
+        }
+        activity.finished()
+        FetchResultImpl(project, VcsNotifier.getInstance(project), mergedResults)
       }
-      activity.finished()
-      FetchResultImpl(project, VcsNotifier.getInstance(project), mergedResults)
+    }
+    finally {
+      fetchRequestCounter.decrementAndGet()
     }
   }
 
@@ -114,6 +122,8 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return RepoResult(firstResult.results + (secondResult.remote to secondResult))
     }
   }
+
+  override fun isFetchRunning() = fetchRequestCounter.get() > 0
 
   private fun fetchInParallel(remotes: List<RemoteRefCoordinates>): List<FetchTask> {
     val tasks = mutableListOf<FetchTask>()

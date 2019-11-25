@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,12 @@ public interface GitFetchSupport {
    */
   @Nullable
   GitRemote getDefaultRemoteToFetch(@NotNull GitRepository repository);
+
+  /**
+   * @return true if there's an active fetch process, false otherwise
+   */
+  @CalledInAny
+  boolean isFetchRunning();
 
   @NotNull
   static GitFetchSupport fetchSupport(@NotNull Project project) {
