@@ -363,17 +363,18 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
     // stub packages can be partial
     groupedResults.containsKey(Priority.STUB_PACKAGE)
       && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty() -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
+    groupedResults.containsKey(Priority.SKELETON) -> firstResultWithFallback(groupedResults, Priority.SKELETON, inverseOrder = true)
     // third party sdk should not overwrite packages from the same vendor
     groupedResults.containsKey(Priority.THIRD_PARTY_SDK) -> firstResultWithFallback(groupedResults, Priority.THIRD_PARTY_SDK)
     else -> listOf(groupedResults.values.first().first())
   }
 }
 
-private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<PsiElement>>, priority: Priority): List<PsiElement> {
+private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<PsiElement>>, priority: Priority, inverseOrder: Boolean = false): List<PsiElement> {
   val first = results[priority]!!.first()
   val nextByPriority = results.tailMap(priority).values.asSequence().drop(1).take(1).flatten().firstOrNull()
 
-  return listOfNotNull(first, nextByPriority)
+  return if (inverseOrder) listOfNotNull(nextByPriority, first) else listOfNotNull(first, nextByPriority)
 }
 
 /**
@@ -384,10 +385,17 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?) = when
   isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
   isInStubPackage(element) -> Priority.STUB_PACKAGE
   isInTypeShed(element) -> Priority.TYPESHED
+  isInSkeletons(element) -> Priority.SKELETON
   PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
   isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
   isInProvidedSdk(element) -> Priority.THIRD_PARTY_SDK
   else -> Priority.OTHER
+}
+
+fun isInSkeletons(element: PsiElement): Boolean {
+  val sdk = PythonSdkUtil.findPythonSdk(element) ?: return false
+  val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile.virtualFile) ?: return false
+  return PythonSdkUtil.isFileInSkeletons(vFile, sdk)
 }
 
 private fun isInProvidedSdk(element: PsiElement): Boolean =
@@ -437,6 +445,7 @@ private enum class Priority {
   STUB_PACKAGE, // pyi file located in some stub package
   INLINE_PACKAGE, // py file located in some inline package
   TYPESHED, // pyi file located in typeshed
+  SKELETON, // generated skeletons for binary modules
   THIRD_PARTY_SDK, // project-specific sdk, e.g Google App Engine one
   OTHER, // other cases, e.g. py file located inside installed lib
   NAMESPACE_PACKAGE // namespace packag e has the lowest priority
