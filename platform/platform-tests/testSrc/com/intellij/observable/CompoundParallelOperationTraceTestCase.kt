@@ -2,32 +2,46 @@
 package com.intellij.observable
 
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
-import org.junit.Assert.assertEquals
+import junit.framework.TestCase
 
-abstract class CompoundParallelOperationTraceTestCase {
+abstract class CompoundParallelOperationTraceTestCase : TestCase() {
+
   protected fun <R> generate(times: Int, action: (Int) -> R): Iterable<R> {
     return (0 until times).map(action)
   }
 
   protected fun <Id> testTrace(action: TestTraceContext<Id>.() -> Unit) {
-    TestTraceContext(true, CompoundParallelOperationTrace<Id>()).action()
+    val trace = CompoundParallelOperationTrace<Id>()
+    assertTrue(trace.isOperationCompleted())
+    TestTraceContext(trace).action()
+    assertTrue(trace.isOperationCompleted())
   }
 
-  protected class TestTraceContext<Id>(
-    private val mustBeComplete: Boolean,
-    private val delegate: CompoundParallelOperationTrace<Id>
-  ) {
+  data class TestTraceContext<Id>(private val delegate: CompoundParallelOperationTrace<Id>) {
 
-    val trace: CompoundParallelOperationTrace<Id>
-      get() {
+    private var mustBeComplete = true
+
+    val trace = MockCompoundParallelOperationTrace(delegate)
+
+    fun operation(action: () -> Unit) {
+      assertTrue(delegate.isOperationCompleted())
+      assertTrue(mustBeComplete)
+      action()
+      assertTrue(delegate.isOperationCompleted())
+      mustBeComplete = true
+    }
+
+    inner class MockCompoundParallelOperationTrace<Id>(private val delegate: CompoundParallelOperationTrace<Id>) {
+      fun startTask(taskId: Id) {
         assertEquals(mustBeComplete, delegate.isOperationCompleted())
-        return delegate
+        delegate.startTask(taskId)
+        mustBeComplete = false
       }
 
-    fun operation(action: TestTraceContext<Id>.() -> Unit) {
-      trace.startOperation()
-      TestTraceContext(false, delegate).action()
-      assertEquals(true, delegate.isOperationCompleted())
+      fun finishTask(taskId: Id) {
+        assertEquals(mustBeComplete, delegate.isOperationCompleted())
+        delegate.finishTask(taskId)
+      }
     }
   }
 }

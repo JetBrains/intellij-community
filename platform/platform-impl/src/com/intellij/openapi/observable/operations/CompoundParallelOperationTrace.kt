@@ -7,44 +7,38 @@ import java.util.concurrent.CopyOnWriteArrayList
 class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) {
 
   private val traces = LinkedHashMap<Id, Int>()
-  private var waitForFirstTaskInOperation = false
-  private var isOperationCompleted = true
 
   private val beforeOperationListeners = CopyOnWriteArrayList<() -> Unit>()
   private val afterOperationListeners = CopyOnWriteArrayList<() -> Unit>()
 
-  fun startOperation() {
-    synchronized(this) {
-      waitForFirstTaskInOperation = true
-      if (!isOperationCompleted) return
-      isOperationCompleted = false
-    }
-    debug("Operation is started")
-    beforeOperationListeners.forEach { it() }
-  }
-
   fun isOperationCompleted(): Boolean {
     synchronized(this) {
-      return isOperationCompleted
+      return traces.isEmpty()
     }
   }
 
   fun startTask(taskId: Id) {
+    val isOperationCompletedBeforeStart: Boolean
     synchronized(this) {
-      waitForFirstTaskInOperation = false
+      isOperationCompletedBeforeStart = traces.isEmpty()
       addTask(taskId)
+    }
+    if (isOperationCompletedBeforeStart) {
+      debug("Operation is started")
+      beforeOperationListeners.forEach { it() }
     }
   }
 
   fun finishTask(taskId: Id) {
+    val isOperationCompletedAfterFinish: Boolean
     synchronized(this) {
       if (!removeTask(taskId)) return
-      if (traces.isNotEmpty()) return
-      if (waitForFirstTaskInOperation) return
-      isOperationCompleted = true
+      isOperationCompletedAfterFinish = traces.isEmpty()
     }
-    debug("Operation is finished")
-    afterOperationListeners.forEach { it() }
+    if (isOperationCompletedAfterFinish) {
+      debug("Operation is finished")
+      afterOperationListeners.forEach { it() }
+    }
   }
 
   private fun addTask(taskId: Id) {

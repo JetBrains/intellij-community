@@ -4,7 +4,6 @@ package com.intellij.openapi.observable.operations
 class AnonymousParallelOperationTrace(debugName: String? = null) {
   private val delegate = CompoundParallelOperationTrace<Nothing?>(debugName)
 
-  fun startOperation() = delegate.startOperation()
   fun isOperationCompleted() = delegate.isOperationCompleted()
   fun startTask() = delegate.startTask(null)
   fun finishTask() = delegate.finishTask(null)
