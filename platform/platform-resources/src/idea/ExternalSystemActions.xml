@@ -185,7 +185,7 @@
       <reference id="ExternalSystem.AssignRunConfigurationShortcut"/>
     </group>
 
-    <group id="ProjectReloadActionGroup" class="com.intellij.openapi.externalSystem.autoimport.ProjectReloadActionGroup">
+    <group id="ProjectRefreshActionGroup" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshActionGroup">
       <action id="ProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction">
         <keyboard-shortcut first-keystroke="control shift O" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control shift O" keymap="Eclipse" remove="true"/>
