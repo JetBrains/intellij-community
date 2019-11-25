@@ -1,6 +1,16 @@
+// "Replace 'if else' with '?:'" "INFORMATION"
 class Test {
+  
+  Value myValue;
+  
+  interface Value {
+    Object getEvaluationExpression(boolean b);
+    String getName();
+  }
+  
+  interface KeyedValue {}
 
-  String foo(){
+  String foo(Value child){
     i<caret>f (child instanceof KeyedValue) {
       // Handling properties of the object
       return "(id)";

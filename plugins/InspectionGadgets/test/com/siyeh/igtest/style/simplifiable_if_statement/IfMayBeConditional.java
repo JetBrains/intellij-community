@@ -1,19 +1,20 @@
-package com.siyeh.igtest.controlflow.if_may_be_conditional;
+package com.siyeh.igtest.style.simplifiable_if_statement;
 
 public class IfMayBeConditional {
 
     void foo(int a, int b) {
         int c = 0;
-        if (a < b) { c += a - b; } else { c -= b; }
+        <warning descr="If statement can be replaced with '?:'">if</warning> (a < b) { c += a - b; } else { c -= b; }
+        if (a < b) { c += a - b; } else { c *= b; }
     }
 
     void foo2(int a, int b) {
         int c = 0;
-        <warning descr="'if' could be replaced with conditional expression">if</warning> (a < b) { c += a - b; } else { c += b; }
+        <warning descr="If statement can be replaced with '?:'">if</warning> (a < b) { c += a - b; } else { c += b; }
     }
 
     void foo3(int i, StringBuilder sb) {
-        <warning descr="'if' could be replaced with conditional expression">if</warning> (i == 0) {
+        <warning descr="If statement can be replaced with '?:'">if</warning> (i == 0) {
             sb.append("type.getConstructor()", 0, 1);
         }
         else {
@@ -22,7 +23,7 @@ public class IfMayBeConditional {
     }
 
     int foo4(int a, int b) {
-        <warning descr="'if' could be replaced with conditional expression">if</warning> (a < b) return a;
+        <warning descr="If statement can be replaced with '?:'">if</warning> (a < b) return a;
         else return b;
     }
 

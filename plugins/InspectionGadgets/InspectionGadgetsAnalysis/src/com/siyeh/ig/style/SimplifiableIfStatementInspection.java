@@ -49,7 +49,11 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
         if (model == null) return;
         String operator = getTargetOperator(model);
         if (operator.isEmpty()) return;
-        boolean infoLevel = DONT_WARN_ON_TERNARY && operator.equals("?:");
+        boolean infoLevel = operator.equals("?:") && 
+                            (DONT_WARN_ON_TERNARY ||
+                             ControlFlowUtils.isElseIf(ifStatement) ||
+                             model.getThenExpression() instanceof PsiConditionalExpression ||
+                             model.getElseExpression() instanceof PsiConditionalExpression);
         if (!isOnTheFly && infoLevel) return;
         holder.registerProblem(ifStatement.getFirstChild(),
                                InspectionGadgetsBundle.message("inspection.simplifiable.if.statement.message", operator),

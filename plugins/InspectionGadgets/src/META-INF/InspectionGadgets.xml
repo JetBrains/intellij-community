@@ -668,9 +668,6 @@
                      key="for.loop.with.missing.component.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.ForLoopWithMissingComponentInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="IfMayBeConditional" bundle="com.siyeh.InspectionGadgetsBundle" key="if.may.be.conditional.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.IfMayBeConditionalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IfStatementWithIdenticalBranches" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="if.statement.with.identical.branches.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WEAK WARNING"
