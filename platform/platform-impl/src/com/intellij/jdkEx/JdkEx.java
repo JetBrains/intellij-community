@@ -108,7 +108,7 @@ public class JdkEx {
   }
 
   public static void setIgnoreMouseEvents(@NotNull Window window, boolean ignoreMouseEvents) {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isMac) {
+    if (SystemInfo.isJetBrainsJvm && (SystemInfo.isMac || SystemInfo.isWindows)) {
       window.setEnabled(false);
       try {
         MethodInvocator invocator =

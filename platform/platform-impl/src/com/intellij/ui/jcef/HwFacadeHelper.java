@@ -37,7 +37,7 @@ public class HwFacadeHelper {
   public static final Color TRANSPARENT_COLOR = new Color(1, 1, 1, 0);
 
   private final JComponent myTarget;
-  private Window myHwFacade;
+  private JWindow myHwFacade;
   private ComponentAdapter myOwnerListener;
   private ComponentAdapter myTargetListener;
   private VolatileImage myBackBuffer;
@@ -143,15 +143,19 @@ public class HwFacadeHelper {
           }
         }
       });
-      myHwFacade = new Window(owner) {
+      myHwFacade = new JWindow(owner);
+      myHwFacade.add(new JPanel() {
+        {
+          setBackground(TRANSPARENT_COLOR);
+        }
         @Override
-        public void paint(Graphics g) {
-          super.paint(g);
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
           if (myBackBuffer != null) {
             g.drawImage(myBackBuffer, 0, 0, null);
           }
         }
-      };
+      });
       JdkEx.setIgnoreMouseEvents(myHwFacade, true);
       myHwFacade.setBounds(targetBounds);
       myHwFacade.setFocusableWindowState(false);
