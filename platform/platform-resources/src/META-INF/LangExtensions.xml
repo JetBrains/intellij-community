@@ -1184,8 +1184,6 @@
 
     <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
 
-    <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector" order="last"/>
-
     <implementationViewSessionFactory implementation="com.intellij.codeInsight.hint.PsiImplementationSessionViewFactory"/>
 
     <!-- must be first because TextEditorProvider.getInstance search by instance of -->

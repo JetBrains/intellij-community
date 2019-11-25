@@ -35,8 +35,6 @@
     <extensionPoint name="xml.nsColorProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider" dynamic="true"/>
 
-    <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
-
     <extensionPoint name="xmlStructureViewElementProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"/>
 
@@ -154,10 +152,6 @@
                                  key="web.editor.configuration.title"
                                  bundle="messages.XmlBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
-
-    <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"
-                             key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
-                             instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
 
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 

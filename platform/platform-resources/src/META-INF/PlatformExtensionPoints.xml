@@ -354,5 +354,7 @@
     <extensionPoint name="actionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer" dynamic="false"/>
 
     <extensionPoint name="config.inlaySettingsProvider" interface="com.intellij.codeInsight.hints.settings.InlaySettingsProvider"/>
+
+    <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
   </extensionPoints>
 </idea-plugin>
