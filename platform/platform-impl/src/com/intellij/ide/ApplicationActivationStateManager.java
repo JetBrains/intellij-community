@@ -68,7 +68,7 @@ public final class ApplicationActivationStateManager {
       state = State.DEACTIVATING;
       LOG.debug("The app is in the deactivating state");
 
-      Timer timer = TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout"), new ActionListener() {
+      Timer timer = TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout", 1500), new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent evt) {
           if (state == State.DEACTIVATING) {
