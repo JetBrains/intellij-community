@@ -332,6 +332,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
+    // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
+    // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
+    mySdkCombo.setSelectedItem(selection);
     onSdkSelected();
   }
 
