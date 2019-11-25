@@ -94,5 +94,6 @@ class JpsCacheLoader implements JpsOutputLoader {
       subTaskIndicator.finished();
       LOG.debug("JPS cache downloads finished");
     }
+    indicatorManager.finished(this);
   }
 }

@@ -94,7 +94,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       return;
     }
 
-    indicatorManager.setText(this,"Applying changes...");
+    indicatorManager.setText(this, "Applying changes...");
     myTmpFolderToModuleName.forEach((tmpModuleFolder, moduleName) -> {
       SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = indicatorManager.createSubTaskIndicator();
       subTaskIndicator.setText2("Applying changes for " + moduleName + " module");
@@ -109,6 +109,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       }
       subTaskIndicator.finished();
     });
+    indicatorManager.finished(this);
     LOG.info("Applying compilation output took: " + (System.currentTimeMillis() - start));
   }
 
