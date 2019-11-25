@@ -865,9 +865,6 @@
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
     <toolWindow id="Favorites" anchor="left" icon="AllIcons.Toolwindows.ToolWindowFavorites" secondary="true"
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
-    <toolWindow id="Services" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowServices" canCloseContents="true"
-                factoryClass="com.intellij.execution.services.ServiceViewToolWindowFactory"
-                conditionClass="com.intellij.execution.services.ServiceViewToolWindowFactory"/>
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
@@ -1080,6 +1077,7 @@
 
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager" serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.execution.services.ServiceViewStartupActivity"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"
                               id="type" order="first"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"
