@@ -116,4 +116,15 @@ public final class IJSwingUtilities {
       }
     }
   }
+
+  @ApiStatus.Internal
+  public static void appendComponentClassNames(@NotNull StringBuilder sb, @Nullable Component root) {
+    UIUtil.uiTraverser(root).forEach(c -> appendComponentClassName(sb, root, c));
+  }
+
+  private static void appendComponentClassName(@NotNull StringBuilder sb, @Nullable Component root, @NotNull Component component) {
+    sb.append("\n    ");
+    for (Component p = component; root != p && p != null; p = p.getParent()) sb.append("  ");
+    sb.append(component.getClass().getName());
+  }
 }

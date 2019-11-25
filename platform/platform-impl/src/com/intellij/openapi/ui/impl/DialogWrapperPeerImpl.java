@@ -926,8 +926,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                 if (size.width > screen.width || size.height > screen.height) {
                   Application application = ApplicationManager.getApplication();
                   if (application != null && application.isInternal()) {
-                    LOG.warn("minimum size " + size.width + "x" + size.height +
-                             " is bigger than screen " + screen.width + "x" + screen.height);
+                    StringBuilder sb = new StringBuilder("dialog minimum size is bigger than screen: ");
+                    sb.append(size.width).append("x").append(size.height);
+                    IJSwingUtilities.appendComponentClassNames(sb, this);
+                    LOG.warn(sb.toString());
                   }
                   if (size.width > screen.width) size.width = screen.width;
                   if (size.height > screen.height) size.height = screen.height;
