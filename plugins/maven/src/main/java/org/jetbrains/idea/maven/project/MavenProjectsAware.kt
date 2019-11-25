@@ -24,7 +24,7 @@ class MavenProjectsAware(
   override val projectId = ExternalSystemProjectId(MavenUtil.SYSTEM_ID, project.name)
 
   override val settingsFiles: Set<String>
-    get() = collectAllSettingsFiles()
+    get() = collectSettingsFiles().map { FileUtil.toCanonicalPath(it) }.toSet()
 
   override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
     isImportCompleted.afterReset({ listener.beforeProjectRefresh() }, parentDisposable)
@@ -35,31 +35,24 @@ class MavenProjectsAware(
     manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
   }
 
-  private fun collectAllSettingsFiles(): Set<String> {
-    val settingsFiles = ArrayList<String?>()
-    settingsFiles.add(manager.generalSettings.effectiveUserSettingsIoFile?.path)
-    settingsFiles.add(manager.generalSettings.effectiveGlobalSettingsIoFile?.path)
-    settingsFiles.addAll(projectsTree.managedFilesPaths)
-    settingsFiles.addAll(projectsTree.projectsFiles.map { it.path })
-    settingsFiles.addAll(collectAllProjectSettings())
-    return settingsFiles.mapNotNull { FileUtil.toCanonicalPath(it) }.toSet()
-  }
-
   private fun hasPomFile(rootDirectory: String): Boolean {
-    val possiblePoms = MavenConstants.POM_NAMES.map { join(rootDirectory, it) }
-    return possiblePoms.any { projectsTree.isPotentialProject(it) }
+    return MavenConstants.POM_NAMES.asSequence()
+      .map { join(rootDirectory, it) }
+      .any { projectsTree.isPotentialProject(it) }
   }
 
-  private fun collectAllProjectSettings(): List<String> {
-    val settingsFiles = ArrayList<String>()
+  private fun collectSettingsFiles() = sequence {
+    yieldAll(projectsTree.managedFilesPaths)
+    yieldAll(projectsTree.projectsFiles.map { it.path })
     for (mavenProject in projectsTree.projects) {
       val rootDirectory = mavenProject.directory
-      settingsFiles.addAll(mavenProject.modulePaths)
-      settingsFiles.add(join(rootDirectory, MavenConstants.JVM_CONFIG_RELATIVE_PATH))
-      settingsFiles.add(join(rootDirectory, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH))
-      if (hasPomFile(rootDirectory)) settingsFiles.add(join(rootDirectory, MavenConstants.PROFILES_XML))
+      yieldAll(mavenProject.modulePaths)
+      yield(join(rootDirectory, MavenConstants.JVM_CONFIG_RELATIVE_PATH))
+      yield(join(rootDirectory, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH))
+      if (hasPomFile(rootDirectory)) {
+        yield(join(rootDirectory, MavenConstants.PROFILES_XML))
+      }
     }
-    return settingsFiles
   }
 
   private fun join(parentPath: String, relativePath: String) = File(parentPath, relativePath).path

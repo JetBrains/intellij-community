@@ -18,13 +18,12 @@ class MavenGeneralSettingsWatcher private constructor(
   private val generalSettings get() = manager.generalSettings
   private val embeddersManager get() = manager.embeddersManager
 
-  private val settingsFiles = collectSettingsFiles()
+  private val settingsFiles: Set<String>
+    get() = collectSettingsFiles().map { FileUtil.toCanonicalPath(it) }.toSet()
 
-  private fun collectSettingsFiles(): Set<String> {
-    val settingsFiles = ArrayList<String?>()
-    settingsFiles.add(generalSettings.effectiveUserSettingsIoFile?.path)
-    settingsFiles.add(generalSettings.effectiveGlobalSettingsIoFile?.path)
-    return settingsFiles.mapNotNull { FileUtil.toCanonicalPath(it) }.toSet()
+  private fun collectSettingsFiles() = sequence {
+    generalSettings.effectiveUserSettingsIoFile?.path?.let { yield(it) }
+    generalSettings.effectiveGlobalSettingsIoFile?.path?.let { yield(it) }
   }
 
   private fun fireSettingsChange() {
