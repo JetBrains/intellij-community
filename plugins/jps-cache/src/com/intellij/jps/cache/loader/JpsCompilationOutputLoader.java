@@ -43,28 +43,30 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
   }
 
   @Override
+  public int calculateDownloads(@NotNull Map<String, Map<String, BuildTargetState>> commitSourcesState,
+                                @Nullable Map<String, Map<String, BuildTargetState>> currentSourcesState) {
+    return calculateAffectedModules(currentSourcesState, commitSourcesState, true).size();
+  }
+
+  @Override
   public LoaderStatus load(@NotNull JpsLoaderContext context) {
     myOldModulesPaths = null;
     myTmpFolderToModuleName = null;
 
-    SegmentedProgressIndicatorManager progressIndicatorManager = context.getIndicatorManager();
-    progressIndicatorManager.setText(this, "Calculating affected modules");
+    SegmentedProgressIndicatorManager downloadProgressManager = context.getDownloadIndicatorManager();
+    downloadProgressManager.setText(this, "Calculating affected modules");
     List<AffectedModule> affectedModules = calculateAffectedModules(context.getCurrentSourcesState(),
                                                                     context.getCommitSourcesState(), true);
-    progressIndicatorManager.finished(this);
-    progressIndicatorManager.getProgressIndicator().checkCanceled();
+    downloadProgressManager.finished(this);
+    downloadProgressManager.getProgressIndicator().checkCanceled();
 
     if (affectedModules.size() > 0) {
       long start = System.currentTimeMillis();
-      Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(progressIndicatorManager, affectedModules);
+      Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(downloadProgressManager, context.getExtractIndicatorManager(),
+                                                                                              affectedModules);
       LOG.info("Download of compilation outputs took: " + (System.currentTimeMillis() - start));
       myTmpFolderToModuleName = downloadResultsPair.second;
       if (!downloadResultsPair.first) return LoaderStatus.FAILED;
-    }
-    else {
-      // Move progress up to the half of segment size
-      progressIndicatorManager.setTasksCount(1);
-      progressIndicatorManager.updateFraction(1.0);
     }
     return LoaderStatus.COMPLETE;
   }
@@ -79,7 +81,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
   }
 
   @Override
-  public void apply() {
+  public void apply(@NotNull SegmentedProgressIndicatorManager indicatorManager) {
     long start = System.currentTimeMillis();
     if (myOldModulesPaths != null) {
       LOG.debug("Removing old compilation outputs " + myOldModulesPaths.size() + " counts");
@@ -92,7 +94,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       return;
     }
 
+    indicatorManager.setText(this,"Applying changes...");
     myTmpFolderToModuleName.forEach((tmpModuleFolder, moduleName) -> {
+      SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = indicatorManager.createSubTaskIndicator();
+      subTaskIndicator.setText2("Applying changes for " + moduleName + " module");
       File currentModuleBuildDir = new File(tmpModuleFolder.getParentFile(), moduleName);
       FileUtil.delete(currentModuleBuildDir);
       try {
@@ -102,10 +107,12 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       catch (IOException e) {
         LOG.warn("Couldn't replace compilation output for module: " + moduleName, e);
       }
+      subTaskIndicator.finished();
     });
     LOG.info("Applying compilation output took: " + (System.currentTimeMillis() - start));
   }
 
+  @NotNull
   private List<AffectedModule> calculateAffectedModules(@Nullable Map<String, Map<String, BuildTargetState>> currentModulesState,
                                                         @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState,
                                                         boolean checkExistance) {
@@ -198,6 +205,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     return result;
   }
 
+  @NotNull
   private static List<AffectedModule> mergeAffectedModules(List<AffectedModule> affectedModules,
                                                            @NotNull Map<String, Map<String, BuildTargetState>> commitModulesState) {
     Set<AffectedModule> result = new HashSet<>();

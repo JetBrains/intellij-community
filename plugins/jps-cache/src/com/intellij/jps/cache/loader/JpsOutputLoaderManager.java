@@ -41,7 +41,7 @@ public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String PROGRESS_TITLE = "Updating Compiler Caches";
-  private static final double TOTAL_SEGMENT_SIZE = 0.9;
+  private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;
   private final ExecutorService ourThreadPool;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
@@ -143,15 +143,20 @@ public class JpsOutputLoaderManager {
       LOG.warn("Couldn't load metadata for commit: " + commitId);
       return;
     }
+
+    // Calculate downloads
+    Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
+    int totalDownloads = getLoaders(myProject).stream().mapToInt(loader -> loader.calculateDownloads(commitSourcesState, currentSourcesState)).sum();
     indicator.setFraction(0.01);
 
     try {
       // Computation with loaders results. If at least one of them failed rollback all job
-      initLoaders(commitId, indicator, commitSourcesState).thenAccept(loaderStatus -> {
+      initLoaders(commitId, indicator, totalDownloads, commitSourcesState, currentSourcesState).thenAccept(loaderStatus -> {
         LOG.info("Loading finished with " + loaderStatus + " status");
         try {
+          SegmentedProgressIndicatorManager indicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
           CompletableFuture.allOf(getLoaders(myProject).stream()
-                                    .map(loader -> applyChanges(loaderStatus, loader, indicator))
+                                    .map(loader -> applyChanges(loaderStatus, loader, indicator, indicatorManager))
                                     .toArray(CompletableFuture[]::new))
             .thenRun(() -> saveStateAndNotify(loaderStatus, commitId, startTime))
             .get();
@@ -179,19 +184,20 @@ public class JpsOutputLoaderManager {
     return true;
   }
 
-  private CompletableFuture<LoaderStatus> initLoaders(String commitId, ProgressIndicator indicator,
-                                                      Map<String, Map<String, BuildTargetState>> commitSourcesState) {
-    Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
+  private CompletableFuture<LoaderStatus> initLoaders(String commitId, ProgressIndicator indicator, int totalDownloads,
+                                                      Map<String, Map<String, BuildTargetState>> commitSourcesState,
+                                                      Map<String, Map<String, BuildTargetState>> currentSourcesState) {
     List<JpsOutputLoader> loaders = getLoaders(myProject);
 
+    // Create indicator with predefined segment size
+    SegmentedProgressIndicatorManager downloadIndicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
+    SegmentedProgressIndicatorManager extractIndicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
+    JpsLoaderContext loaderContext = JpsLoaderContext.createNewContext(commitId, downloadIndicatorManager, extractIndicatorManager,
+                                                                       commitSourcesState, currentSourcesState);
+
     // Start loaders with own context
-    List<CompletableFuture<LoaderStatus>> completableFutures = ContainerUtil.map(loaders, loader -> {
-      return CompletableFuture.supplyAsync(() -> {
-        SegmentedProgressIndicatorManager indicatorManager =
-          new SegmentedProgressIndicatorManager(indicator, TOTAL_SEGMENT_SIZE / loaders.size());
-        return loader.load(JpsLoaderContext.createNewContext(commitId, indicatorManager, commitSourcesState, currentSourcesState));
-      }, ourThreadPool);
-    });
+    List<CompletableFuture<LoaderStatus>> completableFutures = ContainerUtil.map(loaders, loader ->
+      CompletableFuture.supplyAsync(() -> loader.load(loaderContext), ourThreadPool));
 
     // Reduce loaders statuses into the one
     CompletableFuture<LoaderStatus> initialFuture = completableFutures.get(0);
@@ -203,13 +209,13 @@ public class JpsOutputLoaderManager {
     return initialFuture;
   }
 
-  private CompletableFuture<Void> applyChanges(LoaderStatus loaderStatus, JpsOutputLoader loader, ProgressIndicator indicator) {
+  private CompletableFuture<Void> applyChanges(LoaderStatus loaderStatus, JpsOutputLoader loader, ProgressIndicator indicator,
+                                               SegmentedProgressIndicatorManager indicatorManager) {
     if (loaderStatus == LoaderStatus.FAILED) {
-      indicator.setText("Fetching cache failed, rolling back");
+      indicator.setText("Rolling back");
       return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
     }
-    indicator.setText("Fetching cache complete successfully, applying changes ");
-    return CompletableFuture.runAsync(() -> loader.apply(), ourThreadPool);
+    return CompletableFuture.runAsync(() -> loader.apply(indicatorManager), ourThreadPool);
   }
 
   private void saveStateAndNotify(LoaderStatus loaderStatus, String commitId, long startTime) {
@@ -248,8 +254,8 @@ public class JpsOutputLoaderManager {
 
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
-    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, project),
-                                              new JpsCompilationOutputLoader(myServerClient, project));
+    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCompilationOutputLoader(myServerClient, project),
+                                              new JpsCacheLoader(myServerClient, project));
     return myJpsOutputLoadersLoaders;
   }
 

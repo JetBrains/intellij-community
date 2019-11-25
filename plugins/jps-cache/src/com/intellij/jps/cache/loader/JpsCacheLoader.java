@@ -3,6 +3,7 @@ package com.intellij.jps.cache.loader;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.model.JpsLoaderContext;
+import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -34,7 +35,8 @@ class JpsCacheLoader implements JpsOutputLoader {
 
     File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
     long start = System.currentTimeMillis();
-    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(context.getIndicatorManager(), context.getCommitId(), targetDir);
+    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(context.getDownloadIndicatorManager(), context.getExtractIndicatorManager(),
+                                                                        context.getCommitId(), targetDir);
     LOG.info("Download of jps caches took: " + (System.currentTimeMillis() - start));
     myTmpCacheFolder = downloadResultPair.second;
     if (!downloadResultPair.first) return LoaderStatus.FAILED;
@@ -50,7 +52,7 @@ class JpsCacheLoader implements JpsOutputLoader {
   }
 
   @Override
-  public void apply() {
+  public void apply(@NotNull SegmentedProgressIndicatorManager indicatorManager) {
     if (myTmpCacheFolder == null) {
       LOG.warn("Nothing to apply, download results are empty");
       return;
@@ -60,7 +62,10 @@ class JpsCacheLoader implements JpsOutputLoader {
     if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
 
     File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
+    indicatorManager.setText(this,"Applying changes...");
     if (currentDirForBuildCache != null) {
+      SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = indicatorManager.createSubTaskIndicator();
+      subTaskIndicator.setText2("Applying downloaded caches");
       // Copy timestamp old folder to new cache dir
       File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {
@@ -86,6 +91,7 @@ class JpsCacheLoader implements JpsOutputLoader {
       // Remove old cache dir
       FileUtil.delete(currentDirForBuildCache);
       myTmpCacheFolder.renameTo(currentDirForBuildCache);
+      subTaskIndicator.finished();
       LOG.debug("JPS cache downloads finished");
     }
   }

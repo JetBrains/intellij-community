@@ -100,22 +100,23 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   }
 
   @Override
-  public Pair<Boolean, File> downloadCacheById(@NotNull SegmentedProgressIndicatorManager indicatorManager, @NotNull String cacheId,
-                                               @NotNull File targetDir) {
+  public Pair<Boolean, File> downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
+                                               @NotNull SegmentedProgressIndicatorManager extractIndicatorManager,
+                                               @NotNull String cacheId, @NotNull File targetDir) {
     String downloadUrl = stringThree + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     File tmpFolder = new File(targetDir, "tmp");
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
-    JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(Collections.singletonList(description), indicatorManager);
+    JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(Collections.singletonList(description), downloadIndicatorManager);
 
     LOG.debug("Downloading JPS caches from: " + downloadUrl);
     File zipFile = null;
     try {
-      ProgressIndicator indicator = indicatorManager.getProgressIndicator();
+      ProgressIndicator indicator = downloadIndicatorManager.getProgressIndicator();
       List<Pair<File, DownloadableFileDescription>> pairs = outputsDownloader.download(targetDir);
       indicator.checkCanceled();
-      indicatorManager.setText(this, "Extracting downloaded results...");
+      downloadIndicatorManager.setText(this, "Extracting downloaded results...");
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
       zipFile = first != null ? first.first : null;
       if (zipFile == null) {
@@ -124,7 +125,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
       }
       ZipUtil.extract(zipFile, tmpFolder, null);
       FileUtil.delete(zipFile);
-      indicatorManager.finished(this);
+      downloadIndicatorManager.finished(this);
       return new Pair<>(true, tmpFolder);
     }
     catch (ProcessCanceledException | IOException e) {
@@ -139,7 +140,8 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   }
 
   @Override
-  public Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager indicatorManager,
+  public Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
+                                                                  @NotNull SegmentedProgressIndicatorManager extractIndicatorManager,
                                                                   @NotNull List<AffectedModule> affectedModules) {
     File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesUtils.PLUGIN_NAME);
     if (!targetDir.exists()) targetDir.mkdirs();
@@ -152,15 +154,15 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     List<DownloadableFileDescription> descriptions = ContainerUtil.map(urlToModuleNameMap.entrySet(),
                                                                        entry -> service.createFileDescription(entry.getKey(),
                                                                        entry.getValue().getOutPath().getName() + ".zip"));
-    JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(descriptions, indicatorManager);
+    JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(descriptions, downloadIndicatorManager);
 
     Map<File, String> result = new HashMap<>();
     List<File> downloadedFiles = new ArrayList<>();
     try {
-      ProgressIndicator indicator = indicatorManager.getProgressIndicator();
+      ProgressIndicator indicator = downloadIndicatorManager.getProgressIndicator();
       List<Pair<File, DownloadableFileDescription>> download = outputsDownloader.download(targetDir);
       downloadedFiles = ContainerUtil.map(download, pair -> pair.first);
-      indicatorManager.setText(this, "Extracting downloaded results...");
+      downloadIndicatorManager.setText(this, "Extracting downloaded results...");
       for (Pair<File, DownloadableFileDescription> pair : download) {
         indicator.checkCanceled();
         File zipFile = pair.first;
@@ -173,7 +175,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
         FileUtil.delete(zipFile);
         result.put(tmpFolder, affectedModule.getName());
       }
-      indicatorManager.finished(this);
+      downloadIndicatorManager.finished(this);
       return new Pair<>(true, result);
     }
     catch (ProcessCanceledException | IOException e) {

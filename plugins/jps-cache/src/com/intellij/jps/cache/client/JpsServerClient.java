@@ -16,9 +16,11 @@ public interface JpsServerClient {
   Set<String> getAllCacheKeys();
   @Nullable
   File downloadMetadataById(@NotNull String metadataId, @NotNull File targetDir);
-  Pair<Boolean, File> downloadCacheById(@NotNull SegmentedProgressIndicatorManager indicatorManager,
+  Pair<Boolean, File> downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
+                                        @NotNull SegmentedProgressIndicatorManager extractIndicatorManager,
                                         @NotNull String cacheId, @NotNull File targetDir);
-  Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager indicatorManager,
+  Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
+                                                           @NotNull SegmentedProgressIndicatorManager extractIndicatorManager,
                                                            @NotNull List<AffectedModule> affectedModules);
   static JpsServerClient getServerClient() {
     return TemporaryCacheServerClient.INSTANCE;

@@ -31,7 +31,6 @@ class JpsOutputsDownloader {
   JpsOutputsDownloader(@NotNull List<DownloadableFileDescription> filesDescriptions, @NotNull SegmentedProgressIndicatorManager indicatorManager) {
     myFilesDescriptions = filesDescriptions;
     myProgressIndicatorManager = indicatorManager;
-    myProgressIndicatorManager.setTasksCount(filesDescriptions.size());
   }
 
   @NotNull

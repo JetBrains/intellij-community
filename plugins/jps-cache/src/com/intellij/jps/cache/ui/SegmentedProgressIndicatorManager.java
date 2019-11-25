@@ -12,11 +12,12 @@ public class SegmentedProgressIndicatorManager {
   private static final Object myLock = new Object();
   private final ProgressIndicator myProgressIndicator;
   private final double mySegmentSize;
-  private int myTasksCount;
+  private final int myTasksCount;
 
-  public SegmentedProgressIndicatorManager(ProgressIndicator progressIndicator, double segmentSize) {
+  public SegmentedProgressIndicatorManager(ProgressIndicator progressIndicator, int tasksCount, double segmentSize) {
     myProgressIndicator = progressIndicator;
     mySegmentSize = segmentSize;
+    myTasksCount = tasksCount;
     myText2Stack.clear();
     myTextStack.clear();
   }
@@ -75,10 +76,6 @@ public class SegmentedProgressIndicatorManager {
     setText(obj, null);
   }
 
-  public void setTasksCount(int tasksCount) {
-    myTasksCount = tasksCount;
-  }
-
   public ProgressIndicator getProgressIndicator() {
     return myProgressIndicator;
   }
@@ -103,6 +100,11 @@ public class SegmentedProgressIndicatorManager {
     @Override
     public void setText2(String text) {
       myProgressManager.setText2(this, text);
+    }
+
+    @Override
+    public void setText(String text) {
+      myProgressManager.setText(this, text);
     }
 
     @Override
