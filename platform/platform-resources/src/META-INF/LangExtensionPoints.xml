@@ -565,7 +565,7 @@
     <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP">
       <with attribute="className" implements="java.lang.Object"/>
     </extensionPoint>
-    <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+    <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.presentation.PresentationProvider"/>
     </extensionPoint>
 

@@ -30,9 +30,9 @@ public class ItemPresentationProviders extends ClassExtension<ItemPresentationPr
   }
 
   @Nullable
+  @SuppressWarnings({"unchecked"})
   public static <T extends NavigationItem> ItemPresentationProvider<T> getItemPresentationProvider(@NotNull T element) {
-    @SuppressWarnings({"unchecked"}) final ItemPresentationProvider<T> provider = INSTANCE.forClass(element.getClass());
-    return provider;
+    return (ItemPresentationProvider<T>)INSTANCE.forClass(element.getClass());
   }
 
   @Nullable
