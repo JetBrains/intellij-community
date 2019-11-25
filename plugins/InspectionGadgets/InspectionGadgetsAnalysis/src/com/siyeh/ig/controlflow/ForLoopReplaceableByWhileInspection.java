@@ -30,6 +30,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
@@ -224,13 +225,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       }
       if (m_ignoreLoopsWithoutConditions) {
         final PsiExpression condition = statement.getCondition();
-        if (condition == null) {
-          return false;
-        }
-        final String conditionText = condition.getText();
-        if (PsiKeyword.TRUE.equals(conditionText)) {
-          return false;
-        }
+        return condition != null && !BoolUtils.isTrue(condition);
       }
       return true;
     }
