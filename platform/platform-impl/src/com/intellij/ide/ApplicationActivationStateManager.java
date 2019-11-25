@@ -55,7 +55,7 @@ public final class ApplicationActivationStateManager {
       requestToDeactivateTime.getAndSet(System.currentTimeMillis());
 
       // for stuff that cannot wait windowEvent notify about deactivation immediately
-      if (state.isActive()) {
+      if (state.isActive() && !app.isDisposed()) {
         IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
         if (ideFrame != null) {
           app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
@@ -76,9 +76,11 @@ public final class ApplicationActivationStateManager {
             state = State.DEACTIVATED;
             LOG.debug("The app is in the deactivated state");
 
-            IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
-            if (ideFrame != null) {
-              app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+            if (!app.isDisposed()) {
+              IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
+              if (ideFrame != null) {
+                app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+              }
             }
           }
         }
@@ -91,26 +93,21 @@ public final class ApplicationActivationStateManager {
     return false;
   }
 
-  private static boolean setActive(@NotNull Application app, @Nullable Window window) {
-    IdeFrame ideFrame = getIdeFrameFromWindow(window);
-
-    state = State.ACTIVE;
+  private static boolean setActive(@NotNull Application app, @Nullable Window window) { state = State.ACTIVE;
     LOG.debug("The app is in the active state");
 
-    if (ideFrame != null) {
-      app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
-      return true;
+    if (!app.isDisposed()) {
+      IdeFrame ideFrame = getIdeFrameFromWindow(window);
+      if (ideFrame != null) {
+        app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
+        return true;
+      }
     }
     return false;
   }
 
-  public static void updateState(Window window) {
-    Application app = ApplicationManager.getApplication();
-    if (!(app instanceof ApplicationImpl)) {
-      return;
-    }
-
-    if (state.isInactive() && window != null) {
+  public static void updateState(@NotNull ApplicationImpl app, @NotNull Window window) {
+    if (state.isInactive()) {
       setActive(app, window);
     }
   }

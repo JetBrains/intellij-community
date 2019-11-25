@@ -980,9 +980,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return true;
     }
 
+    if (isDisposed()) {
+      return false;
+    }
+
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (activeWindow != null && ApplicationActivationStateManager.isInactive()) {
-      ApplicationActivationStateManager.updateState(activeWindow);
+    if (activeWindow != null) {
+      ApplicationActivationStateManager.updateState(this, activeWindow);
     }
 
     return ApplicationActivationStateManager.isActive();
