@@ -6,6 +6,7 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.util.*
 import javax.swing.Icon
@@ -15,7 +16,10 @@ class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
   private val customDecorationTitle: CustomDecorationTitle = CustomDecorationTitle(frame) {updateCustomDecorationHitTestSpots()}
 
   init {
-    layout = MigLayout("novisualpadding, ins 0, fillx, gap 0, hmin $MIN_HEIGHT", "$H_GAP[min!]$H_GAP[][pref!]")
+    layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "[min!][][pref!]")
+
+    productIcon.border = JBUI.Borders.empty(V, H, V, H)
+    customDecorationTitle.getView().border = JBUI.Borders.empty(V, 0, V, H)
 
     add(productIcon)
     add(customDecorationTitle.getView(), "wmin 0, left, growx, center")
