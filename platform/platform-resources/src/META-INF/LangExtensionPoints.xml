@@ -242,12 +242,12 @@
     <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory"/>
 
-    <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType"/>
-    <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
-    <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
-    <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor"/>
-    <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor"/>
-    <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
+    <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType" dynamic="true"/>
+    <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro" dynamic="true"/>
+    <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor" dynamic="true"/>
+    <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor" dynamic="true"/>
+    <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor" dynamic="true"/>
+    <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate" dynamic="true"/>
 
     <extensionPoint name="fileTemplateGroup" interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory" dynamic="true"/>
     <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
