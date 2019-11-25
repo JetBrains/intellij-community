@@ -4,14 +4,18 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.lightEdit.statusBar.LightEditStatusBar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class LightEditPanel extends JPanel implements Disposable {
+public class LightEditPanel extends JPanel implements DataProvider, Disposable {
 
   private final LightEditorManager myEditorManager;
   private final LightEditTabs      myTabs;
@@ -42,4 +46,12 @@ public class LightEditPanel extends JPanel implements Disposable {
   public void dispose() {
   }
 
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return ProjectManager.getInstance().getDefaultProject();
+    }
+    return null;
+  }
 }
