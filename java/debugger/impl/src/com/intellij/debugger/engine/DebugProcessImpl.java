@@ -555,7 +555,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (port != null) {
         listeningAddress = port;
       }
-      myConnection.setApplicationAddress(listeningAddress);
+      myConnection.setDebuggerAddress(listeningAddress);
 
       myDebugProcessDispatcher.getMulticaster().connectorIsReady();
 
