@@ -87,7 +87,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
       files.add(f);
     }
     else {
-      for (VirtualFile each : ((NewVirtualFile)f).getCachedChildren()) {
+      for (VirtualFile each : ((NewVirtualFile)f).iterInDbChildren()) {
         collectDeletedFiles(each, files);
       }
     }
