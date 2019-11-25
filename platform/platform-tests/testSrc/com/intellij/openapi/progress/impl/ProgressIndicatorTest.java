@@ -856,4 +856,23 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     catch (ProcessCanceledException ignored) {
     }
   }
+
+  public void testProgressIndicatorNotOverriddenIn_InRunProcessWithProgressSynchronously_duringWriteAction() {
+    ProgressIndicator progressIndicator = new ProgressIndicatorStub() {
+      @Override
+      public void processFinish() {
+
+      }
+    };
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
+          assertFalse(progressIndicator.isCanceled());
+          ProgressManager.getInstance().getProgressIndicator().cancel();
+        }, "NotUsed", true, null);
+      }, progressIndicator);
+    });
+
+    assertTrue(progressIndicator.isCanceled());
+  }
 }
