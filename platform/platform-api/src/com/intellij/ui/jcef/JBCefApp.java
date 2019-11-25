@@ -10,20 +10,54 @@ import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author tav
  */
 @ApiStatus.Experimental
-public class JBCefApp {
-  private static final CefApp ourCefApp;
+public abstract class JBCefApp {
+  private final static JBCefApp INSTANCE;
+  private final CefApp ourCefApp;
 
   static {
+    if (SystemInfo.isMac) {
+      INSTANCE = new JBCefAppMac();
+    }
+    else if (SystemInfo.isLinux) {
+      INSTANCE = new JBCefAppLinux();
+    }
+    else if (SystemInfo.isWindows) {
+      INSTANCE = new JBCefAppWindows();
+    }
+    else {
+      INSTANCE = null;
+      assert false : "JBCefApp platform initialization failed";
+    }
+  }
+
+  private JBCefApp() {
     CefSettings settings = new CefSettings();
     settings.windowless_rendering_enabled = false;
     settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
-    if (SystemInfo.isMac) {
-      CefApp.startup();
+    CefApp.startup();
+    //noinspection AbstractMethodCallInConstructor
+    init(settings);
+    ourCefApp = CefApp.getInstance(settings);
+    Disposer.register(ApplicationManager.getApplication(), () -> {
+      ourCefApp.dispose();
+    });
+  }
+
+  public static JBCefApp getInstance() {
+    return INSTANCE;
+  }
+
+  protected abstract void init(@NotNull CefSettings settings);
+
+  private static class JBCefAppMac extends JBCefApp {
+    @Override
+    protected void init(@NotNull CefSettings settings) {
       String JCEF_FRAMEWORKS_PATH = System.getProperty("java.home") + "/Frameworks";
       CefApp.addAppHandler(new CefAppHandlerAdapter(new String[] {
         "--framework-dir-path=" + JCEF_FRAMEWORKS_PATH + "/Chromium Embedded Framework.framework",
@@ -31,8 +65,21 @@ public class JBCefApp {
         "--disable-in-process-stack-traces"
       }) {});
     }
-    else if (SystemInfo.isLinux) {
-      CefApp.startup();
+  }
+
+  private static class JBCefAppWindows extends JBCefApp {
+    @Override
+    protected void init(@NotNull CefSettings settings) {
+      String JCEF_PATH = System.getProperty("java.home") + "/bin";
+      settings.resources_dir_path = JCEF_PATH;
+      settings.locales_dir_path = JCEF_PATH + "/locales";
+      settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
+    }
+  }
+
+  private static class JBCefAppLinux extends JBCefApp {
+    @Override
+    protected void init(@NotNull CefSettings settings) {
       String JCEF_PATH = System.getProperty("java.home") + "/lib";
       settings.resources_dir_path = JCEF_PATH;
       settings.locales_dir_path = JCEF_PATH + "/locales";
@@ -42,13 +89,9 @@ public class JBCefApp {
         "--force-device-scale-factor=" + JBUIScale.sysScale()
       }) {});
     }
-    ourCefApp = CefApp.getInstance(settings);
-    Disposer.register(ApplicationManager.getApplication(), () -> {
-      ourCefApp.dispose();
-    });
   }
 
-  public static CefClient createClient() {
+  public CefClient createClient() {
     return ourCefApp.createClient();
   }
 }

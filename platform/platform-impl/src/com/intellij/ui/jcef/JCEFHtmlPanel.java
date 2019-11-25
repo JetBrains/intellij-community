@@ -40,7 +40,7 @@ public class JCEFHtmlPanel implements Disposable {
   private static final boolean USE_SIZE_WORKAROUND = SystemInfo.isWindows;
 
   static {
-    ourCefClient = JBCefApp.createClient();
+    ourCefClient = JBCefApp.getInstance().createClient();
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
       @Override
       public void onAfterCreated(CefBrowser browser) {
