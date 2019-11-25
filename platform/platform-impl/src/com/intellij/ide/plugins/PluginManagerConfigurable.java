@@ -488,18 +488,7 @@ public class PluginManagerConfigurable
           }
 
           @Override
-          protected void handleAppendToQuery() {
-            showPopupForQuery();
-          }
-
-          @Override
-          protected void handleAppendAttributeValue() {
-            showPopupForQuery();
-          }
-
-          @Override
           protected void showPopupForQuery() {
-            hidePopup();
             showSearchPanel(mySearchTextField.getText());
           }
 
@@ -600,14 +589,12 @@ public class PluginManagerConfigurable
           new SearchQueryParser.Marketplace(mySearchTextField.getText()) {
             @Override
             protected void addToSearchQuery(@NotNull String query) {
-              super.addToSearchQuery(query);
               queries.add(query);
             }
 
             @Override
-            protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
-              super.handleAttribute(name, value, invert);
-              queries.add(name + ":" + SearchQueryParser.wrapAttribute(value));
+            protected void handleAttribute(@NotNull String name, @NotNull String value) {
+              queries.add(name + SearchQueryParser.wrapAttribute(value));
             }
           };
           if (removeAction != null) {
@@ -927,16 +914,6 @@ public class PluginManagerConfigurable
           }
 
           @Override
-          protected void handleAppendToQuery() {
-            showPopupForQuery();
-          }
-
-          @Override
-          protected void handleAppendAttributeValue() {
-            showPopupForQuery();
-          }
-
-          @Override
           protected void showPopupForQuery() {
             showSearchPanel(mySearchTextField.getText());
           }
@@ -955,18 +932,16 @@ public class PluginManagerConfigurable
 
         myInstalledSearchCallback = updateAction -> {
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.InstalledWithVendorAndTag(mySearchTextField.getText()) {
+          new SearchQueryParser.Installed(mySearchTextField.getText()) {
             @Override
             protected void addToSearchQuery(@NotNull String query) {
-              super.addToSearchQuery(query);
               queries.add(query);
             }
 
             @Override
-            protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
-              super.handleAttribute(name, value, invert);
+            protected void handleAttribute(@NotNull String name, @NotNull String value) {
               if (!updateAction.myState) {
-                queries.add("/" + name + (value.isEmpty() ? "" : ":" + SearchQueryParser.wrapAttribute(value)));
+                queries.add(name + (value.isEmpty() ? "" : SearchQueryParser.wrapAttribute(value)));
               }
             }
           };
@@ -1013,7 +988,7 @@ public class PluginManagerConfigurable
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
             myPluginModel.setInvalidFixCallback(null);
 
-            SearchQueryParser.InstalledWithVendorAndTag parser = new SearchQueryParser.InstalledWithVendorAndTag(query);
+            SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
 
             if (myInstalledSearchSetState) {
               for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
@@ -1413,7 +1388,7 @@ public class PluginManagerConfigurable
       myInstalledSearchCallback.accept(this);
     }
 
-    public void setState(@Nullable SearchQueryParser.InstalledWithVendorAndTag parser) {
+    public void setState(@Nullable SearchQueryParser.Installed parser) {
       if (parser == null) {
         myState = false;
         return;

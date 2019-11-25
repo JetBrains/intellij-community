@@ -22,7 +22,6 @@ import java.util.List;
  */
 public abstract class SearchPopupController {
   protected final PluginSearchTextField myTextField;
-  private final boolean myHandleSpace;
   protected SearchPopup myPopup;
   private final JBPopupListener mySearchPopupListener = new JBPopupAdapter() {
     @Override
@@ -32,12 +31,7 @@ public abstract class SearchPopupController {
   };
 
   public SearchPopupController(@NotNull PluginSearchTextField searchTextField) {
-    this(searchTextField, true);
-  }
-
-  public SearchPopupController(@NotNull PluginSearchTextField searchTextField, boolean handleSpace) {
     myTextField = searchTextField;
-    myHandleSpace = handleSpace;
   }
 
   public void handleShowPopup() {
@@ -46,24 +40,13 @@ public abstract class SearchPopupController {
     int position = getCaretPosition();
 
     if (position < length) {
-      if (query.charAt(position) == ' ') {
-        if (position == 0 || query.charAt(position - 1) == ' ') {
-          if (myHandleSpace) {
-            showAttributesPopup(null, position);
-          }
-          return;
-        }
-      }
-      else {
-        hidePopup();
-        handleAppendToQuery();
+      if (query.charAt(position) != ' ') {
+        handleShowPopupForQuery();
         return;
       }
     }
     else if (query.charAt(position - 1) == ' ') {
-      if (myHandleSpace) {
-        showAttributesPopup(null, position);
-      }
+      handleShowPopupForQuery();
       return;
     }
 
@@ -107,13 +90,11 @@ public abstract class SearchPopupController {
       index--;
     }
 
-    String name = StringUtil.trimStart(query.substring(index + 1, end), "-");
-
     if (startPosition.isNull()) {
-      startPosition.set(index + (query.charAt(index + 1) == '-' ? 2 : 1));
+      startPosition.set(index + 1);
     }
 
-    return Pair.create(name, value);
+    return Pair.create(query.substring(index + 1, end), value);
   }
 
   public void showAttributesPopup(@Nullable String namePrefix, int caretPosition) {
@@ -141,7 +122,7 @@ public abstract class SearchPopupController {
   private void handleShowAttributeValuesPopup(@NotNull String name, @Nullable String valuePrefix, int caretPosition) {
     List<String> values = getValues(name);
     if (ContainerUtil.isEmpty(values)) {
-      showPopupForQuery();
+      handleShowPopupForQuery();
       return;
     }
 
@@ -159,7 +140,7 @@ public abstract class SearchPopupController {
       @Override
       public void consume(String value) {
         appendSearchText(SearchQueryParser.wrapAttribute(value), prefix);
-        handleAppendAttributeValue();
+        handleShowPopupForQuery();
       }
     });
   }
@@ -218,7 +199,7 @@ public abstract class SearchPopupController {
     }
 
     if (model.isEmpty()) {
-      showPopupForQuery();
+      handleShowPopupForQuery();
       return true;
     }
 
@@ -231,13 +212,12 @@ public abstract class SearchPopupController {
   @Nullable
   protected abstract List<String> getValues(@NotNull String attribute);
 
+  private void handleShowPopupForQuery() {
+    hidePopup();
+    showPopupForQuery();
+  }
+
   protected abstract void showPopupForQuery();
-
-  protected void handleAppendToQuery() {
-  }
-
-  protected void handleAppendAttributeValue() {
-  }
 
   public boolean isPopupShow() {
     return myPopup != null && myPopup.isValid();
