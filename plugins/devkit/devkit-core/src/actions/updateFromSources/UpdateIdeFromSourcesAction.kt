@@ -90,7 +90,8 @@ open class UpdateIdeFromSourcesAction
     val deployDir = "$devIdeaHome/out/deploy"
     val distRelativePath = "dist"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
-    val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile, bundledPluginDirsToSkip) ?: return
+    val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
+                                            bundledPluginDirsToSkip, state.buildDisabledPlugins) ?: return
     ProjectTaskManager.getInstance(project)
       .buildAllModules()
       .onSuccess {
@@ -266,7 +267,8 @@ open class UpdateIdeFromSourcesAction
                                          deployDir: String,
                                          distRelativePath: String,
                                          scriptFile: File,
-                                         bundledPluginDirsToSkip: List<String>): JavaParameters? {
+                                         bundledPluginDirsToSkip: List<String>,
+                                         buildNonBundledPlugins: Boolean): JavaParameters? {
     val sdk = ProjectRootManager.getInstance(project).projectSdk
     if (sdk == null) {
       LOG.warn("Project SDK is not defined")
@@ -308,6 +310,9 @@ open class UpdateIdeFromSourcesAction
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
     if (bundledPluginDirsToSkip.isNotEmpty()) {
       params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
+    }
+    if (buildNonBundledPlugins) {
+      params.vmParametersList.add("-Dintellij.build.local.plugins.repository=true")
     }
     params.vmParametersList.add("-Dintellij.build.output.root=$deployDir")
     params.vmParametersList.add("-DdistOutputRelativePath=$distRelativePath")
