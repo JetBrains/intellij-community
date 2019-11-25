@@ -15,7 +15,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
 import org.jetbrains.annotations.CalledInAwt
 
-class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String)
+class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
+  internal fun copy(commitMessage: String): ChangeListCommitState =
+    if (this.commitMessage == commitMessage) this else ChangeListCommitState(changeList, changes, commitMessage)
+}
 
 open class SingleChangeListCommitter(
   project: Project,
