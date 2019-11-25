@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -20,6 +21,12 @@ fun findSelectedLogIds(project: Project): Set<String> {
 
 fun getExistingLogIds(project: Project): Set<String> {
   return FileEditorManager.getInstance(project).allEditors.mapNotNullTo(mutableSetOf(), ::getLogId)
+}
+
+fun updateTabName(project: Project, ui: VcsLogUiEx) {
+  val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+  val file = fileEditorManager.allEditors.first { getLogId(it) == ui.id }?.file
+  file?.let { fileEditorManager.updateFilePresentation(it) }
 }
 
 fun <U : VcsLogUiEx> openLogTab(project: Project, logManager: VcsLogManager, name: String,

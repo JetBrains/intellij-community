@@ -74,6 +74,9 @@ public class VcsLogTabsManager {
     MainVcsLogUi ui;
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
       ui = VcsLogEditorUtilKt.openLogTab(myProject, manager, getFullName(tabId), factory, focus);
+      ui.addFilterListener(() -> {
+        VcsLogEditorUtilKt.updateTabName(myProject, ui);
+      });
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
       ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
