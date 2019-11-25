@@ -240,11 +240,13 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return duplicates
   }
 
-  override fun getRecentProjectsActions(forMainMenu: Boolean): Array<AnAction> {
+  // nullable for IDE Features Trainer
+  override fun getRecentProjectsActions(forMainMenu: Boolean): Array<AnAction?> {
     return getRecentProjectsActions(forMainMenu, false)
   }
 
-  override fun getRecentProjectsActions(forMainMenu: Boolean, useGroups: Boolean): Array<AnAction> {
+  // nullable for IDE Features Trainer
+  override fun getRecentProjectsActions(forMainMenu: Boolean, useGroups: Boolean): Array<AnAction?> {
     var paths: MutableSet<String>
     synchronized(stateLock) {
       state.validateRecentProjects(modCounter)
@@ -306,8 +308,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       actions.add(createOpenAction(path, duplicates))
     }
 
-    @Suppress("USELESS_CAST")
-    return actions.toArray(AnAction.EMPTY_ARRAY) as Array<AnAction>
+    return actions.toArray(AnAction.EMPTY_ARRAY)
   }
 
   // for Rider

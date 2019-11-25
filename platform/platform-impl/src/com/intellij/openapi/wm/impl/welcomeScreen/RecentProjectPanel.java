@@ -41,6 +41,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -457,6 +458,17 @@ public class RecentProjectPanel extends JPanel {
     protected final JLabel myName = new JLabel();
     protected final JLabel myPath = new JLabel();
     protected boolean myHovered;
+
+    /**
+     * Used by IDE Faatures Trainer.
+     * 
+     * @deprecated use empty constructor
+     */
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+    protected RecentProjectItemRenderer(@SuppressWarnings("unused") UniqueNameBuilder<ReopenProjectAction> pathShortener) {
+      this();
+    }
 
     protected RecentProjectItemRenderer() {
       super(new VerticalFlowLayout());
