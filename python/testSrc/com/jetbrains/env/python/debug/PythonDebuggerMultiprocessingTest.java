@@ -166,6 +166,9 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
   @Test
   public void testPosixSpawn() {
+
+    Assume.assumeFalse("Windows doesn't support `posix_spawn`", SystemInfo.isWindows);
+
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_posix_spawn.py") {
       @Override
       public void before() {
@@ -176,7 +179,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        Assume.assumeFalse("Windows doesn't support `posix_spawn`", SystemInfo.isWindows);
         waitForPause();
         eval("z").hasValue("2");
         resume();
