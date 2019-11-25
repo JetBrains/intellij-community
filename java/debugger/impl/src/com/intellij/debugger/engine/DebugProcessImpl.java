@@ -311,7 +311,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return;
       }
       if(myConnection.isServerMode()) {
-        ((ListeningConnector)findConnector(SOCKET_LISTENING_CONNECTOR_NAME)).stopListening(arguments);
+        ((ListeningConnector)findConnector(myConnection.isUseSockets(), true)).stopListening(arguments);
       }
     }
     catch (IOException | IllegalConnectorArgumentsException | IllegalArgumentException e) {
