@@ -88,8 +88,17 @@ interface AnnotationBuilder {
   AnnotationBuilder needsUpdateOnTyping();
 
   /**
+   * Registers quick fix for this annotation.
+   * If you want to tweak the fix, e.g. modify its range, please use {@link #newFix(IntentionAction)} instead.
+   * This is an intermediate method in the creating new annotation pipeline.
+   */
+  @Contract(pure=true)
+  @NotNull
+  AnnotationBuilder withFix(@NotNull IntentionAction fix);
+
+  /**
    * Begin registration of the new quickfix associated with the annotation.
-   * A typical code looks like this: <p>{@code holder.newFix(action).registerFix()}</p>
+   * A typical code looks like this: <p>{@code holder.newFix(action).range(fixRange).registerFix()}</p>
    * @param fix an intention action to be shown for the annotation as a quick fix
    */
   @Contract(pure=true)
@@ -97,7 +106,7 @@ interface AnnotationBuilder {
   FixBuilder newFix(@NotNull IntentionAction fix);
   /**
    * Begin registration of the new quickfix associated with the annotation.
-   * A typical code looks like this: <p>{@code holder.newLocalQuickFix(fix).registerFix()}</p>
+   * A typical code looks like this: <p>{@code holder.newLocalQuickFix(fix).range(fixRange).registerFix()}</p>
    * @param fix to be shown for the annotation as a quick fix
    * @param problemDescriptor to be passed to {@link LocalQuickFix#applyFix(Project, CommonProblemDescriptor)}
    */

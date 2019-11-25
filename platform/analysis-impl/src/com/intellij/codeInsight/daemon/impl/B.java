@@ -99,6 +99,12 @@ class B implements AnnotationBuilder {
 
   @NotNull
   @Override
+  public AnnotationBuilder withFix(@NotNull IntentionAction fix) {
+    return newFix(fix).registerFix();
+  }
+
+  @NotNull
+  @Override
   public FixBuilder newFix(@NotNull IntentionAction fix) {
     return new FixB(fix);
   }
