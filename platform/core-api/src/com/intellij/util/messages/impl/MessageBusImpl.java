@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.ListenerDescriptor;
@@ -82,7 +82,7 @@ public class MessageBusImpl implements MessageBus {
     LOG.assertTrue(parentBus.myChildBuses.contains(this));
     myRootBus.clearSubscriberCache();
     // only for project
-    myLazyConnections = parentBus.myParentBus == null ? FactoryMap.create((key) -> connect()) : null;
+    myLazyConnections = parentBus.myParentBus == null ? ConcurrentFactoryMap.createMap((key) -> connect()) : null;
   }
 
   // root message bus constructor
@@ -91,7 +91,7 @@ public class MessageBusImpl implements MessageBus {
     myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
     myRootBus = (RootBus)this;
-    myLazyConnections = FactoryMap.create((key) -> connect());
+    myLazyConnections = ConcurrentFactoryMap.createMap((key) -> connect());
   }
 
   /**
