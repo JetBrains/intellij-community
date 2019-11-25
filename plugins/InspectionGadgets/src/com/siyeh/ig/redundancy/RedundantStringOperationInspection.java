@@ -53,7 +53,6 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_LAST_INDEX_OF = exactInstanceCall(JAVA_LANG_STRING, "lastIndexOf").parameterCount(2);
   private static final CallMatcher STRING_IS_EMPTY = exactInstanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
   private static final CallMatcher CASE_CHANGE = exactInstanceCall(JAVA_LANG_STRING, "toUpperCase", "toLowerCase");
-  private static final CallMatcher STRING_INDEX_OF_ONE_ARG = exactInstanceCall(JAVA_LANG_STRING, "indexOf").parameterCount(1);
   private static final CallMatcher STRING_EQUALS = exactInstanceCall(JAVA_LANG_STRING, "equals").parameterTypes(JAVA_LANG_OBJECT);
 
   public boolean ignoreStringConstructor = false;
@@ -95,7 +94,6 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
       .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem)
       .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
-      .register(STRING_INDEX_OF_ONE_ARG, this::getRedundantSubstringIndexOfProblem)
       .register(STRING_EQUALS, this::getRedundantSubstringEqualsProblem);
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
@@ -159,20 +157,6 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly, fixes);
         }
       }
-      return null;
-    }
-
-    private ProblemDescriptor getRedundantSubstringIndexOfProblem(PsiMethodCallExpression call) {
-      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-      if (STRING_SUBSTRING_ONE_ARG.test(qualifierCall) && qualifierCall.getMethodExpression().getQualifierExpression() != null) {
-        PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
-        if (anchor != null) {
-          return myManager.createProblemDescriptor(anchor, (TextRange)null, 
-                                                   InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
-                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
-                                                   new RemoveRedundantSubstringFix(null));
-        }
-      } 
       return null;
     }
 
@@ -358,9 +342,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   }
 
   private static class RemoveRedundantSubstringFix implements LocalQuickFix {
-    private final @Nullable String myBindCallName;
+    private final @NotNull String myBindCallName;
     
-    RemoveRedundantSubstringFix(@Nullable String bindCallName) {
+    RemoveRedundantSubstringFix(@NotNull String bindCallName) {
       myBindCallName = bindCallName;
     }
     
@@ -368,8 +352,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return myBindCallName == null ? getFamilyName() : 
-             "Use '"+myBindCallName+"' and remove redundant 'substring()' call";
+      return "Use '" + myBindCallName + "' and remove redundant 'substring()' call";
     }
     
     @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -393,9 +376,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (!"endsWith".equals(myBindCallName) && !ExpressionUtils.isZero(args[0])) {
         nextCall.getArgumentList().add(ct.markUnchanged(args[0]));
       }
-      if (myBindCallName != null) {
-        ExpressionUtils.bindCallTo(nextCall, myBindCallName);
-      }
+      ExpressionUtils.bindCallTo(nextCall, myBindCallName);
       ct.replaceAndRestoreComments(substringCall, stringExpr);
     }
   }
