@@ -219,6 +219,32 @@ class LegacyBridgeModulesTest {
     }
 
   @Test
+  fun `test LibraryEntity is removed after clearing module order entries`() =
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleManager = ModuleManager.getInstance(project)
+
+      val module = moduleManager.modifiableModel.let {
+        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+        it.commit()
+        m
+      }
+
+      ModuleRootModificationUtil.addModuleLibrary(module, "xxx-lib", listOf(File(project.basePath, "x.jar").path), emptyList())
+
+      val projectModel = WorkspaceModel.getInstance(project)
+
+      assertEquals(
+        "xxx-lib",
+        projectModel.entityStore.current.entities(LibraryEntity::class.java).toList().single().name)
+
+      ModuleRootModificationUtil.updateModel(module) { model ->
+        model.clear()
+      }
+
+      assertEmpty(projectModel.entityStore.current.entities(LibraryEntity::class.java).toList())
+    }
+
+  @Test
   fun `test content roots provided implicitly`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)

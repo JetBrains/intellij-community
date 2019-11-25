@@ -231,6 +231,10 @@ class LegacyBridgeModifiableRootModel(
   }
 
   override fun clear() {
+    for (library in moduleLibraryTable.libraries) {
+      moduleLibraryTable.removeLibrary(library)
+    }
+
     updateDependencies { dependencies ->
       val jdkItem = dependencies
         .firstOrNull { it is ModuleDependencyItem.InheritedSdkDependency || it is ModuleDependencyItem.SdkDependency }
