@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.Gray;
@@ -108,7 +109,7 @@ public final class MemoryUsagePanel extends JButton implements CustomStatusBarWi
   }
 
   private static Font getWidgetFont() {
-    return JBUI.Fonts.label();
+    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
   }
 
   @Override
