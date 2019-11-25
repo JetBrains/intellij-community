@@ -7,7 +7,7 @@ import kotlin.reflect.KProperty
 class PropertyView<R, S, T>(
   private val instance: ReadWriteProperty<R, S>,
   private val map: (S) -> T,
-  private val coamp: (T) -> S
+  private val comap: (T) -> S
 ) : ReadWriteProperty<R, T> {
 
   override fun getValue(thisRef: R, property: KProperty<*>): T {
@@ -15,7 +15,7 @@ class PropertyView<R, S, T>(
   }
 
   override fun setValue(thisRef: R, property: KProperty<*>, value: T) {
-    instance.setValue(thisRef, property, coamp(value))
+    instance.setValue(thisRef, property, comap(value))
   }
 
   companion object {
