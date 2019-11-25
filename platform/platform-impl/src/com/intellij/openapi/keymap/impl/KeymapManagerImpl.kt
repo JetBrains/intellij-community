@@ -115,8 +115,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         }, pluginDescriptor.pluginId)
         schemeManager.addScheme(keymap)
         fireKeymapAdded(keymap)
-        schemeManager.setCurrent(keymap, true, true)
-        fireActiveKeymapChanged(keymap)
+        // do no set current keymap here, consider: multi-keymap plugins, parent keymaps loading
       }
 
       override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
