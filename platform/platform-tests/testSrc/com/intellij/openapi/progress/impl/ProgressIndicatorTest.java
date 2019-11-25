@@ -867,12 +867,12 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
-          assertFalse(progressIndicator.isCanceled());
-          ProgressManager.getInstance().getProgressIndicator().cancel();
+          ProgressIndicator progressManagerIndicator = ProgressManager.getInstance().getProgressIndicator();
+          assertEquals(progressIndicator, progressManagerIndicator);
+          progressManagerIndicator.cancel();
         }, "NotUsed", true, null);
       }, progressIndicator);
     });
-
     assertTrue(progressIndicator.isCanceled());
   }
 }
