@@ -183,19 +183,19 @@ int main(int argc, char **argv)
 
         VARIANT vtId;
         pclsObj->Get(L"ProcessId", 0, &vtId, nullptr, nullptr);
-        wcout << vtId.intVal << "\n";
+        wcout << "pid:" << vtId.intVal << "\n";
         VARIANT vtName;
         pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
         if (vtName.bstrVal != nullptr)
-            wcout << escapeLineBreaks(vtName.bstrVal) << L"\n";
+            wcout << L"name:" << escapeLineBreaks(vtName.bstrVal) << L"\n";
         else
-            wcout << L"\n";
+            wcout << L"name:\n";
         VARIANT vtCmd;
         pclsObj->Get(L"CommandLine", 0, &vtCmd, nullptr, nullptr);
         if (vtCmd.bstrVal != nullptr)
-            wcout << L"\"" << escapeLineBreaks(vtCmd.bstrVal) << L"\"\n";
+            wcout << L"cmd:" << escapeLineBreaks(vtCmd.bstrVal) << L"\n";
         else
-            wcout << L"\"\"\n";
+            wcout << L"cmd:\n";
         VariantClear(&vtId);
         VariantClear(&vtName);
         VariantClear(&vtCmd);
