@@ -220,7 +220,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  public <T> Future<T> executeOnPooledThread(@NotNull final Callable<T> action) {
+  public <T> Future<T> executeOnPooledThread(@SuppressWarnings("BoundedWildcard") @NotNull Callable<T> action) {
     ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
@@ -622,7 +622,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
 
       boolean success = disposeSelf(!force);
+      //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
+        //noinspection SpellCheckingInspection
         if (Boolean.getBoolean("idea.test.guimode")) {
           shutdown();
         }
@@ -974,16 +976,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isHeadlessEnvironment()) return true;
+    if (isHeadlessEnvironment()) {
+      return true;
+    }
 
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-
-    if (ApplicationActivationStateManager.getState().isInactive()
-      && activeWindow != null) {
+    if (activeWindow != null && ApplicationActivationStateManager.isInactive()) {
       ApplicationActivationStateManager.updateState(activeWindow);
     }
 
-    return ApplicationActivationStateManager.getState().isActive();
+    return ApplicationActivationStateManager.isActive();
   }
 
   @NotNull

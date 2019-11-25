@@ -876,9 +876,9 @@ public final class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static void processAppActivationEvent(WindowEvent we) {
-    ApplicationActivationStateManager.updateState(we);
-    storeLastFocusedComponent(we);
+  private static void processAppActivationEvent(@NotNull WindowEvent event) {
+    ApplicationActivationStateManager.updateState(event);
+    storeLastFocusedComponent(event);
   }
 
   private static void storeLastFocusedComponent(@NotNull WindowEvent we) {
