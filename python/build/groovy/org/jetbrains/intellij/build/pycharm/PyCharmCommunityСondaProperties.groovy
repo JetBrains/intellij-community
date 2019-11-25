@@ -8,8 +8,8 @@ import static org.jetbrains.intellij.build.pycharm.PyCharmPropertiesBase.downloa
 /**
  * @author Aleksey.Rostovskiy
  */
-class PyCharmCommunityСondaProperties extends PyCharmCommunityProperties {
-  PyCharmCommunityСondaProperties(String communityHome) {
+class PyCharmCommunityCondaProperties extends PyCharmCommunityProperties {
+  PyCharmCommunityCondaProperties(String communityHome) {
     super(communityHome)
     customProductCode = "PCA"
     productLayout.bundledPluginModules.add("intellij.python.conda")

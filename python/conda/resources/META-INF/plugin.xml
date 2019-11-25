@@ -2,7 +2,7 @@
   <name>Anaconda Support</name>
   <id>org.jetbrains.plugins.anaconda</id>
   <vendor>JetBrains</vendor>
-  <description>Facilitates using Сonda management system in PyCharm</description>
+  <description>Facilitates using Conda management system in PyCharm</description>
 
   <depends>com.intellij.modules.python</depends>
 
