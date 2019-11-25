@@ -84,7 +84,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class Switcher extends AnAction implements DumbAware {
-  private static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
+  public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Logger LOG = Logger.getInstance(Switcher.class);
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
@@ -192,14 +192,9 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+    if (SWITCHER != null && Comparing.equal(SWITCHER.myTitle, title)) return null;
+
     Project project = e.getProject();
-    if (SWITCHER != null) {
-      final boolean sameShortcut = Comparing.equal(SWITCHER.myTitle, title);
-      if (sameShortcut) {
-        SWITCHER.goForward();
-        return null;
-      }
-    }
     return project == null ? null : createAndShowSwitcher(project, title, actionId, onlyEdited, pinned);
   }
 
@@ -237,6 +232,23 @@ public class Switcher extends AnAction implements DumbAware {
 
     static boolean isEnabled() {
       return getActiveKeymapShortcuts(TOGGLE_CHECK_BOX_ACTION_ID).getShortcuts().length > 0;
+    }
+  }
+
+  public static class IterateItemsAction extends DumbAwareAction implements DumbAware {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      SwitcherPanel switcherPanel = SWITCHER_KEY.get(project);
+      if (switcherPanel != null) {
+        switcherPanel.goForward();
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      e.getPresentation().setEnabledAndVisible(SWITCHER_KEY.get(project) != null);
     }
   }
 
