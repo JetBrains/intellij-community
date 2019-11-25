@@ -20,12 +20,14 @@ import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,8 +100,11 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
-    if (targetClass == null) return;
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    chooseTargetClass(project, editor, this::invokeImpl);
+  }
+
+  private void invokeImpl(@NotNull PsiClass targetClass) {
     PsiMethodReferenceExpression expression = getMethodReference();
     if (expression == null) return;
 

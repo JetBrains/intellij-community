@@ -17,10 +17,14 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -54,7 +58,11 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    chooseTargetClass(project, editor, this::invokeImpl);
+  }
+
+  private void invokeImpl(final PsiClass targetClass) {
     PsiNewExpression newExpression = getNewExpression();
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
     assert ref != null;

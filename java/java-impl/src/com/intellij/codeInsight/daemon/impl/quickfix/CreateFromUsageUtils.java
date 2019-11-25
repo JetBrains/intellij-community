@@ -362,6 +362,9 @@ public class CreateFromUsageUtils {
       if (targetDirectory == null) return null;
     }
     else {
+      if (!FileModificationService.getInstance().prepareFileForWrite(sourceFile)) {
+        return null;
+      }
       targetDirectory = null;
     }
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
