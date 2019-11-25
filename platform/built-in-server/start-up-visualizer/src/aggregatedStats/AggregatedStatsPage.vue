@@ -84,7 +84,7 @@
             <el-form v-if="item.order === 'date'" :inline="true" size="small">
               <el-form-item label="Granularity">
                 <el-select v-model="chartSettings.granularity" data-lpignore="true" filterable>
-                  <el-option v-for='name in ["as is", "hour", "day", "week", "month"]' :key="name" :label="name" :value="name"/>
+                  <el-option v-for='name in ["as is", "2 hour", "day", "week", "month"]' :key="name" :label="name" :value="name"/>
                 </el-select>
               </el-form-item>
             </el-form>

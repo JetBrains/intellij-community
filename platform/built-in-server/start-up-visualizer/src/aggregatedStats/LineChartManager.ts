@@ -3,7 +3,6 @@ import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {addExportMenu, StatChartManager} from "@/charts/ChartManager"
-// import HumanizeDuration from "humanize-duration"
 import {MetricDescriptor, Metrics} from "@/aggregatedStats/model"
 import {ChartConfigurator} from "@/aggregatedStats/ChartConfigurator"
 import * as am4plugins_annotation from "@amcharts/amcharts4/plugins/annotation"
@@ -129,16 +128,6 @@ export class LineChartManager implements StatChartManager {
           scrollbarX.series.push(series)
         }
       }
-
-      // const firstSeries = chart.series.getIndex(0)!!
-      // firstSeries.bullets.getIndex(0)!!.adapter.add("tooltipHTML", this.toolTipAdapter as any)
-      // const tooltip = firstSeries.tooltip!!
-      // tooltip.pointerOrientation = "down"
-      // tooltip.background.fillOpacity = 0.4
-      // tooltip.adapter.add("y", (_x, _target) => {
-      //   return (this.chart.yAxesAndPlotContainer.y as number) + 40
-      // })
-      // tooltip.label.interactionsEnabled = true
     }
 
     chart.data = data

@@ -71,7 +71,7 @@ export abstract class BaseStatChartComponent<T extends StatChartManager> extends
     this.dataRequestCounter++
     const dataRequestCounter = this.dataRequestCounter
     this.queue.add(() => {
-      loadJson(url, null, this.$notify)
+      loadJson(url, null)
         .then(data => {
           if (data == null || dataRequestCounter !== this.dataRequestCounter) {
             return

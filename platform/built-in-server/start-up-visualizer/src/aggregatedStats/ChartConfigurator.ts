@@ -48,7 +48,7 @@ export class SortedByDate implements ChartConfigurator {
   configureSeries(series: am4charts.LineSeries) {
     series.dataFields.dateX = "t"
 
-    series.minBulletDistance = 15
+    series.minBulletDistance = 12
 
     const bullet = series.bullets.push(new am4charts.CircleBullet())
     bullet.circle.strokeWidth = 2
@@ -68,10 +68,6 @@ export class SortedByDate implements ChartConfigurator {
       else {
         this.showTooltip(dataContext)
       }
-      // if clicking on a segment, we need to get the tooltip dataItem
-      // if (event.target.className === "LineSeriesSegment") {
-      //   dataItem = dataItem.component.tooltipDataItem;
-      // }
     })
   }
 }

@@ -4,13 +4,12 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build && unlink dist/js/pdfmake.*.js && unlink dist/js/pdfmake.*.js.map"
+    "build": "vue-cli-service build"
   },
   "dependencies": {
     "@amcharts/amcharts4": "4.7.9",
     "debounce": "^1.2.0",
     "element-ui": "^2.12.0",
-    "humanize-duration": "^3.21.0",
     "p-queue": "^6.2.1",
     "rison-node": "^2.1.0",
     "semver": "^6.3.0",
@@ -23,7 +22,6 @@
   },
   "devDependencies": {
     "@types/debounce": "^1.2.0",
-    "@types/humanize-duration": "^3.18.0",
     "@types/semver": "^6.2.0",
     "@vue/cli-plugin-typescript": "^4.0.5",
     "@vue/cli-service": "^4.0.5",

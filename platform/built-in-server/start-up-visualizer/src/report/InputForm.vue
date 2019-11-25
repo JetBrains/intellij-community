@@ -17,7 +17,7 @@
           <el-button @click="getFromRunningInstance" :loading="isFetching">Get from running instance</el-button>
         </el-form-item>
         <el-form-item>
-          <el-input-number v-model="portNumber" :min="1024" :max="65535"></el-input-number>
+          <el-input-number v-model="portNumber" :min="1024" :max="65535"/>
         </el-form-item>
       </el-form>
       <el-form :inline="true" size="small">
@@ -103,7 +103,7 @@
       loadJson(reportUrl, () => {
         this.isFetchingDev = false
         this.isFetching = false
-      }, this.$notify)
+      })
         .then(data => {
           if (data == null) {
             return

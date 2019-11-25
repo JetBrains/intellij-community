@@ -6,8 +6,10 @@
     v-model="infoIsVisible">
     <div>
       <div>
-        <!-- cell text has 10px padding - so, add link maring to align text  -->
-        <el-link style="margin-left: 10px" :href="reportLink" target="_blank" type="text">{{reportName}}</el-link>
+        <!-- cell text has 10px padding - so, add link margin to align text  -->
+        <el-link v-if="reportName.length !== 0" style="margin-left: 10px" :href="reportLink" target="_blank" type="text">{{reportName}}</el-link>
+        <small v-else style="margin-left: 10px">use <code>as is</code> granularity to see report</small>
+
         <el-link type="default"
                  style="float: right"
                  :underline="false"
@@ -34,11 +36,6 @@
   .infoMetricValue {
     font-family: monospace;
   }
-
-  /*table.chartTooltip th {*/
-  /*  text-align: left;*/
-  /*  font-weight: normal;*/
-  /*}*/
 </style>
 
 <script lang="ts">
@@ -100,7 +97,7 @@
       const chartSettings = this.chartSettings
       let granularity = chartSettings.granularity
       if (granularity == null || granularity == null) {
-        granularity = "hour"
+        granularity = "2 hour"
       }
 
       if (this.order === "buildNumber") {
@@ -117,20 +114,21 @@
       }
       else {
         if (granularity !== "as is") {
-          let sql: string
-          if (granularity == null || granularity === "hour") {
-            sql = "toStartOfHour(generated_time)"
+          let sql = "toStartOfInterval(generated_time, interval "
+          // hour - backward compatibility
+          if (granularity == null || granularity === "2 hour" || granularity === "hour" as any) {
+            sql += "2 hour"
           }
           else if (granularity === "day") {
-            sql = "toStartOfDay(generated_time)"
+            sql += "1 day"
           }
           else if (granularity === "week") {
-            // Monday is the first day of week
-            sql = "toStartOfWeek(generated_time, 1)"
+            sql += "1 week"
           }
           else {
-            sql = "toStartOfMonth(generated_time)"
+            sql += "1 month"
           }
+          sql += ")"
 
           dataQuery.dimensions = [
             // seconds to milliseconds
@@ -180,16 +178,6 @@
             name: metricDescriptor.name,
             value: data[metricDescriptor.key],
           })
-
-          // const isDiffAbnormal = prevItem != null && (value - prevItem[metric.key]) >= 100
-          // if (isDiffAbnormal) {
-          //   html += "<strong>"
-          // }
-          // html += shortEnglishHumanizer(value)
-          // if (isDiffAbnormal) {
-          //   html += "</strong>"
-          // }
-          // html += `</td></tr>`
         }
 
         const request = this.dataRequest!!
@@ -200,12 +188,20 @@
             {field: "generated_time", value: data.t / 1000},
           ],
         }
-        const reportUrl = `/api/v1/report/${encodeQuery(reportQuery)}`
-        this.reportLink = `/#/report?reportUrl=${encodeURIComponent(this.chartSettings.serverUrl)}${reportUrl}`
+
+        if (this.chartSettings.granularity === "as is") {
+          const reportUrl = `/api/v1/report/${encodeQuery(reportQuery)}`
+          this.reportLink = `/#/report?reportUrl=${encodeURIComponent(this.chartSettings.serverUrl)}${reportUrl}`
+          const generatedTime = new Date(data.t)
+          // 18 Oct, 13:01:49
+          this.reportName = `${generatedTime.getDate()} ${generatedTime.toLocaleString("default", {month: "short"})}, ${generatedTime.toLocaleTimeString("default", {hour12: false})}`
+        }
+        else {
+          this.reportName = ""
+        }
 
         this.reportTableData = tableData
         this.infoIsVisible = true
-        this.reportName = this.chartManager!!.dateFormatter.format(data.t, "EEE, dd MMM yyyy HH:mm:ss zzz")
       }) : new SortedByCategory()
       return new LineChartManager(this.$refs.chartContainer as HTMLElement, this.chartSettings || new ChartSettings(), this.type === "instant", metricDescriptors, configurator)
     }
