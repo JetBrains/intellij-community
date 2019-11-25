@@ -16,6 +16,7 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -42,17 +43,23 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance(DomExtenderEP.class);
 
   static {
+    Application app = ApplicationManager.getApplication();
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<DomExtenderEP>() {
       @Override
       public void extensionAdded(@NotNull DomExtenderEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        StubIndex.getInstance().forceRebuild(new Throwable());
+        extensionsChanged();
       }
 
       @Override
       public void extensionRemoved(@NotNull DomExtenderEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        StubIndex.getInstance().forceRebuild(new Throwable());
+        extensionsChanged();
       }
-    }, ApplicationManager.getApplication());
+
+      private void extensionsChanged() {
+        Throwable trace = new Throwable();
+        app.invokeLater(() -> StubIndex.getInstance().forceRebuild(trace), app.getDisposed());
+      }
+    }, app);
   }
 
   @Attribute("domClass")
