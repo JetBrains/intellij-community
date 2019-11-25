@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
+import kotlin.math.max
 
 /**
  * @author yole
@@ -17,8 +18,8 @@ class MemorySizeConfigurator : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
-    var currentXmx = VMOptions.readOption(VMOptions.MemoryKind.HEAP, true)
-    if (currentXmx < 0) currentXmx = VMOptions.readOption(VMOptions.MemoryKind.HEAP, false)
+    val currentXmx = max(VMOptions.readOption(VMOptions.MemoryKind.HEAP, true),
+                         VMOptions.readOption(VMOptions.MemoryKind.HEAP, false))
     if (currentXmx < 0) {
       // Don't know how much -Xmx we have
       return
@@ -36,8 +37,8 @@ class MemorySizeConfigurator : StartupActivity.Background {
 
     val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(currentXmx, totalPhysicalMemory.toInt())
 
-    var currentXms = VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true)
-    if (currentXms < 0) currentXms = VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false)
+    val currentXms = max(VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true),
+                         VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false))
 
     if (currentXms < 0 || newXmx < currentXms) return
 
