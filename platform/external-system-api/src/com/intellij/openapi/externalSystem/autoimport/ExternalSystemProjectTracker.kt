@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Experimental
 interface ExternalSystemProjectTracker : Disposable {
@@ -35,13 +34,6 @@ interface ExternalSystemProjectTracker : Disposable {
    * Schedules update of reload notification status
    */
   fun scheduleProjectNotificationUpdate()
-
-  /**
-   * Enables auto-import in tests
-   * Note: project tracker automatically enabled out of tests
-   */
-  @TestOnly
-  fun enableAutoImportInTests()
 
   companion object {
     @JvmStatic
