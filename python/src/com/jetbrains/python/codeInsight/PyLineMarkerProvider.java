@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -171,6 +172,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   @Override
   public boolean isSeparatorAllowed(@Nullable PsiElement element) {
+    if (element == null || element.getContainingFile().getVirtualFile() instanceof BackedVirtualFile) return false;
     return element instanceof PyFunction || element instanceof PyClass;
   }
 
