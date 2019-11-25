@@ -52,6 +52,11 @@ public class ClassInnerStuffCache {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcInnerClasses())));
   }
 
+  @NotNull
+  public PsiRecordComponent[] getRecordComponents() {
+    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcRecordComponents())));
+  }
+
   @Nullable
   public PsiField findFieldByName(String name, boolean checkBases) {
     if (checkBases) {
@@ -119,6 +124,12 @@ public class ClassInnerStuffCache {
     List<PsiClass> own = myClass.getOwnInnerClasses();
     List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
+  }
+
+  @NotNull
+  private PsiRecordComponent[] calcRecordComponents() {
+    PsiRecordHeader header = myClass.getRecordHeader();
+    return header == null ? PsiRecordComponent.EMPTY_ARRAY : header.getRecordComponents();
   }
 
   @NotNull

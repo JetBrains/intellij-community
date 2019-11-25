@@ -197,7 +197,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   }
 
   public void visitRecordComponent(PsiRecordComponent recordComponent) {
-    visitElement(recordComponent);
+    visitVariable(recordComponent);
   }
 
   public void visitReceiverParameter(PsiReceiverParameter parameter) {
