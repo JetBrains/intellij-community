@@ -100,8 +100,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "constant.conditional.expression.simplify.quickfix");
+      return InspectionGadgetsBundle.message("trivial.if.fix.family.name");
     }
 
     @Override
