@@ -32,14 +32,6 @@ class LegacyBridgeProjectModifiableLibraryTableImpl(
   private val libraries
     get() = WorkspaceModel.getInstance(project).entityStore.cachedValue(librariesValue, myLibrariesToAdd to myLibrariesToRemove)
 
-  private fun getLibraryModifiableModel(library: LibraryViaTypedEntity): LegacyBridgeLibraryModifiableModelImpl {
-    return LegacyBridgeLibraryModifiableModelImpl(
-      originalLibrary = library,
-      committer = { _, diffBuilder ->
-        diff.addDiff(diffBuilder)
-      })
-  }
-
   override fun createLibrary(name: String?): Library = createLibrary(name = name, type = null)
 
   override fun createLibrary(name: String?, type: PersistentLibraryKind<out LibraryProperties<*>>?): Library =
@@ -77,9 +69,19 @@ class LegacyBridgeProjectModifiableLibraryTableImpl(
       project = project,
       initialId = LibraryId(name, libraryTableId),
       initialEntityStore = entityStoreOnDiff,
-      initialModifiableModelFactory = this::getLibraryModifiableModel,
       parent = libraryTable
-    ).also { myLibrariesToAdd.add(it) }
+    ).also { libraryImpl ->
+      libraryImpl.modifiableModelFactory = { librarySnapshot ->
+        LegacyBridgeLibraryModifiableModelImpl(
+          originalLibrary = libraryImpl,
+          originalLibrarySnapshot = librarySnapshot,
+          committer = { _, diffBuilder ->
+            this.diff.addDiff(diffBuilder)
+          }
+        )
+      }
+      myLibrariesToAdd.add(libraryImpl)
+    }
   }
 
   override fun removeLibrary(library: Library) {

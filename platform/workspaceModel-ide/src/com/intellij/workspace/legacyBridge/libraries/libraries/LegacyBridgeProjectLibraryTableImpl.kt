@@ -106,9 +106,8 @@ class LegacyBridgeProjectLibraryTableImpl(
                 else LegacyBridgeLibraryImpl(
                   libraryTable = this@LegacyBridgeProjectLibraryTableImpl,
                   project = project,
-                  initialEntityStore = entityStore,
                   initialId = addedLibraryId,
-                  initialModifiableModelFactory = null,
+                  initialEntityStore = entityStore,
                   parent = this@LegacyBridgeProjectLibraryTableImpl
                 )
 

@@ -25,7 +25,6 @@ import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibra
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryModifiableModelImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEntryImpl
-import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
@@ -542,19 +541,19 @@ class LegacyBridgeModifiableRootModel(
         project = modifiableModel.project,
         initialId = libraryId,
         initialEntityStore = modifiableModel.entityStoreOnDiff,
-        initialModifiableModelFactory = this@ModuleLibraryTable::createLibraryModifiableModel,
         parent = moduleRootComponent
       )
+      libraryImpl.modifiableModelFactory = { librarySnapshot ->
+        LegacyBridgeLibraryModifiableModelImpl(
+          originalLibrary = libraryImpl,
+          originalLibrarySnapshot = librarySnapshot,
+          committer = { _, diffBuilder ->
+            modifiableModel.diff.addDiff(diffBuilder)
+          }
+        )
+      }
       librariesToAdd.add(libraryImpl)
       return libraryImpl
-    }
-
-    private fun createLibraryModifiableModel(library: LibraryViaTypedEntity): LegacyBridgeLibraryModifiableModelImpl {
-      return LegacyBridgeLibraryModifiableModelImpl(
-        originalLibrary = library,
-        committer = { _, diffBuilder ->
-          modifiableModel.diff.addDiff(diffBuilder)
-        })
     }
 
     override fun removeLibrary(library: Library) {

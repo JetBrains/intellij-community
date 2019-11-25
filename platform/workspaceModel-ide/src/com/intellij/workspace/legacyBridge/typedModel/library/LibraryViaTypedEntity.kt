@@ -7,10 +7,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.LibraryKind
-import com.intellij.openapi.roots.libraries.LibraryProperties
-import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
@@ -21,7 +18,8 @@ import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibra
 import org.jdom.Element
 import java.io.StringReader
 
-class LibraryViaTypedEntity(val libraryEntity: LibraryEntity,
+class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
+                            val libraryEntity: LibraryEntity,
                             internal val filePointerProvider: LegacyBridgeFilePointerProvider,
                             val storage: TypedEntityStorage,
                             val libraryTable: LibraryTable,
@@ -101,6 +99,7 @@ class LibraryViaTypedEntity(val libraryEntity: LibraryEntity,
   override fun getExternalSource(): ProjectModelExternalSource? = null
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx = modifiableModelFactory(this)
+  override fun getSource(): Library = libraryImpl
 
   override fun readExternal(element: Element) = throw NotImplementedError()
   override fun writeExternal(rootElement: Element) = throw NotImplementedError()

@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
@@ -20,18 +21,20 @@ import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEnt
 import org.jdom.Element
 
 class LegacyBridgeLibraryModifiableModelImpl(
-  private val originalLibrary: LibraryViaTypedEntity,
+  private val originalLibrary: LegacyBridgeLibraryImpl,
+  private val originalLibrarySnapshot: LibraryViaTypedEntity,
   private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
-) : LegacyBridgeModifiableBase(originalLibrary.storage), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
+) : LegacyBridgeModifiableBase(originalLibrarySnapshot.storage), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
-  private var entityId = originalLibrary.libraryEntity.persistentId()
+  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
 
   private val currentLibraryValue = CachedValue { storage ->
     val newLibrary = LibraryViaTypedEntity(
+      libraryImpl = originalLibrary,
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
       storage = storage,
-      filePointerProvider = originalLibrary.filePointerProvider,
-      libraryTable = originalLibrary.libraryTable,
+      filePointerProvider = originalLibrarySnapshot.filePointerProvider,
+      libraryTable = originalLibrarySnapshot.libraryTable,
       modifiableModelFactory = { throw UnsupportedOperationException() }
     )
 
@@ -62,7 +65,7 @@ class LegacyBridgeLibraryModifiableModelImpl(
     }
 
     if (assertChangesApplied && currentLibrary.name != name) {
-      error("setName: expected library name ${name}, but got ${currentLibrary.name}. Original name: ${originalLibrary.name}")
+      error("setName: expected library name ${name}, but got ${currentLibrary.name}. Original name: ${originalLibrarySnapshot.name}")
     }
   }
 
@@ -96,8 +99,8 @@ class LegacyBridgeLibraryModifiableModelImpl(
   }
 
   override fun isChanged(): Boolean {
-    if (!originalLibrary.libraryEntity.hasEqualProperties(currentLibrary.libraryEntity)) return true
-    val p1 = originalLibrary.libraryEntity.getCustomProperties()
+    if (!originalLibrarySnapshot.libraryEntity.hasEqualProperties(currentLibrary.libraryEntity)) return true
+    val p1 = originalLibrarySnapshot.libraryEntity.getCustomProperties()
     val p2 = currentLibrary.libraryEntity.getCustomProperties()
     return !(p1 == null && p2 == null || p1 != null && p2 != null && p1.hasEqualProperties(p2))
   }
@@ -238,7 +241,7 @@ class LegacyBridgeLibraryModifiableModelImpl(
     }
 
     if (assertChangesApplied && currentLibrary.kind?.kindId != type.kindId) {
-      error("setKind: expected kindId ${type.kindId}, but got ${currentLibrary.kind?.kindId}. Original kind: ${originalLibrary.kind?.kindId}")
+      error("setKind: expected kindId ${type.kindId}, but got ${currentLibrary.kind?.kindId}. Original kind: ${originalLibrarySnapshot.kind?.kindId}")
     }
   }
 
@@ -302,11 +305,13 @@ class LegacyBridgeLibraryModifiableModelImpl(
   override fun addRootSetChangedListener(listener: RootProvider.RootSetChangedListener, parentDisposable: Disposable) = throw UnsupportedOperationException()
   override fun removeRootSetChangedListener(listener: RootProvider.RootSetChangedListener) = throw UnsupportedOperationException()
 
-  override fun getExternalSource(): ProjectModelExternalSource? = originalLibrary.externalSource
+  override fun getExternalSource(): ProjectModelExternalSource? = originalLibrarySnapshot.externalSource
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx = throw UnsupportedOperationException()
 
-  override fun getTable(): LibraryTable = originalLibrary.libraryTable
+  override fun getSource(): Library? = originalLibrary
+
+  override fun getTable(): LibraryTable = originalLibrarySnapshot.libraryTable
 
   override fun getRootProvider(): RootProvider = this
 

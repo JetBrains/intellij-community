@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
@@ -32,7 +33,6 @@ class LegacyBridgeLibraryImpl(
   val project: Project,
   initialId: LibraryId,
   initialEntityStore: TypedEntityStore,
-  initialModifiableModelFactory: ((LibraryViaTypedEntity) -> LegacyBridgeLibraryModifiableModelImpl)?,
   parent: Disposable
 ) : LegacyBridgeLibrary, RootProvider, TraceableDisposable(true) {
 
@@ -101,7 +101,7 @@ class LegacyBridgeLibraryImpl(
   private var disposed = false
 
   // null to update project model via ProjectModelUpdater
-  var modifiableModelFactory = initialModifiableModelFactory
+  var modifiableModelFactory: ((LibraryViaTypedEntity) -> LegacyBridgeLibraryModifiableModelImpl)? = null
 
   private val libraryEntityValue = CachedValueWithParameter { storage, id: LibraryId ->
     storage.resolve(id)
@@ -112,6 +112,7 @@ class LegacyBridgeLibraryImpl(
 
   private val snapshotValue = CachedValueWithParameter { storage, id: LibraryId ->
     LibraryViaTypedEntity(
+      libraryImpl = this,
       libraryEntity = storage.resolve(id) ?: object : LibraryEntity {
         override val entitySource: EntitySource
           get() = throw NotImplementedError()
@@ -133,8 +134,11 @@ class LegacyBridgeLibraryImpl(
       storage = storage,
       libraryTable = libraryTable,
       filePointerProvider = filePointerProvider,
-      modifiableModelFactory = modifiableModelFactory ?: { libraryImpl ->
-        LegacyBridgeLibraryModifiableModelImpl(libraryImpl, committer = { _, diff ->
+      modifiableModelFactory = modifiableModelFactory ?: { librarySnapshot ->
+        LegacyBridgeLibraryModifiableModelImpl(
+          originalLibrary = this,
+          originalLibrarySnapshot = librarySnapshot,
+          committer = { _, diff ->
           WorkspaceModel.getInstance(project).updateProjectModel {
             it.addDiff(diff)
           }
@@ -155,6 +159,9 @@ class LegacyBridgeLibraryImpl(
   override fun getRootProvider(): RootProvider = this
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx = snapshot.modifiableModel
+
+  override fun getSource(): Library? = null
+
   override fun getExternalSource(): ProjectModelExternalSource? = snapshot.externalSource
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = snapshot.getInvalidRootUrls(type)
   override fun getKind(): PersistentLibraryKind<*>? = snapshot.kind

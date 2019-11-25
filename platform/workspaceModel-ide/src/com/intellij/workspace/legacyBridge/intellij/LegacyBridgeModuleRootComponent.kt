@@ -78,9 +78,8 @@ class LegacyBridgeModuleRootComponent(
   internal fun createModuleLibrary(libraryId: LibraryId) = LegacyBridgeLibraryImpl(
     libraryTable = moduleLibraryTable,
     project = currentModule.project,
-    initialEntityStore = legacyBridgeModule.entityStore,
     initialId = libraryId,
-    initialModifiableModelFactory = null,
+    initialEntityStore = legacyBridgeModule.entityStore,
     parent = this
   )
 
