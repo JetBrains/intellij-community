@@ -8,6 +8,7 @@ import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.icons.ImageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;

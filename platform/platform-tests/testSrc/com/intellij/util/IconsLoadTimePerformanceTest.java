@@ -25,7 +25,7 @@ import static org.junit.Assume.assumeTrue;
  *
  * @author tav
  */
-public class IconsLoadTimeTest {
+public class IconsLoadTimePerformanceTest {
   private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED = 30; // ms
   private static final int SVG_ICON_QUORUM_COUNT = 50;
 
