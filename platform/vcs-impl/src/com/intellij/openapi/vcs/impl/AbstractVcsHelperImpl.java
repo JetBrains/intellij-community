@@ -131,11 +131,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showRollbackChangesDialog(List<? extends Change> changes) {
-    RollbackChangesDialog.rollbackChanges(myProject, changes);
-  }
-
-  @Override
   @Nullable
   public Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
                                                       String title,
@@ -382,16 +377,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     AnnotateToggleAction.doAnnotate(editor, myProject, annotation, vcs);
   }
 
-  @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists) {
-    showChangesBrowser(changelists, null);
-  }
-
-  @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists, false), title, false, null);
-  }
-
   private ChangesBrowserDialog createChangesBrowserDialog(CommittedChangesTableModel changelists,
                                                           String title,
                                                           boolean showSearchAgain,
@@ -406,32 +391,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return dlg;
   }
 
-  private void showChangesBrowser(CommittedChangesTableModel changelists,
-                                  String title,
-                                  boolean showSearchAgain,
-                                  @Nullable final Component parent) {
-    final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
-    final ChangesBrowserDialog dlg = parent != null
-                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode, null)
-                                     : new ChangesBrowserDialog(myProject, changelists, mode, null);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
-  }
-
-  @Override
-  public void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title) {
-    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, toSelect);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
-  }
-
   @Override
   public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
-    showChangesListBrowser(changelist, null, title);
+    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, null);
+    if (title != null) {
+      dlg.setTitle(title);
+    }
+    dlg.show();
   }
 
   @Override

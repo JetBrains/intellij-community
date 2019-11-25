@@ -62,12 +62,6 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nls String title);
 
-  public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title);
-
-  public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
-
-  public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
-
   public abstract void showChangesBrowser(CommittedChangesProvider provider,
                                           final RepositoryLocation location,
                                           @Nls String title,
@@ -131,13 +125,6 @@ public abstract class AbstractVcsHelper {
                                        @Nullable AnnotationProvider annotationProvider,
                                        @NotNull FilePath path,
                                        @NotNull AbstractVcs vcs);
-
-  /**
-   * Shows the "Rollback Changes" dialog with the specified list of changes.
-   *
-   * @param changes the changes to show in the dialog.
-   */
-  public abstract void showRollbackChangesDialog(List<? extends Change> changes);
 
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,

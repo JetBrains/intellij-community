@@ -68,23 +68,7 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showChangesListBrowser(changelist: CommittedChangeList?, toSelect: VirtualFile?, title: String?) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showChangesBrowser(changelists: List<CommittedChangeList>) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showChangesBrowser(changelists: List<CommittedChangeList>, title: String) {
-    throw UnsupportedOperationException()
-  }
-
   override fun showWhatDiffersBrowser(parent: Component?, changes: Collection<Change>, title: String) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showRollbackChangesDialog(changes: List<Change>) {
     throw UnsupportedOperationException()
   }
 
