@@ -363,18 +363,18 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
     // stub packages can be partial
     groupedResults.containsKey(Priority.STUB_PACKAGE)
       && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty() -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
-    groupedResults.containsKey(Priority.SKELETON) -> firstResultWithFallback(groupedResults, Priority.SKELETON, inverseOrder = true)
+    groupedResults.containsKey(Priority.SKELETON) -> firstResultWithFallback(groupedResults, Priority.SKELETON).reversed()
     // third party sdk should not overwrite packages from the same vendor
     groupedResults.containsKey(Priority.THIRD_PARTY_SDK) -> firstResultWithFallback(groupedResults, Priority.THIRD_PARTY_SDK)
     else -> listOf(groupedResults.values.first().first())
   }
 }
 
-private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<PsiElement>>, priority: Priority, inverseOrder: Boolean = false): List<PsiElement> {
+private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<PsiElement>>, priority: Priority): List<PsiElement> {
   val first = results[priority]!!.first()
   val nextByPriority = results.tailMap(priority).values.asSequence().drop(1).take(1).flatten().firstOrNull()
 
-  return if (inverseOrder) listOfNotNull(nextByPriority, first) else listOfNotNull(first, nextByPriority)
+  return listOfNotNull(first, nextByPriority)
 }
 
 /**
@@ -394,7 +394,7 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?) = when
 
 fun isInSkeletons(element: PsiElement): Boolean {
   val sdk = PythonSdkUtil.findPythonSdk(element) ?: return false
-  val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile.virtualFile) ?: return false
+  val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
   return PythonSdkUtil.isFileInSkeletons(vFile, sdk)
 }
 
