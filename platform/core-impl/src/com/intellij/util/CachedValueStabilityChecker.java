@@ -173,4 +173,8 @@ class CachedValueStabilityChecker {
 
     return "kotlin.jvm.internal.Lambda".equals(superclass.getName());
   }
+
+  static void cleanupFieldCache() {
+    ourFieldCache.clear();
+  }
 }
