@@ -34,12 +34,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
         private val LOGGER = logger<CustomHeader>()
 
-        val H_GAP
-            get() = JBUIScale.scale(7)
-        val MIN_HEIGHT
-            get() = JBUIScale.scale(24)
-        val GAP_AFTER_MENU
-            get() = JBUIScale.scale(18)
+        val H
+            get() = 7
+        val V
+            get() = 4
+
+
+        val LABEL_BORDER get() = JBUI.Borders.empty(V, 0)
 
         val WINDOWS_VERSION = getWindowsReleaseId()
 
@@ -232,23 +233,17 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     private fun createProductIcon(): JComponent {
         val myMenuBar = object : JMenuBar() {
             override fun getPreferredSize(): Dimension {
-                return minimumSize
-            }
-
-            override fun getMinimumSize(): Dimension {
-                return Dimension(iconSize, iconSize)
+                val insets = insets
+                return Dimension(iconSize + insets.right+ insets.left, iconSize+insets.top+insets.bottom)
             }
 
             override fun paint(g: Graphics?) {
-                icon.paintIcon(this, g, 0, 0)
+                val insets = insets
+                icon.paintIcon(this, g, insets.left, insets.top)
             }
         }
 
-        val menu = object : JMenu() {
-            override fun getPreferredSize(): Dimension {
-                return myMenuBar.preferredSize
-            }
-        }
+        val menu = JMenu()
         myMenuBar.add(menu)
 
         myMenuBar.isOpaque = false
@@ -256,7 +251,6 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         menu.isBorderPainted = true
 
         addMenuItems(menu)
-
         return myMenuBar
     }
 
