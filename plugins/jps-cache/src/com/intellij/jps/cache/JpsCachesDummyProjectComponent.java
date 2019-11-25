@@ -36,7 +36,7 @@ public class JpsCachesDummyProjectComponent implements ProjectComponent {
         BuildManager.getInstance().clearState(myProject);
         notification.expire();
       }));
-      notification.addAction(NotificationAction.createSimple("Don't ask again", () -> {
+      notification.addAction(NotificationAction.createSimple("Don't Ask Again", () -> {
         myPropertiesComponent.setValue(NOT_ASK_AGAIN, true);
         notification.expire();
       }));

@@ -1,5 +1,6 @@
 package com.intellij.jps.cache.loader;
 
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.util.PropertiesComponent;
@@ -44,6 +45,7 @@ public class JpsOutputLoaderManager {
   private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;
   private final ExecutorService ourThreadPool;
+  private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
   private final JpsServerClient myServerClient;
@@ -59,6 +61,7 @@ public class JpsOutputLoaderManager {
     hasRunningTask = new AtomicBoolean();
     myServerClient = JpsServerClient.getServerClient();
     myMetadataLoader = new JpsMetadataLoader(project, myServerClient);
+    myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     // Configure build manager
     BuildManager buildManager = BuildManager.getInstance();
     if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
@@ -178,6 +181,10 @@ public class JpsOutputLoaderManager {
   private synchronized boolean canRunNewLoading() {
     if (hasRunningTask.get()) {
       LOG.warn("Jps cache loading already in progress, can't start the new one");
+      return false;
+    }
+    if (myWorkspaceConfiguration.MAKE_PROJECT_ON_SAVE) {
+      LOG.warn("Project automatic build should be disabled, it can affect portable caches");
       return false;
     }
     hasRunningTask.set(true);
