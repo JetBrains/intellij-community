@@ -37,7 +37,6 @@ public class MavenProjectsManagerWatcher {
   private final MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
-  private final MavenEmbeddersManager myEmbeddersManager;
   private final MavenProjectsAware myProjectsAware;
   private final ExternalSystemProjectTracker myProjectTracker;
   private final Disposable myDisposable;
@@ -46,14 +45,12 @@ public class MavenProjectsManagerWatcher {
                                      MavenProjectsManager manager,
                                      MavenProjectsTree projectsTree,
                                      MavenGeneralSettings generalSettings,
-                                     MavenProjectsProcessor readingProcessor,
-                                     MavenEmbeddersManager embeddersManager) {
+                                     MavenProjectsProcessor readingProcessor) {
     myProject = project;
     myManager = manager;
     myProjectsTree = projectsTree;
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
-    myEmbeddersManager = embeddersManager;
     myProjectsAware = new MavenProjectsAware(project, manager, projectsTree);
     myProjectTracker = ExternalSystemProjectTracker.getInstance(project);
     myDisposable = Disposer.newDisposable(MavenProjectsManagerWatcher.class.toString());
