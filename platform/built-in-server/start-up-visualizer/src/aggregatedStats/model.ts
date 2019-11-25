@@ -62,19 +62,10 @@ export interface DataRequest {
   infoResponse: InfoResponse
 }
 
-export function expandMachine(request: DataRequest): string {
-  if (request.machine.length > 1) {
-    return request.machine.join(",")
-  }
+const rison: { encode: (o: any) => string } = require("rison-node")
 
-  const groupName = request.machine[0]
-  const infoResponse = request.infoResponse
-  for (const machineGroup of infoResponse.productToMachine[request.product]) {
-    if (machineGroup.name === groupName) {
-      return machineGroup.children.map(it => it.name).join(",")
-    }
-  }
-  return groupName
+export function encodeQuery(query: DataQuery): string {
+  return rison.encode(query)
 }
 
 export function expandMachineAsFilterValue(request: DataRequest): string | Array<string> {

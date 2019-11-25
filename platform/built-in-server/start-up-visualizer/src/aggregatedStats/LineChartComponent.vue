@@ -1,18 +1,61 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
-  <div v-loading="isLoading" class="aggregatedChart" ref="chartContainer"></div>
+  <el-popover
+    placement="top"
+    trigger="manual"
+    v-model="infoIsVisible">
+    <div>
+      <div>
+        <!-- cell text has 10px padding - so, add link maring to align text  -->
+        <el-link style="margin-left: 10px" :href="reportLink" target="_blank" type="text">{{reportName}}</el-link>
+        <el-link type="default"
+                 style="float: right"
+                 :underline="false"
+                 icon="el-icon-close"
+                 @click='infoIsVisible = false'/>
+      </div>
+      <el-table :data="reportTableData" :show-header="false">
+        <el-table-column property="name" class-name="infoMetricName" min-width="180"/>
+        <el-table-column property="value" align="right" class-name="infoMetricValue"/>
+      </el-table>
+    </div>
+    <div slot="reference" v-loading="isLoading" class="aggregatedChart" ref="chartContainer"></div>
+  </el-popover>
 </template>
+
+<style>
+  .el-table .cell {
+    word-break: normal;
+  }
+
+  .infoMetricName {
+    white-space: nowrap;
+  }
+  .infoMetricValue {
+    font-family: monospace;
+  }
+
+  /*table.chartTooltip th {*/
+  /*  text-align: left;*/
+  /*  font-weight: normal;*/
+  /*}*/
+</style>
 
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
   import {LineChartManager} from "@/aggregatedStats/LineChartManager"
   import {ChartSettings} from "@/aggregatedStats/ChartSettings"
-  import {loadJson} from "@/httpUtil"
   import {SortedByCategory, SortedByDate} from "@/aggregatedStats/ChartConfigurator"
-  import {DataQuery, DataQueryDimension, DataRequest, expandMachine, expandMachineAsFilterValue} from "@/aggregatedStats/model"
+  import {
+    DataQuery,
+    DataQueryDimension,
+    DataRequest,
+    encodeQuery,
+    expandMachineAsFilterValue,
+    MetricDescriptor,
+    Metrics
+  } from "@/aggregatedStats/model"
   import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
-
-  const rison = require("rison-node")
 
   @Component
   export default class LineChartComponent extends BaseStatChartComponent<LineChartManager> {
@@ -29,6 +72,16 @@
         chartManager.scrollbarXPreviewOptionChanged(this.chartSettings)
       }
     }
+
+    infoIsVisible: boolean = false
+    reportTableData: Array<any> = []
+    reportName: string = ""
+
+    reportLink: string | null = null
+
+    // openReport() {
+    //   window.open(this.reportLink!!, "_blank")
+    // }
 
     @Watch("chartSettings.granularity")
     granularityChanged() {
@@ -101,50 +154,60 @@
         dataQuery.aggregator = "medianTDigest"
       }
 
-      const url = `${chartSettings.serverUrl}/api/v1/metrics/` + rison.encode(dataQuery)
-      const reportUrlPrefix = `${chartSettings.serverUrl}/api/v1/report/` + `product=${encodeURIComponent(request.product)}&machine=${encodeURIComponent(expandMachine(request))}`
-
-      const onFinish = () => {
-        this.isLoading = false
-      }
-      this.isLoading = true
-
-      this.dataRequestCounter++
-      const dataRequestCounter = this.dataRequestCounter
-      this.queue.add(() => {
-        loadJson(url, null, this.$notify)
-          .then(data => {
-            if (data == null || dataRequestCounter !== this.dataRequestCounter) {
-              return
-            }
-
-            const chartManager = this.getOrCreateChartManager()
-            chartManager.reportUrlPrefix = reportUrlPrefix
-            chartManager.render(data)
-          })
+      this.loadData(`${chartSettings.serverUrl}/api/v1/metrics/${encodeQuery(dataQuery)}`, (data: Array<Metrics>, chartManager: LineChartManager) => {
+        chartManager.render(data)
       })
-      .then(onFinish, onFinish)
     }
 
-    private getOrCreateChartManager() {
-      let chartManager = this.chartManager
-      if (chartManager != null) {
-        return chartManager
-      }
-
-      const configurator = this.order === "date" ? new SortedByDate() : new SortedByCategory()
-      chartManager = new LineChartManager(this.$refs.chartContainer as HTMLElement, this.chartSettings || new ChartSettings(), this.type === "instant", configurator)
-
-      for (const key of this.metrics) {
-        chartManager.metricDescriptors.push({
+    protected createChartManager() {
+      const metricDescriptors: Array<MetricDescriptor> = this.metrics.map(key => {
+        return {
           key,
           name: (key.endsWith("_d") || key.endsWith("_i")) ? key.substring(0, key.length - 2) : key,
           hiddenByDefault: false,
-        })
-      }
+        }
+      })
 
-      this.chartManager = chartManager
-      return chartManager
+      const configurator = this.order === "date" ? new SortedByDate(data => {
+        if (data == null) {
+          this.infoIsVisible = false
+          return
+        }
+
+        const tableData = []
+        for (const metricDescriptor of metricDescriptors) {
+          tableData.push({
+            name: metricDescriptor.name,
+            value: data[metricDescriptor.key],
+          })
+
+          // const isDiffAbnormal = prevItem != null && (value - prevItem[metric.key]) >= 100
+          // if (isDiffAbnormal) {
+          //   html += "<strong>"
+          // }
+          // html += shortEnglishHumanizer(value)
+          // if (isDiffAbnormal) {
+          //   html += "</strong>"
+          // }
+          // html += `</td></tr>`
+        }
+
+        const request = this.dataRequest!!
+        const reportQuery: DataQuery = {
+          filters: [
+            {field: "product", value: request.product},
+            {field: "machine", value: expandMachineAsFilterValue(request)},
+            {field: "generated_time", value: data.t / 1000},
+          ],
+        }
+        const reportUrl = `/api/v1/report/${encodeQuery(reportQuery)}`
+        this.reportLink = `/#/report?reportUrl=${encodeURIComponent(this.chartSettings.serverUrl)}${reportUrl}`
+
+        this.reportTableData = tableData
+        this.infoIsVisible = true
+        this.reportName = this.chartManager!!.dateFormatter.format(data.t, "EEE, dd MMM yyyy HH:mm:ss zzz")
+      }) : new SortedByCategory()
+      return new LineChartManager(this.$refs.chartContainer as HTMLElement, this.chartSettings || new ChartSettings(), this.type === "instant", metricDescriptors, configurator)
     }
   }
 </script>

@@ -5,6 +5,7 @@ import PQueue from "p-queue"
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {debounce} from "debounce"
 import {DataRequest} from "@/aggregatedStats/model"
+import {loadJson} from "@/httpUtil"
 
 // @ts-ignore
 @Component
@@ -23,8 +24,8 @@ export abstract class BaseStatChartComponent<T extends StatChartManager> extends
   protected chartManager!: T | null
 
   // ensure that if several tasks were added, the last one will set the chart data
-  protected readonly queue = new PQueue({concurrency: 1})
-  protected dataRequestCounter = 0
+  private readonly queue = new PQueue({concurrency: 1})
+  private dataRequestCounter = 0
   private pendingDataRequest: DataRequest | null = null
 
   // for some reason doesn't work (this is not correct) if doReload inlined
@@ -41,11 +42,7 @@ export abstract class BaseStatChartComponent<T extends StatChartManager> extends
 
     if (module.hot != null) {
       module.hot.dispose(() => {
-        const chartManager = this.chartManager
-        if (chartManager != null) {
-          console.log("dispose chart on hot reload")
-          chartManager.dispose()
-        }
+        this.disposeChart("hot reload")
       })
     }
   }
@@ -55,12 +52,47 @@ export abstract class BaseStatChartComponent<T extends StatChartManager> extends
     if (dataRequest != null) {
       this.loadDataAfterDelay()
     }
+
+    this.chartManager = this.createChartManager()
   }
 
   beforeDestroy() {
+    this.disposeChart("before destroy")
+  }
+
+  protected abstract createChartManager(): T
+
+  protected loadData<D>(url: string, consumer: (data: D, chartManager: T) => void): void {
+    const onFinish = () => {
+      this.isLoading = false
+    }
+    this.isLoading = true
+
+    this.dataRequestCounter++
+    const dataRequestCounter = this.dataRequestCounter
+    this.queue.add(() => {
+      loadJson(url, null, this.$notify)
+        .then(data => {
+          if (data == null || dataRequestCounter !== this.dataRequestCounter) {
+            return
+          }
+
+          const chartManager = this.chartManager
+          if (chartManager == null) {
+            console.log("already disposed")
+            return
+          }
+
+          consumer(data, chartManager)
+        })
+    })
+      .then(onFinish, onFinish)
+  }
+
+  private disposeChart(reason: string) {
     const chartManager = this.chartManager
     if (chartManager != null) {
-      console.log("unset chart manager")
+      console.log(`dispose chart manager: ${reason}`)
       this.chartManager = null
       chartManager.dispose()
     }
