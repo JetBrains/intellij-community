@@ -18,7 +18,6 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
       @Override
       protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
         addVimPlugin(featuredPlugins);
-        addMarkdownPlugin(featuredPlugins);
         addRPlugin(featuredPlugins);
       }
     };
