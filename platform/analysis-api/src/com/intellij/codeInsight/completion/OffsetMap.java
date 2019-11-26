@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -153,6 +154,7 @@ public class OffsetMap implements Disposable {
     return myDocument;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public OffsetMap copyOffsets(@NotNull Document anotherDocument) {
     assert anotherDocument.getTextLength() == myDocument.getTextLength();
