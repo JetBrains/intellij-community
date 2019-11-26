@@ -181,10 +181,7 @@ public class CompletionUtil {
     }
 
     Object object = lookupElement.getObject();
-    if (object instanceof LookupValueWithPsiElement
-
-
-    ) {
+    if (object instanceof LookupValueWithPsiElement) {
       final PsiElement element = ((LookupValueWithPsiElement)object).getElement();
       if (element != null && element.isValid()) return getOriginalElement(element);
     }
