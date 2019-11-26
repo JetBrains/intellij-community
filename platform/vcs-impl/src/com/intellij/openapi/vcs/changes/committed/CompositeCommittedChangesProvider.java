@@ -190,7 +190,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   }
 
   private class CompositeChangesBrowserSettingsEditor implements ChangesBrowserSettingsEditor<CompositeChangeBrowserSettings> {
-    private final JPanel myCompositePanel;
+    @NotNull private final JPanel myCompositePanel;
     private final DateFilterComponent myDateFilter;
     private CompositeChangeBrowserSettings mySettings;
     private final Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<>();
@@ -212,7 +212,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         final JCheckBox checkBox = new JCheckBox(VcsBundle.message("composite.change.provider.include.vcs.checkbox", vcs.getDisplayName()), true);
         checkBox.addActionListener(new ActionListener() {
           @Override
-          public void actionPerformed(final ActionEvent e) {
+          public void actionPerformed(ActionEvent e) {
             updateVcsEnabled(checkBox, editor);
           }
         });
@@ -223,18 +223,20 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       }
     }
 
-    private void updateVcsEnabled(JCheckBox checkBox, ChangesBrowserSettingsEditor editor) {
+    private void updateVcsEnabled(@NotNull JCheckBox checkBox, @NotNull ChangesBrowserSettingsEditor editor) {
       UIUtil.setEnabled(editor.getComponent(), checkBox.isSelected(), true);
       if (checkBox.isSelected()) {
         editor.updateEnabledControls();
       }
     }
 
+    @NotNull
     @Override
     public JComponent getComponent() {
       return myCompositePanel;
     }
 
+    @NotNull
     @Override
     public CompositeChangeBrowserSettings getSettings() {
       Set<AbstractVcs> enabledVcss = new HashSet<>();
@@ -251,10 +253,10 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     }
 
     @Override
-    public void setSettings(CompositeChangeBrowserSettings settings) {
+    public void setSettings(@NotNull CompositeChangeBrowserSettings settings) {
       mySettings = settings;
       boolean dateFilterInitialized = false;
-      for(AbstractVcs vcs: myEditors.keySet()) {
+      for (AbstractVcs vcs : myEditors.keySet()) {
         final ChangeBrowserSettings vcsSettings = mySettings.get(vcs);
         final ChangesBrowserSettingsEditor editor = myEditors.get(vcs);
         //noinspection unchecked
@@ -269,8 +271,8 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       }
     }
 
-    @Override
     @Nullable
+    @Override
     public String validateInput() {
       for(ChangesBrowserSettingsEditor editor: myEditors.values()) {
         String result = editor.validateInput();
@@ -286,6 +288,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       }
     }
 
+    @NotNull
     @Override
     public String getDimensionServiceKey() {
       @NonNls StringBuilder result = new StringBuilder();

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -18,7 +19,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private JPanel myStandardPanel;
   private JCheckBox myStopOnCopyCheckBox;
 
-  public SvnVersionFilterComponent(final boolean showDateFilter) {
+  public SvnVersionFilterComponent(boolean showDateFilter) {
     super(showDateFilter);
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
@@ -26,13 +27,13 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   }
 
   @Override
-  protected void updateAllEnabled(final ActionEvent e) {
+  protected void updateAllEnabled(@Nullable ActionEvent e) {
     super.updateAllEnabled(e);
     updatePair(myUseAuthorFilter, myAuthorField, e);
   }
 
   @Override
-  protected void initValues(ChangeBrowserSettings settings) {
+  protected void initValues(@NotNull ChangeBrowserSettings settings) {
     super.initValues(settings);
     myUseAuthorFilter.setSelected(settings.USE_USER_FILTER);
     myAuthorField.setText(settings.USER);
@@ -40,7 +41,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   }
 
   @Override
-  public void saveValues(ChangeBrowserSettings settings) {
+  public void saveValues(@NotNull ChangeBrowserSettings settings) {
     super.saveValues(settings);
     settings.USER = myAuthorField.getText();
     settings.USE_USER_FILTER = myUseAuthorFilter.isSelected();
@@ -48,7 +49,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   }
 
   @Override
-  protected void installCheckBoxListener(final ActionListener filterListener) {
+  protected void installCheckBoxListener(@NotNull ActionListener filterListener) {
     super.installCheckBoxListener(filterListener);
     myUseAuthorFilter.addActionListener(filterListener);
     myAuthorField.addActionListener(filterListener);
@@ -74,6 +75,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
     return SvnBundle.message("revision.title");
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return getPanel();
