@@ -19,6 +19,7 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
       protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
         addVimPlugin(featuredPlugins);
         addRPlugin(featuredPlugins);
+        featuredPlugins.put("AWS Toolkit", "Tools Integration:A plugin for interacting with Amazon Web Services:aws.toolkit");
       }
     };
 
