@@ -97,7 +97,12 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
     defaultExternalProject.sourceSets = getSourceSets(project, isPreview, resolveSourceSetDependencies, sourceSetFinder)
+
+    // Android Studio: provide the option to not build Gradle tasks list, because this triggers full task graph configuration, which is
+    // very slow for large Android projects.
+    if (!Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim())) {
     defaultExternalProject.tasks = getTasks(project, tasksFactory)
+    }
 
     addArtifactsData(project, defaultExternalProject)
 
