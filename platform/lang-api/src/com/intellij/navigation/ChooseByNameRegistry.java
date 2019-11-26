@@ -27,7 +27,7 @@ public final class ChooseByNameRegistry {
    * Registers a component which contributes items to the "Goto Symbol" list.
    *
    * @param contributor the contributor instance.
-   * @deprecated use {@link com.intellij.navigation.ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
+   * @deprecated use {@link ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
    */
   @Deprecated
   public void contributeToSymbols(ChooseByNameContributor contributor) {
