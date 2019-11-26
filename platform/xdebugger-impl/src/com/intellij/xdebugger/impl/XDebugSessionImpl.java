@@ -97,7 +97,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final Project myProject;
   private final @Nullable ExecutionEnvironment myEnvironment;
   private final AtomicBoolean myStopped = new AtomicBoolean();
-  private boolean myPauseActionSupported;
+  private boolean myPauseActionSupported = true;
   private boolean myReadOnly = false;
   private final AtomicBoolean myShowTabOnSuspend;
   private final List<AnAction> myRestartActions = new SmartList<>();
