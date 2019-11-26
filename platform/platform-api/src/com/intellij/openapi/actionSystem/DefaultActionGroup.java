@@ -154,12 +154,10 @@ public class DefaultActionGroup extends ActionGroup {
     else if (constraint.myAnchor == Anchor.LAST) {
       mySortedChildren.add(action);
     }
-    else if (addToSortedList(action, constraint, actionManager)) {
-      actionAdded(action, actionManager);
-    }
     else {
       myPairs.add(Pair.create(action, constraint));
     }
+    addAllToSortedList(actionManager);
 
     return new ActionInGroup(this, action);
   }
@@ -170,14 +168,6 @@ public class DefaultActionGroup extends ActionGroup {
       if (action.equals(pair.first)) return true;
     }
     return false;
-  }
-
-  private void actionAdded(@NotNull AnAction addedAction, @NotNull ActionManager actionManager) {
-    String addedActionId = addedAction instanceof ActionStub ? ((ActionStub)addedAction).getId() : actionManager.getId(addedAction);
-    if (addedActionId == null) {
-      return;
-    }
-    addAllToSortedList(actionManager);
   }
 
   private void addAllToSortedList(@NotNull ActionManager actionManager) {
@@ -311,9 +301,8 @@ public class DefaultActionGroup extends ActionGroup {
    */
   @Override
   @NotNull
-  public synchronized final AnAction[] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public final AnAction[] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     boolean hasNulls = false;
-    addAllToSortedList(actionManager);
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
