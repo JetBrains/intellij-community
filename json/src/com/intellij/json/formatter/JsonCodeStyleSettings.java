@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Mikhail Golubev
@@ -54,21 +55,21 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   }
 
   public enum PropertyAlignment {
-    DO_NOT_ALIGN(JsonBundle.message("formatter.align.properties.none"), 0),
-    ALIGN_ON_VALUE(JsonBundle.message("formatter.align.properties.on.value"), 1),
-    ALIGN_ON_COLON(JsonBundle.message("formatter.align.properties.on.colon"), 2);
+    DO_NOT_ALIGN(0, "formatter.align.properties.none"),
+    ALIGN_ON_VALUE(1, "formatter.align.properties.on.value"),
+    ALIGN_ON_COLON(2, "formatter.align.properties.on.colon");
 
-    private final String myDescription;
+    private final String myKey;
     private final int myId;
 
-    PropertyAlignment(@NotNull String description, int id) {
-      myDescription = description;
+    PropertyAlignment(int id, @NotNull @PropertyKey(resourceBundle = JsonBundle.BUNDLE) String key) {
+      myKey = key;
       myId = id;
     }
 
     @NotNull
     public String getDescription() {
-      return myDescription;
+      return JsonBundle.message(myKey);
     }
 
     public int getId() {
