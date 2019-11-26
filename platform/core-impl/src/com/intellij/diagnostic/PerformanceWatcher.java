@@ -295,7 +295,7 @@ public final class PerformanceWatcher implements Disposable {
           reportDir = null;
         }
       }
-      LOG.warn("UI freezed for " + durationMs + "ms, details saved to " + reportDir);
+      LOG.warn("UI was frozen for " + durationMs + "ms, details saved to " + reportDir);
       getPublisher().uiFreezeFinished(durationMs, reportDir);
       myFreezeStart = 0;
 
