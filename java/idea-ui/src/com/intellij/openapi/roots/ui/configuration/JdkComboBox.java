@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.EmptyIcon;
@@ -133,12 +134,6 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
         UIUtil.putClientProperty(JdkComboBox.this, ANIMATION_IN_RENDERER_ALLOWED, true);
 
         SimpleColoredComponent component = (SimpleColoredComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-
-        //handle the selected item to show in the ComboBox, not in the popup
-        if (index == -1) {
-          return component;
-        }
-
         UIUtil.putClientProperty(component, ANIMATION_IN_RENDERER_ALLOWED, true);
 
         JPanel panel = new JPanel(new BorderLayout()) {
@@ -150,13 +145,23 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
           }
         };
         panel.add(component, BorderLayout.CENTER);
-        String separatorTextAbove = ((JdkComboBoxModel)getModel()).getSeparatorTextAbove(value);
-        if (separatorTextAbove != null) {
-          SeparatorWithText separator = new SeparatorWithText();
-          if (!separatorTextAbove.isEmpty()) {
-            separator.setCaption(separatorTextAbove);
+
+        //handle the selected item to show in the ComboBox, not in the popup
+        if (index == -1) {
+          if (myModel.myIsSdkDetectorInProgress && isPopupVisible()) {
+            JBLabel progressIcon = new JBLabel(new AnimatedIcon.Default());
+            UIUtil.putClientProperty(progressIcon, ANIMATION_IN_RENDERER_ALLOWED, true);
+            panel.add(progressIcon, BorderLayout.EAST);
           }
-          panel.add(separator, BorderLayout.NORTH);
+        } else {
+          String separatorTextAbove = ((JdkComboBoxModel)getModel()).getSeparatorTextAbove(value);
+          if (separatorTextAbove != null) {
+            SeparatorWithText separator = new SeparatorWithText();
+            if (!separatorTextAbove.isEmpty()) {
+              separator.setCaption(separatorTextAbove);
+            }
+            panel.add(separator, BorderLayout.NORTH);
+          }
         }
         return panel;
       }
