@@ -32,6 +32,7 @@ public final class ProjectPathMacroManager extends PathMacroManager {
   public ExpandMacroToPathMap getExpandMacroMap() {
     final ExpandMacroToPathMap result = super.getExpandMacroMap();
     addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, myProject.getBasePath());
+    result.addMacroExpand("PROJECT_NAME", myProject.getName());
     return result;
   }
 
