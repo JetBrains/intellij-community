@@ -4,10 +4,7 @@ package com.intellij.ide.lightEdit;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -37,7 +34,7 @@ class LightEditTabs extends JBEditorTabs {
   }
 
   void addEditorTab(@NotNull LightEditorInfo editorInfo) {
-    TabInfo tabInfo = new TabInfo(createEditorContainer(editorInfo.getEditor()))
+    TabInfo tabInfo = new TabInfo(new EditorContainer(editorInfo.getEditor()))
       .setText(editorInfo.getFile().getPresentableName())
       .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
@@ -50,12 +47,6 @@ class LightEditTabs extends JBEditorTabs {
     addTabSilently(tabInfo, -1);
     select(tabInfo, true);
     myEditorManager.fireEditorSelected(editorInfo);
-  }
-
-  private static JComponent createEditorContainer(@NotNull Editor editor) {
-    JPanel editorPanel = new JPanel(new BorderLayout());
-    editorPanel.add(editor.getComponent(), BorderLayout.CENTER);
-    return editorPanel;
   }
 
   private void onSelectionChange(@Nullable TabInfo tabInfo) {
@@ -127,4 +118,20 @@ class LightEditTabs extends JBEditorTabs {
     return FileDocumentManager.getInstance().isFileModified(info.getFile());
   }
 
+  private static class EditorContainer extends JPanel implements DataProvider {
+
+    private EditorContainer(Editor editor) {
+      super(new BorderLayout());
+      add(editor.getComponent(), BorderLayout.CENTER);
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return LightEditUtil.getProject();
+      }
+      return null;
+    }
+  }
 }
