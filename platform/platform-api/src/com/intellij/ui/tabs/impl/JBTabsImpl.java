@@ -996,7 +996,12 @@ public class JBTabsImpl extends JComponent
       setComponentZOrder(label, 0);
     }
 
-    fireBeforeSelectionChanged(oldInfo, newInfo);
+    boolean oldValue = myMouseInsideTabsArea;
+    try {
+      fireBeforeSelectionChanged(oldInfo, newInfo);
+    } finally {
+      myMouseInsideTabsArea = oldValue;
+    }
 
     updateContainer(false, true);
 
