@@ -2,18 +2,18 @@
 package com.intellij.execution.target
 
 import com.intellij.configurationStore.ComponentSerializationUtil
-import com.intellij.execution.target.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.XCollection
 
-open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
-  : PersistentStateComponent<BaseExtendableList.ListState>
-  where C : BaseExtendableConfiguration, T : BaseExtendableType<out C> {
+open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPointName<T>)
+  : PersistentStateComponent<ContributedConfigurationsList.ListState>
+  where C : ContributedConfigurationBase, T : ContributedTypeBase<out C> {
 
   private val resolvedInstances = mutableListOf<C>()
-  private val unresolvedInstances = mutableListOf<BaseExtendableState>()
+  private val unresolvedInstances = mutableListOf<ContributedStateBase>()
 
   fun clear() {
     resolvedInstances.clear()
@@ -55,7 +55,7 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
     loadState(state.configs)
   }
 
-  fun loadState(configs: List<BaseExtendableState>) {
+  fun loadState(configs: List<ContributedStateBase>) {
     clear()
     configs.forEach {
       val nextConfig = fromOneState(it)
@@ -68,11 +68,11 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
     }
   }
 
-  open fun toBaseState(config: C): BaseExtendableState = BaseExtendableState().also {
+  open fun toBaseState(config: C): ContributedStateBase = ContributedStateBase().also {
     it.loadFromConfiguration(config)
   }
 
-  protected open fun fromOneState(state: BaseExtendableState): C? {
+  protected open fun fromOneState(state: ContributedStateBase): C? {
     val type = extPoint.extensionList.firstOrNull { it.id == state.typeId }
     val defaultConfig = type?.createDefaultConfig()
     return defaultConfig?.also {
@@ -82,11 +82,11 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
   }
 
   companion object {
-    private fun BaseExtendableConfiguration.getSerializer() = getTypeImpl().createSerializer(this)
+    private fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
   }
 
   open class ListState : BaseState() {
     @get: XCollection(style = XCollection.Style.v2)
-    var configs by list<BaseExtendableState>()
+    var configs by list<ContributedStateBase>()
   }
 }

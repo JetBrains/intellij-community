@@ -7,7 +7,7 @@ import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
-abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String) : BaseExtendableType<C>(id) {
+abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String) : ContributedTypeBase<C>(id) {
 
   abstract fun isApplicableTo(runConfig: RunnerAndConfigurationSettings): Boolean
 

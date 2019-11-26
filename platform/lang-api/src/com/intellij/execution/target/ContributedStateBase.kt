@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
-import com.intellij.execution.target.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import org.jdom.Element
 
-open class BaseExtendableState : BaseState() {
+open class ContributedStateBase : BaseState() {
   @get:Attribute("type")
   var typeId by string()
 
@@ -18,14 +18,14 @@ open class BaseExtendableState : BaseState() {
   @get:Tag("config")
   var innerState: Element? by property<Element?>(null) { it === null }
 
-  open fun loadFromConfiguration(config: BaseExtendableConfiguration) {
+  open fun loadFromConfiguration(config: ContributedConfigurationBase) {
     typeId = config.typeId
     name = config.displayName
     innerState = config.getSerializer().state?.let { XmlSerializer.serialize(it) }
   }
 
   companion object {
-    private fun BaseExtendableConfiguration.getSerializer() = getTypeImpl().createSerializer(this)
+    private fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
   }
 }
 

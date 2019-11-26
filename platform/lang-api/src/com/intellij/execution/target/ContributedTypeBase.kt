@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 import javax.swing.Icon
 
-abstract class BaseExtendableType<C : BaseExtendableConfiguration>(val id: String) {
+abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: String) {
 
   abstract val displayName: String
 
@@ -26,5 +26,5 @@ abstract class BaseExtendableType<C : BaseExtendableConfiguration>(val id: Strin
   open val helpTopic: String? = null
 
   @Suppress("UNCHECKED_CAST")
-  internal fun castConfiguration(config: BaseExtendableConfiguration) = config as C
+  internal fun castConfiguration(config: ContributedConfigurationBase) = config as C
 }

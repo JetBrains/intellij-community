@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 //TODO: suggest "predefined" configurations (e.g one per every configured SFTP connection)
-abstract class RemoteTargetType<C : TargetEnvironmentConfiguration>(id: String) : BaseExtendableType<C>(id) {
+abstract class RemoteTargetType<C : TargetEnvironmentConfiguration>(id: String) : ContributedTypeBase<C>(id) {
   open fun providesNewWizard(project: Project, runtimeType: LanguageRuntimeType<*>?): Boolean = false
 
   open fun createStepsForNewWizard(project: Project, configToConfigure: C, runtimeType: LanguageRuntimeType<*>?)
