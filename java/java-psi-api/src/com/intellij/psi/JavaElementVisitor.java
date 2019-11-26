@@ -423,4 +423,12 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitProvidesStatement(PsiProvidesStatement statement) {
     visitModuleStatement(statement);
   }
+
+  public void visitPattern(PsiPattern pattern) {
+    visitElement(pattern);
+  }
+
+  public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
+    visitPattern(pattern);
+  }
 }

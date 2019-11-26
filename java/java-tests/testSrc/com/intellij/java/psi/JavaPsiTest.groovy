@@ -29,6 +29,20 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert module.modifierList != null
   }
 
+  void testInstanceOf() {
+    def file = configureFile("class A { void foo(A a) { a instanceof B x; } }")
+    def expression = (file.classes[0].methods[0].body.statements[0] as PsiExpressionStatement).expression as PsiInstanceOfExpression
+    def pattern = expression.pattern
+    assert pattern instanceof PsiTypeTestPattern
+    def typeTestPattern = pattern as PsiTypeTestPattern
+    assert typeTestPattern.name == "x"
+    assert typeTestPattern.checkType.text == "B"
+    WriteCommandAction.runWriteCommandAction(project, {
+      typeTestPattern.setName("bar")
+      assert expression.text == "a instanceof B bar"
+    })
+  }
+
   void testPackageAccessDirectiveTargetInsertion() {
     def file = configureFile("module M { opens pkg; }")
     def statement = file.moduleDeclaration.opens.first()
