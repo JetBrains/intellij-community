@@ -90,11 +90,6 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     return new InspectionGadgetsFix[]{new TrivialIfFix()};
   }
 
-  @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
-    return new TrivialIfFix();
-  }
-
   private static class TrivialIfFix extends InspectionGadgetsFix {
 
     @Override
