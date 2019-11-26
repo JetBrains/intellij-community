@@ -8,6 +8,11 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.XCollection
 
+/**
+ * Persistent storage of all [configurations][ContributedConfigurationBase] conforming to given [type][ContributedTypeBase].
+ * Provides access to  the list of currently available configurations, while preserving the serialized state of configurations
+ * provided by the currently unavailable plugins.
+ */
 open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPointName<T>)
   : PersistentStateComponent<ContributedConfigurationsList.ListState>
   where C : ContributedConfigurationBase, T : ContributedTypeBase<out C> {
