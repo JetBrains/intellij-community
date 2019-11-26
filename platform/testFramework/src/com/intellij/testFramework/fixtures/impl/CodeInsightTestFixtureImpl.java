@@ -2057,5 +2057,4 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public Disposable getProjectDisposable() {
     return myProjectFixture.getTestRootDisposable();
   }
-
 }

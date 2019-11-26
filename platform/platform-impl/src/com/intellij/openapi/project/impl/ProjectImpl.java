@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.idea.ApplicationLoader;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,6 +49,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance(ProjectImpl.class);
@@ -63,6 +66,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   static boolean ourClassesAreLoaded;
   private final String creationTrace;
   private ProjectStoreFactory myProjectStoreFactory;
+
+  private final AtomicReference<Disposable> earlyDisposable = new AtomicReference<>(Disposer.newDisposable());
+  private volatile boolean temporarilyDisposed;
 
   private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
     ProjectStoreFactory factory = myProjectStoreFactory != null ? myProjectStoreFactory : ServiceManager.getService(ProjectStoreFactory.class);
@@ -111,13 +117,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return myLight;
   }
 
-  private volatile boolean temporarilyDisposed;
-
   @TestOnly
   void setTemporarilyDisposed(boolean value) {
-    if (!value && super.isDisposed()) {
-      LOG.error("Project was already disposed, flag temporarilyDisposed cannot be set to `true`");
+    if (temporarilyDisposed == value) {
+      return;
     }
+
+    if (value && super.isDisposed()) {
+      throw new IllegalStateException("Project was already disposed, flag temporarilyDisposed cannot be set to `true`");
+    }
+
+    if (!value) {
+      Disposable newDisposable = Disposer.newDisposable();
+      if (!earlyDisposable.compareAndSet(null, newDisposable)) {
+        throw new IllegalStateException("earlyDisposable must be null on second opening of light project");
+      }
+    }
+
     temporarilyDisposed = value;
   }
 
@@ -337,8 +353,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
-    setDisposeInProgress();
-
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
@@ -384,6 +398,25 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public String activityNamePrefix() {
     return "project ";
+  }
+
+  @Override
+  @NotNull
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public final Disposable getEarlyDisposable() {
+    if (isDisposed()) {
+      throw new IllegalStateException(this + " is disposed already");
+    }
+
+    // maybe null only if disposed, but this condition is checked above
+    return earlyDisposable.get();
+  }
+
+  @ApiStatus.Internal
+  public final void disposeEarlyDisposable() {
+    Disposable earlyDisposable = this.earlyDisposable.getAndSet(null);
+    Disposer.dispose(earlyDisposable);
   }
 
   @ApiStatus.Internal

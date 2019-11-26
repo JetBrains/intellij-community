@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author peter
  */
-final class DefaultProject extends UserDataHolderBase implements ProjectEx, ProjectStoreOwner {
+final class DefaultProject extends UserDataHolderBase implements Project, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance(DefaultProject.class);
 
   private final DefaultProjectTimed myDelegate = new DefaultProjectTimed(this) {
@@ -127,11 +127,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
   public boolean isCached() {
     return myDelegate.isCached();
-  }
-
-  @Override
-  public void setProjectName(@NotNull String name) {
-    throw new IllegalStateException();
   }
 
   // delegates

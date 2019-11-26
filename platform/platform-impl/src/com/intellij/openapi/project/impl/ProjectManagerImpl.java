@@ -689,9 +689,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       // if we are shutting down the entire test framework, proceed to full dispose
       ProjectImpl projectImpl = (ProjectImpl)project;
       if (!projectImpl.isTemporarilyDisposed()) {
+        projectImpl.disposeEarlyDisposable();
         projectImpl.setTemporarilyDisposed(true);
         removeFromOpened(project);
-        ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
+        updateTheOnlyProjectField();
         return true;
       }
       projectImpl.setTemporarilyDisposed(false);
@@ -724,6 +725,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project);
+
+      // ignore dispose flag
+      if (project instanceof ProjectImpl) {
+        ((ProjectImpl)project).disposeEarlyDisposable();
+      }
 
       app.runWriteAction(() -> {
         if (dispose && project instanceof ProjectImpl) {

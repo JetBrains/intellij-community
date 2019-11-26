@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -656,6 +657,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   @NotNull
   default Disposable getProjectDisposable() {
-    return getProject();
+    return ((ProjectEx)getProject()).getEarlyDisposable();
   }
 }

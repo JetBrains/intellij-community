@@ -47,7 +47,7 @@ public class JavaSwitchExpressionSanityTest extends LightJavaCodeInsightFixtureT
   }
 
   public void testIntentionsAroundSwitch() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable(), "BoundedWildcard");  // IDEA-194460
+    MadTestingUtil.enableAllInspections(getProject(), "BoundedWildcard");  // IDEA-194460
 
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> {

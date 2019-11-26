@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -63,7 +64,7 @@ import java.util.stream.Stream;
 /**
  * @author peter
  */
-public class MadTestingUtil {
+public final class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance(MadTestingUtil.class);
   private static final boolean USE_ROULETTE_WHEEL = true;
 
@@ -169,7 +170,7 @@ public class MadTestingUtil {
    * @param disposable when this is disposed, reverts to the previous project inspection profile
    * @param except short names of inspections to disable
    */
-  public static void enableAllInspections(Project project, Disposable disposable, String... except) {
+  public static void enableAllInspections(@NotNull Project project, String... except) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
@@ -186,7 +187,7 @@ public class MadTestingUtil {
     manager.addProfile(profile);
     InspectionProfileImpl prev = manager.getCurrentProfile();
     manager.setCurrentProfile(profile);
-    Disposer.register(disposable, () -> {
+    Disposer.register(((ProjectImpl)project).getEarlyDisposable(), () -> {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
       manager.setCurrentProfile(prev);
       manager.deleteProfile(profile);
@@ -549,7 +550,7 @@ public class MadTestingUtil {
       Arrays.sort(children, Comparator.comparing(File::getName));
       while (true) {
         int[] weights = Arrays.stream(children).mapToInt(child -> estimateWeight(child, exhausted)).toArray();
-        int index = 0;
+        int index;
         try {
           index = spin(data, weights);
         }
