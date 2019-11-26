@@ -361,13 +361,20 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
 
   return when {
     // stub packages can be partial
-    groupedResults.containsKey(Priority.STUB_PACKAGE)
-      && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty() -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
-    groupedResults.containsKey(Priority.SKELETON) -> firstResultWithFallback(groupedResults, Priority.SKELETON).reversed()
+    groupedResults.topResultIs(Priority.STUB_PACKAGE) -> {
+      if (groupedResults.containsKey(Priority.SKELETON) && groupedResults.containsKey(Priority.OTHER))
+        groupedResults.asSequence().flatMap { it.value.asSequence() }.toList()
+      else firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
+    }
+    groupedResults.topResultIs(Priority.SKELETON) -> firstResultWithFallback(groupedResults, Priority.SKELETON).reversed()
     // third party sdk should not overwrite packages from the same vendor
-    groupedResults.containsKey(Priority.THIRD_PARTY_SDK) -> firstResultWithFallback(groupedResults, Priority.THIRD_PARTY_SDK)
+    groupedResults.topResultIs(Priority.THIRD_PARTY_SDK) -> firstResultWithFallback(groupedResults, Priority.THIRD_PARTY_SDK)
     else -> listOf(groupedResults.values.first().first())
   }
+}
+
+private fun SortedMap<Priority, MutableList<PsiElement>>.topResultIs(priority: Priority): Boolean {
+  return containsKey(priority) && headMap(priority).isEmpty()
 }
 
 private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<PsiElement>>, priority: Priority): List<PsiElement> {
