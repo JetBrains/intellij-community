@@ -276,8 +276,8 @@
       <with attribute="implementationClass" implements="com.intellij.ide.structureView.StructureViewBuilder"/>
     </extensionPoint>
 
-    <extensionPoint name="macro" interface="com.intellij.ide.macro.Macro"/>
-    <extensionPoint name="macroFilter" interface="com.intellij.ide.macro.MacroFilter"/>
+    <extensionPoint name="macro" interface="com.intellij.ide.macro.Macro" dynamic="true"/>
+    <extensionPoint name="macroFilter" interface="com.intellij.ide.macro.MacroFilter" dynamic="true"/>
 
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption" dynamic="true"/>
     <extensionPoint name="printHandler" interface="com.intellij.ide.actions.PrintActionHandler" dynamic="true"/>
