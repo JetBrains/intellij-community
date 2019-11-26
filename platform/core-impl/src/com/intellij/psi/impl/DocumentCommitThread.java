@@ -78,9 +78,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       new CommitTask(project, document, reason, modality, documentManager.getLastCommittedText(document));
     ReadAction
       .nonBlocking(() -> commitUnderProgress(task, false))
-      .expireWith(project)
-      .expireWith(this)
-      .expireWhen(() -> !documentManager.isInUncommittedSet(document) || !task.isStillValid())
+      .expireWhen(() -> isDisposed || !documentManager.isInUncommittedSet(document) || !task.isStillValid())
       .coalesceBy(task)
       .finishOnUiThread(modality, edtFinish -> {
         if (edtFinish != null) {
