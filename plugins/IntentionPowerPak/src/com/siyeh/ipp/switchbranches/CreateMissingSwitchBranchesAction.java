@@ -84,7 +84,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     PsiType type = expression.getType();
     if (dfr != null) {
       LongRangeSet range = dfr.getExpressionFact(expression, DfaFactType.RANGE);
-      if (range != null && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
+      if (range != null && type != null && PsiType.INT.isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
         return range.stream().mapToObj(c -> Value.fromConstant(TypeConversionUtil.computeCastTo(c, type))).collect(Collectors.toList());
       }
       Set<Object> values = dfr.getExpressionValues(expression);
