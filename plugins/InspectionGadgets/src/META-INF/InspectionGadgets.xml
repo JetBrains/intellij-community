@@ -277,9 +277,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="MalformedFormatString" bundle="com.siyeh.InspectionGadgetsBundle" key="malformed.format.string.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.MalformedFormatStringInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MalformedRegex" bundle="com.siyeh.InspectionGadgetsBundle" key="malformed.regular.expression.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.MalformedRegexInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MalformedXPath" bundle="com.siyeh.InspectionGadgetsBundle" key="malformed.xpath.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.MalformedXPathInspection"/>
