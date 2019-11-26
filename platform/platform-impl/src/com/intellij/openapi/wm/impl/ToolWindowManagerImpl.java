@@ -1714,6 +1714,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    */
   private void appendRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull List<? super FinalizableCommand> commandsList) {
     commandsList.add(myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myCommandProcessor));
+    commandsList.add(myToolWindowsPane.createTransferFocusCmd(() -> {
+      return commandsList.stream().anyMatch(c -> c instanceof RequestFocusInToolWindowCmd);
+    }, myCommandProcessor));
   }
 
   /**

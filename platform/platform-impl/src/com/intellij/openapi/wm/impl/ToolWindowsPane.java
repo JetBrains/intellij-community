@@ -35,6 +35,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
@@ -298,6 +299,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     else {
       throw new IllegalArgumentException("Unknown window type");
     }
+  }
+
+  @NotNull
+  final FinalizableCommand createTransferFocusCmd(@NotNull BooleanSupplier shouldSkip, @NotNull Runnable finishCallBack) {
+    return new TransferFocusCmd(shouldSkip, finishCallBack);
   }
 
   /**
@@ -1036,6 +1042,22 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
+
+  private final class TransferFocusCmd extends FinalizableCommand {
+    private final BooleanSupplier shouldSkip;
+
+    TransferFocusCmd(BooleanSupplier shouldSkip, Runnable finishCallback) {
+      super(finishCallback);
+      this.shouldSkip = shouldSkip;
+    }
+
+    @Override
+    public void run() {
+      if (shouldSkip.getAsBoolean()) return;
+      transferFocus();
+    }
+  }
+
   private final class RemoveDockedComponentCmd extends FinalizableCommand {
     private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
@@ -1054,7 +1076,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
-        transferFocus();
       }
       finally {
         finish();
