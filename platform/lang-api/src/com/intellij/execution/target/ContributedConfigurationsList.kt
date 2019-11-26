@@ -6,7 +6,11 @@ import com.intellij.execution.target.ContributedConfigurationBase.Companion.getT
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jdom.Element
 
 /**
  * Persistent storage of all [configurations][ContributedConfigurationBase] conforming to given [type][ContributedTypeBase].
@@ -73,7 +77,7 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
     }
   }
 
-  open fun toBaseState(config: C): ContributedStateBase = ContributedStateBase().also {
+  protected open fun toBaseState(config: C): ContributedStateBase = ContributedStateBase().also {
     it.loadFromConfiguration(config)
   }
 
@@ -90,8 +94,37 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
     private fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
   }
 
+  /**
+   * Complete state of the [ContributedConfigurationsList] represented by the list of individual [configuration states][ContributedStateBase]
+   */
   open class ListState : BaseState() {
     @get: XCollection(style = XCollection.Style.v2)
     var configs by list<ContributedStateBase>()
   }
+
+  /**
+   * State of the individual contributed configuration. Packs extension-specific serialized state of the configuration together with
+   * information of its [type][ContributedTypeBase] and individual [name][]
+   */
+  open class ContributedStateBase : BaseState() {
+    @get:Attribute("type")
+    var typeId by string()
+
+    @get:Attribute("name")
+    var name by string()
+
+    @get:Tag("config")
+    var innerState: Element? by property<Element?>(null) { it === null }
+
+    open fun loadFromConfiguration(config: ContributedConfigurationBase) {
+      typeId = config.typeId
+      name = config.displayName
+      innerState = config.getSerializer().state?.let { XmlSerializer.serialize(it) }
+    }
+
+    companion object {
+      private fun ContributedConfigurationBase.getSerializer() = getTypeImpl().createSerializer(this)
+    }
+  }
+
 }
