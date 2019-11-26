@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.Pair;
@@ -56,11 +42,11 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     Pair<String, String> remote4 = Pair.create("id4", "http://foo/bar"); // same url
     Pair<String, String> remote5 = Pair.create("id4", "http://foo/baz"); // same id
 
-    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, Collections.singleton(remote1)).size());
-    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2)).size());
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3)).size());
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4)).size());
-    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4, remote5))
+    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(Collections.singleton(remote1)).size());
+    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2)).size());
+    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2, remote3)).size());
+    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2, remote3, remote4)).size());
+    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(asList(remote1, remote2, remote3, remote4, remote5))
       .size());
   }
 

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
+public final class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
   private final Map<Project, BusyContainer> myObjects = FactoryMap.create(this::create);
 
   @NotNull
@@ -197,7 +197,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
   }
 
   @NotNull
-  protected ModalityState getCurrentState() {
+  private static ModalityState getCurrentState() {
     return ModalityState.current();
   }
 

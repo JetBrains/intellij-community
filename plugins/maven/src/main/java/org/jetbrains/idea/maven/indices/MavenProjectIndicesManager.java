@@ -56,7 +56,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     myUpdateQueue = new MavenMergingUpdateQueue(getClass().getSimpleName(), 1000, true, project);
     myDependencySearchService = new DependencySearchService(project);
 
-    if (!isNormalProject()) return;
+    if (!isNormalProject()) {
+      return;
+    }
     doInit();
   }
 
@@ -115,25 +117,27 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     scheduleUpdateIndicesList(null);
   }
 
-  public void scheduleUpdateIndicesList(@Nullable final Consumer<? super List<MavenIndex>> consumer) {
+  public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
     Update update = new Update(this) {
       @Override
       public void run() {
-
-        Set<Pair<String, String>> remoteRepositoriesIdsAndUrls =
-          ReadAction.compute(() -> myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls());
+        Set<Pair<String, String>> remoteRepositoriesIdsAndUrls = ReadAction.compute(() -> {
+          return myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls();
+        });
         File localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
-        if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
+        if (remoteRepositoriesIdsAndUrls == null || localRepository == null) {
+          return;
+        }
 
-        final List<MavenIndex> newProjectIndices;
+        List<MavenIndex> newProjectIndices;
+        MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance();
         if (remoteRepositoriesIdsAndUrls.isEmpty()) {
           newProjectIndices = new ArrayList<>();
         }
         else {
-          newProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
+          newProjectIndices = mavenIndicesManager.ensureIndicesExist(remoteRepositoriesIdsAndUrls);
         }
-        ContainerUtil
-          .addIfNotNull(newProjectIndices, MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
+        ContainerUtil.addIfNotNull(newProjectIndices, mavenIndicesManager.createIndexForLocalRepo(myProject, localRepository));
         myDependencySearchService.reload();
 
         myProjectIndices = newProjectIndices;

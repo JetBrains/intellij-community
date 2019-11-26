@@ -116,8 +116,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       Disposer.register(parent, this);
     }
 
-    myWaiterForMerge = myExecuteInDispatchThread ? AlarmFactory.getInstance().create(thread) :
-                       AlarmFactory.getInstance().create(thread, this);
+    AlarmFactory alarmFactory = AlarmFactory.getInstance();
+    myWaiterForMerge = myExecuteInDispatchThread ? alarmFactory.create(thread) : alarmFactory.create(thread, this);
 
     if (isActive) {
       showNotify();
