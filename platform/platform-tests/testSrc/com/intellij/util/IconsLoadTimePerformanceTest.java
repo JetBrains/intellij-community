@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -25,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
  *
  * @author tav
  */
+@HardwareAgentRequired
 public class IconsLoadTimePerformanceTest {
   private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED = 30; // ms
   private static final int SVG_ICON_QUORUM_COUNT = 50;
