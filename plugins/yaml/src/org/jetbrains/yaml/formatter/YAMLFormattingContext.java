@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.FactoryMap;
@@ -138,6 +139,9 @@ class YAMLFormattingContext {
 
   @Nullable
   Indent computeBlockIndent(@NotNull ASTNode node) {
+    if (node.getPsi() instanceof OuterLanguageElement) {
+      return DIRECT_NORMAL_INDENT;
+    }
     IElementType nodeType = PsiUtilCore.getElementType(node);
     IElementType parentType = PsiUtilCore.getElementType(node.getTreeParent());
     IElementType grandParentType = parentType == null ? null : PsiUtilCore.getElementType(node.getTreeParent().getTreeParent());
