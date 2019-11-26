@@ -33,6 +33,7 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.RenameLocalBranchOnF2KeyPressHandler
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
+import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Component
 import javax.swing.JComponent
@@ -113,6 +114,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
     val showMyBranchesAction = ShowMyBranchesAction(uiController)
     val newBranchAction = NewBranchAction()
+    val updateSelectedAction = UpdateSelectedBranchAction()
     val defaultTreeExpander = DefaultTreeExpander(tree.component)
     val commonActionsManager = CommonActionsManager.getInstance()
     val expandAllAction = commonActionsManager.createExpandAllHeaderAction(defaultTreeExpander, tree.component)
@@ -120,6 +122,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
     val group = DefaultActionGroup()
     group.add(newBranchAction)
+    group.add(updateSelectedAction)
     group.add(deleteAction)
     group.add(diffAction)
     group.add(showMyBranchesAction)

@@ -6,15 +6,21 @@ import com.intellij.dvcs.diverged
 import com.intellij.dvcs.repo.Repository
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitUtil
+import git4idea.GitVcs
 import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
+import git4idea.fetch.GitFetchSupport
 import git4idea.isRemoteBranchProtected
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -38,7 +44,7 @@ internal object BranchesDashboardActions {
   }
 
   class MultipleLocalBranchActions : ActionGroup(), DumbAware {
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(DeleteBranchAction())
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(UpdateSelectedBranchAction(), DeleteBranchAction())
   }
 
   class CurrentBranchActions(project: Project,
@@ -56,6 +62,16 @@ internal object BranchesDashboardActions {
     }
   }
 
+  class LocalBranchActions(project: Project,
+                           repositories: List<GitRepository>,
+                           branchName: String,
+                           currentRepository: GitRepository)
+    : GitBranchPopupActions.LocalBranchActions(project, repositories, branchName, currentRepository) {
+
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+      arrayListOf<AnAction>(*super.getChildren(e)).apply { add(3, UpdateSelectedBranchAction()) }.toTypedArray()
+  }
+
   class BranchActionsBuilder(private val project: Project, private val tree: FilteringBranchesTree) {
     fun build(): ActionGroup? {
       val selectedBranches = tree.getSelectedBranches()
@@ -69,7 +85,7 @@ internal object BranchesDashboardActions {
         val branchInfo = selectedBranches.singleOrNull() ?: return null
         return when {
           branchInfo.isCurrent -> CurrentBranchActions(project, branchInfo.repositories, branchInfo.branchName, guessRepo)
-          branchInfo.isLocal -> GitBranchPopupActions.LocalBranchActions(project, branchInfo.repositories, branchInfo.branchName, guessRepo)
+          branchInfo.isLocal -> LocalBranchActions(project, branchInfo.repositories, branchInfo.branchName, guessRepo)
           else -> GitBranchPopupActions.RemoteBranchActions(project, branchInfo.repositories, branchInfo.branchName, guessRepo)
         }
       }
@@ -98,6 +114,69 @@ internal object BranchesDashboardActions {
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
       val branchName = branches.first().branchName
       createOrCheckoutNewBranch(project, repositories, "$branchName^0", "Create New Branch From $branchName")
+    }
+  }
+
+  class UpdateSelectedBranchAction : BranchesActionBase("Update Selected",
+                                                        "Update remote branch with the corresponding local",
+                                                        AllIcons.Actions.CheckOut) {
+    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
+      if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
+        e.presentation.isEnabled = false
+        e.presentation.description = "Update is already running"
+        return
+      }
+      if (branches.any(BranchInfo::isCurrent)) {
+        e.presentation.isEnabled = false
+        e.presentation.description = "Select non current branches only"
+        return
+      }
+      val repositories = branches.flatMap(BranchInfo::repositories).distinct()
+      val trackingInfosExist =
+        repositories
+          .flatMap { it.branchTrackInfos }
+          .any { trackingBranchInfo -> branches.any { it.branchName == trackingBranchInfo.localBranch.name } }
+      e.presentation.isEnabled = trackingInfosExist
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val branches = e.getData(GIT_BRANCHES)!!
+      val project = e.project!!
+      update(branches, project)
+    }
+
+    private fun update(branches: Set<BranchInfo>, project: Project) {
+      val repositories = branches.flatMap(BranchInfo::repositories).distinct()
+      val branchNames = branches.map(BranchInfo::branchName)
+      val repoToTrackingInfos =
+        repositories.associateWith { it.branchTrackInfos.filter { info -> branchNames.contains(info.localBranch.name) } }
+      if (repoToTrackingInfos.isEmpty()) return
+
+      GitVcs.runInBackground(object : Backgroundable(project, "Updating branches...", true) {
+        var successFetches = 0
+        override fun run(indicator: ProgressIndicator) {
+          val fetchSupport = GitFetchSupport.fetchSupport(project)
+          for ((repo, trackingInfos) in repoToTrackingInfos) {
+            for (trackingInfo in trackingInfos) {
+              val branchName = trackingInfo.localBranch.name
+              val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$branchName:$branchName")
+              try {
+                fetchResult.throwExceptionIfFailed();
+                successFetches += 1
+              }
+              catch (ignored: VcsException) {
+                fetchResult.showNotificationIfFailed("Update Failed")
+              }
+            }
+          }
+        }
+
+        override fun onSuccess() {
+          if (successFetches > 0) {
+            VcsNotifier.getInstance(myProject).notifySuccess("Branches updated")
+          }
+        }
+      })
     }
   }
 
