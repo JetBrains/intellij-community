@@ -1054,6 +1054,10 @@ public class PlatformTestUtil {
   }
 
   public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+    return executeConfiguration(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
+  }
+
+  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull String executorId) throws InterruptedException {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1061,7 +1065,7 @@ public class PlatformTestUtil {
     }
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
       RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
-    ProgramRunner runner = ProgramRunner.getRunner(DefaultRunExecutor.EXECUTOR_ID, runConfiguration);
+    ProgramRunner runner = ProgramRunner.getRunner(executorId, runConfiguration);
     if (runner == null) {
       return null;
     }
