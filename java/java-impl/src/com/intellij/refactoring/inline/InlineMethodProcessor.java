@@ -932,7 +932,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiClass parentClass = (PsiClass)parent;
           final PsiClass containingClass = myMethod.getContainingClass();
           if (containingClass != null && parentClass.isInheritor(containingClass, true)) {
-            qualifier = myFactory.createExpressionFromText(parentClass.getName() + ".this", null);
+            String name = parentClass.getName();
+            // We cannot have qualified this reference to an anonymous class, so we leave it unqualified
+            // this might produce incorrect code in extremely rare cases 
+            // when we inline a superclass method in an anonymous class, 
+            // and the method body contains a nested class that refers to the outer one
+            qualifier = myFactory.createExpressionFromText(name == null ? "this" : name + ".this", null);
           }
           else if (containingClass != null && parentClass.equals(containingClass)) {
             qualifier = myFactory.createExpressionFromText("this", null);
