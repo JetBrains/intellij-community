@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.google.common.collect.ImmutableList;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -118,7 +117,8 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     myOnNewSdkAdded = emptyIfNull(onNewSdkAdded);
 
     setMinimumAndPreferredWidth(JBUI.scale(400));
-    setMaximumRowCount(20);
+    setMaximumRowCount(30);
+    setSwingPopup(false);
     setRenderer(new ColoredListCellRenderer<JdkComboBoxItem>() {
       @Override
       public Component getListCellRendererComponent(JList<? extends JdkComboBoxItem> list,
@@ -127,7 +127,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
                                                     boolean selected,
                                                     boolean hasFocus) {
 
-        //allow AnimationIcon for loader to show progress
+        //allow AnimationIcon show progress animation
         UIUtil.putClientProperty(list, ANIMATION_IN_RENDERER_ALLOWED, true);
         UIUtil.putClientProperty(JdkComboBox.this, ANIMATION_IN_RENDERER_ALLOWED, true);
 
@@ -218,7 +218,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   /**
    * @deprecated Use the overloaded constructor to pass these parameters directly to
    * that class. The {@param setUpButton} is no longer used, the JdkComboBox shows
-   * all the needed actions in the popup. The button will be be made invisible.
+   * all the needed actions in the popup. The button will be made invisible.
    */
   @Deprecated
   @SuppressWarnings("unused")

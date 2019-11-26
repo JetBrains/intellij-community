@@ -114,7 +114,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
         super.cancel(e);
       }
     };
-    myPopup.setMaxRowCount(10);
+    myPopup.setMaxRowCount(Math.max(10, myComboBox.getMaximumRowCount()));
     myPopup.setRequestFocus(false);
     myPopup.addListener(new JBPopupListener() {
       @Override
