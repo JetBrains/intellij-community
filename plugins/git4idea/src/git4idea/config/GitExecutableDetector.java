@@ -17,16 +17,14 @@ import java.util.regex.Pattern;
 
 /**
  * Tries to detect the path to Git executable.
- *
- * @author Kirill Likhodedov
  */
 public class GitExecutableDetector {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableDetector.class);
   private static final String[] UNIX_PATHS = {
     "/usr/local/bin",
-    "/usr/bin",
     "/opt/local/bin",
+    "/usr/bin",
     "/opt/bin",
     "/usr/local/git/bin"};
 
