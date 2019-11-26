@@ -2,7 +2,13 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
+import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 
+/**
+ * Base class for configuration instances contributed by the ["com.intellij.ir.languageRuntime"][EXTENSION_NAME] extension point.
+ * <p/>
+ * Since different language configurations do not share any common bits, this is effectively a marker.
+ */
 abstract class LanguageRuntimeConfiguration(typeId: String)
   : ContributedConfigurationBase(typeId, LanguageRuntimeType.EXTENSION_NAME)
 
