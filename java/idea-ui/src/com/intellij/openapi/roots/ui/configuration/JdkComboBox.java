@@ -119,6 +119,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     setMinimumAndPreferredWidth(JBUI.scale(400));
     setMaximumRowCount(30);
     setSwingPopup(false);
+    putClientProperty("ComboBox.jbPopup.supportUpdateModel", true);
     setRenderer(new ColoredListCellRenderer<JdkComboBoxItem>() {
       @Override
       public Component getListCellRendererComponent(JList<? extends JdkComboBoxItem> list,
@@ -137,6 +138,8 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
         if (index == -1) {
           return component;
         }
+
+        UIUtil.putClientProperty(component, ANIMATION_IN_RENDERER_ALLOWED, true);
 
         JPanel panel = new JPanel(new BorderLayout()) {
           @Override

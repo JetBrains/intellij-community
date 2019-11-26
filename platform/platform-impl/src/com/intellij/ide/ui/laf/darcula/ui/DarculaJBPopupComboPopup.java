@@ -28,6 +28,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author gregsh
@@ -38,6 +39,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
                                                     PropertyChangeListener, AncestorListener {
 
   public static final String CLIENT_PROP = "ComboBox.jbPopup";
+  public static final String USE_LIVE_UPDATE_MODEL = "ComboBox.jbPopup.supportUpdateModel";
 
   private final JComboBox<T> myComboBox;
   private final JList<T> myProxyList = new JBList<>();
@@ -52,6 +54,16 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     myComboBox.addAncestorListener(this);
   }
 
+  @NotNull
+  private ArrayList<T> copyItemsFromCheckboxModel() {
+    ComboBoxModel<T> model = myComboBox.getModel();
+    ArrayList<T> items = new ArrayList<>(model.getSize());
+    for (int i = 0, size = model.getSize(); i < size; i++) {
+      items.add(model.getElementAt(i));
+    }
+    return items;
+  }
+
   @Override
   public void show() {
     myJustClosedViaClick = false;
@@ -61,11 +73,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       myPopup.cancel();
     }
 
-    ArrayList<T> items = new ArrayList<>(myComboBox.getModel().getSize());
-    for (int i = 0, size = myComboBox.getModel().getSize(); i < size; i++) {
-      items.add(myComboBox.getModel().getElementAt(i));
-    }
-    BaseListPopupStep<T> step = new BaseListPopupStep<T>("", items) {
+    BaseListPopupStep<T> step = new BaseListPopupStep<T>("", copyItemsFromCheckboxModel()) {
       @Nullable
       @Override
       public PopupStep onChosen(T selectedValue, boolean finalChoice) {
@@ -202,12 +210,27 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   @Override
   public void propertyChange(PropertyChangeEvent e) {
+    if (!isVisible()) return;
+
     String propertyName = e.getPropertyName();
-    if ("model".equals(propertyName) ||
-        "renderer".equals(propertyName) ||
+    if ("renderer".equals(propertyName) ||
         "editable".equals(propertyName)) {
-      if (isVisible()) {
+      hide();
+    }
+
+    if ("model".equals(propertyName) && myPopup != null) {
+      if (!Boolean.TRUE.equals(myComboBox.getClientProperty(USE_LIVE_UPDATE_MODEL))) {
         hide();
+      }
+      else {
+        //noinspection unchecked,rawtypes
+        List<T> values = ((BaseListPopupStep)myPopup.getStep()).getValues();
+        values.clear();
+        values.addAll(copyItemsFromCheckboxModel());
+        JList<?> popupList = myPopup.getList();
+        ((ListPopupModel<?>)popupList.getModel()).syncModel();
+        popupList.setVisibleRowCount(Math.min(values.size(), Math.max(10, myComboBox.getMaximumRowCount())));
+        myPopup.setSize(popupList.getPreferredSize());
       }
     }
   }
