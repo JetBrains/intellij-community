@@ -324,7 +324,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
 
     if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, DarculaLaf.class, true);
+      Icon icon = IconLoader.findIcon(value, getClass(), true);
       if (icon != null) {
         return icon;
       }

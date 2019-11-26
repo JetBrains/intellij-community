@@ -1,11 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,7 +19,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(LafIconLookup.getIcon("spinnerRight"));
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(MacIconLookup.getIcon("spinnerRight"));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -55,7 +54,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       g2.fill(rect);
     }
 
-    Icon icon = LafIconLookup.getIcon("spinnerRight", false, false, c.isEnabled());
+    Icon icon = MacIconLookup.getIcon("spinnerRight", false, false, c.isEnabled());
     icon.paintIcon(c, g, x, i.top);
   }
 
@@ -67,7 +66,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
 
-    Dimension minSize = new Dimension(i.left + MINIMUM_WIDTH.get() + i.right, iconHeight);
+    Dimension minSize = new Dimension(i.left + DarculaSpinnerUI.MINIMUM_WIDTH.get() + i.right, iconHeight);
     size = maximize(size, minSize);
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();

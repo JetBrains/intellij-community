@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -13,9 +14,6 @@ import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
-
-import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isSmallComboButton;
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,9 +27,9 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
     try {
       g2.translate(x, y);
 
-      float arc = ARC.getFloat();
+      float arc = MacIntelliJTextBorder.ARC.getFloat();
 
-      if (isSmallComboButton(c) && c.isFocusable() && c.hasFocus()) {
+      if (DarculaButtonUI.isSmallComboButton(c) && c.isFocusable() && c.hasFocus()) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);

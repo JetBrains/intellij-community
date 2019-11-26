@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.macos;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.util.ColoredItem;
@@ -9,7 +10,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,21 +19,21 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
+import static com.intellij.laf.macos.MacIntelliJTextBorder.ARC;
+import static com.intellij.laf.macos.MacIntelliJTextBorder.BW;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
-  private static final Icon ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, false));
-  private static final Icon EDITABLE_ICON = EmptyIcon.create(LafIconLookup.getIcon("comboRight", false, false, true, true));
+  private static final Icon ICON = EmptyIcon.create(MacIconLookup.getIcon("comboRight", false, false, true, false));
+  private static final Icon EDITABLE_ICON = EmptyIcon.create(MacIconLookup.getIcon("comboRight", false, false, true, true));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -57,7 +57,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void paint(Graphics g) {
         if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
-        Icon icon = LafIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
+        Icon icon = MacIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           StartupUiUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
@@ -87,7 +87,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
-    editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
+    editorWidth = Math.max(editorWidth, DarculaUIUtil.MINIMUM_WIDTH.get() + i.left);
 
     int width = size != null ? size.width : 0;
     int height = size != null ? size.height : 0;
@@ -100,7 +100,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   protected LayoutManager createLayoutManager() {
-    return new ComboBoxLayoutManager() {
+    return new BasicComboBoxUI.ComboBoxLayoutManager() {
       @Override
       public void layoutContainer(Container parent) {
         JComboBox cb = (JComboBox)parent;

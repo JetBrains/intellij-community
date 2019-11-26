@@ -46,7 +46,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
       if (myWin10ComboDropTriangleIcon == null) {
-        myWin10ComboDropTriangleIcon = IconLoader.findLafIcon("win10/comboDropTriangle", ComboBoxAction.class, true);
+        myWin10ComboDropTriangleIcon = IconLoader.findLafIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle", ComboBoxAction.class, true);
       }
       return myWin10ComboDropTriangleIcon;
     }

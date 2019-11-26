@@ -41,7 +41,6 @@ import static com.intellij.ui.scale.ScaleType.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
-  private static final String LAF_PREFIX = "/com/intellij/ide/ui/laf/icons/";
   private static final String ICON_CACHE_URL_KEY = "ICON_CACHE_URL_KEY";
   // the key: Pair(ICON_CACHE_URL_KEY, url) or Pair(path, classLoader)
   private static final ConcurrentMap<Pair<String, Object>, CachedImageIcon> ourIconsCache =
@@ -213,7 +212,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
-    return findIcon(LAF_PREFIX + key + ".png", aClass, true, strict);
+    return findIcon(key + ".png", aClass, true, strict);
   }
 
   /**

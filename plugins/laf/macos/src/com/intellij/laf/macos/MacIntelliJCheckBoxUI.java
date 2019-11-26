@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.LafIconLookup;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
@@ -14,13 +14,11 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.util.ui.JBUI.scale;
-
 /**
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
-  public static final Icon DEFAULT_ICON = scale(EmptyIcon.create(22));
+  public static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(22));
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
     c.setOpaque(false);
@@ -49,7 +47,7 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
       Object op = b.getClientProperty("JComponent.outline");
       boolean hasFocus = op == null && b.hasFocus();
-      Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), hasFocus, b.isEnabled());
+      Icon icon = MacIconLookup.getIcon(iconName, selected || isIndeterminate(b), hasFocus, b.isEnabled());
       icon.paintIcon(b, g2, iconRect.x, iconRect.y);
 
       if (op != null) {

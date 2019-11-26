@@ -88,6 +88,7 @@ public final class UIUtil {
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
+  public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
 
   @NotNull
   // cannot be static because logging maybe not configured yet
@@ -1320,7 +1321,16 @@ public final class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui", true) && !isCustomTheme();
+    if (SystemInfo.isMac) {
+      LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+      if (lookAndFeel instanceof UserDataHolder) {
+        UserDataHolder dh = (UserDataHolder)lookAndFeel;
+
+        return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
+               StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOs light");
+      }
+    }
+    return false;
   }
 
   public static boolean isUnderWin10LookAndFeel() {

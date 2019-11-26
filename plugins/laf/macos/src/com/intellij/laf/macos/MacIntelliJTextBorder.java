@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
@@ -9,7 +9,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -17,15 +16,13 @@ import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 /**
- * @deprecated For plugin writers: add dependency from com.intellij.laf.macos plugin
- * and use similar class from the plugin.
+ * @author Konstantin Bulenkov
  */
-@ApiStatus.ScheduledForRemoval (inVersion = "2020.2")
-@Deprecated
 public class MacIntelliJTextBorder extends DarculaTextBorder {
   private static final Color OUTLINE_COLOR = Gray.xBC;
   private static final Insets PADDINGS = JBUI.emptyInsets();
 
+  static final JBValue MINIMUM_HEIGHT = new JBValue.Float(21);
   static final JBValue BW = new JBValue.Float(3);
   static final JBValue ARC = new JBValue.Float(6);
 

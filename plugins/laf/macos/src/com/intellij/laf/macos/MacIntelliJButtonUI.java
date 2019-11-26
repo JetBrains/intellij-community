@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
@@ -11,7 +11,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.*;
+import static com.intellij.laf.macos.MacIntelliJTextBorder.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,7 +31,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = LafIconLookup.getIcon("help", false, c.hasFocus(), true);
+      Icon icon = MacIconLookup.getIcon("help", false, c.hasFocus(), true);
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -47,7 +47,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
         float lw = LW(g2);
         float arc = ARC.getFloat();
-        Insets i = isSmallComboButton(c) ? JBUI.insets(1) : c.getInsets();
+        Insets i = DarculaButtonUI.isSmallComboButton(c) ? JBUI.insets(1) : c.getInsets();
 
         // Draw background
         Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom), arc, arc);
@@ -80,7 +80,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     if (!b.isEnabled()) {
       return Gray.xF1;
     }
-    else if (isDefaultButton(b)) {
+    else if (DarculaButtonUI.isDefaultButton(b)) {
       return UIUtil.isGraphite() ?
              new GradientPaint(0, i.top, new Color(0xb2b2b7), 0, h - (i.top + i.bottom), new Color(0x929297)) :
              new GradientPaint(0, i.top, new Color(0x68b2fa), 0, b.getHeight() - (i.top + i.bottom), new Color(0x0e80ff));
@@ -99,7 +99,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     if (!b.isEnabled()) {
       return new GradientPaint(0, i.top, Gray.xD2, 0, h - (i.top + i.bottom), Gray.xC3);
     }
-    else if (isDefaultButton(b)) {
+    else if (DarculaButtonUI.isDefaultButton(b)) {
       return UIUtil.isGraphite() ?
              new GradientPaint(0, i.top, new Color(0xa5a5ab), 0, h - (i.top + i.bottom), new Color(0x7d7d83)) :
              new GradientPaint(0, i.top, new Color(0x4ba0f8), 0, h - (i.top + i.bottom), new Color(0x095eff));
@@ -113,14 +113,14 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = LafIconLookup.getIcon("help");
+      Icon icon = MacIconLookup.getIcon("help");
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     }
     else {
       Insets i = c.getInsets();
-      return new Dimension(getComboAction(c) != null ?
+      return new Dimension(DarculaButtonUI.getComboAction(c) != null ?
                            prefSize.width :
-                           Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
+                           Math.max(DarculaButtonUI.HORIZONTAL_PADDING.get() * 2 + prefSize.width, DarculaButtonUI.MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
                            Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
     }
   }
@@ -134,7 +134,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
     int x = textRect.x + getTextShiftOffset();
     int y = textRect.y + metrics.getAscent() + getTextShiftOffset();
-    if (isDefaultButton(c)) {
+    if (DarculaButtonUI.isDefaultButton(c)) {
       g.setColor(Gray.xCC);
     }
     else {

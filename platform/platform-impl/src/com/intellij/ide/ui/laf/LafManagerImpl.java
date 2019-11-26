@@ -120,23 +120,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   LafManagerImpl() {
     ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
-    if (SystemInfo.isMac) {
-      myDefaultLightTheme = new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName());
-    }
-    else {
-      myDefaultLightTheme = new IntelliJLookAndFeelInfo();
-    }
+    myDefaultLightTheme = new IntelliJLookAndFeelInfo();
     myDefaultDarkTheme = new DarculaLookAndFeelInfo();
   }
 
   @NotNull
   private List<UIManager.LookAndFeelInfo> computeLafList() {
     List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
-    if (SystemInfo.isMac) {
-      lafList.add(myDefaultLightTheme);
-    }
-    else {
-      lafList.add(myDefaultLightTheme);
+    lafList.add(myDefaultLightTheme);
+    if (!SystemInfo.isMac) {
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
         if (!"Metal".equalsIgnoreCase(name)
@@ -151,6 +143,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     lafList.add(myDefaultDarkTheme);
+
+    LafProvider.EP_NAME.forEachExtensionSafe(provider -> {
+      lafList.add(provider.getLookAndFeelInfo());
+    });
 
     UIThemeProvider.EP_NAME.forEachExtensionSafe(provider -> {
       UITheme theme = provider.createTheme();
@@ -525,8 +521,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (laf instanceof MetalLookAndFeel) {
           MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
         }
-        if (laf instanceof UserDataHolder && lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
-          ((UserDataHolder)laf).putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
+        if (laf instanceof UserDataHolder) {
+          UserDataHolder userDataHolder = (UserDataHolder)laf;
+          if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+            userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
+          }
+          else if (lookAndFeelInfo instanceof PluggableLafInfo) {
+            userDataHolder.putUserData(UIUtil.PLUGGABLE_LAF_KEY, lookAndFeelInfo.getName());
+          }
         }
         UIManager.setLookAndFeel(laf);
       }

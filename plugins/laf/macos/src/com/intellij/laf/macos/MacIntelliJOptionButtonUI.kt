@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij
+package com.intellij.laf.macos
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaOptionButtonUI
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.LW
+import com.intellij.laf.macos.MacIntelliJTextBorder.LW
 import com.intellij.util.ui.JBUI.scale
 import java.awt.Dimension
 import java.awt.Graphics2D
