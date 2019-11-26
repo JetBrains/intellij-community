@@ -240,6 +240,7 @@ object DynamicPlugins {
 
     if (wasDisabled) {
       // Update list of disabled plugins
+      (PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl)?.setLoader(pluginDescriptor.pluginClassLoader)
       PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
     }
     else {
