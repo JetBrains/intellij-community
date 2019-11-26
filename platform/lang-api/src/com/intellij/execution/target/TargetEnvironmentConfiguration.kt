@@ -4,6 +4,12 @@ package com.intellij.execution.target
 import com.intellij.execution.target.ContributedConfigurationBase.Companion.getTypeImpl
 import com.intellij.openapi.project.Project
 
+/**
+ * Base class for configuration instances contributed by the ["com.intellij.ir.targetType"][RemoteTargetType.EXTENSION_NAME] extension point.
+ * <p/>
+ * To be useful, target configuration should normally include at least one language runtime configuration, either introspected
+ * or explicitly edited by the user.
+ */
 abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfigurationBase(typeId, RemoteTargetType.EXTENSION_NAME) {
 
   val runtimes = ContributedConfigurationsList(LanguageRuntimeType.EXTENSION_NAME)
