@@ -282,7 +282,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       final Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
