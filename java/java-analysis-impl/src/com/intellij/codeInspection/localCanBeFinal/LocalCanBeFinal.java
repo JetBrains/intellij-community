@@ -221,6 +221,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (expression.getParent() instanceof PsiMethodCallExpression) {
+          super.visitReferenceExpression(expression);
+        }
       }
     });
 
