@@ -852,17 +852,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertSameElements(suggested, "VAR", "subpkg1");
   }
 
-
-  // PY-14519
-  public void testOsPath() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
-    assertContainsElements(suggested, "path");
-  }
-
   // PY-14331
   public void testExcludedTopLevelPackage() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
@@ -1571,6 +1560,24 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     myFixture.configureByFile("uninitialized/variable.py");
     myFixture.complete(CompletionType.BASIC, 2);
     List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-11977
+  public void testClassStaticMembers() {
+    final String text = "class MyClass(object):\n" +
+                        "  def __init__(self):\n" +
+                        "    self.foo = 42\n" +
+                        "\n" +
+                        "  def baz(self):\n" +
+                        "    pass\n" +
+                        "\n\n" +
+                        "MyClass.bar = 42\n" +
+                        "MyClass.<caret>";
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertContainsElements(suggested, "bar", "baz");
     assertDoesntContain(suggested, "foo");
   }
 
