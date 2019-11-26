@@ -1,13 +1,12 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="languageInjector"
-                    interface="com.intellij.psi.LanguageInjector"/>
+    <extensionPoint name="languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
     <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="gotoDeclarationHandler" dynamic="true"
-                    interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
+    <extensionPoint name="gotoDeclarationHandler" interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>

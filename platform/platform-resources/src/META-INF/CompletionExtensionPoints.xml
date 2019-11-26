@@ -1,8 +1,5 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
-    </extensionPoint>
 
     <extensionPoint name="completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
@@ -30,10 +27,6 @@
 
     <extensionPoint name="createDirectoryCompletionContributor" beanClass="com.intellij.ide.actions.CreateDirectoryCompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.actions.CreateDirectoryCompletionContributor"/>
-    </extensionPoint>
-
-    <extensionPoint name="completionData" beanClass="com.intellij.codeInsight.completion.CompletionDataEP">
-      <with attribute="className" implements="com.intellij.codeInsight.completion.CompletionData"/>
     </extensionPoint>
 
     <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

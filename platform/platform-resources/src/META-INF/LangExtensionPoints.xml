@@ -69,16 +69,12 @@
     <extensionPoint name="daemon.externalAnnotatorsFilter" interface="com.intellij.lang.ExternalAnnotatorsFilter" dynamic="true"/>
     <extensionPoint name="daemon.changeLocalityDetector" interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector" dynamic="true"/>
 
-    <extensionPoint name="severitiesProvider" interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
-
     <extensionPoint name="implicitUsageProvider" interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider" dynamic="true"/>
 
     <!-- com.intellij.psi.PsiElement -->
     <extensionPoint name="cantBeStatic" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
-    <extensionPoint name="languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
     <extensionPoint name="concatenationAwareInjector" interface="com.intellij.lang.injection.ConcatenationAwareInjector" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="multiHostInjector" interface="com.intellij.lang.injection.MultiHostInjector" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="referenceInjector" interface="com.intellij.psi.injection.ReferenceInjector" dynamic="true"/>
 
     <extensionPoint name="annotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -127,10 +123,6 @@
     </extensionPoint>
 
     <extensionPoint name="lang.structureViewExtension" interface="com.intellij.ide.structureView.StructureViewExtension"/>
-
-    <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
-    </extensionPoint>
 
     <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.surroundWith.SurroundDescriptor"/>
@@ -558,8 +550,6 @@
 
     <extensionPoint name="treeCopyHandler" interface="com.intellij.psi.impl.source.tree.TreeCopyHandler" dynamic="true"/>
     <extensionPoint name="treeGenerator" interface="com.intellij.psi.impl.source.tree.TreeGenerator" dynamic="true"/>
-
-    <extensionPoint name="psi.treeChangePreprocessor" interface="com.intellij.psi.impl.PsiTreeChangePreprocessor" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory" dynamic="true"/>
 
