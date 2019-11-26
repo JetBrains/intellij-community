@@ -400,7 +400,9 @@ class CompilationContextImpl implements CompilationContext {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
       .dependencies(module).recursively()
       // if project requires different SDKs they all shouldn't be added to test classpath
+/* Android Studio: include SDK in test classpath
       .with { forTests ? withoutSdk() : it }
+*/
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
     return enumerator.classes().roots.collect { it.absolutePath }
   }
