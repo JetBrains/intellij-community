@@ -211,6 +211,10 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddOverridingMethodAndChangeReturnType() {
+    doTest();
+  }
+
   public void testAddOverloadingConstructor() {
     doTest();
   }

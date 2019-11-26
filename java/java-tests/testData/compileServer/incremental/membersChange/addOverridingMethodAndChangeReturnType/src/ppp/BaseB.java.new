@@ -1,0 +1,7 @@
+package ppp;
+
+public class BaseB extends BaseA {
+  public boolean process(int a) {
+    return super.process(a);
+  }
+}
