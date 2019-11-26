@@ -96,7 +96,8 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    holder.newAnnotation(start.getTextRange(), HighlightSeverity.ERROR, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"))
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"))
+      .range(start.getTextRange())
       .withFix(renameEndAction)
       .withFix(renameStartAction)
       .create();
@@ -122,7 +123,8 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    holder.newAnnotation(end.getTextRange(), HighlightSeverity.ERROR, XmlErrorMessages.message("wrong.closing.tag.name"))
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorMessages.message("wrong.closing.tag.name"))
+      .range(end.getTextRange())
       .withFix(new RemoveExtraClosingTagIntentionAction())
       .withFix(renameEndAction)
       .withFix(renameStartAction)

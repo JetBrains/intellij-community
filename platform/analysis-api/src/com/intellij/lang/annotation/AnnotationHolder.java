@@ -169,7 +169,7 @@ public interface AnnotationHolder {
   @Contract(pure=true)
   @ApiStatus.Experimental
   @NotNull
-  default AnnotationBuilder newAnnotation(@NotNull TextRange range, @NotNull HighlightSeverity severity, @NotNull String message) {
+  default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull String message) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
   }
 }

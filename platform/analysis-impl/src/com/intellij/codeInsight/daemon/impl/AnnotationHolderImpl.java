@@ -171,7 +171,9 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   @NotNull
   @Override
-  public AnnotationBuilder newAnnotation(@NotNull TextRange range, @NotNull HighlightSeverity severity, @NotNull String message) {
-    return new B(this, range, severity, message);
+  public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull String message) {
+    return new B(this, severity, message, myCurrentElement);
   }
+
+  PsiElement myCurrentElement;
 }

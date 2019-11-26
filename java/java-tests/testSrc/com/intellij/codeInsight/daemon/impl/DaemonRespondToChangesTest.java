@@ -2479,7 +2479,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
-        holder.newAnnotation(element.getTextRange(), HighlightSeverity.ERROR, MyFastAnnotator.SWEARING).create();
+        holder.newAnnotation(HighlightSeverity.ERROR, MyFastAnnotator.SWEARING).create();
         // sleep after creating annotation to emulate very big annotator which does a great amount of work after registering annotation
 
         // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread

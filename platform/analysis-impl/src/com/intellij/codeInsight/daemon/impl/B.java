@@ -7,12 +7,15 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,8 +25,10 @@ class B implements AnnotationBuilder {
   @NotNull
   private final AnnotationHolderImpl myHolder;
   private final String message;
+  @NotNull
+  private final PsiElement myCurrentElement;
   private final HighlightSeverity severity;
-  private final TextRange range;
+  private TextRange range;
   private Boolean afterEndOfLine;
   private Boolean fileLevel;
   private GutterIconRenderer gutterIconRenderer;
@@ -35,14 +40,11 @@ class B implements AnnotationBuilder {
   private String tooltip;
   private List<FixB> fixes;
 
-  B(@NotNull AnnotationHolderImpl holder, TextRange range, HighlightSeverity severity, String message) {
+  B(@NotNull AnnotationHolderImpl holder, HighlightSeverity severity, String message, @NotNull PsiElement currentElement) {
     myHolder = holder;
     this.severity = severity;
     this.message = message;
-    this.range = range;
-    if (getClass() != B.class) {
-      throw new IncorrectOperationException("You must not extend AnnotationHolder.Builder");
-    }
+    myCurrentElement = currentElement;
   }
 
   private static void assertNotSet(Object o, String description) {
@@ -113,6 +115,14 @@ class B implements AnnotationBuilder {
   @Override
   public FixBuilder newLocalQuickFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor) {
     return new FixB(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor));
+  }
+
+  @NotNull
+  @Override
+  public AnnotationBuilder range(@NotNull TextRange range) {
+    assertNotSet(this.range, "range");
+    this.range = range;
+    return this;
   }
 
   @NotNull
@@ -189,8 +199,9 @@ class B implements AnnotationBuilder {
 
   @Override
   public void create() {
-    //assertSet(range, "range");
-    //assertSet(severity, "severity");
+    if (range == null) {
+      range = myCurrentElement.getTextRange();
+    }
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     if (needsUpdateOnTyping != null) {
       annotation.setNeedsUpdateOnTyping(needsUpdateOnTyping);

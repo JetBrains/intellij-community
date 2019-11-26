@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,14 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.NonExtendable
 public
 interface AnnotationBuilder {
+  /**
+   * Specify annotation range. When not called, the current element range is used,
+   * i.e. of the element your {@link Annotator#annotate(PsiElement, AnnotationHolder)} method is called with.
+   * This is an intermediate method in the creating new annotation pipeline.
+   */
+  @Contract(pure=true)
+  @NotNull
+  AnnotationBuilder range(@NotNull TextRange range);
   /**
    * Specify annotation should be shown after the end of line. Useful for creating warnings of the type "unterminated string literal".
    * This is an intermediate method in the creating new annotation pipeline.
