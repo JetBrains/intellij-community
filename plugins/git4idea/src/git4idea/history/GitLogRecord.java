@@ -155,7 +155,7 @@ class GitLogRecord {
       return ContainerUtil.emptyList();
     }
     final int startParentheses = decoration.indexOf("(");
-    final int endParentheses = decoration.indexOf(")");
+    final int endParentheses = decoration.lastIndexOf(")");
     if ((startParentheses == -1) || (endParentheses == -1)) return Collections.emptyList();
     String refs = decoration.substring(startParentheses + 1, endParentheses);
     String[] names = refs.split(", ");
