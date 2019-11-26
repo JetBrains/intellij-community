@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -198,10 +199,19 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
           else if (value instanceof SuggestedJdkItem) {
             SdkType type = ((SuggestedJdkItem)value).getSdkType();
             String home = ((SuggestedJdkItem)value).getPath();
-            setIcon(type.getIconForAddAction());
             String version = ((SuggestedJdkItem)value).getVersion();
-            append(version == null ? type.getPresentableName() : version);
-            append(" (" + StringUtil.shortenTextWithEllipsis(home, 50, 20) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+
+            Icon icon = type.getIconForAddAction();
+            if (icon == IconUtil.getAddIcon()) icon = type.getIcon();
+            if (icon == null) icon = IconUtil.getAddIcon();
+            setIcon(icon);
+            //for macOS, let's try removing Bundle internals
+            home = StringUtil.trimEnd(home, "/Contents/Home");
+            home = StringUtil.trimEnd(home, "/Contents/MacOS");
+            home = StringUtil.shortenTextWithEllipsis(home, 50, 30);
+            append(home);
+            if (version == null) version = type.getPresentableName();
+            append(" (" + version + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
           else if (value instanceof ActionJdkItem) {
             Presentation presentation = ((ActionJdkItem)value).getAction().getTemplatePresentation();
