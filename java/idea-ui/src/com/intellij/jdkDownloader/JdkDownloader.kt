@@ -17,6 +17,8 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.lang.JavaVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -47,10 +49,13 @@ internal class JdkDownloader : SdkDownload {
       JdkInstaller.prepareJdkInstallation(jdkItem, jdkHome)
     } ?: return
 
+    val jdkVersion = request.item.jdkVersion
+    val safeVersion = JavaVersion.tryParse(jdkVersion)?.let(JdkVersionDetector::formatVersionString) ?: jdkVersion
+
     sdkCreatedCallback.accept(object : SdkDownloadTask {
       override fun getSuggestedSdkName() = request.item.suggestedSdkName
       override fun getPlannedHomeDir() = request.targetDir.absolutePath
-      override fun getPlannedVersion() = request.item.jdkVersion
+      override fun getPlannedVersion() = safeVersion
       override fun doDownload(indicator: ProgressIndicator) {
         JdkInstaller.installJdk(request, indicator)
       }
