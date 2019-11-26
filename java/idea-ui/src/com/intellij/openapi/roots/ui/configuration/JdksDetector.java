@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -133,6 +134,8 @@ public class JdksDetector {
             if (path == null) continue;
 
             try {
+              //a sanity check first
+              if (!new File(path).exists()) continue;
               if (!type.isValidSdkHome(path)) continue;
             }
             catch (Exception e) {
