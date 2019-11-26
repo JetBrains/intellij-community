@@ -15,7 +15,6 @@ import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -368,7 +367,7 @@ class StubSerializationHelper {
       externalId = myNameStorage.valueOf(id);
     } catch (Throwable ignore) {}
     return new SerializerNotFoundException(
-      StubUtil.brokenStubFormat(ourRootStubSerializer.get()) +
+      StubSerializationUtil.brokenStubFormat(ourRootStubSerializer.get()) +
       "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
       "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
   }
