@@ -121,6 +121,11 @@ class B implements AnnotationBuilder {
   @Override
   public AnnotationBuilder range(@NotNull TextRange range) {
     assertNotSet(this.range, "range");
+    TextRange currentElementRange = myCurrentElement.getTextRange();
+    if (!currentElementRange.contains(range)) {
+      throw new IllegalArgumentException("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range);
+    }
+
     this.range = range;
     return this;
   }

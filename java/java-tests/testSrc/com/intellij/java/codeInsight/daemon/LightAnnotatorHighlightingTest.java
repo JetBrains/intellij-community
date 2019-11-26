@@ -1,0 +1,155 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.codeInsight.daemon;
+
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonRespondToChangesTest;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
+import java.util.Collections;
+import java.util.List;
+
+public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
+  public void testInjectedAnnotator() {
+    Annotator annotator = new MyAnnotator();
+    Language xml = StdFileTypes.XML.getLanguage();
+    LanguageAnnotators.INSTANCE.addExplicitExtension(xml, annotator);
+    try {
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
+      assertTrue(list.toString(), list.contains(annotator));
+      doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml",true,false);
+    }
+    finally {
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(xml, annotator);
+    }
+
+    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
+    assertFalse(list.toString(), list.contains(annotator));
+  }
+
+  public void testAnnotatorWorksWithFileLevel() {
+    Annotator annotator = new MyTopFileAnnotator();
+    Language java = StdFileTypes.JAVA.getLanguage();
+    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    try {
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+      assertTrue(list.toString(), list.contains(annotator));
+      configureByFile(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java");
+      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
+      doHighlighting();
+      List<HighlightInfo> fileLevel =
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
+      HighlightInfo info = assertOneElement(fileLevel);
+      assertEquals("top level", info.getDescription());
+
+      type("\n\n");
+      doHighlighting();
+      fileLevel =
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
+      info = assertOneElement(fileLevel);
+      assertEquals("top level", info.getDescription());
+
+      type("//xxx"); //disable top level annotation
+      List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
+      assertEmpty(warnings);
+      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
+      assertEmpty(fileLevel);
+    }
+    finally {
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+    }
+
+    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+    assertFalse(list.toString(), list.contains(annotator));
+  }
+
+  // must stay public for PicoContainer to work
+  public static class MyAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      psiElement.accept(new XmlElementVisitor() {
+        @Override public void visitXmlTag(XmlTag tag) {
+          XmlAttribute attribute = tag.getAttribute("aaa", "");
+          if (attribute != null) {
+            holder.createWarningAnnotation(attribute, "MyAnnotator");
+          }
+        }
+
+        @Override public void visitXmlToken(XmlToken token) {
+          if (token.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+            holder.createWarningAnnotation(token, "ENTITY");
+          }
+        }
+      });
+    }
+  }
+
+  // must stay public for PicoContainer to work
+  public static class MyTopFileAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
+        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
+        annotation.setFileLevelAnnotation(true);
+      }
+    }
+  }
+
+  public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
+    DaemonRespondToChangesTest.useAnnotatorsIn(new Annotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators());
+  }
+  private void runMyAnnotators() {
+    @org.intellij.lang.annotations.Language("JAVA")
+    String text = "class X {\n" +
+                  "  //XXX\n" +
+                  "}\n";
+    configureFromFileText("x.java", text);
+    ((EditorImpl)getEditor()).getScrollPane().getViewport().setSize(1000, 1000);
+    assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+
+    CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
+    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject()))
+      .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
+  }
+
+  public static class MyCrazyAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiComment && element.getText().equals("//XXX")) {
+        try {
+          holder.newAnnotation(HighlightSeverity.ERROR, "xxx")
+            .range(new TextRange(0,1))
+            .create();
+          fail("Must have rejected crazy annotation range");
+        }
+        catch (IllegalArgumentException ignored) {
+        }
+      }
+    }
+  }
+}

@@ -2163,7 +2163,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private static void useAnnotatorsIn(@NotNull Annotator[] annotators, @NotNull Runnable runnable) {
+  public static void useAnnotatorsIn(@NotNull Annotator[] annotators, @NotNull Runnable runnable) {
     com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
     for (Annotator annotator : annotators) {
       LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
