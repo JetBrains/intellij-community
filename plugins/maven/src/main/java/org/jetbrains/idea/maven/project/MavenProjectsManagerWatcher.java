@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ProjectTracker;
@@ -128,7 +127,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void scheduleReadingTask(@NotNull MavenProjectsProcessorReadingTask readingTask) {
-    WriteAction.runAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+    FileDocumentManager.getInstance().saveAllDocuments();
     myReadingProcessor.scheduleTask(readingTask);
   }
 
