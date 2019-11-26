@@ -2,22 +2,29 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.DaemonRespondToChangesTest;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -26,11 +33,14 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInjectedAnnotator() {
@@ -151,5 +161,106 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         }
       }
     }
+  }
+
+
+  private static void checkThrowsWhenCalledTwice(AnnotationHolder holder, Consumer<? super AnnotationBuilder> method) {
+    try {
+      AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx");
+      method.accept(builder);
+      method.accept(builder);
+      builder.create();
+      fail("Must have failed");
+    }
+    catch (IllegalStateException ignored) {
+    }
+    // once is OK
+    AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx");
+    method.accept(builder);
+    builder.create();
+  }
+  private static void checkThrowsWhenCalledTwiceOnFixBuilder(AnnotationHolder holder, Consumer<? super AnnotationBuilder.FixBuilder> method) {
+    IntentionAction fix = new IntentionAction() {
+      @NotNull
+      @Override
+      public String getText() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return null;
+      }
+
+      @Override
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        return false;
+      }
+
+      @Override
+      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+
+      }
+
+      @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+    };
+    try {
+      AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newFix(fix);
+      method.accept(builder);
+      method.accept(builder);
+      builder.registerFix().create();
+      fail("Must have failed");
+    }
+    catch (IllegalStateException ignored) {
+    }
+    // once is OK
+    AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newFix(fix);
+    method.accept(builder);
+    builder.registerFix().create();
+  }
+  public static class MyStupidRepetitiveAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiComment && element.getText().equals("//XXX")) {
+        checkThrowsWhenCalledTwice(holder, builder -> builder.range(element.getTextRange()));
+        checkThrowsWhenCalledTwice(holder, builder -> builder.fileLevel());
+        checkThrowsWhenCalledTwice(holder, builder -> builder.afterEndOfLine());
+        checkThrowsWhenCalledTwice(holder, builder -> builder.enforcedTextAttributes(TextAttributes.ERASE_MARKER));
+        checkThrowsWhenCalledTwice(holder, builder -> builder.highlightType(ProblemHighlightType.ERROR));
+        checkThrowsWhenCalledTwice(holder, builder -> builder.gutterIconRenderer(new GutterIconRenderer() {
+              @Override
+              public boolean equals(Object obj) {
+                return false;
+              }
+
+              @Override
+              public int hashCode() {
+                return 0;
+              }
+
+              @NotNull
+              @Override
+              public Icon getIcon() {
+                return Messages.getQuestionIcon();
+              }
+            }));
+        checkThrowsWhenCalledTwice(holder, builder -> builder.needsUpdateOnTyping());
+        checkThrowsWhenCalledTwice(holder, builder -> builder.problemGroup(() -> ""));
+        checkThrowsWhenCalledTwice(holder, builder -> builder.tooltip(""));
+        checkThrowsWhenCalledTwice(holder, builder -> builder.textAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES));
+        checkThrowsWhenCalledTwiceOnFixBuilder(holder, fixBuilder -> fixBuilder.batch());
+        HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME, UnusedDeclarationInspectionBase.SHORT_NAME);
+        checkThrowsWhenCalledTwiceOnFixBuilder(holder, fixBuilder -> fixBuilder.key(myDeadCodeKey));
+        checkThrowsWhenCalledTwiceOnFixBuilder(holder, fixBuilder -> fixBuilder.range(new TextRange(0,0)));
+      }
+    }
+  }
+
+  public void testAnnotationBuilderMethodsAllowedToBeCalledOnlyOnce() {
+    DaemonRespondToChangesTest.useAnnotatorsIn(new Annotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators());
   }
 }
