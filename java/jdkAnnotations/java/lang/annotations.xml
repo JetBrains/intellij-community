@@ -552,6 +552,7 @@
   <item name="java.lang.String byte[] getBytes()">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt; new&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
   </item>
