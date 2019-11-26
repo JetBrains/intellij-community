@@ -351,7 +351,13 @@ public class TestCaseLoader {
 
     String message = "Number of test classes found: " + getClassesCount() + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
-    TeamCityLogger.info(message);
+
+    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0) {
+      TeamCityLogger.error(message);
+    }
+    else {
+      TeamCityLogger.info(message);
+    }
   }
 
   @Nullable
