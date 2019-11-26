@@ -181,7 +181,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     }
   }
 
-  public final void removeStateDelegates() {
+  protected final void removeAllStateDelegates() {
     synchronized (getLock()) {
       myStateDelegates = null;
     }

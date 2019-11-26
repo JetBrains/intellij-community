@@ -2,11 +2,6 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -15,6 +10,10 @@ public class BgProgressIndicator extends AbstractProgressIndicatorExBase {
   public BgProgressIndicator() {
     super.setText("Downloading...");
     setIndeterminate(false);
+  }
+
+  public void removeStateDelegates() {
+    super.removeAllStateDelegates();
   }
 
   @Override
