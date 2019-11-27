@@ -82,6 +82,15 @@ public abstract class InstructionVisitor {
 
   }
 
+  protected void beforeConditionalJump(ConditionalGotoInstruction instruction, boolean isTrueBranch) {
+    if (isTrueBranch ^ instruction.isNegated()) {
+      instruction.setTrueReachable();
+    }
+    else {
+      instruction.setFalseReachable();
+    }
+  }
+
   void pushExpressionResult(@NotNull DfaValue value,
                             @NotNull ExpressionPushingInstruction instruction,
                             @NotNull DfaMemoryState state) {
@@ -252,12 +261,12 @@ public abstract class InstructionVisitor {
     DfaCondition condFalse = condTrue.negate();
 
     if (condTrue == DfaCondition.getTrue()) {
-      markBranchReachable(instruction, true);
+      beforeConditionalJump(instruction, true);
       return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(instruction.getOffset()), memState)};
     }
 
     if (condFalse == DfaCondition.getTrue()) {
-      markBranchReachable(instruction, false);
+      beforeConditionalJump(instruction, false);
       return nextInstruction(instruction, runner, memState);
     }
 
@@ -267,24 +276,15 @@ public abstract class InstructionVisitor {
 
     if (memState.applyCondition(condTrue)) {
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getOffset()), memState));
-      markBranchReachable(instruction, true);
+      beforeConditionalJump(instruction, true);
     }
 
     if (elseState.applyCondition(condFalse)) {
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), elseState));
-      markBranchReachable(instruction, false);
+      beforeConditionalJump(instruction, false);
     }
 
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
-  }
-
-  private static void markBranchReachable(ConditionalGotoInstruction instruction, boolean isTrueBranch) {
-    if (isTrueBranch ^ instruction.isNegated()) {
-      instruction.setTrueReachable();
-    }
-    else {
-      instruction.setFalseReachable();
-    }
   }
 
   public DfaInstructionState[] visitMethodReference(MethodReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

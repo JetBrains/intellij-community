@@ -10,7 +10,10 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor.ConstantResult;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.fix.*;
-import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.application.ApplicationManager;
@@ -286,7 +289,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     ProblemReporter reporter = new ProblemReporter(holder, scope);
 
     reportFailingCasts(reporter, visitor);
-    reportUnreachableSwitchBranches(trueSet, falseSet, holder);
+    reportUnreachableSwitchBranches(visitor.getSwitchLabelsReachability(), holder);
 
     for (Instruction instruction : allProblems) {
       if (instruction instanceof BranchingInstruction) {
@@ -323,29 +326,27 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     reportPointlessSameArguments(reporter, visitor);
   }
 
-  private void reportUnreachableSwitchBranches(Set<Instruction> trueSet, Set<Instruction> falseSet, ProblemsHolder holder) {
+  private void reportUnreachableSwitchBranches(Map<PsiExpression, ThreeState> labelReachability, ProblemsHolder holder) {
     Set<PsiSwitchBlock> coveredSwitches = new HashSet<>();
-    Set<PsiExpression> trueLabels = StreamEx.of(trueSet).select(ConditionalGotoInstruction.class)
-      .map(ConditionalGotoInstruction::getPsiAnchor).select(PsiExpression.class)
-      .filter(e -> PsiImplUtil.getSwitchLabel(e) != null).toSet();
-    Set<PsiExpression> falseLabels = StreamEx.of(falseSet).select(ConditionalGotoInstruction.class)
-      .map(ConditionalGotoInstruction::getPsiAnchor).select(PsiExpression.class)
-      .filter(e -> PsiImplUtil.getSwitchLabel(e) != null).toSet();
 
-    for (PsiExpression label : trueLabels) {
+    for (Map.Entry<PsiExpression, ThreeState> entry : labelReachability.entrySet()) {
+      if (entry.getValue() != ThreeState.YES) continue;
+      PsiExpression label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
       PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
       if (statement == null || !canRemoveUnreachableBranches(labelStatement, statement)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseValues)
-        .nonNull().flatArray(PsiExpressionList::getExpressions).allMatch(falseLabels::contains)) {
+        .nonNull().flatArray(PsiExpressionList::getExpressions).allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
         continue;
       }
       coveredSwitches.add(statement);
       holder.registerProblem(label, InspectionsBundle.message("dataflow.message.only.switch.label"),
                              createUnwrapSwitchLabelFix());
     }
-    for (PsiExpression label : falseLabels) {
+    for (Map.Entry<PsiExpression, ThreeState> entry : labelReachability.entrySet()) {
+      if (entry.getValue() != ThreeState.NO) continue;
+      PsiExpression label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
       if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock())) {
         holder.registerProblem(label, InspectionsBundle.message("dataflow.message.unreachable.switch.label"),

@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.application.Application;
@@ -14,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -47,6 +45,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private final Map<PsiReferenceExpression, Boolean> mySameArguments = new HashMap<>();
+  private final Map<PsiExpression, ThreeState> mySwitchLabelsReachability = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 
@@ -84,6 +83,15 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       }
     }
     return super.visitAssign(instruction, runner, memState);
+  }
+
+  @Override
+  protected void beforeConditionalJump(ConditionalGotoInstruction instruction, boolean isTrueBranch) {
+    PsiElement anchor = instruction.getPsiAnchor();
+    if (anchor instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)anchor) != null) {
+      mySwitchLabelsReachability.merge((PsiExpression)anchor, ThreeState.fromBoolean(isTrueBranch), ThreeState::merge);
+    }
+    super.beforeConditionalJump(instruction, isTrueBranch);
   }
 
   private static boolean isAssignmentToDefaultValueInConstructor(AssignInstruction instruction, DataFlowRunner runner, DfaValue target) {
@@ -156,6 +164,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   Map<PsiMethodReferenceExpression, DfaValue> getMethodReferenceResults() {
     return myMethodReferenceResults;
+  }
+  
+  Map<PsiExpression, ThreeState> getSwitchLabelsReachability() {
+    return mySwitchLabelsReachability;
   }
 
   EntryStream<PsiTypeCastExpression, Pair<Boolean, PsiType>> getFailingCastExpressions() {
