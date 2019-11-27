@@ -166,7 +166,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyNoseTestFactory createFactory() {
-          return PyNoseTestFactory.INSTANCE;
+          return new PyNoseTestFactory();
         }
       });
   }

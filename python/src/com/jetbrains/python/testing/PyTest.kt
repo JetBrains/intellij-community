@@ -81,7 +81,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   }
 }
 
-object PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
+class PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project): PyTestConfiguration = PyTestConfiguration(project, this)
 
   override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)

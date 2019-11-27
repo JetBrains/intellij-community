@@ -66,11 +66,11 @@ import java.util.regex.Matcher
 /**
  * New configuration factories
  */
-internal val pythonFactories: Array<PythonConfigurationFactoryBase> = arrayOf(
-  PyUnitTestFactory,
-  PyTestFactory,
-  PyNoseTestFactory,
-  PyTrialTestFactory)
+internal val pythonFactories get() = arrayOf<PythonConfigurationFactoryBase>(
+  PyUnitTestFactory(),
+  PyTestFactory(),
+  PyNoseTestFactory(),
+  PyTrialTestFactory())
 
 /**
  * Accepts text that may be wrapped in TC message. Unwarps it and removes TC escape code.

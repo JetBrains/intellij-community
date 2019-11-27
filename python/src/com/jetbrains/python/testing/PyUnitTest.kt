@@ -102,7 +102,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   override fun shouldSeparateTargetPath() = false
 }
 
-object PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
+class PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME

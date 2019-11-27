@@ -237,7 +237,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         @NotNull
         @Override
         protected PyUnitTestFactory createFactory() {
-          return PyUnitTestFactory.INSTANCE;
+          return new PyUnitTestFactory();
         }
 
         @Override
@@ -870,7 +870,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         @Override
         public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
           // Set default working directory to some random location before actual exection
-          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUnitTestFactory.INSTANCE);
+          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(new PyUnitTestFactory());
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
           super.runTestOn(sdkHome, existingSdk);
           templateConfiguration.setWorkingDirectory("");
