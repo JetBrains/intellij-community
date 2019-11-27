@@ -207,12 +207,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, type);
     }
-    else if (op == JavaTokenType.ANDEQ && isBoolean) {
-      generateBooleanAssignmentExpression(true, lExpr, rExpr, type);
-    }
-    else if (op == JavaTokenType.OREQ && isBoolean) {
-      generateBooleanAssignmentExpression(false, lExpr, rExpr, type);
-    }
     else if (op == JavaTokenType.XOREQ && isBoolean) {
       generateXorExpression(expression, new PsiExpression[]{lExpr, rExpr}, type, true);
     }
@@ -1350,12 +1344,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else if (op == JavaTokenType.XOR && PsiType.BOOLEAN.equals(type)) {
       generateXorExpression(expression, operands, type, false);
     }
-    else if (op == JavaTokenType.AND && PsiType.BOOLEAN.equals(type)) {
-      generateAndOr(operands, type, true);
-    }
-    else if (op == JavaTokenType.OR && PsiType.BOOLEAN.equals(type)) {
-      generateAndOr(operands, type, false);
-    }
     else if (isBinaryDivision(op) && operands.length == 2 &&
              type != null && PsiType.LONG.isAssignableFrom(type)) {
       generateDivMod(expression, type, operands[0], operands[1]);
@@ -1480,45 +1468,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(operand, exprType);
       PsiExpression psiAnchor = expression.isPhysical() ? expression : null;
       addInstruction(new BinopInstruction(JavaTokenType.NE, psiAnchor, exprType, i));
-    }
-  }
-
-  private void generateBooleanAssignmentExpression(boolean and, PsiExpression lExpression, PsiExpression rExpression, PsiType exprType) {
-    lExpression.accept(this);
-    generateBoxingUnboxingInstructionFor(lExpression, exprType);
-    addInstruction(new DupInstruction());
-
-    rExpression.accept(this);
-    generateBoxingUnboxingInstructionFor(rExpression, exprType);
-    addInstruction(new SwapInstruction());
-
-    combineStackBooleans(and, lExpression);
-  }
-
-  private void combineStackBooleans(boolean and, PsiExpression anchor) {
-    ConditionalGotoInstruction toPopAndPushSuccess = new ConditionalGotoInstruction(null, and, anchor);
-    addInstruction(toPopAndPushSuccess);
-    GotoInstruction overPushSuccess = new GotoInstruction(null);
-    addInstruction(overPushSuccess);
-
-    PopInstruction pop = new PopInstruction();
-    addInstruction(pop);
-    DfaConstValue constValue = myFactory.getBoolean(!and);
-    PushInstruction pushSuccess = new PushInstruction(constValue, null);
-    addInstruction(pushSuccess);
-
-    toPopAndPushSuccess.setOffset(pop.getIndex());
-    overPushSuccess.setOffset(pushSuccess.getIndex() + 1);
-  }
-
-  private void generateAndOr(PsiExpression[] operands, PsiType exprType, boolean and) {
-    for (int i = 0; i < operands.length; i++) {
-      PsiExpression operand = operands[i];
-      operand.accept(this);
-      generateBoxingUnboxingInstructionFor(operand, exprType);
-      if (i > 0) {
-        combineStackBooleans(and, operand);
-      }
     }
   }
 

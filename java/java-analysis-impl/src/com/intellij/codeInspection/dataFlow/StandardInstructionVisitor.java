@@ -716,8 +716,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return states;
       }
     }
-    DfaValue result = DfaUnknownValue.getInstance();
     PsiType type = instruction.getResultType();
+    if (PsiType.BOOLEAN.equals(type)) {
+      return handleAndOrBinop(instruction, runner, memState, dfaRight, dfaLeft);
+    }
+    DfaValue result = DfaUnknownValue.getInstance();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       boolean isLong = PsiType.LONG.equals(type);
       if (instruction.isWidened()) {
@@ -745,6 +748,30 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     instruction.setFalseReachable();
 
     return nextInstruction(instruction, runner, memState);
+  }
+
+  @NotNull
+  private DfaInstructionState[] handleAndOrBinop(BinopInstruction instruction,
+                                                 DataFlowRunner runner,
+                                                 DfaMemoryState memState,
+                                                 DfaValue dfaRight, DfaValue dfaLeft) {
+    IElementType opSign = instruction.getOperationSign();
+    List<DfaInstructionState> result = new ArrayList<>(2);
+    if (opSign == JavaTokenType.AND || opSign == JavaTokenType.OR) {
+      boolean or = opSign == JavaTokenType.OR;
+      DfaMemoryState copy = memState.createCopy();
+      DfaCondition cond = dfaRight.eq(runner.getFactory().getBoolean(or));
+      if (copy.applyCondition(cond)) {
+        result.add(makeBooleanResult(instruction, runner, copy, ThreeState.fromBoolean(or)));
+      }
+      if (memState.applyCondition(cond.negate())) {
+        pushExpressionResult(dfaLeft, instruction, memState);
+        result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+      }
+    } else {
+      result.add(makeBooleanResult(instruction, runner, memState, ThreeState.UNSURE));
+    }
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -824,7 +851,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     if (states.isEmpty()) {
       // Neither of relations could be applied: likely comparison with NaN; do not split the state in this case, just push false
-      memState.push(factory.getConstFactory().getFalse());
+      pushExpressionResult(factory.getConstFactory().getFalse(), instruction, memState);
       return nextInstruction(instruction, runner, memState);
     }
 

@@ -763,9 +763,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         reporter.registerProblem(psiAnchor, range, message);
         // do not add to reported anchors if only part of expression was reported
       }
-      else if (!(psiAnchor instanceof PsiMethodReferenceExpression)) {
-        reportConstantBoolean(reporter, psiAnchor, evaluatesToTrue);
-      }
     }
   }
 
