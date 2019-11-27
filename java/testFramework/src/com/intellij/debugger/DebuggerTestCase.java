@@ -71,6 +71,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       if (myDebugProcess != null) {
         myDebugProcess.stop(true);
         myDebugProcess.waitFor();
+        myDebugProcess.dispose();
       }
       myTearDownRunnables.forEach(Runnable::run);
       myTearDownRunnables.clear();
