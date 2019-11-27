@@ -239,7 +239,10 @@ internal fun isSafeToReportFrom(descriptor: PluginDescriptor): Boolean {
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
   val pluginId = descriptor.pluginId ?: return false
+  return isPluginFromOfficialJbPluginRepo(pluginId)
+}
 
+internal fun isPluginFromOfficialJbPluginRepo(pluginId: PluginId?): Boolean {
   // not official JetBrains repository - is used, so, not safe to report
   if (!ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
     return false
