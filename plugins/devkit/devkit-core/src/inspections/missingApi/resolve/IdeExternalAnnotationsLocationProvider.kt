@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.BuildNumber
 
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.BuildNumber
 class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
 
   override fun getLocations(
+    project: Project,
     library: Library,
     artifactId: String?,
     groupId: String?,
