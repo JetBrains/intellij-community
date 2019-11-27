@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -97,7 +96,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     if (!project.isDefault()) {
       StartupManager startManager = StartupManager.getInstance(project);
       if (!startManager.postStartupActivityPassed()) {
-        startManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
+        startManager.registerPostStartupDumbAwareActivity(() -> fileStatusesChanged());
       }
     }
   }

@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.indices.DiscoveredTestDataHolder;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +40,12 @@ public class TestDiscoveryIndex implements Disposable {
     myBasePath = basePath;
 
     if (basePath.toFile().exists()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        getHolder(); // proactively init with maybe io costly compact
-      }));
+      StartupManager.getInstance(project).registerPostStartupActivity(() -> {
+        NonUrgentExecutor.getInstance().execute(() -> {
+          // proactively init with maybe io costly compact
+          getHolder();
+        });
+      });
     }
   }
 

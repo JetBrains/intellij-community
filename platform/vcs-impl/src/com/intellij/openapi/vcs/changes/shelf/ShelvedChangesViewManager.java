@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -68,7 +67,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.text.html.ObjectView;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -120,7 +118,7 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     project.getMessageBus().connect().subscribe(ShelveChangesManager.SHELF_TOPIC, e -> scheduleContentUpdate());
-    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> scheduleContentUpdate());
+    StartupManager.getInstance(project).registerPostStartupDumbAwareActivity(() -> scheduleContentUpdate());
   }
 
   private void scheduleContentUpdate() {

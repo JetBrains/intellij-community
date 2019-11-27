@@ -101,16 +101,27 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @Override
   public synchronized void registerPostStartupActivity(@NotNull Runnable runnable) {
+    checkBeforeAddingPostStartupActivity();
+    Deque<Runnable> list = DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities;
+    synchronized (myLock) {
+      list.add(runnable);
+    }
+  }
+
+  @Override
+  public void registerPostStartupDumbAwareActivity(@NotNull Runnable runnable) {
+    checkBeforeAddingPostStartupActivity();
+    synchronized (myLock) {
+      myDumbAwarePostStartupActivities.add(runnable);
+    }
+  }
+
+  private void checkBeforeAddingPostStartupActivity() {
     checkNonDefaultProject();
     if (myPostStartupActivitiesPassed) {
       LOG.error("Registering post-startup activity that will never be run:" +
                 " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() +
                 "; passed=" + myStartupActivitiesPassed);
-    }
-
-    Deque<Runnable> list = DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities;
-    synchronized (myLock) {
-      list.add(runnable);
     }
   }
 

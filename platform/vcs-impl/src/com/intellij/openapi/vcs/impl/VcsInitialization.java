@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
@@ -44,7 +43,7 @@ public final class VcsInitialization implements Disposable {
     myProject = project;
     LOG.assertTrue(!project.isDefault());
 
-    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
+    StartupManager.getInstance(project).registerPostStartupDumbAwareActivity(() -> {
       if (project.isDisposed()) {
         return;
       }

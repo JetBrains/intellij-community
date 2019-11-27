@@ -32,12 +32,23 @@ public abstract class StartupManager {
 
   /**
    * Registers an activity that is performed during project load after the "Loading Project"
-   * progress bar is displayed. You may access the PSI structures from the activity.
+   * progress bar is displayed. You may access the PSI structures from the activity.</p>
+   *
+   * Consider to use {@link #registerPostStartupDumbAwareActivity} if possible.
    *
    * @param runnable the activity to execute.
    * @see StartupActivity#POST_STARTUP_ACTIVITY
    */
   public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
+
+  /**
+   * Registers an {@link com.intellij.openapi.project.DumbAware} activity that is performed during project load, after the "Loading Project"
+   * progress bar is displayed, in a pooled thread.
+   *
+   * @param runnable the activity to execute.
+   * @see StartupActivity#POST_STARTUP_ACTIVITY
+   */
+  public abstract void registerPostStartupDumbAwareActivity(@NotNull Runnable runnable);
 
   public abstract boolean postStartupActivityPassed();
 
