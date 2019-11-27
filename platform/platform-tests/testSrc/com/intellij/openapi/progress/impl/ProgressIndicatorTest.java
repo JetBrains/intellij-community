@@ -857,7 +857,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
   }
 
-  public void testProgressIndicatorNotOverriddenIn_InRunProcessWithProgressSynchronously_duringWriteAction() {
+  public void testProgressIndicatorNotOverriddenIn_runProcessWithProgressSynchronously_duringWriteAction() {
     final String progressIndicatorText = "Progress indicator text";
     ProgressIndicator progressIndicator = new ProgressIndicatorBase() {
       String text;
