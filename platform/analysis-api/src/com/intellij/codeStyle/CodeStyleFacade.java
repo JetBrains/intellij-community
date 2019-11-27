@@ -102,9 +102,30 @@ public abstract class CodeStyleFacade {
   @Deprecated
   public abstract String getLineSeparator();
 
-  public abstract boolean useSpaceBeforeComma(PsiFile psiFile, Language language);
+  /**
+   * Determines whether a comma before space is needed for given {@code PsiFile} in given {@code Language} context.
+   *
+   * @param psiFile  File to determine settings
+   * @param language Context language
+   * @return whether the space before comma is needed
+   */
+  public abstract boolean useSpaceBeforeComma(@NotNull PsiFile psiFile, @NotNull Language language);
 
-  public abstract boolean useSpaceAfterComma(PsiFile psiFile, Language language);
+  /**
+   * Determines whether a comma after space is needed for given {@code PsiFile} in given {@code Language} context.
+   *
+   * @param psiFile  File to determine settings
+   * @param language Context language
+   * @return whether the space after comma is needed
+   */
+  public abstract boolean useSpaceAfterComma(@NotNull PsiFile psiFile, @NotNull Language language);
 
-  public abstract boolean useSpaceAroundAssignmentOperators(PsiFile psiFile, Language language);
+  /**
+   * Determines whether assignment operator should be surrounded with spaces for given {@code PsiFile} in given {@code Language} context.
+   *
+   * @param psiFile  File to determine settings
+   * @param language Context language
+   * @return whether to surround assignment operator with spaces
+   */
+  public abstract boolean useSpaceAroundAssignmentOperators(@NotNull PsiFile psiFile, @NotNull Language language);
 }
