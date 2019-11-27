@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
@@ -76,6 +77,7 @@ public abstract class CachedValuesManager {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
       value = dh.getUserData(key);
       if (value == null) {
+        trackKeyHolder(dataHolder, key);
         value = createParameterizedCachedValue(provider, trackValue);
         value = dh.putUserDataIfAbsent(key, value);
       }
@@ -85,6 +87,7 @@ public abstract class CachedValuesManager {
       synchronized (dataHolder) {
         value = dataHolder.getUserData(key);
         if (value == null) {
+          trackKeyHolder(dataHolder, key);
           value = createParameterizedCachedValue(provider, trackValue);
           dataHolder.putUserData(key, value);
         }
@@ -92,6 +95,9 @@ public abstract class CachedValuesManager {
     }
     return value.getValue(parameter);
   }
+
+  @ApiStatus.Internal
+  protected abstract void trackKeyHolder(@NotNull UserDataHolder dataHolder, @NotNull Key<?> key);
 
   /**
    * Utility method storing created cached values in a {@link UserDataHolder}.

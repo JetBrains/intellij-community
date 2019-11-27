@@ -75,8 +75,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
 
   private <T> CachedValue<T> saveInUserData(@NotNull UserDataHolder dataHolder,
                                             @NotNull Key<CachedValue<T>> key, CachedValue<T> value) {
-    myCacheHolders.put(dataHolder, NULL);
-    myKeys.add(key);
+    trackKeyHolder(dataHolder, key);
 
     if (dataHolder instanceof UserDataHolderEx) {
       return ((UserDataHolderEx)dataHolder).putUserDataIfAbsent(key, value);
@@ -91,6 +90,13 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
       dataHolder.putUserData(key, value);
       return value;
     }
+  }
+
+  @Override
+  protected void trackKeyHolder(@NotNull UserDataHolder dataHolder,
+                                @NotNull Key<?> key) {
+    myCacheHolders.put(dataHolder, NULL);
+    myKeys.add(key);
   }
 
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
