@@ -31,8 +31,10 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -184,12 +186,14 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        if (myRangeHighlighters.isEmpty()) return;
         removeRestartHighlightingListenerToCurrentEditor();
         removeMatchHighlights();
-        myEditor = event.getManager().getSelectedTextEditor();
-        addMatchHighlights();
-        addRestartHighlightingListenerToCurrentEditor();
+        final FileEditor editor = event.getNewEditor();
+        if (editor instanceof TextEditor) {
+          myEditor = ((TextEditor)editor).getEditor();
+          addMatchHighlights();
+          addRestartHighlightingListenerToCurrentEditor();
+        }
       }
     };
     getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
