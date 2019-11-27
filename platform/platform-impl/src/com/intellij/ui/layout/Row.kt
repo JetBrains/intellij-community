@@ -33,9 +33,7 @@ interface RowBuilder : BaseBuilder {
     return createChildRow(label?.let { Label(it) }, isSeparated = separated).apply(init)
   }
 
-  fun titledRow(title: String, init: Row.() -> Unit): Row {
-    return createChildRow(isSeparated = true, title = title).apply(init)
-  }
+  fun titledRow(title: String, init: Row.() -> Unit): Row
 
   /**
    * Creates row with hideable decorator.

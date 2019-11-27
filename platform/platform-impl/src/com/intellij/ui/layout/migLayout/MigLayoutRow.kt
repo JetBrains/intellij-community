@@ -17,6 +17,7 @@ import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
+import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.LineBorder
 import kotlin.reflect.KMutableProperty0
@@ -158,14 +159,15 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                              noGrid: Boolean = false,
                              title: String? = null): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
+    val newIndent = if (parent == null) indent else indent + spacing.indentLevel
 
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else indent + computeChildRowIndent(isSeparated))
+                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else newIndent)
 
     if (isSeparated) {
-      val separatorRow = MigLayoutRow(this, builder, indent = indent, noGrid = true)
+      val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
       separatorRow.enabled = subRowsEnabled
       separatorRow.visible = subRowsVisible
@@ -193,18 +195,28 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   private fun <T : JComponent> addTitleComponent(titleComponent: T, isEmpty: Boolean) {
     val cc = CC().apply {
-      vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
       if (isEmpty) {
         vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
         isTrailingSeparator = true
       }
       else {
-        vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
         // TitledSeparator doesn't grow by default opposite to SeparatorComponent
         growX()
       }
     }
     addComponent(titleComponent, lazyOf(cc))
+  }
+
+  override fun titledRow(title: String, init: Row.() -> Unit): Row {
+    return createChildRow(isSeparated = true, title = title).apply(init).apply {
+      createChildRow().apply {
+        JPanel().apply {
+          maximumSize = Dimension(0, 0)
+          preferredSize = Dimension(0, 0)
+        }()
+        largeGapAfter()
+      }
+    }
   }
 
   override fun hideableRow(title: String, init: Row.() -> Unit): Row {
@@ -256,19 +268,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
           cc.alignY("top")
         }
       }
-    }
-  }
-
-  private fun computeChildRowIndent(isSeparated: Boolean): Int {
-    if (isSeparated) {
-      return spacing.indentLevel
-    }
-    val firstComponent = components.firstOrNull() ?: return 0
-    if (firstComponent is JRadioButton || firstComponent is JCheckBox) {
-      return getCommentLeftInset(firstComponent)
-    }
-    else {
-      return spacing.indentLevel
     }
   }
 
@@ -389,7 +388,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun largeGapAfter() {
-    gapAfter = "${spacing.largeVerticalGap * 2}px!"
+    gapAfter = "${spacing.largeVerticalGap}px!"
   }
 
   override fun createRow(label: String?): Row {
