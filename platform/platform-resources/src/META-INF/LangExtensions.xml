@@ -415,6 +415,7 @@
                          bundle="messages.ApplicationBundle"
                          dynamic="true"
                          groupWeight="1"/>
+    <search.optionContributor implementation="com.intellij.codeInsight.hints.settings.InlayHintsSettingsSearchableContributor" />
 
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.InlayHintsSettings"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
