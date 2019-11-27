@@ -200,7 +200,8 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                                      PythonDebugLanguageConsoleView console,
                                                                      ProcessHandler processHandler, final XDebugSession session) {
     PythonConsoleView pythonConsoleView = console.getPydevConsoleView();
-    PythonDebugConsoleCommunication debugConsoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess);
+    PythonDebugConsoleCommunication debugConsoleCommunication =
+      new PythonDebugConsoleCommunication(project, debugProcess, pythonConsoleView);
 
     pythonConsoleView.setConsoleCommunication(debugConsoleCommunication);
 
