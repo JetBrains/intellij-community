@@ -91,7 +91,7 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
           return@forEach
         }
         indicator.text = "Looking for annotations for '${mavenArtifact.libraryName}'"
-        val locations = AnnotationsLocationSearcher.findAnnotationsLocation(library, mavenArtifact.artifactId, mavenArtifact.groupId, mavenArtifact.version)
+        val locations = AnnotationsLocationSearcher.findAnnotationsLocation(project, library, mavenArtifact.artifactId, mavenArtifact.groupId, mavenArtifact.version)
 
         locations.forEach locations@ { location ->
           if (locationsToSkip.contains(location)) return@locations
