@@ -353,24 +353,20 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (resolved.isEmpty()) return emptyList()
 
   val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
+  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList<PsiElement>()
 
-  if (groupedResults.containsKey(Priority.NAMESPACE_PACKAGE) &&
-      groupedResults.headMap(Priority.NAMESPACE_PACKAGE).isEmpty()) return groupedResults[Priority.NAMESPACE_PACKAGE]!!
-
+  if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)
 
-  return when {
+  val priorityResults =  when {
+    groupedResults.isEmpty() -> emptyList()
     // stub packages can be partial
-    groupedResults.topResultIs(Priority.STUB_PACKAGE) -> {
-      if (groupedResults.containsKey(Priority.SKELETON) && groupedResults.containsKey(Priority.OTHER))
-        groupedResults.asSequence().flatMap { it.value.asSequence() }.toList()
-      else firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
-    }
-    groupedResults.topResultIs(Priority.SKELETON) -> firstResultWithFallback(groupedResults, Priority.SKELETON).reversed()
+    groupedResults.topResultIs(Priority.STUB_PACKAGE) -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
     // third party sdk should not overwrite packages from the same vendor
     groupedResults.topResultIs(Priority.THIRD_PARTY_SDK) -> firstResultWithFallback(groupedResults, Priority.THIRD_PARTY_SDK)
     else -> listOf(groupedResults.values.first().first())
   }
+  return priorityResults + skeletons
 }
 
 private fun SortedMap<Priority, MutableList<PsiElement>>.topResultIs(priority: Priority): Boolean {
@@ -452,8 +448,8 @@ private enum class Priority {
   STUB_PACKAGE, // pyi file located in some stub package
   INLINE_PACKAGE, // py file located in some inline package
   TYPESHED, // pyi file located in typeshed
-  SKELETON, // generated skeletons for binary modules
   THIRD_PARTY_SDK, // project-specific sdk, e.g Google App Engine one
   OTHER, // other cases, e.g. py file located inside installed lib
-  NAMESPACE_PACKAGE // namespace packag e has the lowest priority
+  NAMESPACE_PACKAGE, // namespace package but may contain several entries in resolve result
+  SKELETON // generated skeletons have lowest priority but are always included in the resolve result as a fallback
 }
