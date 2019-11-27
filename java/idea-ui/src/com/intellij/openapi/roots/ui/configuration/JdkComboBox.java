@@ -122,6 +122,8 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     myCreationFilter = notSimpleJavaSdkType(creationFilter);
     myOnNewSdkAdded = emptyIfNull(onNewSdkAdded);
 
+    UIUtil.putClientProperty(this, ANIMATION_IN_RENDERER_ALLOWED, true);
+
     setMinimumAndPreferredWidth(JBUI.scale(400));
     setMaximumRowCount(30);
     setSwingPopup(false);
@@ -134,12 +136,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
                                                     boolean selected,
                                                     boolean hasFocus) {
 
-        //allow AnimationIcon show progress animation
-        UIUtil.putClientProperty(list, ANIMATION_IN_RENDERER_ALLOWED, true);
-        UIUtil.putClientProperty(JdkComboBox.this, ANIMATION_IN_RENDERER_ALLOWED, true);
-
         SimpleColoredComponent component = (SimpleColoredComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-        UIUtil.putClientProperty(component, ANIMATION_IN_RENDERER_ALLOWED, true);
 
         JPanel panel = new JPanel(new BorderLayout()) {
           @Override
@@ -154,7 +151,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
         //handle the selected item to show in the ComboBox, not in the popup
         if (index == -1) {
           if (myModel.myIsSdkDetectorInProgress && isPopupVisible()) {
-            JBLabel progressIcon = new JBLabel(new AnimatedIcon.Default());
+            JBLabel progressIcon = new JBLabel(AnimatedIcon.Default.INSTANCE);
             UIUtil.putClientProperty(progressIcon, ANIMATION_IN_RENDERER_ALLOWED, true);
             panel.add(progressIcon, BorderLayout.EAST);
           }
@@ -190,7 +187,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
             append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
           else if (value instanceof LoadingJdkComboBoxItem) {
-            setIcon(new AnimatedIcon.Default());
+            setIcon(AnimatedIcon.Default.INSTANCE);
             append(ProjectBundle.message("jdk.combo.box.search.of.sdks") );
           }
           else if (value instanceof ProjectJdkComboBoxItem) {
