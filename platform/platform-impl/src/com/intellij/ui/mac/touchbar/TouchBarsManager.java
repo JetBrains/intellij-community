@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.UIUtil;
@@ -397,6 +398,10 @@ public final class TouchBarsManager {
       return null;
 
     @NotNull ListPopupImpl listPopup = (ListPopupImpl)popup;
+
+    //some toolbars, e.g. one from DarculaJBPopupComboPopup are too custom to be supported here
+    if (!(listPopup.getList().getCellRenderer() instanceof PopupListElementRenderer)) return null;
+
     final TouchBar tb = BuildUtils.createScrubberBarFromPopup(listPopup);
     BarContainer container = new BarContainer(BarType.POPUP, tb, null, popupComponent);
     ourTemporaryBars.put(popupComponent, container);
