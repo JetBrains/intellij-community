@@ -108,7 +108,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
 
-    myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
+    updateVisibleRowCount();
 
     boolean shouldShow = super.beforeShow();
     if (myAutoHandleBeforeShow) {
@@ -117,6 +117,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     return shouldShow;
+  }
+
+  protected void updateVisibleRowCount() {
+    myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
   }
 
   @Override
