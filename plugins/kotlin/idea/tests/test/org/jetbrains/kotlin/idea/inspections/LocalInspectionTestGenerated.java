@@ -3344,6 +3344,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/operatorCannotBeApplied.kt");
             }
 
+            @TestMetadata("platformTypeEquals.kt")
+            public void testPlatformTypeEquals() throws Exception {
+                runTest("idea/testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/platformTypeEquals.kt");
+            }
+
             @TestMetadata("plusFromJava.kt")
             public void testPlusFromJava() throws Exception {
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator/plusFromJava.kt");
