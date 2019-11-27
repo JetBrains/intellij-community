@@ -174,10 +174,10 @@ class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
                     val key = it.projectKey.key
                     val projectName = it.project.name
                     AccountMenuItem.Action("Open for $projectName project",
-                                           { BrowserUtil.browse("${url}/p/$key/planning") },
+                                           { BrowserUtil.browse("${url}/p/$key/checklists") },
                                            AllIcons.Ide.External_link_arrow)
                 }.toList()
-                menuItems += AccountMenuItem.Group("Planning", planningActions)
+                menuItems += AccountMenuItem.Group("Checklists", planningActions)
 
                 val issuesActions = keys.map {
                     val key = it.projectKey.key
@@ -194,8 +194,8 @@ class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
                 menuItems += AccountMenuItem.Action("Code Reviews",
                                                     { BrowserUtil.browse("${url}/p/$key/review") },
                                                     AllIcons.Ide.External_link_arrow)
-                menuItems += AccountMenuItem.Action("Planning",
-                                                    { BrowserUtil.browse("${url}/p/$key/planning") },
+                menuItems += AccountMenuItem.Action("Checklists",
+                                                    { BrowserUtil.browse("${url}/p/$key/checklists") },
                                                     AllIcons.Ide.External_link_arrow)
                 menuItems += AccountMenuItem.Action("Issues",
                                                     { BrowserUtil.browse("${url}/p/$key/issues") },

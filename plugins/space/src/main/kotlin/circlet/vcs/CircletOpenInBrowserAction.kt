@@ -95,9 +95,9 @@ class OpenReviews : CircletOpenInBrowserAction("Code reviews") {
     }
 }
 
-class OpenPlanning : CircletOpenInBrowserAction("Planning") {
+class OpenChecklists : CircletOpenInBrowserAction("Checklists") {
     override fun getData(dataContext: DataContext): List<Pair<CircletProjectDescription, String>>? {
-        return getProjectAwareUrls("planning", dataContext)
+        return getProjectAwareUrls("checklists", dataContext)
     }
 }
 

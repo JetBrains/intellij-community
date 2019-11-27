@@ -84,7 +84,7 @@
                 text="Log Out..."/>
 
         <group id="circlet.vcs.OpenReviews" class="circlet.vcs.OpenReviews" text="Open Code Reviews..."/>
-        <group id="circlet.vcs.OpenPlanning" class="circlet.vcs.OpenPlanning" text="Open Planning..."/>
+        <group id="circlet.vcs.OpenChecklists" class="circlet.vcs.OpenChecklists" text="Open Checklists..."/>
         <group id="circlet.vcs.OpenIssues" class="circlet.vcs.OpenIssues" text="Open Issues..."/>
 <!--        <group id="circlet.vcs.OpenProjects" class="circlet.vcs.OpenProjects" text="Open Projects..."/>-->
 
@@ -93,7 +93,7 @@
             <reference id="circlet.ui.clone.CircletCloneAction"/>
             <separator/>
             <reference id="circlet.vcs.OpenReviews"/>
-            <reference id="circlet.vcs.OpenPlanning"/>
+            <reference id="circlet.vcs.OpenChecklists"/>
             <reference id="circlet.vcs.OpenIssues"/>
             <separator/>
             <reference id="circlet.actions.CircletLoginAction"/>
@@ -110,7 +110,6 @@
             <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
             <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
         </group>
-
     </actions>
 
 </idea-plugin>
