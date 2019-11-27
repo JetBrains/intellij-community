@@ -11,8 +11,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
@@ -29,7 +27,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -470,24 +471,29 @@ public class ExtractMethodProcessor implements MatchProvider {
     for (PsiElement element : myElements) {
       block.add(element);
     }
-    final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + exprText + " == null);", null);
-    block.add(statementFromText);
+    PsiReturnStatement statementFromText = (PsiReturnStatement)myElementFactory.createStatementFromText("return " + exprText + ";", null);
+    statementFromText = (PsiReturnStatement)block.add(statementFromText);
+    PsiExpression retValue = statementFromText.getReturnValue();
 
     final DataFlowRunner dfaRunner = new DataFlowRunner();
-    final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
-    if (rc == RunnerResult.OK) {
-      final Pair<Set<Instruction>, Set<Instruction>> expressions = dfaRunner.getConstConditionalExpressions();
-      final Set<Instruction> set = expressions.getSecond();
-      for (Instruction instruction : set) {
-        if (instruction instanceof BranchingInstruction) {
-          if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
-            return true;
-          }
+    
+    class Visitor extends StandardInstructionVisitor {
+      ThreeState neverNull = ThreeState.UNSURE; 
+      
+      @Override
+      protected void beforeExpressionPush(@NotNull DfaValue value,
+                                          @NotNull PsiExpression expression,
+                                          @Nullable TextRange range,
+                                          @NotNull DfaMemoryState state) {
+        if (expression == retValue && range == null) {
+          boolean stateNull = state.isNotNull(value);
+          neverNull = ThreeState.fromBoolean(stateNull && neverNull != ThreeState.NO);
         }
       }
     }
-    return false;
+    Visitor visitor = new Visitor();
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
+    return rc == RunnerResult.OK && visitor.neverNull == ThreeState.YES;
   }
 
   protected boolean checkOutputVariablesCount() {
