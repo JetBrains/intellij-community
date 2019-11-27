@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxPopupState;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,8 +37,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
@@ -345,9 +345,9 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     myOnNewSdkAdded.consume(sdk);
   }
 
-  public void setEditButton(final JButton editButton, final Project project, final Computable<? extends Sdk> retrieveJDK){
+  public void setEditButton(JButton editButton, Project project, @NotNull Supplier<? extends Sdk> retrieveJDK){
     editButton.addActionListener(e -> {
-      final Sdk projectJdk = retrieveJDK.compute();
+      final Sdk projectJdk = retrieveJDK.get();
       if (projectJdk != null) {
         ProjectStructureConfigurable.getInstance(project).select(projectJdk, true);
       }

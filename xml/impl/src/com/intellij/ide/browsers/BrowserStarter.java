@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.google.common.net.HostAndPort;
@@ -20,7 +6,6 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.net.NetUtils;
@@ -29,17 +14,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-public class BrowserStarter {
+public final class BrowserStarter {
   private static final Logger LOG = Logger.getInstance(BrowserStarter.class);
 
   private final StartBrowserSettings mySettings;
   private final RunConfiguration myRunConfiguration;
-  private final Computable<Boolean> myOutdated;
+  private final Supplier<Boolean> myOutdated;
 
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
-                        @NotNull Computable<Boolean> outdated) {
+                        @NotNull Supplier<Boolean> outdated) {
     mySettings = settings;
     myRunConfiguration = runConfiguration;
     myOutdated = outdated;
@@ -126,6 +112,6 @@ public class BrowserStarter {
   }
 
   private boolean isOutdated() {
-    return myOutdated.compute();
+    return myOutdated.get();
   }
 }
