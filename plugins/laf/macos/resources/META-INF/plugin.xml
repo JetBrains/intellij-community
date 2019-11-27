@@ -1,9 +1,9 @@
 <idea-plugin>
   <id>com.intellij.laf.macos</id>
-  <name>MacOs Look And Feel</name>
+  <name>macOS Light Theme</name>
   <vendor>JetBrains</vendor>
 
-  <description><![CDATA[Provides MacOs Look And Feel that mimics MacOs native Blue and Graphite themes]]></description>
+  <description><![CDATA[Provides macOS Look And Feel that mimics macOS native Blue and Graphite themes]]></description>
 
   <depends>com.intellij.modules.platform</depends>
 

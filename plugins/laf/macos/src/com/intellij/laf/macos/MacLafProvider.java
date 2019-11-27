@@ -15,7 +15,7 @@ import java.awt.*;
 import static com.intellij.ide.ui.laf.PluggableLafInfo.SearchAreaContext;
 
 public class MacLafProvider implements LafProvider {
-  public static final String LAF_NAME = "macOs light";
+  public static final String LAF_NAME = "macOS Light";
 
   @NotNull
   @Override
