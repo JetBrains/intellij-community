@@ -69,7 +69,9 @@ public class BinopInstruction extends BranchingInstruction implements Expression
                           boolean unrolledLoop) {
     super(psiAnchor);
     myResultType = resultType;
-    myOperationSign = ourSignificantOperations.contains(opSign) ? opSign : null;
+    myOperationSign =
+      opSign == XOR && PsiType.BOOLEAN.equals(resultType) ? NE : // XOR for boolean is equivalent to NE 
+      ourSignificantOperations.contains(opSign) ? opSign : null;
     myLastOperand = lastOperand;
     myUnrolledLoop = unrolledLoop;
   }

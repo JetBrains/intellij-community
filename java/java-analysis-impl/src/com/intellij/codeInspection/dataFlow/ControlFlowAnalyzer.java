@@ -201,14 +201,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     IElementType op = expression.getOperationTokenType();
     PsiType type = expression.getType();
-    boolean isBoolean = PsiType.BOOLEAN.equals(type);
     if (op == JavaTokenType.EQ) {
       lExpr.accept(this);
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, type);
-    }
-    else if (op == JavaTokenType.XOREQ && isBoolean) {
-      generateXorExpression(expression, new PsiExpression[]{lExpr, rExpr}, type, true);
     }
     else if (op == JavaTokenType.PLUSEQ && type != null && type.equalsToText(JAVA_LANG_STRING)) {
       lExpr.accept(this);
@@ -1341,9 +1337,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else if (op == JavaTokenType.OROR) {
       generateShortCircuitAndOr(expression, operands, type, false);
     }
-    else if (op == JavaTokenType.XOR && PsiType.BOOLEAN.equals(type)) {
-      generateXorExpression(expression, operands, type, false);
-    }
     else if (isBinaryDivision(op) && operands.length == 2 &&
              type != null && PsiType.LONG.isAssignableFrom(type)) {
       generateDivMod(expression, type, operands[0], operands[1]);
@@ -1452,22 +1445,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
              TypeConversionUtil.isNumericType(actualType) &&
              TypeConversionUtil.isNumericType(expectedType)) {
       addInstruction(new PrimitiveConversionInstruction((PsiPrimitiveType)expectedType, context));
-    }
-  }
-
-  private void generateXorExpression(PsiExpression expression, PsiExpression[] operands, final PsiType exprType, boolean forAssignment) {
-    PsiExpression operand = operands[0];
-    operand.accept(this);
-    if (forAssignment) {
-      addInstruction(new DupInstruction());
-    }
-    generateBoxingUnboxingInstructionFor(operand, exprType);
-    for (int i = 1; i < operands.length; i++) {
-      operand = operands[i];
-      operand.accept(this);
-      generateBoxingUnboxingInstructionFor(operand, exprType);
-      PsiExpression psiAnchor = expression.isPhysical() ? expression : null;
-      addInstruction(new BinopInstruction(JavaTokenType.NE, psiAnchor, exprType, i));
     }
   }
 
