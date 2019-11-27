@@ -15,15 +15,11 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithPriority;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
-abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWithPriority, LookupValueWithUIHint, Lookup {
+abstract class AbstractLookup extends LookupElement {
     protected final String myName;
     protected final String myPresentation;
 
@@ -33,56 +29,19 @@ abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWit
     }
 
     @Override
-    public int getPriority() {
-        return HIGHER; // stay above all word-completion stuff in XSLT
-    }
-
-    @Override
-    public boolean handleUserSelection(LookupItem lookupItem, Project project) {
-        lookupItem.setLookupString(myName);
-        return true;
+    public void handleInsert(@NotNull InsertionContext context) {
+        context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), myName);
+        context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
+        XPathInsertHandler.handleInsert(context, this);
     }
 
     public String getName() {
         return myName;
     }
 
+    @NotNull
     @Override
-    public String getPresentation() {
-        return myPresentation;
-    }
-
-    @Override
-    public Color getColorHint() {
-        return null;
-    }
-
-    @Override
-    public String getTypeHint() {
-        return "";
-    }
-
-    @Override
-    public boolean isFunction() {
-        return false;
-    }
-
-    @Override
-    public boolean hasParameters() {
-        return false;
-    }
-
-    @Override
-    public boolean isKeyword() {
-        return false;
-    }
-
-    @Override
-    public boolean isBold() {
-        return isKeyword();
-    }
-
-    public String toString() {
+    public String getLookupString() {
         return myPresentation;
     }
 
