@@ -556,7 +556,7 @@ public final class IdeEventQueue extends EventQueue {
   @Nullable
   private static PerformanceWatcher obtainPerformanceWatcher() {
     PerformanceWatcher watcher = ourPerformanceWatcher;
-    if (watcher == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
+    if (watcher == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
         watcher = PerformanceWatcher.getInstance();
