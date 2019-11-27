@@ -5,7 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
-import com.intellij.openapi.externalSystem.autoimport.ProjectTracker;
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
@@ -66,7 +66,7 @@ public class MavenProjectsManagerWatcher {
 
   @TestOnly
   public synchronized void enableAutoImportInTests() {
-    ProjectTracker.getInstance(myProject).enableAutoImportInTests();
+    AutoImportProjectTracker.getInstance(myProject).enableAutoImportInTests();
   }
 
   public synchronized void stop() {

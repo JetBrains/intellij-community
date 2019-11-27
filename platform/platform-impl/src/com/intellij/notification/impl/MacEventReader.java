@@ -67,8 +67,8 @@ class MacEventReader {
     private static final Executor ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
   }
 
-  public static class ProjectTracker {
-    public ProjectTracker(@NotNull final Project project) {
+  public static class MacProjectTracker {
+    public MacProjectTracker(@NotNull final Project project) {
       project.getMessageBus().connect().subscribe(Notifications.TOPIC, ourNotificationAdapter);
     }
   }
