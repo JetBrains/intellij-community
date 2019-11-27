@@ -53,7 +53,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal class GitInteractiveRebaseDialog(
-  project: Project,
+  private val project: Project,
   root: VirtualFile,
   entries: List<GitRebaseEntryWithDetails>
 ) : DialogWrapper(project, true) {
@@ -124,6 +124,8 @@ internal class GitInteractiveRebaseDialog(
     actions.forEach {
       decorator.addExtraAction(AnActionButton.fromAction(it))
     }
+
+    decorator.addExtraAction(AnActionButton.fromAction(ShowGitRebaseEditorLikeEntriesAction(project, commitsTable)))
 
     val tablePanel = decorator.createPanel().apply {
       border = JBUI.Borders.emptyTop(4)
@@ -458,6 +460,17 @@ private class RewordAction(table: CommitsTable) : ChangeEntryStateAction(GitReba
 
   override fun actionPerformed(e: AnActionEvent) {
     TableUtil.editCellAt(table, table.selectedRows.single(), SUBJECT_COLUMN)
+  }
+}
+
+private class ShowGitRebaseEditorLikeEntriesAction(private val project: Project, private val table: CommitsTable) :
+  DumbAwareAction("Show Entries", "Show Entries", AllIcons.General.Information) {
+
+  private fun getEntries(): List<GitRebaseEntry> = table.model.entries.map { it.entry }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val dialog = GitRebaseEditorLikeEntriesDialog(project, getEntries())
+    dialog.show()
   }
 }
 
