@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,16 +92,12 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
     return SyntaxHighlighterBase.pack(keys1.get(tokenType), keys2.get(tokenType));
   }
 
-  public static final Map<TextAttributesKey, Pair<String, HighlightSeverity>> DISPLAY_NAMES = new THashMap<>(6);
-  static {
-    DISPLAY_NAMES.put(PROPERTY_KEY, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.key"), null));
-    DISPLAY_NAMES.put(PROPERTY_VALUE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.value"), null));
-    DISPLAY_NAMES.put(PROPERTY_KEY_VALUE_SEPARATOR,
-                      new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null));
-    DISPLAY_NAMES.put(PROPERTY_COMMENT, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.comment"), null));
-    DISPLAY_NAMES.put(PROPERTIES_VALID_STRING_ESCAPE,
-                      new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.valid.string.escape"), null));
-    DISPLAY_NAMES.put(PROPERTIES_INVALID_STRING_ESCAPE, Pair
-      .create(PropertiesBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), HighlightSeverity.WARNING));
-  }
+  public static final Map<TextAttributesKey, Pair<String, HighlightSeverity>> DISPLAY_NAMES = ContainerUtil.<TextAttributesKey, Pair<String, HighlightSeverity>>immutableMapBuilder()
+    .put(PROPERTY_KEY, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.key"), null))
+    .put(PROPERTY_VALUE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.value"), null))
+    .put(PROPERTY_KEY_VALUE_SEPARATOR, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null))
+    .put(PROPERTY_COMMENT, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.comment"), null))
+    .put(PROPERTIES_VALID_STRING_ESCAPE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.valid.string.escape"), null))
+    .put(PROPERTIES_INVALID_STRING_ESCAPE, Pair.create(PropertiesBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), HighlightSeverity.WARNING))
+    .build();
 }

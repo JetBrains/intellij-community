@@ -93,10 +93,7 @@ fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools
 fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*, *>, disposable: Disposable) {
   val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
   val shortName = toolWrapper.shortName
-  val key = HighlightDisplayKey.find(shortName)
-  if (key == null) {
-    HighlightDisplayKey.register(shortName, toolWrapper.displayName, toolWrapper.id)
-  }
+  HighlightDisplayKey.findOrRegister(shortName, toolWrapper.displayName, toolWrapper.id)
 
   runInInitMode {
     val existingWrapper = profile.getInspectionTool(shortName, project)

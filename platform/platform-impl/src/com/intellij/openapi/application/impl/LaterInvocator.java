@@ -466,6 +466,7 @@ public class LaterInvocator {
   }
 
   @TestOnly
+  @NotNull
   public static Collection<RunnableInfo> getLaterInvocatorQueue() {
     synchronized (LOCK) {
       // used by leak hunter as root, so we must not copy it here to another list
