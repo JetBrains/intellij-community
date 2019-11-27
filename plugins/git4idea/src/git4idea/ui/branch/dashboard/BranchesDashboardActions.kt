@@ -103,7 +103,6 @@ internal object BranchesDashboardActions {
         return
       }
 
-      e.presentation.description = com.intellij.dvcs.ui.NewBranchAction.description
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
       com.intellij.dvcs.ui.NewBranchAction.checkIfAnyRepositoryIsFresh(e, repositories)
     }
@@ -267,7 +266,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  abstract class BranchesActionBase(text: String? = null, description: String? = null, icon: Icon? = null) :
+  abstract class BranchesActionBase(text: String? = null, private val description: String? = null, icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
 
     open fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {}
@@ -277,6 +276,7 @@ internal object BranchesDashboardActions {
       val project = e.project
       val enabled = project != null && branches != null && branches.isNotEmpty()
       e.presentation.isEnabled = enabled
+      description?.let { e.presentation.description = it }
       if (enabled) {
         update(e, project!!, branches!!)
       }
