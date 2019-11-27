@@ -67,7 +67,7 @@ final class ObjectNode {
     }
   }
 
-  void execute(@NotNull List<? super Throwable> exceptions) {
+  void execute(@NotNull List<? super Throwable> exceptions, boolean onlyChildren) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), each -> {
       if (myTree.getDisposalInfo(myObject) != null) return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
       try {
@@ -89,7 +89,7 @@ final class ObjectNode {
       for (int i = childrenArray.length - 1; i >= 0; i--) {
         try {
           ObjectNode childNode = childrenArray[i];
-          childNode.execute(exceptions);
+          childNode.execute(exceptions, false);
           synchronized (myTree.treeLock) {
             childNode.myParent = null;
           }
@@ -97,6 +97,10 @@ final class ObjectNode {
         catch (Throwable e) {
           exceptions.add(e);
         }
+      }
+
+      if (onlyChildren) {
+        return;
       }
 
       try {

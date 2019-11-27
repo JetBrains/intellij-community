@@ -30,6 +30,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
   @Deprecated
+  @Nullable
   default BaseComponent getComponent(@NotNull String name) {
     return null;
   }

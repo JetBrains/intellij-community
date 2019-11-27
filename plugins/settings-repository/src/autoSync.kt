@@ -90,7 +90,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       sync(app, onAppExit)
       return
     }
-    else if (app.isDisposeInProgress) {
+    else if (app.isDisposed) {
       // will be handled by applicationExiting listener
       return
     }
@@ -148,7 +148,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
         catchAndLog {
           val updateResult = updater.merge()
           if (!onAppExit &&
-              !app.isDisposeInProgress &&
+              !app.isDisposed &&
               updateResult != null &&
               updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult,
                                                app.messageBus)) {

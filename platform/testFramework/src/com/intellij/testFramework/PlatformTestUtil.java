@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreReloadManager;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -91,11 +92,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -624,9 +621,7 @@ public class PlatformTestUtil {
   }
 
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
-    // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
-    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
   }
 
   public static void saveProject(@NotNull Project project) {
@@ -646,7 +641,6 @@ public class PlatformTestUtil {
       }
     }
   }
-
 
   public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
     assertTiming(message, expected, 4, actionToMeasure);
@@ -943,7 +937,6 @@ public class PlatformTestUtil {
         ExceptionUtil.rethrow(e);
       }
       finally {
-        application.setDisposeInProgress(true);
         LightPlatformTestCase.disposeApplication();
         UIUtil.dispatchAllInvocationEvents();
       }

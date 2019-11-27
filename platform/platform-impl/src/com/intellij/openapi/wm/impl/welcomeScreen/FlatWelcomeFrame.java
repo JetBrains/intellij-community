@@ -823,7 +823,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Nullable
   @Override
   public Project getProject() {
-    if (ApplicationManager.getApplication().isDisposeInProgress()) return null;
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return null;
+    }
     return ProjectManager.getInstance().getDefaultProject();
   }
 

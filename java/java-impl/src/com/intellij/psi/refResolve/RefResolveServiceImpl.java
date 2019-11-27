@@ -215,12 +215,8 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
       public void writeActionFinished(@NotNull Object action) {
         enable();
       }
-
-      @Override
-      public void applicationExiting() {
-        disable();
-      }
     }, this);
+    Disposer.register(this, () -> disable());
 
     VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override

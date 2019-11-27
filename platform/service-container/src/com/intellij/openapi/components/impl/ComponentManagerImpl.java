@@ -1,29 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.serviceContainer.MyComponentAdapter;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
-import com.intellij.serviceContainer.PlatformComponentManagerImplKt;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,79 +31,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     ACTIVE, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
-  protected final AtomicReference<ContainerState> myContainerState = new AtomicReference<>(ContainerState.ACTIVE);
-
-  private volatile MessageBus myMessageBus;
-
-  // contents guarded by this
-  private final Map<String, BaseComponent> myNameToComponent = new THashMap<>();
-
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  protected int myComponentConfigCount;
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private int myInstantiatedComponentCount;
-
-  private final List<BaseComponent> myBaseComponents = new SmartList<>();
+  protected final AtomicReference<ContainerState> containerState = new AtomicReference<>(ContainerState.ACTIVE);
 
   protected ComponentManagerImpl(@Nullable ComponentManager parent) {
     myPicoContainer = new DefaultPicoContainer(parent == null ? null : parent.getPicoContainer());
-  }
-
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-    indicator.setFraction(getPercentageOfComponentsLoaded());
-  }
-
-  protected final double getPercentageOfComponentsLoaded() {
-    return (double)myInstantiatedComponentCount / myComponentConfigCount;
-  }
-
-  @NotNull
-  @Override
-  public final MessageBus getMessageBus() {
-    if (myContainerState.get().ordinal() >= ContainerState.DISPOSED.ordinal()) {
-      throwAlreadyDisposed();
-    }
-
-    MessageBus messageBus = myMessageBus;
-    if (messageBus == null) {
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        messageBus = myMessageBus;
-        if (messageBus == null) {
-          messageBus = createMessageBus();
-          myMessageBus = messageBus;
-        }
-      }
-    }
-    return messageBus;
-  }
-
-  @NotNull
-  protected abstract MessageBus createMessageBus();
-
-  protected final synchronized void disposeComponents() {
-    if (isDisposeCompleted()) {
-      throwAlreadyDisposed();
-    }
-    myContainerState.set(ContainerState.DISPOSED);
-
-    // we cannot use list of component adapters because we must dispose in reverse order of creation
-    List<BaseComponent> components = myBaseComponents;
-    for (int i = components.size() - 1; i >= 0; i--) {
-      try {
-        components.get(i).disposeComponent();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        PlatformComponentManagerImplKt.getLOG().error(e);
-      }
-    }
-    myBaseComponents.clear();
-
-    //noinspection NonPrivateFieldAccessedInSynchronizedContext
-    myComponentConfigCount = -1;
   }
 
   @SuppressWarnings("deprecation")
@@ -141,7 +62,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   public final DefaultPicoContainer getPicoContainer() {
     DefaultPicoContainer container = myPicoContainer;
-    if (container == null || isDisposeCompleted()) {
+    if (container == null || containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       throwAlreadyDisposed();
     }
     return container;
@@ -161,22 +82,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myContainerState.set(ContainerState.DISPOSE_COMPLETED);
-
-    if (myMessageBus != null) {
-      Disposer.dispose(myMessageBus);
-      myMessageBus = null;
-    }
-
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      myNameToComponent.clear();
-    }
-  }
-
-  @Override
   @NotNull
   public final Condition<?> getDisposed() {
     return __ -> isDisposed();
@@ -188,46 +93,5 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       return ((NamedComponent)component).getComponentName();
     }
     return component.getClass().getName();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public final synchronized BaseComponent getComponent(@NotNull String name) {
-    return myNameToComponent.get(name);
-  }
-
-  @ApiStatus.Internal
-  public final void registerComponentInstance(@NotNull Object instance, @Nullable ProgressIndicator indicator) {
-    myInstantiatedComponentCount++;
-
-    if (indicator != null) {
-      indicator.checkCanceled();
-      setProgressDuringInit(indicator);
-    }
-
-    if (!(instance instanceof BaseComponent)) {
-      return;
-    }
-
-    BaseComponent baseComponent = (BaseComponent)instance;
-    String componentName = baseComponent.getComponentName();
-    if (myNameToComponent.containsKey(componentName)) {
-      BaseComponent loadedComponent = myNameToComponent.get(componentName);
-      // component may have been already loaded by PicoContainer, so fire error only if components are really different
-      if (!instance.equals(loadedComponent)) {
-        String errorMessage = "Component name collision: " + componentName + ' ' +
-                              (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
-        PluginException.logPluginError(PlatformComponentManagerImplKt.getLOG(), errorMessage, null, instance.getClass());
-      }
-    }
-    else {
-      myNameToComponent.put(componentName, baseComponent);
-    }
-
-    myBaseComponents.add(baseComponent);
-  }
-
-  private boolean isDisposeCompleted() {
-    return myContainerState.get() == ContainerState.DISPOSE_COMPLETED;
   }
 }

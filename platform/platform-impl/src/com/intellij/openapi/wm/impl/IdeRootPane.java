@@ -27,7 +27,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -317,22 +316,35 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  void installNorthComponents(final Project project) {
+  void installNorthComponents(@NotNull Project project) {
     if (myCustomFrameTitlePane != null) {
       myCustomFrameTitlePane.setProject(project);
     }
 
-    ContainerUtil.addAll(myNorthComponents, IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
+    myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project));
+    if (myNorthComponents.isEmpty()) {
+      return;
+    }
+
+    UISettings uiSettings = UISettings.getShadowInstance();
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       myNorthPanel.add(northComponent.getComponent());
-      northComponent.uiSettingsChanged(UISettings.getShadowInstance());
+      northComponent.uiSettingsChanged(uiSettings);
     }
   }
 
   void deinstallNorthComponents() {
+    int count = myNorthPanel.getComponentCount();
+    for (int i = count - 1; i >= 0; i--) {
+      if (myNorthPanel.getComponent(i) != myToolbar) {
+        myNorthPanel.remove(i);
+      }
+    }
+
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      myNorthPanel.remove(northComponent.getComponent());
-      Disposer.dispose(northComponent);
+      if (!Disposer.isDisposed(northComponent)) {
+        Disposer.dispose(northComponent);
+      }
     }
     myNorthComponents.clear();
   }

@@ -5,17 +5,15 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.idea.TestAppLoaderKt.loadTestApp;
 
-public final class IdeaTestApplication implements Disposable {
+public final class IdeaTestApplication {
   private static volatile IdeaTestApplication ourInstance;
   private static volatile RuntimeException bootstrapError;
   private static volatile boolean isBootstrappingAppNow;
@@ -78,24 +76,21 @@ public final class IdeaTestApplication implements Disposable {
   }
 
   public void disposeApp() {
-    WriteAction.runAndWait(() -> {
-      disposeInstance();
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> disposeInstance());
   }
 
-  @Override
   public void dispose() {
     disposeInstance();
   }
 
   private static synchronized void disposeInstance() {
-    if (ourInstance != null) {
-      Application application = ApplicationManager.getApplication();
-      if (application != null) {
-        // `ApplicationManager#ourApplication` will be automatically set to `null`
-        Disposer.dispose(application);
-      }
-      ourInstance = null;
+    if (ourInstance == null) {
+      return;
     }
+
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    // `ApplicationManager#ourApplication` will be automatically set to `null`
+    app.disposeContainer();
+    ourInstance = null;
   }
 }

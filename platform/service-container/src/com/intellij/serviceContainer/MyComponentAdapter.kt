@@ -34,12 +34,23 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
     try {
       val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
       if (instance is Disposable) {
-        Disposer.register(componentManager, instance)
+        Disposer.register(componentManager.serviceParentDisposable, instance)
       }
-      componentManager.registerComponentInstance(instance, indicator)
+
+      componentManager.componentCreated(indicator)
+
       componentManager.initializeComponent(instance, null)
       if (instance is BaseComponent) {
-        (instance as BaseComponent).initComponent()
+        @Suppress("DEPRECATION")
+        instance.initComponent()
+        if (instance !is Disposable) {
+          @Suppress("ObjectLiteralToLambda")
+          Disposer.register(componentManager.serviceParentDisposable, object : Disposable {
+            override fun dispose() {
+              instance.disposeComponent()
+            }
+          })
+        }
       }
       return instance
     }

@@ -57,7 +57,10 @@ import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.File;
@@ -328,12 +331,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     myUpdater.stop();
     myConflictTracker.stopTracking();
-  }
-
-  @Override
-  @NotNull @NonNls
-  public String getComponentName() {
-    return "ChangeListManager";
   }
 
   public void registerChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {

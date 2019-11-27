@@ -19,7 +19,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -27,10 +26,10 @@ import java.util.HashMap;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntToolwindowRegistrar implements ProjectComponent {
+final class AntToolwindowRegistrar implements ProjectComponent {
   private final Project myProject;
 
-  public AntToolwindowRegistrar(Project project) {
+  AntToolwindowRegistrar(@NotNull Project project) {
     myProject = project;
   }
 
@@ -108,12 +107,5 @@ public class AntToolwindowRegistrar implements ProjectComponent {
     for (String oldId : oldIds) {
       actionManager.unregisterAction(oldId);
     }
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "AntToolwindowRegistrar";
   }
 }

@@ -54,7 +54,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
     myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null, project)
       .usePassThroughInUnitTestMode();
     myProject = project;
-    MessageBusConnection connection = project.getMessageBus().connect(project);
+    MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {

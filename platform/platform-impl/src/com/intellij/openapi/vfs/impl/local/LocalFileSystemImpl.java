@@ -338,7 +338,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   }
 
   private void setUpFileWatcher() {
-    if (!ApplicationManager.getApplication().isDisposeInProgress() && myWatcher.isOperational()) {
+    if (!ApplicationManager.getApplication().isDisposed() && myWatcher.isOperational()) {
       List<String> recursiveRoots = new ArrayList<>();
       List<String> flatRoots = new ArrayList<>();
 

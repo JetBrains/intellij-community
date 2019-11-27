@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -62,8 +61,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myUI = contentUI;
     myUI.setManager(this);
 
-    // register on FileManager because before Content disposal the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work for which the findFile() must access filemanager for which it must be alive
-    Disposer.register(PsiManagerEx.getInstanceEx(project).getFileManager(), this);
+    // register on project (will be disposed before services) because before Content disposal
+    // the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored
+    // for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work
+    // for which the findFile() must access fileManager for which it must be alive
+    Disposer.register(project, this);
     Disposer.register(this, contentUI);
   }
 

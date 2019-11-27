@@ -40,8 +40,7 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
           return password;
         }
         // do not try to show any dialogs if application is exiting
-        if (application == null || application.isDisposeInProgress() ||
-            application.isDisposed()) {
+        if (application == null || application.isDisposed()) {
           return null;
         }
 
@@ -50,7 +49,7 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
     }
 
     // do not try to show any dialogs if application is exiting
-    if (application == null || application.isDisposeInProgress() || application.isDisposed()) {
+    if (application == null || application.isDisposed()) {
       return null;
     }
 

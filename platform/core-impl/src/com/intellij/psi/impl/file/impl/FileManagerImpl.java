@@ -12,7 +12,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -59,8 +62,7 @@ public final class FileManagerImpl implements FileManager {
     myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
 
-    Disposer.register(manager.getProject(), this);
-    LowMemoryWatcher.register(this::processQueue, this);
+    LowMemoryWatcher.register(this::processQueue, manager);
 
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
@@ -142,7 +144,6 @@ public final class FileManagerImpl implements FileManager {
     myManager.propertyChanged(event);
   }
 
-  @Override
   public void dispose() {
     myConnection.disconnect();
     clearViewProviders();

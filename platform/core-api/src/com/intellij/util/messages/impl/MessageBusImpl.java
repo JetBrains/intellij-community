@@ -66,7 +66,7 @@ public class MessageBusImpl implements MessageBus {
 
   private final MessageBusOwner myOwner;
   private boolean myDisposed;
-  private final Disposable myConnectionDisposable;
+  private Disposable myConnectionDisposable;
   private MessageDeliveryListener myMessageDeliveryListener;
 
   private final Map<PluginDescriptor, MessageBusConnectionImpl> myLazyConnections;
@@ -259,8 +259,13 @@ public class MessageBusImpl implements MessageBus {
     };
   }
 
+  public final void disposeConnection() {
+    Disposer.dispose(myConnectionDisposable);
+    myConnectionDisposable = null;
+  }
+
   @Override
-  public void dispose() {
+  public final void dispose() {
     if (myDisposed) {
       LOG.error("Already disposed: " + this);
     }
@@ -271,7 +276,10 @@ public class MessageBusImpl implements MessageBus {
       Disposer.dispose(childBus);
     }
 
-    Disposer.dispose(myConnectionDisposable);
+    if (myConnectionDisposable != null) {
+      Disposer.dispose(myConnectionDisposable);
+    }
+
     Queue<DeliveryJob> jobs = myMessageQueue.get();
     if (!jobs.isEmpty()) {
       LOG.error("Not delivered events in the queue: " + jobs);

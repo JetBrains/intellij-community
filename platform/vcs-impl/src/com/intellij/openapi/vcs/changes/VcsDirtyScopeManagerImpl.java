@@ -2,13 +2,15 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,13 +24,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements ProjectComponent {
+public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsDirtyScopeManagerImpl.class);
 
   private final Project myProject;
@@ -39,15 +42,25 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   private boolean myReady;
   private final Object LOCK = new Object();
 
-  public VcsDirtyScopeManagerImpl(Project project) {
+  public VcsDirtyScopeManagerImpl(@NotNull Project project) {
     myProject = project;
 
     myDirtBuilder = new DirtBuilder();
 
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+      }
+    });
+
+    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        if (project == myProject) {
+          VcsDirtyScopeManagerImpl.this.projectOpened();
+        }
       }
     });
   }
@@ -56,8 +69,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return ProjectLevelVcsManager.getInstance(project);
   }
 
-  @Override
-  public void projectOpened() {
+  private void projectOpened() {
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, () -> {
       ReadAction.run(() -> {
         boolean ready = !myProject.isDisposed() && myProject.isOpen();
@@ -92,7 +104,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     synchronized (LOCK) {
       myReady = false;
       myDirtBuilder.reset();
@@ -182,14 +194,6 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
     catch (ProcessCanceledException ignore) {
     }
-  }
-
-  @NotNull
-  private static Collection<FilePath> toFilePaths(@Nullable Collection<? extends VirtualFile> files) {
-    if (files == null) {
-      return Collections.emptyList();
-    }
-    return ContainerUtil.map(files, virtualFile -> VcsUtil.getFilePath(virtualFile));
   }
 
   @Override

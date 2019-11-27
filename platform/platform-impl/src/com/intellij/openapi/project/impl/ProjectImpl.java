@@ -356,20 +356,19 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
+    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
-    if (ProjectManagerEx.getInstanceEx().isProjectOpened(this)) {
+    if (projectManager.isProjectOpened(this)) {
       throw new IllegalStateException("Must call .dispose() for a closed project only. See ProjectManager.closeProject() or ProjectUtil.closeAndDispose().");
     }
-
-    LOG.assertTrue(myContainerState.get().ordinal() <= ContainerState.DISPOSED.ordinal(), this + " is disposed already");
-    disposeComponents();
 
     super.dispose();
 
     if (!application.isDisposed()) {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
-    ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
+    projectManager.updateTheOnlyProjectField();
 
     TimedReference.disposeTimed();
     LaterInvocator.purgeExpiredItems();
@@ -383,7 +382,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project (name=" + myName + ", containerState=" + myContainerState.get().name() +
+    return "Project (name=" + myName + ", containerState=" + containerState.get().name() +
            ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
            (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
@@ -417,10 +416,5 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public final void disposeEarlyDisposable() {
     Disposable earlyDisposable = this.earlyDisposable.getAndSet(null);
     Disposer.dispose(earlyDisposable);
-  }
-
-  @ApiStatus.Internal
-  public final void setDisposeInProgress() {
-    myContainerState.set(ContainerState.DISPOSE_IN_PROGRESS);
   }
 }

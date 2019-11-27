@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.*;
@@ -25,16 +27,16 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
-public class AffectedTestsInChangeListPainter implements ChangeListDecorator, ProjectComponent {
+public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Disposable {
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private final ChangeListAdapter myChangeListListener;
   private final Alarm myAlarm;
   private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
 
-  public AffectedTestsInChangeListPainter(@NotNull Project project, ChangeListManager changeListManager) {
+  public AffectedTestsInChangeListPainter(@NotNull Project project) {
     myProject = project;
-    myChangeListManager = changeListManager;
+    myChangeListManager = ChangeListManager.getInstance(myProject);
     myChangeListListener = new ChangeListAdapter() {
       @Override
       public void changeListsChanged() {
@@ -58,20 +60,19 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     };
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     myChangeListManager.addChangeListListener(myChangeListListener);
+
+    myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        if (project == myProject) {
+          DumbService.getInstance(myProject).runWhenSmart(() -> scheduleUpdate());
+        }
+      }
+    });
   }
 
   @Override
-  public void projectOpened() {
-    DumbService.getInstance(myProject).runWhenSmart(() -> scheduleUpdate());
-  }
-
-  @Override
-  public void projectClosed() {
-    disposeComponent();
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myAlarm.cancelAllRequests();
     myChangeListsToShow.set(Collections.emptySet());
     myChangeListManager.removeChangeListListener(myChangeListListener);

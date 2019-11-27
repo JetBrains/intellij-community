@@ -1371,7 +1371,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     for (String id : getActionIds()) {
       indicator.checkCanceled();
-      if (application.isDisposeInProgress() || application.isDisposed()) return;
+      if (application.isDisposed()) {
+        return;
+      }
 
       AnAction action = getAction(id);
       if (action instanceof PreloadableAction) {

@@ -140,11 +140,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public boolean isDisposeInProgress() {
-    return false;
-  }
-
-  @Override
   public boolean isRestartCapable() {
     return false;
   }

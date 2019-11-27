@@ -953,7 +953,8 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     private void disposeModel() {
       Module[] modules = getModules();
       myModulesCache = null;
-      myModules.clear(); // clear module list before disposing to avoid getModules() returning already disposed modules
+      // clear module list before disposing to avoid getModules() returning already disposed modules
+      myModules.clear();
       for (Module module : modules) {
         Disposer.dispose(module);
       }

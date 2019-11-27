@@ -163,12 +163,12 @@ private fun startApp(app: ApplicationImpl,
         // ensure that TouchBarsManager is loaded before WelcomeFrame/project
         // do not wait completion - it is thread safe and not required for application start
         runActivity("mac touchbar") {
-          if (app.isDisposeInProgress) {
+          if (app.isDisposed) {
             return@Runnable
           }
           Foundation.init()
 
-          if (!app.isDisposeInProgress) {
+          if (app.isDisposed) {
             return@Runnable
           }
           TouchBarsManager.initialize()

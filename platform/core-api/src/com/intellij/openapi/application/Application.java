@@ -395,9 +395,12 @@ public interface Application extends ComponentManager {
   <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**
-   * @return {@code true} if application is currently disposing (but not yet disposed completely)
+   * @deprecated Use {@link #isDisposed()}.
    */
-  boolean isDisposeInProgress();
+  @Deprecated
+  default boolean isDisposeInProgress() {
+    return isDisposed();
+  }
 
   /**
    * Checks if IDE is capable of restarting itself on the current platform and with the current execution mode.

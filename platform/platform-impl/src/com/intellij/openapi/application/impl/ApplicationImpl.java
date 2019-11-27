@@ -162,6 +162,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isInImpatientReader();
   }
 
+  @TestOnly
+  public void disposeContainer() {
+    startDispose();
+    runWriteAction(() -> Disposer.dispose(this));
+    Disposer.assertIsEmpty();
+  }
+
   private boolean disposeSelf(boolean checkCanCloseProject) {
     ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
     if (manager != null) {
@@ -175,10 +182,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    myContainerState.set(ContainerState.DISPOSE_IN_PROGRESS);
-    runWriteAction(() -> Disposer.dispose(this));
-
-    Disposer.assertIsEmpty();
+    //noinspection TestOnlyProblems
+    disposeContainer();
     return true;
   }
 
@@ -323,11 +328,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void dispose() {
-    fireApplicationExiting();
+    //noinspection deprecation
+    myDispatcher.getMulticaster().applicationExiting();
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
-
-    disposeComponents();
 
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.shutdownAppScheduledExecutorService();
@@ -341,8 +345,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.info(ActionUtil.ActionPauses.STAT.statistics());
       //noinspection TestOnlyProblems
       LOG.info(service.statistics()
-               + "; ProcessIOExecutorService threads: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter()
-      );
+               + "; ProcessIOExecutorService threads: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
     }
   }
 
@@ -1204,9 +1207,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.removeListener(l);
   }
 
-  private void fireApplicationExiting() {
-    myDispatcher.getMulticaster().applicationExiting();
-  }
   private void fireBeforeWriteActionStart(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
@@ -1246,31 +1246,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public boolean isDisposeInProgress() {
-    return myContainerState.get() == ContainerState.DISPOSE_IN_PROGRESS || ShutDownTracker.isShutdownHookRunning();
-  }
-
-  @Override
   public boolean isRestartCapable() {
     return Restarter.isSupported();
   }
 
   @Override
-  @TestOnly
-  public void setDisposeInProgress(boolean disposeInProgress) {
-    myContainerState.set(disposeInProgress ? ContainerState.DISPOSE_IN_PROGRESS : ContainerState.ACTIVE);
-  }
-
-  @Override
   public String toString() {
-    return "Application (containerState=" + myContainerState.get().name() + ") " +
+    return "Application (containerState=" + containerState.get().name() + ") " +
            (isUnitTestMode() ? " (Unit test)" : "") +
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +
            (isCommandLine() ? " (Command line)" : "");
   }
 
-  @Nullable
+  @NotNull
   @ApiStatus.Internal
   @Override
   public String activityNamePrefix() {

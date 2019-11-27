@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ import java.util.Map;
  *
  * @see Disposable
  */
-public class Disposer {
+public final class Disposer {
   private static final ObjectTree ourTree = new ObjectTree();
 
   public static boolean isDebugDisposerOn() {
@@ -105,8 +106,14 @@ public class Disposer {
     dispose(disposable, true);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void disposeChildren(@NotNull Disposable disposable) {
+    ourTree.executeAll(disposable, false, /* onlyChildren */ true);
+  }
+
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, processUnregistered);
+    ourTree.executeAll(disposable, processUnregistered, /* onlyChildren */ false);
   }
 
   @NotNull

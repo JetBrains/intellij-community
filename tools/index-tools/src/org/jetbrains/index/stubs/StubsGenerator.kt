@@ -22,6 +22,7 @@ import org.jetbrains.index.IndexGenerator
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
+import kotlin.system.exitProcess
 
 /**
  * Generates stubs and stores them in one persistent hash map
@@ -159,15 +160,13 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       ProjectManager.getInstance().closeProject(project)
       WriteAction.run<Throwable> {
         Disposer.dispose(project)
-        Disposer.dispose(app)
+        app.dispose()
       }
     }, ModalityState.NON_MODAL)
-
   }
 
-  System.exit(0)
+  exitProcess(0)
 }
-
 
 /**
  * Generates stubs for file content for different language levels returned by languageLevelIterator

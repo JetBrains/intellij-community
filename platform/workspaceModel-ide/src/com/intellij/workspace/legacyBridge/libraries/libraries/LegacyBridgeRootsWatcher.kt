@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
 import com.intellij.openapi.Disposable
@@ -29,7 +30,7 @@ class LegacyBridgeRootsWatcher(
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
 
   init {
-    val messageBusConnection = project.messageBus.connect(project)
+    val messageBusConnection = project.messageBus.connect()
     messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) = LOG.bracket("LibraryRootsWatcher.EntityStoreChange") {
         // TODO It's also possible to calculate it on diffs

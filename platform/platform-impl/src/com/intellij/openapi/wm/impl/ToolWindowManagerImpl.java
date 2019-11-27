@@ -2337,7 +2337,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     }
 
-    if (toFocus != null && !ApplicationManager.getApplication().isDisposeInProgress() && !ApplicationManager.getApplication().isDisposed()) {
+    if (toFocus != null && !ApplicationManager.getApplication().isDisposed()) {
       activateToolWindow(toFocus, false, true);
     }
   }

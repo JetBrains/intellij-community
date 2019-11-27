@@ -15,7 +15,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -30,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class StartupManagerImpl extends StartupManagerEx implements Disposable {
+public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance(StartupManagerImpl.class);
   private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
@@ -72,7 +72,6 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
-  private ScheduledFuture<?> myBackgroundPostStartupScheduledFuture;
 
   public StartupManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -203,7 +202,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
           dumbService.runWhenSmart(() -> runActivity(new AtomicBoolean(), extension, pluginDescriptor));
         }
       }
-    }, this);
+    }, myProject);
   }
 
   private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -419,7 +418,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       return;
     }
 
-    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+    ScheduledFuture<?> scheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
       if (myProject.isDisposed()) {
         return;
       }
@@ -430,9 +429,9 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
         public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
           extension.runActivity(myProject);
         }
-      }, this);
+      }, myProject);
 
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
         for (StartupActivity activity : activities) {
           ProgressManager.checkCanceled();
 
@@ -444,13 +443,9 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
         }
       });
     }, Registry.intValue("ide.background.post.startup.activity.delay"), TimeUnit.MILLISECONDS);
-  }
-
-  @Override
-  public void dispose() {
-    if (myBackgroundPostStartupScheduledFuture != null) {
-      myBackgroundPostStartupScheduledFuture.cancel(false);
-    }
+    Disposer.register(myProject, () -> {
+      scheduledFuture.cancel(false);
+    });
   }
 
   public static void runActivity(@NotNull Runnable runnable) {

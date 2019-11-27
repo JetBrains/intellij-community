@@ -61,7 +61,6 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -177,8 +176,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @TestOnly
   static void disposeApplication() {
     if (ourApplication != null) {
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(ourApplication));
-
+      ourApplication.disposeApp();
       ourApplication = null;
     }
   }
@@ -426,7 +424,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       },
       () -> checkEditorsReleased(),
-      super::tearDown,
+      () -> super.tearDown(),
       () -> WriteAction.runAndWait(() -> {
         if (LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
           ProjectJdkTableImpl jdkTable = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();

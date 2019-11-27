@@ -36,7 +36,7 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
     @NotNull
     @Override
     ProjectEx compute() {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application is being disposed!");
+      LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!");
       return new ProjectImpl() {
         @Override
         public boolean isDefault() {

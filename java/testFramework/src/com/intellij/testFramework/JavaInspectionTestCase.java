@@ -12,12 +12,10 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,9 +48,6 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   private EntryPoint myUnusedCodeExtension;
   private VirtualFile ext_src;
   private LightTestMigration myMigration;
-
-  // extension uses message bus
-  private final Disposable myBeforeParentDisposeDisposable = Disposer.newDisposable();
 
   public static GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
     InspectionEP ep = new InspectionEP();
@@ -202,7 +197,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
       }
     };
 
-    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, myBeforeParentDisposeDisposable);
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, myFixture.getProjectDisposable());
   }
 
   @Override
@@ -210,7 +205,6 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     try {
       myUnusedCodeExtension = null;
       ext_src = null;
-      Disposer.dispose(myBeforeParentDisposeDisposable);
     }
     catch (Throwable e) {
       addSuppressedException(e);
