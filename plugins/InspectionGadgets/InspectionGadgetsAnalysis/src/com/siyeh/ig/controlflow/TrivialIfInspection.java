@@ -106,7 +106,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
   }
 
-  public static void simplify(PsiIfStatement statement) {
+  private static void simplify(PsiIfStatement statement) {
     IfBranches branches = IfBranches.fromAssignment(statement);
     if (branches != null) {
       replaceSimplifiableAssignment(statement, branches);
@@ -242,7 +242,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     };
   }
 
-  public static boolean isTrivial(PsiIfStatement ifStatement) {
+  private static boolean isTrivial(PsiIfStatement ifStatement) {
     if (PsiUtilCore.hasErrorElementChild(ifStatement)) {
       return false;
     }
