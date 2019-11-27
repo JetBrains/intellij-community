@@ -9,6 +9,7 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
@@ -43,7 +44,7 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     sink.registerError(highlightElement, ambiguousMethodMessage)
   }
 
-  private fun highlightInapplicableMethod(results: Set<GroovyMethodResult>, arguments: Arguments) {
+  private fun highlightInapplicableMethod(results: Collection<GroovyMethodResult>, arguments: Arguments) {
     val result = results.firstOrNull() ?: return
     val method = result.element
     val containingClass = if (method is GrGdkMethod) method.staticMethod.containingClass else method.containingClass
@@ -71,13 +72,18 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
       return true
     }
 
-    val results: Map<GroovyMethodResult, Applicability> = reference.resolve(false)
+    val results: Collection<GroovyResolveResult> = reference.resolve(false)
+    if (results.isEmpty()) {
+      // will be highlighted by GrUnresolvedAccessInspection
+      return false
+    }
+    val resultApplicabilities: List<Pair<GroovyMethodResult, Applicability>> = results
       .filterIsInstance(GroovyMethodResult::class.java)
-      .associateWith {
-        it.candidate?.argumentMapping?.applicability(it.substitutor, false) ?: inapplicable
+      .map {
+        Pair(it, it.candidate?.argumentMapping?.applicability(it.substitutor, false) ?: inapplicable)
       }
 
-    val totalApplicability = results.entries.fold(applicable) { status, (_, applicability) ->
+    val totalApplicability = resultApplicabilities.fold(applicable) { status, (_, applicability) ->
       when {
         status == inapplicable -> inapplicable
         applicability == inapplicable -> inapplicable
@@ -90,17 +96,20 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
         if (!shouldHighlightInapplicable()) {
           return false
         }
-        highlightInapplicableMethod(results.filter { it.value == inapplicable }.keys, userArguments)
+        val inapplicableResults: Collection<GroovyMethodResult> = resultApplicabilities.mapNotNull { (result, applicability) ->
+          if (applicability == inapplicable) result else null
+        }
+        highlightInapplicableMethod(inapplicableResults, userArguments)
         return true
       }
       canBeApplicable -> {
-        if (results.size > 1) {
+        if (resultApplicabilities.size > 1) {
           highlightUnknownArgs()
           return true
         }
       }
       applicable -> {
-        if (results.size > 1) {
+        if (resultApplicabilities.size > 1) {
           highlightAmbiguousMethod()
           return true
         }
@@ -109,7 +118,7 @@ abstract class CallReferenceHighlighter(protected val reference: GroovyCallRefer
     return false
   }
 
-  protected open fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
+  protected open fun generateFixes(results: Collection<GroovyMethodResult>): Array<LocalQuickFix> {
     return results.flatMap(::generateFixes).toTypedArray()
   }
 

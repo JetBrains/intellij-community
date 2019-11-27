@@ -27,7 +27,7 @@ class GrNewExpressionHighlighter(
       "reference of new expression should exist if it is a constructor call"
     }
 
-  override fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
+  override fun generateFixes(results: Collection<GroovyMethodResult>): Array<LocalQuickFix> {
     val fixes = super.generateFixes(results)
     val constructor = reference.advancedResolve().element
     val targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass::class.java) ?: return fixes

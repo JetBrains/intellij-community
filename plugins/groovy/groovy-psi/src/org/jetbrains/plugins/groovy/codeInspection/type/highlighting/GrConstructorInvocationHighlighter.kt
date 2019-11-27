@@ -20,7 +20,7 @@ class GrConstructorInvocationHighlighter(
 
   override val highlightElement: PsiElement get() = argumentList
 
-  override fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
+  override fun generateFixes(results: Collection<GroovyMethodResult>): Array<LocalQuickFix> {
     val fixes = super.generateFixes(results)
 
     val targetClass = invocation.delegatedClass ?: return fixes
