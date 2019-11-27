@@ -273,7 +273,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
       if (k2 != null) {
         if (strategy.equals(k2, typedKey)) return true;
         if (k3 != null) {
-          if (strategy.equals(k3, typedKey)) return true;
+          return strategy.equals(k3, typedKey);
         }
       }
     }
