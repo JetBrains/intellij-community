@@ -1,16 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import * as am4charts from "@amcharts/amcharts4/charts"
-import * as am4core from "@amcharts/amcharts4/core"
+import {Axis, CategoryAxis, DateAxis, LineSeries, XYChart} from "@amcharts/amcharts4/charts"
+import {Circle, DataItem, MouseCursorStyle} from "@amcharts/amcharts4/core"
 
 export interface ChartConfigurator {
-  configureXAxis(chart: am4charts.XYChart): am4charts.Axis
+  configureXAxis(chart: XYChart): Axis
 
-  configureSeries(series: am4charts.LineSeries): void
+  configureSeries(series: LineSeries): void
 }
 
 export class SortedByCategory implements ChartConfigurator {
-  configureXAxis(chart: am4charts.XYChart): am4charts.Axis {
-    const axis = new am4charts.CategoryAxis()
+  configureXAxis(chart: XYChart): Axis {
+    const axis = new CategoryAxis()
     axis.dataFields.category = "build"
 
     chart.xAxes.push(axis)
@@ -26,7 +26,7 @@ export class SortedByCategory implements ChartConfigurator {
     return axis
   }
 
-  configureSeries(series: am4charts.LineSeries) {
+  configureSeries(series: LineSeries) {
     series.dataFields.categoryX = "build"
   }
 }
@@ -35,40 +35,51 @@ export class SortedByDate implements ChartConfigurator {
   constructor(private readonly showTooltip: (data: any | null) => void) {
   }
 
-  configureXAxis(chart: am4charts.XYChart): am4charts.Axis {
-    const axis = new am4charts.DateAxis()
+  configureXAxis(chart: XYChart): Axis {
+    const axis = new DateAxis()
     axis.groupData = true
     // on granularity change, keep currently selected range
     axis.keepSelection = true
     axis.dataFields.date = "t"
     chart.xAxes.push(axis)
+
+    chart.chartContainer.events.on("hit", _event => {
+      const dataItem = axis.getSeriesDataItem(chart.series.getIndex(0)!!, axis.toAxisPosition(chart.cursor.xPosition), true)
+      if (dataItem != null) {
+        this.showToolTipFromDataItem(dataItem)
+      }
+    });
     return axis
   }
 
-  configureSeries(series: am4charts.LineSeries) {
+  configureSeries(series: LineSeries) {
     series.dataFields.dateX = "t"
 
-    series.minBulletDistance = 12
+    series.minBulletDistance = 15
 
-    const bullet = series.bullets.push(new am4charts.CircleBullet())
-    bullet.circle.strokeWidth = 2
-    bullet.circle.radius = 4
-    bullet.circle.fill = am4core.color("#fff")
+    const bullet = series.bullets.push(new Circle())
+    bullet.radius = 3
+    bullet.cursorOverStyle = MouseCursorStyle.pointer
 
-    bullet.circle.events.on("hit", event => {
+    const hoverState = bullet.states.create("hover")
+    hoverState.properties.scale = 1.3
+
+    bullet.events.on("hit", event => {
       const dataItem = event.target.dataItem
-      if (dataItem == null) {
-        return
-      }
-
-      const dataContext = dataItem.dataContext
-      if (dataContext == null) {
-        this.showTooltip((dataItem as any).groupDataItems[0].dataContext)
-      }
-      else {
-        this.showTooltip(dataContext)
+      if (dataItem != null) {
+        this.showToolTipFromDataItem(dataItem)
       }
     })
+  }
+
+  private showToolTipFromDataItem(dataItem: DataItem) {
+    const dataContext = dataItem.dataContext
+    if (dataContext == null) {
+      this.showTooltip((dataItem as any).groupDataItems[0].dataContext)
+    }
+    else {
+      this.showTooltip(dataContext)
+    }
   }
 }
 

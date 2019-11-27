@@ -56,6 +56,10 @@ export class LineChartManager implements StatChartManager {
     chart.colors.step = 4
     addExportMenu(chart)
 
+    const cursor = new am4charts.XYCursor()
+    cursor.behavior = "zoomX"
+    chart.cursor = cursor
+
     // const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
     // @ts-ignore
     const xAxis = configurator.configureXAxis(chart)
@@ -68,10 +72,6 @@ export class LineChartManager implements StatChartManager {
     valueAxis.logarithmic = this.isInstantEvents
     valueAxis.durationFormatter.baseUnit = "millisecond"
     valueAxis.durationFormatter.durationFormat = "S"
-
-    const cursor = new am4charts.XYCursor()
-    cursor.behavior = "zoomX"
-    chart.cursor = cursor
 
     if (this.chartSettings.showScrollbarXPreview) {
       this.configureScrollbarXWithPreview()
@@ -129,6 +129,12 @@ export class LineChartManager implements StatChartManager {
         }
       }
     }
+    else {
+      // https://github.com/amcharts/amcharts4/issues/1908
+      for (const series of chart.series) {
+        series.bulletsContainer.disposeChildren()
+      }
+    }
 
     chart.data = data
   }
@@ -152,22 +158,3 @@ export class LineChartManager implements StatChartManager {
     this.chart.dispose()
   }
 }
-
-// const shortEnglishHumanizer = HumanizeDuration.humanizer({
-//   language: "shortEn",
-//   maxDecimalPoints: 2,
-//   // exclude "s" seconds to force using ms for consistency
-//   units: ["h", "m", "ms"],
-//   languages: {
-//     shortEn: {
-//       y: () => 'y',
-//       mo: () => 'mo',
-//       w: () => 'w',
-//       d: () => 'd',
-//       h: () => 'h',
-//       m: () => 'm',
-//       s: () => 's',
-//       ms: () => 'ms',
-//     }
-//   }
-// })

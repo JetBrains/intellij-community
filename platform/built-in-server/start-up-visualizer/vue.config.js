@@ -31,7 +31,7 @@ module.exports = {
 
     // noinspection SpellCheckingInspection
     config.externals(function (context, request, callback) {
-      if (/xlsx|pdfmake/.test(request)) {
+      if (/xlsx|pdfmake|canvg/.test(request)) {
         return callback(null, "commonjs " + request)
       }
       callback()

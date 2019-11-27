@@ -7,9 +7,9 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@amcharts/amcharts4": "4.7.9",
+    "@amcharts/amcharts4": "4.7.11",
     "debounce": "^1.2.0",
-    "element-ui": "^2.12.0",
+    "element-ui": "^2.13.0",
     "p-queue": "^6.2.1",
     "rison-node": "^2.1.0",
     "semver": "^6.3.0",
