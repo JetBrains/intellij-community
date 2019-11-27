@@ -36,8 +36,6 @@ import java.io.File;
 
 public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
 
-  private static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
-
   @NotNull
   @Override
   public CellAppearanceEx forOrderEntry(Project project, @NotNull final OrderEntry orderEntry, final boolean selected) {
@@ -46,7 +44,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
-        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : NO_JDK);
+        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : ProjectBundle.message("jdk.missing.item"));
       }
       return forJdk(jdk, false, selected, true);
     }
@@ -104,7 +102,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   @Override
   public CellAppearanceEx forJdk(@Nullable final Sdk jdk, final boolean isInComboBox, final boolean selected, final boolean showVersion) {
     if (jdk == null) {
-      return FileAppearanceService.getInstance().forInvalidUrl(NO_JDK);
+      return FileAppearanceService.getInstance().forInvalidUrl(ProjectBundle.message("jdk.missing.item"));
     }
 
     String name = jdk.getName();

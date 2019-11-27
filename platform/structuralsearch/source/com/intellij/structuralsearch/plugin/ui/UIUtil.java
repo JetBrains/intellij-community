@@ -57,7 +57,6 @@ import java.util.function.Supplier;
  * @author Maxim.Mossienko
  */
 public class UIUtil {
-  private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   public static final NotificationGroup SSR_NOTIFICATION_GROUP =
@@ -108,14 +107,14 @@ public class UIUtil {
   public static void setContent(@NotNull final Editor editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), SSRBundle.message("modify.editor.content.command.name"), SS_GROUP,
                                              () -> document.replaceString(0, document.getTextLength(), value));
   }
 
   public static void setContent(@NotNull EditorTextField editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), SSRBundle.message("modify.editor.content.command.name"), SS_GROUP,
                                              () -> document.replaceString(0, document.getTextLength(), value));
   }
 
