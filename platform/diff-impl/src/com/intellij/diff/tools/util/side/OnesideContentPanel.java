@@ -23,9 +23,21 @@ import javax.swing.*;
 import java.awt.*;
 
 public class OnesideContentPanel extends JPanel {
-  public OnesideContentPanel(@NotNull EditorHolder holder, @Nullable JComponent titleComponent) {
+  private final DiffContentPanel myPanel;
+
+  public OnesideContentPanel(@NotNull JComponent content) {
     super(new BorderLayout());
 
-    add(new HolderPanel(holder, titleComponent), BorderLayout.CENTER);
+    myPanel = new DiffContentPanel(content);
+    add(myPanel, BorderLayout.CENTER);
+  }
+
+  public void setTitle(@Nullable JComponent titles) {
+    myPanel.setTitle(titles);
+  }
+
+  @NotNull
+  public static OnesideContentPanel createFromHolder(@NotNull EditorHolder holder) {
+    return new OnesideContentPanel(holder.getComponent());
   }
 }

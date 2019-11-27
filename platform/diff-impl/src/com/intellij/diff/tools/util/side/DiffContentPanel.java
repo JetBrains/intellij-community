@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.fragmented;
+package com.intellij.diff.tools.util.side;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.diff.util.DiffUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-class UnifiedContentPanel extends JPanel {
-  UnifiedContentPanel(@Nullable JComponent titlesPanel, @NotNull Editor editor) {
-    super(new BorderLayout());
+class DiffContentPanel extends JPanel {
+  DiffContentPanel(@NotNull JComponent content) {
+    super(new BorderLayout(0, DiffUtil.TITLE_GAP));
+    add(content, BorderLayout.CENTER);
+  }
 
-    add(editor.getComponent(), BorderLayout.CENTER);
-
-    if (titlesPanel != null) {
-      add(titlesPanel, BorderLayout.NORTH);
+  public void setTitle(@Nullable JComponent titles) {
+    if (titles != null) {
+      add(titles, BorderLayout.NORTH);
     }
   }
 }

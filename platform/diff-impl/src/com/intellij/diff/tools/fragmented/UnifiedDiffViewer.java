@@ -17,6 +17,7 @@ import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.side.OnesideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
@@ -111,8 +112,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
-    JComponent titlesPanel = createTitles();
-    UnifiedContentPanel contentPanel = new UnifiedContentPanel(titlesPanel, myEditor);
+    OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
+    contentPanel.setTitle(createTitles());
 
     myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
 

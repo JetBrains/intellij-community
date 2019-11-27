@@ -43,11 +43,6 @@ public class ThreeDiffSplitter extends JPanel {
     getDivider(side).setPainter(painter);
   }
 
-  public void repaintDividers() {
-    repaintDivider(Side.LEFT);
-    repaintDivider(Side.RIGHT);
-  }
-
   public void repaintDivider(@NotNull Side side) {
     getDivider(side).repaint();
   }

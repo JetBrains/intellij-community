@@ -114,7 +114,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     JComponent patchTitle = DiffUtil.createTitle(myPatchRequest.getPatchTitle());
     List<JComponent> titleComponents = DiffUtil.createSyncHeightComponents(Arrays.asList(resultTitle, patchTitle));
 
-    myContentPanel = new TwosideContentPanel(holders, titleComponents);
+    myContentPanel = TwosideContentPanel.createFromHolders(holders);
+    myContentPanel.setTitles(titleComponents);
     myPanel = new SimpleDiffPanel(myContentPanel, this, myContext);
 
     myModel = new MyModel(myProject, myResultEditor.getDocument());

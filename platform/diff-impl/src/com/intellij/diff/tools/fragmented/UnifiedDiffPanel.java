@@ -39,7 +39,7 @@ public class UnifiedDiffPanel extends DiffPanelBase {
   @NotNull private final AsyncProcessIcon.Big myBusyIcon;
 
   public UnifiedDiffPanel(@Nullable Project project,
-                          @NotNull UnifiedContentPanel content,
+                          @NotNull JComponent content,
                           @NotNull DataProvider provider,
                           @NotNull DiffContext context) {
     super(project, provider, context);

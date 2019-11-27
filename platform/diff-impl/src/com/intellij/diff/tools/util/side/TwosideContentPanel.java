@@ -19,6 +19,7 @@ import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,17 +30,27 @@ import java.util.List;
 
 public class TwosideContentPanel extends JPanel {
   @NotNull private final DiffSplitter mySplitter;
+  @NotNull private final List<DiffContentPanel> myPanels;
 
-  public TwosideContentPanel(@NotNull List<? extends EditorHolder> holders, @NotNull List<JComponent> titleComponents) {
+  public TwosideContentPanel(@NotNull List<? extends JComponent> contents) {
     super(new BorderLayout());
-    assert holders.size() == 2;
-    assert titleComponents.size() == 2;
+    assert contents.size() == 2;
+
+    myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
 
     mySplitter = new DiffSplitter();
-    mySplitter.setFirstComponent(new HolderPanel(Side.LEFT.select(holders), Side.LEFT.select(titleComponents)));
-    mySplitter.setSecondComponent(new HolderPanel(Side.RIGHT.select(holders), Side.RIGHT.select(titleComponents)));
+    mySplitter.setFirstComponent(Side.LEFT.select(myPanels));
+    mySplitter.setSecondComponent(Side.RIGHT.select(myPanels));
     mySplitter.setHonorComponentsMinimumSize(false);
     add(mySplitter, BorderLayout.CENTER);
+  }
+
+  public void setTitles(@NotNull List<JComponent> titleComponents) {
+    for (Side side : Side.values()) {
+      DiffContentPanel panel = side.select(myPanels);
+      JComponent title = side.select(titleComponents);
+      panel.setTitle(title);
+    }
   }
 
   public void setBottomAction(@Nullable AnAction value) {
@@ -62,5 +73,10 @@ public class TwosideContentPanel extends JPanel {
   @NotNull
   public DiffSplitter getSplitter() {
     return mySplitter;
+  }
+
+  @NotNull
+  public static TwosideContentPanel createFromHolders(@NotNull List<? extends EditorHolder> holders) {
+    return new TwosideContentPanel(ContainerUtil.map(holders, holder -> holder.getComponent()));
   }
 }
