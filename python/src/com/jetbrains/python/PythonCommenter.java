@@ -62,7 +62,7 @@ public class PythonCommenter implements CodeDocumentationAwareCommenter, Indente
 
   @Override
   public IElementType getDocumentationCommentTokenType() {
-    return null;
+    return PyTokenTypes.DOCSTRING;
   }
 
   @Override
