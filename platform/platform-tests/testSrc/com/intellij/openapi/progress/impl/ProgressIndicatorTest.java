@@ -859,7 +859,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
   public void testProgressIndicatorNotOverriddenIn_InRunProcessWithProgressSynchronously_duringWriteAction() {
     final String progressIndicatorText = "Progress indicator text";
-    ProgressIndicator progressIndicator = new ProgressIndicatorStub() {
+    ProgressIndicator progressIndicator = new ProgressIndicatorBase() {
       String text;
 
       @Override
@@ -870,11 +870,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       @Override
       public String getText() {
         return text;
-      }
-
-      @Override
-      public void processFinish() {
-        //Prevent throwing runtimeException.
       }
     };
     ApplicationManager.getApplication().runWriteAction(() -> {
