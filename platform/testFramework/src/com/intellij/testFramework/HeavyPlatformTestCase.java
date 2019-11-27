@@ -66,10 +66,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -94,10 +91,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -567,7 +561,12 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
           LightPlatformTestCase.doTearDown(project, ourApplication);
         }
       })
-      .append(() -> disposeProject())
+      .append(() -> {
+        if (myProject != null) {
+          closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
+          myProject = null;
+        }
+      })
       .append(() -> UIUtil.dispatchAllInvocationEvents())
       .append(() -> {
         if (myCodeStyleSettingsTracker != null) {
@@ -624,24 +623,32 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       .run();
   }
 
-  private void disposeProject() {
-    if (myProject != null) {
-      closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
-      myProject = null;
-    }
-  }
-
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose) {
-    RunAll runAll = new RunAll();
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    for (Project project : projectManager.closeTestProject(projectToClose)) {
-      runAll = runAll
-        .append(() -> {
-          throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project));
-        })
-        .append(() -> projectManager.forceCloseProject(project, true));
+    // project maybe not in the list of opened projects, so, cannot be generalized
+    if (!projectManager.forceCloseProject(projectToClose, true)) {
+      // it means that project was not opened, so, just dispose it
+      if (projectToClose instanceof ProjectImpl) {
+        ProjectImpl project = (ProjectImpl)projectToClose;
+        project.stopServicePreloading();
+        project.disposeEarlyDisposable();
+        project.startDispose();
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(projectToClose));
     }
-    runAll.append(() -> WriteAction.run(() -> Disposer.dispose(projectToClose))).run();
+
+    Project[] openProjects = projectManager.getOpenProjects();
+    if (openProjects.length == 0) {
+      return;
+    }
+
+    List<IllegalStateException> errors = new SmartList<>();
+    List<ThrowableRunnable<Throwable>> tasks = new SmartList<>();
+    for (Project project : openProjects) {
+      errors.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
+      tasks.add(() -> projectManager.forceCloseProject(project, true));
+    }
+    new RunAll(tasks).run(errors);
   }
 
   protected void resetAllFields() {

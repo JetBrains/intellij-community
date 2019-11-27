@@ -26,7 +26,7 @@ public final class RunAll implements Runnable {
     this(Arrays.asList(actions));
   }
 
-  private RunAll(@NotNull List<? extends ThrowableRunnable<?>> actions) {
+  public RunAll(@NotNull List<? extends ThrowableRunnable<?>> actions) {
     myActions = actions;
   }
 

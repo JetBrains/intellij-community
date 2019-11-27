@@ -633,16 +633,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     UIUtil.dispatchAllInvocationEvents(); // post init activities are invokeLatered
   }
 
-  @NotNull
-  @Override
-  @TestOnly
-  public Collection<Project> closeTestProject(@NotNull final Project project) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    forceCloseProject(project, false);
-    Project[] projects = getOpenProjects();
-    return projects.length == 0 ? Collections.emptyList() : Arrays.asList(projects);
-  }
-
   @Override
   public void reloadProject(@NotNull Project project) {
     StoreReloadManager.getInstance().reloadProject(project);

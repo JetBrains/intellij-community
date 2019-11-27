@@ -73,7 +73,7 @@ public class MessageBusImpl implements MessageBus {
 
   public MessageBusImpl(@NotNull MessageBusOwner owner, @NotNull MessageBusImpl parentBus) {
     myOwner = owner;
-    myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
+    myConnectionDisposable = createConnectionDisposable(owner);
     myParentBus = parentBus;
     myRootBus = parentBus.myRootBus;
     synchronized (parentBus.myChildBuses) {
@@ -86,10 +86,16 @@ public class MessageBusImpl implements MessageBus {
     myLazyConnections = parentBus.myParentBus == null ? ConcurrentFactoryMap.createMap((key) -> connect()) : null;
   }
 
+  @NotNull
+  private static Disposable createConnectionDisposable(@NotNull MessageBusOwner owner) {
+    // separate disposable must be used, because container will dispose bus connections in a separate step
+    return Disposer.newDisposable(owner.toString());
+  }
+
   // root message bus constructor
   private MessageBusImpl(@NotNull MessageBusOwner owner) {
     myOwner = owner;
-    myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
+    myConnectionDisposable = createConnectionDisposable(owner);
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
     myRootBus = (RootBus)this;
     myLazyConnections = ConcurrentFactoryMap.createMap((key) -> connect());
@@ -257,6 +263,10 @@ public class MessageBusImpl implements MessageBus {
       sendMessage(new Message(topic, method, args));
       return NA;
     };
+  }
+
+  public final void disposeConnectionChildren() {
+    Disposer.disposeChildren(myConnectionDisposable);
   }
 
   public final void disposeConnection() {

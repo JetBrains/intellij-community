@@ -13,7 +13,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
@@ -88,14 +87,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @TestOnly
   public abstract void openTestProject(@NotNull Project project);
-
-  /**
-   * Without save and "check can close".
-   * Returns remaining open test projects.
-   */
-  @TestOnly
-  @NotNull
-  public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
   /**
    * The project and the app settings will be not saved.

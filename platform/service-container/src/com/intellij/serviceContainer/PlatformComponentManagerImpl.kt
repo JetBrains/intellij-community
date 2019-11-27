@@ -683,25 +683,35 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   final override fun beforeTreeDispose() {
-    containerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
+    if (!containerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)) {
+      // disposed in a recommended way using ProjectManager
+      return
+    }
+
+    // disposed directly using Disposer.dispose()
+    // we don't care that state DISPOSE_IN_PROGRESS is already set,
+    // and exceptions because of that possible - use ProjectManager to close and dispose project.
+    startDispose()
   }
 
   @Internal
   fun startDispose() {
     Disposer.disposeChildren(this)
+
+    val messageBus = messageBus
+    // There is a chance that someone will try to connect to message bus and will get NPE because of disposed connection disposable,
+    // because container state is not yet set to DISPOSE_IN_PROGRESS.
+    // So, 1) dispose connection children 2) set state DISPOSE_IN_PROGRESS 3) dispose connection
+    messageBus?.disposeConnectionChildren()
+
     containerState.set(ContainerState.DISPOSE_IN_PROGRESS)
+
+    messageBus?.disposeConnection()
   }
 
   override fun dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-
-    val messageBus = messageBus
-    if (messageBus != null) {
-      this.messageBus = null
-      // remove listeners before setting dispose in progress
-      messageBus.disposeConnection()
-    }
-
     if (!containerState.compareAndSet(ContainerState.DISPOSE_IN_PROGRESS, ContainerState.DISPOSED)) {
       throw IllegalStateException("Expected current state is DISPOSE_IN_PROGRESS, but actual state is ${containerState.get()} ($this)")
     }
@@ -709,8 +719,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     // dispose components and services
     Disposer.dispose(serviceParentDisposable)
 
+    val messageBus = messageBus
     if (messageBus != null ) {
+      // Must be after disposing of serviceParentDisposable, because message bus disposes child buses, so, we must dispose all services first.
+      // For example, service ModuleManagerImpl disposes modules, each module, in turn, disposes module's message bus (child bus of application).
       Disposer.dispose(messageBus)
+      this.messageBus = null
     }
 
     if (!containerState.compareAndSet(ContainerState.DISPOSED, ContainerState.DISPOSE_COMPLETED)) {

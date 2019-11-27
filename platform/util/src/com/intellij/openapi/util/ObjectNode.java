@@ -69,14 +69,17 @@ final class ObjectNode {
 
   void execute(@NotNull List<? super Throwable> exceptions, boolean onlyChildren) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), each -> {
-      if (myTree.getDisposalInfo(myObject) != null) return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
-      try {
-        if (myObject instanceof Disposable.Parent) {
+      if (myTree.getDisposalInfo(myObject) != null) {
+        return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+      }
+
+      if (!onlyChildren && myObject instanceof Disposable.Parent) {
+        try {
           ((Disposable.Parent)myObject).beforeTreeDispose();
         }
-      }
-      catch (Throwable t) {
-        LOG.error(t);
+        catch (Throwable t) {
+          LOG.error(t);
+        }
       }
 
       ObjectNode[] childrenArray;

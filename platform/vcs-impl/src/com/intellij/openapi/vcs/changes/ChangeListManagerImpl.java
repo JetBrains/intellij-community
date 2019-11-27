@@ -6,7 +6,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -42,7 +45,6 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -73,7 +75,7 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ChangeListOwner, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
 
   public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED =
@@ -110,22 +112,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private final List<CommitExecutor> myRegisteredCommitExecutors = new ArrayList<>();
 
-  public static ChangeListManagerImpl getInstanceImpl(final Project project) {
+  public static ChangeListManagerImpl getInstanceImpl(@NotNull Project project) {
     return (ChangeListManagerImpl)getInstance(project);
-  }
-
-  /**
-   * @deprecated Binary compatibility with Upsource
-   */
-  @Deprecated
-  public ChangeListManagerImpl(@NotNull Project project, VcsConfiguration config) {
-    this(project);
   }
 
   public ChangeListManagerImpl(@NotNull Project project) {
     myProject = project;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
-    myConflictTracker = new ChangelistConflictTracker(project, this, EditorNotifications.getInstance(project));
+    myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
     myDelayedNotificator = new DelayedNotificator(this, myListeners, myScheduler);
@@ -137,21 +131,44 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
-        final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
-        if (automatic || oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
+        LocalChangeList oldList = (LocalChangeList)oldDefaultList;
+        if (automatic || oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) {
+          return;
+        }
 
         scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
     });
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
+      project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          //noinspection TestOnlyProblems
-          waitEverythingDoneInTestMode();
+          if (project == myProject) {
+            //noinspection TestOnlyProblems
+            waitEverythingDoneInTestMode();
+          }
         }
       });
+    }
+  }
+
+  static final class MyAppLevelProjectManagerListener implements ProjectManagerListener {
+    @Override
+    public void projectOpened(@NotNull Project project) {
+      ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).projectOpened();
+    }
+
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      ChangeListManagerImpl manager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
+
+      synchronized (manager.myDataLock) {
+        manager.myUpdateChangesProgressIndicator.cancel();
+      }
+
+      manager.myUpdater.stop();
+      manager.myConflictTracker.stopTracking();
     }
   }
 
@@ -290,8 +307,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     deleteEmptyChangeLists();
   }
 
-  @Override
-  public void projectOpened() {
+  private void projectOpened() {
     VcsListener vcsListener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
@@ -299,7 +315,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     };
 
-    final ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(myProject);
+    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdater.initialized();
       myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
@@ -321,16 +337,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
     }
-  }
-
-  @Override
-  public void projectClosed() {
-    synchronized (myDataLock) {
-      myUpdateChangesProgressIndicator.cancel();
-    }
-
-    myUpdater.stop();
-    myConflictTracker.stopTracking();
   }
 
   public void registerChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {

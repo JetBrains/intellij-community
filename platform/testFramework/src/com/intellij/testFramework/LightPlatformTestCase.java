@@ -32,7 +32,6 @@ import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -550,7 +549,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           LegacyBridgeRootsWatcher.getInstance(project).clear();
         }
       })).
-      append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
+      append(() -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, !ProjectManagerImpl.isLight(project))).
       append(() -> application.setDataProvider(null)).
       append(() -> UiInterceptors.clear()).
       append(() -> ourTestCase = null).
@@ -566,7 +565,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void clearEncodingManagerDocumentQueue() {
-    EncodingManager encodingManager = ServiceManager.getServiceIfCreated(EncodingManager.class);
+    EncodingManager encodingManager = ApplicationManager.getApplication().getServiceIfCreated(EncodingManager.class);
     if (encodingManager instanceof EncodingManagerImpl) {
       ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
     }

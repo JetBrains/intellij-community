@@ -37,8 +37,6 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
         Disposer.register(componentManager.serviceParentDisposable, instance)
       }
 
-      componentManager.componentCreated(indicator)
-
       componentManager.initializeComponent(instance, null)
       if (instance is BaseComponent) {
         @Suppress("DEPRECATION")
@@ -52,6 +50,8 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
           })
         }
       }
+
+      componentManager.componentCreated(indicator)
       return instance
     }
     catch (e: ProcessCanceledException) {
