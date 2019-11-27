@@ -107,6 +107,11 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
         myComboBox.firePopupMenuWillBecomeVisible();
+        //model may drift from the time we decided to open the popup,
+        //let's update it to make sure we did not miss anything
+        if (useLiveUpdateWithModel()) {
+          syncWithModelChange();
+        }
       }
 
       @Override
@@ -190,13 +195,17 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     }
 
     if ("model".equals(propertyName) && myPopup != null) {
-      if (!Boolean.TRUE.equals(myComboBox.getClientProperty(USE_LIVE_UPDATE_MODEL))) {
+      if (!useLiveUpdateWithModel()) {
         hide();
       }
       else {
         syncWithModelChange();
       }
     }
+  }
+
+  private boolean useLiveUpdateWithModel() {
+    return Boolean.TRUE.equals(myComboBox.getClientProperty(USE_LIVE_UPDATE_MODEL));
   }
 
   private void syncWithModelChange() {
