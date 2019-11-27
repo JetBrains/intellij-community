@@ -19,6 +19,7 @@ import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.ThreeDiffSplitter;
+import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -51,6 +52,11 @@ public class ThreesideContentPanel extends JPanel {
       JComponent title = side.select(titleComponents);
       panel.setTitle(title);
     }
+  }
+
+  public void setBreadcrumbs(@NotNull ThreeSide side, @Nullable DiffBreadcrumbsPanel breadcrumbs) {
+    DiffContentPanel panel = side.select(myPanels);
+    panel.setBreadcrumbs(breadcrumbs);
   }
 
   @CalledInAwt

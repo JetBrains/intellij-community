@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.tools.util.side;
 
+import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.util.DiffUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,12 @@ class DiffContentPanel extends JPanel {
   public void setTitle(@Nullable JComponent titles) {
     if (titles != null) {
       add(titles, BorderLayout.NORTH);
+    }
+  }
+
+  public void setBreadcrumbs(@Nullable DiffBreadcrumbsPanel breadcrumbs) {
+    if (breadcrumbs != null) {
+      add(breadcrumbs, BorderLayout.SOUTH);
     }
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
+import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +52,11 @@ public class TwosideContentPanel extends JPanel {
       JComponent title = side.select(titleComponents);
       panel.setTitle(title);
     }
+  }
+
+  public void setBreadcrumbs(@NotNull Side side, @Nullable DiffBreadcrumbsPanel breadcrumbs) {
+    DiffContentPanel panel = side.select(myPanels);
+    panel.setBreadcrumbs(breadcrumbs);
   }
 
   public void setBottomAction(@Nullable AnAction value) {

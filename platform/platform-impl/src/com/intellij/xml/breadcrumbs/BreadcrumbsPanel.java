@@ -139,7 +139,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
       ComponentAdapter resizeListener = new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent event) {
-          breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
+          breadcrumbs.updateBorder(getLeftOffset());
           breadcrumbs.setFont(getNewFont(myEditor));
         }
       };
@@ -152,7 +152,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
         gutterComponent.removeComponentListener(resizeListener);
         breadcrumbs.removeMouseListener(mouseListener);
       });
-      breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
+      breadcrumbs.updateBorder(getLeftOffset());
     }
     else {
       breadcrumbs.updateBorder(0);
@@ -165,6 +165,11 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
 
     queueUpdate();
+  }
+
+  protected int getLeftOffset() {
+    EditorGutterComponentEx gutter = ((EditorGutterComponentEx)myEditor.getGutter());
+    return gutter.getWhitespaceSeparatorOffset();
   }
 
   private void updateCrumbs() {
