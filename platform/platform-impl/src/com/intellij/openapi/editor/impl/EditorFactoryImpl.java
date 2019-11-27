@@ -29,7 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -53,13 +53,13 @@ public class EditorFactoryImpl extends EditorFactory {
 
   public EditorFactoryImpl() {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
+    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void beforeProjectLoaded(@NotNull Project project) {
+      public void projectClosed(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
         Disposer.register(project, () -> {
-          final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-          final boolean isLastProjectClosed = openProjects.length == 0;
+          Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+          boolean isLastProjectClosed = openProjects.length == 0;
           validateEditorsAreReleased(project, isLastProjectClosed);
         });
       }
@@ -81,9 +81,9 @@ public class EditorFactoryImpl extends EditorFactory {
     }, ApplicationManager.getApplication());
   }
 
-  public void validateEditorsAreReleased(Project project, boolean isLastProjectClosed) {
-    for (final Editor editor : myEditors) {
-      if (editor.getProject() == project || editor.getProject() == null && isLastProjectClosed) {
+  public void validateEditorsAreReleased(@NotNull Project project, boolean isLastProjectClosed) {
+    for (Editor editor : myEditors) {
+      if (editor.getProject() == project || (editor.getProject() == null && isLastProjectClosed)) {
         try {
           throwNotReleasedError(editor);
         }
@@ -274,7 +274,7 @@ public class EditorFactoryImpl extends EditorFactory {
     return myEditorEventMulticaster;
   }
 
-  public static class MyRawTypedHandler implements TypedActionHandlerEx {
+  public static final class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
     @SuppressWarnings("NonDefaultConstructor")
@@ -295,7 +295,9 @@ public class EditorFactoryImpl extends EditorFactory {
 
     @Override
     public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-      if (myDelegate instanceof TypedActionHandlerEx) ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
+      if (myDelegate instanceof TypedActionHandlerEx) {
+        ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
+      }
     }
   }
 }

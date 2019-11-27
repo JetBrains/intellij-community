@@ -458,24 +458,26 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> UsefulTestCase.doPostponedFormatting(project)).
       append(() -> LookupManager.hideActiveLookup(project)).
       append(() -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest()).
-      append(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
-        if (ourSourceRoot != null) {
-          try {
-            for (VirtualFile child : ourSourceRoot.getChildren()) {
-              child.delete(LightPlatformTestCase.class);
+      append(() -> {
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+          if (ourSourceRoot != null) {
+            try {
+              for (VirtualFile child : ourSourceRoot.getChildren()) {
+                child.delete(LightPlatformTestCase.class);
+              }
+            }
+            catch (IOException e) {
+              //noinspection CallToPrintStackTrace
+              e.printStackTrace();
             }
           }
-          catch (IOException e) {
-            //noinspection CallToPrintStackTrace
-            e.printStackTrace();
-          }
-        }
 
-        FileDocumentManager manager = FileDocumentManager.getInstance();
-        if (manager instanceof FileDocumentManagerImpl) {
-          ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
-        }
-      })).
+          FileDocumentManager manager = ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
+          if (manager instanceof FileDocumentManagerImpl) {
+            ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
+          }
+        });
+      }).
       append(() -> {
         EditorHistoryManager editorHistoryManager = project.getServiceIfCreated(EditorHistoryManager.class);
         if (editorHistoryManager != null) {

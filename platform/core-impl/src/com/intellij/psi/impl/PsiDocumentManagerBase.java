@@ -69,7 +69,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
 
-    project.getMessageBus().connect(this).subscribe(PsiDocumentTransactionListener.TOPIC, (document, file) -> {
+    project.getMessageBus().connect().subscribe(PsiDocumentTransactionListener.TOPIC, (document, file) -> {
       myUncommittedDocuments.remove(document);
     });
   }

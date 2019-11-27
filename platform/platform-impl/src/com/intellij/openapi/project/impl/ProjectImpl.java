@@ -353,8 +353,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
-    Application application = ApplicationManager.getApplication();
-    application.assertWriteAccessAllowed();  // dispose must be under write action
+    Application app = ApplicationManager.getApplication();
+    // dispose must be under write action
+    app.assertWriteAccessAllowed();
 
     ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
 
@@ -365,8 +366,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     super.dispose();
 
-    if (!application.isDisposed()) {
-      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
+    if (!app.isDisposed()) {
+      //noinspection deprecation
+      app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
     projectManager.updateTheOnlyProjectField();
 

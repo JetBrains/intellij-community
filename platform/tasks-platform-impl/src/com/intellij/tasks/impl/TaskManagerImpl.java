@@ -130,7 +130,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     };
 
-      project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectOpened(@NotNull Project project) {
           if (myProject == project) {
@@ -696,7 +696,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     }
 
-    changeListManager.addChangeListListener(myChangeListListener, this);
+    changeListManager.addChangeListListener(myChangeListListener, myProject);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));

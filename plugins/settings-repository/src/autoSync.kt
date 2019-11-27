@@ -65,15 +65,13 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
           else -> false
         }) {
-          runBlocking {
-            autoSync()
-          }
+          autoSync()
         }
       }
     })
   }
 
-  suspend fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
+  fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
     if (!enabled || !icsManager.isActive || (!force && !icsManager.settings.autoSync)) {
       return
     }
@@ -87,7 +85,9 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     val app = ApplicationManager.getApplication()
 
     if (onAppExit) {
-      sync(app, onAppExit)
+      runBlocking {
+        sync(app, onAppExit)
+      }
       return
     }
     else if (app.isDisposed) {
