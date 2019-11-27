@@ -193,14 +193,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
 
     myEnableDisableButton = new JButton();
-    myEnableDisableButton.addActionListener(e -> changeEnableDisable());
+    myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
     ColorButton.setWidth72(myEnableDisableButton);
     myNameAndButtons.addButtonComponent(myEnableDisableButton);
 
     myEnableDisableAction = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        changeEnableDisable();
+        myPluginModel.changeEnableDisable(myPlugin);
       }
     };
     AbstractAction uninstallAction = new AbstractAction("Uninstall") {
@@ -626,11 +626,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (repaint) {
       fullRepaint();
     }
-  }
-
-  private void changeEnableDisable() {
-    myPluginModel.changeEnableDisable(myPlugin);
-    updateEnabledState();
   }
 
   private void updateEnableForNameAndIcon() {
