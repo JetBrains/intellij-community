@@ -1994,7 +1994,7 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateContainer(boolean forced, final boolean layoutNow) {
-    if (myProject != null && !myProject.isOpen()) return;
+    if (myProject != null && !myProject.isOpen() && !myProject.isDefault()) return;
     for (TabInfo each : new ArrayList<>(myVisibleInfos)) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
