@@ -858,21 +858,34 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testProgressIndicatorNotOverriddenIn_InRunProcessWithProgressSynchronously_duringWriteAction() {
+    final String progressIndicatorText = "Progress indicator text";
     ProgressIndicator progressIndicator = new ProgressIndicatorStub() {
+      String text;
+
+      @Override
+      public void setText(String text) {
+        this.text = text;
+      }
+
+      @Override
+      public String getText() {
+        return text;
+      }
+
       @Override
       public void processFinish() {
-
+        //Prevent throwing runtimeException.
       }
     };
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
           ProgressIndicator progressManagerIndicator = ProgressManager.getInstance().getProgressIndicator();
-          assertEquals(progressIndicator, progressManagerIndicator);
-          progressManagerIndicator.cancel();
+          progressManagerIndicator.setText(progressIndicatorText);
         }, "NotUsed", true, null);
       }, progressIndicator);
     });
-    assertTrue(progressIndicator.isCanceled());
+    assertEquals("Expected the progress indicator passed in to have the text the runnable set",
+                 progressIndicatorText, progressIndicator.getText());
   }
 }
