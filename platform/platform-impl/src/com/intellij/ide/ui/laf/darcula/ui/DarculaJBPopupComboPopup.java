@@ -136,7 +136,6 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     list.setSelectionForeground(UIManager.getColor("ComboBox.selectionForeground"));
     list.setSelectionBackground(UIManager.getColor("ComboBox.selectionBackground"));
     list.setBorder(null);
-    list.setCellRenderer(new MyDelegateRenderer());
     list.setFocusable(false);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
   }
@@ -382,12 +381,14 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     MyListPopupImpl(@Nullable Project project,
                     @NotNull BaseListPopupStep<T> step) {
       super(project, step);
+      configurePopup();
     }
 
     MyListPopupImpl(@Nullable Project project,
                     @Nullable WizardPopup aParent,
                     @NotNull BaseListPopupStep<T> aStep, Object parentValue) {
       super(project, aParent, aStep, parentValue);
+      configurePopup();
     }
 
     @Override
@@ -413,7 +414,14 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     }
 
     @Override
-    protected boolean beforeShow() {
+    protected ListCellRenderer<T> getListElementRenderer() {
+      // we set the correct renderer explicitly
+      // to ensure getComponent().getPreferredSize() is computed
+      // correctly. Fixes the sub-popup jump's to the left on macOS
+      return new MyDelegateRenderer();
+    }
+
+    void configurePopup() {
       setMaxRowCount(Math.max(10, myComboBox.getMaximumRowCount()));
       setRequestFocus(false);
 
@@ -423,8 +431,6 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       if (border != null) {
         getContent().setBorder(border);
       }
-
-      return super.beforeShow();
     }
   }
 }
