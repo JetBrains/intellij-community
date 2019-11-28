@@ -127,7 +127,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
     })
   }
 
-  override fun getStateModificationCount() = state.modificationCount + severityRegistrar.modificationCount  + (schemeManagerIprProvider?.modificationCount ?: 0)
+  override fun getStateModificationCount() = state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
 
   @TestOnly
   fun forceLoadSchemes() {

@@ -161,7 +161,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
 
     @Override
     public void projectClosed(@NotNull Project project) {
-      ChangeListManagerImpl manager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
+      ChangeListManagerImpl manager = (ChangeListManagerImpl)project.getServiceIfCreated(ChangeListManager.class);
+      if (manager == null) {
+        return;
+      }
 
       synchronized (manager.myDataLock) {
         manager.myUpdateChangesProgressIndicator.cancel();
@@ -321,12 +324,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
     }
     else {
-      vcsManager.addInitializationRequest(
-        VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
-          myUpdater.initialized();
-          broadcastStateAfterLoad();
-          myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
-        });
+      vcsManager.addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
+        myUpdater.initialized();
+        broadcastStateAfterLoad();
+        myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
+      });
 
       myConflictTracker.startTracking();
     }
@@ -674,7 +676,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
     catch (Throwable t) {
       LOG.debug(t);
-      ExceptionUtil.rethrowAllAsUnchecked(t);
+      ExceptionUtil.rethrow(t);
     }
     finally {
       if (!myUpdater.isStopped()) {

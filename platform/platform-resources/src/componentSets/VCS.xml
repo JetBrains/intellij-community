@@ -24,10 +24,6 @@
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
       <headless-implementation-class/>
     </component>
