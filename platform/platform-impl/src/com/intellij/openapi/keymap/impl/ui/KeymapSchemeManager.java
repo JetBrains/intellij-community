@@ -9,6 +9,8 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImplKt;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +27,16 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author Sergey.Malenkov
  */
 public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> implements SchemesModel<KeymapScheme> {
-  public static final Predicate<Keymap> FILTER = keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+  public static final Predicate<Keymap> FILTER = keymap -> {
+    String name = keymap.getName();
+    if (SystemInfo.isMac && KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) return false;
+    if (PlatformUtils.isDataGrip() && (StringUtil.containsIgnoreCase(name, "ReSharper") ||
+                                       StringUtil.containsIgnoreCase(name, "Visual Studio") ||
+                                       StringUtil.containsIgnoreCase(name, "Xcode") ||
+                                       StringUtil.containsIgnoreCase(name, "NetBeans") ||
+                                       StringUtil.containsIgnoreCase(name, "Eclipse"))) return false;
+    return true;
+  };
 
   private final List<KeymapScheme> list = new ArrayList<>();
   private final KeymapSelector selector;
