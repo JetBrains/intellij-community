@@ -1806,11 +1806,6 @@
       <option name="JSX_HTML" value="true"/>
     </context>
   </template>
-  <template description="&lt;tr&gt;...&lt;/tr&gt;" name="tr" toReformat="false" toShortenFQNames="true" value="&lt;tr&gt;$END$&lt;/tr&gt;">
-    <context>
-      <option name="JSX_HTML" value="true"/>
-    </context>
-  </template>
   <template description="&lt;li&gt;...&lt;/li&gt;" name="li" toReformat="false" toShortenFQNames="true" value="&lt;li&gt;$END$&lt;/li&gt;">
     <context>
       <option name="JSX_HTML" value="true"/>
