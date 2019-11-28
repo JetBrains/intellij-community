@@ -17,7 +17,7 @@ private fun AnActionEvent.isFromLocalChangesPlace() = place in LOCAL_CHANGES_ACT
 internal fun AnActionEvent.isFromLocalChanges() = getData(CONTENT_MANAGER)?.selectedContent?.tabName == LOCAL_CHANGES
 
 open class CommonCheckinProjectAction : AbstractCommonCheckinAction() {
-  private fun isCommitProjectAction() = this::class.java == CommonCheckinProjectAction::class.java
+  protected open fun isCommitProjectAction() = this::class.java == CommonCheckinProjectAction::class.java
 
   override fun update(e: AnActionEvent) {
     if (isCommitProjectAction() && e.isProjectUsesNonModalCommit() &&
