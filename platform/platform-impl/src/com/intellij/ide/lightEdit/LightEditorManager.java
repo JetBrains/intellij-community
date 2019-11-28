@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -31,7 +30,7 @@ public class LightEditorManager implements Disposable {
   @NotNull
   private LightEditorInfo createEditor(@NotNull Document document, @NotNull VirtualFile file) {
     Editor editor = EditorFactory.getInstance().createEditor(
-      document, ProjectManager.getInstance().getDefaultProject(), EditorKind.MAIN_EDITOR);
+      document, LightEditUtil.getProject(), EditorKind.MAIN_EDITOR);
     ObjectUtils.consumeIfCast(editor, EditorImpl.class,
                               editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
     final LightEditorInfo editorInfo = new LightEditorInfo(editor, file);

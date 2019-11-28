@@ -23,7 +23,7 @@ class LightEditTabs extends JBEditorTabs {
   private final LightEditorManager myEditorManager;
 
   LightEditTabs(@NotNull Disposable parent, LightEditorManager editorManager) {
-    super(null, ActionManager.getInstance(), null, parent);
+    super(LightEditUtil.getProject(), ActionManager.getInstance(), null, parent);
     myEditorManager = editorManager;
     addListener(new TabsListener() {
       @Override
