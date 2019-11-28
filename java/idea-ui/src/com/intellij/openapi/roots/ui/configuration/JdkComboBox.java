@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Predicate;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -136,7 +137,6 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
                                                     boolean hasFocus) {
 
         SimpleColoredComponent component = (SimpleColoredComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-
         JPanel panel = new JPanel(new BorderLayout()) {
           @Override
           public void setBorder(Border border) {
@@ -149,25 +149,39 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
 
         //handle the selected item to show in the ComboBox, not in the popup
         if (index == -1) {
+          component.setOpaque(false);
+          panel.setOpaque(false);
           if (myModel.myIsSdkDetectorInProgress && isPopupVisible()) {
             JBLabel progressIcon = new JBLabel(AnimatedIcon.Default.INSTANCE);
-            UIUtil.putClientProperty(progressIcon, ANIMATION_IN_RENDERER_ALLOWED, true);
             panel.add(progressIcon, BorderLayout.EAST);
           }
-        } else {
-          if (value instanceof ActionGroupJdkItem) {
-            JBLabel toggle = new JBLabel(AllIcons.Icons.Ide.NextStep);
-            panel.add(toggle, BorderLayout.EAST);
-          }
+          return panel;
+        }
 
-          String separatorTextAbove = ((JdkComboBoxModel)getModel()).getSeparatorTextAbove(value);
-          if (separatorTextAbove != null) {
-            SeparatorWithText separator = new SeparatorWithText();
-            if (!separatorTextAbove.isEmpty()) {
-              separator.setCaption(separatorTextAbove);
-            }
-            panel.add(separator, BorderLayout.NORTH);
+        component.setOpaque(true);
+        panel.setOpaque(true);
+        panel.setBackground(component.getBackground());
+        if (value instanceof ActionGroupJdkItem) {
+          JBLabel toggle = new JBLabel(AllIcons.Icons.Ide.NextStep);
+          toggle.setOpaque(false);
+          panel.add(toggle, BorderLayout.EAST);
+        }
+
+        String separatorTextAbove = ((JdkComboBoxModel)getModel()).getSeparatorTextAbove(value);
+        if (separatorTextAbove != null) {
+          SeparatorWithText separator = new SeparatorWithText();
+          if (!separatorTextAbove.isEmpty()) {
+            separator.setCaption(separatorTextAbove);
           }
+          separator.setOpaque(false);
+          separator.setBackground(list.getBackground());
+
+          JPanel wrapper = new JPanel(new BorderLayout());
+          wrapper.add(separator, BorderLayout.CENTER);
+          wrapper.setBackground(list.getBackground());
+          wrapper.setOpaque(true);
+
+          panel.add(wrapper, BorderLayout.NORTH);
         }
         return panel;
       }
