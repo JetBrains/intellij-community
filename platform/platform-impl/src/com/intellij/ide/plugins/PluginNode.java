@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +88,18 @@ public class PluginNode implements IdeaPluginDescriptor {
     return productCode;
   }
 
+  private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
+  private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
+
   public void setProductCode(String productCode) {
     this.productCode = productCode;
+    //if plugin is paid and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID));
+    IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
+    boolean containsUltimateModule = corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
+    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains() || !containsUltimateModule) {
+      if (!myDependencies.contains(PluginId.getId(MARKETPLACE_PLUGIN_ID))) myDependencies.add(PluginId.getId(MARKETPLACE_PLUGIN_ID));
+    }
   }
 
   @Nullable
