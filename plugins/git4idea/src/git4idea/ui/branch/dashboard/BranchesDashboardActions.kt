@@ -6,18 +6,13 @@ import com.intellij.dvcs.diverged
 import com.intellij.dvcs.repo.Repository
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchSupport
@@ -26,6 +21,8 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.createOrCheckoutNewBranch
+import git4idea.ui.branch.isTrackingInfosExist
+import git4idea.ui.branch.updateBranches
 import javax.swing.Icon
 
 internal object BranchesDashboardActions {
@@ -131,51 +128,16 @@ internal object BranchesDashboardActions {
         return
       }
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
-      val trackingInfosExist =
-        repositories
-          .flatMap { it.branchTrackInfos }
-          .any { trackingBranchInfo -> branches.any { it.branchName == trackingBranchInfo.localBranch.name } }
-      e.presentation.isEnabled = trackingInfosExist
+      val branchNames = branches.map(BranchInfo::branchName)
+      e.presentation.isEnabled = isTrackingInfosExist(branchNames, repositories)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       val branches = e.getData(GIT_BRANCHES)!!
       val project = e.project!!
-      update(branches, project)
-    }
-
-    private fun update(branches: Set<BranchInfo>, project: Project) {
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
       val branchNames = branches.map(BranchInfo::branchName)
-      val repoToTrackingInfos =
-        repositories.associateWith { it.branchTrackInfos.filter { info -> branchNames.contains(info.localBranch.name) } }
-      if (repoToTrackingInfos.isEmpty()) return
-
-      GitVcs.runInBackground(object : Backgroundable(project, "Updating branches...", true) {
-        var successFetches = 0
-        override fun run(indicator: ProgressIndicator) {
-          val fetchSupport = GitFetchSupport.fetchSupport(project)
-          for ((repo, trackingInfos) in repoToTrackingInfos) {
-            for (trackingInfo in trackingInfos) {
-              val branchName = trackingInfo.localBranch.name
-              val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$branchName:$branchName")
-              try {
-                fetchResult.throwExceptionIfFailed();
-                successFetches += 1
-              }
-              catch (ignored: VcsException) {
-                fetchResult.showNotificationIfFailed("Update Failed")
-              }
-            }
-          }
-        }
-
-        override fun onSuccess() {
-          if (successFetches > 0) {
-            VcsNotifier.getInstance(myProject).notifySuccess("Branches updated")
-          }
-        }
-      })
+      updateBranches(project, repositories, branchNames)
     }
   }
 
