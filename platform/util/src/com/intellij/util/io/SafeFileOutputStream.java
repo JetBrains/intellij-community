@@ -60,9 +60,9 @@ public class SafeFileOutputStream extends OutputStream {
       Path parent = myTarget.getParent();
       Path backup = parent != null ? parent.resolve(myBackupName) : Paths.get(myBackupName);
       Files.copy(myTarget, backup, BACKUP_COPY);
-      DosFileAttributeView dosView = SystemInfo.isWindows ? Files.getFileAttributeView(backup, DosFileAttributeView.class) : null;
-      if (dosView != null && dosView.readAttributes().isReadOnly()) {
-        dosView.setReadOnly(false);
+      if (SystemInfo.isWindows) {
+        DosFileAttributeView dosView = Files.getFileAttributeView(backup, DosFileAttributeView.class);
+        if (dosView.readAttributes().isReadOnly()) dosView.setReadOnly(false);
       }
       return backup;
     });
