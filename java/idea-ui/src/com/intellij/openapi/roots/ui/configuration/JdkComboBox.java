@@ -104,7 +104,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
    * @param sdkModel the sdks model
    * @param sdkTypeFilter sdk types filter predicate to show
    * @param sdkFilter filters Sdk instances that are listed, it implicitly includes the {@param sdkTypeFilter}
-   * @param creationFilter ac filter of SdkType that allowed to create a new Sdk with that control
+   * @param creationFilter a filter of SdkType that allowed to create a new Sdk with that control
    * @param onNewSdkAdded a callback that is executed once a new Sdk is added to the list
    */
   public JdkComboBox(@Nullable Project project,
@@ -255,7 +255,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     });
 
     myModel = new JdkComboBoxModelBuilder();
-    myModel.reload();
+    reloadModel();
   }
 
   /**
@@ -277,7 +277,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   /**
    * @deprecated Use the overloaded constructor to pass these parameters directly to
    * that class. The {@param setUpButton} is no longer used, the JdkComboBox shows
-   * all the needed actions in the popup. The button will be be made invisible.
+   * all the needed actions in the popup. The button will be made invisible.
    */
   @Deprecated
   @SuppressWarnings("unused")
@@ -396,7 +396,8 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   }
 
   public void reloadModel() {
-    myModel.reload();
+    collectNewSdkActions();
+    myModel.reloadSdks();
   }
 
   /**
@@ -407,7 +408,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   @SuppressWarnings("unused")
   public void reloadModel(JdkComboBoxItem firstItem, @Nullable Project project) {
     myModel.setFirstItem(firstItem);
-    myModel.reload();
+    reloadModel();
   }
 
   @Override
@@ -446,8 +447,10 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
 
     if (anObject instanceof Sdk) {
-      JdkComboBoxModel model = (JdkComboBoxModel)getModel();
-      int idx = model.firstIndexOf(it -> Objects.equals(it.getJdk(), anObject));
+      // it is a chance we have a cloned SDK instance from the model here, or an original one
+      // reload model is needed to make sure we see all instances
+      JdkComboBoxModel model = myModel.reloadSdks();
+      int idx = model.firstIndexOf(it -> Objects.equals(it.getJdk(), anObject) || Objects.equals(mySdkModel.findSdk(it.getJdk()), anObject));
       if (idx >= 0) {
         setSelectedItem(model.getElementAt(idx));
       }
@@ -479,7 +482,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     private boolean myIsSdkDetectorInProgress = true;
 
     private JdkComboBoxItem myFirstItem = null;
-    private ImmutableList<JdkComboBoxItem> myHead = ImmutableList.of();
+    private ImmutableList<ActualJdkComboBoxItem> myHead = ImmutableList.of();
     private ImmutableList<ActionJdkItem> myDownloadActions = ImmutableList.of();
     private ImmutableList<ActionJdkItem> myAddActions = ImmutableList.of();
     private ImmutableList<SuggestedJdkItem> mySuggestions = ImmutableList.of();
@@ -530,7 +533,8 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       setSelectedItem(myInvalidJdkItem);
     }
 
-    public void syncModel() {
+    @NotNull
+    JdkComboBoxModel syncModel() {
       Object previousSelection = getSelectedItem();
       JdkComboBoxModel newModel = new JdkComboBoxModel();
       if (myFirstItem != null) {
@@ -553,12 +557,12 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       }
       newModel.setSelectedItem(previousSelection);
       setModel(newModel);
+      return newModel;
     }
 
-    void reload() {
-      collectNewSdkActions();
-
-      List<JdkComboBoxItem> newHead = new ArrayList<>();
+    @NotNull
+    JdkComboBoxModel reloadSdks() {
+      List<ActualJdkComboBoxItem> newHead = new ArrayList<>();
       Sdk[] jdks = sortSdks(mySdkModel.getSdks());
       for (Sdk jdk : jdks) {
         if (mySdkFilter.value(jdk)) {
@@ -567,11 +571,11 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       }
 
       myHead = ImmutableList.copyOf(newHead);
-      syncModel();
+      return syncModel();
     }
 
     @NotNull
-    private ImmutableList<ActionJdkItem> toImmutableList(@NotNull ActionRole role, @NotNull Map<SdkType, NewSdkAction> actions) {
+    ImmutableList<ActionJdkItem> toImmutableList(@NotNull ActionRole role, @NotNull Map<SdkType, NewSdkAction> actions) {
       ImmutableList.Builder<ActionJdkItem> builder = ImmutableList.builder();
       for (NewSdkAction action : actions.values()) {
         builder.add(new ActionJdkItem(role, action));
