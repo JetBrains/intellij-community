@@ -43,22 +43,27 @@ internal class DiffLineMarkerRenderer(
     var x1 = 0
     val x2 = x1 + gutter.width
 
-    var y1: Int
-    var y2: Int
-    if (myEmptyRange && myLastLine) {
-      y1 = lineToY(editor, DiffUtil.getLineCount(editor.document))
+    val y1: Int
+    val y2: Int
+    if (myEmptyRange) {
+      if (myFirstLine) {
+        val startLine = editor.document.getLineNumber(myHighlighter.startOffset)
+        y1 = lineToY(editor, startLine, true) + 1
+      }
+      else {
+        val lineBefore = when {
+          myLastLine -> DiffUtil.getLineCount(editor.document)
+          else -> editor.document.getLineNumber(myHighlighter.startOffset) - 1
+        }
+        y1 = lineToY(editor, lineBefore, false)
+      }
       y2 = y1
     }
     else {
       val startLine = editor.document.getLineNumber(myHighlighter.startOffset)
-      val endLine = editor.document.getLineNumber(myHighlighter.endOffset) + 1
-      y1 = lineToY(editor, startLine)
-      y2 = if (myEmptyRange) y1 else lineToY(editor, endLine)
-    }
-
-    if (myEmptyRange && myFirstLine) {
-      y1++
-      y2++
+      val lastLine = editor.document.getLineNumber(myHighlighter.endOffset)
+      y1 = lineToY(editor, startLine, true)
+      y2 = lineToY(editor, lastLine, false)
     }
 
     if (myHideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown) {

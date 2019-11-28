@@ -6,6 +6,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -197,12 +198,27 @@ public class DiffDrawUtil {
   //
 
   public static int lineToY(@NotNull Editor editor, int line) {
+    return lineToY(editor, line, true);
+  }
+
+  public static int lineToY(@NotNull Editor editor, int line, boolean lineStart) {
+    if (line < 0) return 0;
+
     Document document = editor.getDocument();
     if (line >= getLineCount(document)) {
       int y = editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getTextLength())).y;
-      return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
+      int tailLines = line - getLineCount(document) + (lineStart ? 0 : 1);
+      return y + editor.getLineHeight() * tailLines;
     }
-    return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
+
+    if (lineStart) {
+      LogicalPosition logicalPosition = editor.offsetToLogicalPosition(document.getLineStartOffset(line));
+      return editor.logicalPositionToXY(logicalPosition).y;
+    }
+    else {
+      LogicalPosition logicalPosition = editor.offsetToLogicalPosition(document.getLineEndOffset(line));
+      return editor.logicalPositionToXY(logicalPosition).y + editor.getLineHeight();
+    }
   }
 
   public static int yToLine(@NotNull Editor editor, int y) {
