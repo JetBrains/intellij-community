@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.search
 
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -11,7 +12,9 @@ internal class MyBulkOccurrenceProcessor(
   private val project: Project,
   private val processors: RequestProcessors
 ) : BulkOccurrenceProcessor {
-
+  companion object {
+    val LOG = Logger.getInstance(MyBulkOccurrenceProcessor::class.java)
+  }
   override fun execute(scope: PsiElement, offsetsInScope: IntArray, searcher: StringSearcher): Boolean {
     if (offsetsInScope.isEmpty()) {
       return true

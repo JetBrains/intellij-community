@@ -4,8 +4,6 @@ package com.intellij.psi.impl.search
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
 import com.intellij.model.search.impl.*
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -31,8 +29,6 @@ import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
-
-internal val LOG: Logger = logger(::LOG)
 
 private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.searcher")
 

@@ -2,7 +2,6 @@
 package git4idea.ui.branch
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
@@ -13,7 +12,9 @@ import git4idea.branch.GitNewBranchOptions
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 
-private val LOG: Logger get() = logger(::LOG)
+object L {
+  val LOG: Logger = Logger.getInstance(L::class.java)
+}
 
 internal fun checkCommitsUnderProgress(project: Project,
                                        repositories: List<GitRepository>,
@@ -38,7 +39,7 @@ private fun hasCommits(project: Project, repository: GitRepository, startRef: St
     return GitHistoryUtils.collectTimedCommits(project, repository.root, "$startRef..$endRef").isNotEmpty()
   }
   catch (ex: VcsException) {
-    LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef")
+    L.LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef")
     return true
   }
 }

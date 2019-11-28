@@ -2,12 +2,13 @@
 package git4idea.repo
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import org.ini4j.Ini
 import java.io.File
 import java.io.IOException
 
-private val LOG: Logger get() = logger(::LOG)
+object L {
+  val LOG: Logger get() = Logger.getInstance(L::class.java)
+}
 
 @Throws(IOException::class)
 internal fun loadIniFile(file: File): Ini {
@@ -21,7 +22,7 @@ internal fun loadIniFile(file: File): Ini {
     return ini
   }
   catch (e: IOException) {
-    LOG.warn("Couldn't load config file at ${file.path}", e)
+    L.LOG.warn("Couldn't load config file at ${file.path}", e)
     throw e
   }
 }

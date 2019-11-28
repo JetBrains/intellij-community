@@ -17,7 +17,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -36,12 +35,12 @@ import java.io.File
 import java.util.*
 import kotlin.collections.LinkedHashSet
 
-private val LOG: Logger = logger(::LOG)
-
 open class UpdateIdeFromSourcesAction
  @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) "Update IDE from Sources Settings..." else "Update IDE from Sources...",
              "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null) {
+
+  private val LOG: Logger = Logger.getInstance(UpdateIdeFromSourcesAction::class.java)
 
 
   override fun actionPerformed(e: AnActionEvent) {
