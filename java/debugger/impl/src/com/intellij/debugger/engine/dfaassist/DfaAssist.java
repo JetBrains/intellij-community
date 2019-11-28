@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
@@ -37,36 +36,37 @@ import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DfaAssist implements DebuggerContextListener {
-  private final Project myProject;
+  private final @NotNull Project myProject;
+  private final @NotNull DebugProcessImpl myProcess;
   private final List<Inlay<?>> myInlays = new ArrayList<>(); // modified from EDT only
+  private volatile CancellablePromise<?> myPromise;
 
-  private DfaAssist(Project project) {
-    myProject = project;
+  private DfaAssist(DebuggerContextImpl context) {
+    myProject = Objects.requireNonNull(context.getProject());
+    myProcess = Objects.requireNonNull(context.getDebugProcess());
   }
 
   @Override
   public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
     if (event == DebuggerSession.Event.DETACHED || event == DebuggerSession.Event.DISPOSE) {
-      disposeInlays();
+      cleanUp();
     }
     if (event != DebuggerSession.Event.PAUSE) return;
     SourcePosition sourcePosition = newContext.getSourcePosition();
     if (sourcePosition == null) {
-      disposeInlays();
+      cleanUp();
       return;
     }
     PsiJavaFile file = ObjectUtils.tryCast(sourcePosition.getFile(), PsiJavaFile.class);
     DebugProcessImpl debugProcess = newContext.getDebugProcess();
     PsiElement element = sourcePosition.getElementAt();
-    if (debugProcess == null || file == null || element == null) {
-      disposeInlays();
+    if (debugProcess != myProcess || file == null || element == null) {
+      cleanUp();
       return;
     }
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
@@ -75,17 +75,17 @@ public class DfaAssist implements DebuggerContextListener {
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         StackFrameProxyImpl proxy = suspendContext.getFrameProxy();
         if (proxy == null) {
-          disposeInlays();
+          cleanUp();
           return;
         }
         StackFrame frame = proxy.getStackFrame();
         DebuggerDfaRunner runner = ReadAction.nonBlocking(() -> createDfaRunner(frame, pointer.getElement()))
           .withDocumentsCommitted(myProject).executeSynchronously();
         if (runner == null) {
-          disposeInlays();
+          cleanUp();
           return;
         }
-        ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
+        myPromise = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
           .finishOnUiThread(ModalityState.NON_MODAL, DfaAssist.this::displayInlays)
           .submit(AppExecutorUtil.getAppExecutorService());
@@ -93,11 +93,15 @@ public class DfaAssist implements DebuggerContextListener {
     });
   }
 
-  private void disposeInlays() {
-    ApplicationManager.getApplication().invokeLater(this::doDisposeInlays);
+  private void cleanUp() {
+    CancellablePromise<?> promise = myPromise;
+    if (promise != null) {
+      promise.cancel();
+    }
+    ApplicationManager.getApplication().invokeLater(this::disposeInlays);
   }
 
-  private void doDisposeInlays() {
+  private void disposeInlays() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myInlays.forEach(Disposer::dispose);
     myInlays.clear();
@@ -105,7 +109,7 @@ public class DfaAssist implements DebuggerContextListener {
 
   private void displayInlays(Map<PsiExpression, DfaHint> hints) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    doDisposeInlays();
+    disposeInlays();
     if (hints.isEmpty()) return;
     EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
     VirtualFile expectedFile = hints.keySet().iterator().next().getContainingFile().getVirtualFile();
@@ -213,11 +217,8 @@ public class DfaAssist implements DebuggerContextListener {
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent evt) {
-      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(myProject);
-      if (process != null) {
-        process.getSession().getContextManager().removeListener(DfaAssist.this);
-        disposeInlays();
-      }
+      myProcess.getSession().getContextManager().removeListener(DfaAssist.this);
+      cleanUp();
     }
   }
   
@@ -227,6 +228,9 @@ public class DfaAssist implements DebuggerContextListener {
    */
   public static void installDfaAssist(@NotNull DebuggerSession javaSession) {
     DebuggerStateManager manager = javaSession.getContextManager();
-    manager.addListener(new DfaAssist(manager.getContext().getProject()));
+    DebuggerContextImpl context = manager.getContext();
+    if (context.getProject() != null && context.getDebugProcess() != null) {
+      manager.addListener(new DfaAssist(context));
+    }
   }
 }
