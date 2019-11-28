@@ -6,9 +6,9 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Pair;
@@ -439,7 +438,7 @@ public final class EventLog {
     }, true);
   }
 
-  static final class ProjectTracker {
+  static final class ProjectTracker implements Disposable {
     private final Map<String, EventLogConsole> myCategoryMap = ContainerUtil.newConcurrentMap();
     private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
     private final LogModel myProjectModel;
@@ -449,8 +448,7 @@ public final class EventLog {
       myProjectModel = new LogModel(project, project);
       myProject = project;
 
-      Application app = ApplicationManager.getApplication();
-      EventLog appService = app.getServiceIfCreated(EventLog.class);
+      EventLog appService = ApplicationManager.getApplication().getServiceIfCreated(EventLog.class);
       if (appService != null) {
         for (Notification notification : appService.myModel.takeNotifications()) {
           printNotification(notification);
@@ -463,18 +461,15 @@ public final class EventLog {
           printNotification(notification);
         }
       });
+    }
 
-      app.getMessageBus().connect(project).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-        @Override
-        public void projectClosed(@NotNull Project eventProject) {
-          if (eventProject != project) {
-            return;
-          }
-
-          getApplicationService().myModel.setStatusMessage(null, 0);
-          StatusBar.Info.set("", null, LOG_REQUESTOR);
-        }
-      });
+    @Override
+    public void dispose() {
+      EventLog appService = ApplicationManager.getApplication().getServiceIfCreated(EventLog.class);
+      if (appService != null) {
+        appService.myModel.setStatusMessage(null, 0);
+      }
+      StatusBar.Info.set("", null, LOG_REQUESTOR);
     }
 
     void initDefaultContent() {

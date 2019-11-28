@@ -13,6 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
@@ -31,11 +32,12 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @TestOnly
+  @NotNull
   public final Project newProjectForTest(@NotNull Path file) {
     OpenProjectTask options = new OpenProjectTask();
     options.useDefaultProjectAsTemplate = false;
     options.isNewProject = true;
-    return newProject(file, null, options);
+    return Objects.requireNonNull(newProject(file, null, options));
   }
 
   @Nullable

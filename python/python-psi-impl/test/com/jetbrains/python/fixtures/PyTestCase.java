@@ -148,7 +148,6 @@ public abstract class PyTestCase extends UsefulTestCase {
         }
       });
     }
-
   }
 
   private static void initApplication() {

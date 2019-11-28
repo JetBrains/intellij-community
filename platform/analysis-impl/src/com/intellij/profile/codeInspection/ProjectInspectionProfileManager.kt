@@ -11,8 +11,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
@@ -42,7 +40,7 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
 const val PROFILE_DIR = "inspectionProfiles"
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
-open class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element> {
+open class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element>, Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {
@@ -105,26 +103,21 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
           throw e
         }
     }
+  }
 
-    app.messageBus.connect(project).subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
-      override fun projectClosed(eventProject: Project) {
-        if (project !== eventProject) {
-          return
-        }
+  override fun dispose() {
+    val cleanupInspectionProfilesRunnable = {
+      cleanupSchemes(project)
+      (serviceIfCreated<InspectionProfileManager>() as BaseInspectionProfileManager?)?.cleanupSchemes(project)
+    }
 
-        val cleanupInspectionProfilesRunnable = {
-          cleanupSchemes(project)
-          (serviceIfCreated<InspectionProfileManager>() as BaseInspectionProfileManager?)?.cleanupSchemes(project)
-        }
-
-        if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-          cleanupInspectionProfilesRunnable.invoke()
-        }
-        else {
-          app.executeOnPooledThread(cleanupInspectionProfilesRunnable)
-        }
-      }
-    })
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      cleanupInspectionProfilesRunnable.invoke()
+    }
+    else {
+      app.executeOnPooledThread(cleanupInspectionProfilesRunnable)
+    }
   }
 
   override fun getStateModificationCount() = state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)

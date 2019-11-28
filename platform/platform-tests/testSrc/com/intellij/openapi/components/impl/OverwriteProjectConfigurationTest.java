@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -11,38 +12,49 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author nik
  */
 public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
-  private File myProjectDir;
+  private Path myProjectDir;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProjectDir = createTempDir(getTestDirectoryName());
+    myProjectDir = createTempDir(getTestDirectoryName()).toPath();
   }
 
   public void testOverwriteModulesList() {
-    final Project project = createProject();
-    createModule(project, "module", ModuleTypeId.JAVA_MODULE);
-    PlatformTestUtil.saveProject(project);
-    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir);
+    try {
+      createModule(project, "module", ModuleTypeId.JAVA_MODULE);
+      PlatformTestUtil.saveProject(project);
+    }
+    finally {
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+    }
 
     Project recreated = createProject();
     PlatformTestUtil.saveProject(recreated);
-    assertEmpty(ModuleManager.getInstance(recreated).getModules());
+    assertThat(ModuleManager.getInstance(recreated).getModules()).isEmpty();
   }
 
   public void testOverwriteModuleType() {
-    final Project project = createProject();
-    File imlFile = createModule(project, "module", ModuleTypeId.JAVA_MODULE);
-    PlatformTestUtil.saveProject(project);
-    assertTrue(imlFile.exists());
-    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir);
+    try {
+      Path imlFile = createModule(project, "module", ModuleTypeId.JAVA_MODULE);
+      PlatformTestUtil.saveProject(project);
+      assertThat(imlFile).isRegularFile();
+    }
+    finally {
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+    }
 
     Project recreated = createProject();
     createModule(recreated, "module", ModuleTypeId.WEB_MODULE);
@@ -51,19 +63,24 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
     assertEquals(ModuleTypeId.WEB_MODULE, ModuleType.get(module).getId());
   }
 
+  @NotNull
   private Project createProject() {
-    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir.toPath());
-    assertNotNull(project);
-    disposeOnTearDown(project);
+    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      }
+    });
     return project;
   }
 
-  private File createModule(final Project project, String moduleName, final String moduleTypeId) {
-    final File imlFile = new File(myProjectDir, moduleName + ".iml");
+  @NotNull
+  private Path createModule(@NotNull Project project, @NotNull String moduleName, @NotNull String moduleTypeId) {
+    Path imlFile = myProjectDir.resolve(moduleName + ".iml");
     ApplicationManager.getApplication().runWriteAction(() -> {
-      ModuleManager.getInstance(project).newModule(imlFile.getAbsolutePath(), moduleTypeId);
+      ModuleManager.getInstance(project).newModule(imlFile.toAbsolutePath().toString(), moduleTypeId);
     });
-
     return imlFile;
   }
 }
