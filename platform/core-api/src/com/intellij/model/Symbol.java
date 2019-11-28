@@ -1,22 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
-import static org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * An element in some model, e.g. language model or framework model.
+ * Symbol is an element in some model, e.g. language model or framework model.
  * <p/>
- * Symbol may be backed by a {@link com.intellij.psi.PsiElement PsiElement} but is not required to. <br/>
- * Symbol may be bound to a {@link com.intellij.openapi.project.Project Project} but is not required to.
+ * <h4>Lifecycle</h4>
+ * The Symbol instance is expected to stay valid within a single read action,
+ * which means it's safe to pass the instance to different APIs.<br/>
+ * Symbol instance should not be referenced between read actions.
+ * Please use {@link #createPointer() Pointer}'s {@link Pointer#dereference dereference}
+ * to obtain new Symbol instance (or the same instance if it's still valid)
+ * in the next read action.
  * <p/>
- * Examples:
- * <ul>
- * <li>Java local variable is a symbol in Java language model, it's backed by some PsiElement</li>
- * <li>Spring Bean is a symbol in Spring framework model, it's defined on-the-fly by framework support</li>
- * <li>database column is a Symbol not backed by PsiElement (defined by data source) and not bound to a Project</li>
- * </ul>
+ * <h4>Equality</h4>
+ * There are no restrictions on whether implementations must provide {@link #equals}/{@link #hashCode}.
+ *
+ * @see com.intellij.model
  */
-@Experimental
 public interface Symbol {
 
+  /**
+   * @return a pointer which is used to restore the Symbol between read actions
+   */
+  @NotNull
+  Pointer<? extends Symbol> createPointer();
 }
