@@ -19,6 +19,11 @@ import javax.swing.*;
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
 
+  int FORCE_EXIT = 0x01;
+  int EXIT_CONFIRMED = 0x02;
+  int SAVE = 0x04;
+  int ELEVATE = 0x08;
+
   /**
    * Loads the application configuration from the specified path
    *
@@ -75,18 +80,41 @@ public interface ApplicationEx extends Application {
                                                           JComponent parentComponent,
                                                           @NotNull Runnable process);
 
+  default void exit(@SuppressWarnings("unused") int flags) {
+    exit();
+  }
+
+  @Override
+  default void exit() {
+    exit(SAVE);
+  }
+
   /**
    * @param force if true, no additional confirmations will be shown. The application is guaranteed to exit
    * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
    */
-  void exit(boolean force, boolean exitConfirmed);
+  default void exit(boolean force, boolean exitConfirmed) {
+    int flags = SAVE;
+    if (force) {
+      flags |= FORCE_EXIT;
+    }
+    if (exitConfirmed) {
+      flags |= EXIT_CONFIRMED;
+    }
+    exit(flags);
+  }
 
   /**
    * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
    */
   void restart(boolean exitConfirmed);
+
+  @Override
+  default void restart() {
+    restart(false);
+  }
 
   /**
    * Restarts the IDE with optional process elevation (on Windows).

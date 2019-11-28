@@ -145,10 +145,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void restart() {
-  }
-
-  @Override
   public void runReadAction(@NotNull Runnable action) {
     action.run();
   }
@@ -285,10 +281,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void exit() {
-  }
-
-  @Override
   public void saveAll() {
   }
 
@@ -303,10 +295,6 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void load(@Nullable String path) {
-  }
-
-  @Override
-  public void exit(boolean force, boolean exitConfirmed) {
   }
 
   @Override

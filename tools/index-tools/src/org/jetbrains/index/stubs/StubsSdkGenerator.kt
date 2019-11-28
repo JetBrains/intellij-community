@@ -4,6 +4,8 @@ package org.jetbrains.index.stubs
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -13,7 +15,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import java.io.File
-import kotlin.system.exitProcess
 
 abstract class ProjectSdkStubsGenerator {
   open fun createStubsGenerator(stubsFilePath: String): StubsGenerator = StubsGenerator("", stubsFilePath)
@@ -27,7 +28,7 @@ abstract class ProjectSdkStubsGenerator {
   private val stubsFileName = "sdk-stubs"
 
   fun buildStubs(baseDir: String) {
-    val app = IdeaTestApplication.getInstance()
+    IdeaTestApplication.getInstance()
     try {
       for (python in File(root).listFiles()) {
         if (python.name.startsWith(".")) {
@@ -40,8 +41,7 @@ abstract class ProjectSdkStubsGenerator {
       e.printStackTrace()
     }
     finally {
-      app.disposeApp()
-      exitProcess(0) //TODO: graceful shutdown
+      ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED)
     }
   }
 

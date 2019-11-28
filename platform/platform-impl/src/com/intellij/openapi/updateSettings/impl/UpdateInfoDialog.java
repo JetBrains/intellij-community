@@ -10,6 +10,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -283,7 +284,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     IdeUpdateUsageTriggerCollector.trigger( "dialog.update.started");
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    application.invokeLater(() -> application.exit(true, true, true, command));
+    application.invokeLater(() -> application.restart(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
   }
 
   private String downloadUrl() {

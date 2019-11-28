@@ -547,28 +547,24 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void exit() {
-    exit(false, false);
-  }
-
-  @Override
-  public void exit(boolean force, final boolean exitConfirmed) {
-    exit(false, exitConfirmed, false);
-  }
-
-  @Override
-  public void restart() {
-    restart(false);
-  }
-
-  @Override
-  public void restart(boolean exitConfirmed) {
-    exit(false, exitConfirmed, true);
+  public final void restart(boolean exitConfirmed) {
+    int flags = SAVE;
+    if (exitConfirmed) {
+      flags |= EXIT_CONFIRMED;
+    }
+    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override
   public final void restart(boolean exitConfirmed, boolean elevate) {
-    exit(false, exitConfirmed, true, elevate, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    int flags = SAVE;
+    if (exitConfirmed) {
+      flags |= EXIT_CONFIRMED;
+    }
+    if (elevate) {
+      flags |= ELEVATE;
+    }
+    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   /**
@@ -581,34 +577,47 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   @Override
-  public void exit(boolean force, boolean exitConfirmed, boolean restart) {
-    exit(force, exitConfirmed, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  public final void exit(boolean force, boolean exitConfirmed, boolean restart) {
+    int flags = SAVE;
+    if (force) {
+      flags |= FORCE_EXIT;
+    }
+    if (exitConfirmed) {
+      flags |= EXIT_CONFIRMED;
+    }
+    exit(flags, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
-    exit(force, exitConfirmed, restart, false, beforeRestart);
+  public void restart(int flags, @NotNull String[] beforeRestart) {
+    exit(flags, true, beforeRestart);
   }
 
-  private void exit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, @NotNull String[] beforeRestart) {
-    if (!force) {
-      if (myExitInProgress) return;
-      if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
+  @Override
+  public final void exit(int flags) {
+    exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  private void exit(int flags, boolean restart, @NotNull String[] beforeRestart) {
+    if (!BitUtil.isSet(flags, FORCE_EXIT) &&
+        (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.NON_MODAL))) {
+      return;
     }
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(force, exitConfirmed, restart, elevate, beforeRestart);
+      doExit(flags, restart, beforeRestart);
     }
     else {
       invokeLater(() -> {
-        doExit(force, exitConfirmed, restart, elevate, beforeRestart);
+        doExit(flags, restart, beforeRestart);
       }, ModalityState.NON_MODAL);
     }
   }
 
-  private void doExit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, String[] beforeRestart) {
+  private void doExit(int flags, boolean restart, String[] beforeRestart) {
+    boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try {
-      if (!force && !confirmExitIfNeeded(exitConfirmed)) {
+      if (!force && !confirmExitIfNeeded(BitUtil.isSet(flags, EXIT_CONFIRMED))) {
         return;
       }
 
@@ -622,7 +631,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
-      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
+      if (BitUtil.isSet(flags, SAVE)) {
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
+      }
 
       boolean success = disposeSelf(!force);
       //noinspection SpellCheckingInspection
@@ -637,7 +648,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          Restarter.scheduleRestart(elevate, beforeRestart);
+          Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);
