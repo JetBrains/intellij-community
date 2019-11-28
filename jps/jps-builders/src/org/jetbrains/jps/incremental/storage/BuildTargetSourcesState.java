@@ -127,6 +127,14 @@ public class BuildTargetSourcesState implements BuildListener {
     LOG.info("Build target sources report took: " + (System.currentTimeMillis() - start) + " ms");
   }
 
+  public void clearSourcesState() {
+    if (reportStateUnavailable()) return;
+    if (myTargetStateStorage.exists()) {
+      LOG.info("Clear build target sources report");
+      FileUtil.delete(myTargetStateStorage);
+    }
+  }
+
   @Override
   public void filesGenerated(@NotNull FileGeneratedEvent event) {
     if (reportStateUnavailable()) return;
