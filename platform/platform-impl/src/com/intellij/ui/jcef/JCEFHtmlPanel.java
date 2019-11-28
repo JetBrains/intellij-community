@@ -4,20 +4,15 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
-import org.cef.browser.CefFrame;
 import org.cef.handler.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,9 +31,6 @@ public class JCEFHtmlPanel implements Disposable {
   private boolean myIsCefBrowserCreated;
   private @Nullable String myHtml;
 
-  // workaround for the UI garbage issue: keep the browser component min until the browser loads html
-  private static final boolean USE_SIZE_WORKAROUND = false;//SystemInfo.isWindows; // [tav] todo: remove it
-
   static {
     ourCefClient = JBCefApp.getInstance().createClient();
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
@@ -55,16 +47,6 @@ public class JCEFHtmlPanel implements Disposable {
       }
     });
     ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
-      @Override
-      public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
-        if (USE_SIZE_WORKAROUND) {
-          JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
-          if (panel != null && browser.getURL() != null && panel.isHtmlLoaded()) {
-            browser.getUIComponent().setSize(panel.myPanelWrapper.getSize());
-            panel.myPanelWrapper.revalidate();
-          }
-        }
-      }
       @Override
       public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
         JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
@@ -98,24 +80,7 @@ public class JCEFHtmlPanel implements Disposable {
     myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
     ourCefBrowser2Panel.put(myCefBrowser, this);
 
-    if (USE_SIZE_WORKAROUND) {
-      myPanelWrapper.setLayout(null);
-      myCefBrowser.getUIComponent().setSize(1, 1);
-      myPanelWrapper.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-          if (isHtmlLoaded()) {
-            myCefBrowser.getUIComponent().setSize(myPanelWrapper.getSize());
-          }
-        }
-      });
-    }
     myPanelWrapper.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
-  }
-
-  private boolean isHtmlLoaded() {
-    // return ourUrl.equals(myCefBrowser.getURL()); 99% match due to protocols
-    return myCefBrowser.getURL().contains(JCEFHtmlPanel.class.getSimpleName());
   }
 
   @NotNull
