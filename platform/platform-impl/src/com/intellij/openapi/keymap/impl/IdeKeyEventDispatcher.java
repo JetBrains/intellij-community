@@ -37,8 +37,8 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
-import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
@@ -771,7 +771,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if (mySystemShortcuts != null
         && keymap != null
-        && actionIds != null && actionIds.length > 0
+        && actionIds.length > 0
         && sc instanceof KeyboardShortcut
     ) {
       // user pressed keystroke and keymap has some actions assigned to sc (actions going to be executed)
