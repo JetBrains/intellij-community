@@ -84,7 +84,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
   public void apply(@NotNull SegmentedProgressIndicatorManager indicatorManager) {
     long start = System.currentTimeMillis();
     if (myOldModulesPaths != null) {
-      LOG.debug("Removing old compilation outputs " + myOldModulesPaths.size() + " counts");
+      LOG.info("Removing old compilation outputs " + myOldModulesPaths.size() + " counts");
       myOldModulesPaths.forEach(file -> {
         if (file.exists()) FileUtil.delete(file);
       });
