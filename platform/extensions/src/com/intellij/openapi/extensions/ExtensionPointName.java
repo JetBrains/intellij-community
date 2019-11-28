@@ -161,19 +161,23 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
   
-  public void addExtensionPointListener(@NotNull ExtensionPointListenerAdded<? super T> added,
-                                        @NotNull ExtensionPointListenerRemoved<? super T> removed,
+  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener<? super T> added,
+                                        @NotNull ExtensionPointChangeListener<? super T> removed,
                                         @Nullable Disposable parentDisposable) {
     getPointImpl(null).addExtensionPointListener(new ExtensionPointListener<T>() {
       @Override
       public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
-        added.extensionAdded(extension, pluginDescriptor);
+        added.extensionChanged(extension, pluginDescriptor);
       }
 
       @Override
       public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
-        removed.extensionRemoved(extension, pluginDescriptor);
+        removed.extensionChanged(extension, pluginDescriptor);
       }
     }, false, parentDisposable);
+  }
+
+  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener<? super T> listener, @Nullable Disposable parentDisposable) {
+    addExtensionPointListener(listener, listener, parentDisposable);
   }
 }

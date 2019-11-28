@@ -4,8 +4,6 @@ package com.intellij.openapi.extensions;
 import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
-public interface ExtensionPointListenerAdded<T> {
-  void extensionAdded(@NotNull T e, @NotNull PluginDescriptor pd);
+public interface ExtensionPointChangeListener<T> {
+  void extensionChanged(@NotNull T e, @NotNull PluginDescriptor pd);
 }
-
-  

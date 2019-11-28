@@ -3,15 +3,13 @@ package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface ExtensionPointListener<T> extends ExtensionPointListenerAdded<T>, ExtensionPointListenerRemoved<T> {
+public interface ExtensionPointListener<T> {
   @SuppressWarnings("rawtypes")
   ExtensionPointListener[] EMPTY_ARRAY = new ExtensionPointListener[0];
 
-  @Override
   default void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
   }
 
-  @Override
   default void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
   }
 }
