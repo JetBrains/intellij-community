@@ -33,7 +33,8 @@ import java.util.concurrent.ConcurrentMap;
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance(MessageBusImpl.class);
   private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = (bus1, bus2) -> ArrayUtil.lexicographicCompare(bus1.myOrder, bus2.myOrder);
-  @SuppressWarnings("SSBasedInspection") private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
+  @SuppressWarnings("SSBasedInspection")
+  private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
   /**
    * Root's order is empty
@@ -59,7 +60,7 @@ public class MessageBusImpl implements MessageBus {
   private volatile Map<String, List<ListenerDescriptor>> myTopicClassToListenerClass = Collections.emptyMap();
 
   private static final Object NA = new Object();
-  private MessageBusImpl myParentBus;
+  private final MessageBusImpl myParentBus;
 
   private final RootBus myRootBus;
 
@@ -92,6 +93,7 @@ public class MessageBusImpl implements MessageBus {
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
     myRootBus = (RootBus)this;
     myLazyConnections = ConcurrentFactoryMap.createMap((key) -> connect());
+    myParentBus = null;
   }
 
   /**
@@ -277,7 +279,6 @@ public class MessageBusImpl implements MessageBus {
     myMessageQueue.remove();
     if (myParentBus != null) {
       myParentBus.onChildBusDisposed(this);
-      myParentBus = null;
     }
     else {
       myRootBus.myWaitingBuses.remove();
