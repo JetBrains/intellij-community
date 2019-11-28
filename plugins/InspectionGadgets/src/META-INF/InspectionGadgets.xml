@@ -332,7 +332,8 @@
                      key="reflection.for.unavailable.annotation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ReflectionForUnavailableAnnotationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceAllDot" bundle="com.siyeh.InspectionGadgetsBundle" key="replace.all.dot.display.name"
+    <localInspection groupPath="Java" language="JAVA" suppressId="SuspiciousRegexArgument" alternativeId="ReplaceAllDot"
+                     shortName="ReplaceAllDot" bundle="com.siyeh.InspectionGadgetsBundle" key="replace.all.dot.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ReplaceAllDotInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ResultOfObjectAllocationIgnored" bundle="com.siyeh.InspectionGadgetsBundle"
