@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.lang.properties.psi.Property;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -24,7 +25,7 @@ import com.intellij.lang.properties.psi.Property;
 public class RegistryImplicitPropertyUsageProvider extends ImplicitPropertyUsageProvider {
 
   @Override
-  protected boolean isUsed(Property property) {
+  protected boolean isUsed(@NotNull Property property) {
     if (RegistryPropertiesAnnotator.isRegistryPropertiesFile(property.getContainingFile())) {
       final String name = property.getName();
       return name != null && RegistryPropertiesAnnotator.isImplicitUsageKey(name);
