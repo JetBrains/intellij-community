@@ -23,8 +23,10 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.util.ArrayUtil
+import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
@@ -189,7 +191,7 @@ object DynamicPlugins {
             module.stateStore.unloadComponent(moduleServiceInstance)
           }
         }
-
+        (CachedValuesManager.getManager(project) as CachedValuesManagerImpl).clearCachedValues()
         (project.messageBus as MessageBusImpl).unsubscribePluginListeners(loadedPluginDescriptor)
       }
     }
@@ -234,6 +236,7 @@ object DynamicPlugins {
         for (module in ModuleManager.getInstance(openProject).modules) {
           (module as PlatformComponentManagerImpl).registerComponents(listOf(pluginDescriptor), true)
         }
+        (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
       }
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
