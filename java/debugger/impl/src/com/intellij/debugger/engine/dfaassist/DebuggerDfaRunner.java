@@ -41,7 +41,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
   private final long myModificationStamp;
 
   DebuggerDfaRunner(@NotNull PsiCodeBlock body, @NotNull PsiStatement statement, @NotNull StackFrame frame) {
-    super(body);
+    super(body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
     myBody = body;
     myStatement = statement;
     myProject = body.getProject();
@@ -142,6 +142,21 @@ class DebuggerDfaRunner extends DataFlowRunner {
         }
       }
       catch (AbsentInformationException ignore) {
+      }
+    }
+    if (psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass psiClass = ((PsiField)psi).getContainingClass();
+      if (psiClass != null) {
+        String name = psiClass.getQualifiedName();
+        if (name != null) {
+          ReferenceType type = ContainerUtil.getOnlyItem(frame.virtualMachine().classesByName(name));
+          if (type != null) {
+            Field field = type.fieldByName(((PsiField)psi).getName());
+            if (field != null) {
+              return wrap(type.getValue(field));
+            }
+          }
+        }
       }
     }
     return null;
@@ -249,7 +264,38 @@ class DebuggerDfaRunner extends DataFlowRunner {
         ((StringReference)jdiValue).value(), psiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING,
                                                                                 myBody.getResolveScope()));
     }
+    if (jdiValue instanceof ObjectReference) {
+      ReferenceType type = ((ObjectReference)jdiValue).referenceType();
+      String enumConstantName = getEnumConstantName((ObjectReference)jdiValue);
+      if (enumConstantName != null) {
+        PsiType psiType = getPsiReferenceType(psiFactory, type);
+        if (psiType instanceof PsiClassType) {
+          PsiClass enumClass = ((PsiClassType)psiType).resolve();
+          if (enumClass != null && enumClass.isEnum()) {
+            PsiField enumConst = enumClass.findFieldByName(enumConstantName, false);
+            if (enumConst instanceof PsiEnumConstant) {
+              return factory.getConstFactory().createFromValue(enumConst, psiType);
+            }
+          }
+        }
+      }
+    }
     return null;
+  }
+
+  private static String getEnumConstantName(ObjectReference ref) {
+    ReferenceType type = ref.referenceType();
+    if (!(type instanceof ClassType) || !((ClassType)type).isEnum()) return null;
+    ClassType superclass = ((ClassType)type).superclass();
+    if (superclass == null) return null;
+    if (!superclass.name().equals(CommonClassNames.JAVA_LANG_ENUM)) {
+      superclass = superclass.superclass();
+    }
+    if (superclass == null || !superclass.name().equals(CommonClassNames.JAVA_LANG_ENUM)) return null;
+    Field nameField = superclass.fieldByName("name");
+    if (nameField == null) return null;
+    Value nameValue = ref.getValue(nameField);
+    return nameValue instanceof StringReference ? ((StringReference)nameValue).value() : null;
   }
 
   private static Value wrap(Value value) {

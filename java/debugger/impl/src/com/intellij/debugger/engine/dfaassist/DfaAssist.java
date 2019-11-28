@@ -10,10 +10,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerContextListener;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -66,7 +63,7 @@ public class DfaAssist implements DebuggerContextListener {
       return;
     }
     PsiJavaFile file = ObjectUtils.tryCast(sourcePosition.getFile(), PsiJavaFile.class);
-    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(myProject);
+    DebugProcessImpl debugProcess = newContext.getDebugProcess();
     PsiElement element = sourcePosition.getElementAt();
     if (debugProcess == null || file == null || element == null) {
       disposeInlays();
@@ -144,7 +141,6 @@ public class DfaAssist implements DebuggerContextListener {
     if (!locationMatches(element, frame.location())) return null;
     PsiStatement statement = getAnchorStatement(element);
     if (statement == null) return null;
-    // TODO: support class initializers
     PsiCodeBlock body = getCodeBlock(statement);
     if (body == null) return null;
     // TODO: read assertion status
@@ -154,21 +150,26 @@ public class DfaAssist implements DebuggerContextListener {
 
   /**
    * Quick check whether code location matches the source code in the editor
-   * @param element
-   * @param location
-   * @return
+   * @param element PsiElement in the editor
+   * @param location location reported by debugger
+   * @return true if debugger location likely matches to the editor location
    */
   private static boolean locationMatches(@NotNull PsiElement element, Location location) {
     Method method = location.method();
-    PsiParameterListOwner context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+    PsiElement context = DebuggerUtilsEx.getContainingMethod(element);
     try {
       if (context instanceof PsiMethod) {
         PsiMethod psiMethod = (PsiMethod)context;
-        return psiMethod.getName().equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.arguments().size();
+        String name = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
+        return name.equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.arguments().size();
       }
       if (context instanceof PsiLambdaExpression) {
-        return method.name().startsWith("lambda$") && 
-                            method.arguments().size() >= context.getParameterList().getParametersCount();
+        return DebuggerUtilsEx.isLambda(method) && 
+               method.arguments().size() >= ((PsiLambdaExpression)context).getParameterList().getParametersCount();
+      }
+      if (context instanceof PsiClassInitializer) {
+        String expectedMethod = ((PsiClassInitializer)context).hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
+        return method.name().equals(expectedMethod);
       }
     }
     catch (AbsentInformationException ignored) {
@@ -195,7 +196,7 @@ public class DfaAssist implements DebuggerContextListener {
       e = e.getParent();
       if (e instanceof PsiCodeBlock) {
         PsiElement parent = e.getParent();
-        if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression ||
+        if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression || parent instanceof PsiClassInitializer ||
             // We cannot properly restore context if we started from finally, so let's analyze just finally block
             parent instanceof PsiTryStatement && ((PsiTryStatement)parent).getFinallyBlock() == e ||
             parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiLoopStatement) {
