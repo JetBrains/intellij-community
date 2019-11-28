@@ -66,7 +66,7 @@ internal object BranchesDashboardActions {
     : GitBranchPopupActions.LocalBranchActions(project, repositories, branchName, currentRepository) {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayListOf<AnAction>(*super.getChildren(e)).apply { add(3, UpdateSelectedBranchAction()) }.toTypedArray()
+      arrayListOf<AnAction>(*super.getChildren(e)).toTypedArray()
   }
 
   class BranchActionsBuilder(private val project: Project, private val tree: FilteringBranchesTree) {

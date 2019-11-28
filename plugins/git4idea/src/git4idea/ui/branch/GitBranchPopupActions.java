@@ -34,6 +34,7 @@ import git4idea.GitProtectedBranchesKt;
 import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
+import git4idea.fetch.GitFetchSupport;
 import git4idea.push.GitPushSource;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitBranchTrackInfo;
@@ -276,6 +277,7 @@ public class GitBranchPopupActions {
         new CheckoutAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
+        new UpdateSelectedBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
@@ -766,6 +768,41 @@ public class GitBranchPopupActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebaseOnCurrent(myRepositories, myBranchName);
+    }
+  }
+
+  private static class UpdateSelectedBranchAction extends DumbAwareAction {
+    private final Project myProject;
+    private final List<? extends GitRepository> myRepositories;
+    private final String myBranchName;
+    private final List<String> myBranchNameList;
+
+    UpdateSelectedBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+      super("Update", null, AllIcons.Actions.CheckOut);
+      myProject = project;
+      myRepositories = repositories;
+      myBranchName = branchName;
+      myBranchNameList = Collections.singletonList(branchName);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      String branchPresentation = getBranchPresentation(myBranchName);
+      String description = String.format("Fetch remote tracking branch and fast-forward %s (like `git fetch %s:%s`)",
+                                         branchPresentation, myBranchName, myBranchName);
+      presentation.setDescription(description);
+      if (GitFetchSupport.fetchSupport(myProject).isFetchRunning()) {
+        presentation.setEnabled(false);
+        presentation.setDescription("Update is already running");
+        return;
+      }
+      presentation.setEnabled(isTrackingInfosExist(myBranchNameList, myRepositories));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      updateBranches(myProject, myRepositories, myBranchNameList);
     }
   }
 
