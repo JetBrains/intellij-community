@@ -178,7 +178,8 @@ public class IncProjectBuilder {
     try {
       context = createContext(scope);
       BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(context);
-      if (forceCleanCaches) sourcesState.clearSourcesState();
+      // Clear source state report if force clean or rebuild
+      if (forceCleanCaches || context.isProjectRebuild()) sourcesState.clearSourcesState();
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
       //myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
