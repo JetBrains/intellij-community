@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.util.Slow
 @Slow
 @CompileStatic
 abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase implements CompilerMethods {
-
   protected CompilerTester myCompilerTester
 
   @Override

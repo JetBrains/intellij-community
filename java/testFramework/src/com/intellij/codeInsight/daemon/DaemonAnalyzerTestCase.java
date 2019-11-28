@@ -101,7 +101,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   protected void tearDown() throws Exception {
     try {
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-      final Project project = getProject();
+      Project project = getProject();
       if (project != null) {
         ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
