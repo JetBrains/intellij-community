@@ -151,7 +151,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Nullable
   static AnAction convertStub(@NotNull ActionStub stub) {
-    AnAction anAction = instantiate(stub.getClassName(), stub.getLoader(), stub.getPlugin().getPluginId(), AnAction.class);
+    AnAction anAction = instantiate(stub.getClassName(), stub.getPlugin(), AnAction.class);
     if (anAction == null) {
       return null;
     }
@@ -162,29 +162,31 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  private static <T> T instantiate(String stubClassName, ClassLoader classLoader, PluginId pluginId, Class<T> expectedClass) {
+  private static <T> T instantiate(@NotNull String stubClassName, @NotNull IdeaPluginDescriptor pluginDescriptor, Class<T> expectedClass) {
     Object obj;
     try {
-      Class<?> aClass = Class.forName(stubClassName, true, classLoader);
       if (expectedClass == ActionGroup.class) {
-        obj = new CachingConstructorInjectionComponentAdapter(stubClassName, aClass)
-          .getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
+        obj = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(stubClassName, pluginDescriptor);
       }
       else {
-        obj = ReflectionUtil.newInstance(aClass);
+        obj = ReflectionUtil.newInstance(Class.forName(stubClassName, true, pluginDescriptor.getPluginClassLoader()));
       }
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
+    catch (PluginException e) {
+      LOG.error(e);
+      return null;
+    }
     catch (Throwable e) {
-      LOG.error(new PluginException(e, pluginId));
+      LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
       return null;
     }
 
     if (!expectedClass.isInstance(obj)) {
       LOG.error(new PluginException("class with name '" +
-                                    stubClassName + "' must be an instance of '" + expectedClass.getName() + "'; got " + obj, pluginId));
+                                    stubClassName + "' must be an instance of '" + expectedClass.getName() + "'; got " + obj, pluginDescriptor.getPluginId()));
       return null;
     }
     //noinspection unchecked
@@ -206,7 +208,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @Nullable
   static ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
     IdeaPluginDescriptor plugin = stub.getPlugin();
-    ActionGroup group = instantiate(stub.getActionClass(), plugin.getPluginClassLoader(), plugin.getPluginId(), ActionGroup.class);
+    ActionGroup group = instantiate(stub.getActionClass(), plugin, ActionGroup.class);
     if (group == null) {
       return null;
     }
@@ -1388,18 +1390,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public ActionCallback tryToExecute(@NotNull final AnAction action,
-                                     @NotNull final InputEvent inputEvent,
-                                     @Nullable final Component contextComponent,
-                                     @Nullable final String place,
+  public ActionCallback tryToExecute(@NotNull AnAction action,
+                                     @NotNull InputEvent inputEvent,
+                                     @Nullable Component contextComponent,
+                                     @Nullable String place,
                                      boolean now) {
+    assert ApplicationManager.getApplication().isDispatchThread();
 
-    final Application app = ApplicationManager.getApplication();
-    assert app.isDispatchThread();
-
-    final ActionCallback result = new ActionCallback();
-    final Runnable doRunnable = () -> tryToExecuteNow(action, inputEvent, contextComponent, place, result);
-
+    ActionCallback result = new ActionCallback();
+    Runnable doRunnable = () -> tryToExecuteNow(action, inputEvent, contextComponent, place, result);
     if (now) {
       doRunnable.run();
     }
@@ -1411,12 +1410,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return result;
   }
 
-  private void tryToExecuteNow(@NotNull AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
-    final Presentation presentation = action.getTemplatePresentation().clone();
-
-    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
-      () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
-        final DataContext context = getContextBy(contextComponent);
+  private void tryToExecuteNow(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent, String place, ActionCallback result) {
+    Presentation presentation = action.getTemplatePresentation().clone();
+    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(() -> {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
+        DataContext context = getContextBy(contextComponent);
 
         AnActionEvent event = new AnActionEvent(
           inputEvent, context,
@@ -1458,8 +1456,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         ActionUtil.performActionDumbAware(action, event);
         result.setDone();
         queueActionPerformedEvent(action, context, event);
-      }
-    ), ModalityState.defaultModalityState());
+      });
+    }, ModalityState.defaultModalityState());
   }
 
   private class MyTimer extends Timer implements ActionListener {
