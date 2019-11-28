@@ -1,11 +1,11 @@
 package circlet.settings
 
 import com.intellij.openapi.ui.*
+import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.*
 import javax.swing.*
-
 
 internal fun buildLoginPanel(st: CircletLoginState.Disconnected,
                              loginAction: (String) -> Unit): DialogPanel {
@@ -34,8 +34,9 @@ internal fun buildLoginPanel(st: CircletLoginState.Disconnected,
             loginButton()
         }
         if (st.error != null) {
-            val errorText = JBLabel(st.error, UIUtil.ComponentStyle.REGULAR, UIUtil.FontColor.BRIGHTER)
-            row("Error") {
+            val errorText = SimpleColoredComponent()
+            errorText.append(st.error, SimpleTextAttributes.ERROR_ATTRIBUTES)
+            row("") {
                 errorText()
             }
         }
