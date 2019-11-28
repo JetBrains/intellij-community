@@ -80,6 +80,6 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     if (isSave) {
       StateStorageManagerKt.saveComponentManager(project, true);
     }
-    ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
+    ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project);
   }
 }

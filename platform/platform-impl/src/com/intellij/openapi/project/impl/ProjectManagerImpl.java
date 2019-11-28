@@ -318,7 +318,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     finally {
       if (!succeed) {
-        ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> Disposer.dispose(project)));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          WriteAction.run(() -> Disposer.dispose(project));
+        });
       }
     }
   }
@@ -411,8 +413,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     GuiUtils.invokeLaterIfNeeded(() -> {
-      closeProject(project, false, false, false, true);
-      WriteAction.run(() -> Disposer.dispose(project));
+      closeProject(project, false, false, /* dispose */ true, true);
       notifyProjectOpenFailed();
     }, ModalityState.defaultModalityState());
     return false;
@@ -639,21 +640,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public boolean closeProject(@NotNull final Project project) {
-    return closeProject(project, true, true, false, true);
+  public final boolean closeProject(@NotNull Project project) {
+    return closeProject(project, /* isSaveProject = */ true, /* isSaveApp = */ true, /* dispose = */ false, /* checkCanClose = */ true);
+  }
+
+  @TestOnly
+  public final boolean forceCloseProject(@NotNull Project project, boolean dispose) {
+    return closeProject(project, /* isSaveProject = */ false, /* isSaveApp = */ false, dispose, /* checkCanClose = */ false);
   }
 
   @Override
-  @TestOnly
-  public boolean forceCloseProject(@NotNull Project project, boolean dispose) {
-    return closeProject(project, false /* do not save project */, false /* do not save app */, dispose, false);
+  public boolean forceCloseProject(@NotNull Project project) {
+    return closeProject(project, /* isSaveProject = */ false, /* isSaveApp = */ false, /* dispose = */ true, /* checkCanClose = */ false);
   }
 
   // return true if successful
   @Override
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
     for (Project project : getOpenProjects()) {
-      if (!closeProject(project, true, false, true, checkCanClose)) {
+      if (!closeProject(project, /* isSaveProject = */ true, /* isSaveApp = */ false, /* dispose = */ true, checkCanClose)) {
         return false;
       }
     }
@@ -662,10 +667,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   // isSaveApp is ignored if saveProject is false
   @SuppressWarnings("TestOnlyProblems")
-  private boolean closeProject(@NotNull final Project project,
-                               final boolean isSaveProject,
-                               final boolean isSaveApp,
-                               final boolean dispose,
+  private boolean closeProject(@NotNull Project project,
+                               boolean isSaveProject,
+                               boolean isSaveApp,
+                               boolean dispose,
                                boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
@@ -688,6 +693,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       projectImpl.setTemporarilyDisposed(false);
     }
     else if (!isProjectOpened(project)) {
+      if (dispose) {
+        if (project instanceof ProjectImpl) {
+          ProjectImpl projectImpl = (ProjectImpl)project;
+          projectImpl.stopServicePreloading();
+          projectImpl.disposeEarlyDisposable();
+          projectImpl.startDispose();
+        }
+        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      }
       return true;
     }
 

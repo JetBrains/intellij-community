@@ -551,7 +551,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           LegacyBridgeRootsWatcher.getInstance(project).clear();
         }
       }),
-      () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, !ProjectManagerImpl.isLight(project)),
+      () -> ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, !ProjectManagerImpl.isLight(project)),
       () -> application.setDataProvider(null),
       () -> UiInterceptors.clear(),
       () -> {
@@ -799,7 +799,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(project, true));
+    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(project));
     assertTrue(project.isDisposed());
 
     // project may be disposed but empty folder may still be there

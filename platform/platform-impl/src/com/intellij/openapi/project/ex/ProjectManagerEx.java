@@ -93,7 +93,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   /**
    * The project and the app settings will be not saved.
    */
-  public abstract boolean forceCloseProject(@NotNull Project project, boolean dispose);
+  public abstract boolean forceCloseProject(@NotNull Project project);
 
   // return true if successful
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);

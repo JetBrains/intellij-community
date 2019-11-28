@@ -97,15 +97,19 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
     if (myProject != null) {
       runAll = runAll
-        .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
-        .append(() -> {
-          for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
-            moduleFixtureBuilder.getFixture().tearDown();
-          }
-        })
-        .append(() -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
-        .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
-        .append(() -> myProject = null);
+        .append(
+          () -> {
+            LightPlatformTestCase.doTearDown(myProject, myApplication);
+            myProject = null;
+          },
+          () -> {
+            for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
+              moduleFixtureBuilder.getFixture().tearDown();
+            }
+          },
+          () -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.checkThatNoOpenProjects()),
+          () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(myProject)
+        );
     }
 
     JarFileSystemImpl.cleanupForNextTest();
@@ -136,24 +140,27 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     }
 
     runAll
-      .append(super::tearDown)
-      .append(() -> {
-        if (myEditorListenerTracker != null) {
-          myEditorListenerTracker.checkListenersLeak();
-        }
-      })
-      .append(() -> {
-        if (myThreadTracker != null) {
-          myThreadTracker.checkLeak();
-        }
-      })
-      .append(LightPlatformTestCase::checkEditorsReleased)
-      .append(() -> {
-        if (myOldSdks != null) {
-          myOldSdks.checkForJdkTableLeaks();
-        }
-      })
-      .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
+      .append(
+        () -> super.tearDown(),
+        () -> {
+          if (myEditorListenerTracker != null) {
+            myEditorListenerTracker.checkListenersLeak();
+          }
+        },
+        () -> {
+          if (myThreadTracker != null) {
+            myThreadTracker.checkLeak();
+          }
+        },
+        () -> LightPlatformTestCase.checkEditorsReleased(),
+        () -> {
+          if (myOldSdks != null) {
+            myOldSdks.checkForJdkTableLeaks();
+          }
+        },
+        // project is disposed by now, no point in passing it
+        () -> HeavyPlatformTestCase.cleanupApplicationCaches(null)
+      )
       .run();
   }
 

@@ -8,6 +8,7 @@ import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -558,8 +559,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     runAll(
       () -> disposeRootDisposable(),
       () -> {
-        if (project != null) {
-          LightPlatformTestCase.doTearDown(project, ourApplication);
+        if (myProject != null) {
+          LightPlatformTestCase.doTearDown(myProject, ourApplication);
+          myProject = null;
         }
       },
       () -> {
@@ -613,7 +615,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       () -> myVirtualFilePointerTracker.assertPointersAreDisposed(),
       () -> {
         myProjectManager = null;
-        myProject = null;
         myModule = null;
         myFilesToDelete.clear();
         myEditorListenerTracker = null;
@@ -626,28 +627,22 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    // project maybe not in the list of opened projects, so, cannot be generalized
-    if (!projectManager.forceCloseProject(projectToClose, true)) {
-      // it means that project was not opened, so, just dispose it
-      if (projectToClose instanceof ProjectImpl) {
-        ProjectImpl project = (ProjectImpl)projectToClose;
-        project.stopServicePreloading();
-        project.disposeEarlyDisposable();
-        project.startDispose();
-      }
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(projectToClose));
-    }
+    projectManager.forceCloseProject(projectToClose);
+    checkThatNoOpenProjects();
+  }
 
-    Project[] openProjects = projectManager.getOpenProjects();
+  public static void checkThatNoOpenProjects() {
+    Project[] openProjects = ProjectUtil.getOpenProjects();
     if (openProjects.length == 0) {
       return;
     }
 
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     List<IllegalStateException> errors = new SmartList<>();
     List<ThrowableRunnable<Throwable>> tasks = new SmartList<>();
     for (Project project : openProjects) {
       errors.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
-      tasks.add(() -> projectManager.forceCloseProject(project, true));
+      tasks.add(() -> projectManager.forceCloseProject(project));
     }
     new RunAll(tasks).run(errors);
   }
@@ -1048,8 +1043,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
 
     NonBlockingReadActionImpl.cancelAllTasks();
-    GeneratedSourceFileChangeTrackerImpl tracker =
-      (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
+    GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getServiceIfCreated(GeneratedSourceFileChangeTracker.class);
     if (tracker != null) {
       tracker.cancelAllAndWait(timeout, timeUnit);
     }

@@ -6,11 +6,10 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import java.io.File
@@ -29,16 +28,12 @@ abstract class ProjectSdkStubsGenerator {
 
   fun buildStubs(baseDir: String) {
     val app = IdeaTestApplication.getInstance()
-
-
     try {
       for (python in File(root).listFiles()) {
         if (python.name.startsWith(".")) {
           continue
         }
-        indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty",
-                                        python.absolutePath,
-                                        "$baseDir/$stubsFileName")
+        indexSdkAndStoreSerializedStubs("${PathManager.getHomePath()}/python/testData/empty", python.absolutePath, "$baseDir/$stubsFileName")
       }
     }
     catch (e: Throwable) {
@@ -52,23 +47,18 @@ abstract class ProjectSdkStubsGenerator {
 
   private fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsFilePath: String) {
     val pair = openProjectWithSdk(projectPath, moduleTypeId, createSdkProducer(sdkPath))
-
     val project = pair.first
     val sdk = pair.second
 
     try {
-
       val roots: List<VirtualFile> = sdk!!.rootProvider.getFiles(OrderRootType.CLASSES).asList()
-
       val stubsGenerator = createStubsGenerator(stubsFilePath)
-
       stubsGenerator.buildStubsForRoots(roots)
     }
     finally {
       UIUtil.invokeAndWaitIfNeeded(Runnable {
-        ProjectManager.getInstance().closeProject(project)
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
         WriteAction.run<Throwable> {
-          Disposer.dispose(project)
           SdkConfigurationUtil.removeSdk(sdk!!)
         }
       })

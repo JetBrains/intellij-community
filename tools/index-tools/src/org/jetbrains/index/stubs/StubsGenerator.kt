@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.VirtualFile
@@ -157,9 +158,8 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
   }
   finally {
     ApplicationManager.getApplication().invokeAndWait(Runnable {
-      ProjectManager.getInstance().closeProject(project)
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project)
       WriteAction.run<Throwable> {
-        Disposer.dispose(project)
         app.dispose()
       }
     }, ModalityState.NON_MODAL)

@@ -835,7 +835,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       assertEquals(US_ASCII, file.getCharset());
     }
     finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(newEncodingProject, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(newEncodingProject);
     }
   }
 

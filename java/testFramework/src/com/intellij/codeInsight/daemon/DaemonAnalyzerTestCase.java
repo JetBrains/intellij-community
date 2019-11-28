@@ -18,7 +18,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.ExternalAnnotatorsFilter;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -114,7 +113,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     finally {
       super.tearDown();
     }
-    //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {

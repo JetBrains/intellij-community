@@ -148,7 +148,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       Project project = getProject();
       if (project != null) {
         doPostponedFormatting(project);
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project, false);
       }
     }
     catch (Throwable e) {
@@ -1504,7 +1503,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       return;
     }
     finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject);
     }
     fail("must throw PCE");
   }

@@ -227,7 +227,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       });
     }
     finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject);
     }
   }
 
@@ -372,7 +372,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
     }
     finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject);
     }
   }
 

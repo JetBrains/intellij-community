@@ -37,7 +37,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
       assertEquals("util", assertOneElement(dep.dependencyModuleNames))
     }
     finally {
-      getProjectManager().forceCloseProject(project, true)
+      getProjectManager().forceCloseProject(project)
     }
   }
 

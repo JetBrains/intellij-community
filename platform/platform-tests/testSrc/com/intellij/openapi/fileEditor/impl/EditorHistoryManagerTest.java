@@ -81,7 +81,7 @@ public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
       ProjectKt.getStateStore(project).saveComponent(EditorHistoryManager.getInstance(project));
     }
     finally {
-      myProjectManager.forceCloseProject(project, true);
+      myProjectManager.forceCloseProject(project);
     }
     UIUtil.dispatchAllInvocationEvents();
   }
