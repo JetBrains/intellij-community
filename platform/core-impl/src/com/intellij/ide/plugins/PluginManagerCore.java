@@ -538,12 +538,21 @@ public final class PluginManagerCore {
 
     // it can be an UrlClassLoader loaded by another class loader, so instanceof doesn't work
     Class<? extends ClassLoader> aClass = loader.getClass();
-    if (aClass.getName().equals(UrlClassLoader.class.getName())) {
+    if (isInstanceofUrlClassLoader(aClass)) {
       try {
         return ((Boolean)aClass.getMethod("hasLoadedClass", String.class).invoke(loader, className)).booleanValue();
       }
       catch (Exception ignored) {
       }
+    }
+    return false;
+  }
+
+  private static boolean isInstanceofUrlClassLoader(Class<?> aClass) {
+    String urlClassLoaderName = UrlClassLoader.class.getName();
+    while (aClass != null) {
+      if (aClass.getName().equals(urlClassLoaderName)) return true;
+      aClass = aClass.getSuperclass();
     }
     return false;
   }
