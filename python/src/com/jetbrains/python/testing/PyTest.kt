@@ -56,7 +56,8 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
 
 
 class PyTestConfiguration(project: Project, factory: PyTestFactory)
-  : PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)) {
+  : PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)),
+    PyTestConfigurationWithCustomSymbol {
   @ConfigField
   var keywords: String = ""
   @ConfigField
@@ -101,6 +102,9 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
    * Fetch params from test name
    */
   private fun getParamFromMetaInfo(metaInfo: String) = PARAM_REGEX.find(metaInfo)?.groupValues?.getOrNull(1) ?: ""
+
+  override val fileSymbolSeparator get() = "::"
+  override val symbolSymbolSeparator get() = "::"
 
   override fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?): Boolean {
     return super.isSameAsLocation(target, metainfo) && getParamFromMetaInfo(metainfo ?: "") == parameters
