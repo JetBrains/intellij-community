@@ -75,7 +75,11 @@ public class JpsOutputLoaderManager {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
-        if (commitInfo != null) startLoadingForCommit(commitInfo.first);
+        if (commitInfo != null) {
+          // Drop JPS metadata to force plugin for downloading all compilation outputs
+          if (isForceUpdate) myMetadataLoader.dropCurrentProjectMetadata();
+          startLoadingForCommit(commitInfo.first);
+        }
         hasRunningTask.set(false);
       }
     };

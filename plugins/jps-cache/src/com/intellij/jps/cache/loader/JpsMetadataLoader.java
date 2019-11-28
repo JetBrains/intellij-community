@@ -69,4 +69,10 @@ public class JpsMetadataLoader {
     }
     return null;
   }
+
+  void dropCurrentProjectMetadata() {
+    File currentBuildCacheFolder = myBuildManager.getProjectSystemDirectory(myProject);
+    File currentSourceState = new File(currentBuildCacheFolder, SOURCES_STATE_FILE_NAME);
+    if (currentSourceState.exists()) FileUtil.delete(currentSourceState);
+  }
 }
