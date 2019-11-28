@@ -6,7 +6,7 @@ import com.intellij.diff.util.Side
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -69,14 +69,14 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
       // later to avoid saving inside document change event processing and deadlock with CLM.
-      TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
+      ApplicationManager.getApplication().invokeLater(Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
         val isEmpty = documentTracker.readLock { blocks.isEmpty() }
         if (isEmpty) {
           // file was modified, and now it's not -> dirty local change
           vcsDirtyScopeManager.fileDirty(virtualFile)
         }
-      })
+      }, project.disposed)
     }
   }
 
