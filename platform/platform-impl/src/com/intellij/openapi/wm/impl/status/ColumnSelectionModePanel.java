@@ -68,7 +68,7 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   }
 
   private void updateStatus() {
-    if (!myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return;
     final Editor editor = getFocusedEditor();
     if (editor != null && !isOurEditor(editor)) return;
     if (editor == null || !editor.isColumnMode()) {
