@@ -859,19 +859,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
   public void testProgressIndicatorNotOverriddenIn_runProcessWithProgressSynchronously_duringWriteAction() {
     final String progressIndicatorText = "Progress indicator text";
-    ProgressIndicator progressIndicator = new ProgressIndicatorBase() {
-      String text;
-
-      @Override
-      public void setText(String text) {
-        this.text = text;
-      }
-
-      @Override
-      public String getText() {
-        return text;
-      }
-    };
+    ProgressIndicator progressIndicator = new ProgressIndicatorBase();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
