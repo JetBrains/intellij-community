@@ -30,7 +30,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Objects;
 
 /**
  *  @author dsl
@@ -127,8 +128,6 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
 
   private PsiDirectory getOrCreateDirectoryForSource(final VirtualFile file)
     throws IncorrectOperationException {
-    final VirtualFile sourceRoot = myFileIndex.getSourceRootForFile(file);
-    LOG.assertTrue(sourceRoot != null, file.getPath());
-    return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, sourceRoot);
+    return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, Objects.requireNonNull(myFileIndex.getSourceRootForFile(file)));
   }
 }

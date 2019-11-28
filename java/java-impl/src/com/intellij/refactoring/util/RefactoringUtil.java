@@ -1211,7 +1211,7 @@ public class RefactoringUtil {
   }
 
   @NotNull
-  public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, final VirtualFile sourceRoot)
+  public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull final VirtualFile sourceRoot)
     throws IncorrectOperationException {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
