@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.diagnostic.EventsWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
@@ -82,6 +83,7 @@ public final class IdeEventQueue extends EventQueue {
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
+  private static EventsWatcher ourEventsWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -367,6 +369,7 @@ public final class IdeEventQueue extends EventQueue {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
+    EventsWatcher eventsWatcher = obtainEventsWatcher();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted(startedAt);
@@ -458,6 +461,9 @@ public final class IdeEventQueue extends EventQueue {
     finally {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
+      }
+      if (eventsWatcher != null) {
+        eventsWatcher.edtEventFinished(e, startedAt);
       }
     }
   }
@@ -562,6 +568,15 @@ public final class IdeEventQueue extends EventQueue {
         watcher = PerformanceWatcher.getInstance();
         ourPerformanceWatcher = watcher;
       }
+    }
+    return watcher;
+  }
+
+  @Nullable
+  private static EventsWatcher obtainEventsWatcher() {
+    EventsWatcher watcher = ourEventsWatcher;
+    if (watcher == null) {
+        ourEventsWatcher = watcher = EventsWatcher.getInstance();
     }
     return watcher;
   }

@@ -319,6 +319,7 @@
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.EventsWatcher" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"
                         serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
