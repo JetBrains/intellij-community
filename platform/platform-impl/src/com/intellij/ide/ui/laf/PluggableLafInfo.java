@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,4 +46,5 @@ public abstract class PluggableLafInfo extends UIManager.LookAndFeelInfo {
   }
 
   public abstract SearchTextAreaPainter createSearchAreaPainter(@NotNull SearchAreaContext context);
+  public abstract DarculaEditorTextFieldBorder createEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor);
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.util.ui.JBInsets;
@@ -25,7 +25,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
+import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,7 +35,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isTableCellEditor(c) || isCompact(c) ?
+    return DarculaUIUtil.isTableCellEditor(c) || DarculaUIUtil.isCompact(c) ?
            JBUI.insets(1, 1, 1, 4).asUIResource() :
            JBUI.insets(1).asUIResource();
   }
@@ -50,7 +50,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
       Rectangle r = new Rectangle(x, y, width, height);
       WinIntelliJTextFieldUI.adjustInWrapperRect(r, c);
 
-      boolean isCellRenderer = isTableCellEditor(c);
+      boolean isCellRenderer = DarculaUIUtil.isTableCellEditor(c);
       int bw = 1;
       Object op = jc.getClientProperty("JComponent.outline");
       if (c.isEnabled() && op != null) {

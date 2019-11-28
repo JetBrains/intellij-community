@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
@@ -18,7 +18,7 @@ import java.awt.event.MouseListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder.MINIMUM_HEIGHT;
+import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -91,7 +91,8 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   static void adjustInWrapperRect(Rectangle r, Component c) {
-    if (ComponentUtil.getParentOfType((Class<? extends Wrapper>)Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+    if (ComponentUtil.getParentOfType((Class<? extends Wrapper>)Wrapper.class, c) != null && TextFieldWithPopupHandlerUI
+      .isSearchFieldWithHistoryPopup(c)) {
       int delta = c.getHeight() - c.getPreferredSize().height;
       if (delta > 0) {
         delta -= delta % 2 == 0 ? 0 : 1;
@@ -117,7 +118,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected Insets getDefaultMargins() {
     Component c = getComponent();
-    return isCompact(c) || isTableCellEditor(c) ? JBInsets.create(0, 3) : JBInsets.create(2, 6);
+    return DarculaUIUtil.isCompact(c) || DarculaUIUtil.isTableCellEditor(c) ? JBInsets.create(0, 3) : JBInsets.create(2, 6);
   }
 
   @Override

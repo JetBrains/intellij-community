@@ -2,7 +2,9 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -558,14 +560,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void setupBorder(@NotNull EditorEx editor) {
     if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      if (UIUtil.isUnderDefaultMacTheme()) {
-        editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
-      } else if (UIUtil.isUnderWin10LookAndFeel()) {
-        editor.setBorder(new DarculaUIUtil.WinEditorTextFieldBorder(this, editor));
-      } else {
+      LafManager lafManager = LafManager.getInstance();
+      UIManager.LookAndFeelInfo lafInfo = lafManager.getCurrentLookAndFeel();
+      if (lafInfo instanceof PluggableLafInfo) {
+        editor.setBorder(((PluggableLafInfo)lafInfo).createEditorTextFieldBorder(this, editor));
+      }
+      else {
         editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
       }
-
     }
     else {
       editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));

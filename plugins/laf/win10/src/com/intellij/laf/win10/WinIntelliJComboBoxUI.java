@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
@@ -19,6 +19,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -494,7 +495,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     Insets i = getInsets();
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
-    editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
+    editorWidth = Math.max(editorWidth, DarculaUIUtil.MINIMUM_WIDTH.get() + i.left);
 
     int width = size != null ? size.width : 0;
     int height = size != null ? size.height : 0;
@@ -507,7 +508,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   protected LayoutManager createLayoutManager() {
-    return new ComboBoxLayoutManager() {
+    return new BasicComboBoxUI.ComboBoxLayoutManager() {
       @Override
       public void layoutContainer(Container parent) {
         JComboBox cb = (JComboBox)parent;

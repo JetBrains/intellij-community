@@ -1,13 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -15,13 +12,11 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-import static com.intellij.util.ui.JBUI.scale;
-
 /**
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
-  private static final Icon DEFAULT_ICON = scale(EmptyIcon.create(13)).asUIResource();
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -51,7 +46,7 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
       Object op = b.getClientProperty("JComponent.outline");
       boolean focused = op == null && c.hasFocus() || bm.isRollover() || isCellRollover(b);
       boolean pressed = bm.isPressed() || isCellPressed(b);
-      Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
+      Icon icon = WinIconLookup.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
       icon.paintIcon(c, g, iconRect.x, iconRect.y);
 
       if (op != null) {

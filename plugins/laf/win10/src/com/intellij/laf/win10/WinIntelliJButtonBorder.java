@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.JBInsets;
@@ -13,7 +13,7 @@ import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL;
+import static com.intellij.laf.win10.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL;
 
 /**
  * @author Konstantin Bulenkov

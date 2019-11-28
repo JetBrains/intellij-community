@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui.laf.intellij
+package com.intellij.laf.win10
 
-import com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL
+import com.intellij.laf.win10.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.util.ui.JBUI.scale
 import java.awt.*

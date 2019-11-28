@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI;
@@ -24,8 +24,8 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder.MINIMUM_HEIGHT;
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
+import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
+import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 public class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
   private MouseListener hoverListener;

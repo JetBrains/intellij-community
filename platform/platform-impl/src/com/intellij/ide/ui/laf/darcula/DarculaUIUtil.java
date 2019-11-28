@@ -4,12 +4,11 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
-import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.ui.*;
-import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.table.JBTableRowEditor;
@@ -29,8 +28,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Locale;
-
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 /**
  * @author Konstantin Bulenkov
@@ -201,190 +198,6 @@ public class DarculaUIUtil {
     }
     finally {
       g2.dispose();
-    }
-  }
-
-  public static class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
-    public MacEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
-      super(editorTextField, editor);
-    }
-
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      if (isComboBoxEditor(c)) {
-        g.setColor(c.getBackground());
-        g.fillRect(x, y, width, height);
-        return;
-      }
-
-      EditorTextField editorTextField = ComponentUtil.getParentOfType((Class<? extends EditorTextField>)EditorTextField.class, c);
-      if (editorTextField == null) return;
-      boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
-
-      if (isTableCellEditor(c)) {
-        paintCellEditorBorder((Graphics2D)g, c, new Rectangle(x, y, width, height), hasFocus);
-      }
-      else {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          if (c.isOpaque() || c instanceof JComponent && ((JComponent)c).getClientProperty(MacUIUtil.MAC_FILL_BORDER) == Boolean.TRUE) {
-            g2.setColor(UIUtil.getPanelBackground());
-            g2.fillRect(x, y, width, height);
-          }
-
-          Rectangle2D rect = new Rectangle2D.Float(
-            x + JBUIScale.scale(3), y + JBUIScale.scale(3), width - JBUIScale.scale(3) * 2, height - JBUIScale.scale(3) * 2);
-          g2.setColor(c.getBackground());
-          g2.fill(rect);
-
-          if (!editorTextField.isEnabled()) {
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-          }
-
-          float bw = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
-          Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          outline.append(rect, false);
-          outline.append(new Rectangle2D.Float((float)rect.getX() + bw,
-                                               (float)rect.getY() + bw,
-                                               (float)rect.getWidth() - 2 * bw,
-                                               (float)rect.getHeight() - 2 * bw), false);
-          g2.setColor(Gray.xBC);
-          g2.fill(outline);
-
-          g2.translate(x, y);
-
-          Object op = editorTextField.getClientProperty("JComponent.outline");
-          if (editorTextField.isEnabled() && op != null) {
-            paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
-          }
-          else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
-            paintFocusBorder(g2, width, height, 0, true);
-          }
-        }
-        finally {
-          g2.dispose();
-        }
-      }
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return isTableCellEditor(c) || isCompact(c) || isComboBoxEditor(c) ?
-             JBInsets.create(2, 3).asUIResource() : JBInsets.create(5, 8).asUIResource();
-    }
-  }
-
-  public static class WinEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
-    public WinEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
-      super(editorTextField, editor);
-      editor.addEditorMouseListener(new EditorMouseListener() {
-        @Override
-        public void mouseEntered(@NotNull EditorMouseEvent e) {
-          editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
-          editorTextField.repaint();
-        }
-
-        @Override
-        public void mouseExited(@NotNull EditorMouseEvent e) {
-          editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
-          editorTextField.repaint();
-        }
-      });
-    }
-
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      if (isComboBoxEditor(c)) {
-        g.setColor(c.getBackground());
-        g.fillRect(x, y, width, height);
-        return;
-      }
-
-      EditorTextField editorTextField = ComponentUtil.getParentOfType((Class<? extends EditorTextField>)EditorTextField.class, c);
-      if (editorTextField == null) return;
-
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        Rectangle r = new Rectangle(x, y, width, height);
-        boolean isCellRenderer = isTableCellEditor(c);
-
-        if (ComponentUtil.getParentOfType((Class<? extends Wrapper>)Wrapper.class, c) != null && TextFieldWithPopupHandlerUI
-          .isSearchFieldWithHistoryPopup(c)) {
-          JBInsets.removeFrom(r, JBInsets.create(2, 0));
-        }
-
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-        // Fill background area of border
-        if (isBorderOpaque() || c.getParent() != null) {
-          g2.setColor(c.getParent().getBackground());
-
-          Path2D borderArea = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          borderArea.append(r, false);
-
-          Rectangle innerRect = new Rectangle(r);
-          JBInsets.removeFrom(innerRect, JBUI.insets(isCellRenderer ? 1 : 2));
-          borderArea.append(innerRect, false);
-          g2.fill(borderArea);
-        }
-
-        // draw border itself
-        boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
-        int bw = 1;
-
-        Object op = editorTextField.getClientProperty("JComponent.outline");
-        if (editorTextField.isEnabled() && op != null) {
-          Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
-          bw = isCellRenderer ? 1 : 2;
-        }
-        else {
-          if (hasFocus) {
-            g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-          }
-          else if (editorTextField.isEnabled() &&
-                   editorTextField.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
-            g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
-          }
-          else {
-            g2.setColor(UIManager.getColor("TextField.borderColor"));
-          }
-
-          if (!isCellRenderer) {
-            JBInsets.removeFrom(r, JBUI.insets(1));
-          }
-        }
-
-        if (!editorTextField.isEnabled()) {
-          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
-        }
-
-        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        border.append(r, false);
-
-        Rectangle innerRect = new Rectangle(r);
-        JBInsets.removeFrom(innerRect, JBUI.insets(bw));
-        border.append(innerRect, false);
-
-        g2.fill(border);
-      }
-      finally {
-        g2.dispose();
-      }
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      if (ComponentUtil.getParentOfType((Class<? extends ComboBoxCompositeEditor>)ComboBoxCompositeEditor.class, c) != null) {
-        return JBUI.emptyInsets().asUIResource();
-      }
-      return (isTableCellEditor(c) ? JBUI.insets(1) : isComboBoxEditor(c) ? JBInsets.create(1, 6) : JBInsets.create(4, 6)).asUIResource();
-    }
-
-    @Nullable
-    @Override
-    public Insets getVisualPaddings(@NotNull Component component) {
-      return JBUI.insets(1);
     }
   }
 

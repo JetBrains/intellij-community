@@ -1334,14 +1334,14 @@ public final class UIUtil {
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui", true) && !isCustomTheme();
-  }
+    if (SystemInfo.isWindows) {
+      LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+      if (lookAndFeel instanceof UserDataHolder) {
+        UserDataHolder dh = (UserDataHolder)lookAndFeel;
 
-  private static boolean isCustomTheme() {
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (lookAndFeel instanceof UserDataHolder) {
-      Boolean value = ((UserDataHolder)lookAndFeel).getUserData(LAF_WITH_THEME_KEY);
-      return value != null && value.booleanValue();
+        return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
+               StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
+      }
     }
     return false;
   }
