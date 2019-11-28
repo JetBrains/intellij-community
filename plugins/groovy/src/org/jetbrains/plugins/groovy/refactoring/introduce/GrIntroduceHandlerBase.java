@@ -12,7 +12,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -428,9 +427,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
     ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(psiReference -> {
       final PsiElement element = psiReference.getElement();
-      if (element != null) {
-        list.add(element);
-      }
+      list.add(element);
       return true;
     });
     return list.toArray(PsiElement.EMPTY_ARRAY);
@@ -520,25 +517,6 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
     }
   }
-
-  public static RangeMarker createRange(Document document, StringPartInfo part) {
-    if (part == null) {
-      return null;
-    }
-    TextRange range = part.getRange().shiftRight(part.getLiteral().getTextRange().getStartOffset());
-    return document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
-
-  }
-
-  @Nullable
-  public static RangeMarker createRange(@NotNull Document document, @Nullable PsiElement expression) {
-    if (expression == null) {
-      return null;
-    }
-    TextRange range = expression.getTextRange();
-    return document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), false);
-  }
-
 
   public static boolean isInplace(@NotNull Editor editor, @NotNull PsiElement place) {
     final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(place);
