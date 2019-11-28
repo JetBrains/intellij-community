@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.pinned.items
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Alarm
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.PinToTopManagerState
@@ -31,8 +32,15 @@ open class XDebuggerPinToTopManager {
     val pinToTopComparator : Comparator<XValueNodeImpl> = Comparator.comparing<XValueNodeImpl, Boolean> { !isItemPinned(it) }
     val compoundComparator = pinToTopComparator.then(XValueNodeImpl.COMPARATOR)
 
+    fun isEnabled() : Boolean {
+        return Registry.`is`("debugger.field.pin.to.top", true)
+    }
+
     fun onNodeHovered(node: XDebuggerTreeNode?, lifetimeHolder: Disposable) {
         if (myActiveNode == node) {
+            return
+        }
+        if (!isEnabled()) {
             return
         }
 

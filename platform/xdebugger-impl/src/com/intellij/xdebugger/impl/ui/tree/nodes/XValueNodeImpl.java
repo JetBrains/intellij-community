@@ -306,6 +306,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Nullable
   @Override
   public Object getIconTag() {
+    if (!getTree().getPinToTopManager().isEnabled()) {
+        return null;
+    }
+
     if (!(myValueContainer instanceof PinToTopMemberValue)) {
       return null;
     }

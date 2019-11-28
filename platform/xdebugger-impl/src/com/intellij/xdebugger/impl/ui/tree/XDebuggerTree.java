@@ -160,6 +160,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       @Override
       public void mouseMoved(MouseEvent e) {
         super.mouseMoved(e);
+        if (!myPinToTopManager.isEnabled()) {
+          return;
+        }
         TreePath pathForLocation = getPathForLocation(e.getX(), e.getY());
         if (pathForLocation == null) {
           myPinToTopManager.onNodeHovered(null, XDebuggerTree.this);
