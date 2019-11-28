@@ -451,5 +451,11 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     public int hashCode() {
       return 31 * myExpression.hashCode() + Objects.hashCode(myRange);
     }
+
+    @Override
+    public String toString() {
+      String text = myExpression.getText();
+      return myRange == null ? text : text.substring(myRange.getStartOffset(), myRange.getEndOffset());
+    }
   }
 }
