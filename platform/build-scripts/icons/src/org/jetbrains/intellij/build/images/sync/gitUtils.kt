@@ -174,7 +174,7 @@ private fun beforePushRetry(e: Throwable, repo: File, spec: String, user: String
     execute(repo, GIT, *identity, "pull", "--rebase=true", "origin", if (specParts.count() == 2) {
       "${specParts[1]}:${specParts[0]}"
     }
-    else spec)
+    else spec, withTimer = true)
   }
   return true
 }
