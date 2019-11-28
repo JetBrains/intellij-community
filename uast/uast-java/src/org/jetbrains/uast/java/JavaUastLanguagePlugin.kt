@@ -202,6 +202,7 @@ internal object JavaConverter {
           val methodOrFieldRef = el.parent as? PsiDocMethodOrFieldRef ?: return@let null
           JavaUSimpleNameReferenceExpression(el, el.text, givenParent, methodOrFieldRef.reference) }
         }
+        is PsiCatchSection -> el<UCatchClause>(build(::JavaUCatchClause))
         else -> null
       }
     }
