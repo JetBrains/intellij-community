@@ -57,8 +57,8 @@
     <extensionPoint name="remoteFileUpdater"
                     interface="com.intellij.ide.browsers.RemoteFileUpdater"/>
 
-    <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider"/>
-    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP"/>
+    <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
+    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>
 
     <extensionPoint name="xml.idContributor"
                     interface="com.intellij.xml.util.XmlIdContributor"/>
