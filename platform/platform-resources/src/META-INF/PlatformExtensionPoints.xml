@@ -16,8 +16,7 @@
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
 
-    <extensionPoint name="errorHandler"
-                    interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
+    <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>
 
     <extensionPoint name="jps.plugin"
                     beanClass="com.intellij.jps.impl.JpsPluginBean"/>
