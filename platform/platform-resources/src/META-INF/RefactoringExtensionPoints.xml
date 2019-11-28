@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="lang.refactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.refactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.refactoring.RefactoringSupportProvider"/>
     </extensionPoint>
 
