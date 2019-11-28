@@ -25,7 +25,7 @@ group 'intellij.tools'
 version '1.0'
 
 try {
-  project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(1000)
+  project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(5000)
   if (!project.ext.inJetBrainsNetwork && org.gradle.internal.os.OperatingSystem.current().isWindows()) {
     project.ext.inJetBrainsNetwork = Runtime.getRuntime().exec("ping -n 1 repo.labs.intellij.net").waitFor() == 0
   }
