@@ -60,7 +60,7 @@
                     interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
     <extensionPoint name="trailingSpacesOptionsProvider"
-                    interface="com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider"/>
+                    interface="com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider" dynamic="true"/>
 
     <extensionPoint name="fileTypeUsageSchemaDescriptor"
                     beanClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$FileTypeUsageSchemaDescriptorEP">
