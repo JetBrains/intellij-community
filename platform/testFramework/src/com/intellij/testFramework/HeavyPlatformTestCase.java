@@ -129,7 +129,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   @Nullable
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
-
   @NotNull
   public TempFiles getTempDir() {
     return myTempFiles;
@@ -554,63 +553,63 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll()
-      .append(() -> disposeRootDisposable())
-      .append(() -> {
+    new RunAll(
+      () -> disposeRootDisposable(),
+      () -> {
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, ourApplication);
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (myProject != null) {
           closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
           myProject = null;
         }
-      })
-      .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .append(() -> {
+      },
+      () -> UIUtil.dispatchAllInvocationEvents(),
+      () -> {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         StartMarkAction.checkCleared(project);
         InplaceRefactoring.checkCleared();
-      })
-      .append(() -> {
+      },
+      () -> {
         JarFileSystemImpl.cleanupForNextTest();
 
         getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
         LaterInvocator.dispatchPendingFlushes();
-      })
-      .append(() -> {
+      },
+      () -> {
         if (!myAssertionsInTestDetected) {
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;
           }
         }
-      })
-      .append(() -> super.tearDown())
-      .append(() -> {
+      },
+      () -> super.tearDown(),
+      () -> {
         if (myEditorListenerTracker != null) {
           myEditorListenerTracker.checkListenersLeak();
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (myThreadTracker != null) {
           myThreadTracker.checkLeak();
         }
-      })
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
-      .append(() -> myOldSdks.checkForJdkTableLeaks())
-      .append(() -> myVirtualFilePointerTracker.assertPointersAreDisposed())
-      .append(() -> {
+      },
+      () -> LightPlatformTestCase.checkEditorsReleased(),
+      () -> myOldSdks.checkForJdkTableLeaks(),
+      () -> myVirtualFilePointerTracker.assertPointersAreDisposed(),
+      () -> {
         myProjectManager = null;
         myProject = null;
         myModule = null;
@@ -619,8 +618,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         myThreadTracker = null;
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourTestCase = null;
-      })
-      .run();
+      }
+    ).run();
   }
 
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {

@@ -450,14 +450,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll().
-      append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
-      append(() -> CodeStyle.dropTemporarySettings(project)).
-      append(() -> checkJavaSwingTimersAreDisposed()).
-      append(() -> UsefulTestCase.doPostponedFormatting(project)).
-      append(() -> LookupManager.hideActiveLookup(project)).
-      append(() -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest()).
-      append(() -> {
+    new RunAll(
+      () -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue(),
+      () -> CodeStyle.dropTemporarySettings(project),
+      () -> checkJavaSwingTimersAreDisposed(),
+      () -> UsefulTestCase.doPostponedFormatting(project),
+      () -> LookupManager.hideActiveLookup(project),
+      () -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest(),
+      () -> {
         WriteCommandAction.runWriteCommandAction(project, () -> {
           if (ourSourceRoot != null) {
             try {
@@ -476,15 +476,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
           }
         });
-      }).
-      append(() -> {
+      },
+      () -> {
         EditorHistoryManager editorHistoryManager = project.getServiceIfCreated(EditorHistoryManager.class);
         if (editorHistoryManager != null) {
           editorHistoryManager.removeAllFiles();
         }
-      }).
-      append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
-      append(() -> {
+      },
+      () -> assertFalse(PsiManager.getInstance(project).isDisposed()),
+      () -> {
         clearEncodingManagerDocumentQueue();
 
         if (!ourAssertionsInTestDetected) {
@@ -492,37 +492,37 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             throw IdeaLogger.ourErrorsOccurred;
           }
         }
-      }).
-      append(() -> clearUncommittedDocuments(project)).
-      append(() -> {
+      },
+      () -> clearUncommittedDocuments(project),
+      () -> {
         HintManagerImpl hintManager = (HintManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(HintManager.class);
         if (hintManager != null) {
           hintManager.cleanup();
         }
-      }).
-      append(() -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests()).
-      append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
-      append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
-      append(() -> {
+      },
+      () -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests(),
+      () -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests(),
+      () -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest(),
+      () -> {
         TemplateDataLanguageMappings templateDataLanguageMappings = project.getServiceIfCreated(TemplateDataLanguageMappings.class);
         if (templateDataLanguageMappings != null) {
           templateDataLanguageMappings.cleanupForNextTest();
         }
-      }).
-      append(() -> {
+      },
+      () -> {
         PsiManager psiManager = project.getServiceIfCreated(PsiManager.class);
         if (psiManager != null) {
           ((PsiManagerImpl)psiManager).cleanupForNextTest();
         }
-      }).
-      append(() -> {
+      },
+      () -> {
         StructureViewFactory structureViewFactory = project.getServiceIfCreated(StructureViewFactory.class);
         if (structureViewFactory != null) {
           ((StructureViewFactoryImpl)structureViewFactory).cleanupForNextTest();
         }
-      }).
-      append(() -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
-      append(() -> WriteAction.runAndWait(() -> {
+      },
+      () -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS),
+      () -> WriteAction.runAndWait(() -> {
         if (LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
           for (Module module : ModuleManager.getInstance(project).getModules()) {
             ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(module)).disposeAndClearCaches();
@@ -548,20 +548,21 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
           LegacyBridgeRootsWatcher.getInstance(project).clear();
         }
-      })).
-      append(() -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, !ProjectManagerImpl.isLight(project))).
-      append(() -> application.setDataProvider(null)).
-      append(() -> UiInterceptors.clear()).
-      append(() -> ourTestCase = null).
-      append(() -> CompletionProgressIndicator.cleanupForNextTest()).
-      append(() -> {
+      }),
+      () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, !ProjectManagerImpl.isLight(project)),
+      () -> application.setDataProvider(null),
+      () -> UiInterceptors.clear(),
+      () -> {
+        ourTestCase = null;
+      },
+      () -> CompletionProgressIndicator.cleanupForNextTest(),
+      () -> {
         if (ourTestCount++ % 100 == 0) {
           // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
           // so let's clear the cache every now and then to ensure it doesn't grow too large
           GCUtil.clearBeanInfoCache();
         }
-      }).
-      run();
+      }).run();
   }
 
   public static void clearEncodingManagerDocumentQueue() {
