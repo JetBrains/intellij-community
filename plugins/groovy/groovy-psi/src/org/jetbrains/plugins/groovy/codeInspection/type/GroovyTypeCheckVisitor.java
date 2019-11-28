@@ -434,12 +434,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                  @NotNull PsiElement elementToHighlight) {
     if (rType == null) return;
     final ConversionResult result = TypesUtil.canAssign(lType, rType, context, Position.ASSIGNMENT);
-    processResult(result, elementToHighlight, "cannot.assign", lType, rType, LocalQuickFix.EMPTY_ARRAY);
+    processResult(result, elementToHighlight, lType, rType, LocalQuickFix.EMPTY_ARRAY);
   }
 
   protected void processAssignmentWithinMultipleAssignment(@Nullable PsiType targetType,
                                                            @Nullable PsiType actualType,
-                                                           @NotNull PsiElement context,
                                                            @NotNull PsiElement elementToHighlight) {
     if (targetType == null || actualType == null) return;
     final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType);
@@ -467,7 +466,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         GrExpression lValue = lValues[i];
         if (initializers.length <= i) break;
         GrExpression rValue = initializers[i];
-        processAssignmentWithinMultipleAssignment(lValue.getType(), rValue.getType(), expression, rValue);
+        processAssignmentWithinMultipleAssignment(lValue.getType(), rValue.getType(), rValue);
       }
     }
     else {
@@ -498,14 +497,13 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private void processResult(@NotNull ConversionResult result,
                              @NotNull PsiElement elementToHighlight,
-                             @NotNull @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String messageKey,
                              @NotNull PsiType lType,
                              @NotNull PsiType rType,
                              @NotNull LocalQuickFix[] fixes) {
     if (result == ConversionResult.OK) return;
     registerError(
       elementToHighlight,
-      GroovyBundle.message(messageKey, rType.getPresentableText(), lType.getPresentableText()),
+      GroovyBundle.message("cannot.assign", rType.getPresentableText(), lType.getPresentableText()),
       fixes,
       result == ConversionResult.ERROR ? ProblemHighlightType.GENERIC_ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     );
@@ -802,7 +800,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     final ConversionResult result = TypesUtil.canAssign(targetType, iteratedType, forInClause, Position.ASSIGNMENT);
     LocalQuickFix[] fixes = {new GrCastFix(TypesUtil.createListType(iterated, targetType), iterated)};
-    processResult(result, variable, "cannot.assign", targetType, iteratedType, fixes);
+    processResult(result, variable, targetType, iteratedType, fixes);
   }
 
   @Override
