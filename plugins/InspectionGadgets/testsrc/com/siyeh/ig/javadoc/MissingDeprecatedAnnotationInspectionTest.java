@@ -14,7 +14,7 @@ public class MissingDeprecatedAnnotationInspectionTest extends LightJavaInspecti
 
   public void testMissingDeprecatedAnnotation() {
     doTest();
-    checkQuickFix("Fix all 'Missing @Deprecated annotation' problems in file");
+    checkQuickFixAll();
   }
 
   public void testModuleInfo() {

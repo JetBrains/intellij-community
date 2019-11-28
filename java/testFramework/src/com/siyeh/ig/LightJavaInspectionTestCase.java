@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -99,6 +100,12 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
+  protected final void checkQuickFixAll() {
+    final InspectionProfileEntry inspection = getInspection();
+    assert inspection != null : "getInspection() needs to return a non-null value for checkQuickFixAll() to work";
+    checkQuickFix(InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.getDisplayName()));
   }
 
   protected final void doTest(@Language("JAVA") @NotNull String classText, String fileName) {

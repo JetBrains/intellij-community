@@ -19,7 +19,7 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
 
   protected void doQuickFixTest() {
     super.doTest();
-    checkQuickFix("Fix all 'Unnecessarily escaped character' problems in file");
+    checkQuickFixAll();
   }
 
   @Nullable
