@@ -36,7 +36,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
-  private final Map<PsiExpression, ConstantResult> myConstantExpressions = new HashMap<>();
+  private final Map<ExpressionChunk, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
@@ -91,7 +91,6 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     if (anchor instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)anchor) != null) {
       mySwitchLabelsReachability.merge((PsiExpression)anchor, ThreeState.fromBoolean(isTrueBranch), ThreeState::merge);
     }
-    super.beforeConditionalJump(instruction, isTrueBranch);
   }
 
   private static boolean isAssignmentToDefaultValueInConstructor(AssignInstruction instruction, DataFlowRunner runner, DfaValue target) {
@@ -159,6 +158,11 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   Map<PsiExpression, ConstantResult> getConstantExpressions() {
+    return EntryStream.of(myConstantExpressions).filterKeys(chunk -> chunk.myRange == null)
+      .mapKeys(chunk -> chunk.myExpression).toMap();
+  }
+
+  Map<ExpressionChunk, ConstantResult> getConstantExpressionChunks() {
     return myConstantExpressions;
   }
 
@@ -196,6 +200,14 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
            ContainerUtil.exists(instructions, i -> i instanceof ReturnInstruction && ((ReturnInstruction)i).getAnchor() instanceof PsiReturnStatement);
   }
 
+  public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
+    PsiExpression expression = instruction.getExpression();
+    return expression != null && !myUsefulInstanceofs.contains(instruction) && myReachable.contains(instruction) &&
+           myConstantExpressions.get(new ExpressionChunk(expression, null)) != ConstantResult.TRUE &&
+           (!(expression instanceof PsiMethodReferenceExpression) ||
+            !DfaConstValue.isConstant(myMethodReferenceResults.get(expression), Boolean.TRUE));
+  }
+
   @Override
   protected void beforeExpressionPush(@NotNull DfaValue value,
                                       @NotNull PsiExpression expression,
@@ -214,9 +226,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       if (fact == null) fact = TypeConstraint.empty();
       myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::unite);
     }
-    if (range == null) {
-      reportConstantExpressionValue(value, memState, expression);
-    }
+    reportConstantExpressionValue(value, memState, expression, range);
   }
 
   @Override
@@ -287,9 +297,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
            contracts.stream().anyMatch(contract -> contract.getReturnValue().isFail() && !contract.isTrivial());
   }
 
-  private void reportConstantExpressionValue(DfaValue value, DfaMemoryState memState, PsiExpression expression) {
+  private void reportConstantExpressionValue(DfaValue value, DfaMemoryState memState, PsiExpression expression, TextRange range) {
     if (expression instanceof PsiLiteralExpression) return;
-    ConstantResult curState = myConstantExpressions.get(expression);
+    ExpressionChunk chunk = new ExpressionChunk(expression, range);
+    ConstantResult curState = myConstantExpressions.get(chunk);
     if (curState == ConstantResult.UNKNOWN) return;
     ConstantResult nextState = ConstantResult.UNKNOWN;
     DfaConstValue dfaConst = memState.getConstantValue(value);
@@ -299,7 +310,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
         nextState = ConstantResult.UNKNOWN;
       }
     }
-    myConstantExpressions.put(expression, nextState);
+    myConstantExpressions.put(chunk, nextState);
   }
 
   @Override
@@ -415,6 +426,30 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       if (Boolean.TRUE.equals(value)) return TRUE;
       if (Boolean.FALSE.equals(value)) return FALSE;
       return UNKNOWN;
+    }
+  }
+  
+  static class ExpressionChunk {
+    final @NotNull PsiExpression myExpression;
+    final @Nullable TextRange myRange;
+
+    ExpressionChunk(@NotNull PsiExpression expression, @Nullable TextRange range) {
+      myExpression = expression;
+      myRange = range;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ExpressionChunk chunk = (ExpressionChunk)o;
+      return myExpression.equals(chunk.myExpression) &&
+             Objects.equals(myRange, chunk.myRange);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * myExpression.hashCode() + Objects.hashCode(myRange);
     }
   }
 }

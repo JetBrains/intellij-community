@@ -10,8 +10,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor.ConstantResult;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.fix.*;
-import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
@@ -19,7 +17,6 @@ import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -157,7 +154,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       @Override
       public void visitIfStatement(PsiIfStatement statement) {
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
-        if (BranchingInstruction.isBoolConst(condition)) {
+        if (BoolUtils.isBooleanLiteral(condition)) {
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
           holder.registerProblem(condition, "Condition is always " + condition.getText(), fix);
         }
@@ -277,33 +274,21 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                  ProblemsHolder holder,
                                  final DataFlowInstructionVisitor visitor,
                                  PsiElement scope) {
-    Pair<Set<Instruction>, Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
-    Set<Instruction> trueSet = constConditions.getFirst();
-    Set<Instruction> falseSet = constConditions.getSecond();
-
-    ArrayList<Instruction> allProblems = new ArrayList<>();
-    allProblems.addAll(trueSet);
-    allProblems.addAll(falseSet);
-    StreamEx.of(runner.getInstructions()).select(InstanceofInstruction.class).filter(visitor::isInstanceofRedundant).into(allProblems);
-
     ProblemReporter reporter = new ProblemReporter(holder, scope);
 
     reportFailingCasts(reporter, visitor);
     reportUnreachableSwitchBranches(visitor.getSwitchLabelsReachability(), holder);
 
-    for (Instruction instruction : allProblems) {
-      if (instruction instanceof BranchingInstruction) {
-        handleBranchingInstruction(reporter, visitor, trueSet, (BranchingInstruction)instruction);
-      }
-    }
-
     reportAlwaysFailingCalls(reporter, visitor);
 
     List<NullabilityProblem<?>> problems = NullabilityProblemKind.postprocessNullabilityProblems(visitor.problems().toList());
-    reportNullabilityProblems(reporter, problems, visitor.getConstantExpressions());
-    reportNullableReturns(reporter, problems, visitor.getConstantExpressions(), scope);
+    Map<PsiExpression, ConstantResult> constantExpressions = visitor.getConstantExpressions();
+    reportNullabilityProblems(reporter, problems, constantExpressions);
+    reportNullableReturns(reporter, problems, constantExpressions, scope);
 
     reportOptionalOfNullableImprovements(reporter, visitor.getOfNullableCalls());
+
+    reportRedundantInstanceOf(runner, visitor, reporter);
 
     reportConstants(reporter, visitor);
 
@@ -324,6 +309,21 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     reportDuplicateAssignments(reporter, visitor);
     reportPointlessSameArguments(reporter, visitor);
+  }
+
+  private static void reportRedundantInstanceOf(DataFlowRunner runner,
+                                                DataFlowInstructionVisitor visitor,
+                                                ProblemReporter reporter) {
+    for (Instruction instruction : runner.getInstructions()) {
+      if (instruction instanceof InstanceofInstruction) {
+        InstanceofInstruction instanceOf = (InstanceofInstruction)instruction;
+        if (visitor.isInstanceofRedundant(instanceOf)) {
+          reporter.registerProblem(instanceOf.getPsiAnchor(),
+                                   InspectionsBundle.message("dataflow.message.redundant.instanceof"),
+                                   new RedundantInstanceofFix());
+        }
+      }
+    }
   }
 
   private void reportUnreachableSwitchBranches(Map<PsiExpression, ThreeState> labelReachability, ProblemsHolder holder) {
@@ -371,8 +371,18 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportConstants(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    visitor.getConstantExpressions().forEach((expression, result) -> {
+    visitor.getConstantExpressionChunks().forEach((chunk, result) -> {
       if (result == ConstantResult.UNKNOWN) return;
+      PsiExpression expression = chunk.myExpression;
+      if (chunk.myRange != null) {
+        if (result.value() instanceof Boolean) {
+          // report rare cases like a == b == c where "a == b" part is constant
+          String message = InspectionsBundle.message("dataflow.message.constant.condition", result.toString());
+          reporter.registerProblem(expression, chunk.myRange, message);
+          // do not add to reported anchors if only part of expression was reported
+        }
+        return;
+      }
       if (isCondition(expression)) {
         if (result.value() instanceof Boolean) {
           reportConstantBoolean(reporter, expression, (Boolean)result.value());
@@ -734,36 +744,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                        InspectionsBundle.message("dataflow.message.cce", operand.getText());
       reporter.registerProblem(castType, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     });
-  }
-
-  private void handleBranchingInstruction(ProblemReporter reporter,
-                                          StandardInstructionVisitor visitor,
-                                          Set<Instruction> trueSet,
-                                          BranchingInstruction instruction) {
-    PsiElement psiAnchor = instruction.getPsiAnchor();
-    if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
-      if (visitor.canBeNull((InstanceofInstruction)instruction)) {
-        reporter.registerProblem(psiAnchor,
-                                 InspectionsBundle.message("dataflow.message.redundant.instanceof"),
-                                 new RedundantInstanceofFix());
-      }
-      else {
-        reportConstantBoolean(reporter, psiAnchor, true);
-      }
-    }
-    else if (psiAnchor != null &&
-             (!(psiAnchor instanceof PsiExpression) || PsiImplUtil.getSwitchLabel((PsiExpression)psiAnchor) == null) &&
-             !isFlagCheck(psiAnchor)) {
-      boolean evaluatesToTrue = trueSet.contains(instruction);
-      TextRange range =
-        instruction instanceof ExpressionPushingInstruction ? ((ExpressionPushingInstruction)instruction).getExpressionRange() : null;
-      if (range != null) {
-        // report rare cases like a == b == c where "a == b" part is constant
-        String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-        reporter.registerProblem(psiAnchor, range, message);
-        // do not add to reported anchors if only part of expression was reported
-      }
-    }
   }
 
   private void reportConstantBoolean(ProblemReporter reporter, PsiElement psiAnchor, boolean evaluatesToTrue) {

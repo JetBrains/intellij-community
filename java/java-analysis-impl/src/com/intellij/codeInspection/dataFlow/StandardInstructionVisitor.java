@@ -30,9 +30,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance(StandardInstructionVisitor.class);
   private final boolean myStopAnalysisOnNpe;
 
-  private final Set<InstanceofInstruction> myReachable = new THashSet<>();
-  private final Set<InstanceofInstruction> myCanBeNullInInstanceof = new THashSet<>();
-  private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
+  final Set<InstanceofInstruction> myReachable = new THashSet<>();
+  final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
 
   public StandardInstructionVisitor() {
     myStopAnalysisOnNpe = false;
@@ -744,9 +743,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     pushExpressionResult(result, instruction, memState);
 
-    instruction.setTrueReachable();  // Not a branching instruction actually.
-    instruction.setFalseReachable();
-
     return nextInstruction(instruction, runner, memState);
   }
 
@@ -878,9 +874,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
     DfaValueFactory factory = runner.getFactory();
-    if (!memState.isNotNull(dfaLeft)) {
-      myCanBeNullInInstanceof.add(instruction);
-    }
     boolean unknownTargetType = false;
     DfaCondition condition = null;
     if (instruction.isClassObjectCheck()) {
@@ -935,20 +928,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                 @NotNull ThreeState result) {
     DfaValue value = result == ThreeState.UNSURE ? DfaUnknownValue.getInstance() : runner.getFactory().getBoolean(result.toBoolean());
     pushExpressionResult(value, instruction, memState);
-    if (result != ThreeState.NO) {
-      instruction.setTrueReachable();
-    }
-    if (result != ThreeState.YES) {
-      instruction.setFalseReachable();
-    }
     return new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState);
-  }
-
-  public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
-    return !myUsefulInstanceofs.contains(instruction) && !instruction.isConditionConst() && myReachable.contains(instruction);
-  }
-
-  public boolean canBeNull(InstanceofInstruction instruction) {
-    return myCanBeNullInInstanceof.contains(instruction);
   }
 }

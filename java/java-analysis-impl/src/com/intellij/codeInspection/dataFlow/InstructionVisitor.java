@@ -83,12 +83,6 @@ public abstract class InstructionVisitor {
   }
 
   protected void beforeConditionalJump(ConditionalGotoInstruction instruction, boolean isTrueBranch) {
-    if (isTrueBranch ^ instruction.isNegated()) {
-      instruction.setTrueReachable();
-    }
-    else {
-      instruction.setFalseReachable();
-    }
   }
 
   void pushExpressionResult(@NotNull DfaValue value,

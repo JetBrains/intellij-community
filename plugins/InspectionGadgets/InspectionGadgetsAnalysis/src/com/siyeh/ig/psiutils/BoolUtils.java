@@ -255,6 +255,7 @@ public class BoolUtils {
     return null;
   }
 
+  @Contract("null -> false")
   public static boolean isBooleanLiteral(PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (!(expression instanceof PsiLiteralExpression)) {

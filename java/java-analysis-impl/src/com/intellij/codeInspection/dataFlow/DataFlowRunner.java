@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -619,41 +618,6 @@ public class DataFlowRunner {
       }
       consumer.accept(closure, states);
     }
-  }
-
-  @NotNull
-  public Pair<Set<Instruction>,Set<Instruction>> getConstConditionalExpressions() {
-    Set<Instruction> trueSet = new HashSet<>();
-    Set<Instruction> falseSet = new HashSet<>();
-
-    for (Instruction instruction : myInstructions) {
-      if (instruction instanceof BranchingInstruction) {
-        BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
-        if (branchingInstruction.getPsiAnchor() != null && branchingInstruction.isConditionConst()) {
-          if (!branchingInstruction.isTrueReachable()) {
-            falseSet.add(branchingInstruction);
-          }
-
-          if (!branchingInstruction.isFalseReachable()) {
-            trueSet.add(branchingInstruction);
-          }
-        }
-      }
-    }
-
-    for (Instruction instruction : myInstructions) {
-      if (instruction instanceof BranchingInstruction) {
-        BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
-        if (branchingInstruction.isTrueReachable()) {
-          falseSet.remove(branchingInstruction);
-        }
-        if (branchingInstruction.isFalseReachable()) {
-          trueSet.remove(branchingInstruction);
-        }
-      }
-    }
-
-    return Pair.create(trueSet, falseSet);
   }
 
   protected static class TimeStats {
