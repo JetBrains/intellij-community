@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
@@ -38,17 +39,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class DfaAssist implements DebuggerContextListener {
   private final @NotNull Project myProject;
-  private final @NotNull DebugProcessImpl myProcess;
   private final List<Inlay<?>> myInlays = new ArrayList<>(); // modified from EDT only
   private volatile CancellablePromise<?> myPromise;
 
-  private DfaAssist(DebuggerContextImpl context) {
-    myProject = Objects.requireNonNull(context.getProject());
-    myProcess = Objects.requireNonNull(context.getDebugProcess());
+  private DfaAssist(@NotNull Project project) {
+    myProject = project;
   }
 
   @Override
@@ -65,7 +67,7 @@ public class DfaAssist implements DebuggerContextListener {
     PsiJavaFile file = ObjectUtils.tryCast(sourcePosition.getFile(), PsiJavaFile.class);
     DebugProcessImpl debugProcess = newContext.getDebugProcess();
     PsiElement element = sourcePosition.getElementAt();
-    if (debugProcess != myProcess || file == null || element == null) {
+    if (debugProcess == null || file == null || element == null) {
       cleanUp();
       return;
     }
@@ -217,8 +219,11 @@ public class DfaAssist implements DebuggerContextListener {
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent evt) {
-      myProcess.getSession().getContextManager().removeListener(DfaAssist.this);
-      cleanUp();
+      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(myProject);
+      if (process != null) {
+        process.getSession().getContextManager().removeListener(DfaAssist.this);
+        cleanUp();
+      }
     }
   }
   
@@ -229,8 +234,8 @@ public class DfaAssist implements DebuggerContextListener {
   public static void installDfaAssist(@NotNull DebuggerSession javaSession) {
     DebuggerStateManager manager = javaSession.getContextManager();
     DebuggerContextImpl context = manager.getContext();
-    if (context.getProject() != null && context.getDebugProcess() != null) {
-      manager.addListener(new DfaAssist(context));
+    if (context.getProject() != null) {
+      manager.addListener(new DfaAssist(context.getProject()));
     }
   }
 }
