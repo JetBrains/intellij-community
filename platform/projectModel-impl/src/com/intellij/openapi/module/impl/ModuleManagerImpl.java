@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -172,11 +173,6 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
   }
 
-  @TestOnly
-  public void loadStateFromModulePaths(@NotNull Set<ModulePath> modulePaths) {
-    loadState(modulePaths);
-  }
-
   private void loadState(@NotNull Set<ModulePath> modulePaths) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
     myModulePathsToLoad = modulePaths;
@@ -278,20 +274,17 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount());
+    boolean isParallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
+    ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
+                                         : ConcurrencyUtil.newSameThreadExecutorService();
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
-    boolean parallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
         break;
       }
       String path = modulePath.getPath();
       if (!paths.add(path)) continue;
-      if (!parallel) {
-        tasks.add(Pair.create(null, modulePath));
-        continue;
-      }
       tasks.add(Pair.create(service.submit(() -> {
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
@@ -317,14 +310,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         break;
       }
       try {
-        Module module;
-        if (parallel) {
-          module = task.first.get();
-        }
-        else {
-          module = moduleModel.loadModuleInternal(task.second.getPath());
-          progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
-        }
+        Module module = task.first.get();
         if (module == null) continue;
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
@@ -336,9 +322,6 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
           groupInterner.setModuleGroupPath(moduleModel, module, groupPathString.split(MODULE_GROUP_SEPARATOR));
         }
         myFailedModulePaths.remove(modulePath);
-      }
-      catch (IOException e) {
-        reportError(errors, task.second, e);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -452,7 +435,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerErrors(errors);
   }
 
-  public void removeFailedModulePath(@NotNull ModulePath modulePath) {
+  void removeFailedModulePath(@NotNull ModulePath modulePath) {
     myFailedModulePaths.remove(modulePath);
     incModificationCount();
   }
@@ -515,7 +498,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
 
     if (!sorted.isEmpty()) {
-      Collections.sort(sorted, Comparator.comparing(SaveItem::getModuleName));
+      sorted.sort(Comparator.comparing(SaveItem::getModuleName));
 
       Element modules = new Element(ELEMENT_MODULES);
       for (SaveItem saveItem : sorted) {
