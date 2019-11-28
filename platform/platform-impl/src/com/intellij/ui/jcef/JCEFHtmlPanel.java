@@ -8,35 +8,32 @@ import com.intellij.ui.JBColor;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author tav
  */
 public class JCEFHtmlPanel implements Disposable {
-  @NotNull
-  private final JPanel myPanelWrapper;
   private static final CefClient ourCefClient;
-  private static final Map<CefBrowser, JCEFHtmlPanel> ourCefBrowser2Panel = new HashMap<>();
   // browser demands some valid URL for loading html content
-  private final static String ourUrl = JCEFHtmlPanel.class.getResource(JCEFHtmlPanel.class.getSimpleName() + ".class").toExternalForm();
+  private static final String ourUrl = JCEFHtmlPanel.class.getResource(JCEFHtmlPanel.class.getSimpleName() + ".class").toExternalForm();
 
-  private @NotNull final CefBrowser myCefBrowser;
+  @NotNull private final MyComponent myComponent;
+  @NotNull private final CefBrowser myCefBrowser;
   private boolean myIsCefBrowserCreated;
-  private @Nullable String myHtml;
+  @Nullable private String myHtml;
 
   static {
     ourCefClient = JBCefApp.getInstance().createClient();
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
       @Override
       public void onAfterCreated(CefBrowser browser) {
-        JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
+        JCEFHtmlPanel panel = getJCEFHtmlPanel(browser);
         if (panel != null) {
           panel.myIsCefBrowserCreated = true;
           if (panel.myHtml != null) {
@@ -49,7 +46,7 @@ public class JCEFHtmlPanel implements Disposable {
     ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
       public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
-        JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
+        JCEFHtmlPanel panel = getJCEFHtmlPanel(browser);
         if (panel != null) {
           panel.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
         }
@@ -68,24 +65,21 @@ public class JCEFHtmlPanel implements Disposable {
       }
     });
     Disposer.register(ApplicationManager.getApplication(), () -> {
-      ourCefBrowser2Panel.clear();
       ourCefClient.dispose();
     });
   }
 
   public JCEFHtmlPanel() {
-    myPanelWrapper = new JPanel(new BorderLayout());
-    myPanelWrapper.setBackground(JBColor.background());
+    myComponent = new MyComponent(new BorderLayout());
+    myComponent.setBackground(JBColor.background());
 
     myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
-    ourCefBrowser2Panel.put(myCefBrowser, this);
-
-    myPanelWrapper.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
+    myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
   }
 
   @NotNull
   public JComponent getComponent() {
-    return myPanelWrapper;
+    return myComponent;
   }
 
   public CefBrowser getBrowser() {
@@ -112,7 +106,22 @@ public class JCEFHtmlPanel implements Disposable {
 
   @Override
   public void dispose() {
-    ourCefBrowser2Panel.remove(myCefBrowser);
     myCefBrowser.close(true);
+  }
+
+  @Contract("null->null; !null->!null")
+  private static JCEFHtmlPanel getJCEFHtmlPanel(CefBrowser browser) {
+    if (browser == null) return null;
+    return ((MyComponent)browser.getUIComponent().getParent()).getJCEFHtmlPanel();
+  }
+
+  private class MyComponent extends JPanel {
+    MyComponent(BorderLayout layout) {
+      super(layout);
+    }
+
+    JCEFHtmlPanel getJCEFHtmlPanel() {
+      return JCEFHtmlPanel.this;
+    }
   }
 }
