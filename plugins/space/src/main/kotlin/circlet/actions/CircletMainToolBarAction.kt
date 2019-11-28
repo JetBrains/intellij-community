@@ -92,6 +92,9 @@ class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
                 view.border = JBUI.Borders.empty(8, 12)
                 wrapper.setContent(view)
                 wrapper.repaint()
+                if (st is CircletLoginState.Disconnected) {
+                    popup.pack(true, true)
+                }
             }
             popup.showUnderneathOf(component)
         }
