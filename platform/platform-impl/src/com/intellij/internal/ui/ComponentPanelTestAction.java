@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -50,6 +51,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -131,6 +133,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("Validators", createValidatorsPanel());
       pane.addTab("Multilines", createMultilinePanel());
       pane.addTab("JSliderUI", createJSliderTab());
+      pane.addTab("ComboBox", createComboBoxTab());
 
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
@@ -852,6 +855,91 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.add(wrap(vSlider));
 
       return panel;
+    }
+
+    @NotNull
+    private JComponent createComboBoxTab() {
+      JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5"));
+      pane.add(new JLabel("Shows a combobox with custom JBPopup and multiple layers of items"), "baseline, wrap");
+
+      class Item {
+        final Icon myIcon;
+        final String myText;
+        final ImmutableList<Item> myChildren;
+
+        Item(@NotNull Icon icon, @NotNull String text) {
+          this(icon, text, ImmutableList.of());
+        }
+
+        Item(@NotNull Icon icon, @NotNull String text, @NotNull List<Item> myChildren) {
+          this.myIcon = icon;
+          this.myText = text;
+          this.myChildren = ImmutableList.copyOf(myChildren);
+        }
+      }
+
+      class Model extends DefaultComboBoxModel<Item> implements ComboBoxPopupState<Item> {
+        Model(List<Item> items) {
+          super(items.toArray(new Item[0]));
+        }
+
+        @Nullable
+        @Override
+        public ListModel<Item> onChosen(Item selectedValue) {
+          if (selectedValue.myChildren.isEmpty()) return null;
+          return new Model(selectedValue.myChildren);
+        }
+
+        @Override
+        public boolean hasSubstep(Item selectedValue) {
+          return !selectedValue.myChildren.isEmpty();
+        }
+
+        @Override
+        public void setSelectedItem(Object anObject) {
+          //sub-items are not contained here, so selector login has to be tweaked
+          super.setSelectedItem(anObject);
+        }
+      }
+
+      ImmutableList.Builder<Item> builder2 = ImmutableList.builder();
+      builder2.add(new Item(AllIcons.General.Add, "Add"));
+      builder2.add(new Item(AllIcons.General.ArrowDown, "ArrowDown"));
+      builder2.add(new Item(AllIcons.General.Balloon, "Balloon"));
+      builder2.add(new Item(AllIcons.General.Filter, "Filter"));
+      builder2.add(new Item(AllIcons.General.Remove, "Remove"));
+      ImmutableList<Item> level2 = builder2.build();
+
+      ImmutableList.Builder<Item> builder1 = ImmutableList.builder();
+      builder1.add(new Item(AllIcons.Icons.Ide.NextStep, "Next"));
+      builder1.add(new Item(AllIcons.Vcs.Patch_applied, "Patch"));
+      builder1.add(new Item(AllIcons.General.Settings, "SubList", level2));
+      builder1.add(new Item(AllIcons.General.Remove, "Remove"));
+
+      ComboBox<Item> comboBox = new ComboBox<>(new Model(builder1.build()));
+      comboBox.setSwingPopup(false);
+      comboBox.setRenderer(new ColoredListCellRenderer<Item>() {
+        @Override
+        protected void customizeCellRenderer(@NotNull JList<? extends Item> list,
+                                             Item value,
+                                             int index,
+                                             boolean selected,
+                                             boolean hasFocus) {
+          setIcon(value.myIcon);
+          append(value.myText);
+          append(" ");
+          append("this text is gray", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          append(" ");
+          append("error", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          if (!value.myChildren.isEmpty()) {
+            append(" ->");
+          }
+        }
+      });
+      pane.add(new JLabel("The ComboBox:"), "baseline");
+      pane.add(comboBox, "baseline");
+
+      return pane;
     }
 
     private JComponent wrap(JComponent component) {
