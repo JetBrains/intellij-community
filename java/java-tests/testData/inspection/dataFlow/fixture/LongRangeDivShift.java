@@ -36,4 +36,9 @@ public class LongRangeDivShift {
           <warning descr="Condition 'sc == rs + MAX_RESIZERS' is always 'false'">sc == rs + MAX_RESIZERS</warning>) {}
     }
   }
+
+  void testPolyadicDiv() {
+    int a = 0;
+    double res = 1 / a / -2;
+  }
 }
