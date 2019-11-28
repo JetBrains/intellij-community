@@ -584,26 +584,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
               }
               configureRTClasspath(parameters, module);
               parameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-              wWriter.println(parameters.getClassPath().getPathsString());
-              wWriter.println(parameters.getModulePath().getPathsString());
-              ParamsGroup paramsGroup = getJigsawOptions(parameters);
-              if (paramsGroup == null) {
-                wWriter.println(0);
-              }
-              else {
-                List<String> parametersList = paramsGroup.getParametersList().getList();
-                wWriter.println(parametersList.size());
-                for (String option : parametersList) {
-                  wWriter.println(option);
-                }
-              }
+              writeClasspath(wWriter, parameters);
             }
             catch (CantRunException e) {
-              wWriter.println(javaParameters.getClassPath().getPathsString());
+              writeClasspath(wWriter, javaParameters);
             }
           }
           else {
-            wWriter.println(classpath);
+            writeClasspath(wWriter, javaParameters);
           }
 
           final List<String> classNames = perModule.get(module);
@@ -613,6 +601,22 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           }
           wWriter.println(filters);
         }
+      }
+    }
+  }
+
+  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) {
+    wWriter.println(parameters.getClassPath().getPathsString());
+    wWriter.println(parameters.getModulePath().getPathsString());
+    ParamsGroup paramsGroup = getJigsawOptions(parameters);
+    if (paramsGroup == null) {
+      wWriter.println(0);
+    }
+    else {
+      List<String> parametersList = paramsGroup.getParametersList().getList();
+      wWriter.println(parametersList.size());
+      for (String option : parametersList) {
+        wWriter.println(option);
       }
     }
   }
