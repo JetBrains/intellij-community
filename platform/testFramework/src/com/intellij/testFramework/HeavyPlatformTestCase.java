@@ -94,6 +94,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.testFramework.RunAll.runAll;
+
 /**
  * Base class for heavy tests.
  * <p/>
@@ -553,7 +555,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll(
+    runAll(
       () -> disposeRootDisposable(),
       () -> {
         if (project != null) {
@@ -619,7 +621,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourTestCase = null;
       }
-    ).run();
+    );
   }
 
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {

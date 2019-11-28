@@ -117,6 +117,8 @@ import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.testFramework.RunAll.runAll;
+
 /**
  * @author yole
  */
@@ -450,7 +452,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll(
+    runAll(
       () -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue(),
       () -> CodeStyle.dropTemporarySettings(project),
       () -> checkJavaSwingTimersAreDisposed(),
@@ -562,7 +564,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           // so let's clear the cache every now and then to ensure it doesn't grow too large
           GCUtil.clearBeanInfoCache();
         }
-      }).run();
+      });
   }
 
   public static void clearEncodingManagerDocumentQueue() {
