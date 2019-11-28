@@ -154,7 +154,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       scenarioPassed = false;
       String message = "Undefined step: " + getName(currentStep);
       String details = "";
-      outCommand(TEMPLATE_TEST_FAILED, true, getCurrentTime(), details, message, stepFullName, "error = 'true'");
+      outCommand(TEMPLATE_TEST_FAILED, true, getCurrentTime(), details, message, stepFullName, "");
     }
     else if (result.equals(Result.SKIPPED)) {
       skippedStepCount++;
