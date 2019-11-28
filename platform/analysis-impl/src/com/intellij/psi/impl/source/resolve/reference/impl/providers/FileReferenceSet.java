@@ -57,7 +57,7 @@ public class FileReferenceSet {
   @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
   @Nullable private FileType[] mySuitableFileTypes;
 
-  public FileReferenceSet(String str,
+  public FileReferenceSet(@NotNull String str,
                           @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,
@@ -67,7 +67,7 @@ public class FileReferenceSet {
     this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, true);
   }
 
-  public FileReferenceSet(String str,
+  public FileReferenceSet(@NotNull String str,
                           @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,

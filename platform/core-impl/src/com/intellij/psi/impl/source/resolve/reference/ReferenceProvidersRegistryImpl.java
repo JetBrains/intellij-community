@@ -66,7 +66,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   }
 
   @NotNull
-  private static PsiReferenceRegistrarImpl createRegistrar(Language language) {
+  private static PsiReferenceRegistrarImpl createRegistrar(@NotNull Language language) {
     PsiReferenceRegistrarImpl registrar = new PsiReferenceRegistrarImpl();
     for (PsiReferenceContributor contributor : CONTRIBUTOR_EXTENSION.allForLanguageOrAny(language)) {
       registerContributedReferenceProviders(registrar, contributor);
@@ -109,17 +109,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   @NotNull
   @Override
   public PsiReferenceRegistrarImpl getRegistrar(@NotNull Language language) {
-    PsiReferenceRegistrarImpl registrar = myRegistrars.get(language);
-    if (registrar == null) {
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        registrar = myRegistrars.get(language);
-        if (registrar == null) {
-          myRegistrars.put(language, registrar = createRegistrar(language));
-        }
-      }
-    }
-    return registrar;
+    return myRegistrars.computeIfAbsent(language, ReferenceProvidersRegistryImpl::createRegistrar);
   }
 
   @Override

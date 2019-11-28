@@ -41,7 +41,7 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider() {
       @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, String text, int offset, boolean soft) {
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull String text, int offset, boolean soft) {
         PsiReference[] references = super.getReferencesByElement(element, text, offset, soft);
         return references.length > 100 ? PsiReference.EMPTY_ARRAY : references;
       }
