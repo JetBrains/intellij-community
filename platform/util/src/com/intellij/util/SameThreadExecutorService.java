@@ -32,7 +32,9 @@ final class SameThreadExecutorService extends AbstractExecutorService {
 
   @Override
   public boolean awaitTermination(long theTimeout, @NotNull TimeUnit theUnit) {
-    shutdown();
+    if (!isShutdown()) {
+      throw new IllegalStateException("Must call shutdown*() before awaitTermination()");
+    };
     return true;
   }
 
@@ -40,11 +42,15 @@ final class SameThreadExecutorService extends AbstractExecutorService {
   @Contract(pure = true)
   @Override
   public List<Runnable> shutdownNow() {
+    shutdown();
     return Collections.emptyList();
   }
 
   @Override
   public void execute(@NotNull Runnable command) {
+    if (isShutdown()) {
+      throw new IllegalStateException("Must not call execute() after pool is shut down");
+    }
     command.run();
   }
 }
