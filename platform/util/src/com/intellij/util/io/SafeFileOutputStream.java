@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
+import java.nio.file.attribute.DosFileAttributeView;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -58,6 +59,8 @@ public class SafeFileOutputStream extends OutputStream {
       Path parent = myTarget.getParent();
       Path backup = parent != null ? parent.resolve(myBackupName) : Paths.get(myBackupName);
       Files.copy(myTarget, backup, BACKUP_COPY);
+      DosFileAttributeView dosView = Files.getFileAttributeView(backup, DosFileAttributeView.class);
+      if (dosView != null && dosView.readAttributes().isReadOnly()) dosView.setReadOnly(false);
       return backup;
     });
     myBuffer = new BufferExposingByteArrayOutputStream();
