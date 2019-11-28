@@ -26,18 +26,31 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
   @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context);
 
   /**
-   * Find psiElement for parameter info should also set ItemsToShow in context and may set highlighted element
+   * <p>Find psiElement for parameter info should also set ItemsToShow in context and may set highlighted element</p>
    *
-   * Note: it is executed on non UI thread
+   * <p>Note: it is executed on non UI thread</p>
    */
   @Nullable
   ParameterOwner findElementForParameterInfo(@NotNull CreateParameterInfoContext context);
   // Usually context.showHint
   void showParameterInfo(@NotNull final ParameterOwner element, @NotNull CreateParameterInfoContext context);
 
-  // Null returns leads to removing hint
+  /**
+   * <p>Hint has to be removed if method returns <code>null</code>.</p>
+   *
+   * <p>Note: it is executed on non-UI thread</p>
+   */
   @Nullable
   ParameterOwner findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context);
+
+  /**
+   * This method performs some extra action (e.g. show hints) with a result of execution of
+   * {@link #findElementForUpdatingParameterInfo(UpdateParameterInfoContext)} on UI thread.
+   */
+  default void processFoundElementForUpdatingParameterInfo(@Nullable ParameterOwner parameterOwner,
+                                                           @NotNull UpdateParameterInfoContext context) {
+
+  }
 
   /**
    * <p>Updates parameter info context due to change of caret position.</p>
