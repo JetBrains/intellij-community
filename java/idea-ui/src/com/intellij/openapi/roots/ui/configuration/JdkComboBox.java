@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.EmptyIcon;
@@ -222,11 +221,14 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
           }
           else if (value instanceof ActionJdkItem) {
             ActionJdkItem item = (ActionJdkItem)value;
-            Presentation presentation = item.getAction().getTemplatePresentation();
-            Icon icon = item.getIcon();
-            if (icon == null) icon = IconUtil.getAddIcon();
+            Presentation template = item.myAction.getTemplatePresentation();
+            Icon icon = template.getIcon();
+            if (item.myRole == ActionRole.ADD) {
+              icon = item.myAction.getSdkType().getIcon();
+              if (icon == null) icon = AllIcons.General.Add;
+            }
             setIcon(icon);
-            String text = presentation.getText();
+            String text = template.getText();
             append(text != null ? text : "<null>");
           }
           else if (value instanceof ActionGroupJdkItem) {
@@ -455,7 +457,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     if (anObject instanceof LoadingJdkComboBoxItem) return;
 
     if (anObject instanceof ActionJdkItem) {
-      AnAction action = ((ActionJdkItem)anObject).getAction();
+      AnAction action = ((ActionJdkItem)anObject).myAction;
       executeNewSdkAction(action);
       return;
     }
@@ -528,45 +530,6 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       setSelectedItem(myInvalidJdkItem);
     }
 
-    private void addActionGroup(@NotNull JdkComboBoxModel newModel,
-                                @NotNull Icon groupIcon,
-                                @NotNull String name,
-                                @NotNull List<ActionJdkItem> items,
-                                @NotNull Function<ActionJdkItem, Icon> customIcon) {
-      if (items.size() == 0) return;
-      if (items.size() == 1) {
-        items.forEach(newModel::addElement);
-        return;
-      }
-
-      ImmutableList.Builder<ActionJdkItem> subItems = ImmutableList.builder();
-      for (ActionJdkItem item : items) {
-        ActionJdkItem subItem = new ActionJdkItem(item.myAction) {
-          @Nullable
-          @Override
-          public Icon getIcon() {
-            return customIcon.fun(item);
-          }
-        };
-        subItems.add(subItem);
-      }
-      newModel.addElement(new ActionGroupJdkItem(groupIcon, name, subItems.build()));
-    }
-
-    @NotNull
-    private Icon originalSdkIconForAdd(@NotNull ActionJdkItem item) {
-      Icon icon = item.getSdkType().getIcon();
-      if (icon != null) return icon;
-      return AllIcons.General.Add;
-    }
-
-    @NotNull
-    private Icon originalSdkIconForDownload(@NotNull ActionJdkItem item) {
-      Icon icon = item.getSdkType().getIcon();
-      if (icon != null) return icon;
-      return AllIcons.Actions.Download;
-    }
-
     public void syncModel() {
       Object previousSelection = getSelectedItem();
       JdkComboBoxModel newModel = new JdkComboBoxModel();
@@ -579,8 +542,10 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
         newModel.addElement(myInvalidJdkItem);
       }
 
-      addActionGroup(newModel, AllIcons.Actions.Download, "Download", myDownloadActions, this::originalSdkIconForDownload);
-      addActionGroup(newModel, AllIcons.General.Add, "Add SDK", myAddActions, this::originalSdkIconForAdd);
+      ImmutableList.Builder<ActionJdkItem> subMenu = ImmutableList.builder();
+      subMenu.addAll(myDownloadActions);
+      subMenu.addAll(myAddActions);
+      newModel.addElement(new ActionGroupJdkItem(AllIcons.General.Add, "Add SDK", subMenu.build()));
 
       for (SuggestedJdkItem item : mySuggestions) {
         if (!isApplicableSuggestedItem(item)) continue;
@@ -606,18 +571,18 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
 
     @NotNull
-    private ImmutableList<ActionJdkItem> toImmutableList(@NotNull Map<SdkType, NewSdkAction> actions) {
+    private ImmutableList<ActionJdkItem> toImmutableList(@NotNull ActionRole role, @NotNull Map<SdkType, NewSdkAction> actions) {
       ImmutableList.Builder<ActionJdkItem> builder = ImmutableList.builder();
       for (NewSdkAction action : actions.values()) {
-        builder.add(new ActionJdkItem(action));
+        builder.add(new ActionJdkItem(role, action));
       }
       return builder.build();
     }
 
     void setActions(@NotNull Map<SdkType, NewSdkAction> downloadActions,
                     @NotNull Map<SdkType, NewSdkAction> customActions) {
-      myDownloadActions = toImmutableList(downloadActions);
-      myAddActions = toImmutableList(customActions);
+      myDownloadActions = toImmutableList(ActionRole.DOWNLOAD, downloadActions);
+      myAddActions = toImmutableList(ActionRole.ADD, customActions);
       syncModel();
     }
   }
@@ -683,7 +648,9 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     @Nullable
     String getSeparatorTextAbove(@Nullable JdkComboBoxItem value) {
       int valueIndex = firstIndexOf(it -> it == value);
-      if (value instanceof ActionJdkItem && valueIndex > 0 && !(getElementAt(valueIndex-1) instanceof ActionJdkItem)) {
+
+      //the fist action or action group deserve a group
+      if (valueIndex == firstIndexOf(it -> it instanceof ActionGroupJdkItem || it instanceof ActionJdkItem)) {
         return "";
       }
 
@@ -874,26 +841,17 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
   }
 
+  private enum ActionRole {
+    DOWNLOAD, ADD
+  }
+
   private static class ActionJdkItem extends JdkComboBoxItem {
+    final ActionRole myRole;
     final NewSdkAction myAction;
 
-    ActionJdkItem(@NotNull NewSdkAction action) {
+    ActionJdkItem(@NotNull ActionRole role, @NotNull NewSdkAction action) {
+      myRole = role;
       myAction = action;
-    }
-
-    @NotNull
-    AnAction getAction() {
-      return myAction;
-    }
-
-    @Nullable
-    public Icon getIcon() {
-      return myAction.getTemplatePresentation().getIcon();
-    }
-
-    @NotNull
-    public SdkType getSdkType() {
-      return myAction.getSdkType();
     }
   }
 
