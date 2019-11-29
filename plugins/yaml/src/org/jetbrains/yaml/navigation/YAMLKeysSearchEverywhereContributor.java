@@ -175,8 +175,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
       .stream()
       .sorted()
       .map(idx -> priority.get(idx))
-      .map(found -> found.stream().sorted())
-      .flatMap(s -> s)
+      .flatMap(found -> found.stream().sorted())
       .collect(Collectors.toList());
   }
 

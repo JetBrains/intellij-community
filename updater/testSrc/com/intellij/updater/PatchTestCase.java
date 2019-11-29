@@ -80,8 +80,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     assertThat(list).isEqualTo(groups.stream().flatMap(Collection::stream).collect(toList()));
     // sorts group elements and concatenates groups into a list
     return groups.stream()
-      .map(elements -> elements.stream().sorted(sorter))
-      .flatMap(stream -> stream)
+      .flatMap(elements -> elements.stream().sorted(sorter))
       .collect(toList());
   }
 }
