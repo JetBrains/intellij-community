@@ -362,7 +362,7 @@ public class CommonActionsPanel extends JPanel {
 
   static class DownButton extends MyActionButton {
     DownButton(Listener listener, String name, Icon icon) {
-      super(Buttons.UP, listener, name, icon);
+      super(Buttons.DOWN, listener, name, icon);
     }
 
     @Override
