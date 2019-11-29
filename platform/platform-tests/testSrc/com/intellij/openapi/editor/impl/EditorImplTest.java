@@ -571,4 +571,11 @@ public class EditorImplTest extends AbstractEditorTest {
     mouse().right().clickAt(0, 6);
     checkResultByText("some t<caret>ext");
   }
+
+  public void testDragStartingBeyondSelectedLineEnd() {
+    initText("<selection>line1</selection>\nline2");
+    setEditorVisibleSize(100, 100);
+    mouse().pressAt(0, 10).dragTo(1, 10).release();
+    checkResultByText("line1<selection>\nline2</selection>");
+  }
 }

@@ -3945,10 +3945,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int newStart = mySelectionModel.getSelectionStart();
       int newEnd = mySelectionModel.getSelectionEnd();
 
-      myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
+      Point p = new Point(x, y);
+      myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(p);
       myKeepSelectionOnMousePress = mySelectionModel.hasSelection() &&
                                     caretOffset >= mySelectionModel.getSelectionStart() &&
                                     caretOffset <= mySelectionModel.getSelectionEnd() &&
+                                    !isPointAfterSelectionEnd(p) &&
                                     (SwingUtilities.isLeftMouseButton(e) && mySettings.isDndEnabled() ||
                                      SwingUtilities.isRightMouseButton(e));
 
@@ -3982,8 +3984,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         else {
           if (!myKeepSelectionOnMousePress && getSelectionModel().hasSelection() && !isCreateRectangularSelectionEvent(e) &&
               e.getClickCount() == 1) {
-            setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
-            mySelectionModel.setSelection(caretOffset, caretOffset);
+            if (!toggleCaret) {
+              setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
+              mySelectionModel.setSelection(caretOffset, caretOffset);
+            }
           }
           else {
             if (e.getButton() == MouseEvent.BUTTON1
@@ -4015,6 +4019,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       return isNavigation;
+    }
+
+    private boolean isPointAfterSelectionEnd(Point p) {
+      Point selectionEnd = visualPositionToXY(mySelectionModel.getSelectionEndPosition());
+      return p.y >= selectionEnd.y + getLineHeight() || p.y >= selectionEnd.y && p.x > selectionEnd.x;
     }
   }
 
