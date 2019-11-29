@@ -5,7 +5,11 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,6 +21,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,7 +41,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -172,9 +176,8 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
         FileDocumentManager.getInstance().saveAllDocuments();
 
         final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
-        final MavenRunner mavenRunner = MavenRunner.getInstance(project);
-
         targetDone.down();
+        final Semaphore descriptorWait = new Semaphore();
         new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
@@ -189,12 +192,40 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
               RunnerAndConfigurationSettings configuration =
                 MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, myProject);
-              result[0] = mavenRunner.runBatch(Collections.singletonList(params),
-                                               null,
-                                               null,
-                                               TasksBundle.message("maven.tasks.executing"),
-                                               indicator,
-                                               ph -> ph.putUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY, configuration));
+              Ref<RunContentDescriptor> descriptorRef = new Ref<>();
+
+              descriptorWait.down();
+              MavenRunConfigurationType.runConfiguration(myProject, params, null, null, rcd -> {
+
+                rcd.setExecutionId(env.getExecutionId());
+                descriptorRef.set(rcd);
+                ProcessHandler handler = rcd.getProcessHandler();
+                if (handler != null) {
+                  handler.addProcessListener(new ProcessAdapter() {
+                    @Override
+                    public void startNotified(@NotNull ProcessEvent event) {
+                      handler.putUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY, configuration);
+                    }
+                  });
+                }
+                descriptorWait.up();
+              }, false);
+
+
+              while (!indicator.isCanceled() && !descriptorWait.isUp()) {
+                descriptorWait.waitFor(1000);
+              }
+
+              if (descriptorRef.get() == null) {
+                result[0] = false;
+              }
+              else {
+                ProcessHandler handler = descriptorRef.get().getProcessHandler();
+                if (handler != null) {
+                  handler.waitFor();
+                }
+                result[0] = handler != null && Integer.valueOf(0).equals(handler.getExitCode());
+              }
               myProject.getMessageBus().syncPublisher(RunDashboardManager.DASHBOARD_TOPIC)
                 .configurationChanged(configuration.getConfiguration(), true);
             }
