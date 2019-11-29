@@ -160,7 +160,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
 
         component.setOpaque(true);
         panel.setOpaque(true);
-        panel.setBackground(component.getBackground());
+        panel.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
         if (value instanceof ActionGroupJdkItem) {
           JBLabel toggle = new JBLabel(AllIcons.Icons.Ide.NextStep);
           toggle.setOpaque(false);
