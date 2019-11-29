@@ -172,6 +172,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     assertArrayEquals(positions, softWrapPositions.toArray());
   }
 
+  public void verifyFoldingState(String state) {
+    assertEquals(state, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
+  }
+
   protected void configureSoftWraps(int charCountToWrapAt) {
     EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt);
   }
