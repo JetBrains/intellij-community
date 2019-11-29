@@ -503,7 +503,7 @@ open class IdeStarter : ApplicationStarter {
 
     // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
     val willOpenProject = commandLineArgs.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
-    showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+    val needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
 
     frameInitActivity.end()
 
@@ -512,6 +512,7 @@ open class IdeStarter : ApplicationStarter {
     }
 
     val project = when {
+      !needToOpenProject -> null
       filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, filesToLoad, "MacMenu")
       commandLineArgs.isNotEmpty() -> loadProjectFromExternalCommandLine(commandLineArgs)
       else -> null
@@ -519,7 +520,7 @@ open class IdeStarter : ApplicationStarter {
 
     app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
 
-    if (project == null && RecentProjectsManager.getInstance().willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+    if (needToOpenProject && project == null && RecentProjectsManager.getInstance().willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
       RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
     }
 
@@ -532,7 +533,7 @@ open class IdeStarter : ApplicationStarter {
     }
   }
 
-  private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean) {
+  private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
     val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
     val showWelcomeFrame = when (val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null) {
       null -> null
@@ -549,10 +550,16 @@ open class IdeStarter : ApplicationStarter {
         }
       }
       if (wizardDialog.showIfNeeded()) {
-        return
+        return false
       }
     }
-    showWelcomeFrame?.run()
+
+    if (showWelcomeFrame == null) {
+      return true
+    }
+
+    showWelcomeFrame.run()
+    return false
   }
 
   private fun postOpenUiTasks(app: Application) {
