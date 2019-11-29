@@ -2,37 +2,31 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.dashboard.RunDashboardManager;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.DefaultJavaProgramRunner;
+import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenEditGoalDialog;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
-import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -164,94 +158,41 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
                              @NotNull RunConfiguration configuration,
                              @NotNull ExecutionEnvironment env,
                              @NotNull final MavenBeforeRunTask task) {
-    final Semaphore targetDone = new Semaphore();
-    final boolean[] result = new boolean[]{true};
-    try {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        final Project project = CommonDataKeys.PROJECT.getData(context);
-        final MavenProject mavenProject = getMavenProject(task);
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
-        if (project == null || project.isDisposed() || mavenProject == null) return;
+    final Project project = CommonDataKeys.PROJECT.getData(context);
 
-        FileDocumentManager.getInstance().saveAllDocuments();
+    if (ReadAction.compute(() -> project == null || project.isDisposed())) return false;
 
-        final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
-        targetDone.down();
-        final Semaphore descriptorWait = new Semaphore();
-        new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            try {
-              MavenRunnerParameters params = new MavenRunnerParameters(
-                true,
-                mavenProject.getDirectory(),
-                mavenProject.getFile().getName(),
-                ParametersListUtil.parse(task.getGoal()),
-                explicitProfiles.getEnabledProfiles(),
-                explicitProfiles.getDisabledProfiles());
+    return doRunMavenTask(project, task, env);
+  }
 
-              RunnerAndConfigurationSettings configuration =
-                MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, myProject);
-              Ref<RunContentDescriptor> descriptorRef = new Ref<>();
+  private boolean doRunMavenTask(Project project, MavenBeforeRunTask task, ExecutionEnvironment env) {
+    final MavenProject mavenProject = getMavenProject(task);
+    if (mavenProject == null) return false;
+    final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
 
-              descriptorWait.down();
-              MavenRunConfigurationType.runConfiguration(myProject, params, null, null, rcd -> {
+    MavenRunnerParameters params = new MavenRunnerParameters(
+      true,
+      mavenProject.getDirectory(),
+      mavenProject.getFile().getName(),
+      ParametersListUtil.parse(task.getGoal()),
+      explicitProfiles.getEnabledProfiles(),
+      explicitProfiles.getDisabledProfiles());
 
-                rcd.setExecutionId(env.getExecutionId());
-                descriptorRef.set(rcd);
-                ProcessHandler handler = rcd.getProcessHandler();
-                if (handler != null) {
-                  handler.addProcessListener(new ProcessAdapter() {
-                    @Override
-                    public void startNotified(@NotNull ProcessEvent event) {
-                      handler.putUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY, configuration);
-                    }
-                  });
-                }
-                descriptorWait.up();
-              }, false);
+    RunnerAndConfigurationSettings configuration =
+      MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, myProject);
+    ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configuration, project);
+    environment.setExecutionId(env.getExecutionId());
 
-
-              while (!indicator.isCanceled() && !descriptorWait.isUp()) {
-                descriptorWait.waitFor(1000);
-              }
-
-              if (descriptorRef.get() == null) {
-                result[0] = false;
-              }
-              else {
-                ProcessHandler handler = descriptorRef.get().getProcessHandler();
-                if (handler != null) {
-                  handler.waitFor();
-                }
-                result[0] = handler != null && Integer.valueOf(0).equals(handler.getExitCode());
-              }
-              myProject.getMessageBus().syncPublisher(RunDashboardManager.DASHBOARD_TOPIC)
-                .configurationChanged(configuration.getConfiguration(), true);
-            }
-            finally {
-              targetDone.up();
-            }
-          }
-
-          @Override
-          public boolean shouldStartInBackground() {
-            return MavenRunner.getInstance(project).getSettings().isRunMavenInBackground();
-          }
-
-          @Override
-          public void processSentToBackground() {
-            MavenRunner.getInstance(project).getSettings().setRunMavenInBackground(true);
-          }
-        }.queue();
-      }, ModalityState.NON_MODAL);
-    }
-    catch (Exception e) {
-      MavenLog.LOG.error(e);
+    if (!environment.getRunner().canRun(executor.getId(), environment.getRunProfile())) {
+      MavenLog.LOG.warn("Can't run " + task.getGoal() + " on runner=" + runner.getRunnerId() + ", executorId=" + executor.getId());
       return false;
     }
-    targetDone.waitFor();
-    return result[0];
+
+    return RunConfigurationBeforeRunProvider.doRunTask(executor.getId(), environment, runner);
   }
 
   @NotNull
