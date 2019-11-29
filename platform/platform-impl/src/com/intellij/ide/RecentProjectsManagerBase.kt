@@ -108,7 +108,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       @Suppress("DEPRECATION")
       state.recentPaths.clear()
       @Suppress("DEPRECATION")
-      state.recentPaths.addAll(ContainerUtil.reverse(state.additionalInfo.keys.toList()))
+      state.recentPaths.addAll(state.additionalInfo.keys.reversed())
       if (state.pid == null) {
         //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
         state.pid = null
@@ -472,7 +472,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
     get() = synchronized(stateLock) {
-      return ContainerUtil.reverse(ContainerUtil.findAll(state.additionalInfo.entries) { it.value.opened })
+      return state.additionalInfo.entries.filter { it.value.opened }.asReversed()
     }
 
   override fun getGroups(): List<ProjectGroup?> {
