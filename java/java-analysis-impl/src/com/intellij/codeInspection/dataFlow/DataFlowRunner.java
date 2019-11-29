@@ -540,11 +540,13 @@ public class DataFlowRunner {
     Instruction instruction = instructionState.getInstruction();
     DfaInstructionState[] states = instruction.accept(this, instructionState.getMemoryState(), visitor);
 
-    PsiElement closure = DfaUtil.getClosureInside(instruction);
-    if (closure instanceof PsiClass) {
-      registerNestedClosures(instructionState, (PsiClass)closure);
-    } else if (closure instanceof PsiLambdaExpression) {
-      registerNestedClosures(instructionState, (PsiLambdaExpression)closure);
+    if (instruction instanceof ClosureInstruction) {
+      PsiElement closure = ((ClosureInstruction)instruction).getClosureElement();
+      if (closure instanceof PsiClass) {
+        registerNestedClosures(instructionState, (PsiClass)closure);
+      } else if (closure instanceof PsiLambdaExpression) {
+        registerNestedClosures(instructionState, (PsiLambdaExpression)closure);
+      }
     }
 
     return states;

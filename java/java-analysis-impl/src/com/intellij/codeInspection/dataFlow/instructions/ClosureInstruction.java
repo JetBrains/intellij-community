@@ -16,29 +16,34 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Indicates the closure (lambda or class) inside the analyzed code block
+ */
+public class ClosureInstruction extends Instruction {
+  @NotNull private final PsiElement myClosure;
 
-public class EmptyInstruction extends Instruction {
-  @Nullable private final PsiElement myAnchor;
-
-  public EmptyInstruction(@Nullable PsiElement anchor) {
-    myAnchor = anchor;
+  public ClosureInstruction(@NotNull PsiElement closure) {
+    myClosure = closure;
   }
 
-  @Nullable
-  public PsiElement getAnchor() {
-    return myAnchor;
+  @NotNull
+  public PsiElement getClosureElement() {
+    return myClosure;
   }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitEmptyInstruction(this, runner, stateBefore);
+    return visitor.visitClosureInstruction(this, runner, stateBefore);
   }
 
   public String toString() {
-    return "EMPTY";
+    return "CLOSURE";
   }
 }

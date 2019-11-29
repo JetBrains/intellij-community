@@ -108,11 +108,9 @@ public class LiveVariablesAnalyzer {
       if (value instanceof DfaVariableValue) {
         return Collections.singletonList((DfaVariableValue)value);
       }
-    } else {
-      PsiElement closure = DfaUtil.getClosureInside(instruction);
-      if (closure != null) {
-        return myClosureReads.get(closure);
-      }
+    }
+    else if (instruction instanceof ClosureInstruction) {
+      return myClosureReads.get(((ClosureInstruction)instruction).getClosureElement());
     }
     return Collections.emptyList();
   }

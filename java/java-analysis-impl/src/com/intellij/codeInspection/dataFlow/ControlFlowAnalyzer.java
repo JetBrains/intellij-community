@@ -259,8 +259,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiElement[] elements = statement.getDeclaredElements();
     for (PsiElement element : elements) {
       if (element instanceof PsiClass) {
-        addInstruction(new EmptyInstruction(element));
-        handleEscapedVariables(element);
+        handleClosure(element);
       }
       else if (element instanceof PsiVariable) {
         PsiVariable variable = (PsiVariable)element;
@@ -744,15 +743,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
     DfaValue dfaValue = myFactory.createValue(expression);
     addInstruction(new PushInstruction(dfaValue, expression));
-    handleEscapedVariables(expression);
-    addInstruction(new LambdaInstruction(expression));
+    handleClosure(expression);
     finishElement(expression);
   }
 
-  private void handleEscapedVariables(PsiElement element) {
+  private void handleClosure(PsiElement closure) {
     Set<PsiLocalVariable> variables = new HashSet<>();
     Set<DfaVariableValue> escapedVars = new HashSet<>();
-    element.accept(new JavaRecursiveElementWalkingVisitor() {
+    closure.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -788,6 +786,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (!escapedVars.isEmpty()) {
       addInstruction(new EscapeInstruction(escapedVars));
     }
+    addInstruction(new ClosureInstruction(closure));
   }
 
   @Override public void visitReturnStatement(PsiReturnStatement statement) {
@@ -1739,7 +1738,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiMethod constructor = pushConstructorArguments(expression);
       PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       if (anonymousClass != null) {
-        handleEscapedVariables(anonymousClass);
+        handleClosure(anonymousClass);
       }
 
       addConditionalErrorThrow();
@@ -1974,7 +1973,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     int end = myCurrentFlow.getEndOffset(lambda).getInstructionOffset();
     for (int i = start; i < end; i++) {
       Instruction inst = myCurrentFlow.getInstruction(i);
-      if (inst instanceof EscapeInstruction || inst instanceof LambdaInstruction) {
+      if (inst instanceof EscapeInstruction || inst instanceof ClosureInstruction) {
         myCurrentFlow.makeNop(i);
       }
     }

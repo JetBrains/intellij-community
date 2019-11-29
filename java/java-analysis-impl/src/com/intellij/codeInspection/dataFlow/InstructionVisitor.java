@@ -246,10 +246,6 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, state);
   }
 
-  public DfaInstructionState[] visitLambdaExpression(LambdaInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    return nextInstruction(instruction, runner, memState);
-  }
-
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaCondition condTrue = memState.pop().eq(runner.getFactory().getBoolean(!instruction.isNegated()));
     DfaCondition condFalse = condTrue.negate();
@@ -330,7 +326,7 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  public DfaInstructionState[] visitEmptyInstruction(EmptyInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
+  public DfaInstructionState[] visitClosureInstruction(ClosureInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
     return nextInstruction(instruction, runner, before);
   }
 }
