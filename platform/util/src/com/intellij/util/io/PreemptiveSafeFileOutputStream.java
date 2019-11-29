@@ -30,7 +30,7 @@ public class PreemptiveSafeFileOutputStream extends OutputStream {
 
   public PreemptiveSafeFileOutputStream(@NotNull Path target) throws IOException {
     myTarget = target;
-    myTemp = Paths.get(myTarget + TEMP_EXT);
+    myTemp = myTarget.getFileSystem().getPath(myTarget + TEMP_EXT);
     myOutputStream = Files.newOutputStream(myTemp, TEMP_WRITE);
   }
 
@@ -101,7 +101,7 @@ public class PreemptiveSafeFileOutputStream extends OutputStream {
 
     Path backup = null;
     if (Files.exists(myTarget)) {
-      backup = Paths.get(myTarget + BACKUP_EXT);
+      backup = myTarget.getFileSystem().getPath(myTarget + BACKUP_EXT);
       try {
         Files.move(myTarget, backup, RENAME);
       }

@@ -36,7 +36,7 @@ public class SafeFileOutputStream extends OutputStream {
   private static final OpenOption[] BACKUP_READ = {StandardOpenOption.DELETE_ON_CLOSE};
 
   private final Path myTarget;
-  private final String myBackupName;
+  private final String myBackupExt;
   private final @Nullable Future<Path> myBackupFuture;
   private final BufferExposingByteArrayOutputStream myBuffer;
   private boolean myClosed = false;
@@ -55,20 +55,21 @@ public class SafeFileOutputStream extends OutputStream {
 
   public SafeFileOutputStream(@NotNull Path target, @NotNull String backupExt) {
     myTarget = target;
-    myBackupName = myTarget.getFileName() + backupExt;
-    myBackupFuture = !Files.exists(target) ? null : AppExecutorUtil.getAppExecutorService().submit(() -> {
-      Path parent = myTarget.getParent();
-      Path backup = parent != null ? parent.resolve(myBackupName) : Paths.get(myBackupName);
-      Files.copy(myTarget, backup, BACKUP_COPY);
-      if (SystemInfo.isWindows) {
-        DosFileAttributeView dosView = Files.getFileAttributeView(backup, DosFileAttributeView.class);
-        if (dosView != null && dosView.readAttributes().isReadOnly()) {
-          dosView.setReadOnly(false);
-        }
-      }
-      return backup;
-    });
+    myBackupExt = backupExt;
+    myBackupFuture = Files.exists(target) ? AppExecutorUtil.getAppExecutorService().submit(this::backup) : null;
     myBuffer = new BufferExposingByteArrayOutputStream();
+  }
+
+  private Path backup() throws IOException {
+    Path backup = myTarget.getFileSystem().getPath(myTarget + myBackupExt);
+    Files.copy(myTarget, backup, BACKUP_COPY);
+    if (SystemInfo.isWindows) {
+      DosFileAttributeView dosView = Files.getFileAttributeView(backup, DosFileAttributeView.class);
+      if (dosView != null && dosView.readAttributes().isReadOnly()) {
+        dosView.setReadOnly(false);
+      }
+    }
+    return backup;
   }
 
 
@@ -112,7 +113,7 @@ public class SafeFileOutputStream extends OutputStream {
       throw new IllegalStateException(e);
     }
     catch (ExecutionException e) {
-      throw new IOException(CommonBundle.message("safe.write.backup", myTarget, myBackupName), e.getCause());
+      throw new IOException(CommonBundle.message("safe.write.backup", myTarget, myTarget.getFileName() + myBackupExt), e.getCause());
     }
   }
 
