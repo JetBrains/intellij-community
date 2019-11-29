@@ -336,11 +336,11 @@
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher" dynamic="true"/>
 
-    <extensionPoint name="statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP">
+    <extensionPoint name="statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.statistics.Statistician"/>
     </extensionPoint>
 
-    <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint">
+    <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
 
