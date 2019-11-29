@@ -277,6 +277,7 @@
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+    <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 
