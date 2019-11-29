@@ -21,6 +21,13 @@ public class ReturnNullInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
+  public void testReturnNullFromNotNullAnnotatedMethods() {
+    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    nnnManager.setNotNulls("com.siyeh.igtest.bugs.NotNull");
+    Disposer.register(myFixture.getTestRootDisposable(), nnnManager::setNotNulls);
+    doTest();
+  }
+
   public void testWarnOptional() {
     doTest();
   }
@@ -28,9 +35,18 @@ public class ReturnNullInspectionTest extends LightJavaInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
+    final String testCaseName = getTestName(false);
     final ReturnNullInspection inspection = new ReturnNullInspection();
-    inspection.m_reportObjectMethods = !"WarnOptional".equals(getTestName(false));
-    inspection.m_ignorePrivateMethods = "WarnOptional".equals(getTestName(false));
+    if ("ReturnNullFromNotNullAnnotatedMethods".equals(testCaseName)) {
+      inspection.m_ignorePrivateMethods = true;
+      inspection.m_reportObjectMethods = false;
+      inspection.m_reportArrayMethods = false;
+      inspection.m_reportCollectionMethods = false;
+    } else {
+      inspection.m_reportObjectMethods = !"WarnOptional".equals(testCaseName);
+      inspection.m_ignorePrivateMethods = "WarnOptional".equals(testCaseName);
+    }
+
     return inspection;
   }
 
@@ -47,7 +63,13 @@ public class ReturnNullInspectionTest extends LightJavaInspectionTestCase {
       "import java.lang.annotation.*;\n" +
       "@Retention(RetentionPolicy.SOURCE)\n" +
       "@Target({ElementType.TYPE_USE, ElementType.METHOD})\n" +
-      "public @interface Nullable {}"
+      "public @interface Nullable {}",
+
+      "package com.siyeh.igtest.bugs;\n" +
+      "import java.lang.annotation.*;\n" +
+      "@Retention(RetentionPolicy.SOURCE)\n" +
+      "@Target({ElementType.TYPE_USE, ElementType.METHOD})\n" +
+      "public @interface NotNull {}"
     };
   }
 }

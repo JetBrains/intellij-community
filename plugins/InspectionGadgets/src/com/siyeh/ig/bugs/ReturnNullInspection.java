@@ -181,6 +181,21 @@ public class ReturnNullInspection extends BaseInspection {
         registerError(value, value);
         return;
       }
+
+      final Project project = method.getProject();
+      final NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findEffectiveNullabilityInfo(method);
+      if (info != null && !info.isInferred()) {
+        if (info.getNullability() == Nullability.NULLABLE) {
+          return;
+        } else if (info.getNullability() == Nullability.NOT_NULL) {
+          registerError(value, value);
+          return;
+        }
+      }
+      if (DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) {
+        return;
+      }
+
       if (lambda) {
         if (m_ignorePrivateMethods || isInNullableContext(element)) {
           return;
@@ -196,14 +211,6 @@ public class ReturnNullInspection extends BaseInspection {
             return;
           }
         }
-      }
-      final Project project = method.getProject();
-      final NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findEffectiveNullabilityInfo(method);
-      if (info != null && info.getNullability() == Nullability.NULLABLE && !info.isInferred()) {
-        return;
-      }
-      if (DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) {
-        return;
       }
 
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
