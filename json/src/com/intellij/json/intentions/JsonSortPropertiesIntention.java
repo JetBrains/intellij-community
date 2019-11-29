@@ -40,7 +40,7 @@ public class JsonSortPropertiesIntention implements IntentionAction, LowPriority
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement parent = findParentObject(editor, file);
-    return parent instanceof JsonObject && !isSorted((JsonObject)parent);
+    return parent instanceof JsonObject && !isSorted((JsonObject)parent) && parent.isWritable();
   }
 
   @Nullable
