@@ -16,17 +16,5 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
-
-public abstract class BranchingInstruction extends Instruction {
-  private final PsiElement myExpression;
-
-  protected BranchingInstruction(@Nullable PsiElement psiAnchor) {
-    myExpression = psiAnchor;
-  }
-
-  public PsiElement getPsiAnchor() {
-    return myExpression;
-  }
+public interface BranchingInstruction {
 }

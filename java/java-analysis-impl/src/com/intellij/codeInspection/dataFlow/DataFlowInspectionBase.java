@@ -317,7 +317,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (instruction instanceof InstanceofInstruction) {
         InstanceofInstruction instanceOf = (InstanceofInstruction)instruction;
         if (visitor.isInstanceofRedundant(instanceOf)) {
-          reporter.registerProblem(instanceOf.getPsiAnchor(),
+          reporter.registerProblem(instanceOf.getExpression(),
                                    InspectionsBundle.message("dataflow.message.redundant.instanceof"),
                                    new RedundantInstanceofFix());
         }
