@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -114,8 +115,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private final Alarm mySecondKeystrokePopupTimeout = new Alarm();
 
-  private SystemShortcuts mySystemShortcuts = null;
-
   public IdeKeyEventDispatcher(@Nullable IdeEventQueue queue){
     myQueue = queue;
 
@@ -123,14 +122,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Application parent = ApplicationManager.getApplication();
     if (parent != null) {
       Disposer.register(parent, this);
-    }
-  }
-
-  public void enableSystemShortcutsChecker() {
-    // shortcuts reading can spent some milliseconds (2-4 ms on MacBookPro 2018)
-    // so do it only when UI initialized
-    if (mySystemShortcuts == null) {
-      mySystemShortcuts = new SystemShortcuts();
     }
   }
 
@@ -791,6 +782,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private void addActionsFromActiveKeymap(@NotNull Shortcut sc) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return;
+    }
+
     KeymapManager keymapManager = KeymapManager.getInstance();
     Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
     String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(sc);
@@ -802,15 +797,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    if (mySystemShortcuts != null
-        && keymap != null
-        && actionIds.length > 0
-        && sc instanceof KeyboardShortcut
-    ) {
+    if (keymap != null && actionIds.length > 0 && sc instanceof KeyboardShortcut) {
       // user pressed keystroke and keymap has some actions assigned to sc (actions going to be executed)
       // check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary
       // see IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap
-      mySystemShortcuts.onUserPressedShortcut(keymap, actionIds, (KeyboardShortcut)sc);
+      SystemShortcuts.getInstance().onUserPressedShortcut(keymap, actionIds, (KeyboardShortcut)sc);
     }
   }
 

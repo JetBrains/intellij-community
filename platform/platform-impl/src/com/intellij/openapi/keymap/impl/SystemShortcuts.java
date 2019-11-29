@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
+@Service
 public final class SystemShortcuts {
   private static final Logger LOG = Logger.getInstance(SystemShortcuts.class);
   private static final @NotNull String ourNotificationGroupId = "System shortcuts conflicts";
@@ -52,8 +54,13 @@ public final class SystemShortcuts {
   @NotNull
   private final Map<AWTKeyStroke, ConflictItem> myKeymapConflicts = new HashMap<>();
 
-  public SystemShortcuts() {
+  private SystemShortcuts() {
     readSystem();
+  }
+
+  @NotNull
+  public static SystemShortcuts getInstance() {
+    return ApplicationManager.getApplication().getService(SystemShortcuts.class);
   }
 
   public static final class ConflictItem {

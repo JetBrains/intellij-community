@@ -531,6 +531,8 @@ open class IdeStarter : ApplicationStarter {
     if (!app.isHeadlessEnvironment) {
       postOpenUiTasks(app)
     }
+
+    StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
   }
 
   private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
