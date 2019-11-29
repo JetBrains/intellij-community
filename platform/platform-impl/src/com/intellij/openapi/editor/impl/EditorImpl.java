@@ -47,7 +47,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -117,7 +116,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
@@ -4436,65 +4434,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static class ExplosionPainter extends AbstractPainter {
-    private final Point myExplosionLocation;
-    private final Image myImage;
-    @NotNull private final Disposable myPainterListenersDisposable;
-
-    private static final long TIME_PER_FRAME = 30;
-    private final int myWidth;
-    private final int myHeight;
-    private long lastRepaintTime = System.currentTimeMillis();
-    private int frameIndex;
-    private static final int TOTAL_FRAMES = 8;
-
-    private final AtomicBoolean nrp = new AtomicBoolean(true);
-
-    ExplosionPainter(final Point explosionLocation, Image image, @NotNull Disposable painterListenersDisposable) {
-      myExplosionLocation = new Point(explosionLocation.x, explosionLocation.y);
-      myImage = image;
-      myPainterListenersDisposable = painterListenersDisposable;
-      myWidth = myImage.getWidth(null);
-      myHeight = myImage.getHeight(null);
-    }
-
-    @Override
-    public void executePaint(Component component, Graphics2D g) {
-      if (!nrp.get()) return;
-
-      long currentTimeMillis = System.currentTimeMillis();
-
-      float alpha = 1 - (float)frameIndex / TOTAL_FRAMES;
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-      Image scaledImage = ImageUtil.scaleImage(myImage, alpha);
-
-      int x = myExplosionLocation.x - scaledImage.getWidth(null) / 2;
-      int y = myExplosionLocation.y - scaledImage.getHeight(null) / 2;
-
-      if (currentTimeMillis - lastRepaintTime < TIME_PER_FRAME) {
-        UIUtil.drawImage(g, scaledImage, x, y, null);
-        EdtExecutorService.getScheduledExecutorInstance().schedule(() -> component.repaint(x, y, myWidth, myHeight),
-                                                                   TIME_PER_FRAME, TimeUnit.MILLISECONDS);
-        return;
-      }
-      lastRepaintTime = currentTimeMillis;
-      frameIndex++;
-      UIUtil.drawImage(g, scaledImage, x, y, null);
-      if (frameIndex == TOTAL_FRAMES) {
-        nrp.set(false);
-        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myPainterListenersDisposable));
-        component.repaint(x, y, myWidth, myHeight);
-      }
-      component.repaint(x, y, myWidth, myHeight);
-    }
-
-    @Override
-    public boolean needsRepaint() {
-      return nrp.get();
-    }
-
-  }
-
   static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t, int dropAction) {
     final EditorDropHandler dropHandler = editor.getDropHandler();
 
@@ -4511,7 +4450,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               Point editorComponentLocationOnScreen = editorComponent.getLocationOnScreen();
               Disposable painterListenersDisposable = Disposer.newDisposable("PainterListenersDisposable");
               Disposer.register(editor.getDisposable(), painterListenersDisposable);
-              ExplosionPainter painter = new ExplosionPainter(
+              GutterIconDropAnimator painter = new GutterIconDropAnimator(
                 new Point(
                   mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
                   mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
