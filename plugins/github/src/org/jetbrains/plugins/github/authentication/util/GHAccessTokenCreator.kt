@@ -52,7 +52,7 @@ class GHAccessTokenCreator(private val server: GithubServerPath,
   }
 
   companion object {
-    private val MASTER_SCOPES = listOf("repo", "gist")
+    private val MASTER_SCOPES = listOf("repo", "gist", "read:org")
     const val DEFAULT_CLIENT_NAME = "Github Integration Plugin"
 
     @JvmStatic
