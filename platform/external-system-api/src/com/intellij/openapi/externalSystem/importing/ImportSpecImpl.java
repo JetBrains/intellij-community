@@ -32,7 +32,6 @@ public class ImportSpecImpl implements ImportSpec {
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
   private boolean forceWhenUptodate;
-  private boolean whenAutoImportEnabled;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
@@ -78,14 +77,12 @@ public class ImportSpecImpl implements ImportSpec {
     this.forceWhenUptodate = forceWhenUptodate;
   }
 
-  @Override
-  public boolean whenAutoImportEnabled() {
-    return whenAutoImportEnabled;
-  }
-
-  public void setWhenAutoImportEnabled(boolean whenAutoImportEnabled) {
-    this.whenAutoImportEnabled = whenAutoImportEnabled;
-  }
+  /**
+   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public void setWhenAutoImportEnabled(boolean whenAutoImportEnabled) { }
 
   public void setCallback(@Nullable ExternalProjectRefreshCallback callback) {
     myCallback = callback;

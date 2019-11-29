@@ -172,12 +172,6 @@ public abstract class AbstractExternalSystemSettings<
         added.add(current);
       }
       else {
-        if (current.isUseAutoImport() != old.isUseAutoImport()) {
-          if (listener != null) {
-            listener.onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
-          }
-          getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
-        }
         checkSettings(old, current);
       }
     }

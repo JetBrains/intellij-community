@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,9 @@ import static com.intellij.util.PlatformUtils.isIntelliJ;
  */
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
-  private String  myExternalProjectPath;
+  private static Logger LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport");
+
+  private String myExternalProjectPath;
   @Nullable private Set<String> myModules = new HashSet<>();
 
   @NotNull
@@ -31,7 +35,6 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     this.myModules = modules;
   }
 
-  private boolean myUseAutoImport;
   private boolean myUseQualifiedModuleNames = !isIntelliJ() && !"AndroidStudio".equals(getPlatformPrefix()); // backward-compatible defaults
 
   /**
@@ -54,12 +57,23 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     myExternalProjectPath = externalProjectPath;
   }
 
+  /**
+   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public boolean isUseAutoImport() {
-    return myUseAutoImport;
+    return true;
   }
 
-  public void setUseAutoImport(boolean useAutoImport) {
-    myUseAutoImport = useAutoImport;
+  /**
+   * @deprecated Auto-import cannot be disabled
+   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public void setUseAutoImport(@SuppressWarnings("unused") boolean useAutoImport) {
+    LOG.error("Auto-import cannot be disabled");
   }
 
   /**
@@ -118,7 +132,6 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;
     receiver.myModules = myModules != null ? new HashSet<>(myModules) : new HashSet<>();
-    receiver.myUseAutoImport = myUseAutoImport;
     receiver.myCreateEmptyContentRootDirectories = myCreateEmptyContentRootDirectories;
     receiver.myUseQualifiedModuleNames = myUseQualifiedModuleNames;
   }

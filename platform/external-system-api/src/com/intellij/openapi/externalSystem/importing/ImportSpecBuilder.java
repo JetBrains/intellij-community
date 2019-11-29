@@ -22,7 +22,6 @@ public class ImportSpecBuilder {
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
   private boolean myForceWhenUptodate;
-  private boolean myWhenAutoImportEnabled;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean isReportRefreshError = true;
@@ -42,8 +41,12 @@ public class ImportSpecBuilder {
     apply(importSpec);
   }
 
+  /**
+   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public ImportSpecBuilder whenAutoImportEnabled() {
-    myWhenAutoImportEnabled = true;
     return this;
   }
 
@@ -109,7 +112,6 @@ public class ImportSpecBuilder {
 
   public ImportSpec build() {
     ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
-    mySpec.setWhenAutoImportEnabled(myWhenAutoImportEnabled);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
@@ -123,7 +125,6 @@ public class ImportSpecBuilder {
   }
 
   private void apply(ImportSpec spec) {
-    myWhenAutoImportEnabled = spec.whenAutoImportEnabled();
     myProgressExecutionMode = spec.getProgressExecutionMode();
     myForceWhenUptodate = spec.isForceWhenUptodate();
     myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
