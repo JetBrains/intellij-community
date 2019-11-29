@@ -643,6 +643,7 @@
             <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction"/>
             <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction"/>
             <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction"/>
+            <action id="ToggleZenMode" class="com.intellij.ide.actions.ToggleZenModeAction"/>
           </group>
           <group id="UIToggleActions">
             <separator/>
