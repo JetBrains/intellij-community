@@ -236,7 +236,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   }
   @Override
   public void dispose() {
-    shutdown(false);
+    shutdown(ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override

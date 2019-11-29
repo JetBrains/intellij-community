@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -802,10 +801,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       File temp = createTempDirectory();
       VirtualFile tempDir = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      Project newProject = ProjectManagerEx.getInstanceEx().newProjectForTest(Paths.get(tempDir.getPath()));
-      Disposer.register(getTestRootDisposable(), () -> {
-        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject));
-      });
+      Project newProject = ProjectManagerEx.getInstanceEx().newProjectForTest(Paths.get(tempDir.getPath()), getTestRootDisposable());
       PlatformTestUtil.saveProject(newProject);
 
       Charset newProjectEncoding = EncodingProjectManager.getInstance(newProject).getDefaultCharset();

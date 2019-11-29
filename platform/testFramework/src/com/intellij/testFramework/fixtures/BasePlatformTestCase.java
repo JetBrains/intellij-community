@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -26,6 +27,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class BasePlatformTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
+
+  @NotNull
+  @Override
+  public Disposable getTestRootDisposable() {
+    return myFixture == null ? super.getTestRootDisposable() : myFixture.getTestRootDisposable();
+  }
 
   @Override
   protected void setUp() throws Exception {

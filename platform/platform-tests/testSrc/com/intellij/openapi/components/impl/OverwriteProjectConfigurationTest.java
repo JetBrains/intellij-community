@@ -31,48 +31,38 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   }
 
   public void testOverwriteModulesList() {
-    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir);
+    Disposable disposable = Disposer.newDisposable();
+    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, disposable);
     try {
       createModule(project, "module", ModuleTypeId.JAVA_MODULE);
       PlatformTestUtil.saveProject(project);
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      Disposer.dispose(disposable);
     }
 
-    Project recreated = createProject();
+    Project recreated = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, myProject);
     PlatformTestUtil.saveProject(recreated);
     assertThat(ModuleManager.getInstance(recreated).getModules()).isEmpty();
   }
 
   public void testOverwriteModuleType() {
-    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir);
+    Disposable disposable = Disposer.newDisposable();
+    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, disposable);
     try {
       Path imlFile = createModule(project, "module", ModuleTypeId.JAVA_MODULE);
       PlatformTestUtil.saveProject(project);
       assertThat(imlFile).isRegularFile();
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      Disposer.dispose(disposable);
     }
 
-    Project recreated = createProject();
+    Project recreated = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, myProject);
     createModule(recreated, "module", ModuleTypeId.WEB_MODULE);
     PlatformTestUtil.saveProject(recreated);
     Module module = assertOneElement(ModuleManager.getInstance(recreated).getModules());
     assertEquals(ModuleTypeId.WEB_MODULE, ModuleType.get(module).getId());
-  }
-
-  @NotNull
-  private Project createProject() {
-    Project project = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
-      }
-    });
-    return project;
   }
 
   @NotNull

@@ -3,9 +3,11 @@ package com.intellij.openapi.project.ex;
 
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,11 +35,13 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @TestOnly
   @NotNull
-  public final Project newProjectForTest(@NotNull Path file) {
+  public final Project newProjectForTest(@NotNull Path file, @NotNull Disposable parentDisposable) {
     OpenProjectTask options = new OpenProjectTask();
     options.useDefaultProjectAsTemplate = false;
     options.isNewProject = true;
-    return Objects.requireNonNull(newProject(file, null, options));
+    Project project = Objects.requireNonNull(newProject(file, null, options));
+    Disposer.register(parentDisposable, () -> forceCloseProject(project));
+    return project;
   }
 
   @Nullable
