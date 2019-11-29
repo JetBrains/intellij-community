@@ -961,40 +961,51 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
       Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
       activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(lastFocusedFrame.getProject()));
-      EditorsSplitters splitters = fem.getSplittersFor(activeWindow);
-      return splitters != null ? splitters : fem.getSplitters();
+      Project project = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
+      FileEditorManagerEx fileEditorManager = project == null || project.isDisposed() ? null : FileEditorManagerEx.getInstanceEx(project);
+      if (fileEditorManager == null) {
+        return null;
+      }
+      EditorsSplitters splitters = fileEditorManager.getSplittersFor(activeWindow);
+      return splitters != null ? splitters : fileEditorManager.getSplitters();
     }
 
     if (activeWindow instanceof IdeFrame.Child) {
       Project project = ((IdeFrame.Child)activeWindow).getProject();
-      activeWindow = WindowManager.getInstance().getFrame(project);
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(project));
-      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-      return splitters != null ? splitters : fem.getSplitters();
+      return getSplittersForProject(WindowManager.getInstance().getFrame(project), project);
     }
 
-    final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
+    IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
     if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(frame.getProject()));
-      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-      return splitters != null ? splitters : fem.getSplitters();
+      return getSplittersForProject(activeWindow, frame.getProject());
     }
 
     return null;
   }
 
+  @Nullable
+  private static EditorsSplitters getSplittersForProject(@Nullable Window activeWindow, @Nullable Project project) {
+    FileEditorManagerEx fileEditorManager = project == null || project.isDisposed() ? null : FileEditorManagerEx.getInstanceEx(project);
+    if (fileEditorManager == null) {
+      return null;
+    }
+    EditorsSplitters splitters = activeWindow == null ? null : fileEditorManager.getSplittersFor(activeWindow);
+    return splitters == null ? fileEditorManager.getSplitters() : splitters;
+  }
+
   public static JComponent findDefaultComponentInSplitters()  {
     EditorsSplitters splittersToFocus = getSplittersToFocus();
-    if (splittersToFocus != null) {
-      final EditorWindow window = splittersToFocus.getCurrentWindow();
-      if (window != null) {
-        final EditorWithProviderComposite editor = window.getSelectedEditor();
-        if (editor != null) {
-          JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-          if (defaultFocusedComponentInEditor != null) {
-            return defaultFocusedComponentInEditor;
-          }
+    if (splittersToFocus == null) {
+      return null;
+    }
+
+    EditorWindow window = splittersToFocus.getCurrentWindow();
+    if (window != null) {
+      EditorWithProviderComposite editor = window.getSelectedEditor();
+      if (editor != null) {
+        JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+        if (defaultFocusedComponentInEditor != null) {
+          return defaultFocusedComponentInEditor;
         }
       }
     }
