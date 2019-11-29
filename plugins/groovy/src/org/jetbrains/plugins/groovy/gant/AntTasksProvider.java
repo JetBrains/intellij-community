@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ant.ReflectedProject;
@@ -44,6 +30,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Future;
 
+import static org.jetbrains.plugins.groovy.gant.AntBuilderMethod.methods;
+
 /**
  * @author ilyas, peter
  */
@@ -73,11 +61,12 @@ public class AntTasksProvider {
       final Set<LightMethodBuilder> methods = new HashSet<>();
 
       final Project project = file.getProject();
+      final PsiType mapType = TypesUtil.createType(GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, file);
+      final PsiType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, file);
       final PsiType closureType = TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, file);
-      final PsiClassType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, file);
 
       for (String name : antObjects.keySet()) {
-        methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name), stringType));
+        methods.addAll(methods(file, name, antObjects.get(name), mapType, stringType, closureType));
       }
       return CachedValueProvider.Result
         .create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));

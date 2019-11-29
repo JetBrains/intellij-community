@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -182,7 +181,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                                                         @NotNull final CallInfo<T> info) {
     final PsiElement element = methodResolveResult.getElement();
     if (!(element instanceof PsiMethod)) return true;
-    if (element instanceof GrBuilderMethod) return true;
 
     final PsiMethod method = (PsiMethod)element;
 
