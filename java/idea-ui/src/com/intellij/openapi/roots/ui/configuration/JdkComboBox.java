@@ -124,7 +124,7 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
 
     UIUtil.putClientProperty(this, ANIMATION_IN_RENDERER_ALLOWED, true);
 
-    setMinimumAndPreferredWidth(JBUI.scale(400));
+    setMinimumAndPreferredWidth(JBUI.scale(300));
     setMaximumRowCount(30);
     setSwingPopup(false);
     putClientProperty("ComboBox.jbPopup.supportUpdateModel", true);
