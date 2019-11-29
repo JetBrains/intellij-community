@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
@@ -430,5 +431,31 @@ public class FoldingTest extends AbstractEditorTest {
     addCollapsedFoldRegion(0, getEditor().getDocument().getTextLength(), "...");
     mouse().clickAt(0, 1);
     assertEquals(new VisualPosition(0, 0), getEditor().getCaretModel().getVisualPosition());
+  }
+
+  public void testExpandRegionDoesNotImpactOutsideCaret() {
+    initText("(\n" +
+             "  foo [\n" +
+             "    bar<caret>\n" +
+             "  ]\n" +
+             ")");
+    foldOccurrences("(?s)\\(.*\\)", "...");
+    foldOccurrences("(?s)\\[.*\\]", "...");
+    checkResultByText("<caret>(\n" +
+                      "  foo [\n" +
+                      "    bar\n" +
+                      "  ]\n" +
+                      ")");
+
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("foo"));
+    verifyFoldingState("[FoldRegion -(0:23), placeholder='...', FoldRegion +(8:21), placeholder='...']");
+
+    executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
+
+    checkResultByText("(\n" +
+                      "  <caret>foo [\n" +
+                      "    bar\n" +
+                      "  ]\n" +
+                      ")");
   }
 }
