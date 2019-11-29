@@ -77,12 +77,11 @@ class VfsEventGenerationHelper {
           children = scanChildren(child, relevantExcluded, checkCanceled);
         }
       }
-      catch (InvalidPathException ignored) {
-        // Paths.get() throws sometimes
+      catch (InvalidPathException e) {
+        LOG.warn("Invalid child name: '" + childName + "'", e);
       }
     }
-    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true,
-                                                  children);
+    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
     myEvents.add(event);
   }
 
