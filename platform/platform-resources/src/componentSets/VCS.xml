@@ -12,15 +12,6 @@
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.PartialLineStatusTrackerManagerState</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
     </component>
     <component>
