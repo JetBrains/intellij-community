@@ -168,7 +168,11 @@ sealed class GithubCredentialsUI {
     override fun getPanel() = panel {
       buildTitleAndLinkRow(this, dialogMode, switchUiLink)
       row("Server:") { serverTextField(pushX, growX) }
-      row("Token:") { tokenTextField(pushX, growX) }
+      row("Token:") {
+        tokenTextField(
+          comment = "The following scopes must be granted to the access token: " + GHAccessTokenCreator.MASTER_SCOPES,
+          constraints = *arrayOf(pushX, growX))
+      }
       row("") {
         cell {
           loginButton()
