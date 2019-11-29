@@ -62,19 +62,22 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     deinstall(component, null);
   }
 
-  public final void deinstall(final Component component, @Nullable AWTEvent cause){
-    if (component == null) return;
+  public final void deinstall(final Component component, @Nullable AWTEvent cause) {
+    if (component == null) {
+      return;
+    }
 
-    if(component instanceof Container){
-      Container container=(Container)component;
-      int componentCount=container.getComponentCount();
-      for(int i=0;i<componentCount;i++){
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      int componentCount = container.getComponentCount();
+      for (int i = 0; i < componentCount; i++) {
         deinstall(container.getComponent(i));
       }
       container.removeContainerListener(this);
     }
+
     component.removeFocusListener(this);
-    if(getFocusedComponent() ==component){
+    if (getFocusedComponent() == component) {
       setFocusedComponentImpl(null, cause);
     }
   }
@@ -117,8 +120,8 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   private void installImpl(Component component){
-    if(component instanceof Container){
-      Container container=(Container)component;
+    if (component instanceof Container) {
+      Container container = (Container)component;
       synchronized (container.getTreeLock()) {
         int componentCount = container.getComponentCount();
         for (int i = 0; i < componentCount; i++) {
@@ -127,7 +130,8 @@ public class FocusWatcher implements ContainerListener,FocusListener{
         container.addContainerListener(this);
       }
     }
-    if(component instanceof JMenuItem||component instanceof JMenuBar){
+
+    if (component instanceof JMenuItem || component instanceof JMenuBar) {
       return;
     }
     component.addFocusListener(this);
@@ -138,7 +142,9 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   }
 
   public void setFocusedComponentImpl(Component component, @Nullable AWTEvent cause){
-    if (!isFocusedComponentChangeValid(component, cause)) return;
+    if (!isFocusedComponentChangeValid(component, cause)) {
+      return;
+    }
 
     if (UIUtil.isFocusProxy(component)) {
       _setFocused(getFocusedComponent(), cause);

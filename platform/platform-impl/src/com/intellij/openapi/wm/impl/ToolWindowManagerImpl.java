@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupActivity;
@@ -68,25 +69,20 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
-
-import static com.intellij.openapi.fileEditor.impl.EditorsSplitters.findDefaultComponentInSplittersIfPresent;
 
 @State(name = "ToolWindowManager", defaultStateAsResource = true, storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 })
-public class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
+public class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ToolWindowManagerImpl.class);
 
   private final Project myProject;
   private final EventDispatcher<ToolWindowManagerListener> myDispatcher = EventDispatcher.create(ToolWindowManagerListener.class);
   private DesktopLayout myLayout = new DesktopLayout();
-  private final Map<String, InternalDecorator> myId2InternalDecorator = new HashMap<>();
-  private final Map<String, FloatingDecorator> myId2FloatingDecorator = new HashMap<>();
-  private final Map<String, WindowedDecorator> myId2WindowedDecorator = new HashMap<>();
-  private final Map<String, StripeButton> myId2StripeButton = new HashMap<>();
-  private final Map<String, FocusWatcher> myIdToFocusWatcher = new HashMap<>();
+  private final Map<String, ToolWindowEntry> idToEntry = new HashMap<>();
 
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
   private final InternalDecoratorListener myInternalDecoratorListener = new MyInternalDecoratorListener();
@@ -94,7 +90,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private final ActiveStack myActiveStack = new ActiveStack();
   private final SideStack mySideStack = new SideStack();
 
-  private ToolWindowsPane myToolWindowsPane;
+  private ToolWindowsPane myToolWindowPane;
   private ProjectFrameHelper myFrame;
   private DesktopLayout myLayoutToRestoreLater;
   @NonNls private static final String EDITOR_ELEMENT = "editor";
@@ -106,8 +102,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
   @NonNls private static final String LAYOUT_TO_RESTORE = "layout-to-restore";
-
-  private final Map<String, Balloon> myWindow2Balloon = new HashMap<>();
 
   private KeyState myCurrentState = KeyState.waiting;
   private final Alarm myWaiterForSecondPress = new Alarm();
@@ -125,7 +119,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     waiting, pressed, released, hold
   }
 
-  private final SingleAlarm myUpdateHeadersAlarm = new SingleAlarm(() -> updateToolWindowHeaders(), 50, this);
   private final CommandProcessor myCommandProcessor = new CommandProcessor();
 
   public ToolWindowManagerImpl(@NotNull Project project) {
@@ -135,10 +128,12 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
-    MessageBusConnection projectLevelBusConnection = project.getMessageBus().connect(this);
+    SingleAlarm updateHeadersAlarm = new SingleAlarm(() -> updateToolWindowHeaders(), 50, myProject);
+
+    MessageBusConnection projectLevelBusConnection = project.getMessageBus().connect();
     projectLevelBusConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
 
-    MessageBusConnection appLevelBusConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    MessageBusConnection appLevelBusConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
     appLevelBusConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
@@ -184,11 +179,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         //noinspection TestOnlyProblems
         init();
 
-        PropertyChangeListener focusListener = it -> myUpdateHeadersAlarm.request();
+        PropertyChangeListener focusListener = it -> updateHeadersAlarm.cancelAndRequest();
         KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         keyboardFocusManager.addPropertyChangeListener("focusOwner", focusListener);
-        Disposer.register(ToolWindowManagerImpl.this,
-                          () -> keyboardFocusManager.removePropertyChangeListener("focusOwner", focusListener));
+        Disposer.register(myProject, () -> keyboardFocusManager.removePropertyChangeListener("focusOwner", focusListener));
       }
 
       @Override
@@ -197,6 +191,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           Toolkit.getDefaultToolkit().removeAWTEventListener(awtFocusListener);
           ToolWindowManagerImpl.this.projectClosed();
         }
+      }
+    });
+
+    appLevelBusConnection.subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        idToEntry.forEach((key, info) -> {
+          info.getStripeButton().updatePresentation();
+        });
       }
     });
 
@@ -241,7 +244,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private static void focusDefaultElementInSelectedEditor() {
-    findDefaultComponentInSplittersIfPresent(Component::requestFocus);
+    EditorsSplitters.findDefaultComponentInSplittersIfPresent(Component::requestFocus);
   }
 
   private void updateToolWindowHeaders() {
@@ -373,8 +376,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private void processHoldState() {
-    if (myToolWindowsPane != null) {
-      myToolWindowsPane.setStripesOverlayed(myCurrentState == KeyState.hold);
+    if (myToolWindowPane != null) {
+      myToolWindowPane.setStripesOverlayed(myCurrentState == KeyState.hold);
     }
   }
 
@@ -396,23 +399,17 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     return myProject;
   }
 
-  @Override
-  public void dispose() {
-    LOG.assertTrue(myId2StripeButton.isEmpty(), myId2StripeButton);
-  }
-
   @TestOnly
   public void init() {
-    if (myToolWindowsPane != null) {
+    if (myToolWindowPane != null) {
       return;
     }
 
     myFrame = WindowManagerEx.getInstanceEx().allocateFrame(myProject);
     IdeFrameImpl frame = myFrame.getFrame();
-    myToolWindowsPane = new ToolWindowsPane(frame, this);
-    Disposer.register(this, myToolWindowsPane);
+    myToolWindowPane = new ToolWindowsPane(frame, this, myProject);
     IdeRootPane rootPane = Objects.requireNonNull(myFrame.getRootPane());
-    rootPane.setToolWindowsPane(myToolWindowsPane);
+    rootPane.setToolWindowsPane(myToolWindowPane);
     frame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
     rootPane.updateToolbar();
 
@@ -424,9 +421,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         resetHoldState();
       }
       return false;
-    }, this);
+    }, myProject);
 
-    UIUtil.putClientProperty(myToolWindowsPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
+    UIUtil.putClientProperty(myToolWindowPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
       List<WindowInfoImpl> infos = myLayout.getInfos();
       List<JComponent> result = new ArrayList<>(infos.size());
       for (WindowInfoImpl info : infos) {
@@ -592,7 +589,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     for (FinalizableCommand each : commandList) {
       each.beforeExecute(this);
     }
-    myCommandProcessor.execute(commandList, myProject.getDisposed());
+    myCommandProcessor.execute(commandList, () -> myProject.isDisposed());
   }
 
   private void flushCommands() {
@@ -717,7 +714,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   /**
    * Helper method. It deactivates (and hides) window with specified {@code id}.
    */
-  private void deactivateToolWindowImpl(@NotNull WindowInfoImpl info, final boolean shouldHide, @NotNull List<? super FinalizableCommand> commandsList) {
+  private void deactivateToolWindowImpl(@NotNull WindowInfoImpl info, boolean shouldHide, @NotNull List<? super FinalizableCommand> commandsList) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: deactivateToolWindowImpl(" + info.getId() + "," + shouldHide + ")");
     }
@@ -775,26 +772,32 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    * @return floating decorator for the tool window with specified {@code ID}.
    */
   private FloatingDecorator getFloatingDecorator(@NotNull String id) {
-    return myId2FloatingDecorator.get(id);
+    ToolWindowEntry entry = idToEntry.get(id);
+    return entry == null ? null : entry.getFloatingDecorator();
   }
+
   /**
    * @return windowed decorator for the tool window with specified {@code ID}.
    */
+  @Nullable
   private WindowedDecorator getWindowedDecorator(@NotNull String id) {
-    return myId2WindowedDecorator.get(id);
+    ToolWindowEntry entry = idToEntry.get(id);
+    return entry == null ? null : entry.getWindowedDecorator();
   }
+
   /**
    * @return internal decorator for the tool window with specified {@code ID}.
    */
-  private InternalDecorator getInternalDecorator(@NotNull String id) {
-    return myId2InternalDecorator.get(id);
+  @NotNull
+  final InternalDecorator getInternalDecorator(@NotNull String id) {
+    return idToEntry.get(id).getInternalDecorator();
   }
 
   /**
    * @return tool button for the window with specified {@code ID}.
    */
   StripeButton getStripeButton(@NotNull String id) {
-    return myId2StripeButton.get(id);
+    return idToEntry.get(id).getStripeButton();
   }
 
   @Override
@@ -840,9 +843,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (id == null || !myLayout.isToolWindowRegistered(id)) {
       return null;
     }
-
-    InternalDecorator decorator = getInternalDecorator(id);
-    return decorator != null ? decorator.getToolWindow() : null;
+    return getInternalDecorator(id).getToolWindow();
   }
 
   void showToolWindow(@NotNull String id) {
@@ -955,15 +956,16 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     toBeShownInfo.setVisible(true);
-    final InternalDecorator decorator = getInternalDecorator(id);
+    ToolWindowEntry entry = idToEntry.get(id);
 
     if (toBeShownInfo.isFloating()) {
-      commandsList.add(new AddFloatingDecoratorCmd(decorator, toBeShownInfo));
+      commandsList.add(new AddFloatingDecoratorCmd(entry, toBeShownInfo));
     }
     else if (toBeShownInfo.isWindowed()) {
-      commandsList.add(new AddWindowedDecoratorCmd(decorator, toBeShownInfo));
+      commandsList.add(new AddWindowedDecoratorCmd(entry, toBeShownInfo));
     }
-    else { // docked and sliding windows
+    else {
+      // docked and sliding windows
 
       // If there is tool window on the same side then we have to hide it, i.e.
       // clear place for tool window to be shown.
@@ -995,7 +997,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           }
         }
       }
-      appendAddDecoratorCmd(decorator, toBeShownInfo, dirtyMode, commandsList);
+      appendAddDecoratorCmd(entry.getInternalDecorator(), toBeShownInfo, dirtyMode, commandsList);
 
       // Remove tool window from the SideStack.
       if (isStackEnabled()) {
@@ -1086,12 +1088,12 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   @NotNull
-  private ToolWindow registerToolWindow(@NotNull final String id,
-                                        @Nullable final JComponent component,
-                                        @NotNull final ToolWindowAnchor anchor,
+  private ToolWindow registerToolWindow(@NotNull String id,
+                                        @Nullable JComponent component,
+                                        @NotNull ToolWindowAnchor anchor,
                                         boolean sideTool,
                                         boolean canCloseContent,
-                                        final boolean canWorkInDumbMode,
+                                        boolean canWorkInDumbMode,
                                         boolean shouldBeAvailable) {
     //noinspection TestOnlyProblems
     init();
@@ -1105,28 +1107,29 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       throw new IllegalArgumentException("window with id=\"" + id + "\" is already registered");
     }
 
-    final WindowInfoImpl info = myLayout.register(id, anchor, sideTool);
-    final boolean wasActive = info.isActive();
-    final boolean wasVisible = info.isVisible();
+    WindowInfoImpl info = myLayout.register(id, anchor, sideTool);
+    boolean wasActive = info.isActive();
+    boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
-    // Create decorator
 
-    ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
-    Disposer.register(this, toolWindow);
+    Disposable disposable = Disposer.newDisposable(id);
+    Disposer.register(myProject, disposable);
+
+    ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component, disposable);
     toolWindow.setAvailable(shouldBeAvailable, null);
-    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow, canWorkInDumbMode);
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
-    myId2InternalDecorator.put(id, decorator);
+
+    // create decorator
+    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow, canWorkInDumbMode, disposable);
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
     toolWindow.addPropertyChangeListener(myToolWindowPropertyChangeListener);
-    myIdToFocusWatcher.put(id, new ToolWindowFocusWatcher(toolWindow));
 
-    // Create and show tool button
+    // create and show tool button
+    StripeButton button = new StripeButton(decorator, myToolWindowPane);
 
-    final StripeButton button = new StripeButton(decorator, myToolWindowsPane);
-    Disposer.register(toolWindow, button);
-    myId2StripeButton.put(id, button);
+    idToEntry.put(id, new ToolWindowEntry(button, decorator, new ToolWindowFocusWatcher(toolWindow), disposable));
+
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendAddButtonCmd(button, info, commandsList);
 
@@ -1150,10 +1153,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   @Override
-  public void unregisterToolWindow(@NotNull final String id) {
+  public void unregisterToolWindow(@NotNull String id) {
     ToolWindowImpl window = (ToolWindowImpl)getToolWindow(id);
     if (window != null) {
-      Disposer.dispose(window);
+      doUnregisterToolWindow(window.getId());
     }
   }
 
@@ -1161,15 +1164,17 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: unregisterToolWindow(" + id + ")");
     }
+
     ApplicationManager.getApplication().assertIsDispatchThread();
     WindowInfoImpl info = myLayout.getInfo(id, false);
     if (info == null || !info.isRegistered()) {
       return;
     }
 
-    final ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
+    ToolWindowEx toolWindow = (ToolWindowEx)getToolWindow(id);
+    assert toolWindow != null;
 
-    // Remove decorator and tool button from the screen
+    // remove decorator and tool button from the screen
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendRemoveDecoratorCommand(info, false, commandsList);
 
@@ -1183,31 +1188,24 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     appendApplyWindowInfoCmd(info, commandsList);
 
     execute(commandsList, false);
-    assert toolWindow != null;
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowUnregistered(id, toolWindow);
     }
 
-    // Remove all references on tool window and save its last properties
+    // remove all references on tool window and save its last properties
     toolWindow.removePropertyChangeListener(myToolWindowPropertyChangeListener);
 
-    // Destroy stripe button
-    myId2StripeButton.remove(id);
-    //
-    ToolWindowFocusWatcher watcher = (ToolWindowFocusWatcher)myIdToFocusWatcher.remove(id);
-    watcher.deinstall();
-
-    // Destroy decorator
-    final InternalDecorator decorator = getInternalDecorator(id);
-    decorator.dispose();
-    decorator.removeInternalDecoratorListener(myInternalDecoratorListener);
-    myId2InternalDecorator.remove(id);
+    // destroy stripe button
+    ToolWindowEntry entry = idToEntry.remove(id);
+    Disposer.dispose(entry.getDisposable());
+    entry.getWatcher().deinstall();
   }
 
-  private void appendRemoveDecoratorCommand(WindowInfoImpl info,
-                                            boolean dirtyMode,
-                                            @NotNull List<? super FinalizableCommand> commandsList) {
-    if (!info.isVisible()) return;
+  private void appendRemoveDecoratorCommand(@NotNull WindowInfoImpl info, boolean dirtyMode, @NotNull List<? super FinalizableCommand> commandsList) {
+    if (!info.isVisible()) {
+      return;
+    }
+
     info.setVisible(false);
     if (info.isFloating()) {
       commandsList.add(new RemoveFloatingDecoratorCmd(info));
@@ -1317,11 +1315,12 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   @Override
-  public boolean canShowNotification(@NotNull final String toolWindowId) {
+  public boolean canShowNotification(@NotNull String toolWindowId) {
     if (!myLayout.isToolWindowRegistered(toolWindowId)) {
       return false;
     }
-    final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
+
+    Stripe stripe = myToolWindowPane.getStripeFor(toolWindowId);
     return stripe != null && stripe.getButtonFor(toolWindowId) != null;
   }
 
@@ -1332,23 +1331,26 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   @Override
-  public void notifyByBalloon(@NotNull final String toolWindowId,
-                              @NotNull final MessageType type,
-                              @NotNull final String text,
-                              @Nullable final Icon icon,
-                              @Nullable final HyperlinkListener listener) {
+  public void notifyByBalloon(@NotNull String toolWindowId,
+                              @NotNull MessageType type,
+                              @NotNull String text,
+                              @Nullable Icon icon,
+                              @Nullable HyperlinkListener listener) {
     checkId(toolWindowId);
 
-    Balloon existing = myWindow2Balloon.get(toolWindowId);
+    ToolWindowEntry entry = idToEntry.get(toolWindowId);
+
+    Balloon existing = entry.getBalloon();
     if (existing != null) {
       Disposer.dispose(existing);
     }
 
-    final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
+    Stripe stripe = myToolWindowPane.getStripeFor(toolWindowId);
     if (stripe == null) {
       return;
     }
-    final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
+
+    ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
       window.setPlaceholderMode(true);
       stripe.updatePresentation();
@@ -1356,8 +1358,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       stripe.repaint();
     }
 
-    final ToolWindowAnchor anchor = getRegisteredInfoOrLogError(toolWindowId).getAnchor();
-    final Ref<Balloon.Position> position = Ref.create(Balloon.Position.below);
+    ToolWindowAnchor anchor = getRegisteredInfoOrLogError(toolWindowId).getAnchor();
+    Ref<Balloon.Position> position = Ref.create(Balloon.Position.below);
     if (ToolWindowAnchor.TOP == anchor) {
       position.set(Balloon.Position.below);
     }
@@ -1371,97 +1373,101 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       position.set(Balloon.Position.atLeft);
     }
 
-    final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
-    final Balloon balloon = JBPopupFactory.getInstance()
+    BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
+    BalloonImpl balloon = (BalloonImpl)JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getTitleForeground(), type.getPopupBackground(), listenerWrapper)
       .setBorderColor(type.getBorderColor()).setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
     NotificationsManagerImpl.frameActivateBalloonListener(balloon, () ->
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(()->((BalloonImpl)balloon).setHideOnClickOutside(true), 100, TimeUnit.MILLISECONDS)
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> balloon.setHideOnClickOutside(true), 100, TimeUnit.MILLISECONDS)
     );
     listenerWrapper.myBalloon = balloon;
-    myWindow2Balloon.put(toolWindowId, balloon);
+    entry.setBalloon(balloon);
     Disposer.register(balloon, () -> {
       window.setPlaceholderMode(false);
       stripe.updatePresentation();
       stripe.revalidate();
       stripe.repaint();
-      myWindow2Balloon.remove(toolWindowId);
+      entry.setBalloon(null);
     });
-    Disposer.register(getProject(), balloon);
+    Disposer.register(entry.getDisposable(), balloon);
 
-    execute(new ArrayList<>(Collections.<FinalizableCommand>singletonList(new FinalizableCommand(null) {
+    execute(Collections.singletonList(new FinalizableCommand(null) {
       @Override
       public void run() {
-        final StripeButton button = stripe.getButtonFor(toolWindowId);
+        StripeButton button = stripe.getButtonFor(toolWindowId);
         //noinspection ObjectToString
         LOG.assertTrue(button != null, "Button was not found, popup won't be shown. Toolwindow id: " +
                                        toolWindowId + ", message: " + text + ", message type: " + type);
         //noinspection ConstantConditions
-        if (button == null) return;
+        if (button == null) {
+          return;
+        }
 
-        final Runnable show = () -> {
-            PositionTracker<Balloon> tracker;
-            if (button.isShowing()) {
-              tracker = new PositionTracker<Balloon>(button) {
-                @Override
-                @Nullable
-                public RelativePoint recalculateLocation(Balloon object) {
-                  Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
-                  StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
-                  if (twButton == null) {
-                    return null;
-                  }
-                  //noinspection ConstantConditions
-                  if (getToolWindow(toolWindowId).getAnchor() != anchor) {
-                    object.hide();
-                    return null;
-                  }
-                  final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
-                  return new RelativePoint(twButton, point);
+        Runnable show = () -> {
+          PositionTracker<Balloon> tracker;
+          if (button.isShowing()) {
+            tracker = new PositionTracker<Balloon>(button) {
+              @Override
+              @Nullable
+              public RelativePoint recalculateLocation(Balloon object) {
+                Stripe twStripe = myToolWindowPane.getStripeFor(toolWindowId);
+                StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
+                if (twButton == null) {
+                  return null;
                 }
-              };
-            }
-            else {
-              tracker = new PositionTracker<Balloon>(myToolWindowsPane) {
-                @Override
-                public RelativePoint recalculateLocation(Balloon object) {
-                  final Rectangle bounds = myToolWindowsPane.getBounds();
-                  final Point target = StartupUiUtil.getCenterPoint(bounds, new Dimension(1, 1));
-                  if (ToolWindowAnchor.TOP == anchor) {
-                    target.y = 0;
-                  }
-                  else if (ToolWindowAnchor.BOTTOM == anchor) {
-                    target.y = bounds.height - 3;
-                  }
-                  else if (ToolWindowAnchor.LEFT == anchor) {
-                    target.x = 0;
-                  }
-                  else if (ToolWindowAnchor.RIGHT == anchor) {
-                    target.x = bounds.width;
-                  }
-                  return new RelativePoint(myToolWindowsPane, target);
+                //noinspection ConstantConditions
+                if (getToolWindow(toolWindowId).getAnchor() != anchor) {
+                  object.hide();
+                  return null;
                 }
-              };
-            }
-            if (!balloon.isDisposed()) {
-              balloon.show(tracker, position.get());
-            }
+                final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
+                return new RelativePoint(twButton, point);
+              }
+            };
+          }
+          else {
+            tracker = new PositionTracker<Balloon>(myToolWindowPane) {
+              @Override
+              public RelativePoint recalculateLocation(Balloon object) {
+                final Rectangle bounds = myToolWindowPane.getBounds();
+                final Point target = StartupUiUtil.getCenterPoint(bounds, new Dimension(1, 1));
+                if (ToolWindowAnchor.TOP == anchor) {
+                  target.y = 0;
+                }
+                else if (ToolWindowAnchor.BOTTOM == anchor) {
+                  target.y = bounds.height - 3;
+                }
+                else if (ToolWindowAnchor.LEFT == anchor) {
+                  target.x = 0;
+                }
+                else if (ToolWindowAnchor.RIGHT == anchor) {
+                  target.x = bounds.width;
+                }
+                return new RelativePoint(myToolWindowPane, target);
+              }
+            };
+          }
+          if (!balloon.isDisposed()) {
+            balloon.show(tracker, position.get());
+          }
         };
 
-        if (!button.isValid()) {
+        if (button.isValid()) {
+          show.run();
+        }
+        else {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(show);
         }
-        else {
-          show.run();
-        }
       }
-    })));
+    }));
   }
 
   @Override
-  public Balloon getToolWindowBalloon(String id) {
-    return myWindow2Balloon.get(id);
+  @Nullable
+  public Balloon getToolWindowBalloon(@NotNull String id) {
+    ToolWindowEntry entry = idToEntry.get(id);
+    return entry == null ? null : entry.getBalloon();
   }
 
   @Override
@@ -1582,7 +1588,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     if (wasActive) {
       activateToolWindowImpl(id, commandList, true, true);
     }
-    commandList.add(myToolWindowsPane.createUpdateButtonPositionCmd(id, myCommandProcessor));
+    commandList.add(myToolWindowPane.createUpdateButtonPositionCmd(id, myCommandProcessor));
   }
 
   ToolWindowType getToolWindowInternalType(@NotNull String id) {
@@ -1706,15 +1712,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
                                      @NotNull WindowInfoImpl info,
                                      boolean dirtyMode,
                                      @NotNull List<? super FinalizableCommand> commandsList) {
-    commandsList.add(myToolWindowsPane.createAddDecoratorCmd(decorator, info, dirtyMode, myCommandProcessor));
+    commandsList.add(myToolWindowPane.createAddDecoratorCmd(decorator, info, dirtyMode, myCommandProcessor));
   }
 
   /**
    * @see ToolWindowsPane#createRemoveDecoratorCmd
    */
-  private void appendRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull List<? super FinalizableCommand> commandsList) {
-    commandsList.add(myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myCommandProcessor));
-    commandsList.add(myToolWindowsPane.createTransferFocusCmd(() -> {
+  private void appendRemoveDecoratorCmd(@NotNull String id, boolean dirtyMode, @NotNull List<? super FinalizableCommand> commandsList) {
+    commandsList.add(myToolWindowPane.createRemoveDecoratorCmd(id, dirtyMode, myCommandProcessor));
+    commandsList.add(myToolWindowPane.createTransferFocusCmd(() -> {
       return commandsList.stream().anyMatch(c -> c instanceof RequestFocusInToolWindowCmd);
     }, myCommandProcessor));
   }
@@ -1724,34 +1730,38 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    */
   private void appendAddButtonCmd(final StripeButton button, @NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
     Comparator<StripeButton> comparator = myLayout.comparator(info.getAnchor());
-    commandsList.add(myToolWindowsPane.createAddButtonCmd(button, info, comparator, myCommandProcessor));
+    commandsList.add(myToolWindowPane.createAddButtonCmd(button, info, comparator, myCommandProcessor));
   }
 
   /**
    * @see ToolWindowsPane#createAddButtonCmd
    */
   private void appendRemoveButtonCmd(@NotNull String id, @NotNull WindowInfoImpl info, @NotNull List<? super FinalizableCommand> commandsList) {
-    FinalizableCommand cmd = myToolWindowsPane.createRemoveButtonCmd(info, id, myCommandProcessor);
+    FinalizableCommand cmd = myToolWindowPane.createRemoveButtonCmd(info, id, myCommandProcessor);
     if (cmd != null) {
       commandsList.add(cmd);
     }
   }
 
   private void appendRequestFocusInToolWindowCmd(@NotNull String id, @NotNull List<? super FinalizableCommand> commandList) {
-    ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
-    if (toolWindow == null) {
+    if (!myLayout.isToolWindowRegistered(id)) {
       return;
     }
 
-    FocusWatcher focusWatcher = myIdToFocusWatcher.get(id);
-    commandList.add(new RequestFocusInToolWindowCmd(toolWindow, focusWatcher, myCommandProcessor, myProject));
+    ToolWindowEntry entry = idToEntry.get(id);
+    if (entry == null) {
+      return;
+    }
+
+    ToolWindowFocusWatcher focusWatcher = entry.getWatcher();
+    commandList.add(new RequestFocusInToolWindowCmd(entry.getInternalDecorator().getToolWindow(), focusWatcher, myCommandProcessor, myProject));
   }
 
   /**
    * @see ToolWindowsPane#createSetEditorComponentCmd
    */
   private void appendSetEditorComponentCmd(@Nullable JComponent component, @NotNull List<? super FinalizableCommand> commandsList) {
-    commandsList.add(myToolWindowsPane.createSetEditorComponentCmd(component, myCommandProcessor));
+    commandsList.add(myToolWindowPane.createSetEditorComponentCmd(component, myCommandProcessor));
   }
 
   private void appendUpdateRootPaneCmd(@NotNull List<? super FinalizableCommand> commandsList) {
@@ -1788,12 +1798,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return null;
     }
 
-    // Update size of all open floating windows. See SCR #18439
+    // update size of all open floating windows. See SCR #18439
     for (WindowInfoImpl info : myLayout.getInfos()) {
       if (info.isVisible()) {
-        final InternalDecorator decorator = getInternalDecorator(Objects.requireNonNull(info.getId()));
-        LOG.assertTrue(decorator != null);
-        decorator.fireResized();
+        getInternalDecorator(Objects.requireNonNull(info.getId())).fireResized();
       }
     }
 
@@ -1898,22 +1906,23 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   void stretchWidth(@NotNull ToolWindowImpl toolWindow, int value) {
-    myToolWindowsPane.stretchWidth(toolWindow, value);
+    myToolWindowPane.stretchWidth(toolWindow, value);
   }
 
   @Override
   public boolean isMaximized(@NotNull ToolWindow wnd) {
-    return myToolWindowsPane.isMaximized(wnd);
+    return myToolWindowPane.isMaximized(wnd);
   }
 
   @Override
-  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
-    if (wnd.getType() == ToolWindowType.FLOATING && wnd instanceof ToolWindowImpl) {
-      MaximizeActiveDialogAction.doMaximize(getFloatingDecorator(((ToolWindowImpl)wnd).getId()));
+  public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
+    if (window.getType() == ToolWindowType.FLOATING && window instanceof ToolWindowImpl) {
+      MaximizeActiveDialogAction.doMaximize(getFloatingDecorator(((ToolWindowImpl)window).getId()));
       return;
     }
-    if (wnd.getType() == ToolWindowType.WINDOWED && wnd instanceof ToolWindowImpl) {
-      WindowedDecorator decorator = getWindowedDecorator(((ToolWindowImpl)wnd).getId());
+
+    if (window.getType() == ToolWindowType.WINDOWED && window instanceof ToolWindowImpl) {
+      WindowedDecorator decorator = getWindowedDecorator(((ToolWindowImpl)window).getId());
       Frame frame = decorator != null && decorator.getFrame() instanceof Frame ? (Frame)decorator.getFrame() : null;
       if (frame != null) {
         int state = frame.getState();
@@ -1926,11 +1935,12 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
       return;
     }
-    myToolWindowsPane.setMaximized(wnd, maximized);
+
+    myToolWindowPane.setMaximized(window, maximized);
   }
 
   void stretchHeight(ToolWindowImpl toolWindow, int value) {
-    myToolWindowsPane.stretchHeight(toolWindow, value);
+    myToolWindowPane.stretchHeight(toolWindow, value);
   }
 
   private static class BalloonHyperlinkListener implements HyperlinkListener {
@@ -1961,12 +1971,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     /**
      * Creates floating decorator for specified internal decorator.
      */
-    private AddFloatingDecoratorCmd(@NotNull InternalDecorator decorator, @NotNull WindowInfoImpl info) {
+    private AddFloatingDecoratorCmd(@NotNull ToolWindowEntry entry, @NotNull WindowInfoImpl info) {
       super(myCommandProcessor);
+
       IdeFrameImpl frame = myFrame.getFrame();
+      InternalDecorator decorator = entry.getInternalDecorator();
       myFloatingDecorator = new FloatingDecorator(frame, info.copy(), decorator);
-      myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
-      final Rectangle bounds = info.getFloatingBounds();
+
+      entry.setFloatingDecorator(myFloatingDecorator);
+      Rectangle bounds = info.getFloatingBounds();
       if (bounds != null &&
           bounds.width > 0 &&
           bounds.height > 0 &&
@@ -2004,9 +2017,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     private RemoveFloatingDecoratorCmd(@NotNull WindowInfoImpl info) {
       super(myCommandProcessor);
+
       myFloatingDecorator = getFloatingDecorator(Objects.requireNonNull(info.getId()));
-      myId2FloatingDecorator.remove(info.getId());
-      info.setFloatingBounds(myFloatingDecorator.getBounds());
+      info.setFloatingBounds(Objects.requireNonNull(myFloatingDecorator).getBounds());
     }
 
     @Override
@@ -2021,8 +2034,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     @NotNull
     @Override
-    public Condition<?> getExpireCondition() {
-      return ApplicationManager.getApplication().getDisposed();
+    public BooleanSupplier getExpireCondition() {
+      return () -> ApplicationManager.getApplication().isDisposed();
     }
   }
 
@@ -2036,8 +2049,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     /**
      * Creates windowed decorator for specified internal decorator.
      */
-    private AddWindowedDecoratorCmd(@NotNull InternalDecorator decorator, @NotNull WindowInfoImpl info) {
+    private AddWindowedDecoratorCmd(@NotNull ToolWindowEntry entry, @NotNull WindowInfoImpl info) {
       super(myCommandProcessor);
+
+      InternalDecorator decorator = entry.getInternalDecorator();
       myWindowedDecorator = new WindowedDecorator(myProject, info.copy(), decorator);
       myShouldBeMaximized = info.isMaximized();
       Window window = myWindowedDecorator.getFrame();
@@ -2048,7 +2063,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
         window.setBounds(new Rectangle(bounds));
       }
-      else { // place new frame at the center of main frame if there are no floating bounds
+      else {
+        // place new frame at the center of main frame if there are no floating bounds
         Dimension size = decorator.getSize();
         if (size.width == 0 || size.height == 0) {
           size = decorator.getPreferredSize();
@@ -2056,9 +2072,11 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         window.setSize(size);
         window.setLocationRelativeTo(myFrame.getFrame());
       }
-      myId2WindowedDecorator.put(info.getId(), myWindowedDecorator);
+
+      entry.setWindowedDecorator(myWindowedDecorator);
       myWindowedDecorator.addDisposable(() -> {
-        if (myId2WindowedDecorator.get(info.getId()) != null) {
+        ToolWindowEntry e = idToEntry.get(info.getId());
+        if (e != null && e.getWindowedDecorator() != null) {
           hideToolWindow(Objects.requireNonNull(info.getId()), false);
         }
       });
@@ -2097,17 +2115,25 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     private RemoveWindowedDecoratorCmd(@NotNull WindowInfoImpl info) {
       super(myCommandProcessor);
-      myWindowedDecorator = getWindowedDecorator(Objects.requireNonNull(info.getId()));
-      myId2WindowedDecorator.remove(info.getId());
 
-      Window frame = myWindowedDecorator.getFrame();
-      if (!frame.isShowing()) return;
+      myWindowedDecorator = getWindowedDecorator(Objects.requireNonNull(info.getId()));
+      ToolWindowEntry entry = idToEntry.get(info.getId());
+      if (entry != null) {
+        entry.setWindowedDecorator(null);
+      }
+
+      Window frame = Objects.requireNonNull(myWindowedDecorator).getFrame();
+      if (!frame.isShowing()) {
+        return;
+      }
+
       boolean maximized = ((JFrame)frame).getExtendedState() == Frame.MAXIMIZED_BOTH;
       if (maximized) {
         ((JFrame)frame).setExtendedState(Frame.NORMAL);
         frame.invalidate();
         frame.revalidate();
       }
+
       Rectangle bounds = getRootBounds((JFrame)frame);
       info.setFloatingBounds(bounds);
       info.setMaximized(maximized);
@@ -2125,8 +2151,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     @NotNull
     @Override
-    public Condition<?> getExpireCondition() {
-      return ApplicationManager.getApplication().getDisposed();
+    public BooleanSupplier getExpireCondition() {
+      return () -> ApplicationManager.getApplication().isDisposed();
     }
   }
 
@@ -2141,7 +2167,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   /**
    * Notifies window manager about focus traversal in tool window
    */
-  private final class ToolWindowFocusWatcher extends FocusWatcher {
+  static final class ToolWindowFocusWatcher extends FocusWatcher {
     private final String myId;
     private final ToolWindowImpl myToolWindow;
 
@@ -2157,24 +2183,23 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     @Override
     protected boolean isFocusedComponentChangeValid(final Component comp, final AWTEvent cause) {
-      return myCommandProcessor.getCommandCount() == 0 && comp != null;
+      return myToolWindow.getToolWindowManager().myCommandProcessor.getCommandCount() == 0 && comp != null;
     }
 
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (myCommandProcessor.getCommandCount() > 0 || component == null) {
+      if (myToolWindow.getToolWindowManager().myCommandProcessor.getCommandCount() > 0 || component == null) {
         return;
       }
-      final WindowInfoImpl info = getRegisteredInfoOrLogError(myId);
-      //getFocusManagerImpl(myProject)..cancelAllRequests();
 
+      WindowInfoImpl info = myToolWindow.getToolWindowManager().getRegisteredInfoOrLogError(myId);
       if (!info.isActive()) {
-        getFocusManagerImpl(myProject).doWhenFocusSettlesDown(new EdtRunnable() {
+        getFocusManagerImpl(myToolWindow.getToolWindowManager().myProject).doWhenFocusSettlesDown(new EdtRunnable() {
           @Override
           public void runEdt() {
-            WindowInfoImpl windowInfo = myLayout.getInfo(myId, true);
+            WindowInfoImpl windowInfo = myToolWindow.getToolWindowManager().myLayout.getInfo(myId, true);
             if (windowInfo == null || !windowInfo.isVisible()) return;
-            activateToolWindow(myId, false, false);
+            myToolWindow.getToolWindowManager().activateToolWindow(myId, false, false);
           }
         });
       }
@@ -2187,16 +2212,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    */
   private final class MyToolWindowPropertyChangeListener implements PropertyChangeListener {
     @Override
-    public void propertyChange(final PropertyChangeEvent e) {
+    public void propertyChange(PropertyChangeEvent e) {
       ToolWindowImpl toolWindow = (ToolWindowImpl)e.getSource();
       if (ToolWindowEx.PROP_AVAILABLE.equals(e.getPropertyName())) {
-        final WindowInfoImpl info = getRegisteredInfoOrLogError(toolWindow.getId());
+        WindowInfoImpl info = getRegisteredInfoOrLogError(toolWindow.getId());
         if (!toolWindow.isAvailable() && info.isVisible()) {
           hideToolWindow(toolWindow.getId(), false);
         }
       }
-      StripeButton button = myId2StripeButton.get(toolWindow.getId());
-      if (button != null) button.updatePresentation();
+
+      ToolWindowEntry entry = idToEntry.get(toolWindow.getId());
+      if (entry != null) {
+        entry.getStripeButton().updatePresentation();
+      }
       ActivateToolWindowAction.updateToolWindowActionPresentation(toolWindow);
     }
   }
@@ -2276,13 +2304,13 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
 
         float paneWeight = anchor.isHorizontal()
-                           ? (float)source.getHeight() / myToolWindowsPane.getMyLayeredPane().getHeight()
-                           : (float)source.getWidth() / myToolWindowsPane.getMyLayeredPane().getWidth();
+                           ? (float)source.getHeight() / myToolWindowPane.getMyLayeredPane().getHeight()
+                           : (float)source.getWidth() / myToolWindowPane.getMyLayeredPane().getWidth();
         info.setWeight(paneWeight);
         if (another != null && anchor.isSplitVertically()) {
           paneWeight = anchor.isHorizontal()
-                       ? (float)another.getHeight() / myToolWindowsPane.getMyLayeredPane().getHeight()
-                       : (float)another.getWidth() / myToolWindowsPane.getMyLayeredPane().getWidth();
+                       ? (float)another.getHeight() / myToolWindowPane.getMyLayeredPane().getHeight()
+                       : (float)another.getWidth() / myToolWindowPane.getMyLayeredPane().getWidth();
           another.getWindowInfo().setWeight(paneWeight);
         }
       }
@@ -2411,18 +2439,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       String id = Objects.requireNonNull(info.getId());
       if (info.isVisible()) {
         if (info.isFloating()) {
-          if (myId2FloatingDecorator.get(id) == null) {
+          ToolWindowEntry entry = idToEntry.get(id);
+          if (entry != null && entry.getFloatingDecorator() == null) {
             violations.add("Floating window has no decorator: " + id);
           }
         }
         else if (info.isWindowed()) {
-          if (myId2WindowedDecorator.get(id) == null) {
+          ToolWindowEntry entry = idToEntry.get(id);
+          if (entry != null && entry.getWindowedDecorator() == null) {
             violations.add("Windowed window has no decorator: " + id);
-          }
-        }
-        else {
-          if (myToolWindowsPane.getDecoratorById(id) == null) {
-            violations.add("Docked/split window has no decorator: " + id);
           }
         }
       }

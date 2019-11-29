@@ -179,7 +179,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public Balloon getToolWindowBalloon(String id) {
+  public Balloon getToolWindowBalloon(@NotNull String id) {
     return null;
   }
 

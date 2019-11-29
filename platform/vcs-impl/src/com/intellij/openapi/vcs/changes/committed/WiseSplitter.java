@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 
@@ -28,7 +13,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WiseSplitter implements Disposable {
+public final class WiseSplitter implements Disposable {
   private static final Border LEFT_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.RIGHT);
   private static final Border MIDDLE_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | SideBorder.RIGHT);
 
@@ -41,8 +26,7 @@ public class WiseSplitter implements Disposable {
     myRefresher = refresher;
     myParentSplitter = parentSplitter;
 
-    myInnerSplitter = new ThreeComponentsSplitter(false);
-    Disposer.register(this, myInnerSplitter);
+    myInnerSplitter = new ThreeComponentsSplitter(this);
     myInnerSplitter.setHonorComponentsMinimumSize(true);
     myInnerSplitterContents = new HashMap<>();
     updateBorders();
@@ -61,17 +45,19 @@ public class WiseSplitter implements Disposable {
         myParentSplitter.setProportion(0.25f);
       }
       myInnerSplitter.setFirstComponent(comp);
-      myInnerSplitter.setFirstSize((int) (myParentSplitter.getSize().getWidth() * myParentSplitter.getProportion()));
-    } else if (idx == 1) {
+      myInnerSplitter.setFirstSize((int)(myParentSplitter.getSize().getWidth() * myParentSplitter.getProportion()));
+    }
+    else if (idx == 1) {
       final Dimension dimension = myInnerSplitter.getSize();
       final double width = dimension.getWidth() / 2;
       myInnerSplitter.setInnerComponent(comp);
-      myInnerSplitter.setFirstSize((int) width);
-    } else {
+      myInnerSplitter.setFirstSize((int)width);
+    }
+    else {
       final Dimension dimension = myInnerSplitter.getSize();
       final double width = dimension.getWidth() / 3;
       myInnerSplitter.setLastComponent(comp);
-      myInnerSplitter.setFirstSize((int) width);
+      myInnerSplitter.setFirstSize((int)width);
       myInnerSplitter.setLastSize((int) width);
     }
 
@@ -89,8 +75,10 @@ public class WiseSplitter implements Disposable {
     setBorder(myParentSplitter.getSecondComponent(), isEmpty);
   }
 
-  private void setBorder(JComponent c, boolean leftMost) {
-    if (c instanceof JScrollPane) c.setBorder(leftMost ? LEFT_BORDER : MIDDLE_BORDER);
+  private static void setBorder(JComponent c, boolean leftMost) {
+    if (c instanceof JScrollPane) {
+      c.setBorder(leftMost ? LEFT_BORDER : MIDDLE_BORDER);
+    }
   }
 
   public void remove(final CommittedChangesFilterKey key) {

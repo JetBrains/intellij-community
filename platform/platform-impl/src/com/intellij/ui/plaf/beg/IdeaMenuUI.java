@@ -4,13 +4,13 @@ package com.intellij.ui.plaf.beg;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
@@ -369,11 +369,11 @@ public class IdeaMenuUI extends BasicMenuUI{
     int k1 = i1 + myMaxGutterIconWidth + 1;
     int l1 = j1 + myMaxGutterIconWidth + 4;
     g.setColor(BegResources.m);
-    UIUtil.drawLine(g, i1, j1, i1, l1);
-    UIUtil.drawLine(g, i1, j1, k1, j1);
+    LinePainter2D.paint((Graphics2D)g, i1, j1, i1, l1);
+    LinePainter2D.paint((Graphics2D)g, i1, j1, k1, j1);
     g.setColor(BegResources.j);
-    UIUtil.drawLine(g, k1, j1, k1, l1);
-    UIUtil.drawLine(g, i1, l1, k1, l1);
+    LinePainter2D.paint((Graphics2D)g, k1, j1, k1, l1);
+    LinePainter2D.paint((Graphics2D)g, i1, l1, k1, l1);
   }
 
   private void resetRects() {

@@ -13,11 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WindowState;
-import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -50,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 
 public class FrameWrapper implements Disposable, DataProvider {
-
   private String myDimensionKey;
   private JComponent myComponent = null;
   private JComponent myPreferredFocus = null;
@@ -263,7 +258,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     assert !myDisposed : "Already disposed!";
 
     if (myFrame == null) {
-      final IdeFrame parent = WindowManager.getInstance().getIdeFrame(myProject);
+      IdeFrame parent = WindowManager.getInstance().getIdeFrame(myProject);
       myFrame = myIsDialog ? createJDialog(parent) : createJFrame(parent);
     }
     return myFrame;

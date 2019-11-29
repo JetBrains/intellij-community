@@ -190,7 +190,7 @@ public abstract class ToolWindowManager {
                                        @Nullable HyperlinkListener listener);
 
   @Nullable
-  public abstract Balloon getToolWindowBalloon(String id);
+  public abstract Balloon getToolWindowBalloon(@NotNull String id);
 
   public abstract boolean isMaximized(@NotNull ToolWindow wnd);
 

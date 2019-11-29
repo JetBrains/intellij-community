@@ -45,7 +45,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ToolWindowImpl implements ToolWindowEx, Disposable {
+public final class ToolWindowImpl implements ToolWindowEx {
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private final ToolWindowManagerImpl myToolWindowManager;
   private final String myId;
@@ -75,14 +75,17 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
   private static final Logger LOG = Logger.getInstance(ToolWindowImpl.class);
   private String myHelpId;
 
-  ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager, @NotNull String id, boolean canCloseContent, @Nullable final JComponent component) {
+  ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager,
+                 @NotNull String id, boolean canCloseContent,
+                 @Nullable JComponent component,
+                 @NotNull Disposable parentDisposable) {
     myToolWindowManager = toolWindowManager;
     myId = id;
 
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     myContentUI = new ToolWindowContentUi(this);
     myContentManager = contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
-    Disposer.register(this, myContentManager);
+    Disposer.register(parentDisposable, myContentManager);
 
     if (component != null) {
       final Content content = contentFactory.createContent(component, "", false);
@@ -94,7 +97,7 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
 
     InternalDecorator.installFocusTraversalPolicy(myComponent, new LayoutFocusTraversalPolicy());
 
-    UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable.Adapter() {
+    UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable() {
       @Override
       public void showNotify() {
         myShowing.onReady();
@@ -372,7 +375,6 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
   public final Icon getIcon() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myIcon;
-    //return getSelectedContent().getIcon();
   }
 
   @NotNull
@@ -432,7 +434,7 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
     return selected != null ? selected : EMPTY_CONTENT;
   }
 
-  public void setDecorator(final InternalDecorator decorator) {
+  public void setDecorator(@NotNull InternalDecorator decorator) {
     myDecorator = decorator;
   }
 
@@ -505,11 +507,6 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
   @Override
   public boolean isDisposed() {
     return myContentManager.isDisposed();
-  }
-
-  @Override
-  public void dispose() {
-    myToolWindowManager.doUnregisterToolWindow(myId);
   }
 
   boolean isPlaceholderMode() {

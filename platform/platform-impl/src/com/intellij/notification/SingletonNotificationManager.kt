@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -26,9 +26,10 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
     val oldNotification = notification.get()
     // !oldNotification.isExpired() is not enough - notification could be closed, but not expired
     if (oldNotification != null) {
-      if (!oldNotification.isExpired && (oldNotification.balloon != null || project != null &&
-          group.displayType == NotificationDisplayType.TOOL_WINDOW &&
-          ToolWindowManager.getInstance(project).getToolWindowBalloon(group.toolWindowId) != null)) {
+      val toolWindowId = group.toolWindowId
+      if (!oldNotification.isExpired && toolWindowId != null && (oldNotification.balloon != null || project != null &&
+                                                                 group.displayType == NotificationDisplayType.TOOL_WINDOW &&
+                                                                 ToolWindowManager.getInstance(project).getToolWindowBalloon(toolWindowId) != null)) {
         return false
       }
       oldNotification.whenExpired(null)

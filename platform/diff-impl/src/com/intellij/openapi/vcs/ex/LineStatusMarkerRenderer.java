@@ -19,9 +19,9 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.CalledInAwt;
@@ -419,9 +419,9 @@ public abstract class LineStatusMarkerRenderer {
       Stroke oldStroke = g.getStroke();
       g.setStroke(new BasicStroke(JBUIScale.scale(1)));
       g.setColor(borderColor);
-      UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
-      UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
-      UIUtil.drawLine(g, x1, y2 - 1, x2 - 1, y2 - 1);
+      LinePainter2D.paint((Graphics2D)g, x1, y1, x2 - 1, y1);
+      LinePainter2D.paint((Graphics2D)g, x1, y1, x1, y2 - 1);
+      LinePainter2D.paint((Graphics2D)g, x1, y2 - 1, x2 - 1, y2 - 1);
       g.setStroke(oldStroke);
     }
   }

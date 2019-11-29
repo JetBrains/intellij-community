@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.BooleanSupplier;
 
 /**
  * Requests focus for the specified tool window.
@@ -52,8 +52,8 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   @NotNull
   @Override
-  public Condition<?> getExpireCondition() {
-    return myProject.getDisposed();
+  public BooleanSupplier getExpireCondition() {
+    return () -> myProject.isDisposed();
   }
 
   private void bringOwnerToFront() {

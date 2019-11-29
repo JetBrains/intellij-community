@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -159,7 +159,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
     // We delay initialization of name field till dialog is shown, so that it will be executed in a different command and won't
     // be tied to any document changes performed in current command (and won't prevent undo for them later)
-    new UiNotifyConnector.Once(panel, new Activatable.Adapter() {
+    new UiNotifyConnector.Once(panel, new Activatable() {
       @Override
       public void showNotify() {
         myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,

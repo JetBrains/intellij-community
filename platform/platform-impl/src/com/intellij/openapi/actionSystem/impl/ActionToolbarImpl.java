@@ -1150,7 +1150,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private static void updateWhenFirstShown(@NotNull JComponent targetComponent, @NotNull ToolbarReference ref) {
-    Activatable activatable = new Activatable.Adapter() {
+    Activatable activatable = new Activatable() {
       @Override
       public void showNotify() {
         ActionToolbarImpl toolbar = ref.get();

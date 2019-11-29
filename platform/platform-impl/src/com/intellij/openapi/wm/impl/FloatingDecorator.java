@@ -13,8 +13,8 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -334,23 +334,23 @@ public final class FloatingDecorator extends JDialog {
       final JBColor gray = new JBColor(Color.gray, Gray._95);
       if(ANCHOR_TOP==myAnchor){
         g.setColor(lightGray);
-        UIUtil.drawLine(g, 0, 0, getWidth() - 1, 0);
-        UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
+        LinePainter2D.paint((Graphics2D)g, 0, 0, getWidth() - 1, 0);
+        LinePainter2D.paint((Graphics2D)g, 0, 0, 0, getHeight() - 1);
         g.setColor(JBColor.GRAY);
-        UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
+        LinePainter2D.paint((Graphics2D)g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
       } else if(ANCHOR_LEFT==myAnchor){
         g.setColor(lightGray);
-        UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
+        LinePainter2D.paint((Graphics2D)g, 0, 0, 0, getHeight() - 1);
       } else {
         if(ANCHOR_BOTTOM==myAnchor){
           g.setColor(lightGray);
-          UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
+          LinePainter2D.paint((Graphics2D)g, 0, 0, 0, getHeight() - 1);
           g.setColor(gray);
-          UIUtil.drawLine(g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
-          UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
+          LinePainter2D.paint((Graphics2D)g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
+          LinePainter2D.paint((Graphics2D)g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
         } else{ // RIGHT
           g.setColor(gray);
-          UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
+          LinePainter2D.paint((Graphics2D)g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
         }
       }
     }

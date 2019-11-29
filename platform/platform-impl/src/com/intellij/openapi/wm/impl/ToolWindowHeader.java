@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -33,10 +32,10 @@ import java.util.function.Supplier;
 /**
  * @author pegov
  */
-public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
+public abstract class ToolWindowHeader extends JPanel implements UISettingsListener {
   @NotNull private final Supplier<? extends ActionGroup> myGearProducer;
 
-  private ToolWindow myToolWindow;
+  private final ToolWindow myToolWindow;
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
   private ToolWindowType myImageType;
@@ -115,8 +114,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        ToolWindowManagerImpl mgr = toolWindow.getToolWindowManager();
-        mgr.setMaximized(myToolWindow, !mgr.isMaximized(myToolWindow));
+        ToolWindowManagerImpl manager = toolWindow.getToolWindowManager();
+        manager.setMaximized(myToolWindow, !manager.isMaximized(myToolWindow));
         return true;
       }
     }.installOn(myWestPanel);
@@ -150,12 +149,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
     clearCaches();
-  }
-
-  @Override
-  public void dispose() {
-    removeAll();
-    myToolWindow = null;
   }
 
   void setTabActions(@NotNull AnAction[] actions) {
@@ -290,7 +283,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
   }
 
-  private class HideAction extends DumbAwareAction {
+  private final class HideAction extends DumbAwareAction {
     HideAction() {
       ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID);
       getTemplatePresentation().setIcon(AllIcons.General.HideToolWindow);
@@ -303,7 +296,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
+    public void update(@NotNull final AnActionEvent event) {
       event.getPresentation().setEnabled(myToolWindow != null && myToolWindow.isVisible());
     }
   }

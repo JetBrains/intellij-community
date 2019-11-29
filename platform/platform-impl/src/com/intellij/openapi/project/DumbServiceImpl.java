@@ -543,7 +543,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     final DumbUnawareHider wrapper = new DumbUnawareHider(dumbUnawareContent);
     wrapper.setContentVisible(!isDumb());
     getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
-
       @Override
       public void enteredDumbMode() {
         wrapper.setContentVisible(false);

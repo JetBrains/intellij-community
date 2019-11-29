@@ -4,14 +4,10 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -32,9 +28,9 @@ import java.awt.image.BufferedImage;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class StripeButton extends AnchoredButton implements ActionListener, Disposable {
+public final class StripeButton extends AnchoredButton implements ActionListener {
   /**
-   * This is analog of Swing mnemomic. We cannot use the standard ones
+   * This is analog of Swing mnemonic. We cannot use the standard ones
    * because it causes typing of "funny" characters into the editor.
    */
   private int myMnemonic;
@@ -49,11 +45,28 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private KeyEventDispatcher myDragKeyEventDispatcher;
   private boolean myDragCancelled = false;
 
-  StripeButton(@NotNull final InternalDecorator decorator, ToolWindowsPane pane) {
+  StripeButton(@NotNull InternalDecorator decorator, @NotNull ToolWindowsPane pane) {
     myDecorator = decorator;
     myPane = pane;
 
-    init();
+    setFocusable(false);
+
+    setBorder(JBUI.Borders.empty(5, 5, 0, 5));
+    updatePresentation();
+    apply(decorator.getWindowInfo());
+    addActionListener(this);
+    addMouseListener(new MyPopupHandler());
+    setRolloverEnabled(true);
+    setOpaque(false);
+
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+
+    addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseDragged(MouseEvent e) {
+        processDrag(e);
+      }
+    });
   }
 
   /**
@@ -87,43 +100,12 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     return myDecorator.getWindowInfo();
   }
 
-  private void init() {
-    setFocusable(false);
-
-    setBorder(JBUI.Borders.empty(5, 5, 0, 5));
-    updatePresentation();
-    apply(myDecorator.getWindowInfo());
-    addActionListener(this);
-    addMouseListener(new MyPopupHandler());
-    setRolloverEnabled(true);
-    setOpaque(false);
-
-    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-
-    addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseDragged(final MouseEvent e) {
-        processDrag(e);
-      }
-    });
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
-      @Override
-      public void activeKeymapChanged(@Nullable Keymap keymap) {
-        updatePresentation();
-      }
-    });
-  }
-
   public boolean isFirst() {
     return is(true);
   }
 
   public boolean isLast() {
     return is(false);
-  }
-
-  public boolean isOppositeSide() {
-    return getWindowInfo().isSplit();
   }
 
   private boolean is(boolean first) {
@@ -161,7 +143,9 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void processDrag(final MouseEvent e) {
-    if (myDragCancelled || !MouseDragHelper.checkModifiers(e)) return;
+    if (myDragCancelled || !MouseDragHelper.checkModifiers(e)) {
+      return;
+    }
     if (!isDraggingNow()) {
       if (myPressedPoint == null) return;
       if (isWithinDeadZone(e)) return;
@@ -216,7 +200,8 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       if (myLastStripe != null) {
         myLastStripe.resetDrop();
       }
-    } else {
+    }
+    else {
       if (myLastStripe != null && myLastStripe != stripe) {
         myLastStripe.resetDrop();
       }
@@ -226,7 +211,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     myLastStripe = stripe;
   }
 
-  private class DragKeyEventDispatcher implements KeyEventDispatcher {
+  private final class DragKeyEventDispatcher implements KeyEventDispatcher {
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
       if (isDraggingNow() && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getID() == KeyEvent.KEY_PRESSED) {
@@ -287,16 +272,13 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       myDecorator.fireActivated();
     }
     myPressedWhenSelected = false;
+    //noinspection SpellCheckingInspection
     FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + myDecorator.getToolWindow().getId());
   }
 
   public void apply(@NotNull WindowInfoImpl info) {
     setSelected(info.isVisible() || info.isActive());
     updateState();
-  }
-
-  @Override
-  public void dispose() {
   }
 
   private void showPopup(final Component component, final int x, final int y) {
@@ -380,7 +362,6 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       myDragKeyEventDispatcher = null;
     }
   }
-
 
   @Override
   public String toString() {

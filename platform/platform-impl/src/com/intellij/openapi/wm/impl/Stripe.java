@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -69,30 +70,30 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
 
     private static void drawBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
-      if (insets.top == 1) UIUtil.drawLine(g, x, y, x + width, y);
-      if (insets.right == 1) UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height);
-      if (insets.left == 1) UIUtil.drawLine(g, x, y, x, y + height);
-      if (insets.bottom == 1) UIUtil.drawLine(g, x, y + height - 1, x + width, y + height - 1);
+      if (insets.top == 1) LinePainter2D.paint((Graphics2D)g, x, y, x + width, y);
+      if (insets.right == 1) LinePainter2D.paint((Graphics2D)g, x + width - 1, y, x + width - 1, y + height);
+      if (insets.left == 1) LinePainter2D.paint((Graphics2D)g, x, y, x, y + height);
+      if (insets.bottom == 1) LinePainter2D.paint((Graphics2D)g, x, y + height - 1, x + width, y + height - 1);
 
       if (StartupUiUtil.isUnderDarcula()) {
         final Color c = g.getColor();
         if (insets.top == 2) {
           g.setColor(c);
-          UIUtil.drawLine(g, x, y, x + width, y);
+          LinePainter2D.paint((Graphics2D)g, x, y, x + width, y);
           g.setColor(Gray._85);
-          UIUtil.drawLine(g, x, y + 1, x + width, y + 1);
+          LinePainter2D.paint((Graphics2D)g, x, y + 1, x + width, y + 1);
         }
         if (insets.right == 2) {
           g.setColor(Gray._85);
-          UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height);
+          LinePainter2D.paint((Graphics2D)g, x + width - 1, y, x + width - 1, y + height);
           g.setColor(c);
-          UIUtil.drawLine(g, x + width - 2, y, x + width - 2, y + height);
+          LinePainter2D.paint((Graphics2D)g, x + width - 2, y, x + width - 2, y + height);
         }
         if (insets.left == 2) {
           g.setColor(Gray._85);
-          UIUtil.drawLine(g, x + 1, y, x + 1, y + height);
+          LinePainter2D.paint((Graphics2D)g, x + 1, y, x + 1, y + height);
           g.setColor(c);
-          UIUtil.drawLine(g, x, y, x, y + height);
+          LinePainter2D.paint((Graphics2D)g, x, y, x, y + height);
         }
         if (insets.bottom == 2) {
           //do nothing
@@ -579,12 +580,12 @@ final class Stripe extends JPanel implements UISettingsListener {
     g.setColor(new Color(255, 255, 255, 40));
     Rectangle r = getBounds();
     if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
-      UIUtil.drawLine(g, 0, 0, 0, r.height);
-      UIUtil.drawLine(g, r.width - 2, 0, r.width - 2, r.height);
+      LinePainter2D.paint((Graphics2D)g, 0, 0, 0, r.height);
+      LinePainter2D.paint((Graphics2D)g, r.width - 2, 0, r.width - 2, r.height);
     }
     else {
-      UIUtil.drawLine(g, 0, 1, r.width, 1);
-      UIUtil.drawLine(g, 0, r.height - 1, r.width, r.height - 1);
+      LinePainter2D.paint((Graphics2D)g, 0, 1, r.width, 1);
+      LinePainter2D.paint((Graphics2D)g, 0, r.height - 1, r.width, r.height - 1);
     }
   }
 }

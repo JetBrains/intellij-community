@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.paint.LinePainter2D;
 
 import javax.swing.border.Border;
 import java.awt.*;
@@ -45,19 +45,19 @@ public class ColoredSideBorder implements Border {
     for(i = 0; i < getThickness(); i++){
       if (myLeftColor != null){
         g.setColor(myLeftColor);
-        UIUtil.drawLine(g, x + i, y + i, x + i, height - i - i - 1);
+        LinePainter2D.paint((Graphics2D)g, x + i, y + i, x + i, height - i - i - 1);
       }
       if (myTopColor != null){
         g.setColor(myTopColor);
-        UIUtil.drawLine(g, x + i, y + i, width - i - i - 1, y + i);
+        LinePainter2D.paint((Graphics2D)g, x + i, y + i, width - i - i - 1, y + i);
       }
       if (myRightColor != null){
         g.setColor(myRightColor);
-        UIUtil.drawLine(g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
+        LinePainter2D.paint((Graphics2D)g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
       }
       if (myBottomColor != null){
         g.setColor(myBottomColor);
-        UIUtil.drawLine(g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
+        LinePainter2D.paint((Graphics2D)g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
       }
     }
     g.setColor(oldColor);

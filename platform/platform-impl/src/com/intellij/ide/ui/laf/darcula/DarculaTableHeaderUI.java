@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBValue;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -40,7 +40,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     g.fillRect(0, 0, w, h);
     JBColor bottomSeparatorColor = JBColor.namedColor("TableHeader.bottomSeparatorColor", ColorUtil.shift(bg, 0.75));
     g.setPaint(bottomSeparatorColor);
-    UIUtil.drawLine(g, 0, h - 1, w, h - 1);
+    LinePainter2D.paint((Graphics2D)g, 0, h - 1, w, h - 1);
 
     final Enumeration<TableColumn> columns = model.getColumns();
 
@@ -51,7 +51,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
       if (columns.hasMoreElements() && column.getWidth() > 0) {
         offset += column.getWidth();
         g.setColor(lineColor);
-        UIUtil.drawLine(g, offset - 1, 1, offset - 1, h - 3);
+        LinePainter2D.paint((Graphics2D)g, offset - 1, 1, offset - 1, h - 3);
       }
     }
 

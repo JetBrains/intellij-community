@@ -73,11 +73,11 @@ public class EditorMouseHoverPopupControl {
   }
 
   public static void disablePopupsWhileShowing(@NotNull Editor editor, @NotNull Component popupComponent) {
-    new UiNotifyConnector.Once(popupComponent, new Activatable.Adapter() {
+    new UiNotifyConnector.Once(popupComponent, new Activatable() {
       @Override
       public void showNotify() {
         disablePopups(editor);
-        new UiNotifyConnector.Once(popupComponent, new Adapter() {
+        new UiNotifyConnector.Once(popupComponent, new Activatable() {
           @Override
           public void hideNotify() {
             enablePopups(editor);

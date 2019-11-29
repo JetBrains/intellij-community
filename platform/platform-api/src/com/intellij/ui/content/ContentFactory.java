@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public interface ContentFactory {
-
   @NotNull
   Content createContent(JComponent component, @Nls(capitalization = Nls.Capitalization.Title) String displayName, boolean isLockable);
 

@@ -629,7 +629,7 @@ public class Mock {
     }
 
     @Override
-    public Balloon getToolWindowBalloon(String id) {
+    public Balloon getToolWindowBalloon(@NotNull String id) {
       return null;
     }
 

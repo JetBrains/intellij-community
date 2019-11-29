@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
@@ -56,7 +56,7 @@ class TextLayoutCache implements PrioritizedInternalDocumentListener, Disposable
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
     myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);
-    Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable.Adapter() {
+    Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable() {
       @Override
       public void hideNotify() {
         trimChunkCache();

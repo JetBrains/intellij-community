@@ -16,7 +16,7 @@ import com.intellij.vcs.log.impl.VcsLogEditorTabSelector
 import org.jetbrains.plugins.github.pullrequest.GHPRAccountsComponent
 import org.jetbrains.plugins.github.pullrequest.GHPRComponentFactory
 
-class GHPREditorContentSynchronizer {
+internal class GHPREditorContentSynchronizer {
   companion object {
     fun getInstance(project: Project): GHPREditorContentSynchronizer = project.service()
   }
@@ -24,14 +24,14 @@ class GHPREditorContentSynchronizer {
   private fun addContentManagerListener(window: ToolWindowImpl,
                                         listener: ContentManagerListener) {
     window.contentManager.addContentManagerListener(listener)
-    Disposer.register(window, Disposable {
+    Disposer.register(window.contentManager, Disposable {
       if (!window.isDisposed) {
         window.contentManager.removeContentManagerListener(listener)
       }
     })
   }
 
-  class MyToolwindowListener(private val project: Project) : ToolWindowManagerListener {
+  internal class MyToolwindowListener(private val project: Project) : ToolWindowManagerListener {
     override fun toolWindowRegistered(id: String) {
 
       if (!Registry.`is`("show.log.as.editor.tab")) return
@@ -53,5 +53,4 @@ class GHPREditorContentSynchronizer {
       }
     }
   }
-
 }

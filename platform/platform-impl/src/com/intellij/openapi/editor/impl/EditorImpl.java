@@ -1134,7 +1134,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable.Adapter() {
+    UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable() {
       @Override
       public void showNotify() {
         myGutterComponent.updateSizeOnShowNotify();

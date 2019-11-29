@@ -16,7 +16,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -442,7 +441,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     _addListener(listener, parent);
   }
 
-
   @Override
   public void addMouseMotionPreprocessor(@NotNull final MouseMotionListener listener, @NotNull final Disposable parent) {
     _addListener(listener, parent);
@@ -451,7 +449,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private void _addListener(@NotNull EventListener listener, @NotNull Disposable parent) {
     if (!myMouseListeners.contains(listener)) {
       Disposable listenerDisposable = myMouseListeners.add(listener, parent);
-      Disposer.register(listenerDisposable, () -> UIUtil.invokeLaterIfNeeded(() -> removeListener(listener)));
+      Disposer.register(listenerDisposable, () -> {
+        UIUtil.invokeLaterIfNeeded(() -> removeListener(listener));
+      });
       updateSortedList();
     }
     activateIfNeeded();

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -52,60 +53,60 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
         {
           if (isSelected) {
             // left
-            UIUtil.drawLine(g, x, y + 1, x, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x, y + 1, x, y + h - 1);
             // top
-            UIUtil.drawLine(g, x + 1, y, x + w - 3, y);
+            LinePainter2D.paint((Graphics2D)g, x + 1, y, x + w - 3, y);
             // right
-            UIUtil.drawLine(g, x + w - 2, y + 1, x + w - 2, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x + w - 2, y + 1, x + w - 2, y + h - 1);
           }
           else {
             // left
-            UIUtil.drawLine(g, x, y + 1, x, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x, y + 1, x, y + h - 1);
             // top
-            UIUtil.drawLine(g, x + 1, y, x + w - 3, y);
+            LinePainter2D.paint((Graphics2D)g, x + 1, y, x + w - 3, y);
             // right
-            UIUtil.drawLine(g, x + w - 2, y + 1, x + w - 2, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x + w - 2, y + 1, x + w - 2, y + h - 1);
           }
           break;
         }
       case LEFT:
         {
           // top
-          UIUtil.drawLine(g, x + 1, y + 1, x + w - 1, y + 1);
+          LinePainter2D.paint((Graphics2D)g, x + 1, y + 1, x + w - 1, y + 1);
           // left
-          UIUtil.drawLine(g, x, y + 2, x, y + h - 2);
+          LinePainter2D.paint((Graphics2D)g, x, y + 2, x, y + h - 2);
           //bottom
-          UIUtil.drawLine(g, x + 1, y + h - 1, x + w - 1, y + h - 1);
+          LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 1, y + h - 1);
           break;
         }
       case BOTTOM:
         {
           if (isSelected) {
             // left
-            UIUtil.drawLine(g, x, y, x, y + h - 2);
+            LinePainter2D.paint((Graphics2D)g, x, y, x, y + h - 2);
             // bottom
-            UIUtil.drawLine(g, x + 1, y + h - 1, x + w - 2, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 2, y + h - 1);
             // right
-            UIUtil.drawLine(g, x + w - 1, y, x + w - 1, y + h - 2);
+            LinePainter2D.paint((Graphics2D)g, x + w - 1, y, x + w - 1, y + h - 2);
           }
           else {
             // left
-            UIUtil.drawLine(g, x, y, x, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x, y, x, y + h - 1);
             // bottom
-            UIUtil.drawLine(g, x + 1, y + h - 1, x + w - 3, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 3, y + h - 1);
             // right
-            UIUtil.drawLine(g, x + w - 2, y, x + w - 2, y + h - 1);
+            LinePainter2D.paint((Graphics2D)g, x + w - 2, y, x + w - 2, y + h - 1);
           }
           break;
         }
       case RIGHT:
         {
           // top
-          UIUtil.drawLine(g, x, y + 1, x + w - 2, y + 1);
+          LinePainter2D.paint((Graphics2D)g, x, y + 1, x + w - 2, y + 1);
           // right
-          UIUtil.drawLine(g, x + w - 1, y + 2, x + w - 1, y + h - 2);
+          LinePainter2D.paint((Graphics2D)g, x + w - 1, y + 2, x + w - 1, y + h - 2);
           //bottom
-          UIUtil.drawLine(g, x, y + h - 1, x + w - 2, y + h - 1);
+          LinePainter2D.paint((Graphics2D)g, x, y + h - 1, x + w - 2, y + h - 1);
           break;
         }
       default:
@@ -182,19 +183,19 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != TOP || selectedIndex < 0 ||
           (selRect.y + selRect.height + 1 < y) ||
           (selRect.x < x || selRect.x > x + w)) {
-        UIUtil.drawLine(g, x, y, x + w - 1, y);
+        LinePainter2D.paint((Graphics2D)g, x, y, x + w - 1, y);
       }
       else {
         // Break line to show visual connection to selected tab
         boolean lastInRun = isLastInRun(selectedIndex);
 
-        UIUtil.drawLine(g, x, y, selRect.x, y);
+        LinePainter2D.paint((Graphics2D)g, x, y, selRect.x, y);
 
         if (selRect.x + selRect.width < right - 1) {
-          UIUtil.drawLine(g, selRect.x + selRect.width - 2, y, right, y);
+          LinePainter2D.paint((Graphics2D)g, selRect.x + selRect.width - 2, y, right, y);
         }
         else {
-          UIUtil.drawLine(g, x + w - 2, y, x + w - 2, y);
+          LinePainter2D.paint((Graphics2D)g, x + w - 2, y, x + w - 2, y);
         }
       }
     }
@@ -217,25 +218,25 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != BOTTOM || selectedIndex < 0 ||
           (selRect.y - 1 > h) ||
           (selRect.x < x || selRect.x > x + w)) {
-        UIUtil.drawLine(g, x, y + h - 1, x + w - 1, y + h - 1);
+        LinePainter2D.paint((Graphics2D)g, x, y + h - 1, x + w - 1, y + h - 1);
       }
       else {
         // Break line to show visual connection to selected tab
         boolean lastInRun = isLastInRun(selectedIndex);
 
         if (leftToRight || lastInRun) {
-          UIUtil.drawLine(g, x, bottom, selRect.x, bottom);
+          LinePainter2D.paint((Graphics2D)g, x, bottom, selRect.x, bottom);
         }
         else {
-          UIUtil.drawLine(g, x, bottom, selRect.x - 1, bottom);
+          LinePainter2D.paint((Graphics2D)g, x, bottom, selRect.x - 1, bottom);
         }
 
         if (selRect.x + selRect.width < x + w - 2) {
           if (leftToRight && !lastInRun) {
-            UIUtil.drawLine(g, selRect.x + selRect.width, bottom, right, bottom);
+            LinePainter2D.paint((Graphics2D)g, selRect.x + selRect.width, bottom, right, bottom);
           }
           else {
-            UIUtil.drawLine(g, selRect.x + selRect.width - 1, bottom, right, bottom);
+            LinePainter2D.paint((Graphics2D)g, selRect.x + selRect.width - 1, bottom, right, bottom);
           }
         }
       }
@@ -256,13 +257,13 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != LEFT || selectedIndex < 0 ||
           (selRect.x + selRect.width + 1 < x) ||
           (selRect.y < y || selRect.y > y + h)) {
-        UIUtil.drawLine(g, x, y, x, y + h - 2);
+        LinePainter2D.paint((Graphics2D)g, x, y, x, y + h - 2);
       }
       else {
         // Break line to show visual connection to selected tab
-        UIUtil.drawLine(g, x, y, x, selRect.y + 1);
+        LinePainter2D.paint((Graphics2D)g, x, y, x, selRect.y + 1);
         if (selRect.y + selRect.height < y + h - 2) {
-          UIUtil.drawLine(g, x, selRect.y + selRect.height + 1, x, y + h + 2);
+          LinePainter2D.paint((Graphics2D)g, x, selRect.y + selRect.height + 1, x, y + h + 2);
         }
       }
     }
@@ -282,14 +283,14 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       if (tabPlacement != RIGHT || selectedIndex < 0 ||
           (selRect.x - 1 > w) ||
           (selRect.y < y || selRect.y > y + h)) {
-        UIUtil.drawLine(g, x + w - 1, y, x + w - 1, y + h - 1);
+        LinePainter2D.paint((Graphics2D)g, x + w - 1, y, x + w - 1, y + h - 1);
       }
       else {
         // Break line to show visual connection to selected tab
-        UIUtil.drawLine(g, x + w - 1, y, x + w - 1, selRect.y);
+        LinePainter2D.paint((Graphics2D)g, x + w - 1, y, x + w - 1, selRect.y);
 
         if (selRect.y + selRect.height < y + h - 2) {
-          UIUtil.drawLine(g, x + w - 1, selRect.y + selRect.height, x + w - 1, y + h - 2);
+          LinePainter2D.paint((Graphics2D)g, x + w - 1, selRect.y + selRect.height, x + w - 1, y + h - 2);
         }
       }
     }

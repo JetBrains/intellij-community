@@ -24,8 +24,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,23 +46,18 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class InternalDecorator extends JPanel implements Queryable, DataProvider {
-
-  private Project myProject;
+  private final Project myProject;
   private WindowInfoImpl myInfo;
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
   private final EventDispatcher<InternalDecoratorListener> myDispatcher = EventDispatcher.create(InternalDecoratorListener.class);
-  /*
-   * Actions
-   */
-  private final ToggleContentUiTypeAction myToggleContentUiTypeAction;
   private final RemoveStripeButtonAction myRemoveFromSideBarAction;
 
   private ActionGroup myAdditionalGearActions;
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
-  @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
+  static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
 
   //See ToolWindowViewModeAction and ToolWindowMoveAction
   @NonNls @Deprecated public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
@@ -71,25 +66,27 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @NonNls @Deprecated public static final String TOGGLE_WINDOWED_MODE_ACTION_ID = "ToggleWindowedMode";
   @NonNls @Deprecated public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
 
-  @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
+  private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
-  private ToolWindowHeader myHeader;
+  private final ToolWindowHeader myHeader;
   private final ActionGroup myToggleToolbarGroup;
 
-  private final AnAction myFocusEditorAction = ActionManager.getInstance().getAction("FocusEditor");
-
-  InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow, boolean dumbAware) {
+  InternalDecorator(@NotNull Project project, @NotNull WindowInfoImpl info, @NotNull ToolWindowImpl toolWindow, boolean dumbAware, @NotNull Disposable parentDisposable) {
     super(new BorderLayout());
+
     myProject = project;
     myToolWindow = toolWindow;
     myToolWindow.setDecorator(this);
     myDivider = new MyDivider();
 
-    myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
+    /*
+     * Actions
+     */
+    ToggleContentUiTypeAction toggleContentUiTypeAction = new ToggleContentUiTypeAction();
     myRemoveFromSideBarAction = new RemoveStripeButtonAction();
     myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
     if (!ToolWindowId.PREVIEW.equals(info.getId())) {
-      ((DefaultActionGroup)myToggleToolbarGroup).addAction(myToggleContentUiTypeAction);
+      ((DefaultActionGroup)myToggleToolbarGroup).addAction(toggleContentUiTypeAction);
     }
 
     setFocusable(false);
@@ -107,7 +104,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
     };
 
-    init(dumbAware);
+    init(dumbAware, parentDisposable);
 
     apply(info);
   }
@@ -192,14 +189,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.removeListener(l);
   }
 
-  final void dispose() {
-    removeAll();
-
-    Disposer.dispose(myHeader);
-    myHeader = null;
-    myProject = null;
-  }
-
   /**
    * Fires event that "hide" button has been pressed.
    */
@@ -229,27 +218,25 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.getMulticaster().contentUiTypeChanges(this, type);
   }
 
-  private void fireVisibleOnPanelChanged(final boolean visibleOnPanel) {
+  private void fireVisibleOnPanelChanged(boolean visibleOnPanel) {
     myDispatcher.getMulticaster().visibleStripeButtonChanged(this, visibleOnPanel);
   }
 
-  private void init(boolean dumbAware) {
+  private void init(boolean dumbAware, @NotNull Disposable parentDisposable) {
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
 
-    final JPanel contentPane = new JPanel(new BorderLayout());
+    JPanel contentPane = new JPanel(new BorderLayout());
     installFocusTraversalPolicy(contentPane, new LayoutFocusTraversalPolicy());
     contentPane.add(myHeader, BorderLayout.NORTH);
 
     JPanel innerPanel = new JPanel(new BorderLayout());
     JComponent toolWindowComponent = myToolWindow.getComponent();
     if (!dumbAware) {
-      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, myToolWindow);
+      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, parentDisposable);
     }
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
-    final NonOpaquePanel inner = new NonOpaquePanel(innerPanel);
-
-    contentPane.add(inner, BorderLayout.CENTER);
+    contentPane.add(new NonOpaquePanel(innerPanel), BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
@@ -259,7 +246,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
     if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
-      Collection<KeyStroke> keyStrokes = KeymapUtil.getKeyStrokes(myFocusEditorAction.getShortcutSet());
+      Collection<KeyStroke> keyStrokes = KeymapUtil.getKeyStrokes(ActionManager.getInstance().getAction("FocusEditor").getShortcutSet());
       if (keyStrokes.contains(ks)) {
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
         return true;
@@ -293,25 +280,26 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     private void doPaintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Insets insets = getBorderInsets(c);
 
+      Graphics2D graphics2D = (Graphics2D)g;
       if (insets.top > 0) {
-        UIUtil.drawLine(g, x, y + insets.top - 1, x + width - 1, y + insets.top - 1);
-        UIUtil.drawLine(g, x, y + insets.top, x + width - 1, y + insets.top);
+        LinePainter2D.paint(graphics2D, x, y + insets.top - 1, x + width - 1, y + insets.top - 1);
+        LinePainter2D.paint(graphics2D, x, y + insets.top, x + width - 1, y + insets.top);
       }
 
       if (insets.left > 0) {
-        UIUtil.drawLine(g, x, y, x, y + height);
-        UIUtil.drawLine(g, x + 1, y, x + 1, y + height);
+        LinePainter2D.paint(graphics2D, x, y, x, y + height);
+        LinePainter2D.paint(graphics2D, x + 1, y, x + 1, y + height);
       }
 
       if (insets.right > 0) {
-        UIUtil.drawLine(g, x + width - 1, y + insets.top, x + width - 1, y + height);
-        UIUtil.drawLine(g, x + width, y + insets.top, x + width, y + height);
+        LinePainter2D.paint(graphics2D, x + width - 1, y + insets.top, x + width - 1, y + height);
+        LinePainter2D.paint(graphics2D, x + width, y + insets.top, x + width, y + height);
       }
 
       if (insets.bottom > 0) {
-        UIUtil.drawLine(g, x, y + height - 1, x + width, y + height - 1);
-        UIUtil.drawLine(g, x, y + height, x + width, y + height);
-       }
+        LinePainter2D.paint(graphics2D, x, y + height - 1, x + width, y + height - 1);
+        LinePainter2D.paint(graphics2D, x, y + height, x + width, y + height);
+      }
     }
 
     @Override
@@ -581,7 +569,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   private final class MyDivider extends JPanel {
     private boolean myDragging;
-    private Point myLastPoint;
     private Disposable myDisposable;
     private IdeGlassPane myGlassPane;
 
@@ -648,22 +635,22 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         final ToolWindowAnchor anchor = myInfo.getAnchor();
         final Point point = event.getPoint();
         final Container windowPane = InternalDecorator.this.getParent();
-        myLastPoint = SwingUtilities.convertPoint(MyDivider.this, point, windowPane);
-        myLastPoint.x = Math.min(Math.max(myLastPoint.x, 0), windowPane.getWidth());
-        myLastPoint.y = Math.min(Math.max(myLastPoint.y, 0), windowPane.getHeight());
+        Point lastPoint = SwingUtilities.convertPoint(MyDivider.this, point, windowPane);
+        lastPoint.x = Math.min(Math.max(lastPoint.x, 0), windowPane.getWidth());
+        lastPoint.y = Math.min(Math.max(lastPoint.y, 0), windowPane.getHeight());
 
         final Rectangle bounds = InternalDecorator.this.getBounds();
         if (anchor == ToolWindowAnchor.TOP) {
-          InternalDecorator.this.setBounds(0, 0, bounds.width, myLastPoint.y);
+          InternalDecorator.this.setBounds(0, 0, bounds.width, lastPoint.y);
         }
         else if (anchor == ToolWindowAnchor.LEFT) {
-          InternalDecorator.this.setBounds(0, 0, myLastPoint.x, bounds.height);
+          InternalDecorator.this.setBounds(0, 0, lastPoint.x, bounds.height);
         }
         else if (anchor == ToolWindowAnchor.BOTTOM) {
-          InternalDecorator.this.setBounds(0, myLastPoint.y, bounds.width, windowPane.getHeight() - myLastPoint.y);
+          InternalDecorator.this.setBounds(0, lastPoint.y, bounds.width, windowPane.getHeight() - lastPoint.y);
         }
         else if (anchor == ToolWindowAnchor.RIGHT) {
-          InternalDecorator.this.setBounds(myLastPoint.x, 0, windowPane.getWidth() - myLastPoint.x, bounds.height);
+          InternalDecorator.this.setBounds(lastPoint.x, 0, windowPane.getWidth() - lastPoint.x, bounds.height);
         }
         InternalDecorator.this.validate();
         e.consume();

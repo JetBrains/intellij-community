@@ -59,8 +59,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
-public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
-
+public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
   private static final Logger LOG = Logger.getInstance(BalloonImpl.class);
 
   /**
@@ -1188,9 +1187,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       if (balloon.myCornerToPointerDistance < indent) return indent;
 
       int limit = this == ABOVE || this == BELOW ? size.width - indent : size.height - indent;
-      if (balloon.myCornerToPointerDistance > limit) return limit;
-
-      return balloon.myCornerToPointerDistance;
+      return Math.min(balloon.myCornerToPointerDistance, limit);
     }
 
     abstract Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize, int distance);
