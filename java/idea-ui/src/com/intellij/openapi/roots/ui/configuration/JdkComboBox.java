@@ -25,8 +25,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -236,14 +236,34 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
           else if (value instanceof ActionJdkItem) {
             ActionJdkItem item = (ActionJdkItem)value;
             Presentation template = item.myAction.getTemplatePresentation();
-            Icon icon = template.getIcon();
-            if (item.myRole == ActionRole.ADD) {
-              icon = item.myAction.getSdkType().getIcon();
-              if (icon == null) icon = AllIcons.General.Add;
+            //this is a sub-menu item
+            SdkType sdkType = item.myAction.getSdkType();
+            if (item.myGroup != null) {
+              switch (item.myRole) {
+                case ADD:
+                  //we already have the (+) in the parent node, thus showing original icon
+                  Icon icon = sdkType.getIcon();
+                  if (icon == null) icon = AllIcons.General.Add;
+                  setIcon(icon);
+                  append(sdkType.getPresentableName() + "...");
+                  break;
+                case DOWNLOAD:
+                  setIcon(template.getIcon());
+                  append("Download " + sdkType.getPresentableName() + "...");
+                  break;
+              }
+            } else {
+              switch (item.myRole) {
+                case ADD:
+                  setIcon(template.getIcon());
+                  append("Add " + sdkType.getPresentableName() + "...");
+                  break;
+                case DOWNLOAD:
+                  setIcon(template.getIcon());
+                  append("Download " + sdkType.getPresentableName() + "...");
+                  break;
+              }
             }
-            setIcon(icon);
-            String text = template.getText();
-            append(text != null ? text : "<null>");
           }
           else if (value instanceof ActionGroupJdkItem) {
             setIcon(((ActionGroupJdkItem)value).myIcon);
@@ -563,7 +583,12 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
       ImmutableList.Builder<ActionJdkItem> subMenu = ImmutableList.builder();
       subMenu.addAll(myDownloadActions);
       subMenu.addAll(myAddActions);
-      newModel.addElement(new ActionGroupJdkItem(AllIcons.General.Add, "Add SDK", subMenu.build()));
+      ImmutableList<ActionJdkItem> subItems = subMenu.build();
+      if (subItems.size() > 3) {
+        newModel.addElement(new ActionGroupJdkItem(AllIcons.General.Add, "Add SDK", subItems));
+      } else {
+        subItems.forEach(newModel::addElement);
+      }
 
       for (SuggestedJdkItem item : mySuggestions) {
         if (!isApplicableSuggestedItem(item)) continue;
@@ -864,12 +889,23 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
   }
 
   private static class ActionJdkItem extends JdkComboBoxItem {
+    @Nullable final ActionGroupJdkItem myGroup;
     final ActionRole myRole;
     final NewSdkAction myAction;
 
-    ActionJdkItem(@NotNull ActionRole role, @NotNull NewSdkAction action) {
+    private ActionJdkItem(@NotNull ActionRole role, @NotNull NewSdkAction action) {
+      this(role, action, null);
+    }
+
+    ActionJdkItem(@NotNull ActionRole role, @NotNull NewSdkAction action, @Nullable ActionGroupJdkItem group) {
       myRole = role;
       myAction = action;
+      myGroup = group;
+    }
+
+    @NotNull
+    ActionJdkItem withGroup(@NotNull ActionGroupJdkItem group) {
+      return new ActionJdkItem(myRole, myAction, group);
     }
   }
 
@@ -880,10 +916,10 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
 
     private ActionGroupJdkItem(@NotNull Icon icon,
                                @NotNull String caption,
-                               @NotNull List<? extends JdkComboBoxItem> subItems) {
+                               @NotNull List<ActionJdkItem> subItems) {
       myIcon = icon;
-      this.myCaption = caption;
-      mySubItems = subItems;
+      myCaption = caption;
+      mySubItems = ImmutableList.copyOf(ContainerUtil.map(subItems, it -> it.withGroup(this)));
     }
   }
 
