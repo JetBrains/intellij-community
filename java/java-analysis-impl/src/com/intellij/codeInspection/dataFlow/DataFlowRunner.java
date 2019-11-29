@@ -525,9 +525,9 @@ public class DataFlowRunner {
       }
     }
 
-    for (Instruction instruction : mayRemoveStatesFor) {
-      processedStates.remove((BranchingInstruction)instruction);
-      incomingStates.remove((BranchingInstruction)instruction);
+    for (BranchingInstruction instruction : mayRemoveStatesFor) {
+      processedStates.remove(instruction);
+      incomingStates.remove(instruction);
     }
   }
 

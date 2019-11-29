@@ -22,11 +22,9 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiPrefixExpression;
 
-public class NotInstruction extends Instruction implements ExpressionPushingInstruction {
-  private final PsiPrefixExpression myAnchor;
-
+public class NotInstruction extends ExpressionPushingInstruction<PsiPrefixExpression> {
   public NotInstruction(PsiPrefixExpression anchor) {
-    myAnchor = anchor;
+    super(anchor);
   }
 
   @Override
@@ -36,10 +34,5 @@ public class NotInstruction extends Instruction implements ExpressionPushingInst
 
   public String toString() {
     return "NOT";
-  }
-
-  @Override
-  public PsiPrefixExpression getExpression() {
-    return myAnchor;
   }
 }

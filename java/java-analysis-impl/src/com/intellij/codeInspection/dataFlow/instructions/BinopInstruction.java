@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.*;
 
-public class BinopInstruction extends Instruction implements ExpressionPushingInstruction, BranchingInstruction {
+public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression> implements BranchingInstruction {
   private static final TokenSet ourSignificantOperations =
     TokenSet.create(EQ, EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, OR, XOR, PERC, DIV, ASTERISK, GTGT, GTGTGT, LTLT);
 
@@ -42,7 +42,6 @@ public class BinopInstruction extends Instruction implements ExpressionPushingIn
 
   private final IElementType myOperationSign;
   private final @Nullable PsiType myResultType;
-  private final PsiExpression myExpression;
   private final int myLastOperand;
   private final boolean myUnrolledLoop;
   private boolean myWidened;
@@ -68,8 +67,8 @@ public class BinopInstruction extends Instruction implements ExpressionPushingIn
                           @Nullable PsiType resultType,
                           int lastOperand,
                           boolean unrolledLoop) {
+    super(expression);
     assert lastOperand == -1 || expression instanceof PsiPolyadicExpression;
-    myExpression = expression;
     myResultType = resultType;
     myOperationSign =
       opSign == XOR && PsiType.BOOLEAN.equals(resultType) ? NE : // XOR for boolean is equivalent to NE 
@@ -113,20 +112,14 @@ public class BinopInstruction extends Instruction implements ExpressionPushingIn
   @Override
   @Nullable
   public TextRange getExpressionRange() {
-    if (myLastOperand != -1 && myExpression instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression anchor = (PsiPolyadicExpression)myExpression;
+    if (myLastOperand != -1 && getExpression() instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression anchor = (PsiPolyadicExpression)getExpression();
       PsiExpression[] operands = anchor.getOperands();
       if (operands.length > myLastOperand + 1) {
         return new TextRange(0, operands[myLastOperand].getStartOffsetInParent()+operands[myLastOperand].getTextLength());
       }
     }
     return null;
-  }
-
-  @Nullable
-  @Override
-  public PsiExpression getExpression() {
-    return myExpression;
   }
 
   @Override

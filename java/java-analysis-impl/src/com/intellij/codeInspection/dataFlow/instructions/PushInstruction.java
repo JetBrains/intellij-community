@@ -26,9 +26,8 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PushInstruction extends Instruction implements ExpressionPushingInstruction {
+public class PushInstruction extends ExpressionPushingInstruction<PsiExpression> {
   private final DfaValue myValue;
-  private final PsiExpression myPlace;
   private final boolean myReferenceWrite;
 
   public PushInstruction(@Nullable DfaValue value, PsiExpression place) {
@@ -36,8 +35,8 @@ public class PushInstruction extends Instruction implements ExpressionPushingIns
   }
 
   public PushInstruction(@Nullable DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
+    super(place);
     myValue = value != null ? value : DfaUnknownValue.getInstance();
-    myPlace = place;
     myReferenceWrite = isReferenceWrite;
   }
 
@@ -48,11 +47,6 @@ public class PushInstruction extends Instruction implements ExpressionPushingIns
   @NotNull
   public DfaValue getValue() {
     return myValue;
-  }
-
-  @Override
-  public PsiExpression getExpression() {
-    return myPlace;
   }
 
   @Override

@@ -220,7 +220,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       currentStates = addContractResults(contract, currentStates, runner.getFactory(), new HashSet<>(), defaultResult, methodRef);
     }
     for (DfaCallState currentState: currentStates) {
-      pushExpressionResult(defaultResult, () -> methodRef, currentState.myMemoryState);
+      pushExpressionResult(defaultResult, new ResultOfInstruction(methodRef), currentState.myMemoryState);
     }
   }
 
@@ -449,7 +449,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if(contract.isTrivial()) {
       for (DfaCallState callState : states) {
         DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, callState);
-        pushExpressionResult(result, () -> expression, callState.myMemoryState);
+        pushExpressionResult(result, new ResultOfInstruction(expression), callState.myMemoryState);
         finalStates.add(callState.myMemoryState);
       }
       return Collections.emptySet();
@@ -478,7 +478,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       if(state != null) {
         DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, new DfaCallState(state, arguments));
-        pushExpressionResult(result, () -> expression, state);
+        pushExpressionResult(result, new ResultOfInstruction(expression), state);
         finalStates.add(state);
       }
     }

@@ -17,4 +17,5 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 public interface BranchingInstruction {
+  int getIndex();
 }
