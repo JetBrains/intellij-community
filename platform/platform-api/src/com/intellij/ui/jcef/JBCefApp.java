@@ -91,8 +91,8 @@ public abstract class JBCefApp {
     }
   }
 
-  public CefClient createClient() {
-    return ourCefApp.createClient();
+  public JBCefClient createClient() {
+    return new JBCefClient(ourCefApp.createClient());
   }
 }
 

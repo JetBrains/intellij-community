@@ -7,6 +7,7 @@ import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.cef.browser.CefBrowser;
+import org.cef.handler.CefLoadHandler;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor;
@@ -42,8 +43,11 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   @NotNull
   private final BridgeSettingListener myBridgeSettingListener = new BridgeSettingListener();
 
+  private final CefLoadHandler myCefLoadHandler;
+
   public MarkdownJCEFHtmlPanel() {
     super();
+
     JBCefUtils.addJSHandler(getBrowser().getClient(), JS_REQ_SET_SCROLL_Y,
       (value) -> {
         try {
@@ -51,11 +55,20 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
         } catch (NumberFormatException ignored) {}
         return true;
       });
+
     JBCefUtils.addJSHandler(getBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
       (link) -> {
         MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
         return true;
       });
+
+    getJBCefClient().addLoadHandler(myCefLoadHandler = new CefLoadHandlerAdapter() {
+      @Override
+      public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
+        myScrollPreservingListener.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
+        myBridgeSettingListener.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
+      }
+    }, getBrowser());
   }
 
   @Override
@@ -107,6 +120,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   @Override
   public void dispose() {
     super.dispose();
+    getJBCefClient().removeLoadHandler(myCefLoadHandler, getBrowser());
     JBCefUtils.removeJSHandler(getBrowser().getClient(), JS_REQ_SET_SCROLL_Y);
     JBCefUtils.removeJSHandler(getBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER);
   }
@@ -114,12 +128,6 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   @NotNull
   private static String getScriptingLines() {
     return MY_SCRIPTING_LINES.getValue();
-  }
-
-  @Override
-  protected void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
-    myScrollPreservingListener.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
-    myBridgeSettingListener.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
   }
 
   private class BridgeSettingListener extends CefLoadHandlerAdapter  {

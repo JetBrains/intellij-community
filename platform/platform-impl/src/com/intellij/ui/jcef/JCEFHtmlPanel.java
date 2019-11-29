@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
-import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.*;
 import org.jetbrains.annotations.Contract;
@@ -19,7 +18,7 @@ import java.awt.*;
  * @author tav
  */
 public class JCEFHtmlPanel implements Disposable {
-  private static final CefClient ourCefClient;
+  private static final JBCefClient ourCefClient = JBCefApp.getInstance().createClient();
   // browser demands some valid URL for loading html content
   private static final String ourUrl = JCEFHtmlPanel.class.getResource(JCEFHtmlPanel.class.getSimpleName() + ".class").toExternalForm();
 
@@ -28,9 +27,23 @@ public class JCEFHtmlPanel implements Disposable {
   private boolean myIsCefBrowserCreated;
   @Nullable private String myHtml;
 
+  private final CefLifeSpanHandler myCefLifeSpanHandler;
+  private final CefFocusHandler myCefFocusHandler;
+
   static {
-    ourCefClient = JBCefApp.getInstance().createClient();
-    ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
+    Disposer.register(ApplicationManager.getApplication(), () -> {
+      ourCefClient.getCefClient().dispose();
+    });
+  }
+
+  public JCEFHtmlPanel() {
+    myComponent = new MyComponent(new BorderLayout());
+    myComponent.setBackground(JBColor.background());
+
+    myCefBrowser = ourCefClient.getCefClient().createBrowser("about:blank", false, false);
+    myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
+
+    ourCefClient.addLifeSpanHandler(myCefLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
       @Override
       public void onAfterCreated(CefBrowser browser) {
         JCEFHtmlPanel panel = getJCEFHtmlPanel(browser);
@@ -42,17 +55,9 @@ public class JCEFHtmlPanel implements Disposable {
           }
         }
       }
-    });
-    ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
-      @Override
-      public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
-        JCEFHtmlPanel panel = getJCEFHtmlPanel(browser);
-        if (panel != null) {
-          panel.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
-        }
-      }
-    });
-    ourCefClient.addFocusHandler(new CefFocusHandlerAdapter() {
+    }, myCefBrowser);
+
+    ourCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
@@ -63,18 +68,7 @@ public class JCEFHtmlPanel implements Disposable {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
         return false;
       }
-    });
-    Disposer.register(ApplicationManager.getApplication(), () -> {
-      ourCefClient.dispose();
-    });
-  }
-
-  public JCEFHtmlPanel() {
-    myComponent = new MyComponent(new BorderLayout());
-    myComponent.setBackground(JBColor.background());
-
-    myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
-    myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
+    }, myCefBrowser);
   }
 
   @NotNull
@@ -82,8 +76,14 @@ public class JCEFHtmlPanel implements Disposable {
     return myComponent;
   }
 
+  @NotNull
   public CefBrowser getBrowser() {
     return myCefBrowser;
+  }
+
+  @NotNull
+  public static JBCefClient getJBCefClient() {
+    return ourCefClient;
   }
 
   public void setHtml(@NotNull String html) {
@@ -101,11 +101,10 @@ public class JCEFHtmlPanel implements Disposable {
     return html;
   }
 
-  protected void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
-  }
-
   @Override
   public void dispose() {
+    ourCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
+    ourCefClient.removeLifeSpanHandler(myCefLifeSpanHandler, myCefBrowser);
     myCefBrowser.close(true);
   }
 
