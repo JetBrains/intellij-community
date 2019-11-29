@@ -126,6 +126,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
           GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
           GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
         }
+        toolTipText = value.state.toString().toLowerCase().capitalize()
       }
       title.apply {
         text = value.title
