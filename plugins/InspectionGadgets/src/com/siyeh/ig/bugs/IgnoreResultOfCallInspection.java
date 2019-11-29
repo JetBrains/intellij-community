@@ -203,6 +203,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (PropertyUtil.isSimpleGetter(method)) {
         return !isIgnored(method, null);
       }
+      if (method instanceof PsiCompiledElement) {
+        PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
+        if (sourceMethod != null && PropertyUtil.isSimpleGetter(sourceMethod)) {
+          return !isIgnored(method, null);
+        }
+      }
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
         return !isIgnored(method, null);
       }
