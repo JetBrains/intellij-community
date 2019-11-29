@@ -33,5 +33,5 @@ interface MappingEntry {
   val name: String?
     get() = null
 
-  val nextGenerated: MappingEntry
+  val nextGenerated: MappingEntry?
 }

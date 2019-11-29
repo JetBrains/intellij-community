@@ -102,6 +102,6 @@ private data class NestedMappingEntry(private val child: MappingEntry, private v
   override val name: String?
     get() = parent.name
 
-  override val nextGenerated: MappingEntry
+  override val nextGenerated: MappingEntry?
     get() = child.nextGenerated
 }
