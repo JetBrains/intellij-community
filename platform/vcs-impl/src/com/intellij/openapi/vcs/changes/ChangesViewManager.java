@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
@@ -270,7 +271,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).openEditorPreview();
+      ((EditorTabPreview)diffPreview).openEditorPreview(false);
     }
   }
 
@@ -365,6 +366,10 @@ public class ChangesViewManager implements ChangesViewEx,
           @Override
           protected boolean skipPreviewUpdate() {
             if (super.skipPreviewUpdate()) {
+              return true;
+            }
+
+            if (!IdeFocusManager.getInstance(myProject).getFocusOwner().equals(myView)) {
               return true;
             }
 
