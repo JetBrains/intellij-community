@@ -61,7 +61,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   private var isServicePreloadingCancelled = false
 
   private var instantiatedComponentCount = 0
-  private var componentConfigCount = 0
+  private var componentConfigCount = -1
 
   @Suppress("LeakingThis")
   internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.simpleName}@${System.identityHashCode(this)}")
@@ -108,7 +108,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     val app = getApplication()
     val headless = app == null || app.isHeadlessEnvironment
-    var componentConfigCount = 0
+    var newComponentConfigCount = 0
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
     val isHeadlessMode = app?.isHeadlessEnvironment == true
     val isUnitTestMode = app?.isUnitTestMode == true
@@ -130,7 +130,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
         try {
           registerComponent(descriptor, plugin)
-          componentConfigCount++
+          newComponentConfigCount++
         }
         catch (e: Throwable) {
           handleInitComponentError(e, null, plugin.pluginId)
@@ -166,8 +166,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
     activity?.end()
 
-    if (componentConfigCount <= 0) {
-      this.componentConfigCount = componentConfigCount
+    if (componentConfigCount == -1) {
+      componentConfigCount = newComponentConfigCount
     }
 
     // app - phase must be set before getMessageBus()

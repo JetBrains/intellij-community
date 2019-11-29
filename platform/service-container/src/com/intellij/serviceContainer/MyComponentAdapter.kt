@@ -45,6 +45,7 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
           @Suppress("ObjectLiteralToLambda")
           Disposer.register(componentManager.serviceParentDisposable, object : Disposable {
             override fun dispose() {
+              @Suppress("DEPRECATION")
               instance.disposeComponent()
             }
           })
