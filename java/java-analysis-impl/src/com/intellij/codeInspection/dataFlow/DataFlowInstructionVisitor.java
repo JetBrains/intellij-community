@@ -202,10 +202,14 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
     PsiExpression expression = instruction.getExpression();
-    return expression != null && !myUsefulInstanceofs.contains(instruction) && myReachable.contains(instruction) &&
-           myConstantExpressions.get(new ExpressionChunk(expression, null)) != ConstantResult.TRUE &&
-           (!(expression instanceof PsiMethodReferenceExpression) ||
-            !DfaConstValue.isConstant(myMethodReferenceResults.get(expression), Boolean.TRUE));
+    if (expression == null || myUsefulInstanceofs.contains(instruction) || !myReachable.contains(instruction)) return false;
+    if (expression instanceof PsiMethodReferenceExpression) {
+      DfaValue value = myMethodReferenceResults.get(expression);
+      return !(value instanceof DfaConstValue) || !(((DfaConstValue)value).getValue() instanceof Boolean);
+    } else {
+      ConstantResult result = myConstantExpressions.get(new ExpressionChunk(expression, null));
+      return result != ConstantResult.TRUE && result != ConstantResult.FALSE;
+    }
   }
 
   @Override
