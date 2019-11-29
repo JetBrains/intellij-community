@@ -23,6 +23,7 @@ class CustomHeaderMenuBar : IdeMenuBar() {
   override fun createActionMenu(enableMnemonics: Boolean, isDarkMenu: Boolean, action: ActionGroup?): ActionMenu {
     val actionMenu = super.createActionMenu(enableMnemonics, isDarkMenu, action)
     actionMenu.isOpaque = false
+    actionMenu.isFocusable = false
 
     return actionMenu
   }
