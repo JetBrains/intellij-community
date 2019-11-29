@@ -116,17 +116,22 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private SystemShortcuts mySystemShortcuts = null;
 
-  public IdeKeyEventDispatcher(IdeEventQueue queue){
+  public IdeKeyEventDispatcher(@Nullable IdeEventQueue queue){
     myQueue = queue;
-    Application parent = ApplicationManager.getApplication();  // Application is null on early start when e.g. license dialog is shown
-    if (parent != null) Disposer.register(parent, this);
+
+    // Application is null on early start when e.g. license dialog is shown
+    Application parent = ApplicationManager.getApplication();
+    if (parent != null) {
+      Disposer.register(parent, this);
+    }
   }
 
   public void enableSystemShortcutsChecker() {
     // shortcuts reading can spent some milliseconds (2-4 ms on MacBookPro 2018)
     // so do it only when UI initialized
-    if (mySystemShortcuts == null)
+    if (mySystemShortcuts == null) {
       mySystemShortcuts = new SystemShortcuts();
+    }
   }
 
   public boolean isWaitingForSecondKeyStroke(){
