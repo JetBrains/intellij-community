@@ -39,7 +39,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<ExpressionChunk, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
-  private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
+  private final Map<PsiMethodReferenceExpression, ConstantResult> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
@@ -166,7 +166,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return myConstantExpressions;
   }
 
-  Map<PsiMethodReferenceExpression, DfaValue> getMethodReferenceResults() {
+  Map<PsiMethodReferenceExpression, ConstantResult> getMethodReferenceResults() {
     return myMethodReferenceResults;
   }
   
@@ -203,13 +203,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
     PsiExpression expression = instruction.getExpression();
     if (expression == null || myUsefulInstanceofs.contains(instruction) || !myReachable.contains(instruction)) return false;
-    if (expression instanceof PsiMethodReferenceExpression) {
-      DfaValue value = myMethodReferenceResults.get(expression);
-      return !(value instanceof DfaConstValue) || !(((DfaConstValue)value).getValue() instanceof Boolean);
-    } else {
-      ConstantResult result = myConstantExpressions.get(new ExpressionChunk(expression, null));
-      return result != ConstantResult.TRUE && result != ConstantResult.FALSE;
-    }
+    ConstantResult result = expression instanceof PsiMethodReferenceExpression ?
+                            myMethodReferenceResults.get(expression) : myConstantExpressions.get(new ExpressionChunk(expression, null));
+    return result != ConstantResult.TRUE && result != ConstantResult.FALSE;
   }
 
   @Override
@@ -252,11 +248,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       processOfNullableResult(value, state, methodRef.getReferenceNameElement());
     }
     PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
-    if (method != null) {
+    if (method != null && JavaMethodContractUtil.isPure(method)) {
       List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
       if (contracts.isEmpty() || !contracts.get(0).isTrivial()) {
-        // Do not track if method reference may have different results
-        myMethodReferenceResults.merge(methodRef, value, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
+        myMethodReferenceResults.compute(methodRef, (mr, curState) -> ConstantResult.mergeValue(curState, state, value));
       }
     }
   }
@@ -304,17 +299,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private void reportConstantExpressionValue(DfaValue value, DfaMemoryState memState, PsiExpression expression, TextRange range) {
     if (expression instanceof PsiLiteralExpression) return;
     ExpressionChunk chunk = new ExpressionChunk(expression, range);
-    ConstantResult curState = myConstantExpressions.get(chunk);
-    if (curState == ConstantResult.UNKNOWN) return;
-    ConstantResult nextState = ConstantResult.UNKNOWN;
-    DfaConstValue dfaConst = memState.getConstantValue(value);
-    if (dfaConst != null) {
-      nextState = ConstantResult.fromConstValue(dfaConst);
-      if (curState != null && curState != nextState) {
-        nextState = ConstantResult.UNKNOWN;
-      }
-    }
-    myConstantExpressions.put(chunk, nextState);
+    myConstantExpressions.compute(chunk, (c, curState) -> ConstantResult.mergeValue(curState, memState, value));
   }
 
   @Override
@@ -430,6 +415,15 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       if (Boolean.TRUE.equals(value)) return TRUE;
       if (Boolean.FALSE.equals(value)) return FALSE;
       return UNKNOWN;
+    }
+
+    @NotNull
+    static ConstantResult mergeValue(@Nullable ConstantResult state, @NotNull DfaMemoryState memState, @Nullable DfaValue value) {
+      if (state == UNKNOWN) return UNKNOWN;
+      DfaConstValue dfaConst = memState.getConstantValue(value);
+      if (dfaConst == null) return UNKNOWN;
+      ConstantResult nextState = fromConstValue(dfaConst);
+      return state == null || state == nextState ? nextState : UNKNOWN;
     }
   }
   

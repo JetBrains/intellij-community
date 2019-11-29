@@ -12,7 +12,6 @@ import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityPr
 import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -592,13 +591,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportMethodReferenceProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
-    visitor.getMethodReferenceResults().forEach((methodRef, dfaValue) -> {
-      if (dfaValue instanceof DfaConstValue) {
-        Object value = ((DfaConstValue)dfaValue).getValue();
-        if(value instanceof Boolean) {
-          holder.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.constant.method.reference", value),
-                                 createReplaceWithTrivialLambdaFix(value));
-        }
+    visitor.getMethodReferenceResults().forEach((methodRef, result) -> {
+      if (result != ConstantResult.UNKNOWN) {
+        Object value = result.value();
+        holder.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.constant.method.reference", value),
+                               createReplaceWithTrivialLambdaFix(value));
       }
     });
   }
