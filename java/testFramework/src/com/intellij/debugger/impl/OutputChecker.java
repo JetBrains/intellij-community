@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,6 +50,19 @@ public class OutputChecker {
   private final String myOutputPath;
   private Map<Key, StringBuffer> myBuffers;
   private String myTestName;
+
+  private static String HOST_NAME = null;
+  private static String CANONICAL_HOST_NAME = null;
+
+  static {
+    try {
+      InetAddress localHost = InetAddress.getLocalHost();
+      HOST_NAME = localHost.getHostName();
+      CANONICAL_HOST_NAME = localHost.getCanonicalHostName();
+    }
+    catch (UnknownHostException ignored) {
+    }
+  }
 
   public OutputChecker(String appPath, String outputPath) {
     myAppPath = appPath;
@@ -186,9 +200,12 @@ public class OutputChecker {
       String junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), File.pathSeparator);
       result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
 
-      InetAddress localHost = InetAddress.getLocalHost();
-      result = StringUtil.replace(result, localHost.getCanonicalHostName(), "!HOST_NAME!", true);
-      result = StringUtil.replace(result, localHost.getHostName(), "!HOST_NAME!", true);
+      if (!StringUtil.isEmpty(CANONICAL_HOST_NAME)) {
+        result = StringUtil.replace(result, CANONICAL_HOST_NAME, "!HOST_NAME!", true);
+      }
+      if (!StringUtil.isEmpty(HOST_NAME)) {
+        result = StringUtil.replace(result, HOST_NAME, "!HOST_NAME!", true);
+      }
       result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", false);
 
       VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
