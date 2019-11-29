@@ -8,12 +8,16 @@ import org.cef.handler.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * A wrapper over {@link CefBrowser}. Use {@link #getComponent()} as the browser's UI component.
+ * A wrapper over {@link CefBrowser}.
+ * <p>
+ * Use {@link #getComponent()} as the browser's UI component.
+ * Use {@link #loadURL(String)} or {@link #loadString(String)} for loading.
  *
  * @author tav
  */
@@ -23,20 +27,59 @@ public class JBCefBrowser implements Disposable {
   @NotNull private final MyComponent myComponent;
   @NotNull private final CefBrowser myCefBrowser;
   @NotNull private final CefFocusHandler myCefFocusHandler;
+  @NotNull private final CefLifeSpanHandler myLifeSpanHandler;
 
   private volatile boolean isCefClientPublished = true;
+  private volatile boolean myIsCefBrowserCreated;
+  @Nullable private volatile DeferLoader myDeferLoader;
+
+  // CEF demands async loading
+  private enum DeferLoader {
+    URL {
+      @Override
+      public void load(@NotNull CefBrowser browser) {
+        EventQueue.invokeLater(() -> browser.loadURL(loadValue));
+      }
+    },
+    HTML {
+      @Override
+      public void load(@NotNull CefBrowser browser) {
+        EventQueue.invokeLater(() -> browser.loadString(loadValue, "about:blank"));
+      }
+    };
+
+    @NotNull protected String loadValue = ""; // URL or HTML
+
+    public DeferLoader with(String loadValue) {
+      this.loadValue = loadValue;
+      return this;
+    }
+
+    public abstract void load(@NotNull CefBrowser browser);
+  }
 
   /**
-   * Creates a browser with the provided {@code JBCefClient}. The client's lifecycle is the responsibility of the caller.
+   * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
    */
-  public JBCefBrowser(@NotNull JBCefClient client) {
+  public JBCefBrowser(@NotNull JBCefClient client, @Nullable String url) {
     myCefClient = client;
 
     myComponent = new MyComponent(new BorderLayout());
     myComponent.setBackground(JBColor.background());
 
-    myCefBrowser = myCefClient.getCefClient().createBrowser("about:blank", false, false);
+    myCefBrowser = myCefClient.getCefClient().createBrowser(url != null ? url : "about:blank", false, false);
     myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
+
+    myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
+      @Override
+      public void onAfterCreated(CefBrowser browser) {
+        myIsCefBrowserCreated = true;
+        if (myDeferLoader != null) {
+          myDeferLoader.load(browser);
+          myDeferLoader = null;
+        }
+      }
+    }, getCefBrowser());
 
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
@@ -52,13 +95,41 @@ public class JBCefBrowser implements Disposable {
     }, myCefBrowser);
   }
 
+  public void loadURL(String url) {
+    if (myIsCefBrowserCreated) {
+      myCefBrowser.loadURL(url);
+    }
+    else {
+      myDeferLoader = DeferLoader.URL.with(url);
+    }
+  }
+
+  public void loadString(String html) {
+    if (myIsCefBrowserCreated) {
+      myCefBrowser.loadString(html, "about:blank");
+    }
+    else {
+      myDeferLoader = DeferLoader.HTML.with(html);
+    }
+  }
+
   /**
    * Creates a browser with default {@link JBCefClient}. The default client is disposed with the browser unless it's retrieved via {@link #getJBCefClient()},
    * in which case the client's lifecycle is the responsibility of the caller.
    */
   @SuppressWarnings("unused")
   public JBCefBrowser() {
-    this(JBCefApp.getInstance().createClient());
+    this(JBCefApp.getInstance().createClient(), null);
+    isCefClientPublished = false;
+  }
+
+  /**
+   * @see #JBCefBrowser()
+   * @param url initial url
+   */
+  @SuppressWarnings("unused")
+  public JBCefBrowser(@NotNull String url) {
+    this(JBCefApp.getInstance().createClient(), url);
     isCefClientPublished = false;
   }
 
@@ -81,12 +152,14 @@ public class JBCefBrowser implements Disposable {
   @Override
   public void dispose() {
     myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
+    myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
     myCefBrowser.close(false);
     if (!isCefClientPublished) {
       myCefClient.getCefClient().dispose();
     }
   }
 
+  @SuppressWarnings("unused")
   @Contract("null->null; !null->!null")
   protected static JBCefBrowser getJBCefBrowser(CefBrowser browser) {
     if (browser == null) return null;
