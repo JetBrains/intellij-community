@@ -14,18 +14,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 public final class BrowserStarter {
   private static final Logger LOG = Logger.getInstance(BrowserStarter.class);
 
   private final StartBrowserSettings mySettings;
   private final RunConfiguration myRunConfiguration;
-  private final Supplier<Boolean> myOutdated;
+  private final BooleanSupplier myOutdated;
 
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
-                        @NotNull Supplier<Boolean> outdated) {
+                        @NotNull BooleanSupplier outdated) {
     mySettings = settings;
     myRunConfiguration = runConfiguration;
     myOutdated = outdated;
@@ -112,6 +112,6 @@ public final class BrowserStarter {
   }
 
   private boolean isOutdated() {
-    return myOutdated.get();
+    return myOutdated.getAsBoolean();
   }
 }
