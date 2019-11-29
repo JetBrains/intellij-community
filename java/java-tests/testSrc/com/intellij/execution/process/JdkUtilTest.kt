@@ -110,9 +110,9 @@ class JdkUtilTest : BareTestFixtureTestCase() {
 
     val args = listOf("1#1", "\"2'", "line\n-", "C:\\", "D:\\work", "E:\\work space", "unicode\u2026")
     CommandLineWrapperUtil.writeArgumentsFile(file, args, StandardCharsets.UTF_8)
-    val actual = file.readText(Charsets.UTF_8)
+    val actual = file.readLines(Charsets.UTF_8)
 
-    assertThat(actual.split("\n")).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026", "")
+    assertThat(actual).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026")
   }
 
   private fun doTest(vararg expected: String) {
