@@ -182,7 +182,7 @@ public class IncProjectBuilder {
       if (forceCleanCaches || context.isProjectRebuild()) sourcesState.clearSourcesState();
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
-      //myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
+      myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
       sourcesState.reportSourcesState();
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);

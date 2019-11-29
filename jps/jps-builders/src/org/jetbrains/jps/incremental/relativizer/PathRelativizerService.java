@@ -50,9 +50,11 @@ public class PathRelativizerService {
   private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
-    myRelativizers =
-      new SmartList<>(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER), new JavaSdkPathRelativizer(javaSdks),
-        new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER), new MavenPathRelativizer());
+    myRelativizers = new SmartList<>(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER),
+                                     new JavaSdkPathRelativizer(javaSdks),
+                                     new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER),
+                                     new MavenPathRelativizer(),
+                                     new GradlePathRelativizer());
     myUnhandledPaths = new LinkedHashSet<>();
   }
 

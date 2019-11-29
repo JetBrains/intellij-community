@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jdom.Namespace;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -15,7 +14,7 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
-class MavenPathRelativizer implements PathRelativizer {
+class MavenPathRelativizer extends CommonPathRelativizer {
   private static final String IDENTIFIER = "$MAVEN_REPOSITORY$";
   private static final String M2_DIR = ".m2";
   private static final String CONF_DIR = "conf";
@@ -23,38 +22,19 @@ class MavenPathRelativizer implements PathRelativizer {
   private static final String REPOSITORY_PATH = "repository";
   private static final Namespace SETTINGS_NAMESPACE = Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0");
 
-  private boolean myPathInitialized;
-  private String myMavenRepositoryPath;
-
-  @Nullable
-  @Override
-  public String toRelativePath(@NotNull String path) {
-    initializeMavenRepositoryPath();
-    if (myMavenRepositoryPath == null || !FileUtil.startsWith(path, myMavenRepositoryPath)) return null;
-    return IDENTIFIER + path.substring(myMavenRepositoryPath.length());
-
+  MavenPathRelativizer() {
+    super(initializeMavenRepositoryPath(), IDENTIFIER);
   }
 
   @Nullable
-  @Override
-  public String toAbsolutePath(@NotNull String path) {
-    initializeMavenRepositoryPath();
-    if (myMavenRepositoryPath == null || !path.startsWith(IDENTIFIER)) return null;
-    return myMavenRepositoryPath + path.substring(IDENTIFIER.length());
-  }
-
-  private void initializeMavenRepositoryPath() {
-    if (myPathInitialized) return;
-
+  private static String initializeMavenRepositoryPath() {
     String defaultMavenFolder = SystemProperties.getUserHome() + File.separator + M2_DIR;
     // Check user local settings
     File userSettingsFile = new File(defaultMavenFolder, SETTINGS_XML);
     if (userSettingsFile.exists()) {
       String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
       if (isNotEmpty(fromUserSettings) && new File(fromUserSettings).exists()) {
-        myMavenRepositoryPath = PathRelativizerService.normalizePath(fromUserSettings);
-        myPathInitialized = true;
-        return;
+        return PathRelativizerService.normalizePath(fromUserSettings);
       }
     }
 
@@ -63,17 +43,15 @@ class MavenPathRelativizer implements PathRelativizer {
     if (globalSettingsFile.exists()) {
       String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
       if (isNotEmpty(fromGlobalSettings) && new File(fromGlobalSettings).exists()) {
-        myMavenRepositoryPath = PathRelativizerService.normalizePath(fromGlobalSettings);
-        myPathInitialized = true;
-        return;
+        return PathRelativizerService.normalizePath(fromGlobalSettings);
       }
     }
 
     String defaultMavenRepository = defaultMavenFolder + File.separator + REPOSITORY_PATH;
     if (FileUtil.exists(defaultMavenFolder)) {
-      myMavenRepositoryPath = PathRelativizerService.normalizePath(defaultMavenRepository);
-      myPathInitialized = true;
+      return PathRelativizerService.normalizePath(defaultMavenRepository);
     }
+    return null;
   }
 
   @Nullable
