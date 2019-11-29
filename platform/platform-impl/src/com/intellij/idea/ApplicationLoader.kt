@@ -532,7 +532,7 @@ open class IdeStarter : ApplicationStarter {
       postOpenUiTasks(app)
     }
 
-    StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
   }
 
   private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
@@ -593,9 +593,6 @@ open class IdeStarter : ApplicationStarter {
       })
       ScreenReader.setActive(generalSettings.isSupportScreenReaders)
     }
-
-    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm)
-      IdeEventQueue.getInstance().keyEventDispatcher.enableSystemShortcutsChecker()
   }
 }
 

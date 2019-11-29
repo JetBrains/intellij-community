@@ -16,6 +16,7 @@ public enum LoadingState {
   COMPONENTS_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENTS_LOADED("app component loaded"),
+  APP_STARTED("app started"),
   PROJECT_OPENED("project opened"),
   INDEXING_FINISHED("indexing finished");
 
