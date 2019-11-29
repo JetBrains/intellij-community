@@ -100,10 +100,10 @@ class VfsEventGenerationHelper {
     return false;
   }
 
-
   void beginTransaction() {
     myMarkedStart = myEvents.size();
   }
+
   void endTransaction(boolean success) {
     if (!success) {
       myEvents.subList(myMarkedStart, myEvents.size()).clear();
