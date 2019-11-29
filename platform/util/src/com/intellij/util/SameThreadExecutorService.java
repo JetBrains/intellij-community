@@ -34,7 +34,7 @@ final class SameThreadExecutorService extends AbstractExecutorService {
   public boolean awaitTermination(long theTimeout, @NotNull TimeUnit theUnit) {
     if (!isShutdown()) {
       throw new IllegalStateException("Must call shutdown*() before awaitTermination()");
-    };
+    }
     return true;
   }
 
