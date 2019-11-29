@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
-public final class BrowserStarter {
+public class BrowserStarter {
   private static final Logger LOG = Logger.getInstance(BrowserStarter.class);
 
   private final StartBrowserSettings mySettings;
