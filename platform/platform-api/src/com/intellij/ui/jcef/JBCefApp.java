@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import org.cef.CefApp;
-import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.ApiStatus;

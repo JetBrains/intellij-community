@@ -13,6 +13,7 @@ import org.cef.misc.StringRef;
 import org.cef.network.CefRequest;
 import org.cef.network.CefResponse;
 import org.cef.network.CefURLRequest;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.*;
  * @author tav
  */
 @SuppressWarnings("unused")
+@ApiStatus.Experimental
 public class JBCefClient {
   @NotNull private final CefClient myCefClient;
 

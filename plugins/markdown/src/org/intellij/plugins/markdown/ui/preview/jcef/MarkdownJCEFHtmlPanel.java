@@ -48,16 +48,16 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   public MarkdownJCEFHtmlPanel() {
     super();
 
-    JBCefUtils.addJSHandler(getBrowser().getClient(), JS_REQ_SET_SCROLL_Y,
-      (value) -> {
+    JBCefUtils.addJSHandler(getCefBrowser().getClient(), JS_REQ_SET_SCROLL_Y,
+                            (value) -> {
         try {
           myScrollPreservingListener.myScrollY = Integer.parseInt(value);
         } catch (NumberFormatException ignored) {}
         return true;
       });
 
-    JBCefUtils.addJSHandler(getBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
-      (link) -> {
+    JBCefUtils.addJSHandler(getCefBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
+                            (link) -> {
         MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
         return true;
       });
@@ -68,7 +68,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
         myScrollPreservingListener.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
         myBridgeSettingListener.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
       }
-    }, getBrowser());
+    }, getCefBrowser());
   }
 
   @Override
@@ -106,12 +106,12 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
 
   @Override
   public void scrollToMarkdownSrcOffset(final int offset) {
-    getBrowser().executeJavaScript(
+    getCefBrowser().executeJavaScript(
       "if ('__IntelliJTools' in window) " +
       "__IntelliJTools.scrollToOffset(" + offset + ", '" + HtmlGenerator.Companion.getSRC_ATTRIBUTE_NAME() + "');",
-      getBrowser().getURL(), 0);
+      getCefBrowser().getURL(), 0);
 
-    getBrowser().executeJavaScript(
+    getCefBrowser().executeJavaScript(
       "var value = document.documentElement.scrollTop || (document.body && document.body.scrollTop);" +
       JBCefUtils.makeJSRequestCode(JS_REQ_SET_SCROLL_Y, "value"),
       null, 0);
@@ -120,9 +120,9 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   @Override
   public void dispose() {
     super.dispose();
-    getJBCefClient().removeLoadHandler(myCefLoadHandler, getBrowser());
-    JBCefUtils.removeJSHandler(getBrowser().getClient(), JS_REQ_SET_SCROLL_Y);
-    JBCefUtils.removeJSHandler(getBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER);
+    getJBCefClient().removeLoadHandler(myCefLoadHandler, getCefBrowser());
+    JBCefUtils.removeJSHandler(getCefBrowser().getClient(), JS_REQ_SET_SCROLL_Y);
+    JBCefUtils.removeJSHandler(getCefBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER);
   }
 
   @NotNull
@@ -133,13 +133,13 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   private class BridgeSettingListener extends CefLoadHandlerAdapter  {
     @Override
     public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
-      getBrowser().executeJavaScript(
+      getCefBrowser().executeJavaScript(
         "window.JavaPanelBridge = {" +
           "openInExternalBrowser : function(link) {" +
             JBCefUtils.makeJSRequestCode(JS_REQ_OPEN_IN_BROWSER, "link") +
           "}" +
         "};",
-        getBrowser().getURL(), 0);
+        getCefBrowser().getURL(), 0);
     }
   }
 
@@ -149,14 +149,14 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
     @Override
     public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
       if (isLoading) {
-        getBrowser().executeJavaScript(
+        getCefBrowser().executeJavaScript(
           "var value = document.documentElement.scrollTop || document.body.scrollTop;" +
           JBCefUtils.makeJSRequestCode(JS_REQ_SET_SCROLL_Y, "value"),
-          getBrowser().getURL(), 0);
+          getCefBrowser().getURL(), 0);
       }
       else {
-        getBrowser().executeJavaScript("document.documentElement.scrollTop = ({} || document.body).scrollTop = " + myScrollY,
-                                       getBrowser().getURL(), 0);
+        getCefBrowser().executeJavaScript("document.documentElement.scrollTop = ({} || document.body).scrollTop = " + myScrollY,
+                                          getCefBrowser().getURL(), 0);
       }
     }
   }
