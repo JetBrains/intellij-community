@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.openapi.Disposable
@@ -12,7 +12,7 @@ import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.authentication.ui.GithubAccountsPanel
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSettings
@@ -27,7 +27,7 @@ class GithubSettingsPanel(project: Project,
                           avatarLoader: CachingGithubUserAvatarLoader,
                           imageResizer: GithubImageResizer)
   : ConfigurableUi<GithubSettingsConfigurable.GithubSettingsHolder>, Disposable {
-  private val accountsPanel = GithubAccountsPanel(project, executorFactory, avatarLoader, imageResizer)
+  private val accountsPanel = GHAccountsPanel(project, executorFactory, avatarLoader, imageResizer)
   private val timeoutField = JFormattedTextField(NumberFormatter(NumberFormat.getIntegerInstance()).apply {
     minimum = 0
     maximum = 60

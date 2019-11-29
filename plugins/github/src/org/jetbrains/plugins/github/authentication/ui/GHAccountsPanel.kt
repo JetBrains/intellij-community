@@ -39,10 +39,10 @@ import javax.swing.event.ListDataListener
 
 private const val LINK_TAG = "EDIT_LINK"
 
-internal class GithubAccountsPanel(private val project: Project,
-                                   private val executorFactory: GithubApiRequestExecutor.Factory,
-                                   private val avatarLoader: CachingGithubUserAvatarLoader,
-                                   private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
+internal class GHAccountsPanel(private val project: Project,
+                               private val executorFactory: GithubApiRequestExecutor.Factory,
+                               private val avatarLoader: CachingGithubUserAvatarLoader,
+                               private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
     // disable link handler when there are no errors
