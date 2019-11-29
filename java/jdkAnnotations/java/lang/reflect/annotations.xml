@@ -1,4 +1,21 @@
 <root>
+  <item name='java.lang.reflect.AnnotatedElement T getAnnotation(java.lang.Class&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.AnnotatedElement T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.AnnotatedElement boolean isAnnotationPresent(java.lang.Class&lt;? extends java.lang.annotation.Annotation&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.AnnotatedElement boolean isAnnotationPresent(java.lang.Class&lt;? extends java.lang.annotation.Annotation&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.reflect.Constructor T newInstance(java.lang.Object...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -7,8 +24,7 @@
       <val name="flagsFromClass" val="java.lang.reflect.Modifier.class"/>
     </annotation>
   </item>
-  <item
-      name='java.lang.reflect.Proxy java.lang.Object newProxyInstance(java.lang.ClassLoader, java.lang.Class&lt;?&gt;[], java.lang.reflect.InvocationHandler)'>
+  <item name='java.lang.reflect.Proxy java.lang.Object newProxyInstance(java.lang.ClassLoader, java.lang.Class&lt;?&gt;[], java.lang.reflect.InvocationHandler)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
