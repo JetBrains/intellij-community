@@ -748,15 +748,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void handleClosure(PsiElement closure) {
-    Set<PsiLocalVariable> variables = new HashSet<>();
+    Set<PsiVariable> variables = new HashSet<>();
     Set<DfaVariableValue> escapedVars = new HashSet<>();
     closure.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement target = expression.resolve();
-        if (target instanceof PsiLocalVariable) {
-          variables.add((PsiLocalVariable)target);
+        if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+          variables.add((PsiVariable)target);
         }
         if (target instanceof PsiMember && !((PsiMember)target).hasModifierProperty(PsiModifier.STATIC)) {
           DfaVariableValue qualifier = getFactory().getExpressionFactory().getQualifierOrThisVariable(expression);
@@ -778,7 +778,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     for (DfaValue value : getFactory().getValues()) {
       if(value instanceof DfaVariableValue) {
         PsiModifierListOwner var = ((DfaVariableValue)value).getPsiVariable();
-        if (var instanceof PsiLocalVariable && variables.contains(var)) {
+        if (var instanceof PsiVariable && variables.contains(var)) {
           escapedVars.add((DfaVariableValue)value);
         }
       }
