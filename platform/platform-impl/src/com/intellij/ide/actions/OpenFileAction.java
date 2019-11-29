@@ -123,7 +123,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
     if (type == null) return;
 
-    if (project != null) {
+    if (project != null && !project.isDefault()) {
       openFile(file, project);
     }
     else {
