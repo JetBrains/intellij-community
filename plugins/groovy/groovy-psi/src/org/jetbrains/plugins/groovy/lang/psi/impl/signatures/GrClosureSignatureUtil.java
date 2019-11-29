@@ -114,24 +114,6 @@ public class GrClosureSignatureUtil {
   }
 
   @NotNull
-  public static GrSignature removeParam(final GrSignature signature, int i) {
-    final GrClosureParameter[] newParams = ArrayUtil.remove(signature.getParameters(), i);
-    return new GrClosureSignatureWithNewParameters(signature, newParams);
-  }
-
-  @NotNull
-  public static GrSignature rawSignature(@NotNull final GrSignature signature) {
-    final GrClosureParameter[] params = signature.getParameters();
-
-    final GrClosureParameter[] closureParams = ContainerUtil.map(params, parameter -> {
-      PsiType type = TypeConversionUtil.erasure(parameter.getType());
-      return new GrImmediateClosureParameterImpl(type, parameter.getName(), parameter.isOptional(), parameter.getDefaultInitializer());
-    }, new GrClosureParameter[params.length]);
-
-    return new GrClosureSignatureWithNewParameters(signature, closureParams);
-  }
-
-  @NotNull
   public static GrSignature createSignature(PsiParameter[] parameters, @Nullable PsiType returnType) {
     return new GrImmediateClosureSignatureImpl(parameters, returnType);
   }
