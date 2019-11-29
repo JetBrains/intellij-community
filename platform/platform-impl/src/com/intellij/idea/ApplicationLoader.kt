@@ -480,7 +480,6 @@ open class IdeStarter : ApplicationStarter {
   override fun main(args: Array<String>) {
     val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
 
-    val app = ApplicationManager.getApplication()
     // Event queue should not be changed during initialization of application components.
     // It also cannot be changed before initialization of application components because IdeEventQueue uses other
     // application components. So it is proper to perform replacement only here.
@@ -489,14 +488,12 @@ open class IdeStarter : ApplicationStarter {
     }
 
     val commandLineArgs = args.toList()
+    val app = ApplicationManager.getApplication()
 
     val appFrameCreatedActivity = frameInitActivity.startChild("app frame created callback")
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     lifecyclePublisher.appFrameCreated(commandLineArgs)
     appFrameCreatedActivity.end()
-
-    // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-    val willOpenProject = commandLineArgs.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
 
     // temporary check until the JRE implementation has been checked and bundled
     if (java.lang.Boolean.getBoolean("ide.popup.enablePopupType")) {
@@ -504,15 +501,9 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
-    val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
-    val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null
-    showWizardAndWelcomeFrame(when (doShowWelcomeFrame) {
-      null -> null
-      else -> Runnable {
-        doShowWelcomeFrame.run()
-        lifecyclePublisher.welcomeScreenDisplayed()
-      }
-    })
+    // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
+    val willOpenProject = commandLineArgs.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+    showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
 
     frameInitActivity.end()
 
@@ -520,30 +511,36 @@ open class IdeStarter : ApplicationStarter {
       LifecycleUsageTriggerCollector.onIdeStart()
     }
 
-    TransactionGuard.submitTransaction(app, Runnable {
-      val project = when {
-        filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, filesToLoad, "MacMenu")
-        commandLineArgs.isNotEmpty() -> loadProjectFromExternalCommandLine(commandLineArgs)
-        else -> null
-      }
+    val project = when {
+      filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFileList(null, filesToLoad, "MacMenu")
+      commandLineArgs.isNotEmpty() -> loadProjectFromExternalCommandLine(commandLineArgs)
+      else -> null
+    }
 
-      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
+    app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
 
-      if (project == null && RecentProjectsManager.getInstance().willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
-        RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
-      }
+    if (project == null && RecentProjectsManager.getInstance().willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+      RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
+    }
 
-      EventQueue.invokeLater {
-        reportPluginError()
-      }
-    })
+    app.invokeLater {
+      reportPluginError()
+    }
 
     if (!app.isHeadlessEnvironment) {
       postOpenUiTasks(app)
     }
   }
 
-  private fun showWizardAndWelcomeFrame(showWelcomeFrame: Runnable?) {
+  private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean) {
+    val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
+    val showWelcomeFrame = when (val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null) {
+      null -> null
+      else -> Runnable {
+        doShowWelcomeFrame.run()
+        lifecyclePublisher.welcomeScreenDisplayed()
+      }
+    }
     wizardStepProvider?.let { wizardStepsProvider ->
       val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepsProvider, null, false, true) {
         override fun doOKAction() {
