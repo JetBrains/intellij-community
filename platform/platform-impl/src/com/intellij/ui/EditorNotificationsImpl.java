@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -44,7 +45,6 @@ import java.util.List;
  * @author peter
  */
 public class EditorNotificationsImpl extends EditorNotifications {
-  // do not use project level - use app level instead
   private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
 
   private final MergingUpdateQueue myUpdateMerger;
@@ -78,6 +78,14 @@ public class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
+    EP_PROJECT.getPoint(project).addExtensionPointListener(
+      new ExtensionPointAdapter<Provider>() {
+        @Override
+        public void extensionListChanged() {
+          updateAllNotifications();
+        }
+      }
+    , false, project);
   }
 
   @Override
