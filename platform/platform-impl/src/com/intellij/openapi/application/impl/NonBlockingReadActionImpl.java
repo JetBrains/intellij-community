@@ -190,6 +190,11 @@ public class NonBlockingReadActionImpl<T>
       }
       myExpireCondition = composeCancellationCondition();
       myProgressIndicator = outerIndicator;
+
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Creating " + this);
+      }
+
       if (hasUnboundedExecutor()) {
         preventTooManySubmissions();
       }
@@ -242,6 +247,9 @@ public class NonBlockingReadActionImpl<T>
     }
 
     private void cleanup() {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Cleaning " + this);
+      }
       ProgressIndicator indicator = currentIndicator;
       if (indicator != null) {
         indicator.cancel();
@@ -324,6 +332,9 @@ public class NonBlockingReadActionImpl<T>
     }
 
     void transferToBgThread() {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Submitting " + this);
+      }
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if (app.isWriteActionInProgress() || app.isWriteActionPending()) {
         rescheduleLater();
@@ -334,6 +345,9 @@ public class NonBlockingReadActionImpl<T>
         acquire();
       }
       backendExecutor.execute(() -> {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Running in background " + this);
+        }
         try {
           if (!attemptComputation()) {
             rescheduleLater();
@@ -411,6 +425,9 @@ public class NonBlockingReadActionImpl<T>
 
     private void reschedule() {
       if (!checkObsolete()) {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Rescheduling " + this);
+        }
         scheduleWithinConstraints(() -> transferToBgThread(), null);
       }
     }
@@ -481,6 +498,10 @@ public class NonBlockingReadActionImpl<T>
       }, edtFinish.first);
     }
 
+    @Override
+    public String toString() {
+      return "Submission{" + myComputation + ", " + getState() + "}";
+    }
   }
 
   @TestOnly
@@ -519,7 +540,7 @@ public class NonBlockingReadActionImpl<T>
     if (!task.isDone()) {
       //noinspection UseOfSystemOutOrSystemErr
       System.err.println(ThreadDumper.dumpThreadsToString());
-      throw new AssertionError("Too long async task " + task.getComputationOrigin());
+      throw new AssertionError("Too long async task " + task);
     }
   }
 
