@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
+import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -14,6 +15,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class LightEditService implements Disposable, LightEditorListener {
   private WindowWrapper myWrapper;
@@ -36,8 +40,16 @@ public class LightEditService implements Disposable, LightEditorListener {
         new WindowWrapperBuilder(WindowWrapper.Mode.FRAME, editorPanel)
           .setOnCloseHandler(()->handleClose())
           .build();
+      setupMenuBar(myWrapper);
       SplashManager.hideBeforeShow(myWrapper.getWindow());
       myWrapperIsStale = false;
+    }
+  }
+
+  private static void setupMenuBar(@NotNull WindowWrapper wrapper) {
+    Window window = wrapper.getWindow();
+    if (window instanceof JFrame) {
+      ((JFrame)window).setJMenuBar(new LightEditMenuBar());
     }
   }
 
