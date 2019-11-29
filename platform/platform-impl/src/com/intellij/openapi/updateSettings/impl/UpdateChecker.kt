@@ -36,6 +36,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import gnu.trove.THashMap
 import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -54,8 +55,7 @@ private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
  */
 object UpdateChecker {
-  @JvmField
-  val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
+  @JvmField val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
   private val ourAdditionalRequestOptions = THashMap<String, String>()
@@ -64,7 +64,7 @@ object UpdateChecker {
 
   /**
    * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
-   * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
+   * Has no effect on non-bundled plugins.
    */
   @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
@@ -455,8 +455,9 @@ object UpdateChecker {
   @Suppress("unused", "UNUSED_PARAMETER")
   fun getInstallationUID(c: PropertiesComponent): String = PermanentInstallationID.get()
 
+  @Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
   @JvmStatic
-  @Deprecated(message = "Use disabledToUpdate")
+  @Suppress("unused")
   val disabledToUpdatePlugins: Set<String>
     get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
 
@@ -515,6 +516,7 @@ object UpdateChecker {
   }
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
+  @ApiStatus.Internal
   fun testPlatformUpdate(project: Project?, updateInfoText: String, patchFilePath: String?, forceUpdate: Boolean) {
     if (!ApplicationManager.getApplication().isInternal) {
       throw IllegalStateException()
