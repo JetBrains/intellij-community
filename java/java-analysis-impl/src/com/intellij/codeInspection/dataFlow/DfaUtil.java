@@ -519,8 +519,7 @@ public class DfaUtil {
   }
 
   public static boolean isNaN(Object value) {
-    if (value instanceof Double && ((Double)value).isNaN()) return true;
-    if (value instanceof Float && ((Float)value).isNaN()) return true;
-    return false;
+    return value instanceof Double && ((Double)value).isNaN() || 
+           value instanceof Float && ((Float)value).isNaN();
   }
 }

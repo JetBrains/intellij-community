@@ -86,7 +86,7 @@ public abstract class InstructionVisitor {
   }
 
   void pushExpressionResult(@NotNull DfaValue value,
-                            @NotNull ExpressionPushingInstruction instruction,
+                            @NotNull ExpressionPushingInstruction<?> instruction,
                             @NotNull DfaMemoryState state) {
     PsiExpression anchor = instruction.getExpression();
     if (isExpressionPush(instruction, anchor)) {
@@ -100,7 +100,7 @@ public abstract class InstructionVisitor {
     state.push(value);
   }
 
-  private static boolean isExpressionPush(@NotNull ExpressionPushingInstruction instruction, PsiExpression anchor) {
+  private static boolean isExpressionPush(@NotNull ExpressionPushingInstruction<?> instruction, PsiExpression anchor) {
     if (anchor == null) return false;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
     if (parent instanceof PsiAssignmentExpression) {
@@ -117,7 +117,7 @@ public abstract class InstructionVisitor {
   }
 
   private void callBeforeExpressionPush(@NotNull DfaValue value,
-                                        @NotNull ExpressionPushingInstruction instruction,
+                                        @NotNull ExpressionPushingInstruction<?> instruction,
                                         @NotNull DfaMemoryState state, PsiExpression anchor) {
     beforeExpressionPush(value, anchor, instruction.getExpressionRange(), state);
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());

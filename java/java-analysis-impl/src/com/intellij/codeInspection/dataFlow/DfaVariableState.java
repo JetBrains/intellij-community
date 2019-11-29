@@ -126,11 +126,6 @@ class DfaVariableState {
     return this;
   }
 
-  @Nullable
-  public DfaValue getValue() {
-    return null;
-  }
-
   @NotNull
   public TypeConstraint getTypeConstraint() {
     TypeConstraint fact = getFact(DfaFactType.TYPE_CONSTRAINT);

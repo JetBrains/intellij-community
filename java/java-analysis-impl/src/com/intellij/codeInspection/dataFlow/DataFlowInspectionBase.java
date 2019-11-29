@@ -257,7 +257,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   @Nullable
-  protected LocalQuickFix createIntroduceVariableFix(PsiExpression expression) {
+  protected LocalQuickFix createIntroduceVariableFix() {
     return null;
   }
 

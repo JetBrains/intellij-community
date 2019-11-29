@@ -395,8 +395,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     @Nullable
     PsiExpression getExpression() {
       if (myInstruction instanceof ExpressionPushingInstruction &&
-          ((ExpressionPushingInstruction)myInstruction).getExpressionRange() == null) {
-        return ((ExpressionPushingInstruction)myInstruction).getExpression();
+          ((ExpressionPushingInstruction<?>)myInstruction).getExpressionRange() == null) {
+        return ((ExpressionPushingInstruction<?>)myInstruction).getExpression();
       }
       if (myInstruction instanceof ConditionalGotoInstruction) {
         return ObjectUtils.tryCast(((ConditionalGotoInstruction)myInstruction).getPsiAnchor(), PsiExpression.class);

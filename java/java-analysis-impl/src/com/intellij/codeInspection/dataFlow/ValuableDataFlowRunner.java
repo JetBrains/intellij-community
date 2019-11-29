@@ -100,11 +100,6 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     }
 
     @Override
-    public DfaValue getValue() {
-      return myValue;
-    }
-
-    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof ValuableDfaVariableState) || !super.equals(o)) return false;

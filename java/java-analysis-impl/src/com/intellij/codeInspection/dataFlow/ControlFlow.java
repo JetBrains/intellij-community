@@ -145,15 +145,6 @@ public class ControlFlow {
     }
   }
 
-  static ControlFlowOffset deltaOffset(final ControlFlowOffset delegate, final int delta) {
-    return new ControlFlowOffset() {
-      @Override
-      public int getInstructionOffset() {
-        return delegate.getInstructionOffset() + delta;
-      }
-    };
-  }
-
   public static class FixedOffset extends ControlFlowOffset {
     private final int myOffset;
 

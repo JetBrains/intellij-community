@@ -101,7 +101,7 @@ public class TrackingRunner extends DataFlowRunner {
       killedStates.add(memState);
     }
     if (instruction instanceof ExpressionPushingInstruction) {
-      ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
+      ExpressionPushingInstruction<?> pushing = (ExpressionPushingInstruction<?>)instruction;
       if (pushing.getExpression() == myExpression && pushing.getExpressionRange() == null) {
         for (DfaInstructionState state : states) {
           MemoryStateChange history = ((TrackingDfaMemoryState)state.getMemoryState()).getHistory();

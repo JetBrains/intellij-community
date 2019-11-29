@@ -205,7 +205,7 @@ public class JavaMethodContractUtil {
    * @return true if the method known to be pure (see {@link Contract#pure()} for details).
    */
   public static boolean isPure(@NotNull PsiMethod method) {
-    return getContractInfo(method).myPure;
+    return getContractInfo(method).isPure();
   }
 
   /**

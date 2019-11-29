@@ -87,9 +87,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   @Override
   protected void beforeConditionalJump(ConditionalGotoInstruction instruction, boolean isTrueBranch) {
-    PsiElement anchor = instruction.getPsiAnchor();
-    if (anchor instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)anchor) != null) {
-      mySwitchLabelsReachability.merge((PsiExpression)anchor, ThreeState.fromBoolean(isTrueBranch), ThreeState::merge);
+    PsiExpression anchor = instruction.getPsiAnchor();
+    if (anchor != null && PsiImplUtil.getSwitchLabel(anchor) != null) {
+      mySwitchLabelsReachability.merge(anchor, ThreeState.fromBoolean(isTrueBranch), ThreeState::merge);
     }
   }
 
@@ -232,7 +232,6 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   @Override
   protected void beforeMethodCall(@NotNull PsiExpression expression,
                                   @NotNull DfaCallArguments arguments,
-                                  @NotNull DataFlowRunner runner,
                                   @NotNull DfaMemoryState memState) {
     PsiReferenceExpression reference = USELESS_SAME_ARGUMENTS.getReferenceIfMatched(expression);
     if (reference != null) {

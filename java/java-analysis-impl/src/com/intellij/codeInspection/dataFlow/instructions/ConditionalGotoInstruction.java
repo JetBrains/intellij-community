@@ -21,7 +21,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.Nullable;
 
-public class ConditionalGotoInstruction extends Instruction implements JumpInstruction, BranchingInstruction {
+public class ConditionalGotoInstruction extends Instruction implements BranchingInstruction {
   private ControlFlow.ControlFlowOffset myOffset;
   private final boolean myIsNegated;
   private final PsiExpression myExpression;
@@ -54,12 +54,10 @@ public class ConditionalGotoInstruction extends Instruction implements JumpInstr
     return target.getIndex() == (whenTrueOnStack == myIsNegated ? getIndex() + 1 : getOffset());
   }
   
-  @Override
   public int getOffset() {
     return myOffset.getInstructionOffset();
   }
 
-  @Override
   public void setOffset(final int offset) {
     myOffset = new ControlFlow.FixedOffset(offset);
   }

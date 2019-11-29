@@ -269,26 +269,6 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to invoke the method associated with given method call assuming that method arguments and qualifier
-   * are already on stack. If vararg call is specified, vararg arguments should be placed as is, without packing into array,
-   * so number of arguments may differ from number of method parameters.
-   * <p>
-   * Stack before: ... qualifier arg1 arg2 ... argN
-   * <p>
-   * Stack after: ... return value
-   * <p>
-   * Note that qualifier must be present even if method is static (use {@link #pushUnknown()}). Similarly, return value will be pushed
-   * on stack always, even if method is void.
-   *
-   * @param call a method call to generate invocation upon
-   * @return this builder
-   */
-  public CFGBuilder invoke(PsiMethodCallExpression call) {
-    myAnalyzer.addBareCall(call, call.getMethodExpression());
-    return this;
-  }
-
-  /**
    * Generate instructions to compare two values on top of stack with given relation operation (e.g. {@link JavaTokenType#GT}).
    * <p>
    * Stack before: ... val1 val2

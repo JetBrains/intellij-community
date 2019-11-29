@@ -303,7 +303,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected void beforeMethodCall(@NotNull PsiExpression expression,
                                   @NotNull DfaCallArguments arguments,
-                                  @NotNull DataFlowRunner runner,
                                   @NotNull DfaMemoryState memState) {
 
   }
@@ -314,7 +313,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaCallArguments callArguments = popCall(instruction, factory, memState);
 
     if (callArguments.myArguments != null && instruction.getExpression() != null) {
-      beforeMethodCall(instruction.getExpression(), callArguments, runner, memState);
+      beforeMethodCall(instruction.getExpression(), callArguments, memState);
     }
 
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();

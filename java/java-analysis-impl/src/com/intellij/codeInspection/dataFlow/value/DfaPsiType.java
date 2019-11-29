@@ -80,10 +80,6 @@ public class DfaPsiType {
     return myFactory.myConvertibleCache.computeIfAbsent(key, k -> myPsiType.isConvertibleFrom(other.myPsiType));
   }
 
-  public DfaValueFactory getFactory() {
-    return myFactory;
-  }
-
   @Override
   public String toString() {
     return myPsiType.getPresentableText();

@@ -94,9 +94,7 @@ public abstract class ContractReturnValue {
   }
 
   public boolean isSuperValueOf(ContractReturnValue value) {
-    if (value == this || this == ANY_VALUE) return true;
-    if (this == NOT_NULL_VALUE && value.isNotNull()) return true;
-    return false;
+    return this == value || this == ANY_VALUE || (this == NOT_NULL_VALUE && value.isNotNull());
   }
 
   static DfaValue merge(DfaValue defaultValue, DfaValue newValue, DfaMemoryState memState) {

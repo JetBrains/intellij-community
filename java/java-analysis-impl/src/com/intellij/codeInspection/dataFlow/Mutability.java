@@ -98,7 +98,7 @@ public enum Mutability {
   public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof LightElement) return UNKNOWN;
     return CachedValuesManager.getCachedValue(owner, () -> 
-      CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+      CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @NotNull
