@@ -16,7 +16,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.authentication.util.GithubTokenCreator
+import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
@@ -128,7 +128,7 @@ sealed class GithubCredentialsUI {
                                       indicator: ProgressIndicator): Pair<String, String> {
       val login = loginTextField.text.trim()
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-      val token = GithubTokenCreator(server, executor, indicator).createMaster(clientName).token
+      val token = GHAccessTokenCreator(server, executor, indicator).createMaster(clientName).token
       return login to token
     }
 

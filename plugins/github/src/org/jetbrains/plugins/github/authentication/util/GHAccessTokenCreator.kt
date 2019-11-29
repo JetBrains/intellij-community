@@ -17,9 +17,9 @@ import java.util.*
 /**
  * Handy helper for creating OAuth token
  */
-class GithubTokenCreator(private val server: GithubServerPath,
-                         private val executor: GithubApiRequestExecutor,
-                         private val indicator: ProgressIndicator) {
+class GHAccessTokenCreator(private val server: GithubServerPath,
+                           private val executor: GithubApiRequestExecutor,
+                           private val indicator: ProgressIndicator) {
   @Throws(IOException::class)
   fun createMaster(@Nls(capitalization = Nls.Capitalization.Title) noteSuffix: String): GithubAuthorization {
     return safeCreate(MASTER_SCOPES, ApplicationNamesInfo.getInstance().fullProductName + " " + noteSuffix + " access token")
