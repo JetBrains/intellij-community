@@ -33,6 +33,7 @@ import java.util.*;
 @ApiStatus.Experimental
 public class JBCefClient {
   @NotNull private final CefClient myCefClient;
+  private volatile boolean isDisposed;
 
   private final HandlerSupport<CefContextMenuHandler> myContextMenuHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDialogHandler> myDialogHandler = new HandlerSupport<>();
@@ -53,6 +54,15 @@ public class JBCefClient {
   @NotNull
   public CefClient getCefClient() {
     return myCefClient;
+  }
+
+  public void dispose() {
+    isDisposed = true;
+    myCefClient.dispose();
+  }
+
+  public boolean isDisposed() {
+    return isDisposed;
   }
 
   public void addContextMenuHandler(@NotNull CefContextMenuHandler handler, @NotNull CefBrowser browser) {

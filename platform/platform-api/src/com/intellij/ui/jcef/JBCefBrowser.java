@@ -29,7 +29,7 @@ public class JBCefBrowser implements Disposable {
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @NotNull private final CefLifeSpanHandler myLifeSpanHandler;
 
-  private volatile boolean isCefClientPublished = true;
+  private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile DeferLoader myDeferLoader;
 
@@ -62,7 +62,15 @@ public class JBCefBrowser implements Disposable {
    * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
    */
   public JBCefBrowser(@NotNull JBCefClient client, @Nullable String url) {
+    this(client, false, url);
+  }
+
+  private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
+    if (client.isDisposed()) {
+      throw new IllegalArgumentException("JBCefClient is disposed");
+    }
     myCefClient = client;
+    myIsDefaultClient = isDefaultClient;
 
     myComponent = new MyComponent(new BorderLayout());
     myComponent.setBackground(JBColor.background());
@@ -74,8 +82,9 @@ public class JBCefBrowser implements Disposable {
       @Override
       public void onAfterCreated(CefBrowser browser) {
         myIsCefBrowserCreated = true;
-        if (myDeferLoader != null) {
-          myDeferLoader.load(browser);
+        DeferLoader loader = myDeferLoader;
+        if (loader != null) {
+          loader.load(browser);
           myDeferLoader = null;
         }
       }
@@ -114,13 +123,11 @@ public class JBCefBrowser implements Disposable {
   }
 
   /**
-   * Creates a browser with default {@link JBCefClient}. The default client is disposed with the browser unless it's retrieved via {@link #getJBCefClient()},
-   * in which case the client's lifecycle is the responsibility of the caller.
+   * Creates a browser with default {@link JBCefClient}. The default client is disposed with this browser and may not be used with other browsers.
    */
   @SuppressWarnings("unused")
   public JBCefBrowser() {
-    this(JBCefApp.getInstance().createClient(), null);
-    isCefClientPublished = false;
+    this(JBCefApp.getInstance().createClient(), true, null);
   }
 
   /**
@@ -129,8 +136,7 @@ public class JBCefBrowser implements Disposable {
    */
   @SuppressWarnings("unused")
   public JBCefBrowser(@NotNull String url) {
-    this(JBCefApp.getInstance().createClient(), url);
-    isCefClientPublished = false;
+    this(JBCefApp.getInstance().createClient(), true, url);
   }
 
   @NotNull
@@ -145,7 +151,6 @@ public class JBCefBrowser implements Disposable {
 
   @NotNull
   public JBCefClient getJBCefClient() {
-    isCefClientPublished = true;
     return myCefClient;
   }
 
@@ -154,8 +159,8 @@ public class JBCefBrowser implements Disposable {
     myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
     myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
     myCefBrowser.close(false);
-    if (!isCefClientPublished) {
-      myCefClient.getCefClient().dispose();
+    if (myIsDefaultClient) {
+      myCefClient.dispose();
     }
   }
 
