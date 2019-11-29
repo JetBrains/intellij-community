@@ -1,6 +1,6 @@
 <idea-plugin version="2">
     <id>com.jetbrains.space</id>
-    <name>Space Integration</name>
+    <name>Space</name>
     <version>0.1.dev</version>
     <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
 
