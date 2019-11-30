@@ -214,7 +214,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     return myModule;
   }
 
-  private class MyDataProvider implements DataProvider {
+  private final class MyDataProvider implements DataProvider {
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
@@ -222,7 +222,9 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
         return myProject;
       }
       else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-        if (myProject == null) return null;
+        if (myProject == null || myProject.isDisposed()) {
+          return null;
+        }
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {
@@ -236,7 +238,6 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           if (contentRoots.length > 0) {
             final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
             return new IdeView() {
-
               @NotNull
               @Override
               public PsiDirectory[] getDirectories() {
