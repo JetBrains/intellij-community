@@ -11,24 +11,20 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.*
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Splitter
@@ -53,7 +49,6 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.*
@@ -67,6 +62,18 @@ import java.util.function.Predicate
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
+
+private val LOG = Logger.getInstance(ToolWindowManagerImpl::class.java)
+
+private const val EDITOR_ELEMENT = "editor"
+private const val ACTIVE_ATTR_VALUE = "active"
+private const val FRAME_ELEMENT = "frame"
+private const val X_ATTR = "x"
+private const val Y_ATTR = "y"
+private const val WIDTH_ATTR = "width"
+private const val HEIGHT_ATTR = "height"
+private const val EXTENDED_STATE_ATTR = "extended-state"
+private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 
 @State(name = "ToolWindowManager",
        defaultStateAsResource = true,
@@ -101,6 +108,119 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private val commandProcessor = CommandProcessor()
+
+  @Service
+  private class ToolWindowManagerAppLevelHelper {
+    private var awtFocusListener: AWTEventListener? = null
+
+    init {
+      awtFocusListener = AWTEventListener { event ->
+        event as FocusEvent
+        if (event.id != FocusEvent.FOCUS_GAINED) {
+          return@AWTEventListener
+        }
+
+        processOpenedProjects { project ->
+          val component = event.component ?: return@AWTEventListener
+          for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.editorComposites) {
+            if (composite.editors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
+              (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
+            }
+          }
+        }
+      }
+
+      Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK)
+
+      val updateHeadersAlarm = SingleAlarm(Runnable {
+        processOpenedProjects { project ->
+          (getInstance(project) as ToolWindowManagerImpl).updateToolWindowHeaders()
+        }
+      }, 50, ApplicationManager.getApplication())
+      val focusListener = PropertyChangeListener { updateHeadersAlarm.cancelAndRequest() }
+      val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+      keyboardFocusManager.addPropertyChangeListener("focusOwner", focusListener)
+      Disposer.register(ApplicationManager.getApplication(), Disposable {
+        keyboardFocusManager.removePropertyChangeListener("focusOwner", focusListener)
+      })
+
+      val connection = ApplicationManager.getApplication().messageBus.connect()
+      connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+        override fun projectOpened(project: Project) {
+          (getInstance(project) as ToolWindowManagerImpl).init()
+        }
+
+        override fun projectClosed(project: Project) {
+          (getInstance(project) as ToolWindowManagerImpl).projectClosed()
+        }
+      })
+
+      connection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
+        override fun activeKeymapChanged(keymap: Keymap?) {
+          processOpenedProjects { project ->
+            (getInstance(project) as ToolWindowManagerImpl).idToEntry.values.forEach {
+              it.stripeButton.updatePresentation()
+            }
+          }
+        }
+      })
+
+      connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
+        override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+          processOpenedProjects { project ->
+            val manager = getInstance(project) as ToolWindowManagerImpl
+            if (manager.currentState != KeyState.HOLD) {
+              manager.resetHoldState()
+            }
+          }
+        }
+      })
+    }
+  }
+
+  init {
+    if (!project.isDefault) {
+      service<ToolWindowManagerAppLevelHelper>()
+
+      val disposable = (project as ProjectEx).earlyDisposable
+      val connection = project.messageBus.connect(disposable)
+      connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+
+      layout.copyFrom(WindowManagerEx.getInstanceEx().layout)
+      layout.infos.forEach { layout.unregister(it.id!!) }
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(
+            project) {
+            override fun run() {
+              if (!hasOpenEditorFiles()) {
+                focusToolWindowByDefault(null)
+              }
+            }
+          })
+        }
+      })
+      val predicate = Predicate { event: AWTEvent ->
+        (event.id == FocusEvent.FOCUS_LOST) || (event.id == FocusEvent.FOCUS_GAINED) || (event.id == MouseEvent.MOUSE_PRESSED) || (event.id == KeyEvent.KEY_PRESSED)
+      }
+
+      Windows.ToolWindowFilter
+        .filterBySignal(Windows.Signal(predicate))
+        .withEscAction()
+        .handleDocked { }
+        .handleFloating { }
+        .handleFocusLostOnPinned { toolWindowId: String ->
+          val commands = mutableListOf<FinalizableCommand>()
+          if (isToolWindowRegistered(toolWindowId)) {
+            deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands)
+            // notify clients that toolwindow is deactivated
+            execute(commands, true)
+          }
+        }
+        .handleWindowed { toolWindowId: String? -> }
+        .bind(project)
+    }
+  }
 
   private fun updateToolWindowHeaders() {
     focusManager.doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
@@ -650,9 +770,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   /**
    * @param dirtyMode if `true` then all UI operations are performed in dirty mode.
    */
-  private fun showToolWindowImpl(id: String,
-                                 dirtyMode: Boolean,
-                                 commandsList: MutableList<in FinalizableCommand>) {
+  private fun showToolWindowImpl(id: String, dirtyMode: Boolean, commandsList: MutableList<FinalizableCommand>) {
     val toBeShownInfo = getRegisteredInfoOrLogError(id)
     val window = getToolWindow(id)
     if (window != null && toBeShownInfo.isWindowed) {
@@ -683,11 +801,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         if ((id == info.id)) {
           continue
         }
-        if (info.isVisible && (
-            info.type == toBeShownInfo.type) && (
-              info.anchor == toBeShownInfo.anchor) && (info.isSplit == toBeShownInfo.isSplit)) { // hide and deactivate tool window
+        if (info.isVisible && (info.type == toBeShownInfo.type) && (info.anchor == toBeShownInfo.anchor) && (info.isSplit == toBeShownInfo.isSplit)) { // hide and deactivate tool window
           info.isVisible = false
-          appendRemoveDecoratorCmd((Objects.requireNonNull(info.id))!!, false, commandsList)
+          appendRemoveDecoratorCmd(info.id!!, false, commandsList)
           if (info.isActive) {
             info.isActive = false
           }
@@ -740,7 +856,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean,
                                   canCloseContents: Boolean): ToolWindow {
-    return registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, true)
+    return registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, shouldBeAvailable = true)
   }
 
   override fun registerToolWindow(id: String,
@@ -770,7 +886,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean,
                                   secondary: Boolean): ToolWindow {
-    return registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode, true)
+    return registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode)
   }
 
   private fun registerToolWindow(id: String,
@@ -779,7 +895,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                  sideTool: Boolean,
                                  canCloseContent: Boolean,
                                  canWorkInDumbMode: Boolean,
-                                 shouldBeAvailable: Boolean): ToolWindow {
+                                 shouldBeAvailable: Boolean = true): ToolWindow {
     init()
     if (LOG.isDebugEnabled) {
       LOG.debug("enter: installToolWindow($id,$component,$anchor\")")
@@ -877,9 +993,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     entry.watcher.deinstall()
   }
 
-  private fun appendRemoveDecoratorCommand(info: WindowInfoImpl,
-                                           dirtyMode: Boolean,
-                                           commandsList: MutableList<in FinalizableCommand>) {
+  private fun appendRemoveDecoratorCommand(info: WindowInfoImpl, dirtyMode: Boolean, commandsList: MutableList<FinalizableCommand>) {
     if (!info.isVisible) {
       return
     }
@@ -889,7 +1003,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       info.isFloating -> commandsList.add(RemoveFloatingDecoratorCmd(info))
       info.isWindowed -> commandsList.add(RemoveWindowedDecoratorCmd(info))
       // docked and sliding windows
-      else ->appendRemoveDecoratorCmd((Objects.requireNonNull(info.id))!!, dirtyMode, commandsList)
+      else -> appendRemoveDecoratorCmd((Objects.requireNonNull(info.id))!!, dirtyMode, commandsList)
     }
   }
 
@@ -902,9 +1016,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     layoutToRestoreLater = layout
   }
 
-  override fun getLayoutToRestoreLater(): DesktopLayout {
-    return (layoutToRestoreLater)!!
-  }
+  override fun getLayoutToRestoreLater() = layoutToRestoreLater!!
 
   override fun setLayout(layout: DesktopLayout) {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -1092,10 +1204,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     execute(commandList)
   }
 
-  private fun setToolWindowAnchorImpl(id: String,
-                                      anchor: ToolWindowAnchor,
-                                      order: Int,
-                                      commandsList: MutableList<in FinalizableCommand>) {
+  private fun setToolWindowAnchorImpl(id: String, anchor: ToolWindowAnchor, order: Int, commandsList: MutableList<FinalizableCommand>) {
     val info = getRegisteredInfoOrLogError(id)
     if (anchor == info.anchor && order == info.order) {
       return
@@ -1531,6 +1640,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     override fun run() {
       try {
+        @Suppress("DEPRECATION")
         floatingDecorator.show()
       }
       finally {
@@ -1711,8 +1821,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
       val info = toolWindow.toolWindowManager.getRegisteredInfoOrLogError(id)
       if (!info.isActive) {
-        getFocusManagerImpl(
-          toolWindow.toolWindowManager.project).doWhenFocusSettlesDown(object : EdtRunnable() {
+        IdeFocusManager.getInstance(toolWindow.toolWindowManager.project).doWhenFocusSettlesDown(object : EdtRunnable() {
           override fun runEdt() {
             val windowInfo = toolWindow.toolWindowManager.layout.getInfo(id, true)
             if (windowInfo == null || !windowInfo.isVisible) return
@@ -1776,8 +1885,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
      */
     override fun resized(source: InternalDecorator) {
       if (!source.isShowing) {
-        return  // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
+        // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
+        return
       }
+
       val info = getRegisteredInfoOrLogError(source.toolWindow.id)
       if (info.isFloating) {
         val owner = SwingUtilities.getWindowAncestor(source)
@@ -1788,11 +1899,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       else if (info.isWindowed) {
         val decorator = getWindowedDecorator((Objects.requireNonNull(info.id))!!)
         val frame = decorator?.frame
-        if (frame == null || !frame.isShowing) return
+        if (frame == null || !frame.isShowing) {
+          return
+        }
         info.floatingBounds = getRootBounds(frame as JFrame)
         info.isMaximized = frame.extendedState == Frame.MAXIMIZED_BOTH
       }
-      else { // docked and sliding windows
+      else {
+        // docked and sliding windows
         val anchor = info.anchor
         var another: InternalDecorator? = null
         if (source.parent is Splitter) {
@@ -1838,9 +1952,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  override fun fallbackToEditor(): Boolean {
-    return activeStack.isEmpty
-  }
+  override fun fallbackToEditor() = activeStack.isEmpty
 
   private fun focusToolWindowByDefault(idToIgnore: String?) {
     var toFocus: String? = null
@@ -1882,7 +1994,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
     info.isShowStripeButton = visibleOnPanel
-    val commandList = mutableListOf<FinalizableCommand>
+    val commandList = mutableListOf<FinalizableCommand>()
     appendApplyWindowInfoCmd(info, commandList)
     execute(commandList)
   }
@@ -1894,29 +2006,26 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   class InitToolWindowsActivity() : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
-      val ex = getInstanceEx(project)
-      if (ex is ToolWindowManagerImpl) {
-        val manager = ex
-        val list = mutableListOf<FinalizableCommand>
-        manager.registerToolWindowsFromBeans(list)
-        manager.initAll(list)
-        EdtInvocationManager.getInstance().invokeLater({
-                                                         manager.execute(list)
-                                                         manager.commandProcessor.flush()
-                                                       })
-        ToolWindowEP.EP_NAME.addExtensionPointListener(
-          object : ExtensionPointListener<ToolWindowEP?> {
-            override fun extensionAdded(extension: ToolWindowEP,
-                                        pluginDescriptor: PluginDescriptor) {
-              manager.initToolWindow(extension)
-            }
-
-            override fun extensionRemoved(extension: ToolWindowEP,
-                                          pluginDescriptor: PluginDescriptor) {
-              manager.unregisterToolWindow(extension.id)
-            }
-          }, project)
+      val manager = getInstanceEx(project) as? ToolWindowManagerImpl ?: return
+      val list = mutableListOf<FinalizableCommand>()
+      manager.registerToolWindowsFromBeans(list)
+      manager.initAll(list)
+      EdtInvocationManager.getInstance().invokeLater {
+        manager.execute(list)
+        manager.commandProcessor.flush()
       }
+      ToolWindowEP.EP_NAME.addExtensionPointListener(
+        object : ExtensionPointListener<ToolWindowEP?> {
+          override fun extensionAdded(extension: ToolWindowEP,
+                                      pluginDescriptor: PluginDescriptor) {
+            manager.initToolWindow(extension)
+          }
+
+          override fun extensionRemoved(extension: ToolWindowEP,
+                                        pluginDescriptor: PluginDescriptor) {
+            manager.unregisterToolWindow(extension.id)
+          }
+        }, project)
     }
   }
 
@@ -1924,7 +2033,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (!ApplicationManager.getApplication().isEAP && !ApplicationManager.getApplication().isInternal) {
       return
     }
-    val violations: MutableList<String> = ArrayList()
+
+    val violations = mutableListOf<String>()
     for (info: WindowInfoImpl in layout.infos) {
       val id = Objects.requireNonNull(info.id)
       if (info.isVisible) {
@@ -1943,217 +2053,82 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
     if (!violations.isEmpty()) {
-      LOG.error(
-        "Invariants failed: \n" + java.lang.String.join("\n", violations) + "\nContext: " + additionalMessage)
+      LOG.error("Invariants failed: \n${java.lang.String.join("\n", violations)}\nContext: $additionalMessage")
     }
   }
+}
 
-  companion object {
-    private val LOG = Logger.getInstance(
-      ToolWindowManagerImpl::class.java)
-    @NonNls
-    private val EDITOR_ELEMENT = "editor"
-    @NonNls
-    private val ACTIVE_ATTR_VALUE = "active"
-    @NonNls
-    private val FRAME_ELEMENT = "frame"
-    @NonNls
-    private val X_ATTR = "x"
-    @NonNls
-    private val Y_ATTR = "y"
-    @NonNls
-    private val WIDTH_ATTR = "width"
-    @NonNls
-    private val HEIGHT_ATTR = "height"
-    @NonNls
-    private val EXTENDED_STATE_ATTR = "extended-state"
-    @NonNls
-    private val LAYOUT_TO_RESTORE = "layout-to-restore"
+private fun focusDefaultElementInSelectedEditor() {
+  EditorsSplitters.findDefaultComponentInSplittersIfPresent { obj: JComponent -> obj.requestFocus() }
+}
 
-    private fun focusDefaultElementInSelectedEditor() {
-      EditorsSplitters.findDefaultComponentInSplittersIfPresent(
-        { obj: JComponent -> obj.requestFocus() })
+private fun areAllModifiersPressed(@JdkConstants.InputEventMask modifiers: Int, @JdkConstants.InputEventMask mask: Int): Boolean {
+  return (modifiers xor mask) == 0
+}
+
+@JdkConstants.InputEventMask
+private fun keyCodeToInputMask(code: Int): Int {
+  var mask = 0
+  if (code == KeyEvent.VK_SHIFT) {
+    mask = InputEvent.SHIFT_MASK
+  }
+  if (code == KeyEvent.VK_CONTROL) {
+    mask = InputEvent.CTRL_MASK
+  }
+  if (code == KeyEvent.VK_META) {
+    mask = InputEvent.META_MASK
+  }
+  if (code == KeyEvent.VK_ALT) {
+    mask = InputEvent.ALT_MASK
+  }
+  return mask
+}
+
+// We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
+@get:JdkConstants.InputEventMask
+private val activateToolWindowVKsMask: Int
+  get() {
+    if (ApplicationManager.getApplication() == null) return 0
+    val keymap = Objects.requireNonNull(KeymapManager.getInstance()).activeKeymap
+    val baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow")
+    var baseModifiers = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.ALT_MASK
+    for (each: Shortcut in baseShortcut) {
+      if (each is KeyboardShortcut) {
+        val keyStroke = each.firstKeyStroke
+        baseModifiers = keyStroke.modifiers
+        if (baseModifiers > 0) {
+          break
+        }
+      }
     }
-
-    private fun areAllModifiersPressed(@JdkConstants.InputEventMask modifiers: Int, @JdkConstants.InputEventMask mask: Int): Boolean {
-      return (modifiers xor mask) == 0
-    }
-
-    @JdkConstants.InputEventMask
-    private fun keyCodeToInputMask(code: Int): Int {
-      var mask = 0
-      if (code == KeyEvent.VK_SHIFT) {
-        mask = InputEvent.SHIFT_MASK
-      }
-      if (code == KeyEvent.VK_CONTROL) {
-        mask = InputEvent.CTRL_MASK
-      }
-      if (code == KeyEvent.VK_META) {
-        mask = InputEvent.META_MASK
-      }
-      if (code == KeyEvent.VK_ALT) {
-        mask = InputEvent.ALT_MASK
-      }
-      return mask
-    }
-
     // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
-    @get:InputEventMask
-    private val activateToolWindowVKsMask: Int
-      private get() {
-        if (ApplicationManager.getApplication() == null) return 0
-        val keymap = Objects.requireNonNull(KeymapManager.getInstance()).activeKeymap
-        val baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow")
-        var baseModifiers = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.ALT_MASK
-        for (each: Shortcut in baseShortcut) {
-          if (each is KeyboardShortcut) {
-            val keyStroke = each.firstKeyStroke
-            baseModifiers = keyStroke.modifiers
-            if (baseModifiers > 0) {
-              break
-            }
-          }
-        }
-        // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
-        return baseModifiers and (InputEvent.SHIFT_MASK or InputEvent.CTRL_MASK or InputEvent.META_MASK or InputEvent.ALT_MASK)
-      }
-
-    private fun getFocusManagerImpl(project: Project): IdeFocusManager {
-      return IdeFocusManager.getInstance(project)
-    }
-
-    private fun createEditorComponent(project: Project): JComponent {
-      return FrameEditorComponentProvider.EP.extensionList[0].createEditorComponent(project)
-    }
-
-    private fun createInitializingLabel(): JLabel {
-      val label = JLabel("Initializing...", SwingConstants.CENTER)
-      label.isOpaque = true
-      val treeBg = UIUtil.getTreeBackground()
-      label.background = ColorUtil.toAlpha(treeBg, 180)
-      val treeFg = UIUtil.getTreeForeground()
-      label.foreground = ColorUtil.toAlpha(treeFg, 180)
-      return label
-    }
-
-    private fun isToHideOnDeactivation(info: WindowInfoImpl): Boolean {
-      return if (info.isFloating || info.isWindowed) false else info.isAutoHide || info.isSliding
-    }
-
-    private val isStackEnabled: Boolean
-      private get() = Registry.`is`("ide.enable.toolwindow.stack")
-
-    private fun getRootBounds(frame: JFrame): Rectangle {
-      val rootPane = frame.rootPane
-      val bounds = rootPane.bounds
-      bounds.setLocation(frame.x + rootPane.x, frame.y + rootPane.y)
-      return bounds
-    }
+    return baseModifiers and (InputEvent.SHIFT_MASK or InputEvent.CTRL_MASK or InputEvent.META_MASK or InputEvent.ALT_MASK)
   }
 
-  init {
-    if (project.isDefault) {
-      return
-    }
-    val updateHeadersAlarm = SingleAlarm(Runnable { updateToolWindowHeaders() }, 50, project)
-    val projectLevelBusConnection = project.messageBus.connect()
-    projectLevelBusConnection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
-    val appLevelBusConnection = ApplicationManager.getApplication().messageBus.connect(
-      project)
-    appLevelBusConnection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        if (currentState != KeyState.HOLD) {
-          resetHoldState()
-        }
-      }
-    })
-    appLevelBusConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      var awtFocusListener: AWTEventListener? = null
-      override fun projectOpened(project: Project) {
-        if (project !== this.project) {
-          return
-        }
-        awtFocusListener = AWTEventListener { event ->
-          if (project.isDisposed) {
-            return@AWTEventListener
-          }
-          assert(event is FocusEvent)
-          val focusEvent = event as FocusEvent
-          if (focusEvent.id == FocusEvent.FOCUS_GAINED) {
-            val component = focusEvent.component
-            if (component != null) {
-              val editorIsGoingToGetFocus = FileEditorManagerEx.getInstanceEx(
-                project).splitters.editorComposites.stream()
-                .flatMap(
-                  { c: EditorWithProviderComposite -> Arrays.stream(c.editors) })
-                .anyMatch(
-                  { editor: FileEditor ->
-                    SwingUtilities.isDescendingFrom(component, editor.component)
-                  })
-              if (editorIsGoingToGetFocus) {
-                activeStack.clear()
-              }
-            }
-          }
-        }
-        Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK)
-        init()
-        val focusListener = PropertyChangeListener { it: PropertyChangeEvent? -> updateHeadersAlarm.cancelAndRequest() }
-        val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-        keyboardFocusManager.addPropertyChangeListener("focusOwner", focusListener)
-        Disposer.register(this.project, Disposable { keyboardFocusManager.removePropertyChangeListener("focusOwner", focusListener) })
-      }
+private fun createEditorComponent(project: Project): JComponent {
+  return FrameEditorComponentProvider.EP.extensionList[0].createEditorComponent(project)
+}
 
-      override fun projectClosed(project: Project) {
-        if (project === this.project) {
-          Toolkit.getDefaultToolkit().removeAWTEventListener(awtFocusListener)
-          this@ToolWindowManagerImpl.projectClosed()
-        }
-      }
-    })
-    appLevelBusConnection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
-      override fun activeKeymapChanged(keymap: Keymap?) {
-        idToEntry.forEach(
-          { key: String?, info: ToolWindowEntry -> info.stripeButton.updatePresentation() })
-      }
-    })
-    layout.copyFrom(WindowManagerEx.getInstanceEx().layout)
-    layout.infos.forEach(
-      java.util.function.Consumer { info: WindowInfoImpl -> layout.unregister((Objects.requireNonNull(info.id))!!) })
-    projectLevelBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        getFocusManagerImpl(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(
-          project) {
-          override fun run() {
-            if (!hasOpenEditorFiles()) {
-              focusToolWindowByDefault(null)
-            }
-          }
-        })
-      }
-    })
-    val predicate = Predicate { event: AWTEvent ->
-      (event.id == FocusEvent.FOCUS_LOST
-      ) || (event.id == FocusEvent.FOCUS_GAINED
-           ) || (event.id == MouseEvent.MOUSE_PRESSED
-                ) || (event.id == KeyEvent.KEY_PRESSED)
-    }
-    Windows.ToolWindowFilter
-      .filterBySignal(Windows.Signal(predicate))
-      .withEscAction()
-      .handleDocked({ toolWindowId: String? -> })
-      .handleFloating({ toolWindowId: String? -> })
-      .handleFocusLostOnPinned({ toolWindowId: String ->
-                                 val commands = mutableListOf<FinalizableCommand>
-                                 if (isToolWindowRegistered(toolWindowId)) {
-                                   deactivateToolWindowImpl(
-                                     getRegisteredInfoOrLogError(toolWindowId), true, commands)
-                                   execute(commands,
-                                           true) // notify clients that toolwindow is deactivated
-                                 }
-                               })
-      .handleWindowed({ toolWindowId: String? -> })
-      .bind(project)
-    checkInvariants("")
-  }
+private fun createInitializingLabel(): JLabel {
+  val label = JLabel("Initializing...", SwingConstants.CENTER)
+  label.isOpaque = true
+  val treeBg = UIUtil.getTreeBackground()
+  label.background = ColorUtil.toAlpha(treeBg, 180)
+  val treeFg = UIUtil.getTreeForeground()
+  label.foreground = ColorUtil.toAlpha(treeFg, 180)
+  return label
+}
+
+private fun isToHideOnDeactivation(info: WindowInfoImpl): Boolean {
+  return if (info.isFloating || info.isWindowed) false else info.isAutoHide || info.isSliding
+}
+
+private val isStackEnabled: Boolean
+  get() = Registry.`is`("ide.enable.toolwindow.stack")
+
+private fun getRootBounds(frame: JFrame): Rectangle {
+  val rootPane = frame.rootPane
+  val bounds = rootPane.bounds
+  bounds.setLocation(frame.x + rootPane.x, frame.y + rootPane.y)
+  return bounds
 }
