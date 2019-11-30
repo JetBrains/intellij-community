@@ -316,7 +316,7 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
       }
     }
 
-    subjectColumn.cellEditor = CommitMessageCellEditor(project)
+    subjectColumn.cellEditor = CommitMessageCellEditor(project, this)
   }
 
   private fun shouldDrawNode(row: Int): Boolean {
@@ -325,7 +325,7 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
            entryWithEditedMessage.entry.action != GitRebaseEntry.Action.DROP
   }
 
-  private class CommitMessageCellEditor(project: Project) : AbstractCellEditor(), TableCellEditor {
+  private class CommitMessageCellEditor(project: Project, private val table: CommitsTable) : AbstractCellEditor(), TableCellEditor {
     private val closeEditorAction = object : AnAction() {
       override fun actionPerformed(e: AnActionEvent) {
         stopCellEditing()
@@ -355,11 +355,10 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
 
     override fun getCellEditorValue() = commitMessageField.text
 
-    override fun isCellEditable(e: EventObject?): Boolean {
-      if (e is MouseEvent) {
-        return e.clickCount >= 2
-      }
-      return true
+    override fun isCellEditable(e: EventObject?) = when {
+      table.selectedRowCount > 1 -> false
+      e is MouseEvent -> e.clickCount >= 2
+      else -> true
     }
   }
 }
