@@ -92,7 +92,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private var frame: ProjectFrameHelper? = null
   private var layoutToRestoreLater: DesktopLayout? = null
   private var currentState = KeyState.WAITING
-  private val waiterForSecondPress = Alarm()
+  private val waiterForSecondPress: Alarm?
 
   private val secondPressRunnable = Runnable {
     if (currentState != KeyState.HOLD) {
@@ -109,6 +109,56 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private val commandProcessor = CommandProcessor()
+
+  init {
+    if (project.isDefault) {
+      waiterForSecondPress = null
+    }
+    else {
+      service<ToolWindowManagerAppLevelHelper>()
+
+      val disposable = (project as ProjectEx).earlyDisposable
+
+      waiterForSecondPress = Alarm(disposable)
+
+      val connection = project.messageBus.connect(disposable)
+      connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+
+      layout.copyFrom(WindowManagerEx.getInstanceEx().layout)
+      layout.infos.forEach { layout.unregister(it.id!!) }
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(
+            project) {
+            override fun run() {
+              if (!hasOpenEditorFiles()) {
+                focusToolWindowByDefault(null)
+              }
+            }
+          })
+        }
+      })
+
+      val predicate = Predicate { event: AWTEvent ->
+        (event.id == FocusEvent.FOCUS_LOST) || (event.id == FocusEvent.FOCUS_GAINED) || (event.id == MouseEvent.MOUSE_PRESSED) || (event.id == KeyEvent.KEY_PRESSED)
+      }
+      Windows.ToolWindowFilter
+        .filterBySignal(Windows.Signal(predicate))
+        .withEscAction()
+        .handleDocked { }
+        .handleFloating { }
+        .handleFocusLostOnPinned { toolWindowId: String ->
+          val commands = mutableListOf<FinalizableCommand>()
+          if (isToolWindowRegistered(toolWindowId)) {
+            deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands)
+            // notify clients that toolwindow is deactivated
+            execute(commands, true)
+          }
+        }
+        .handleWindowed { }
+        .bind(project)
+    }
+  }
 
   @Service
   private class ToolWindowManagerAppLevelHelper {
@@ -176,50 +226,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           }
         }
       })
-    }
-  }
-
-  init {
-    if (!project.isDefault) {
-      service<ToolWindowManagerAppLevelHelper>()
-
-      val disposable = (project as ProjectEx).earlyDisposable
-      val connection = project.messageBus.connect(disposable)
-      connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
-
-      layout.copyFrom(WindowManagerEx.getInstanceEx().layout)
-      layout.infos.forEach { layout.unregister(it.id!!) }
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(
-            project) {
-            override fun run() {
-              if (!hasOpenEditorFiles()) {
-                focusToolWindowByDefault(null)
-              }
-            }
-          })
-        }
-      })
-      val predicate = Predicate { event: AWTEvent ->
-        (event.id == FocusEvent.FOCUS_LOST) || (event.id == FocusEvent.FOCUS_GAINED) || (event.id == MouseEvent.MOUSE_PRESSED) || (event.id == KeyEvent.KEY_PRESSED)
-      }
-
-      Windows.ToolWindowFilter
-        .filterBySignal(Windows.Signal(predicate))
-        .withEscAction()
-        .handleDocked { }
-        .handleFloating { }
-        .handleFocusLostOnPinned { toolWindowId: String ->
-          val commands = mutableListOf<FinalizableCommand>()
-          if (isToolWindowRegistered(toolWindowId)) {
-            deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands)
-            // notify clients that toolwindow is deactivated
-            execute(commands, true)
-          }
-        }
-        .handleWindowed { }
-        .bind(project)
     }
   }
 
@@ -295,7 +301,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       if (currentState == KeyState.PRESSED) {
         currentState = KeyState.RELEASED
-        restartWaitingForSecondPressAlarm()
+        if (waiterForSecondPress != null) {
+          waiterForSecondPress.cancelAllRequests()
+          waiterForSecondPress.addRequest(secondPressRunnable, SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650))
+        }
       }
       else {
         resetHoldState()
@@ -305,12 +314,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun processHoldState() {
     toolWindowPane?.setStripesOverlayed(currentState == KeyState.HOLD)
-  }
-
-  private fun restartWaitingForSecondPressAlarm() {
-    waiterForSecondPress.cancelAllRequests()
-    waiterForSecondPress.addRequest(secondPressRunnable,
-                                    SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650))
   }
 
   private fun hasOpenEditorFiles(): Boolean {
