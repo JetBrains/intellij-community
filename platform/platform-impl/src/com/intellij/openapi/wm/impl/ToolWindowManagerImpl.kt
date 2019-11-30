@@ -125,6 +125,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         service<ToolWindowManagerAppLevelHelper>()
       }
 
+      // manager is used in light tests (light project is never disposed), so, earlyDisposable must be used
       val disposable = (project as ProjectEx).earlyDisposable
 
       waiterForSecondPress = Alarm(disposable)
@@ -146,25 +147,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           })
         }
       })
-
-      val predicate = Predicate { event: AWTEvent ->
-        (event.id == FocusEvent.FOCUS_LOST) || (event.id == FocusEvent.FOCUS_GAINED) || (event.id == MouseEvent.MOUSE_PRESSED) || (event.id == KeyEvent.KEY_PRESSED)
-      }
-      Windows.ToolWindowFilter
-        .filterBySignal(Windows.Signal(predicate))
-        .withEscAction()
-        .handleDocked { }
-        .handleFloating { }
-        .handleFocusLostOnPinned { toolWindowId: String ->
-          if (isToolWindowRegistered(toolWindowId)) {
-            val commands = mutableListOf<FinalizableCommand>()
-            deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), shouldHide = true, commands = commands)
-            // notify clients that toolwindow is deactivated
-            execute(commands, true)
-          }
-        }
-        .handleWindowed { }
-        .bind(project)
     }
   }
 
@@ -213,6 +195,23 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           (getInstance(project) as ToolWindowManagerImpl).projectClosed()
         }
       })
+
+      Windows.ToolWindowFilter
+        .filterBySignal(Windows.Signal(Predicate { event ->
+          (event.id == FocusEvent.FOCUS_LOST) || (event.id == FocusEvent.FOCUS_GAINED) || (event.id == MouseEvent.MOUSE_PRESSED) || (event.id == KeyEvent.KEY_PRESSED)
+        }))
+        .withEscAction()
+        .handleFocusLostOnPinned { toolWindowId ->
+          processOpenedProjects { project ->
+            val manager = (getInstance(project) as ToolWindowManagerImpl)
+            val info = manager.layout.getInfo(toolWindowId, true) ?: return@processOpenedProjects
+            val commands = mutableListOf<FinalizableCommand>()
+            manager.deactivateToolWindowImpl(info, shouldHide = true, commands = commands)
+            // notify clients that toolwindow is deactivated
+            manager.execute(commands, true)
+          }
+        }
+        .bind(ApplicationManager.getApplication())
 
       connection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
         override fun activeKeymapChanged(keymap: Keymap?) {
@@ -479,14 +478,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
     if (isFireStateChangedEvent) {
-      for (each: FinalizableCommand in commandList) {
+      for (each in commandList) {
         if (each.willChangeState()) {
           fireStateChanged()
           break
         }
       }
     }
-    for (each: FinalizableCommand in commandList) {
+    for (each in commandList) {
       each.beforeExecute(this)
     }
     commandProcessor.execute(commandList) { project.isDisposed }
@@ -1816,7 +1815,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       deinstall(toolWindow.component)
     }
 
-    override fun isFocusedComponentChangeValid(component: Component?, cause: AWTEvent): Boolean {
+    override fun isFocusedComponentChangeValid(component: Component?, cause: AWTEvent?): Boolean {
       return component != null && toolWindow.toolWindowManager.commandProcessor.commandCount == 0
     }
 
