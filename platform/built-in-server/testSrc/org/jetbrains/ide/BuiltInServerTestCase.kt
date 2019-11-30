@@ -31,12 +31,14 @@ internal abstract class BuiltInServerTestCase {
   protected val tempDirManager = TemporaryDirectory()
   protected val manager = TestManager(projectRule, tempDirManager)
 
-  private val ruleChain = RuleChain(
-      tempDirManager,
-      Timeout(60, TimeUnit.SECONDS),
-      manager,
-      DisposeModulesRule(projectRule))
-  @Rule fun getChain() = ruleChain
+  @Rule
+  @JvmField
+  val ruleChain = RuleChain(
+    tempDirManager,
+    Timeout(60, TimeUnit.SECONDS),
+    manager,
+    DisposeModulesRule(projectRule)
+  )
 
   protected open val urlPathPrefix = ""
 
