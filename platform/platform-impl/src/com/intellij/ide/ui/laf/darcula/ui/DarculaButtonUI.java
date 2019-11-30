@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -258,7 +257,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     int textIconGap = StringUtil.isEmpty(b.getText()) || b.getIcon() == null ? 0 : b.getIconTextGap();
     Dimension size = BasicGraphicsUtils.getPreferredButtonSize(b, textIconGap);
     // "BasicGraphicsUtils.getPreferredButtonSize" can return null -> https://bugs.openjdk.java.net/browse/JDK-4694008
-    return getDarculaButtonSize(c, ObjectUtils.notNull(size, JBUI.emptySize()));
+    return getDarculaButtonSize(c, size == null ? new Dimension() : size);
   }
 
   @Override
