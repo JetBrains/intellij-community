@@ -38,6 +38,7 @@ import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
+import java.awt.BasicStroke
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -236,7 +237,17 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
     val commitIconColumn = columnModel.getColumn(CommitsTableModel.COMMIT_ICON_COLUMN)
     val renderer = CommitIconRenderer()
     commitIconColumn.cellRenderer = TableCellRenderer { table, _, isSelected, hasFocus, row, column ->
-      renderer.update(table, isSelected, hasFocus, row, column, row == table.rowCount - 1, shouldDrawNode(row))
+      renderer.update(
+        table,
+        isSelected,
+        hasFocus,
+        row,
+        column,
+        row == table.rowCount - 1,
+        shouldDrawNode(row),
+        table.editingRow == row,
+        getRowHeight(row)
+      )
       renderer
     }
     adjustCommitIconColumnWidth()
@@ -355,20 +366,17 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
 
 private class CommitIconRenderer : SimpleColoredRenderer() {
   companion object {
-    private val UP_EDGE = getEdge(EdgePrintElement.Type.UP)
-    private val DOWN_EDGE = getEdge(EdgePrintElement.Type.DOWN)
-    private val NODE = object : NodePrintElement {
+    private val UP_EDGE = object : EdgePrintElement {
+      override fun getPositionInOtherRow(): Int = 0
+      override fun getType(): EdgePrintElement.Type = EdgePrintElement.Type.UP
+      override fun getLineStyle(): EdgePrintElement.LineStyle = EdgePrintElement.LineStyle.SOLID
+      override fun hasArrow(): Boolean = false
       override fun getRowIndex(): Int = 0
       override fun getPositionInCurrentRow(): Int = 0
       override fun getColorId(): Int = 0
       override fun isSelected(): Boolean = false
     }
-
-    private fun getEdge(type: EdgePrintElement.Type) = object : EdgePrintElement {
-      override fun getPositionInOtherRow(): Int = 0
-      override fun getType(): EdgePrintElement.Type = type
-      override fun getLineStyle(): EdgePrintElement.LineStyle = EdgePrintElement.LineStyle.SOLID
-      override fun hasArrow(): Boolean = false
+    private val NODE = object : NodePrintElement {
       override fun getRowIndex(): Int = 0
       override fun getPositionInCurrentRow(): Int = 0
       override fun getColorId(): Int = 0
@@ -377,23 +385,46 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
   }
 
   private val nodeColor = DefaultColorGenerator().getColor(1)
-  private val painter = SimpleGraphCellPainter(ColorGenerator { nodeColor })
+  private val painter = object : SimpleGraphCellPainter(ColorGenerator { nodeColor }) {
+    fun drawDownLine(g2: Graphics2D) {
+      val tableRowHeight = this@CommitIconRenderer.rowHeight
+      val nodeWidth = PaintParameters.getNodeWidth(rowHeight)
+      val y2: Int = tableRowHeight
+      val y1: Int = rowHeight / 2
+      val x: Int = nodeWidth / 2
+      g2.color = nodeColor
+      g2.stroke = BasicStroke(PaintParameters.getLineThickness(rowHeight), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
+      g2.drawLine(x, y1, x, y2)
+    }
+  }
   private var isHead = false
   private var withNode = true
+  private var rowHeight = 0
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
     drawCommitIcon(g as Graphics2D)
   }
 
-  fun update(table: JTable?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int, isHead: Boolean, withNode: Boolean) {
+  fun update(
+    table: JTable?,
+    isSelected: Boolean,
+    hasFocus: Boolean,
+    row: Int,
+    column: Int,
+    isHead: Boolean,
+    withNode: Boolean,
+    editing: Boolean,
+    rowHeight: Int
+  ) {
     clear()
     setPaintFocusBorder(false)
-    acquireState(table, isSelected, hasFocus, row, column)
+    acquireState(table, isSelected && !editing, hasFocus && !editing, row, column)
     cellState.updateRenderer(this)
     border = null
     this.isHead = isHead
     this.withNode = withNode
+    this.rowHeight = rowHeight
   }
 
   private fun drawCommitIcon(g2: Graphics2D) {
@@ -401,10 +432,10 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
     if (withNode) {
       elements.add(NODE)
     }
-    if (!isHead) {
-      elements.add(DOWN_EDGE)
-    }
     painter.draw(g2, elements)
+    if (!isHead) {
+      painter.drawDownLine(g2)
+    }
   }
 }
 
