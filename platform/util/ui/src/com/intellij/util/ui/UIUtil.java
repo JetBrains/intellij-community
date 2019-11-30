@@ -661,7 +661,7 @@ public final class UIUtil {
     final int centerY = bounds.height / 2;
     final Font font = g.getFont();
     final FontRenderContext frc = g.getFontRenderContext();
-    final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
+    final Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
 
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
   }
