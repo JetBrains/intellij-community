@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.ActivateToolWindowAction
@@ -217,7 +218,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
             execute(commands, true)
           }
         }
-        .handleWindowed { toolWindowId: String? -> }
+        .handleWindowed { }
         .bind(project)
     }
   }
@@ -387,9 +388,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val label = createInitializingLabel()
     val toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor)
     val factory = bean.toolWindowFactory
-    val window = registerToolWindow(bean.id, label, toolWindowAnchor, false, bean.canCloseContents,
-                                    DumbService.isDumbAware(factory),
-                                    factory.shouldBeAvailable(project))
+    val window = registerToolWindow(id = bean.id, component = label, anchor = toolWindowAnchor, sideTool = false,
+                                    canCloseContent = bean.canCloseContents,
+                                    canWorkInDumbMode = DumbService.isDumbAware(factory),
+                                    shouldBeAvailable = factory.shouldBeAvailable(project))
     val toolWindow = window as ToolWindowImpl
     toolWindow.setContentFactory(factory)
     if (bean.icon != null && toolWindow.icon == null) {
@@ -402,7 +404,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           icon = EmptyIcon.ICON_13
         }
       }
-      toolWindow.setIcon((icon)!!)
+      toolWindow.icon = icon!!
     }
     val info = getRegisteredInfoOrLogError(bean.id)
     if (!info.isSplit && bean.secondary && !info.isWasRead) {
@@ -647,7 +649,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    */
   fun getStripeButton(id: String) = idToEntry.get(id)!!.stripeButton
 
-  override fun getIdsOn(anchor: ToolWindowAnchor) = layout.getVisibleIdsOn(anchor, this)
+  override fun getIdsOn(anchor: ToolWindowAnchor): List<String> = layout.getVisibleIdsOn(anchor, this)
 
   override fun getLocationIcon(id: String, fallbackIcon: Icon): Icon {
     val window = getToolWindow(id)
@@ -736,7 +738,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           if (storedInfo.isSplit != info.isSplit) {
             continue
           }
-          val currentInfo = getRegisteredInfoOrLogError((Objects.requireNonNull(storedInfo.id))!!)
+          val currentInfo = getRegisteredInfoOrLogError(storedInfo.id!!)
           // SideStack contains copies of real WindowInfos. It means that
           // these stored infos can be invalid. The following loop removes invalid WindowInfos.
           if ((storedInfo.anchor == currentInfo.anchor) && (
@@ -746,7 +748,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           }
         }
         if (info2 != null) {
-          showToolWindowImpl((Objects.requireNonNull(info2.id))!!, false, commandList)
+          showToolWindowImpl(info2.id!!, false, commandList)
         }
       }
       // If we hide currently active tool window then we should activate the previous
@@ -832,14 +834,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override fun registerToolWindow(id: String,
                                   component: JComponent,
                                   anchor: ToolWindowAnchor): ToolWindow {
-    return registerToolWindow(id, component, anchor, false, false, false, true)
+    return registerToolWindow(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false)
   }
 
   override fun registerToolWindow(id: String,
                                   component: JComponent,
                                   anchor: ToolWindowAnchor,
                                   parentDisposable: Disposable): ToolWindow {
-    return registerToolWindow(id, component, anchor, parentDisposable, false, false)
+    return registerToolWindow(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false)
   }
 
   override fun registerToolWindow(id: String,
@@ -847,7 +849,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   anchor: ToolWindowAnchor,
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean): ToolWindow {
-    return registerToolWindow(id, component, anchor, parentDisposable, canWorkInDumbMode, false)
+    return registerToolWindow(id = id, component = component, anchor = anchor, canWorkInDumbMode = canWorkInDumbMode)
   }
 
   override fun registerToolWindow(id: String,
@@ -856,20 +858,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean,
                                   canCloseContents: Boolean): ToolWindow {
-    return registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, shouldBeAvailable = true)
+    return registerToolWindow(id = id, component = component, anchor = anchor, canCloseContent = canCloseContents, canWorkInDumbMode = canWorkInDumbMode)
   }
 
   override fun registerToolWindow(id: String,
                                   canCloseContent: Boolean,
                                   anchor: ToolWindowAnchor): ToolWindow {
-    return registerToolWindow(id, null, anchor, false, canCloseContent, false, true)
+    return registerToolWindow(id = id, component = null, anchor = anchor, canCloseContent = canCloseContent, canWorkInDumbMode = false)
   }
 
   override fun registerToolWindow(id: String,
                                   canCloseContent: Boolean,
                                   anchor: ToolWindowAnchor,
                                   secondary: Boolean): ToolWindow {
-    return registerToolWindow(id, null, anchor, secondary, canCloseContent, false, true)
+    return registerToolWindow(id = id, component = null, anchor = anchor, sideTool = secondary, canCloseContent = canCloseContent, canWorkInDumbMode = false)
   }
 
   override fun registerToolWindow(id: String,
@@ -877,7 +879,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   anchor: ToolWindowAnchor,
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean): ToolWindow {
-    return registerToolWindow(id, canCloseContent, anchor, parentDisposable, canWorkInDumbMode, false)
+    return registerToolWindow(id = id, canCloseContent = canCloseContent, anchor = anchor, parentDisposable = parentDisposable, canWorkInDumbMode = canWorkInDumbMode, secondary = false)
   }
 
   override fun registerToolWindow(id: String,
@@ -886,15 +888,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean,
                                   secondary: Boolean): ToolWindow {
-    return registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode)
+    return registerToolWindow(id = id, component = null, anchor = anchor, sideTool = secondary, canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode)
   }
 
   private fun registerToolWindow(id: String,
                                  component: JComponent?,
                                  anchor: ToolWindowAnchor,
-                                 sideTool: Boolean,
-                                 canCloseContent: Boolean,
-                                 canWorkInDumbMode: Boolean,
+                                 sideTool: Boolean = false,
+                                 canCloseContent: Boolean = true,
+                                 canWorkInDumbMode: Boolean = true,
                                  shouldBeAvailable: Boolean = true): ToolWindow {
     init()
     if (LOG.isDebugEnabled) {
@@ -938,10 +940,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // (for example, tool window is in auto hide mode) then we just activate editor component.
     if (!info.isAutoHide && (info.isDocked || info.isFloating)) {
       if (wasActive) {
-        activateToolWindowImpl((Objects.requireNonNull(info.id))!!, commandsList, true, true)
+        activateToolWindowImpl(info.id!!, commandsList, true, true)
       }
       else if (wasVisible) {
-        showToolWindowImpl((Objects.requireNonNull(info.id))!!, false, commandsList)
+        showToolWindowImpl(info.id!!, false, commandsList)
       }
     }
     execute(commandsList)
@@ -1003,7 +1005,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       info.isFloating -> commandsList.add(RemoveFloatingDecoratorCmd(info))
       info.isWindowed -> commandsList.add(RemoveWindowedDecoratorCmd(info))
       // docked and sliding windows
-      else -> appendRemoveDecoratorCmd((Objects.requireNonNull(info.id))!!, dirtyMode, commandsList)
+      else -> appendRemoveDecoratorCmd(info.id!!, dirtyMode, commandsList)
     }
   }
 
@@ -1029,33 +1031,33 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val commandList = mutableListOf<FinalizableCommand>()
     for (currentInfo: WindowInfoImpl in currentInfos) {
-      val info = layout.getInfo((Objects.requireNonNull(currentInfo.id))!!, false)
+      val info = layout.getInfo(currentInfo.id!!, false)
       if (currentInfo.isVisible && (info == null || !info.isVisible)) {
         deactivateToolWindowImpl(currentInfo, true, commandList)
       }
     }
     // change anchor of tool windows
     for (currentInfo: WindowInfoImpl in currentInfos) {
-      val info = layout.getInfo((Objects.requireNonNull(currentInfo.id))!!, false) ?: continue
+      val info = layout.getInfo(currentInfo.id!!, false) ?: continue
       if (currentInfo.anchor != info.anchor || currentInfo.order != info.order) {
         setToolWindowAnchorImpl((currentInfo.id)!!, info.anchor, info.order, commandList)
       }
     }
     // change types of tool windows
     for (currentInfo: WindowInfoImpl in currentInfos) {
-      val info = layout.getInfo((Objects.requireNonNull(currentInfo.id))!!, false) ?: continue
+      val info = layout.getInfo(currentInfo.id!!, false) ?: continue
       if (currentInfo.type != info.type) {
         setToolWindowTypeImpl((currentInfo.id)!!, info.type, commandList)
       }
     }
     // change other properties
     for (currentInfo: WindowInfoImpl in currentInfos) {
-      val info = layout.getInfo((Objects.requireNonNull(currentInfo.id))!!, false) ?: continue
+      val info = layout.getInfo(currentInfo.id!!, false) ?: continue
       copyWindowOptions(info, commandList)
     }
     // restore visibility
     for (currentInfo: WindowInfoImpl in currentInfos) {
-      val info = layout.getInfo((Objects.requireNonNull(currentInfo.id))!!, false) ?: continue
+      val info = layout.getInfo(currentInfo.id!!, false) ?: continue
       if (info.isVisible) {
         showToolWindowImpl((currentInfo.id)!!, false, commandList)
       }
@@ -1069,7 +1071,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     execute(listOf(InvokeLaterCmd(runnable, commandProcessor)))
   }
 
-  override fun getFocusManager() = IdeFocusManager.getInstance(project)
+  override fun getFocusManager(): IdeFocusManager = IdeFocusManager.getInstance(project)!!
 
   override fun canShowNotification(toolWindowId: String): Boolean {
     if (!layout.isToolWindowRegistered(toolWindowId)) {
@@ -1347,7 +1349,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun copyWindowOptions(origin: WindowInfoImpl, commandsList: MutableList<FinalizableCommand>) {
-    val id = (Objects.requireNonNull(origin.id))!!
+    val id = origin.id!!
     val info = getRegisteredInfoOrLogError(id)
     var changed = false
     if (info.isAutoHide != origin.isAutoHide) {
@@ -1491,7 +1493,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // update size of all open floating windows. See SCR #18439
     for (info: WindowInfoImpl in layout.infos) {
       if (info.isVisible) {
-        getInternalDecorator((Objects.requireNonNull(info.id))!!).fireResized()
+        getInternalDecorator(info.id!!).fireResized()
       }
     }
 
@@ -1548,10 +1550,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         else {
           pendingSetLayoutTask.set(task)
           app.invokeLater(Runnable {
-            val effectiveTask: Runnable? = pendingSetLayoutTask.getAndSet(null)
-            if (effectiveTask != null) {
-              effectiveTask.run()
-            }
+            pendingSetLayoutTask.getAndSet(null)?.run()
           }, project.disposed)
         }
       }
@@ -1692,7 +1691,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     override fun getExpireCondition() = BooleanSupplier { ApplicationManager.getApplication().isDisposed }
 
     init {
-      info.floatingBounds = Objects.requireNonNull(floatingDecorator)!!.bounds
+      info.floatingBounds = floatingDecorator!!.bounds
     }
   }
 
@@ -1748,11 +1747,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
       entry.windowedDecorator = windowedDecorator
       windowedDecorator.addDisposable {
-        val e: ToolWindowEntry? = idToEntry.get(info.id)
-        if (e != null && e.windowedDecorator != null) {
-          hideToolWindow(
-            (Objects.requireNonNull(info.id))!!,
-            false)
+        val e = idToEntry.get(info.id)
+        if (e?.windowedDecorator != null) {
+          hideToolWindow(info.id!!, false)
         }
       }
     }
@@ -1763,7 +1760,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * with specified `ID`.
    */
   private inner class RemoveWindowedDecoratorCmd(info: WindowInfoImpl) : FinalizableCommand(commandProcessor) {
-    private val windowedDecorator = getWindowedDecorator((Objects.requireNonNull(info.id))!!)
+    private val windowedDecorator = getWindowedDecorator(info.id!!)
 
     override fun run() {
       try {
@@ -1784,7 +1781,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         entry.windowedDecorator = null
       }
 
-      val frame = Objects.requireNonNull(windowedDecorator)!!.frame
+      val frame = windowedDecorator!!.frame
       if (frame.isShowing) {
         val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
         if (maximized) {
@@ -1858,7 +1855,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   /**
    * Translates events from InternalDecorator into ToolWindowManager method invocations.
    */
-  private inner class MyInternalDecoratorListener() : InternalDecoratorListener {
+  private inner class MyInternalDecoratorListener : InternalDecoratorListener {
     override fun anchorChanged(source: InternalDecorator, anchor: ToolWindowAnchor) {
       setToolWindowAnchor(source.toolWindow.id, anchor)
     }
@@ -1897,7 +1894,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
       else if (info.isWindowed) {
-        val decorator = getWindowedDecorator((Objects.requireNonNull(info.id))!!)
+        val decorator = getWindowedDecorator(info.id!!)
         val frame = decorator?.frame
         if (frame == null || !frame.isShowing) {
           return
@@ -1956,13 +1953,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun focusToolWindowByDefault(idToIgnore: String?) {
     var toFocus: String? = null
-    for (each: String in activeStack.stack) {
+    for (each in activeStack.stack) {
       if (idToIgnore != null && idToIgnore.equals(each, ignoreCase = true)) continue
       if (getRegisteredInfoOrLogError(each).isVisible) {
         toFocus = each
         break
       }
     }
+
     if (toFocus == null) {
       for (each: String in activeStack.persistentStack) {
         if (idToIgnore != null && idToIgnore.equals(each, ignoreCase = true)) continue
@@ -1972,6 +1970,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
     }
+
     if (toFocus != null && !ApplicationManager.getApplication().isDisposed) {
       activateToolWindow(toFocus, false, true)
     }
@@ -1993,6 +1992,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (visibleOnPanel == info.isShowStripeButton) {
       return
     }
+
     info.isShowStripeButton = visibleOnPanel
     val commandList = mutableListOf<FinalizableCommand>()
     appendApplyWindowInfoCmd(info, commandList)
@@ -2004,7 +2004,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return info == null || info.isShowStripeButton
   }
 
-  class InitToolWindowsActivity() : StartupActivity.DumbAware {
+  class InitToolWindowsActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
       val manager = getInstanceEx(project) as? ToolWindowManagerImpl ?: return
       val list = mutableListOf<FinalizableCommand>()
@@ -2015,14 +2015,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         manager.commandProcessor.flush()
       }
       ToolWindowEP.EP_NAME.addExtensionPointListener(
-        object : ExtensionPointListener<ToolWindowEP?> {
-          override fun extensionAdded(extension: ToolWindowEP,
-                                      pluginDescriptor: PluginDescriptor) {
+        object : ExtensionPointListener<ToolWindowEP> {
+          override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
             manager.initToolWindow(extension)
           }
 
-          override fun extensionRemoved(extension: ToolWindowEP,
-                                        pluginDescriptor: PluginDescriptor) {
+          override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
             manager.unregisterToolWindow(extension.id)
           }
         }, project)
@@ -2035,8 +2033,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val violations = mutableListOf<String>()
-    for (info: WindowInfoImpl in layout.infos) {
-      val id = Objects.requireNonNull(info.id)
+    for (info in layout.infos) {
+      val id = info.id!!
       if (info.isVisible) {
         if (info.isFloating) {
           val entry = idToEntry[id]
@@ -2052,7 +2050,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
     }
-    if (!violations.isEmpty()) {
+    if (violations.isNotEmpty()) {
       LOG.error("Invariants failed: \n${java.lang.String.join("\n", violations)}\nContext: $additionalMessage")
     }
   }
@@ -2088,11 +2086,14 @@ private fun keyCodeToInputMask(code: Int): Int {
 @get:JdkConstants.InputEventMask
 private val activateToolWindowVKsMask: Int
   get() {
-    if (ApplicationManager.getApplication() == null) return 0
-    val keymap = Objects.requireNonNull(KeymapManager.getInstance()).activeKeymap
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+      return 0
+    }
+
+    val keymap = KeymapManager.getInstance().activeKeymap
     val baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow")
     var baseModifiers = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.ALT_MASK
-    for (each: Shortcut in baseShortcut) {
+    for (each in baseShortcut) {
       if (each is KeyboardShortcut) {
         val keyStroke = each.firstKeyStroke
         baseModifiers = keyStroke.modifiers

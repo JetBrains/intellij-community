@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
@@ -475,7 +476,7 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
 
   private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
     val project = WindowManagerEx.getInstanceEx().findFirstVisibleFrameHelper()?.project ?: return null
-    val toolWindowManager = ToolWindowManagerImpl.getInstance(project)
+    val toolWindowManager = ToolWindowManager.getInstance(project)
     val visibleToolWindows = toolWindowManager.toolWindowIds
       .asSequence()
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
@@ -531,7 +532,7 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
 
   private fun getToolWindow(pointOnScreen: Point): ToolWindowImpl? {
     val project = WindowManagerEx.getInstanceEx().findFirstVisibleFrameHelper()?.project ?: return null
-    val toolWindowManager = ToolWindowManagerImpl.getInstance(project)
+    val toolWindowManager = ToolWindowManager.getInstance(project)
     val visibleToolWindows = toolWindowManager.toolWindowIds
       .asSequence()
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
