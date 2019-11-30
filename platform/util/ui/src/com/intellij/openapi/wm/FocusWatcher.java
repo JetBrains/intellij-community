@@ -159,8 +159,8 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     focusedComponentChanged(component, cause);
   }
 
-  protected boolean isFocusedComponentChangeValid(final Component comp, final AWTEvent cause) {
-    return comp != null || cause != null;
+  protected boolean isFocusedComponentChangeValid(@Nullable Component component, AWTEvent cause) {
+    return component != null || cause != null;
   }
 
   /**
@@ -171,7 +171,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * @param component currently focused component. The component can be {@code null}
    * @param cause
    */
-  protected void focusedComponentChanged(Component component, @Nullable final AWTEvent cause){}
+  protected void focusedComponentChanged(@Nullable Component component, @Nullable AWTEvent cause){}
 
   protected void focusLostImpl(final FocusEvent e){}
 
