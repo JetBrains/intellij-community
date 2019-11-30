@@ -52,7 +52,6 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
-import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -394,9 +393,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       Collection<VirtualFile> roots = getSelectedRoots();
       if (roots.size() != 1) return null;
       return myLogData.getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
-    }
-    else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
-      return myDiffPreviewProvider;
     }
     else if (VCS_LOG.is(dataId)) {
       return myLogUi.getVcsLog();
