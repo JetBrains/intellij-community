@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.jcef;
 
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.jcef.JBCefUtils;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.ArrayUtil;
@@ -56,11 +57,13 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
         return true;
       });
 
-    JBCefUtils.addJSHandler(getCefBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
-                            (link) -> {
-        MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
-        return true;
-      });
+    if (Registry.is("markdown.open.link.in.external.browser")) {
+      JBCefUtils.addJSHandler(getCefBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
+        (link) -> {
+          MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
+          return true;
+        });
+    }
 
     getJBCefClient().addLoadHandler(myCefLoadHandler = new CefLoadHandlerAdapter() {
       @Override
@@ -133,13 +136,15 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   private class BridgeSettingListener extends CefLoadHandlerAdapter  {
     @Override
     public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
-      getCefBrowser().executeJavaScript(
-        "window.JavaPanelBridge = {" +
-          "openInExternalBrowser : function(link) {" +
-            JBCefUtils.makeJSRequestCode(JS_REQ_OPEN_IN_BROWSER, "link") +
-          "}" +
-        "};",
-        getCefBrowser().getURL(), 0);
+      if (Registry.is("markdown.open.link.in.external.browser")) {
+        getCefBrowser().executeJavaScript(
+          "window.JavaPanelBridge = {" +
+            "openInExternalBrowser : function(link) {" +
+              JBCefUtils.makeJSRequestCode(JS_REQ_OPEN_IN_BROWSER, "link") +
+            "}" +
+          "};",
+          getCefBrowser().getURL(), 0);
+      }
     }
   }
 
