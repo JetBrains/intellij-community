@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -119,7 +118,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     }
     else {
       Insets i = c.getInsets();
-      prefSize = ObjectUtils.notNull(prefSize, JBUI.emptySize());
       return new Dimension(getComboAction(c) != null ?
                            prefSize.width :
                            Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
