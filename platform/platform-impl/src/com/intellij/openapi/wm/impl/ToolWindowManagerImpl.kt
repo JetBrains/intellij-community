@@ -9,7 +9,10 @@ import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -46,7 +49,10 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.PositionTracker
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
@@ -115,7 +121,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       waiterForSecondPress = null
     }
     else {
-      service<ToolWindowManagerAppLevelHelper>()
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        service<ToolWindowManagerAppLevelHelper>()
+      }
 
       val disposable = (project as ProjectEx).earlyDisposable
 
@@ -148,9 +156,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         .handleDocked { }
         .handleFloating { }
         .handleFocusLostOnPinned { toolWindowId: String ->
-          val commands = mutableListOf<FinalizableCommand>()
           if (isToolWindowRegistered(toolWindowId)) {
-            deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands)
+            val commands = mutableListOf<FinalizableCommand>()
+            deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), shouldHide = true, commands = commands)
             // notify clients that toolwindow is deactivated
             execute(commands, true)
           }
@@ -342,7 +350,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
       false
     }, project)
-    UIUtil.putClientProperty(toolWindowPane!!, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
+    toolWindowPane!!.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
       val infos = layout.infos
       val result = ArrayList<JComponent>(infos.size)
       for (info: WindowInfoImpl in infos) {
@@ -579,17 +587,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   /**
    * Helper method. It deactivates (and hides) window with specified `id`.
    */
-  private fun deactivateToolWindowImpl(info: WindowInfoImpl,
-                                       shouldHide: Boolean,
-                                       commandsList: MutableList<FinalizableCommand>) {
+  private fun deactivateToolWindowImpl(info: WindowInfoImpl, shouldHide: Boolean, commands: MutableList<FinalizableCommand>) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("enter: deactivateToolWindowImpl(" + info.id + "," + shouldHide + ")")
+      LOG.debug("enter: deactivateToolWindowImpl(${info.id},$shouldHide)")
     }
     if (shouldHide) {
-      appendRemoveDecoratorCommand(info, false, commandsList)
+      appendRemoveDecoratorCommand(info, false, commands)
     }
     info.isActive = false
-    appendApplyWindowInfoCmd(info, commandsList)
+    appendApplyWindowInfoCmd(info, commands)
     checkInvariants("Info: $info; shouldHide: $shouldHide")
   }
 
@@ -2007,26 +2013,25 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return info == null || info.isShowStripeButton
   }
 
-  class InitToolWindowsActivity : StartupActivity.DumbAware {
+  internal class InitToolWindowsActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
       val manager = getInstanceEx(project) as? ToolWindowManagerImpl ?: return
       val list = mutableListOf<FinalizableCommand>()
       manager.registerToolWindowsFromBeans(list)
       manager.initAll(list)
-      EdtInvocationManager.getInstance().invokeLater {
+      ApplicationManager.getApplication().invokeLater {
         manager.execute(list)
         manager.commandProcessor.flush()
       }
-      ToolWindowEP.EP_NAME.addExtensionPointListener(
-        object : ExtensionPointListener<ToolWindowEP> {
-          override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-            manager.initToolWindow(extension)
-          }
+      ToolWindowEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ToolWindowEP> {
+        override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+          manager.initToolWindow(extension)
+        }
 
-          override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-            manager.unregisterToolWindow(extension.id)
-          }
-        }, project)
+        override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+          manager.unregisterToolWindow(extension.id)
+        }
+      }, project)
     }
   }
 
