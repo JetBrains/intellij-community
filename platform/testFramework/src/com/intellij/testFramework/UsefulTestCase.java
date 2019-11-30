@@ -397,11 +397,17 @@ public abstract class UsefulTestCase extends TestCase {
         logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
       }
       catch (Throwable tearingDown) {
-        if (exception == null) exception = tearingDown;
-        else exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        if (exception == null) {
+          exception = tearingDown;
+        }
+        else {
+          exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        }
       }
     }
-    if (exception != null) throw exception;
+    if (exception != null) {
+      throw exception;
+    }
   }
 
   /**

@@ -142,6 +142,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.testFramework.RunAll.runAll;
 import static org.junit.Assert.*;
 
 /**
@@ -1219,55 +1220,58 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void tearDown() throws Exception {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll()
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
-        if (ApplicationManager.getApplication() == null) {
-          return;
-        }
-
-        Project project;
-        try {
-          project = myProjectFixture.getProject();
-        }
-        catch (AssertionError ignore) {
-          project = null;
-        }
-
-        if (project != null) {
-          CodeStyle.dropTemporarySettings(project);
-          // clear "show param info" delayed requests leaking project
-          AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
-          if (autoPopupController != null) {
-            autoPopupController.cancelAllRequests();
+    runAll(
+      () -> {
+        EdtTestUtil.runInEdtAndWait(() -> {
+          if (ApplicationManager.getApplication() == null) {
+            return;
           }
-        }
 
-        // return default value to avoid unnecessary save
-        DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
-        if (daemonCodeAnalyzerSettings != null) {
-          daemonCodeAnalyzerSettings.setImportHintEnabled(true);
-        }
+          Project project;
+          try {
+            project = myProjectFixture.getProject();
+          }
+          catch (AssertionError ignore) {
+            project = null;
+          }
 
-        if (project != null) {
-          closeOpenFiles();
-          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
-          // needed for myVirtualFilePointerTracker check below
-          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
-        }
-      }))
-      .append(() -> {
+          if (project != null) {
+            CodeStyle.dropTemporarySettings(project);
+            // clear "show param info" delayed requests leaking project
+            AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
+            if (autoPopupController != null) {
+              autoPopupController.cancelAllRequests();
+            }
+          }
+
+          // return default value to avoid unnecessary save
+          DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+          if (daemonCodeAnalyzerSettings != null) {
+            daemonCodeAnalyzerSettings.setImportHintEnabled(true);
+          }
+
+          if (project != null) {
+            closeOpenFiles();
+            ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+            // needed for myVirtualFilePointerTracker check below
+            ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+          }
+        });
+      },
+      () -> {
         clearFileAndEditor();
         myPsiManager = null;
-      })
-      .append(() -> disposeRootDisposable())
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()))
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()))
-      .append(() -> super.tearDown())
-      .append(() -> {
+      },
+      () -> disposeRootDisposable(),
+      () -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()),
+      () -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()),
+      () -> super.tearDown(),
+      () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
         }
-      }).run();
+      }
+    );
   }
 
   private void closeOpenFiles() {
