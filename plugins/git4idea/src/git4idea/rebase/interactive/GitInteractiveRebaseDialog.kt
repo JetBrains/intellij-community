@@ -90,7 +90,7 @@ internal class GitInteractiveRebaseDialog(
   }
   private val actions = listOf<AnAction>(
     ChangeEntryStateAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Checked, commitsTable),
-    ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, AllIcons.Actions.Pause, commitsTable),
+    ChangeEntryStateAction(GitRebaseEntry.Action.EDIT, "Stop to Edit", "Stop to Edit", AllIcons.Actions.Pause, commitsTable),
     ChangeEntryStateAction(GitRebaseEntry.Action.DROP, AllIcons.Actions.GC, commitsTable),
     FixupAction(commitsTable),
     RewordAction(commitsTable)
@@ -440,9 +440,15 @@ private class CommitIconRenderer : SimpleColoredRenderer() {
 
 private open class ChangeEntryStateAction(
   protected val action: GitRebaseEntry.Action,
+  title: String,
+  description: String,
   icon: Icon,
   protected val table: CommitsTable
-) : DumbAwareAction(action.name.capitalize(), action.name.capitalize(), icon) {
+) : DumbAwareAction(title, description, icon) {
+
+  constructor(action: GitRebaseEntry.Action, icon: Icon, table: CommitsTable) :
+    this(action, action.name.capitalize(), action.name.capitalize(), icon, table)
+
   init {
     val keyStroke = KeyStroke.getKeyStroke(
       KeyEvent.getExtendedKeyCodeForChar(action.mnemonic.toInt()),
@@ -467,6 +473,16 @@ private open class ChangeEntryStateAction(
 }
 
 private class FixupAction(table: CommitsTable) : ChangeEntryStateAction(GitRebaseEntry.Action.FIXUP, AllIcons.Vcs.Merge, table) {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.text = when (table.selectedRowCount) {
+      0 -> "Fixup"
+      1 -> "Fixup with Previous"
+      else -> "Fixup Selected"
+    }
+    e.presentation.description = e.presentation.text
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val selectedRows = table.selectedRows
     if (selectedRows.size == 1) {
@@ -480,7 +496,13 @@ private class FixupAction(table: CommitsTable) : ChangeEntryStateAction(GitRebas
   }
 }
 
-private class RewordAction(table: CommitsTable) : ChangeEntryStateAction(GitRebaseEntry.Action.REWORD, AllIcons.Actions.Edit, table) {
+private class RewordAction(table: CommitsTable) :
+  ChangeEntryStateAction(GitRebaseEntry.Action.REWORD, TITLE, TITLE, AllIcons.Actions.Edit, table) {
+
+  companion object {
+    private const val TITLE = "Edit Message"
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     if (table.selectedRowCount != 1) {
