@@ -12,18 +12,18 @@ import java.util.function.Predicate;
 public interface ChangesViewContentI {
   void setContentManager(@NotNull ContentManager contentManager);
 
-  void addContent(Content content);
+  void addContent(@NotNull Content content);
 
-  void removeContent(final Content content);
+  void removeContent(@NotNull Content content);
 
-  void setSelectedContent(final Content content);
+  void setSelectedContent(@NotNull Content content);
 
   void setSelectedContent(@NotNull Content content, boolean requestFocus);
 
   @Nullable
-  <T> T getActiveComponent(final Class<T> aClass);
+  <T> T getActiveComponent(@NotNull Class<T> aClass);
 
-  void selectContent(final String tabName);
+  void selectContent(@NotNull String tabName);
 
   @NotNull
   List<Content> findContents(@NotNull Predicate<Content> predicate);
