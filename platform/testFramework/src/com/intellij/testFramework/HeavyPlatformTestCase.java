@@ -190,12 +190,14 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     if (ourPlatformPrefixInitialized) {
       return;
     }
+
     if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
       ourPlatformPrefixInitialized = true;
       return;
     }
+
     for (String candidate : PREFIX_CANDIDATES) {
-      String markerPath = candidate != null ? "META-INF/" + candidate + "Plugin.xml" : "idea/ApplicationInfo.xml";
+      String markerPath = candidate == null ? "idea/ApplicationInfo.xml" : "META-INF/" + candidate + "Plugin.xml";
       URL resource = HeavyPlatformTestCase.class.getClassLoader().getResource(markerPath);
       if (resource != null) {
         if (candidate != null) {
