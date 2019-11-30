@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.util.containers.hash.HashMap;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -47,7 +47,7 @@ public class JBCefUtils {
     CefMessageRouter r = id2msgRouter.get(jsRequestID);
     if (r != null) {
       cefClient.removeMessageRouter(r);
-      id2msgRouter.remove(r);
+      id2msgRouter.remove(jsRequestID);
     }
   }
 
