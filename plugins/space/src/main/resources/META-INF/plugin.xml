@@ -4,7 +4,11 @@
     <version>0.1.dev</version>
     <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
 
-    <description><![CDATA[Space Integration plugin]]></description>
+    <description>
+        <![CDATA[
+            Lets you connect your IDE to your organization in JetBrains Space.
+        ]]>
+    </description>
 
     <change-notes><![CDATA[]]>
 

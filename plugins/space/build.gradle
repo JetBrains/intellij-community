@@ -70,7 +70,7 @@ buildPlugin {
 <plugins>
     <plugin id="com.jetbrains.space" url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaIntegration),number:${buildNumber}/artifacts/content/app-idea-${buildNumber}.zip" version="$buildNumber">
         <name>Space</name>
-        <description>Space Integration plugin</description>
+        <description>Lets you connect your IDE to your organization in JetBrains Space.</description>
     </plugin>
 </plugins>""")
             println "##teamcity[publishArtifacts 'app/app-idea/build/distributions/update.xml']"
