@@ -114,7 +114,7 @@ class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
             }
 
             is CircletLoginState.Disconnected -> {
-                buildLoginPanel(st) { serverName ->
+                buildLoginPanel(st, true) { serverName ->
                     login(serverName, loginState, component)
                 }
             }

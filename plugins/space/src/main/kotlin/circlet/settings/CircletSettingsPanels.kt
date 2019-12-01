@@ -1,6 +1,7 @@
 package circlet.settings
 
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.layout.*
@@ -8,7 +9,9 @@ import com.intellij.util.ui.*
 import javax.swing.*
 
 internal fun buildLoginPanel(st: CircletLoginState.Disconnected,
-                             loginAction: (String) -> Unit): DialogPanel {
+                             popupMode: Boolean = false,
+                             loginAction: (String) -> Unit
+): DialogPanel {
     return panel {
         val serverField = JTextField(st.server, 30)
 
@@ -33,14 +36,24 @@ internal fun buildLoginPanel(st: CircletLoginState.Disconnected,
         row("") {
             loginButton()
         }
+
         if (st.error != null) {
-            val errorText = SimpleColoredComponent()
-            errorText.append(st.error, SimpleTextAttributes.ERROR_ATTRIBUTES)
-            row("") {
-                errorText()
+            val errorText = createCommentComponent(st.error, true).apply {
+                foreground = JBColor.RED
+            }
+
+            buildRow(popupMode).cell {
+                errorText(growX, pushX)
             }
         }
     }
+}
+
+private fun RowBuilder.buildRow(popupMode: Boolean): Row {
+    if (popupMode) {
+        return row {}
+    }
+    return row("") {}
 }
 
 internal fun buildConnectingPanel(st: CircletLoginState.Connecting, cancelAction: () -> Unit): DialogPanel {
