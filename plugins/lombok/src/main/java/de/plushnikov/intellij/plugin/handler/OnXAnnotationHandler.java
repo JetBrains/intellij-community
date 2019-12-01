@@ -11,6 +11,15 @@ import com.intellij.psi.PsiNameValuePair;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.With;
+import lombok.experimental.Wither;
+
 
 public class OnXAnnotationHandler {
   private static final Pattern UNDERSCORES = Pattern.compile("__*");
@@ -21,13 +30,14 @@ public class OnXAnnotationHandler {
   private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
 
   private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
-    "lombok.Getter",
-    "lombok.Setter",
-    "lombok.experimental.Wither",
-    "lombok.NoArgsConstructor",
-    "lombok.RequiredArgsConstructor",
-    "lombok.AllArgsConstructor",
-    "lombok.EqualsAndHashCode"
+    Getter.class.getCanonicalName(),
+    Setter.class.getCanonicalName(),
+    With.class.getCanonicalName(),
+    Wither.class.getCanonicalName(),
+    NoArgsConstructor.class.getCanonicalName(),
+    RequiredArgsConstructor.class.getCanonicalName(),
+    AllArgsConstructor.class.getCanonicalName(),
+    EqualsAndHashCode.class.getCanonicalName()
   );
   private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
     "onConstructor",
