@@ -1,16 +1,17 @@
 package de.plushnikov.bug.issue634;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
-@AllArgsConstructor
 @RequiredArgsConstructor
-public class Node {
-  @Setter
-  private Node next;
+@AllArgsConstructor
+@Builder
+class Node {
 
-  private final Object element;
+  @Setter
+  @NonNull
+  private NodeBuilder next;
+  @NonNull
+  @Getter
+  private final Node element;
 }
