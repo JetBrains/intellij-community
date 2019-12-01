@@ -15,10 +15,8 @@ before_cache:
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 
 env:
-  - IDEA_VERSION=LATEST-EAP-SNAPSHOT  UPLOAD_BUILD=true
-  - IDEA_VERSION=2019.3               UPLOAD_BUILD=true
-  - IDEA_VERSION=2019.2.4             UPLOAD_BUILD=false
-  - IDEA_VERSION=2019.2               UPLOAD_BUILD=true
+  - IDEA_VERSION=LATEST-EAP-SNAPSHOT
+  - IDEA_VERSION=2019.3
 
 before_install:
   - chmod +x gradlew
@@ -44,6 +42,6 @@ deploy:
   file: "build/distributions/lombok-plugin-*.zip"
   on:
     tags: true
-    condition: (( $TRAVIS_TAG =~ ^releasebuild_[0-9]+.*$ ) && ( $UPLOAD_BUILD=true ))
+    condition: $TRAVIS_TAG =~ ^releasebuild_[0-9]+.*$
 after_deploy:
   - ./gradlew publishPlugin
