@@ -70,6 +70,8 @@ public final class PluginManagerCore {
 
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
   public static final String CORE_PLUGIN_ID = "com.intellij";
+  public static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
+  private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
 
   private static final PluginId JAVA_PLUGIN_ID = PluginId.getId("com.intellij.java");
   private static final PluginId JAVA_MODULE_ID = PluginId.getId("com.intellij.modules.java");
@@ -1992,4 +1994,11 @@ public final class PluginManagerCore {
   public static void removeDisablePluginListener(@NotNull Runnable listener) {
     PluginManager.getInstance().removeDisablePluginListener(listener);
   }
+
+  public static boolean ideContainsUltimateModule() {
+    IdeaPluginDescriptor corePlugin = getPlugin(PluginId.getId(CORE_PLUGIN_ID));
+    IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
+    return corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
+  }
+
 }

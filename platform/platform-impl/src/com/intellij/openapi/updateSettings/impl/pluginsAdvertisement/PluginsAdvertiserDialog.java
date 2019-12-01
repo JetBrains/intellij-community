@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.*;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -60,13 +61,21 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
+    boolean isCommunityIDE = !PluginManagerCore.ideContainsUltimateModule();
+    boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    boolean isPaidPluginsRequireMarketplacePlugin = isCommunityIDE || isVendorNotJetBrains;
     List<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myUploadedPlugins) {
       PluginDescriptor plugin = downloader.getDescriptor();
       if (!mySkippedPlugins.contains(plugin.getPluginId())) {
         pluginsToEnable.add(plugin);
         if (plugin.isEnabled()) {
-          nodes.add(PluginDownloader.createPluginNode(null, downloader));
+          PluginNode pluginNode = PluginDownloader.createPluginNode(null, downloader);
+          //if plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
+          if (pluginNode.getProductCode() != null && isPaidPluginsRequireMarketplacePlugin) {
+            pluginNode.addDepends(PluginManagerCore.MARKETPLACE_PLUGIN_ID);
+          }
+          nodes.add(pluginNode);
         }
       }
     }
