@@ -23,7 +23,7 @@ public class JCEFHtmlPanel extends JBCefBrowser {
 
   public void setHtml(@NotNull String html) {
     final String htmlToRender = prepareHtml(html);
-    loadString(htmlToRender);
+    loadHTML(htmlToRender);
   }
 
   @NotNull

@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.*;
@@ -17,7 +18,7 @@ import java.awt.*;
  * A wrapper over {@link CefBrowser}.
  * <p>
  * Use {@link #getComponent()} as the browser's UI component.
- * Use {@link #loadURL(String)} or {@link #loadString(String)} for loading.
+ * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
  *
  * @author tav
  */
@@ -38,22 +39,35 @@ public class JBCefBrowser implements Disposable {
     URL {
       @Override
       public void load(@NotNull CefBrowser browser) {
-        EventQueue.invokeLater(() -> browser.loadURL(loadValue));
+        EventQueue.invokeLater(() -> browser.loadURL(url));
+      }
+
+      @NotNull
+      @Override
+      public DeferLoader with(@NotNull String value) {
+        this.url = value;
+        return this;
       }
     },
     HTML {
       @Override
       public void load(@NotNull CefBrowser browser) {
-        EventQueue.invokeLater(() -> browser.loadString(loadValue, "about:blank"));
+        EventQueue.invokeLater(() -> browser.loadString(html, "about:blank"));
+      }
+
+      @NotNull
+      @Override
+      public DeferLoader with(@NotNull String value) {
+        this.html = value;
+        return this;
       }
     };
 
-    @NotNull protected String loadValue = ""; // URL or HTML
+    @NotNull protected String html = "";
+    @NotNull protected String url = "about:blank";
 
-    public DeferLoader with(String loadValue) {
-      this.loadValue = loadValue;
-      return this;
-    }
+    @NotNull
+    public abstract DeferLoader with(@NotNull String value);
 
     public abstract void load(@NotNull CefBrowser browser);
   }
@@ -78,7 +92,8 @@ public class JBCefBrowser implements Disposable {
     myCefBrowser = myCefClient.getCefClient().createBrowser(url != null ? url : "about:blank", false, false);
     myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
 
-    myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
+    myCefClient.
+      addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
       @Override
       public void onAfterCreated(CefBrowser browser) {
         myIsCefBrowserCreated = true;
@@ -88,9 +103,8 @@ public class JBCefBrowser implements Disposable {
           myDeferLoader = null;
         }
       }
-    }, getCefBrowser());
-
-    myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
+    }, myCefBrowser).
+      addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
@@ -104,7 +118,7 @@ public class JBCefBrowser implements Disposable {
     }, myCefBrowser);
   }
 
-  public void loadURL(String url) {
+  public void loadURL(@NotNull String url) {
     if (myIsCefBrowserCreated) {
       myCefBrowser.loadURL(url);
     }
@@ -113,7 +127,7 @@ public class JBCefBrowser implements Disposable {
     }
   }
 
-  public void loadString(String html) {
+  public void loadHTML(@NotNull String html) {
     if (myIsCefBrowserCreated) {
       myCefBrowser.loadString(html, "about:blank");
     }
@@ -160,7 +174,7 @@ public class JBCefBrowser implements Disposable {
     myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
     myCefBrowser.close(false);
     if (myIsDefaultClient) {
-      myCefClient.dispose();
+      Disposer.dispose(myCefClient);
     }
   }
 
