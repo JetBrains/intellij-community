@@ -29,14 +29,12 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
 public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Disposable {
   private final Project myProject;
-  private final ChangeListManager myChangeListManager;
   private final ChangeListAdapter myChangeListListener;
   private final Alarm myAlarm;
   private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
 
   public AffectedTestsInChangeListPainter(@NotNull Project project) {
     myProject = project;
-    myChangeListManager = ChangeListManager.getInstance(myProject);
     myChangeListListener = new ChangeListAdapter() {
       @Override
       public void changeListsChanged() {
@@ -59,7 +57,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
       }
     };
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-    myChangeListManager.addChangeListListener(myChangeListListener);
+    ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
     myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
@@ -75,7 +73,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
   public void dispose() {
     myAlarm.cancelAllRequests();
     myChangeListsToShow.set(Collections.emptySet());
-    myChangeListManager.removeChangeListListener(myChangeListListener);
+    ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
   }
 
   private void scheduleRefresh() {
@@ -118,7 +116,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
 
   private void update() {
     myChangeListsToShow.set(
-      myChangeListManager.getChangeLists().stream()
+      ChangeListManager.getInstance(myProject).getChangeLists().stream()
         .filter(list -> !list.getChanges().isEmpty())
         .map(list -> {
           Collection<Change> changes = list.getChanges();

@@ -63,7 +63,6 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   private ScheduledFuture myFuture;
   private List<CommittedChangeList> myCachedIncomingChangeLists;
   private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
-  private final ProjectLevelVcsManager myVcsManager;
 
   private MyRefreshRunnable myRefresnRunnable;
 
@@ -99,21 +98,20 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
-    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
-    myVcsManager = vcsManager;
-    vcsManager.addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE, () -> {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        if (myProject.isDisposed()) {
-          return;
-        }
+    ProjectLevelVcsManagerImpl.getInstanceImpl(project)
+      .addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE, () -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          if (myProject.isDisposed()) {
+            return;
+          }
 
-        myTaskQueue.start();
+          myTaskQueue.start();
 
-        MessageBusConnection connection = project.getMessageBus().connect();
-        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
+          MessageBusConnection connection = project.getMessageBus().connect();
+          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
+        });
       });
-    });
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
@@ -135,7 +133,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
 
   @Nullable
   public CommittedChangesProvider getProviderForProject() {
-    final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
+    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
     List<AbstractVcs> vcsWithProviders = new ArrayList<>();
     for(AbstractVcs vcs: vcss) {
       if (vcs.getCommittedChangesProvider() != null) {
@@ -152,7 +150,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   public boolean isMaxCountSupportedForProject() {
-    for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
+    for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
         final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
@@ -186,7 +184,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
 
     @Override
     public void run() {
-      for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
+      for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
         final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
         if (provider == null) continue;
 

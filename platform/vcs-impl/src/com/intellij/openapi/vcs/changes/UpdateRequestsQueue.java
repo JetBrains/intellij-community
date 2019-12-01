@@ -41,16 +41,11 @@ public final class UpdateRequestsQueue {
   private boolean myRequestRunning;
   private final List<Runnable> myWaitingUpdateCompletionQueue = new ArrayList<>();
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
-  private final ProjectLevelVcsManager myPlVcsManager;
-  private final StartupManagerEx myStartupManager;
 
   public UpdateRequestsQueue(@NotNull Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, @NotNull Runnable delegate) {
     myProject = project;
     myScheduler = scheduler;
-
     myDelegate = delegate;
-    myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myStartupManager = StartupManagerEx.getInstanceEx(myProject);
 
     // not initialized
     myStarted = false;
@@ -182,12 +177,12 @@ public final class UpdateRequestsQueue {
 
   // true = do not execute
   private boolean checkHeavyOperations() {
-    return !myIgnoreBackgroundOperation && myPlVcsManager.isBackgroundVcsOperationRunning();
+    return !myIgnoreBackgroundOperation && ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
   }
 
   // true = do not execute
   private boolean checkLifeCycle() {
-    return !myStarted || !myStartupManager.startupActivityPassed();
+    return !myStarted || !StartupManagerEx.getInstanceEx(myProject).startupActivityPassed();
   }
 
   private final class MyRunnable implements Runnable {

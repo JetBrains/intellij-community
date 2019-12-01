@@ -318,17 +318,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       }
     };
 
-    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdater.initialized();
       myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
     }
     else {
-      vcsManager.addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
-        myUpdater.initialized();
-        broadcastStateAfterLoad();
-        myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
-      });
+      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject)
+        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
+          myUpdater.initialized();
+          broadcastStateAfterLoad();
+          myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
+        });
 
       myConflictTracker.startTracking();
     }
