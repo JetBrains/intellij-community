@@ -132,6 +132,7 @@ class CircletVcsOpenInBrowserActionGroup :
 
         val changeListManager = ChangeListManager.getInstance(project)
         if (changeListManager.isUnversioned(virtualFile)) return null
+        if (changeListManager.isIgnoredFile(virtualFile)) return null
 
         val change = changeListManager.getChange(virtualFile)
         if (change != null && change.type == Change.Type.NEW) return null
