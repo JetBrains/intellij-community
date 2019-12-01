@@ -267,21 +267,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
-    FileTypeDetector.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeDetector>() {
-      @Override
-      public void extensionAdded(@NotNull FileTypeDetector extension, @NotNull PluginDescriptor pluginDescriptor) {
+    FileTypeDetector.EP_NAME.addExtensionPointListener(
+      (e, pd) -> {
         synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
           myFileTypeDetectorMap = null;
         }
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull FileTypeDetector extension, @NotNull PluginDescriptor pluginDescriptor) {
-        synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
-          myFileTypeDetectorMap = null;
-        }
-      }
-    }, this);
+      }, this);
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
       @Override

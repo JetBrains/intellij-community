@@ -3,8 +3,6 @@ package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.psi.PsiElement;
@@ -32,17 +30,7 @@ public final class MetaRegistry extends MetaDataRegistrar {
   }
 
   static {
-    MetaDataContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<MetaDataContributor>() {
-      @Override
-      public void extensionAdded(@NotNull MetaDataContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
-        clearBindings();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull MetaDataContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
-        clearBindings();
-      }
-    }, ApplicationManager.getApplication());
+    MetaDataContributor.EP_NAME.addExtensionPointListener((e, pd) -> {clearBindings();}, ApplicationManager.getApplication());
   }
 
   private static void clearBindings() {
