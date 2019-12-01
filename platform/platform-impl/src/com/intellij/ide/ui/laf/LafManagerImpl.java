@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -589,16 +588,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     AppUIUtil.updateForDarcula(isDarcula);
   }
 
-  @Nullable
-  private static Icon getAquaMenuDisabledIcon() {
-    final Icon arrowIcon = (Icon)UIManager.get("Menu.arrowIcon");
-    if (arrowIcon != null) {
-      return IconLoader.getDisabledIcon(arrowIcon);
-    }
-
-    return null;
-  }
-
   /**
    * Updates LAF of all windows. The method also updates font of components
    * as it's configured in {@code UISettings}.
@@ -949,7 +938,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void initInputMapDefaults(UIDefaults defaults) {
     // Make ENTER work in JTrees
     InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
@@ -978,7 +966,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void initFontDefaults(@NotNull UIDefaults defaults, @NotNull FontUIResource uiFont) {
     defaults.put("Tree.ancestorInputMap", null);
     FontUIResource textFont = new FontUIResource(uiFont);
