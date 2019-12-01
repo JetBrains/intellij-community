@@ -1,11 +1,5 @@
 package de.plushnikov.intellij.plugin.extension;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -20,13 +14,20 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import lombok.SneakyThrows;
 import de.plushnikov.intellij.plugin.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.handler.EqualsAndHashCodeCallSuperHandler;
 import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
 import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
+import lombok.SneakyThrows;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
@@ -39,16 +40,16 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     registeredFilters = new HashMap<>();
     registeredHooks = new HashMap<>();
 
-    for (LombokHighlightFilter value : LombokHighlightFilter.values()) {
-      registeredFilters.computeIfAbsent(value.severity, s -> new HashMap<>())
-        .computeIfAbsent(value.key, k -> new ArrayList<>())
-        .add(value);
+    for (LombokHighlightFilter highlightFilter : LombokHighlightFilter.values()) {
+      registeredFilters.computeIfAbsent(highlightFilter.severity, s -> new HashMap<>())
+        .computeIfAbsent(highlightFilter.key, k -> new ArrayList<>())
+        .add(highlightFilter);
     }
 
-    for (LombokHighlightFixHook value : LombokHighlightFixHook.values()) {
-      registeredHooks.computeIfAbsent(value.severity, s -> new HashMap<>())
-        .computeIfAbsent(value.key, k -> new ArrayList<>())
-        .add(value);
+    for (LombokHighlightFixHook highlightFixHook : LombokHighlightFixHook.values()) {
+      registeredHooks.computeIfAbsent(highlightFixHook.severity, s -> new HashMap<>())
+        .computeIfAbsent(highlightFixHook.key, k -> new ArrayList<>())
+        .add(highlightFixHook);
     }
   }
 
