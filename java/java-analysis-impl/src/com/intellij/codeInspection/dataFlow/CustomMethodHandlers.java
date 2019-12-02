@@ -88,6 +88,8 @@ class CustomMethodHandlers {
               (args, memState, factory, method) -> numberAsString(args, memState, factory, 3, Long.SIZE))
     .register(staticCall(JAVA_LANG_LONG, "toBinaryString").parameterCount(1),
               (args, memState, factory, method) -> numberAsString(args, memState, factory, 1, Long.SIZE))
+    .register(instanceCall(JAVA_LANG_ENUM, "name").parameterCount(0),
+              (args, memState, factory, method) -> enumName(args.myQualifier, memState, factory, method.getReturnType()))
     .register(anyOf(
       staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap", "singleton", "singletonList", "singletonMap"),
       staticCall(JAVA_UTIL_LIST, "of"),
@@ -339,6 +341,17 @@ class CustomMethodHandlers {
     DfaFactMap map = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
       .with(DfaFactType.SPECIAL_FIELD_VALUE, STRING_LENGTH.withValue(lengthRange));
     return factory.getFactFactory().createValue(map);
+  }
+
+  private static DfaValue enumName(DfaValue qualifier, DfaMemoryState state, DfaValueFactory factory, PsiType type) {
+    DfaConstValue constant = state.getConstantValue(qualifier);
+    if (constant != null) {
+      Object value = constant.getValue();
+      if (value instanceof PsiEnumConstant) {
+        return factory.getConstFactory().createFromValue(((PsiEnumConstant)value).getName(), type);
+      }
+    }
+    return null;
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
