@@ -76,7 +76,7 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
       })
   }
 
-  private fun addCloseListener(it: Channel) {
+  protected open fun addCloseListener(it: Channel) {
     it.closeFuture().addChannelListener {
       processChannel.compareAndSet(it.channel(), null)
     }
