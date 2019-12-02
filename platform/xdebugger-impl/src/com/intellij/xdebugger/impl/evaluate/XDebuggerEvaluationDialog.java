@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.*;
@@ -251,7 +250,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     Editor oldEditor = (myInputComponent != null) ? myInputComponent.getInputEditor().getEditor() : null;
 
     myInputComponent = createInputComponent(mode, text);
-    myInputComponent.getMainComponent().setMinimumSize(new JBDimension(500, 350));
     myMainPanel.removeAll();
     myInputComponent.addComponent(myMainPanel, myResultPanel);
 
@@ -373,6 +371,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         return XDebuggerEvaluationDialog.this;
       }
       return null;
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      Dimension d = super.getMinimumSize();
+      d.width = Math.max(d.width, JBUI.scale(300));
+      return d;
     }
   }
 }
