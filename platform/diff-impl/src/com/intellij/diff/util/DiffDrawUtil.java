@@ -225,6 +225,26 @@ public class DiffDrawUtil {
     return editor.xyToLogicalPosition(new Point(0, y)).line;
   }
 
+  @NotNull
+  public static MarkerRange getGutterMarkerPaintRange(@NotNull Editor editor, int startLine, int endLine) {
+    int y1;
+    int y2;
+    if (startLine == endLine) {
+      if (startLine == 0) {
+        y1 = lineToY(editor, 0, true) + 1;
+      }
+      else {
+        y1 = lineToY(editor, startLine - 1, false);
+      }
+      y2 = y1;
+    }
+    else {
+      y1 = lineToY(editor, startLine, true);
+      y2 = lineToY(editor, endLine - 1, false);
+    }
+    return new MarkerRange(y1, y2);
+  }
+
   @Nullable
   private static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
                                                   @Nullable final Editor editor,
@@ -709,5 +729,23 @@ public class DiffDrawUtil {
 
   enum BorderType {
     NONE, LINE, DOTTED
+  }
+
+  public static class MarkerRange {
+    public final int y1;
+    public final int y2;
+
+    public MarkerRange(int y1, int y2) {
+      this.y1 = y1;
+      this.y2 = y2;
+    }
+
+    public int component1() {
+      return y1;
+    }
+
+    public int component2() {
+      return y2;
+    }
   }
 }

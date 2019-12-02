@@ -153,34 +153,13 @@ public class DiffDividerDrawUtil {
                                               int startLine1, int endLine1,
                                               int startLine2, int endLine2,
                                               @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
-    IntPair range1 = getPaintRange(editor1, startLine1, endLine1);
-    IntPair range2 = getPaintRange(editor2, startLine2, endLine2);
-    return new DividerPolygon(range1.val1, range2.val1, range1.val2, range2.val2, fillColor, borderColor, dottedBorder);
-  }
-
-  /**
-   * Keep in sync with {@link DiffLineMarkerRenderer#paint}
-   */
-  @NotNull
-  private static IntPair getPaintRange(@NotNull Editor editor, int startLine, int endLine) {
-    int topOffset = getEditorTopOffset(editor);
-
-    int y1;
-    int y2;
-    if (startLine == endLine) {
-      if (startLine == 0) {
-        y1 = lineToY(editor, 0, true) + 1;
-      }
-      else {
-        y1 = lineToY(editor, startLine - 1, false);
-      }
-      y2 = y1;
-    }
-    else {
-      y1 = lineToY(editor, startLine, true);
-      y2 = lineToY(editor, endLine - 1, false);
-    }
-    return new IntPair(y1 + topOffset, y2 + topOffset);
+    int topOffset1 = getEditorTopOffset(editor1);
+    int topOffset2 = getEditorTopOffset(editor2);
+    DiffDrawUtil.MarkerRange range1 = DiffDrawUtil.getGutterMarkerPaintRange(editor1, startLine1, endLine1);
+    DiffDrawUtil.MarkerRange range2 = DiffDrawUtil.getGutterMarkerPaintRange(editor2, startLine2, endLine2);
+    return new DividerPolygon(range1.y1 + topOffset1, range2.y1 + topOffset2,
+                              range1.y2 + topOffset1, range2.y2 + topOffset2,
+                              fillColor, borderColor, dottedBorder);
   }
 
   @NotNull
