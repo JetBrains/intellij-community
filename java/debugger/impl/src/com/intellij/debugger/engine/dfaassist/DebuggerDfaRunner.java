@@ -123,7 +123,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
         ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
         PsiClass psiClass = ((PsiField)element).getContainingClass();
-        if (psiClass != null && type.name().equals(psiClass.getQualifiedName())) {
+        if (psiClass != null && sameType(type.name(), psiClass)) {
           Field field = type.fieldByName(((PsiField)element).getName());
           if (field != null) {
             return wrap(((ObjectReference)qualifierValue).getValue(field));
@@ -154,20 +154,43 @@ class DebuggerDfaRunner extends DataFlowRunner {
     PsiModifierListOwner psi = var.getPsiVariable();
     if (psi instanceof PsiClass) {
       // this
-      if (PsiTreeUtil.getParentOfType(myBody, PsiClass.class) == psi) {
-        return frame.thisObject();
+      ObjectReference thisRef = frame.thisObject();
+      if (thisRef != null) {
+        if (PsiTreeUtil.getParentOfType(myBody, PsiClass.class) == psi) {
+          return thisRef;
+        }
+        ReferenceType type = thisRef.referenceType();
+        if (type instanceof ClassType) {
+          for (Field field : type.allFields()) {
+            if (field.isSynthetic() && field.isFinal() && !field.isStatic() &&
+                field.name().matches("this\\$\\d+") && sameType(field.typeName(), (PsiClass)psi)) {
+              return thisRef.getValue(field);
+            }
+          }
+        }
       }
-      // TODO: support references to outer classes
     }
     if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
-      // TODO: support captured locals
+      String varName = ((PsiVariable)psi).getName();
       try {
-        LocalVariable variable = frame.visibleVariableByName(((PsiVariable)psi).getName());
+        LocalVariable variable = frame.visibleVariableByName(varName);
         if (variable != null) {
           return wrap(frame.getValue(variable));
         }
       }
       catch (AbsentInformationException ignore) {
+      }
+      ObjectReference thisRef = frame.thisObject();
+      if (thisRef != null) {
+        ReferenceType type = thisRef.referenceType();
+        if (type instanceof ClassType) {
+          for (Field field : type.allFields()) {
+            if (field.isSynthetic() && field.isFinal() && !field.isStatic() &&
+                field.name().startsWith("val$") && field.name().substring("val$".length()).equals(varName)) {
+              return wrap(thisRef.getValue(field));
+            }
+          }
+        }
       }
     }
     if (psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) {
@@ -186,6 +209,10 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
     }
     return null;
+  }
+
+  private static boolean sameType(String jdiName, PsiClass psiClass) {
+    return jdiName.replace('$', '.').equals(psiClass.getQualifiedName());
   }
 
   private void addToState(PsiElementFactory psiFactory,
