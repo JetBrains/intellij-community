@@ -15,7 +15,7 @@ import org.jetbrains.concurrency.Promise;
 import java.awt.*;
 
 public class HeadlessDataManager extends DataManagerImpl {
-  private static class HeadlessContext extends UserDataHolderBase implements DataContext {
+  private static final class HeadlessContext extends UserDataHolderBase implements DataContext {
     private final DataProvider myProvider;
 
     HeadlessContext(DataProvider provider) {
@@ -23,7 +23,8 @@ public class HeadlessDataManager extends DataManagerImpl {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
+    @Nullable
+    public Object getData(@NotNull String dataId) {
       return myProvider != null ? myProvider.getData(dataId) : null;
     }
   }

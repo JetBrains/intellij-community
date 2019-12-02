@@ -1,96 +1,144 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.idea;
+package com.intellij.idea
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.HeadlessDataManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.ide.DataManager
+import com.intellij.ide.impl.HeadlessDataManager
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.ui.IconManager
+import com.intellij.util.concurrency.AppExecutorUtil
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Supplier
 
-import static com.intellij.idea.TestAppLoaderKt.loadTestApp;
+class IdeaTestApplication private constructor() {
+  companion object {
+    @Volatile
+    private var ourInstance: IdeaTestApplication? = null
+    @Volatile
+    private var bootstrapError: RuntimeException? = null
+    private val isBootstrappingAppNow = AtomicBoolean()
 
-public final class IdeaTestApplication {
-  private static volatile IdeaTestApplication ourInstance;
-  private static volatile RuntimeException bootstrapError;
-  private static volatile boolean isBootstrappingAppNow;
+    private val dataManager: HeadlessDataManager
+      get() = ApplicationManager.getApplication().getComponent(DataManager::class.java) as HeadlessDataManager
 
-  private IdeaTestApplication() { }
-
-  public void setDataProvider(@Nullable DataProvider provider) {
-    getDataManager().setTestDataProvider(provider);
-  }
-
-  public void setDataProvider(@Nullable DataProvider provider, Disposable parentDisposable) {
-    getDataManager().setTestDataProvider(provider, parentDisposable);
-  }
-
-  public @Nullable Object getData(@NotNull String dataId) {
-    return getDataManager().getDataContext().getData(dataId);
-  }
-
-  private static HeadlessDataManager getDataManager() {
-    return (HeadlessDataManager)ApplicationManager.getApplication().getComponent(DataManager.class);
-  }
-
-  public static IdeaTestApplication getInstance() {
-    IdeaTestApplication instance = ourInstance;
-    if (instance == null) {
-      try {
-        instance = createInstance();
+    @JvmStatic
+    fun getInstance(): IdeaTestApplication {
+      var result = ourInstance
+      if (result == null) {
+        try {
+          result = createInstance()
+        }
+        catch (e: RuntimeException) {
+          bootstrapError = e
+          isBootstrappingAppNow.set(false)
+          throw e
+        }
       }
-      catch (RuntimeException e) {
-        bootstrapError = e;
-        isBootstrappingAppNow = false;
-        throw e;
+      return result
+    }
+
+    @Synchronized
+    private fun createInstance(): IdeaTestApplication {
+      var result = ourInstance
+      if (result != null) {
+        return result
       }
+
+      bootstrapError?.let {
+        throw it
+      }
+
+      if (!isBootstrappingAppNow.compareAndSet(false, true)) {
+        throw IllegalStateException("App bootstrap is already in process")
+      }
+
+      HeavyPlatformTestCase.doAutodetectPlatformPrefix()
+      loadTestApp()
+      isBootstrappingAppNow.set(false)
+      result = IdeaTestApplication()
+      ourInstance = result
+      return result
     }
-    return instance;
+
+    @Synchronized
+    @JvmStatic
+    private fun disposeInstance() {
+      if (ourInstance == null) {
+        return
+      }
+      val app = ApplicationManager.getApplication() as ApplicationImpl
+      // `ApplicationManager#ourApplication` will be automatically set to `null`
+      app.disposeContainer()
+      ourInstance = null
+    }
   }
 
-  @NotNull
-  private static synchronized IdeaTestApplication createInstance() {
-    if (ourInstance != null) {
-      return ourInstance;
-    }
-
-    if (bootstrapError != null) {
-      throw bootstrapError;
-    }
-
-    if (isBootstrappingAppNow) {
-      throw new IllegalStateException("App bootstrap is already in process");
-    }
-    isBootstrappingAppNow = true;
-
-    HeavyPlatformTestCase.doAutodetectPlatformPrefix();
-
-    loadTestApp();
-
-    isBootstrappingAppNow = false;
-    ourInstance = new IdeaTestApplication();
-    return ourInstance;
+  fun setDataProvider(provider: DataProvider?) {
+    dataManager.setTestDataProvider(provider)
   }
 
-  public void disposeApp() {
-    ApplicationManager.getApplication().invokeAndWait(() -> disposeInstance());
+  fun setDataProvider(provider: DataProvider?, parentDisposable: Disposable?) {
+    dataManager.setTestDataProvider(provider, parentDisposable!!)
   }
 
-  public void dispose() {
-    disposeInstance();
-  }
+  fun getData(dataId: String) = dataManager.dataContext.getData(dataId)
 
-  private static synchronized void disposeInstance() {
-    if (ourInstance == null) {
-      return;
+  fun disposeApp() {
+    ApplicationManager.getApplication().invokeAndWait {
+      disposeInstance()
     }
+  }
 
-    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    // `ApplicationManager#ourApplication` will be automatically set to `null`
-    app.disposeContainer();
-    ourInstance = null;
+  fun dispose() {
+    disposeInstance()
+  }
+}
+
+private fun loadTestApp() {
+  Main.setFlags(arrayOf("inspect", "", "", ""))
+  assert(Main.isHeadless())
+  assert(Main.isCommandLine())
+  PluginManagerCore.isUnitTestMode = true
+  IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
+
+  val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier {
+    PluginManagerCore.getLoadedPlugins(IdeaTestApplication::class.java.classLoader)
+  }, AppExecutorUtil.getAppExecutorService())
+  StartupUtil.replaceSystemEventQueue(logger<IdeaTestApplication>())
+  val app = ApplicationImpl(true, true, true, true)
+  IconManager.activate()
+  val plugins: List<IdeaPluginDescriptorImpl>
+  try {
+    plugins = registerRegistryAndInitStore(registerAppComponents(loadedPluginFuture, app), app)
+      .get(20, TimeUnit.SECONDS)
+
+    val boundedExecutor = createExecutorToPreloadServices()
+    val preloadServiceFuture = preloadServices(plugins, app, boundedExecutor, "")
+    app.loadComponents(null)
+
+    preloadServiceFuture
+      .thenCompose { callAppInitialized(app, boundedExecutor) }
+      .get(20, TimeUnit.SECONDS)
+  }
+  catch (e: TimeoutException) {
+    throw RuntimeException("Cannot preload services in 20 seconds: ${ThreadDumper.dumpThreadsToString()}", e)
+  }
+  catch (e: ExecutionException) {
+    throw e.cause ?: e
+  }
+  catch (e: InterruptedException) {
+    throw e.cause ?: e
   }
 }

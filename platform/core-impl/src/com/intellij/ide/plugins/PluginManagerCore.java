@@ -1289,8 +1289,7 @@ public final class PluginManagerCore {
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath, isRunningFromSources);
-    boolean parallel = System.getProperty("parallel.pluginDescriptors.loading") != "false";
-    int flags = parallel ? IS_PARALLEL : 0;
+    int flags = IS_PARALLEL;
     if (isUnitTestMode) {
       flags |= IGNORE_MISSING_INCLUDE;
     }
