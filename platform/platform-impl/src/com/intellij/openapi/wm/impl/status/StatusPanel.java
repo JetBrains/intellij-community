@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -67,23 +68,17 @@ class StatusPanel extends JPanel {
     public void setBounds(int x, int y, int w, int h) {
       super.setBounds(x, y, Math.min(w, StatusPanel.this.getWidth()), h);
     }
+  };
+
+  final JBLabel myTimeLabel = new JBLabel() {
+    @Override
+    public String getText() {
+      return StringUtil.notNullize(myTimeText);
+    }
 
     @Override
-    protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
-      if (myTimeText != null && text.endsWith(myTimeText)) {
-        int withoutTime = maxWidth - fm.stringWidth(myTimeText);
-        int end = Math.min(text.length() - myTimeText.length() - 1, 1000);
-        while (end > 0) {
-          final String truncated = text.substring(0, end) + "... ";
-          if (fm.stringWidth(truncated) < withoutTime) {
-            text = truncated + myTimeText;
-            break;
-          }
-          end--;
-        }
-      }
-
-      return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
+    public Font getFont() {
+      return myTextPanel.getFont();
     }
   };
 
@@ -92,6 +87,7 @@ class StatusPanel extends JPanel {
 
     setOpaque(false);
 
+    myTimeLabel.setBorder(JBUI.Borders.emptyLeft(4));
     myTextPanel.setBorder(JBUI.Borders.emptyLeft(5));
     new ClickListener() {
       @Override
@@ -203,7 +199,8 @@ class StatusPanel extends JPanel {
           if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
             myTimeText = "(" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
             text += " " + myTimeText;
-          } else {
+          }
+          else {
             myTimeText = null;
           }
           setStatusText(text);
