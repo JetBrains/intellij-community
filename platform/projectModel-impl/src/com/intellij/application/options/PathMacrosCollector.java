@@ -50,7 +50,7 @@ public final class PathMacrosCollector extends PathMacroMap {
     Set<String> result = new SmartHashSet<>(preResult);
     result.removeAll(pathMacros.getSystemMacroNames());
     result.removeAll(pathMacros.getLegacyMacroNames());
-    result.removeAll(pathMacros.getToolMacroNames());
+    pathMacros.removeToolMacroNames(result);
     result.removeAll(pathMacros.getIgnoredMacroNames());
     return result;
   }
