@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,5 +38,5 @@ public abstract class IterableTraversal {
    * @param candidate element to check
    * @return true if given element is a method call which removes current element from iterable
    */
-  public abstract boolean isRemoveCall(PsiElement candidate);
+  public abstract boolean isRemoveCall(PsiExpression candidate);
 }

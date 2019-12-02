@@ -76,7 +76,7 @@ public class IteratorDeclaration extends IterableTraversal {
   }
 
   @Override
-  public boolean isRemoveCall(PsiElement candidate) {
+  public boolean isRemoveCall(PsiExpression candidate) {
     return isIteratorMethodCall(candidate, "remove");
   }
 
