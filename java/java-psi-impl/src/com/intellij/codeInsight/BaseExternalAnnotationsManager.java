@@ -201,7 +201,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     DataParsingSaxHandler handler = new DataParsingSaxHandler(file);
     try {
-      SAXParser saxParser = getParser();
+      SAXParser saxParser = Holder.FACTORY.newSAXParser();
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(file.getViewProvider().getContents()))), handler);
       saxParser.reset();
     }
@@ -214,24 +214,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return result;
   }
 
-  private static final ThreadLocal<SAXParser> CACHED_SAX_PARSER = ThreadLocal.withInitial(()-> {
-    try {
-      return SAXParserFactory.newInstance().newSAXParser();
-    }
-    catch (ParserConfigurationException | SAXException e) {
-      throw new RuntimeException(e);
-    }
-  });
-  private static SAXParser getParser() throws ParserConfigurationException, SAXException {
-    try {
-      return CACHED_SAX_PARSER.get();
-    }
-    catch (RuntimeException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof SAXException) throw (SAXException)cause;
-      if (cause instanceof ParserConfigurationException) throw (ParserConfigurationException)cause;
-      throw e;
-    }
+  private interface Holder {
+    SAXParserFactory FACTORY = SAXParserFactory.newInstance();
   }
 
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
