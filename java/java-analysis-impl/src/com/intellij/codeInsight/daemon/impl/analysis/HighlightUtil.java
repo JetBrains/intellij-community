@@ -3107,8 +3107,18 @@ public class HighlightUtil extends HighlightUtilBase {
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
-    ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"),
-    SWITCH_EXPRESSION(LanguageLevel.JDK_13_PREVIEW, "feature.switch.expressions"),
+    ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"){
+      @Override
+      boolean isSufficient(LanguageLevel useSiteLevel) {
+        return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
+      }
+    },
+    SWITCH_EXPRESSION(LanguageLevel.JDK_13_PREVIEW, "feature.switch.expressions") {
+      @Override
+      boolean isSufficient(LanguageLevel useSiteLevel) {
+        return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
+      }
+    },
     TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks");
 
     private final LanguageLevel level;
@@ -3127,7 +3137,7 @@ public class HighlightUtil extends HighlightUtilBase {
       return isSufficient(PsiUtil.getLanguageLevel(element));
     }
 
-    private boolean isSufficient(LanguageLevel useSiteLevel) {
+    boolean isSufficient(LanguageLevel useSiteLevel) {
       return useSiteLevel.isAtLeast(level) && (!level.isPreview() || useSiteLevel.isPreview());
     }
   }
