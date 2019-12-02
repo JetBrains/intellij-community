@@ -198,7 +198,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
    * Tries to add external annotations into given root if possible.
    * Notifies about each addition result separately.
    */
-  public void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
+  private void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
     Project project = myPsiManager.getProject();
 
     Map<Optional<XmlFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
@@ -788,7 +788,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     }
 
     List<XmlTag> sorted = new ArrayList<>(itemTags);
-    Collections.sort(sorted, (item1, item2) -> {
+    sorted.sort((item1, item2) -> {
       String externalName1 = item1.getAttributeValue("name");
       String externalName2 = item2.getAttributeValue("name");
       assert externalName1 != null && externalName2 != null; // null names were not added
@@ -815,7 +815,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   @NotNull
   private static String createItemTag(@NotNull String ownerName, @NotNull ExternalAnnotation annotation) {
     String annotationTag = createAnnotationTag(annotation.getAnnotationFQName(), annotation.getValues());
-    return String.format("<item name=\'%s\'>%s</item>", ownerName, annotationTag);
+    return String.format("<item name='%s'>%s</item>", ownerName, annotationTag);
   }
 
   @NonNls
@@ -824,14 +824,14 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   public static String createAnnotationTag(@NotNull String annotationFQName, @Nullable PsiNameValuePair[] values) {
     @NonNls String text;
     if (values != null && values.length != 0) {
-      text = "  <annotation name=\'" + annotationFQName + "\'>\n";
+      text = "  <annotation name='" + annotationFQName + "'>\n";
       text += StringUtil.join(values, pair -> "<val" +
                                               (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
                                               " val=\"" + StringUtil.escapeXmlEntities(pair.getValue().getText()) + "\"/>", "    \n");
       text += "  </annotation>";
     }
     else {
-      text = "  <annotation name=\'" + annotationFQName + "\'/>\n";
+      text = "  <annotation name='" + annotationFQName + "'/>\n";
     }
     return text;
   }
