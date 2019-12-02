@@ -571,7 +571,13 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     JdkComboBoxModel syncModel() {
       Object previousSelection = getSelectedItem();
       JdkComboBoxModel newModel = new JdkComboBoxModel();
-      if (myFirstItem != null) {
+
+      if (myFirstItem instanceof ProjectJdkComboBoxItem) {
+        Sdk projectSdk = mySdkModel.getProjectSdk();
+        if (projectSdk == null || mySdkFilter.value(projectSdk)) {
+          newModel.addElement(myFirstItem);
+        }
+      } else if (myFirstItem != null) {
         newModel.addElement(myFirstItem);
       }
 
