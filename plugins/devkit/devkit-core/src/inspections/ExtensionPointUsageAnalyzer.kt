@@ -474,7 +474,8 @@ private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Edito
   val allUnsafeUsages = mutableListOf<EPElementUsage>()
   val task = object : Task.Backgroundable(file.project, "Analyzing extension points") {
     override fun run(indicator: ProgressIndicator) {
-      for (extensionPoint in domElement.extensionPoints) {
+      val extensionPoints = runReadAction { domElement.extensionPoints }
+      for (extensionPoint in extensionPoints) {
         runReadAction {
           if (extensionPoint.dynamic.value != null) return@runReadAction
           indicator.text = extensionPoint.effectiveQualifiedName
