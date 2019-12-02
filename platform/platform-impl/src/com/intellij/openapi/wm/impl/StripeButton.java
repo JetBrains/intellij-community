@@ -332,7 +332,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     else {
       setVisible(toShow && (window.isShowStripeButton() || isSelected()));
     }
-    setEnabled(toShow && !window.isPlaceholderMode());
+    setEnabled(window.isAvailable());
   }
 
   private final class MyPopupHandler extends PopupHandler {
