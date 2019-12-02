@@ -59,9 +59,13 @@ public abstract class ToolWindowFixture {
     pause(new Condition("Find tool window with ID '" + toolWindowId + "'") {
       @Override
       public boolean test() {
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
-        toolWindowRef.set(toolWindow);
-        return toolWindow != null;
+        try {
+          ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+          toolWindowRef.set(toolWindow);
+          return toolWindow != null;
+        } catch(Exception e) {
+          return false;
+        }
       }
     }, Timeouts.INSTANCE.getMinutes02());
     myRobot = robot;
