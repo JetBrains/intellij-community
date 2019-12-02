@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.cef.CefClient;
 import org.cef.CefSettings;
@@ -100,7 +101,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeContextMenuHandler(@NotNull CefContextMenuHandler handler, @NotNull CefBrowser browser) {
-    myContextMenuHandler.remove(browser, handler, () -> myCefClient.removeContextMenuHandler());
+    myContextMenuHandler.remove(handler, browser, () -> myCefClient.removeContextMenuHandler());
   }
 
   public JBCefClient addDialogHandler(@NotNull CefDialogHandler handler, @NotNull CefBrowser browser) {
@@ -123,7 +124,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeDialogHandler(@NotNull CefDialogHandler handler, @NotNull CefBrowser browser) {
-    myDialogHandler.remove(browser, handler, () -> myCefClient.removeDialogHandler());
+    myDialogHandler.remove(handler, browser, () -> myCefClient.removeDialogHandler());
   }
 
   public JBCefClient addDisplayHandler(@NotNull CefDisplayHandler handler, @NotNull CefBrowser browser) {
@@ -168,7 +169,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeDisplayHandler(@NotNull CefDisplayHandler handler, @NotNull CefBrowser browser) {
-    myDisplayHandler.remove(browser, handler, () -> myCefClient.removeDisplayHandler());
+    myDisplayHandler.remove(handler, browser, () -> myCefClient.removeDisplayHandler());
   }
 
   public JBCefClient addDownloadHandler(@NotNull CefDownloadHandler handler, @NotNull CefBrowser browser) {
@@ -195,7 +196,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeDownloadHandle(@NotNull CefDownloadHandler handler, @NotNull CefBrowser browser) {
-    myDownloadHandler.remove(browser, handler, () -> myCefClient.removeDownloadHandler());
+    myDownloadHandler.remove(handler, browser, () -> myCefClient.removeDownloadHandler());
   }
 
   public JBCefClient addDragHandler(@NotNull CefDragHandler handler, @NotNull CefBrowser browser) {
@@ -212,7 +213,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeDragHandler(@NotNull CefDragHandler handler, @NotNull CefBrowser browser) {
-    myDragHandler.remove(browser, handler, () -> myCefClient.removeDragHandler());
+    myDragHandler.remove(handler, browser, () -> myCefClient.removeDragHandler());
   }
 
   public JBCefClient addFocusHandler(@NotNull CefFocusHandler handler, @NotNull CefBrowser browser) {
@@ -243,7 +244,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeFocusHandler(@NotNull CefFocusHandler handler, @NotNull CefBrowser browser) {
-    myFocusHandler.remove(browser, handler, () -> myCefClient.removeFocusHandler());
+    myFocusHandler.remove(handler, browser, () -> myCefClient.removeFocusHandler());
   }
 
   public JBCefClient addJSDialogHandler(@NotNull CefJSDialogHandler handler, @NotNull CefBrowser browser) {
@@ -287,7 +288,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeJSDialogHandler(@NotNull CefJSDialogHandler handler, @NotNull CefBrowser browser) {
-    myJSDialogHandler.remove(browser, handler, () -> myCefClient.removeJSDialogHandler());
+    myJSDialogHandler.remove(handler, browser, () -> myCefClient.removeJSDialogHandler());
   }
 
   public JBCefClient addKeyboardHandler(@NotNull CefKeyboardHandler handler, @NotNull CefBrowser browser) {
@@ -311,7 +312,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeKeyboardHandler(@NotNull CefKeyboardHandler handler, @NotNull CefBrowser browser) {
-    myKeyboardHandler.remove(browser, handler, () -> myCefClient.removeKeyboardHandler());
+    myKeyboardHandler.remove(handler, browser, () -> myCefClient.removeKeyboardHandler());
   }
 
   public JBCefClient addLifeSpanHandler(@NotNull CefLifeSpanHandler handler, @NotNull CefBrowser browser) {
@@ -356,7 +357,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeLifeSpanHandler(@NotNull CefLifeSpanHandler handler, @NotNull CefBrowser browser) {
-    myLifeSpanHandler.remove(browser, handler, () -> myCefClient.removeLifeSpanHandler());
+    myLifeSpanHandler.remove(handler, browser, () -> myCefClient.removeLifeSpanHandler());
   }
 
   public JBCefClient addLoadHandler(@NotNull CefLoadHandler handler, @NotNull CefBrowser browser) {
@@ -394,7 +395,7 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeLoadHandler(@NotNull CefLoadHandler handler, @NotNull CefBrowser browser) {
-    myLoadHandler.remove(browser, handler, () -> myCefClient.removeLoadHandler());
+    myLoadHandler.remove(handler, browser, () -> myCefClient.removeLoadHandler());
   }
 
   public JBCefClient addRequestHandler(@NotNull CefRequestHandler handler, @NotNull CefBrowser browser) {
@@ -503,36 +504,53 @@ public class JBCefClient implements Disposable {
   }
 
   public void removeRequestHandler(@NotNull CefRequestHandler handler, @NotNull CefBrowser browser) {
-    myRequestHandler.remove(browser, handler, () -> myCefClient.removeRequestHandler());
+    myRequestHandler.remove(handler, browser, () -> myCefClient.removeRequestHandler());
   }
 
   private class HandlerSupport<T> {
     private volatile Map<CefBrowser, List<T>> myMap;
 
-    private synchronized void initMap(@NotNull Runnable onInit) {
+    private synchronized void syncInitMap() {
       if (myMap == null) {
         myMap = Collections.synchronizedMap(new LinkedHashMap<>());
+      }
+    }
+
+    private synchronized List<T> syncInitList(@NotNull CefBrowser browser, @NotNull Runnable onInit) {
+      List<T> list = myMap.get(browser);
+      if (list == null) {
+        myMap.put(browser, list = Collections.synchronizedList(new LinkedList<>()));
         onInit.run();
+      }
+      return list;
+    }
+
+    private synchronized void syncRemoveFromMap(@NotNull List<T> list, @NotNull CefBrowser browser, @NotNull Runnable onClear) {
+      if (list.isEmpty()) {
+        myMap.remove(browser);
+        onClear.run();
       }
     }
 
     public JBCefClient add(@NotNull T handler, @NotNull CefBrowser browser, @NotNull Runnable onInit) {
       if (myMap == null) {
-        initMap(onInit);
+        syncInitMap();
       }
-      List<T> list = myMap.computeIfAbsent(browser, (key) -> Collections.synchronizedList(new LinkedList<>()));
+      List<T> list = myMap.get(browser);
+      if (list == null) {
+        list = syncInitList(browser, onInit);
+      }
       list.add(handler);
       return JBCefClient.this;
     }
 
-    public void remove(@NotNull CefBrowser browser, @NotNull T handler, @NotNull Runnable onClear) {
+    public void remove(@NotNull T handler, @NotNull CefBrowser browser, @NotNull Runnable onClear) {
       if (myMap != null) {
         List<T> list = myMap.get(browser);
         if (list != null) {
           list.remove(handler);
           if (list.isEmpty()) {
-            myMap.remove(browser);
-            onClear.run();
+            syncRemoveFromMap(list, browser, onClear);
           }
         }
       }
@@ -553,11 +571,9 @@ public class JBCefClient implements Disposable {
     public <R> R handle(@NotNull CefBrowser browser, @NotNull HandlerCallable<T, R> callable) {
       List<T> list = get(browser);
       assert list != null;
-      R lastResult = null;
-      for (T h : list) {
-        lastResult = callable.handle(h);
-      }
-      return lastResult;
+      final Ref<R> lastResult = new Ref<>(null);
+      list.forEach(handler -> lastResult.set(callable.handle(handler)));
+      return lastResult.get();
     }
 
     @NotNull
@@ -569,9 +585,7 @@ public class JBCefClient implements Disposable {
     public void handle(@NotNull CefBrowser browser, @NotNull HandlerRunnable<T> runnable) {
       List<T> list = get(browser);
       if (list == null) return;
-      for (T h : list) {
-        runnable.handle(h);
-      }
+      list.forEach(handler -> runnable.handle(handler));
     }
   }
 
