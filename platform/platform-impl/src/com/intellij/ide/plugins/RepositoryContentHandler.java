@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +48,6 @@ class RepositoryContentHandler extends DefaultHandler {
   private Stack<String> categories;
   private String categoryName;
 
-  private Boolean isPaidPluginsRequireMarketplacePlugin;
-
   @NotNull
   List<PluginNode> getPluginsList() {
     return plugins != null ? plugins : Collections.emptyList();
@@ -60,11 +57,6 @@ class RepositoryContentHandler extends DefaultHandler {
   public void startDocument() {
     plugins = new ArrayList<>();
     categories = new Stack<>();
-    if (isPaidPluginsRequireMarketplacePlugin == null) {
-      boolean isCommunityIDE = !PluginManagerCore.ideContainsUltimateModule();
-      boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
-      isPaidPluginsRequireMarketplacePlugin = isCommunityIDE || isVendorNotJetBrains;
-    }
   }
 
   @Override
@@ -156,10 +148,6 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(PRODUCT_CODE)) {
       currentPlugin.setProductCode(currentValueString);
-      //if plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
-      if (isPaidPluginsRequireMarketplacePlugin) {
-        currentPlugin.addDepends(PluginManagerCore.MARKETPLACE_PLUGIN_ID);
-      }
     }
   }
 
