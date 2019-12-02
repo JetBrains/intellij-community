@@ -101,41 +101,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   @NotNull
   @Override
   public CellAppearanceEx forJdk(@Nullable final Sdk jdk, final boolean isInComboBox, final boolean selected, final boolean showVersion) {
-    if (jdk == null) {
-      return FileAppearanceService.getInstance().forInvalidUrl(ProjectBundle.message("jdk.missing.item"));
-    }
-
-    String name = jdk.getName();
-    CompositeAppearance appearance = new CompositeAppearance();
-    SdkType sdkType = (SdkType)jdk.getSdkType();
-    appearance.setIcon(sdkType.getIcon());
-    SimpleTextAttributes attributes = getTextAttributes(sdkType.sdkHasValidPath(jdk), selected);
-    CompositeAppearance.DequeEnd ending = appearance.getEnding();
-    ending.addText(name, attributes);
-
-    if (showVersion) {
-      String versionString = jdk.getVersionString();
-      if (versionString != null && !versionString.equals(name)) {
-        SimpleTextAttributes textAttributes = isInComboBox && !selected ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES :
-                                              SystemInfo.isMac && selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                                                                                        Color.WHITE) : SimpleTextAttributes.GRAY_ATTRIBUTES;
-        ending.addComment(versionString, textAttributes);
-      }
-    }
-
-    return ending.getAppearance();
-  }
-
-  private static SimpleTextAttributes getTextAttributes(final boolean valid, final boolean selected) {
-    if (!valid) {
-      return SimpleTextAttributes.ERROR_ATTRIBUTES;
-    }
-    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
-      return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
-    }
-    else {
-      return SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
-    }
+    return SdkAppearanceService.getInstance().forSdk(jdk, isInComboBox, selected, showVersion);
   }
 
   @NotNull

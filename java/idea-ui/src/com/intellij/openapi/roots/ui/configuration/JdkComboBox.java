@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
+import com.intellij.openapi.roots.ui.SdkAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
@@ -274,8 +275,8 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
           }
           else if (value != null) {
             Sdk sdk = value.getJdk();
-            OrderEntryAppearanceService.getInstance()
-              .forJdk(sdk, false, selected, false)
+            SdkAppearanceService.getInstance()
+              .forSdk(sdk, false, selected, false)
               .customize(this);
 
             if (sdk != null) {

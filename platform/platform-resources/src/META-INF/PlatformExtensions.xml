@@ -287,6 +287,9 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.FileAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.SdkAppearanceService"
+                        serviceImplementation="com.intellij.openapi.roots.ui.SdkAppearanceServiceImpl"/>
+
     <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger"/>
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
