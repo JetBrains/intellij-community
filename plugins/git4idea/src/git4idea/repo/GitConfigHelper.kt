@@ -6,10 +6,6 @@ import org.ini4j.Ini
 import java.io.File
 import java.io.IOException
 
-object L {
-  val LOG: Logger get() = Logger.getInstance(L::class.java)
-}
-
 @Throws(IOException::class)
 internal fun loadIniFile(file: File): Ini {
   val ini = Ini()
@@ -22,7 +18,7 @@ internal fun loadIniFile(file: File): Ini {
     return ini
   }
   catch (e: IOException) {
-    L.LOG.warn("Couldn't load config file at ${file.path}", e)
+    Logger.getInstance(GitConfig::class.java).warn("Couldn't load config file at ${file.path}", e)
     throw e
   }
 }
