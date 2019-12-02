@@ -80,19 +80,28 @@ public class LightEditService implements Disposable, LightEditorListener {
   }
 
   public boolean closeEditorWindow() {
-    disposeEditorPanel();
-    myWrapperIsStale = true;
-    Disposer.dispose(myEditorManager);
-    if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
-      Disposer.dispose(myWrapper);
-      try {
-        ApplicationManager.getApplication().exit();
+    if (canClose()) {
+      disposeEditorPanel();
+      myWrapperIsStale = true;
+      Disposer.dispose(myEditorManager);
+      if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
+        Disposer.dispose(myWrapper);
+        try {
+          ApplicationManager.getApplication().exit();
+        }
+        catch (Throwable t) {
+          System.exit(1);
+        }
       }
-      catch (Throwable t) {
-        System.exit(1);
-      }
+      return true;
     }
-    return true;
+    else {
+      return false;
+    }
+  }
+
+  private boolean canClose() {
+    return !myEditorManager.containsUnsavedDocuments() || LightEditUtil.confirmCloseAll();
   }
 
   public LightEditPanel getEditPanel() {

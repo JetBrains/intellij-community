@@ -95,4 +95,12 @@ public class LightEditorManager implements Disposable {
   boolean isImplicitSaveAllowed(@NotNull Document document) {
     return ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), true);
   }
+
+  static boolean isUnsaved(@NotNull LightEditorInfo info) {
+    return FileDocumentManager.getInstance().isFileModified(info.getFile());
+  }
+
+  boolean containsUnsavedDocuments() {
+    return myEditors.stream().anyMatch(editorInfo -> isUnsaved(editorInfo));
+  }
 }

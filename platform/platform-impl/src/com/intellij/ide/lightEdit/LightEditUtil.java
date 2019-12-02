@@ -64,4 +64,25 @@ public class LightEditUtil {
       return false;
     }
   }
+
+  static boolean confirmCloseAll() {
+    final String[] options = {CLOSE_SAVE, CLOSE_DISCARD, CLOSE_CANCEL};
+    int result = Messages.showDialog(
+      getProject(),
+      ApplicationBundle.message("light.edit.exit.message"),
+      ApplicationBundle.message("light.edit.exit.title"),
+      options, 0, Messages.getWarningIcon());
+    if (result >= 0) {
+      if (CLOSE_CANCEL.equals(options[result])) {
+        return false;
+      }
+      else if (CLOSE_SAVE.equals(options[result])) {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
 }

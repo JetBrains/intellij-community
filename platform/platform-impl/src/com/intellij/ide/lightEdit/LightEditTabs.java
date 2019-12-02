@@ -93,7 +93,7 @@ class LightEditTabs extends JBEditorTabs {
 
     private Icon getIcon() {
       return
-        isUnsaved(myEditorInfo) ? AllIcons.General.Modified : AllIcons.Actions.Close;
+        LightEditorManager.isUnsaved(myEditorInfo) ? AllIcons.General.Modified : AllIcons.Actions.Close;
     }
 
     private void closeCurrentTab() {
@@ -112,15 +112,11 @@ class LightEditTabs extends JBEditorTabs {
     private void closeTab(@NotNull TabInfo tabInfo) {
       Object data = tabInfo.getObject();
       if (data instanceof LightEditorInfo) {
-        if (!isUnsaved(myEditorInfo) || LightEditUtil.confirmClose((LightEditorInfo)data)) {
+        if (!LightEditorManager.isUnsaved(myEditorInfo) || LightEditUtil.confirmClose((LightEditorInfo)data)) {
           removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
         }
       }
     }
-  }
-
-  private static boolean isUnsaved(@NotNull LightEditorInfo info) {
-    return FileDocumentManager.getInstance().isFileModified(info.getFile());
   }
 
   private static class EditorContainer extends JPanel implements DataProvider {
