@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -126,6 +127,11 @@ public class PySearchUtilBase {
             libRoot = versionRoot;
           }
         }
+        // Empty in case of a temporary empty SDK created to install package management
+        if (classVFiles.length == 0) {
+          return LocalFileSystem.getInstance().findFileByIoFile(libRoot);
+        }
+
         final String libRootPath = libRoot.getPath();
         for (VirtualFile file : classVFiles) {
           if (FileUtil.pathsEqual(file.getPath(), libRootPath)) {
