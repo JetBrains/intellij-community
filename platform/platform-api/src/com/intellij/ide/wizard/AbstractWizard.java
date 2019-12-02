@@ -325,6 +325,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
 
   protected String addStepComponent(final Component component) {
+    if (component instanceof JPanel) {
+      ((JPanel)component).putClientProperty(DIALOG_CONTENT_PANEL_PROPERTY, true);
+    }
+
     String id = myComponentToIdMap.get(component);
     if (id == null) {
       id = Integer.toString(myComponentToIdMap.size());
