@@ -40,7 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInjectedAnnotator() {
@@ -164,11 +164,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
 
-  private static void checkThrowsWhenCalledTwice(AnnotationHolder holder, Consumer<? super AnnotationBuilder> method) {
+  private static void checkThrowsWhenCalledTwice(AnnotationHolder holder, Function<? super AnnotationBuilder, ? extends AnnotationBuilder> method) {
     try {
       AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx");
-      method.accept(builder);
-      method.accept(builder);
+      method.apply(builder);
+      method.apply(builder);
       builder.create();
       fail("Must have failed");
     }
@@ -176,10 +176,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     }
     // once is OK
     AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx");
-    method.accept(builder);
+    AnnotationBuilder newBuilder = method.apply(builder);
+    assertSame(newBuilder, builder);
     builder.create();
   }
-  private static void checkThrowsWhenCalledTwiceOnFixBuilder(AnnotationHolder holder, Consumer<? super AnnotationBuilder.FixBuilder> method) {
+  private static void checkThrowsWhenCalledTwiceOnFixBuilder(AnnotationHolder holder, Function<? super AnnotationBuilder.FixBuilder, ? extends AnnotationBuilder.FixBuilder> method) {
     IntentionAction fix = new IntentionAction() {
       @NotNull
       @Override
@@ -210,8 +211,8 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     };
     try {
       AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newFix(fix);
-      method.accept(builder);
-      method.accept(builder);
+      method.apply(builder);
+      method.apply(builder);
       builder.registerFix().create();
       fail("Must have failed");
     }
@@ -219,7 +220,8 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     }
     // once is OK
     AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newFix(fix);
-    method.accept(builder);
+    AnnotationBuilder.FixBuilder newBuilder = method.apply(builder);
+    assertSame(newBuilder, builder);
     builder.registerFix().create();
   }
   public static class MyStupidRepetitiveAnnotator implements Annotator {
