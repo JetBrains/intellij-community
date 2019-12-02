@@ -149,7 +149,6 @@ public class DfaAssist implements DebuggerContextListener {
     if (statement == null) return null;
     PsiCodeBlock body = getCodeBlock(statement);
     if (body == null) return null;
-    // TODO: read assertion status
     DebuggerDfaRunner runner = new DebuggerDfaRunner(body, statement, frame);
     return runner.isValid() ? runner : null;
   }

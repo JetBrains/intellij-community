@@ -139,6 +139,18 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
       return null;
     }
+    if (var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
+      ReferenceType type = frame.location().method().declaringType();
+      if (type instanceof ClassType) {
+        Field field = type.fieldByName("$assertionsDisabled");
+        if (field != null && field.isStatic() && field.isSynthetic()) {
+          Value value = type.getValue(field);
+          if (value instanceof BooleanValue) {
+            return value;
+          }
+        }
+      }
+    }
     PsiModifierListOwner psi = var.getPsiVariable();
     if (psi instanceof PsiClass) {
       // this
