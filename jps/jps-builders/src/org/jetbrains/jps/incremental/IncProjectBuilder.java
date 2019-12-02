@@ -172,7 +172,11 @@ public class IncProjectBuilder {
       myProjectDescriptor.getProjectStamps().getStampStorage().force();
     });
 
-    startTempDirectoryCleanupTask();
+    final CleanupTempDirectoryExtension cleaner = CleanupTempDirectoryExtension.getInstance();
+    final Future<Void> cleanupTask = cleaner != null && cleaner.getCleanupTask() != null? cleaner.getCleanupTask() : startTempDirectoryCleanupTask(myProjectDescriptor);
+    if (cleanupTask != null) {
+      myAsyncTasks.add(cleanupTask);
+    }
 
     CompileContextImpl context = null;
     try {
@@ -475,16 +479,17 @@ public class IncProjectBuilder {
       .forEach(context::processMessage);
   }
 
-  private void startTempDirectoryCleanupTask() {
+  @Nullable
+  static Future<Void> startTempDirectoryCleanupTask(final ProjectDescriptor pd) {
     final String tempPath = System.getProperty("java.io.tmpdir", null);
     if (StringUtil.isEmptyOrSpaces(tempPath)) {
-      return;
+      return null;
     }
     final File tempDir = new File(tempPath);
-    final File dataRoot = myProjectDescriptor.dataManager.getDataPaths().getDataStorageRoot();
+    final File dataRoot = pd.dataManager.getDataPaths().getDataStorageRoot();
     if (!FileUtil.isAncestor(dataRoot, tempDir, true)) {
       // cleanup only 'local' temp
-      return;
+      return null;
     }
     final File[] files = tempDir.listFiles();
     if (files != null && files.length != 0) {
@@ -497,8 +502,9 @@ public class IncProjectBuilder {
       thread.setPriority(Thread.MIN_PRIORITY);
       thread.setDaemon(true);
       thread.start();
-      myAsyncTasks.add(task);
+      return task;
     }
+    return null;
   }
 
   private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {
