@@ -64,7 +64,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   private var componentConfigCount = -1
 
   @Suppress("LeakingThis")
-  internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.simpleName}@${System.identityHashCode(this)}")
+  internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.name}@${System.identityHashCode(this)}")
 
   var componentCreated = false
     private set
