@@ -642,11 +642,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchHiDPI(uiDefaults);
 
-    fixProgressBar(uiDefaults);
-
-    fixOptionButton(uiDefaults);
-
     fixMacOSDarkThemeDecorations();
+
+    if (myCurrentLaf instanceof PluggableLafInfo) {
+      ((PluggableLafInfo)myCurrentLaf).updateDefaults(uiDefaults);
+    }
 
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
@@ -803,28 +803,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
     }
 
-    uiDefaults.put("Menu.arrowIcon", UIUtil.isUnderWin10LookAndFeel() ?
-      new Win10MenuArrowIcon() :
-      new DefaultMenuArrowIcon());
-
+    uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon());
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
-  }
-
-  private static void fixProgressBar(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
-      uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
-      uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
-    }
-  }
-
-  /**
-   * NOTE: This code could be removed if {@link com.intellij.ui.components.JBOptionButton} is moved to [platform-impl]
-   * and default UI is created there directly.
-   */
-  static void fixOptionButton(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
-      uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
-    }
   }
 
   /**
@@ -1100,54 +1080,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
-  private abstract static class MenuArrowIcon implements Icon, UIResource {
-    private final Icon icon;
-    private final Icon selectedIcon;
-    private final Icon disabledIcon;
-
-    private MenuArrowIcon(Icon icon, Icon selectedIcon, Icon disabledIcon) {
-      this.icon = icon;
-      this.selectedIcon = selectedIcon;
-      this.disabledIcon = disabledIcon;
-    }
-
-    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-      JMenuItem b = (JMenuItem) c;
-      ButtonModel model = b.getModel();
-
-      if (!model.isEnabled()) {
-        disabledIcon.paintIcon(c, g, x, y);
-      } else if (model.isArmed() || (c instanceof JMenu && model.isSelected())) {
-        selectedIcon.paintIcon(c, g, x, y);
-      } else {
-        icon.paintIcon(c, g, x, y);
-      }
-    }
-
-    @Override public int getIconWidth() {
-      return icon.getIconWidth();
-    }
-
-    @Override public int getIconHeight() {
-      return icon.getIconHeight();
-    }
-  }
-
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
     private static final BooleanSupplier dark = () -> ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground"));
     private DefaultMenuArrowIcon() {
       super(AllIcons.Icons.Ide.NextStep,
             dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
             IconLoader.getDisabledIcon(AllIcons.Icons.Ide.NextStep));
-    }
-  }
-
-  private static class Win10MenuArrowIcon extends MenuArrowIcon {
-    private static final String NAME = "menuTriangle";
-    private Win10MenuArrowIcon() {
-      super(LafIconLookup.getIcon(NAME),
-            LafIconLookup.getSelectedIcon(NAME),
-            LafIconLookup.getDisabledIcon(NAME));
     }
   }
 

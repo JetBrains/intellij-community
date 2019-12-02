@@ -15,6 +15,7 @@
  */
 package com.intellij.laf.win10;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -24,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
 /**
@@ -54,7 +54,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
       int bw = 1;
       Object op = jc.getClientProperty("JComponent.outline");
       if (c.isEnabled() && op != null) {
-        Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
+        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
         bw = isCellRenderer ? 1 : 2;
       }
       else {
