@@ -29,16 +29,7 @@ public class ThrowableInterner {
   private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
-      String message = throwable.getMessage();
-      if (message != null) {
-        return message.hashCode();
-      }
-      Object[] backtrace = getBacktrace(throwable);
-      if (backtrace != null) {
-        Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);
-        return Arrays.hashCode(stack);
-      }
-      return Arrays.hashCode(throwable.getStackTrace());
+      return ThrowableInterner.computeHashCode(throwable);
     }
 
     @Override
@@ -57,6 +48,19 @@ public class ThrowableInterner {
       return Arrays.equals(o1.getStackTrace(), o2.getStackTrace());
     }
   });
+
+  public static int computeHashCode(@NotNull Throwable throwable) {
+    String message = throwable.getMessage();
+    if (message != null) {
+      return message.hashCode();
+    }
+    Object[] backtrace = getBacktrace(throwable);
+    if (backtrace != null) {
+      Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);
+      return Arrays.hashCode(stack);
+    }
+    return Arrays.hashCode(throwable.getStackTrace());
+  }
 
   private static final Field BACKTRACE_FIELD;
   // can be UNKNOWN if the memory layout or JDK is unknown or ancient so we skip interning altogether, (e.g. jdk <=6)
