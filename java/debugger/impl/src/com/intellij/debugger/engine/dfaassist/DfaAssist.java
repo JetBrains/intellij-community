@@ -58,7 +58,7 @@ public class DfaAssist implements DebuggerContextListener {
     if (event == DebuggerSession.Event.DETACHED || event == DebuggerSession.Event.DISPOSE) {
       cleanUp();
     }
-    if (event != DebuggerSession.Event.PAUSE) return;
+    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) return;
     SourcePosition sourcePosition = newContext.getSourcePosition();
     if (sourcePosition == null) {
       cleanUp();
