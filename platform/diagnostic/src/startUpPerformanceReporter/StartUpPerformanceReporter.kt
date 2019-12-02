@@ -25,6 +25,7 @@ import com.intellij.util.io.write
 import gnu.trove.THashMap
 import java.nio.ByteBuffer
 import java.nio.file.Paths
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import kotlin.Comparator
@@ -68,8 +69,25 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
     }
 
     val projectName = project.name
-    ActivityImpl.listener = Consumer { activity ->
-      if (activity.end != 0L && activity.category == null && activity.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+    ActivityImpl.listener = ActivityListener(projectName)
+  }
+
+  inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
+    // not all activities are performed always, so, we wait only activities that were started
+    // - this set contains started, but not yet ended activities
+    private val pendingActivities = ConcurrentLinkedQueue<ActivityImpl>()
+
+    override fun accept(activity: ActivityImpl) {
+      if (activity.category != null && activity.category != ActivityCategory.APP_INIT) {
+        return
+      }
+
+      if (activity.end == 0L) {
+        if (activity.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES || activity.name == Activities.EDITOR_RESTORING_TILL_PAINT) {
+          pendingActivities.add(activity)
+        }
+      }
+      else if (pendingActivities.remove(activity) && pendingActivities.isEmpty()) {
         ActivityImpl.listener = null
         reportIfAnotherAlreadySet(projectName)
       }

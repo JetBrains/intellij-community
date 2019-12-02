@@ -162,7 +162,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void runPostStartupActivitiesFromExtensions() {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
-    // (depending on dumb-awareness), but because there is no other concurrent phase and timeline end equals to last dumb-aware activity,
+    // (depending on dumb-awareness), but because there is no other concurrent phase,
     // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
     Activity dumbAwareActivity = StartUpMeasurer.startMainActivity(Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES);
 

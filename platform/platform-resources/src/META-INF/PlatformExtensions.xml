@@ -1,5 +1,8 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <!-- must be first - adds activity listener (to tack, when reporing should be stoi) -->
+    <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
+
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
@@ -805,8 +808,6 @@
         <component>FUSProjectUsageTrigger</component>
       </components>
     </obsoleteStorage>
-
-    <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="last"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.MemorySizeConfigurator"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.MemorySizeConfiguratorService"/>

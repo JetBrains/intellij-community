@@ -32,15 +32,16 @@ public final class ActivityImpl implements Activity {
   @ApiStatus.Internal
   public static volatile Consumer<ActivityImpl> listener;
 
-  ActivityImpl(@Nullable String name, @Nullable String pluginId) {
-    this(name, StartUpMeasurer.getCurrentTime(), null, pluginId);
+  ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent, @Nullable String pluginId) {
+    this(name, start, parent, pluginId, null);
   }
 
-  ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent, @Nullable String pluginId) {
+  ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent, @Nullable String pluginId, @Nullable ActivityCategory category) {
     this.name = name;
     this.start = start;
     this.parent = parent;
     this.pluginId = pluginId;
+    this.category = category;
 
     Thread thread = Thread.currentThread();
     threadId = thread.getId();
@@ -80,9 +81,7 @@ public final class ActivityImpl implements Activity {
   @Override
   @NotNull
   public ActivityImpl startChild(@NotNull String name) {
-    ActivityImpl activity = new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId);
-    activity.category = category;
-    return activity;
+    return new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId, category);
   }
 
   @NotNull
@@ -134,9 +133,7 @@ public final class ActivityImpl implements Activity {
   @NotNull
   public Activity endAndStart(@NotNull String name) {
     end();
-    ActivityImpl activity = new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId);
-    activity.setCategory(category);
-    return activity;
+    return new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId, category);
   }
 
   @Override

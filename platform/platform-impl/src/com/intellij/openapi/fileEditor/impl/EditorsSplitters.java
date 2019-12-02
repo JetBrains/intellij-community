@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -243,8 +244,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return null;
     }
 
-    ApplicationManager.getApplication().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity("editor restoring till paint"));
-    Activity restoringEditors = StartUpMeasurer.startMainActivity(StartUpMeasurer.Activities.EDITOR_RESTORING);
+    ApplicationManager.getApplication().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING_TILL_PAINT));
+    Activity restoringEditors = StartUpMeasurer.startMainActivity(Activities.EDITOR_RESTORING);
     JPanel component = myUIBuilder.process(element, getTopPanel());
     if (component != null) {
       component.setFocusable(false);
