@@ -25,12 +25,19 @@ object JpsProjectEntitiesLoader {
   }
 
   fun loadModule(moduleFile: File, storagePlace: JpsProjectStoragePlace, builder: TypedEntityStorageBuilder) {
+    val source = JpsFileEntitySource.FileInDirectory(moduleFile.parentFile.toVirtualFileUrl(), storagePlace)
+    loadModule(moduleFile, source, storagePlace, builder)
+  }
+
+  internal fun loadModule(moduleFile: File,
+                          source: JpsFileEntitySource.FileInDirectory,
+                          storagePlace: JpsProjectStoragePlace,
+                          builder: TypedEntityStorageBuilder) {
     val mainFactories = createProjectEntitiesSerializers(storagePlace)
     val reader = CachingJpsFileContentReader(storagePlace.baseDirectoryUrl)
     val moduleSerializerFactory = mainFactories.fileSerializerFactories.filterIsInstance<ModuleSerializersFactory>().single()
 
-    val source = JpsFileEntitySource(moduleFile.toVirtualFileUrl(), moduleSerializerFactory.storagePlace)
-    val serializer = moduleSerializerFactory.createSerializer(source)
+    val serializer = moduleSerializerFactory.createSerializer(source, moduleFile.toVirtualFileUrl())
     serializer.loadEntities(builder, reader)
   }
 
@@ -46,16 +53,18 @@ object JpsProjectEntitiesLoader {
     return JpsEntitiesSerializerFactories(entityTypeSerializers = emptyList(),
                                           directorySerializersFactories = listOf(JpsLibrariesDirectorySerializerFactory("$projectDirUrl/.idea/libraries", storagePlace),
                                                                                  JpsArtifactsDirectorySerializerFactory("$projectDirUrl/.idea/artifacts", storagePlace)),
-                                          fileSerializerFactories = listOf(ModuleSerializersFactory("$projectDirUrl/.idea/modules.xml", storagePlace)))
+                                          fileSerializerFactories = listOf(ModuleSerializersFactory("$projectDirUrl/.idea/modules.xml", storagePlace)),
+                                          storagePlace = storagePlace)
   }
 
   private fun createIprProjectSerializers(storagePlace: JpsProjectStoragePlace.FileBased): JpsEntitiesSerializerFactories {
-    val projectFileSource = JpsFileEntitySource(storagePlace.iprFile, storagePlace)
-    val projectFileUrl = projectFileSource.file.url
-    return JpsEntitiesSerializerFactories(listOf(JpsLibrariesFileSerializer(projectFileUrl, storagePlace, LibraryTableId.ProjectLibraryTableId),
-                                                 JpsArtifactsFileSerializer(projectFileUrl, storagePlace)),
+    val projectFileSource = JpsFileEntitySource.ExactFile(storagePlace.iprFile, storagePlace)
+    val projectFileUrl = projectFileSource.file
+    return JpsEntitiesSerializerFactories(listOf(JpsLibrariesFileSerializer(projectFileUrl, projectFileSource, LibraryTableId.ProjectLibraryTableId),
+                                                 JpsArtifactsFileSerializer(projectFileUrl, projectFileSource)),
                                           directorySerializersFactories = emptyList(),
-                                          fileSerializerFactories = listOf(ModuleSerializersFactory(projectFileUrl, storagePlace)))
+                                          fileSerializerFactories = listOf(ModuleSerializersFactory(projectFileUrl.url, storagePlace)),
+                                          storagePlace = storagePlace)
   }
 }
 

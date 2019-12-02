@@ -44,6 +44,26 @@ class JpsProjectSaveAfterChangesTest {
   }
 
   @Test
+  fun `rename module in directory-based project`() {
+    checkSaveProjectAfterChange(sampleDirBasedProjectFile, "directoryBased/renameModule", listOf("util/util.iml")) { builder, projectDirUrl ->
+      val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
+      builder.modifyEntity(ModifiableModuleEntity::class.java, utilModule) {
+        name = "util2"
+      }
+    }
+  }
+
+  @Test
+  fun `rename module in file-based project`() {
+    checkSaveProjectAfterChange(sampleFileBasedProjectFile, "fileBased/renameModule", listOf("util/util.iml")) { builder, projectDirUrl ->
+      val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
+      builder.modifyEntity(ModifiableModuleEntity::class.java, utilModule) {
+        name = "util2"
+      }
+    }
+  }
+
+  @Test
   fun `add library`() {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, projectDirUrl ->
       val root = LibraryRoot(VirtualFileUrlManager.fromUrl("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/"),
@@ -56,7 +76,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `add module`() {
     checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule") { builder, projectDirUrl ->
       val projectPlace = (builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource).projectPlace
-      val source = JpsFileEntitySource(VirtualFileUrlManager.fromUrl("$projectDirUrl/newModule.iml"), projectPlace)
+      val source = JpsFileEntitySource.FileInDirectory(VirtualFileUrlManager.fromUrl(projectDirUrl), projectPlace)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
       val module = builder.addModuleEntity("newModule", dependencies, source)
       builder.addContentRootEntity(VirtualFileUrlManager.fromUrl("$projectDirUrl/new"), emptyList(), emptyList(), module, source)
@@ -87,6 +107,26 @@ class JpsProjectSaveAfterChangesTest {
                              LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
       builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
         roots = listOf(root)
+      }
+    }
+  }
+
+  @Test
+  fun `rename library in directory-based project`() {
+    checkSaveProjectAfterChange(sampleDirBasedProjectFile, "directoryBased/renameLibrary", listOf(".idea/libraries/junit.xml")) { builder, projectDirUrl ->
+      val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
+      builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
+        name = "junit2"
+      }
+    }
+  }
+
+  @Test
+  fun `rename library in file-based project`() {
+    checkSaveProjectAfterChange(sampleFileBasedProjectFile, "fileBased/renameLibrary", emptyList()) { builder, projectDirUrl ->
+      val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
+      builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
+        name = "junit2"
       }
     }
   }

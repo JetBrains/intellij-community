@@ -23,30 +23,31 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
   override val entityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java
 
-  override fun createSerializer(fileUrl: String): JpsFileEntitiesSerializer<LibraryEntity> {
-    return JpsLibraryEntitiesSerializer(fileUrl, projectStoragePlace, LibraryTableId.ProjectLibraryTableId)
+  override val entityFilter: (LibraryEntity) -> Boolean
+    get() = { it.tableId == LibraryTableId.ProjectLibraryTableId }
+
+  override fun createSerializer(fileUrl: String, entitySource: JpsFileEntitySource.FileInDirectory): JpsFileEntitiesSerializer<LibraryEntity> {
+    return JpsLibraryEntitiesSerializer(VirtualFileUrlManager.fromUrl(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
   }
 }
 
 private const val LIBRARY_TABLE_COMPONENT_NAME = "libraryTable"
 
-internal class JpsLibrariesFileSerializer(fileUrl: String, projectStoragePlace: JpsProjectStoragePlace, libraryTableId: LibraryTableId)
-  : JpsLibraryEntitiesSerializer(fileUrl, projectStoragePlace, libraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
+internal class JpsLibrariesFileSerializer(fileUrl: VirtualFileUrl, entitySource: JpsFileEntitySource, libraryTableId: LibraryTableId)
+  : JpsLibraryEntitiesSerializer(fileUrl, entitySource, libraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
   override val entityFilter: (LibraryEntity) -> Boolean
     get() = { it.tableId == libraryTableId }
 }
 
-internal open class JpsLibraryEntitiesSerializer(private val fileUrl: String, private val projectStoragePlace: JpsProjectStoragePlace, protected val libraryTableId: LibraryTableId) : JpsFileEntitiesSerializer<LibraryEntity> {
-  override val entitySource: JpsFileEntitySource
-    get() = JpsFileEntitySource(VirtualFileUrlManager.fromUrl(fileUrl), projectStoragePlace)
-
+internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl, override val entitySource: JpsFileEntitySource,
+                                                 protected val libraryTableId: LibraryTableId) : JpsFileEntitiesSerializer<LibraryEntity> {
   override val mainEntityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java
 
   override fun loadEntities(builder: TypedEntityStorageBuilder,
                             reader: JpsFileContentReader) {
     val source = entitySource
-    val libraryTableTag = reader.loadComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME) ?: return
+    val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
       loadLibrary(name, libraryTag, libraryTableId, builder, source)
@@ -65,7 +66,7 @@ internal open class JpsLibraryEntitiesSerializer(private val fileUrl: String, pr
     mainEntities.sortedBy { it.name }.forEach {
       componentTag.addContent(saveLibrary(it, savedEntities))
     }
-    writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
+    writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
     return savedEntities
   }
 }

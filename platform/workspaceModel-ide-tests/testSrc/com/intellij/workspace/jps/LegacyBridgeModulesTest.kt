@@ -172,11 +172,11 @@ class LegacyBridgeModulesTest {
         moduleManager.disposeModule(module)
       }
 
-      val modulePath = File(project.basePath, "oldName.iml").toVirtualFileUrl()
+      val moduleDirUrl = File(project.basePath).toVirtualFileUrl()
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
-        it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, project.storagePlace!!))
+        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, project.storagePlace!!))
       }
 
       assertNotNull(moduleManager.findModuleByName("name"))
@@ -184,7 +184,7 @@ class LegacyBridgeModulesTest {
       projectModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.removeEntity(moduleEntity)
-        it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, project.storagePlace!!))
+        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, project.storagePlace!!))
       }
 
       assertEquals(1, moduleManager.modules.size)
@@ -250,14 +250,14 @@ class LegacyBridgeModulesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val dir = File(project.basePath, "dir")
-      val modulePath = File(project.basePath, "oldName.iml").toVirtualFileUrl()
+      val moduleDirUrl = File(project.basePath).toVirtualFileUrl()
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectPlace = project.storagePlace!!
 
       projectModel.updateProjectModel {
-        val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource(modulePath, projectPlace))
-        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(), false, "", JpsFileEntitySource(modulePath, projectPlace))
+        val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectPlace))
+        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(), false, "", JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectPlace))
       }
 
       val module = moduleManager.findModuleByName("name")

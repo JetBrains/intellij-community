@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
 import org.junit.Assert
 import org.junit.ClassRule
@@ -64,7 +65,8 @@ class ImlReplaceBySourceTest {
     """.trimIndent())
 
     val replaceWith = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(moduleFile, storagePlace, replaceWith)
+    val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
+    JpsProjectEntitiesLoader.loadModule(moduleFile, source, storagePlace, replaceWith)
 
     val before = builder.toStorage()
 
@@ -83,10 +85,11 @@ class ImlReplaceBySourceTest {
 
   private fun replaceBySourceFullReplace(projectFile: File) {
     val storageBuilder1 = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder1)
+    val data = JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder1)
 
     val storageBuilder2 = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder2)
+    val reader = CachingJpsFileContentReader(projectFile.asStoragePlace().baseDirectoryUrl)
+    data.loadAll(reader, storageBuilder2)
 
     //println(storageBuilder1.toGraphViz())
     //println(storageBuilder2.toGraphViz())

@@ -494,11 +494,11 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   internal fun getModuleFilePath(moduleEntity: ModuleEntity): String {
-    val jpsFileEntitySource = moduleEntity.entitySource as? JpsFileEntitySource
+    val jpsFileEntitySource = moduleEntity.entitySource as? JpsFileEntitySource.FileInDirectory
 
     // TODO Is this fallback fake path ok?
-    return jpsFileEntitySource?.file?.filePath
-           ?: "$outOfTreeModulesPath/${moduleEntity.name}.iml"
+    val directoryPath = jpsFileEntitySource?.directory?.filePath ?: outOfTreeModulesPath
+    return "$directoryPath/${moduleEntity.name}.iml"
   }
 
   internal fun createModuleInstance(project: Project,

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
@@ -59,7 +60,7 @@ class LegacyBridgeModifiableModuleModel(
     }
 
     // TODO get entity source from ProjectModelExternalSource instead
-    val entitySource = JpsFileEntitySource(VirtualFileUrlManager.fromUrl(JpsPathUtil.pathToUrl(canonicalPath)), project.storagePlace!!)
+    val entitySource = JpsFileEntitySource.FileInDirectory(VirtualFileUrlManager.fromUrl(JpsPathUtil.pathToUrl(PathUtil.getParentPath(canonicalPath))), project.storagePlace!!)
 
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,

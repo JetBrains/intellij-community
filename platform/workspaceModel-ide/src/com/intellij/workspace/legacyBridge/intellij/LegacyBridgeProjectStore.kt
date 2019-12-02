@@ -7,10 +7,10 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtil
 import com.intellij.workspace.jps.JpsFileContentWriter
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 import com.intellij.workspace.jps.getProjectStateStorage
-import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.ConcurrentHashMap
@@ -69,11 +69,14 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
 private class ProjectWithModulesSaveSessionProducerManager(project: Project) : ProjectSaveSessionProducerManager(project) {
+  companion object {
+    private val NULL_ELEMENT = Element("null")
+  }
   private val moduleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element?>>()
 
   internal fun setModuleComponentState(imlFilePath: String, componentName: String, componentTag: Element?) {
     val componentToElement = moduleComponents.computeIfAbsent(imlFilePath) { ConcurrentHashMap() }
-    componentToElement[componentName] = componentTag
+    componentToElement[componentName] = componentTag ?: NULL_ELEMENT
   }
 
   internal fun commitComponents(moduleFilePath: String, moduleStore: ComponentStoreImpl,
@@ -82,7 +85,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
     val storage = moduleStore.storageManager.getStateStorage(MODULE_FILE_STORAGE_ANNOTATION)
     val producer = moduleSaveSessionManager.getProducer(storage) ?: return
     componentToElement.forEach { (componentName, componentTag) ->
-      producer.setState(null, componentName, componentTag)
+      producer.setState(null, componentName, if (componentTag === NULL_ELEMENT) null else componentTag)
     }
   }
 }

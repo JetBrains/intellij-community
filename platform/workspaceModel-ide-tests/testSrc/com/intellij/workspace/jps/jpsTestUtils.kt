@@ -13,6 +13,7 @@ import com.intellij.workspace.api.toVirtualFileUrl
 import com.intellij.workspace.ide.IdeUiEntitySource
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
+import junit.framework.AssertionFailedError
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
@@ -132,37 +133,40 @@ internal fun createSerializationData(projectDir: File): JpsEntitiesSerialization
 }
 
 fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {
+  fun getNonNullActualFileUrl(source: JpsFileEntitySource) =
+    getActualFileUrl(source) ?: throw AssertionFailedError("file name is not registered for $source")
+
   directorySerializerFactoriesByUrl.forEach { (url, directorySerializer) ->
     assertEquals(url, directorySerializer.directoryUrl)
     val fileSerializers = serializerToDirectoryFactory.getKeysByValue(directorySerializer)!!
     val directoryFileUrls = JpsPathUtil.urlToFile(url).listFiles { file: File -> file.isFile }?.map { JpsPathUtil.pathToUrl(it.systemIndependentPath) } ?: emptyList()
-    assertEquals(directoryFileUrls.sorted(), fileSerializers.map { it.entitySource.file.url }.sorted())
+    assertEquals(directoryFileUrls.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.entitySource) }.sorted())
   }
 
   fileSerializerFactoriesByUrl.forEach { (url, fileSerializer) ->
     assertEquals(url, fileSerializer.fileUrl)
     val fileSerializers = serializerToFileFactory.getKeysByValue(fileSerializer)!!
-    val serializersFromFactory = fileSerializer.createSerializers(CachingJpsFileContentReader(projectBaseDirUrl))
-    assertEquals(serializersFromFactory.map {it.entitySource.file.url}.sorted(), fileSerializers.map { it.entitySource.file.url }.sorted())
+    val serializersFromFactory = fileSerializer.createSerializers(CachingJpsFileContentReader(projectBaseDirUrl), ::createFileInDirectorySource)
+    assertEquals(serializersFromFactory.map {getNonNullActualFileUrl(it.entitySource)}.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.entitySource) }.sorted())
   }
 
   fileSerializersByUrl.entrySet().forEach { (url, serializers) ->
     serializers.forEach {
-      assertEquals(url, it.entitySource.file.url)
+      assertEquals(url, getNonNullActualFileUrl(it.entitySource))
     }
   }
 
   serializerToFileFactory.keys.forEach {
-    assertTrue(it in fileSerializersByUrl[it.entitySource.file.url] ?: emptyList<JpsFileEntitiesSerializer<*>>())
+    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.entitySource)] ?: emptyList<JpsFileEntitiesSerializer<*>>())
   }
 
   serializerToDirectoryFactory.keys.forEach {
-    assertTrue(it in fileSerializersByUrl[it.entitySource.file.url])
+    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.entitySource)])
   }
 
   val allSources = storage.entitiesBySource { true }
   assertNull(allSources[IdeUiEntitySource])
-  assertEquals(allSources.keys.filterIsInstance<JpsFileEntitySource>().map { it.file.url }.sorted(), fileSerializersByUrl.keySet().sorted())
+  assertEquals(allSources.keys.filterIsInstance<JpsFileEntitySource>().map { getNonNullActualFileUrl(it) }.sorted(), fileSerializersByUrl.keySet().sorted())
 }
 
 internal fun File.asStoragePlace(): JpsProjectStoragePlace =

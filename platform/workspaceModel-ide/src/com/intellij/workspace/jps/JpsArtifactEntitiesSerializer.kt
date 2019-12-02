@@ -20,7 +20,9 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   override val entityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun createSerializer(fileUrl: String) = JpsArtifactEntitiesSerializer(fileUrl, storagePlace, false)
+  override fun createSerializer(fileUrl: String, entitySource: JpsFileEntitySource.FileInDirectory): JpsArtifactEntitiesSerializer {
+    return JpsArtifactEntitiesSerializer(VirtualFileUrlManager.fromUrl(fileUrl), entitySource, false)
+  }
 
   override fun getDefaultFileName(entity: ArtifactEntity): String {
     return entity.name
@@ -29,8 +31,8 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
 private const val ARTIFACT_MANAGER_COMPONENT_NAME = "ArtifactManager"
 
-internal class JpsArtifactsFileSerializer(fileUrl: String, storagePlace: JpsProjectStoragePlace) : JpsArtifactEntitiesSerializer(fileUrl, storagePlace, true),
-                                                                                                   JpsFileEntityTypeSerializer<ArtifactEntity> {
+internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource: JpsFileEntitySource) : JpsArtifactEntitiesSerializer(fileUrl, entitySource, true),
+                                                                                                        JpsFileEntityTypeSerializer<ArtifactEntity> {
   override val additionalEntityTypes: List<Class<out TypedEntity>>
     get() = listOf(ArtifactsOrderEntity::class.java)
 }
@@ -43,16 +45,14 @@ internal interface ArtifactsOrderEntity : ModifiableTypedEntity<ArtifactsOrderEn
   var orderOfArtifacts: List<String>
 }
 
-internal open class JpsArtifactEntitiesSerializer(private val fileUrl: String, private val storagePlace: JpsProjectStoragePlace,
+internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
+                                                  override val entitySource: JpsFileEntitySource,
                                                   private val preserveOrder: Boolean) : JpsFileEntitiesSerializer<ArtifactEntity> {
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override val entitySource: JpsFileEntitySource
-    get() = JpsFileEntitySource(VirtualFileUrlManager.fromUrl(fileUrl), storagePlace)
-
   override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader) {
-    val artifactListElement = reader.loadComponent(fileUrl, ARTIFACT_MANAGER_COMPONENT_NAME)
+    val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
     val source = entitySource
@@ -137,7 +137,7 @@ internal open class JpsArtifactEntitiesSerializer(private val fileUrl: String, p
         componentTag.addContent(saveArtifact(artifact, savedEntities))
       }
     }
-    writer.saveComponent(fileUrl, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
+    writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
     return savedEntities
   }
 

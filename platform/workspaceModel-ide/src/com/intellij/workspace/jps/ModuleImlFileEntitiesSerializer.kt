@@ -26,10 +26,8 @@ private const val MODULE_ROOT_MANAGER_COMPONENT_NAME = "NewModuleRootManager"
 private const val URL_ATTRIBUTE = "url"
 
 internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePath,
-                                               private val storagePlace: JpsProjectStoragePlace) : JpsFileEntitiesSerializer<ModuleEntity> {
-  override val entitySource: JpsFileEntitySource
-    get() = JpsFileEntitySource(File(modulePath.path).toVirtualFileUrl(), storagePlace)
-
+                                               override val fileUrl: VirtualFileUrl,
+                                               override val entitySource: JpsFileEntitySource) : JpsFileEntitiesSerializer<ModuleEntity> {
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
@@ -43,7 +41,7 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
     val source = entitySource
     val moduleEntity = builder.addModuleEntity(moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), source)
 
-    val rootManagerElement = reader.loadComponent(source.file.url, MODULE_ROOT_MANAGER_COMPONENT_NAME)?.clone()
+    val rootManagerElement = reader.loadComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME)?.clone()
     if (rootManagerElement == null) {
       return
     }
@@ -218,7 +216,7 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
       rootManagerElement.addContent(saveDependencyItem(it, moduleLibraries, savedEntities))
     }
 
-    writer.saveComponent(entitySource.file.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, rootManagerElement)
+    writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, rootManagerElement)
     return savedEntities
   }
 
@@ -357,30 +355,38 @@ internal class ModuleSerializersFactory(override val fileUrl: String,
   override val entityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
-  override fun createSerializer(source: JpsFileEntitySource): JpsFileEntitiesSerializer<ModuleEntity> {
-    return ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(source.file.filePath), null), storagePlace)
+  override fun getFileName(entity: ModuleEntity): String {
+    return "${entity.name}.iml"
   }
 
-  override fun createSerializers(reader: JpsFileContentReader): List<JpsFileEntitiesSerializer<ModuleEntity>> {
+  override fun createSerializer(source: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
+    return ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl,  source)
+  }
+
+  override fun createSerializers(reader: JpsFileContentReader,
+                                 sourceFactory: (VirtualFileUrl, String) -> JpsFileEntitySource.FileInDirectory): List<JpsFileEntitiesSerializer<ModuleEntity>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, MODULE_MANAGER_COMPONENT_NAME) ?: return emptyList()
     return ModuleManagerImpl.getPathsToModuleFiles(moduleManagerTag).map {
       //todo load module groups
-      ModuleImlFileEntitiesSerializer(it, storagePlace)
+      val moduleFile = File(it.path)
+      val url = moduleFile.toVirtualFileUrl()
+      ModuleImlFileEntitiesSerializer(it, url, sourceFactory(moduleFile.parentFile.toVirtualFileUrl(), moduleFile.name))
     }
   }
 
   override fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter) {
     val componentTag = JDomSerializationUtil.createComponentElement(MODULE_MANAGER_COMPONENT_NAME)
     val entitiesToSave = entities
-      .mapNotNullTo(ArrayList()) { module -> (module.entitySource as? JpsFileEntitySource)?.let { Pair(it, module) } }
+      .mapNotNullTo(ArrayList()) { module -> (module.entitySource as? JpsFileEntitySource.FileInDirectory)?.let { Pair(it, module) } }
       .sortedBy { it.second.name }
     if (entitiesToSave.isNotEmpty()) {
       val modulesTag = Element("modules")
       entitiesToSave
         .forEach { (source, module) ->
           val moduleTag = Element("module")
-          moduleTag.setAttribute("fileurl", source.file.url)
-          moduleTag.setAttribute("filepath", JpsPathUtil.urlToPath(source.file.url))
+          val fileUrl = getModuleFileUrl(source, module)
+          moduleTag.setAttribute("fileurl", fileUrl)
+          moduleTag.setAttribute("filepath", JpsPathUtil.urlToPath(fileUrl))
           module.groupPath?.let {
             moduleTag.setAttribute("group", it.path.joinToString("/"))
           }
@@ -391,4 +397,11 @@ internal class ModuleSerializersFactory(override val fileUrl: String,
 
     writer.saveComponent(fileUrl, MODULE_MANAGER_COMPONENT_NAME, componentTag)
   }
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
+  }
+
+  private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
+                               module: ModuleEntity) = source.directory.url + "/" + module.name + ".iml"
 }

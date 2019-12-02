@@ -3,11 +3,12 @@ package com.intellij.workspace.ide
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.project.isDirectoryBased
+import com.intellij.util.PathUtil
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.api.VirtualFileUrlManager
-import com.intellij.util.PathUtil
 import org.jetbrains.jps.util.JpsPathUtil
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Represents a file/directory where IntelliJ project is stored.
@@ -31,9 +32,41 @@ sealed class JpsProjectStoragePlace {
 }
 
 /**
- * Represents a specific xml file containing configuration of IntelliJ IDEA project in JPS format (*.ipr file or *.xml file under .idea directory)
+ * Represents an xml file containing configuration of IntelliJ IDEA project in JPS format (*.ipr file or *.xml file under .idea directory)
  */
-data class JpsFileEntitySource(val file: VirtualFileUrl, val projectPlace: JpsProjectStoragePlace) : EntitySource
+sealed class JpsFileEntitySource : EntitySource {
+  abstract val projectPlace: JpsProjectStoragePlace
+
+  /**
+   * Represents a specific xml file containing configuration of some entities of IntelliJ IDEA project.
+   */
+  data class ExactFile(val file: VirtualFileUrl, override val projectPlace: JpsProjectStoragePlace) : JpsFileEntitySource()
+
+  /**
+   * Represents an xml file located in the specified [directory] which contains configuration of some entities of IntelliJ IDEA project.
+   * The file name is automatically derived from the entity name.
+   */
+  data class FileInDirectory(val directory: VirtualFileUrl, override val projectPlace: JpsProjectStoragePlace) : JpsFileEntitySource() {
+    /**
+     * Automatically generated value which is used to distinguish different files in [directory]. The actual name is stored in serialization
+     * structures and may change if name of the corresponding entity has changed.
+     */
+    val fileNameId: Int = nextId.getAndIncrement()
+
+    companion object {
+      private val nextId = AtomicInteger()
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      return other is FileInDirectory && directory == other.directory && projectPlace == other.projectPlace && fileNameId == other.fileNameId
+    }
+
+    override fun hashCode(): Int {
+      return directory.hashCode() * 31 * 31 + projectPlace.hashCode() * 31 + fileNameId
+    }
+  }
+}
 
 data class ExternalEntitySource(val source: ProjectModelExternalSource) : EntitySource
 
