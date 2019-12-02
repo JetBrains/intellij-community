@@ -4,6 +4,7 @@ package com.intellij.idea
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -12,15 +13,21 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.ui.IconManager
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.UIUtil
+import sun.awt.AWTAutoShutdown
+import java.awt.EventQueue
+import java.awt.Toolkit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
+import javax.swing.SwingUtilities
 
 class IdeaTestApplication private constructor() {
   companion object {
@@ -116,7 +123,14 @@ private fun loadTestApp() {
   val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier {
     PluginManagerCore.getLoadedPlugins(IdeaTestApplication::class.java.classLoader)
   }, AppExecutorUtil.getAppExecutorService())
-  StartupUtil.replaceSystemEventQueue(logger<IdeaTestApplication>())
+
+  if (EventQueue.isDispatchThread()) {
+    StartupUtil.replaceSystemEventQueue(logger<IdeaTestApplication>())
+  }
+  else {
+    replaceIdeEventQueueSafely()
+  }
+
   val app = ApplicationImpl(true, true, true, true)
   IconManager.activate()
   val plugins: List<IdeaPluginDescriptorImpl>
@@ -141,4 +155,21 @@ private fun loadTestApp() {
   catch (e: InterruptedException) {
     throw e.cause ?: e
   }
+}
+
+fun replaceIdeEventQueueSafely() {
+  if (Toolkit.getDefaultToolkit().systemEventQueue is IdeEventQueue) {
+    return
+  }
+  if (SwingUtilities.isEventDispatchThread()) {
+    throw IllegalStateException("must not call under EDT")
+  }
+
+  AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread())
+  // in JDK 1.6 java.awt.EventQueue.push() causes slow painful death of current EDT
+  // so we have to wait through its agony to termination
+  UIUtil.pump()
+  EventQueue.invokeAndWait { IdeEventQueue.getInstance() }
+  EventQueue.invokeAndWait(EmptyRunnable.getInstance())
+  EventQueue.invokeAndWait(EmptyRunnable.getInstance())
 }
