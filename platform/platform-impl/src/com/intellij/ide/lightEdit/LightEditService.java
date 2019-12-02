@@ -24,7 +24,7 @@ public class LightEditService implements Disposable, LightEditorListener {
   private boolean myWrapperIsStale;
   private final LightEditorManager myEditorManager;
 
-  static LightEditService getInstance() {
+  public static LightEditService getInstance() {
     return ServiceManager.getService(LightEditService.class);
   }
 
@@ -38,7 +38,7 @@ public class LightEditService implements Disposable, LightEditorListener {
       final LightEditPanel editorPanel = new LightEditPanel(myEditorManager);
       myWrapper =
         new WindowWrapperBuilder(WindowWrapper.Mode.FRAME, editorPanel)
-          .setOnCloseHandler(()->handleClose())
+          .setOnCloseHandler(()-> closeEditorWindow())
           .build();
       setupMenuBar(myWrapper);
       SplashManager.hideBeforeShow(myWrapper.getWindow());
@@ -79,7 +79,7 @@ public class LightEditService implements Disposable, LightEditorListener {
     }
   }
 
-  private boolean handleClose() {
+  public boolean closeEditorWindow() {
     disposeEditorPanel();
     myWrapperIsStale = true;
     Disposer.dispose(myEditorManager);
@@ -123,7 +123,7 @@ public class LightEditService implements Disposable, LightEditorListener {
   @Override
   public void afterClose(@NotNull LightEditorInfo editorInfo) {
     if (myEditorManager.getEditorCount() == 0) {
-      handleClose();
+      closeEditorWindow();
     }
   }
 

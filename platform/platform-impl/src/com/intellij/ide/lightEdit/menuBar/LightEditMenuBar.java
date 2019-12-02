@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.menuBar;
 
+import com.intellij.ide.lightEdit.actions.LightEditExitAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -21,7 +22,9 @@ public class LightEditMenuBar extends JMenuBar {
     myPresentationFactory = new MenuItemPresentationFactory();
     add(createActionMenu("&File",
                          standardAction("OpenFile"),
-                         standardAction("SaveAll")
+                         standardAction("SaveAll"),
+                         Separator.create(),
+                         new LightEditExitAction()
     ));
     add(createActionMenu("&Help",
                          standardAction("HelpTopics"),
