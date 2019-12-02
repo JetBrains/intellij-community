@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   /**
    * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
    */
+  @Transient
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public boolean isUseAutoImport() {
@@ -70,10 +72,11 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
    * @deprecated Auto-import cannot be disabled
    * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
    */
+  @Transient
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void setUseAutoImport(@SuppressWarnings("unused") boolean useAutoImport) {
-    LOG.error("Auto-import cannot be disabled");
+    LOG.warn(new Throwable("Auto-import cannot be disabled"));
   }
 
   /**
