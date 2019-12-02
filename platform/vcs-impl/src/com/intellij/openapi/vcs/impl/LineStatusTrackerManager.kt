@@ -14,7 +14,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -87,7 +86,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     private val LOG = Logger.getInstance(LineStatusTrackerManager::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project): LineStatusTrackerManagerI = project.service()
+    fun getInstance(project: Project): LineStatusTrackerManagerI {
+      return project.getComponent(LineStatusTrackerManagerI::class.java)
+    }
 
     @JvmStatic
     fun getInstanceImpl(project: Project): LineStatusTrackerManager {
@@ -96,7 +97,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   init {
-    val busConnection = project.messageBus.connect()
+    val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
     busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
@@ -105,6 +106,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
     StartupManager.getInstance(project).registerPreStartupActivity {
+      if (isDisposed) return@registerPreStartupActivity
+
       ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
 
       FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
@@ -204,6 +207,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
     }
   }
+
 
   @CalledInAwt
   private fun checkIfTrackerCanBeReleased(document: Document) {
@@ -334,6 +338,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       data.clmFilePath = newFilePath
     }
   }
+
 
   private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
     if (isDisposed) return false
