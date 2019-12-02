@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  * @see ProjectJdkTable
  * @see ProjectRootManager#getProjectSdk()
+ * @see SdkTracker
  */
 public interface Sdk extends UserDataHolder {
   @NotNull

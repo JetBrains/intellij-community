@@ -32,6 +32,10 @@
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTracker"
+                    serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkTrackerImpl"/>
+
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
