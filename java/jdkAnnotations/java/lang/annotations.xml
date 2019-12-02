@@ -233,12 +233,6 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.lang.Class java.lang.String getPackageName()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="pure" val="true"/>
-    </annotation>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name='java.lang.Class java.lang.String getSimpleName()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
