@@ -38,7 +38,7 @@
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
     <programRunner implementation="org.intellij.lang.xpath.xslt.run.XsltRunner"/>
-    <configurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
+    <runConfigurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
 
     <applicationService
         serviceInterface="org.intellij.plugins.xpathView.support.XPathSupport"
