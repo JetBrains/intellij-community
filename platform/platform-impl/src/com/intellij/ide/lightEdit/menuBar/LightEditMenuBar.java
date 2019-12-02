@@ -19,19 +19,21 @@ public class LightEditMenuBar extends JMenuBar {
 
   public LightEditMenuBar() {
     myPresentationFactory = new MenuItemPresentationFactory();
-    ActionGroup fileActions = new DefaultActionGroup(
-      "&File", Arrays.asList(standardAction("OpenFile"),
-                             standardAction("SaveAll")
+    add(createActionMenu("&File",
+                         standardAction("OpenFile"),
+                         standardAction("SaveAll")
     ));
-    ActionMenu actionMenu = createActionMenu(fileActions);
-    add(actionMenu);
+    add(createActionMenu("&Help",
+                         standardAction("HelpTopics"),
+                         standardAction("About")));
   }
 
   @NotNull
-  protected ActionMenu createActionMenu(ActionGroup action) {
+  protected ActionMenu createActionMenu(@NotNull String title, AnAction... actions) {
+    ActionGroup actionGroup = new DefaultActionGroup(title, Arrays.asList(actions));
     return new ActionMenu(null,
                           ActionPlaces.MAIN_MENU,
-                          action,
+                          actionGroup,
                           myPresentationFactory,
                           !UISettings.getInstance().getDisableMnemonics(),
                           isDarkMacMenu());
