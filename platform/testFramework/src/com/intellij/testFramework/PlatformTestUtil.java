@@ -909,22 +909,14 @@ public class PlatformTestUtil {
    */
   public static void disposeApplicationAndCheckForProjectLeaks() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      try {
-        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-
       cleanupAllProjects();
 
       UIUtil.dispatchAllInvocationEvents();
 
       ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-      System.out.println(application.writeActionStatistics());
+      if (application != null) {
+        System.out.println(application.writeActionStatistics());
+      }
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
       System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
       System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
