@@ -64,8 +64,6 @@ public class PluginManagerCore {
 
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
   public static final String CORE_PLUGIN_ID = "com.intellij";
-  public static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
-  private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
   private static final String ALL_MODULES_MARKER = "com.intellij.modules.all";
@@ -1725,11 +1723,5 @@ public class PluginManagerCore {
     protected JBTreeTraverser<PluginId> newInstance(@NotNull Meta<PluginId> meta) {
       return new PluginTraverser(meta, idMap);
     }
-  }
-
-  public static boolean ideContainsUltimateModule() {
-    IdeaPluginDescriptor corePlugin = getPlugin(PluginId.getId(CORE_PLUGIN_ID));
-    IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
-    return corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
   }
 }

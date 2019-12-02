@@ -44,6 +44,9 @@ public class RepositoryHelper {
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
   @SuppressWarnings("SpellCheckingInspection") private static final String TAG_EXT = ".etag";
 
+  private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
+  private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
+
   /**
    * Returns a list of configured plugin hosts.
    * Note that the list always ends with {@code null} element denoting a main plugin repository.
@@ -229,6 +232,10 @@ public class RepositoryHelper {
     Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
     if (build == null) build = PluginManagerCore.getBuildNumber();
 
+    boolean isCommunityIDE = !ideContainsUltimateModule();
+    boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    boolean isPaidPluginsRequireMarketplacePlugin = isCommunityIDE || isVendorNotJetBrains;
+
     for (PluginNode node : list) {
       PluginId pluginId = node.getPluginId();
 
@@ -253,8 +260,20 @@ public class RepositoryHelper {
       if (previous == null || VersionComparatorUtil.compare(node.getVersion(), previous.getVersion()) > 0) {
         result.put(pluginId, node);
       }
+
+      //if plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
+      if (isPaidPluginsRequireMarketplacePlugin) {
+        node.addDepends(MARKETPLACE_PLUGIN_ID);
+      }
     }
 
     return new ArrayList<>(result.values());
   }
+
+  private static boolean ideContainsUltimateModule() {
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID));
+    IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
+    return corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
+  }
+
 }
