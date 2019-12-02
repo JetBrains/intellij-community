@@ -203,7 +203,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     try {
       SAXParser saxParser = Holder.FACTORY.newSAXParser();
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(file.getViewProvider().getContents()))), handler);
-      saxParser.reset();
     }
     catch (IOException | ParserConfigurationException | SAXException e) {
       LOG.error(file.getViewProvider().getVirtualFile().getPath(), e);
