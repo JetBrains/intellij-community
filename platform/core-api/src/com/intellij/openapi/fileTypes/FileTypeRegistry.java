@@ -49,7 +49,9 @@ public abstract class FileTypeRegistry {
    * Checks if the given file has the given file type.
    */
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-    return file.getFileType() == type;
+    FileType actualType = file.getFileType();
+    //todo remove scratch check after IDEA-228078 is fixed
+    return actualType == type || "Scratch".equals(actualType.getName()) && type == getFileTypeByFileName(file.getNameSequence());
   }
 
   @Nullable
