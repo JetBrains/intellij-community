@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
-import com.intellij.codeInspection.ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -30,7 +29,7 @@ class LiteralConstructorReferenceHighlighter(
       if (clazz == null) {
         return false
       }
-      sink.registerProblem(highlightElement, LIKE_UNKNOWN_SYMBOL, GroovyBundle.message("cannot.instantiate.interface", clazz.name))
+      sink.registerError(highlightElement, GroovyBundle.message("cannot.instantiate.interface", clazz.name))
       return true
     }
     else {

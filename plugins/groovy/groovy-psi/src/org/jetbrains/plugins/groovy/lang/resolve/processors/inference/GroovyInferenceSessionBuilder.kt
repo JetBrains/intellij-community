@@ -136,46 +136,55 @@ private fun getExpectedTypeAndPosition(expression: GrExpression): ExpectedType? 
          ?: getArgumentExpectedType(expression)
 }
 
-fun getAssignmentOrReturnExpectedType(expression: GrExpression): PsiType? {
-  return getAssignmentOrReturnExpectedTypeAndPosition(expression)?.type
+private fun getAssignmentOrReturnExpectedTypeAndPosition(expression: GrExpression): ExpectedType? {
+  return getAssignmentExpectedType(expression)?.let { ExpectedType(it, ASSIGNMENT) }
+         ?: getReturnExpectedType(expression)?.let { ExpectedType(it, RETURN_VALUE) }
 }
 
-private fun getAssignmentOrReturnExpectedTypeAndPosition(expression: GrExpression): ExpectedType? {
-  val parent = expression.parent
-  val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, false, GrFunctionalExpression::class.java)
+fun getAssignmentOrReturnExpectedType(expression: GrExpression): PsiType? {
+  return getAssignmentExpectedType(expression)
+         ?: getReturnExpectedType(expression)
+}
 
-  if (parent is GrReturnStatement && parentMethod != null) {
-    val returnType = parentMethod.returnType ?: return null
-    return ExpectedType(returnType, RETURN_VALUE)
-  }
-  else if (isExitPoint(expression) && parentMethod != null) {
-    val returnType = parentMethod.returnType ?: return null
-    if (TypeConversionUtil.isVoidType(returnType)) return null
-    return ExpectedType(returnType, RETURN_VALUE)
-  }
-  else if (parent is GrAssignmentExpression && expression == parent.rValue) {
-    val lValue = skipParentheses(parent.lValue, false)
-    val type = (if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null) ?: return null
-    return ExpectedType(type, ASSIGNMENT)
+fun getAssignmentExpectedType(expression: GrExpression): PsiType? {
+  val parent: PsiElement = expression.parent
+  if (parent is GrAssignmentExpression && expression == parent.rValue) {
+    val lValue: PsiElement? = skipParentheses(parent.lValue, false)
+    return if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null
   }
   else if (parent is GrVariable) {
-    val declaredType = parent.declaredType ?: return null
-    return ExpectedType(declaredType, ASSIGNMENT)
+    return parent.declaredType
   }
   else if (parent is GrListOrMap) {
-    val pParent = parent.parent
+    val pParent: PsiElement? = parent.parent
     if (pParent is GrVariableDeclaration && pParent.isTuple) {
-      val index = parent.initializers.indexOf(expression)
-      val declaredType = pParent.variables.getOrNull(index)?.declaredType ?: return null
-      return ExpectedType(declaredType, ASSIGNMENT)
+      val index: Int = parent.initializers.indexOf(expression)
+      return pParent.variables.getOrNull(index)?.declaredType
     }
     else if (pParent is GrTupleAssignmentExpression) {
-      val index = parent.initializers.indexOf(expression)
-      val expressions = pParent.lValue.expressions
-      val lValue = expressions.getOrNull(index)
-      val declaredType = (lValue?.staticReference?.resolve() as? GrVariable)?.declaredType ?: return null
-      return ExpectedType(declaredType, ASSIGNMENT)
+      val index: Int = parent.initializers.indexOf(expression)
+      val expressions: Array<out GrReferenceExpression> = pParent.lValue.expressions
+      val lValue: GrReferenceExpression = expressions.getOrNull(index) ?: return null
+      val variable: GrVariable? = lValue.staticReference.resolve() as? GrVariable
+      return variable?.declaredType
     }
+  }
+  return null
+}
+
+private fun getReturnExpectedType(expression: GrExpression): PsiType? {
+  val parent: PsiElement = expression.parent
+  val parentMethod: GrMethod? = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, false, GrFunctionalExpression::class.java)
+  if (parentMethod == null) {
+    return null
+  }
+  if (parent is GrReturnStatement) {
+    return parentMethod.returnType
+  }
+  else if (isExitPoint(expression)) {
+    val returnType: PsiType = parentMethod.returnType ?: return null
+    if (TypeConversionUtil.isVoidType(returnType)) return null
+    return returnType
   }
   return null
 }

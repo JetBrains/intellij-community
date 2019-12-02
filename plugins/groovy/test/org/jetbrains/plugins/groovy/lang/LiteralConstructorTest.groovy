@@ -153,6 +153,82 @@ class CollectionNoArgConstructor implements Collection {
   }
 
   @Test
+  void 'constructor reference @CS'() {
+    def data = [
+      'boolean boo = [<caret>]'   : false,
+      'byte b = [<caret>]'        : false,
+      'char c = [<caret>]'        : false,
+      'double d = [<caret>]'      : false,
+      'float f = [<caret>]'       : false,
+      'int i = [<caret>]'         : false,
+      'long l = [<caret>]'        : false,
+      'short s = [<caret>]'       : false,
+      'void v = [<caret>]'        : false,
+
+      'boolean boo = [<caret>1]'  : true,
+      'byte b = [<caret>1]'       : true,
+      'char c = [<caret>1]'       : true,
+      'double d = [<caret>1]'     : true,
+      'float f = [<caret>1]'      : true,
+      'int i = [<caret>1]'        : true,
+      'long l = [<caret>1]'       : true,
+      'short s = [<caret>1]'      : true,
+      'void v = [<caret>1]'       : true,
+
+      'boolean boo = [<caret>:]'  : true,
+      'byte b = [<caret>:]'       : true,
+      'char c = [<caret>:]'       : true,
+      'double d = [<caret>:]'     : true,
+      'float f = [<caret>:]'      : true,
+      'int i = [<caret>:]'        : true,
+      'long l = [<caret>:]'       : true,
+      'short s = [<caret>:]'      : true,
+      'void v = [<caret>:]'       : true,
+
+      'Boolean boo = [<caret>]'   : true,
+      'Byte b = [<caret>]'        : true,
+      'Character c = [<caret>]'   : true,
+      'Double d = [<caret>]'      : true,
+      'Float f = [<caret>]'       : true,
+      'Integer i = [<caret>]'     : true,
+      'Long l = [<caret>]'        : true,
+      'Short s = [<caret>]'       : true,
+      'Void v = [<caret>]'        : true,
+
+      'Boolean boo = [<caret>:]'  : true,
+      'Byte b = [<caret>:]'       : true,
+      'Character c = [<caret>:]'  : true,
+      'Double d = [<caret>:]'     : true,
+      'Float f = [<caret>:]'      : true,
+      'Integer i = [<caret>:]'    : true,
+      'Long l = [<caret>:]'       : true,
+      'Short s = [<caret>:]'      : true,
+      'Void v = [<caret>:]'       : true,
+
+      'BigInteger bi = [<caret>]' : true,
+      'BigInteger bi = [<caret>1]': true,
+      'BigInteger bi = [<caret>:]': true,
+
+      'def a = [<caret>]'         : false,
+      'def a = [<caret>:]'        : false,
+      'Object a = [<caret>]'      : false,
+      'Object a = [<caret>:]'     : false,
+
+      'Class a = [<caret>]'       : false,
+      'Class a = [<caret>:]'      : false,
+      'String s = [<caret>]'      : true,
+      'String s = [<caret>:]'     : true,
+
+      'Set s = [<caret>]'         : false,
+      'Set s = [<caret>:]'        : true,
+
+      'Person p = [<caret>]'      : true,
+      'Person p = [<caret>:]'     : true,
+    ]
+    constructorReferenceTest(data, true)
+  }
+
+  @Test
   void 'constructor reference from named argument'() {
     def data = [
       'Person p = [parent: [<caret>]]'           : true,
@@ -183,9 +259,10 @@ class CollectionNoArgConstructor implements Collection {
     constructorReferenceTest(data)
   }
 
-  private void constructorReferenceTest(LinkedHashMap<String, Boolean> data) {
+  private void constructorReferenceTest(LinkedHashMap<String, Boolean> data, boolean cs = false) {
     TestUtils.runAll(data) { text, expected ->
-      def listOrMap = elementUnderCaret(text, GrListOrMap)
+      def fullText = cs ? (String)"@groovy.transform.CompileStatic def cs() { $text }" : text
+      def listOrMap = elementUnderCaret(fullText, GrListOrMap)
       def reference = listOrMap.constructorReference
       if (expected) {
         Assert.assertNotNull(text, reference)

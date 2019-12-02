@@ -15,13 +15,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_GROOVY_METHODS
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getExpressionArguments
 import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveConstructor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.getAssignmentExpectedType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.getAssignmentOrReturnExpectedType
+import org.jetbrains.plugins.groovy.lang.typing.box
 import org.jetbrains.plugins.groovy.lang.typing.getWritePropertyType
 
 class GrLiteralConstructorReference(element: GrListOrMap) : GrConstructorReference<GrListOrMap>(element) {
@@ -32,10 +35,17 @@ class GrLiteralConstructorReference(element: GrListOrMap) : GrConstructorReferen
 
   override fun doResolveClass(): GroovyResolveResult? {
     val literal: GrListOrMap = element
-    val lType: PsiClassType = getExpectedType(literal) as? PsiClassType ?: return null
+    val cs = isCompileStatic(literal)
+    val lType: PsiClassType = getExpectedType(literal, cs) as? PsiClassType ?: return null
     val resolveResult: ClassResolveResult = lType.resolveGenerics()
     val clazz: PsiClass = resolveResult.element ?: return null
-    if (fallsBackToConstructor(clazz, literal)) {
+    val fallsBackToConstructor = if (cs) {
+      fallsBackToConstructorCS(clazz, literal)
+    }
+    else {
+      fallsBackToConstructor(clazz, literal)
+    }
+    if (fallsBackToConstructor) {
       return BaseGroovyResolveResult(clazz, literal, substitutor = resolveResult.substitutor)
     }
     else {
@@ -48,10 +58,27 @@ class GrLiteralConstructorReference(element: GrListOrMap) : GrConstructorReferen
   override val supportsEnclosingInstance: Boolean get() = false
 }
 
-private fun getExpectedType(literal: GrListOrMap): PsiType? {
-  return getAssignmentOrReturnExpectedType(literal)
+private fun getExpectedType(literal: GrListOrMap, cs: Boolean): PsiType? {
+  return getExpectedTypeFromAssignmentOrReturn(literal, cs)
          ?: getExpectedTypeFromNamedArgument(literal)
          ?: getExpectedTypeFromCoercion(literal)
+}
+
+/**
+ * @see org.codehaus.groovy.transform.stc.StaticTypeCheckingVisitor.addListAssignmentConstructorErrors
+ */
+private fun getExpectedTypeFromAssignmentOrReturn(literal: GrListOrMap, cs: Boolean): PsiType? {
+  return if (cs) {
+    val type: PsiType? = getAssignmentExpectedType(literal)
+    when {
+      literal.isMap || !literal.isEmpty -> type?.box(literal)
+      type is PsiClassType && type.resolve()?.isInterface == true -> null
+      else -> type
+    }
+  }
+  else {
+    getAssignmentOrReturnExpectedType(literal)
+  }
 }
 
 private fun getExpectedTypeFromNamedArgument(literal: GrListOrMap): PsiType? {
@@ -127,6 +154,14 @@ private val ignoredFqnsInSafeCast = setOf(
   JAVA_UTIL_LINKED_LIST,
   JAVA_LANG_STRING
 )
+
+private fun fallsBackToConstructorCS(clazz: PsiClass, literal: GrListOrMap): Boolean {
+  if (clazz.qualifiedName == JAVA_LANG_CLASS) {
+    return false
+  }
+  val literalClass = (literal.type as? PsiClassType)?.resolve()
+  return !InheritanceUtil.isInheritorOrSelf(literalClass, clazz, true)
+}
 
 /**
  * @return `true` if [org.codehaus.groovy.runtime.typehandling.DefaultTypeTransformation.castToType]
