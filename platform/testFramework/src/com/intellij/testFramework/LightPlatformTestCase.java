@@ -398,7 +398,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll(
+    runAll(
       () -> {
         if (ApplicationManager.getApplication() != null) {
           CodeStyle.dropTemporarySettings(project);
@@ -440,13 +440,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           myThreadTracker.checkLeak();
         }
       },
-      () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
+      () -> {
+        if (project != null) {
+          InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+        }
+      },
       () -> {
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
         }
       }
-    ).run();
+    );
   }
 
   public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
@@ -458,7 +462,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> checkJavaSwingTimersAreDisposed(),
       () -> UsefulTestCase.doPostponedFormatting(project),
       () -> LookupManager.hideActiveLookup(project),
-      () -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest(),
+      () -> {
+        if (ProjectManagerImpl.isLight(project)) {
+          StartupManagerImpl startupManager = (StartupManagerImpl)project.getServiceIfCreated(StartupManager.class);
+          if (startupManager != null) {
+            startupManager.prepareForNextTest();
+          }
+        }
+      },
       () -> {
         WriteCommandAction.runWriteCommandAction(project, () -> {
           if (ourSourceRoot != null) {

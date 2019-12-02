@@ -89,7 +89,11 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
           oldSdks.checkForJdkTableLeaks();
         }
       })
-      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
+      .append(() -> {
+        if (project != null) {
+          InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+        }
+      })
       .append(() -> {
         Application app = ApplicationManager.getApplication();
         if (app != null) {

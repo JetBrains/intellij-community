@@ -96,6 +96,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     RunAll runAll = new RunAll();
 
     if (myProject != null) {
+      Project project = myProject;
       runAll = runAll
         .append(
           () -> {
@@ -108,7 +109,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
             }
           },
           () -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.checkThatNoOpenProjects()),
-          () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(myProject)
+          () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project)
         );
     }
 
