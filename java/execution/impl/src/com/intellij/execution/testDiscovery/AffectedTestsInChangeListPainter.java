@@ -56,7 +56,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
         scheduleUpdate();
       }
     };
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
     myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -71,7 +71,6 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
 
   @Override
   public void dispose() {
-    myAlarm.cancelAllRequests();
     myChangeListsToShow.set(Collections.emptySet());
     ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
   }
