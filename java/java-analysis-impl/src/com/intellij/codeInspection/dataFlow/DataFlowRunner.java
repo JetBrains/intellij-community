@@ -35,6 +35,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
@@ -178,7 +179,7 @@ public class DataFlowRunner {
     ControlFlow flow = null;
     try {
       myStats.reset();
-      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, myIgnoreAssertions, myInlining).buildControlFlow();
+      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, myInlining).buildControlFlow();
       myStats.endFlow();
 
       if (flow != null) {
@@ -435,6 +436,14 @@ public class DataFlowRunner {
   private void initializeVariables(@NotNull PsiElement psiBlock,
                                    @NotNull Collection<? extends DfaMemoryState> initialStates,
                                    @NotNull ControlFlow flow) {
+    List<DfaVariableValue> vars = flow.accessedVariables().collect(Collectors.toList());
+    DfaVariableValue assertionStatus =
+      ContainerUtil.find(vars, v -> v.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor);
+    if (assertionStatus != null) {
+      for (DfaMemoryState state : initialStates) {
+        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions)));
+      }
+    }
     if (psiBlock instanceof PsiClass) {
       DfaVariableValue thisValue = getFactory().getVarFactory().createThisValue((PsiClass)psiBlock);
       // In class initializer this variable is local until escaped
@@ -445,7 +454,7 @@ public class DataFlowRunner {
     }
     PsiElement parent = psiBlock.getParent();
     if (parent instanceof PsiMethod && !(((PsiMethod)parent).isConstructor())) {
-      Map<DfaVariableValue, DfaValue> initialValues = StreamEx.of(flow.accessedVariables()).mapToEntry(
+      Map<DfaVariableValue, DfaValue> initialValues = StreamEx.of(vars).mapToEntry(
         var -> makeInitialValue(var, (PsiMethod)parent)).nonNullValues().toMap();
       for (DfaMemoryState state : initialStates) {
         initialValues.forEach(state::setVarValue);

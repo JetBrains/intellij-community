@@ -299,6 +299,32 @@ public class DfaExpressionFactory {
     }
     return PsiSubstitutor.EMPTY;
   }
+  
+  public DfaVariableValue getAssertionsDisabledVariable() {
+    return myFactory.getVarFactory().createVariableValue(AssertionDisabledDescriptor.INSTANCE);
+  }
+
+  public static final class AssertionDisabledDescriptor implements VariableDescriptor {
+    static final AssertionDisabledDescriptor INSTANCE = new AssertionDisabledDescriptor();
+    
+    private AssertionDisabledDescriptor() {}
+    
+    @Override
+    public boolean isStable() {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public PsiType getType(@Nullable DfaVariableValue qualifier) {
+      return PsiType.BOOLEAN;
+    }
+
+    @Override
+    public String toString() {
+      return "$assertionsDisabled";
+    }
+  }
 
   static final class PlainDescriptor implements VariableDescriptor {
     private final @NotNull PsiVariable myVariable;

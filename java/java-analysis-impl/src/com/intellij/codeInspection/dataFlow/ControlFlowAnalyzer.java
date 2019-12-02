@@ -47,7 +47,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   static final int MAX_UNROLL_SIZE = 3;
   private static final int MAX_ARRAY_INDEX_FOR_INITIALIZER = 32;
   private final PsiElement myCodeFragment;
-  private final boolean myIgnoreAssertions;
   private final boolean myInlining;
   private final Project myProject;
 
@@ -60,12 +59,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final Map<String, ExceptionTransfer> myExceptionCache;
   private ExpressionBlockContext myExpressionBlockContext;
 
-  ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
+  ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean inlining) {
     myInlining = inlining;
     myFactory = valueFactory;
     myCodeFragment = codeFragment;
     myProject = codeFragment.getProject();
-    myIgnoreAssertions = ignoreAssertions;
     GlobalSearchScope scope = codeFragment.getResolveScope();
     myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, fqn))));
   }
@@ -233,11 +231,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
-    if (myIgnoreAssertions) {
-      return;
-    }
-
     startElement(statement);
+    addInstruction(new PushInstruction(myFactory.getExpressionFactory().getAssertionsDisabledVariable(), null));
+    ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, false, null);
+    addInstruction(jump);
     final PsiExpression condition = statement.getAssertCondition();
     final PsiExpression description = statement.getAssertDescription();
     if (condition != null) {
@@ -250,6 +247,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       throwException(myExceptionCache.get(JAVA_LANG_ASSERTION_ERROR), statement);
     }
+    jump.setOffset(getInstructionCount());
     finishElement(statement);
   }
 
