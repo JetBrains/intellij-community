@@ -376,7 +376,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     @Override
     public Dimension getMinimumSize() {
       Dimension d = super.getMinimumSize();
-      d.width = Math.max(d.width, JBUI.scale(300));
+      d.width = Math.max(d.width, JBUI.scale(450));
       return d;
     }
   }
