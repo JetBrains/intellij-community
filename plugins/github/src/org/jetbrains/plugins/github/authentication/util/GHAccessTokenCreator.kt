@@ -22,7 +22,7 @@ class GHAccessTokenCreator(private val server: GithubServerPath,
                            private val indicator: ProgressIndicator) {
   @Throws(IOException::class)
   fun createMaster(@Nls(capitalization = Nls.Capitalization.Title) noteSuffix: String): GithubAuthorization {
-    return safeCreate(MASTER_SCOPES, ApplicationNamesInfo.getInstance().fullProductName + " " + noteSuffix + " access token")
+    return safeCreate(GHSecurityUtil.MASTER_SCOPES, ApplicationNamesInfo.getInstance().fullProductName + " " + noteSuffix + " access token")
   }
 
   @Throws(IOException::class)
@@ -53,7 +53,6 @@ class GHAccessTokenCreator(private val server: GithubServerPath,
 
   companion object {
     val MASTER_SCOPES = listOf("repo", "gist", "read:org")
-    const val DEFAULT_CLIENT_NAME = "Github Integration Plugin"
 
     @JvmStatic
     internal fun findNextDeduplicationIndex(note: String, existingNotes: List<String>): Int {

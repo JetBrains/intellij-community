@@ -19,11 +19,11 @@ import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
@@ -47,7 +47,7 @@ internal class GHAccountsPanel(private val project: Project,
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
     // disable link handler when there are no errors
     addListDataListener(object : ListDataListener {
-      override fun contentsChanged(e: ListDataEvent?) = setLinkHandlerEnabled(items.any { it.loadingError != null })
+      override fun contentsChanged(e: ListDataEvent?) = setLinkHandlerEnabled(items.any { it.errorText != null })
       override fun intervalRemoved(e: ListDataEvent?) {}
       override fun intervalAdded(e: ListDataEvent?) {}
     })
@@ -132,8 +132,8 @@ internal class GHAccountsPanel(private val project: Project,
    * Manages link hover and click for [GithubAccountDecoratorRenderer.loadingError]
    * Sets the proper cursor and underlines the link on hover
    *
-   * @see [GithubAccountDecorator.loadingError]
-   * @see [GithubAccountDecorator.showLoginLink]
+   * @see [GithubAccountDecorator.errorText]
+   * @see [GithubAccountDecorator.showReLoginLink]
    * @see [GithubAccountDecorator.errorLinkPointedAt]
    */
   private fun createLinkActivationListener() = object : MouseAdapter() {
@@ -173,7 +173,7 @@ internal class GHAccountsPanel(private val project: Project,
       if (!cellBounds.contains(point)) return null
 
       val decorator = accountListModel.getElementAt(idx)
-      if (decorator?.loadingError == null) return null
+      if (decorator?.errorText == null) return null
 
       val rendererComponent = accountList.cellRenderer.getListCellRendererComponent(accountList, decorator, idx, true, true)
       rendererComponent.setBounds(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height)
@@ -215,32 +215,41 @@ internal class GHAccountsPanel(private val project: Project,
     val token = newTokensMap[account] ?: currentTokensMap[account]
     if (token == null) {
       accountListModel.contentsChanged(accountData.apply {
-        loadingError = "Missing access token"
-        showLoginLink = true
+        errorText = "Missing access token"
+        showReLoginLink = true
       })
       return
     }
     val executor = executorFactory.create(token)
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
       lateinit var loadedDetails: GithubAuthenticatedUser
+      var correctScopes: Boolean = true
 
       override fun run(indicator: ProgressIndicator) {
-        loadedDetails = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
+        val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, indicator, account.server)
+        loadedDetails = details
+        correctScopes = GHSecurityUtil.isEnoughScopes(scopes.orEmpty())
       }
 
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
           details = loadedDetails
           iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, GithubUIUtil.avatarSize, accountList)
-          loadingError = null
-          showLoginLink = false
+          if (correctScopes) {
+            errorText = null
+            showReLoginLink = false
+          }
+          else {
+            errorText = "Insufficient security scopes"
+            showReLoginLink = true
+          }
         })
       }
 
       override fun onThrowable(error: Throwable) {
         accountListModel.contentsChanged(accountData.apply {
-          loadingError = error.message.toString()
-          showLoginLink = error is GithubAuthenticationException
+          errorText = error.message.toString()
+          showReLoginLink = error is GithubAuthenticationException
         })
       }
     })
@@ -340,14 +349,15 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
     }
     loadingError.apply {
       clear()
-      value.loadingError?.let {
+      value.errorText?.let {
         append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
         append(" ")
-        if (value.showLoginLink) append("Log In",
-                                        if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE,
-                                                                                           JBUI.CurrentTheme.Link.linkColor())
-                                        else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
-                                        LINK_TAG)
+        if (value.showReLoginLink) append("Re-Login",
+                                          if (value.errorLinkPointedAt)
+                                            SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
+                                          else
+                                            SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
+                                          LINK_TAG)
       }
     }
     return this
@@ -367,8 +377,8 @@ private class GithubAccountDecorator(val account: GithubAccount, var projectDefa
   var details: GithubAuthenticatedUser? = null
   var iconProvider: GHAvatarIconsProvider? = null
 
-  var loadingError: String? = null
-  var showLoginLink = false
+  var errorText: String? = null
+  var showReLoginLink = false
   var errorLinkPointedAt = false
 
   override fun equals(other: Any?): Boolean {
