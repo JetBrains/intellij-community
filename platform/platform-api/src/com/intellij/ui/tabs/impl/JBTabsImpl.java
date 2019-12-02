@@ -2635,7 +2635,7 @@ public class JBTabsImpl extends JComponent
     OnePixelDivider divider = mySplitter.getDivider();
     if (position.isSide() && divider.getParent() == null) {
       add(divider);
-    } else if (divider.getParent() == this){
+    } else if (divider.getParent() == this && !position.isSide()){
       remove(divider);
     }
     relayout(true, false);
