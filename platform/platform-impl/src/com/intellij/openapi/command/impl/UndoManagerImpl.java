@@ -226,8 +226,9 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     myCommandLevel--;
     if (myCommandLevel > 0) return;
 
-    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent() && myCurrentMerger.isPhysical()) {
-      addFocusedDocumentAsAffected();
+    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent() && myCurrentMerger.isPhysical() &&
+        myOriginatorReference != null) {
+      addDocumentAsAffected(myOriginatorReference);
     }
     myOriginatorReference = null;
 
@@ -237,10 +238,14 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     disposeCurrentMerger();
   }
 
-  private void addFocusedDocumentAsAffected() {
-    if (myOriginatorReference == null || myCurrentMerger.hasChangesOf(myOriginatorReference, true)) return;
+  public void addDocumentAsAffected(@NotNull Document document) {
+    addDocumentAsAffected(DocumentReferenceManager.getInstance().create(document));
+  }
 
-    final DocumentReference[] refs = {myOriginatorReference};
+  private void addDocumentAsAffected(@NotNull DocumentReference documentReference) {
+    if (myCurrentMerger.hasChangesOf(documentReference, true)) return;
+
+    final DocumentReference[] refs = {documentReference};
     myCurrentMerger.addAction(new MentionOnlyUndoableAction(refs));
   }
 
