@@ -268,9 +268,9 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.folding.CollapseBlockHandler"/>
     </extensionPoint>
 
-    <extensionPoint name="editor.linePainter" interface="com.intellij.openapi.editor.EditorLinePainter"/>
+    <extensionPoint name="editor.linePainter" interface="com.intellij.openapi.editor.EditorLinePainter" dynamic="true"/>
 
-    <extensionPoint name="actionFromOptionDescriptorProvider" interface="com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider"/>
+    <extensionPoint name="actionFromOptionDescriptorProvider" interface="com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider" dynamic="true"/>
 
     <extensionPoint name="cachesInvalidator" interface="com.intellij.ide.caches.CachesInvalidator" dynamic="true"/>
 
