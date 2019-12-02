@@ -63,7 +63,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "parseInt", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
-      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException");
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException")
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
+                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"), 
+              "java.lang.NoSuchMethodException")
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
+                                       "getField", "getDeclaredField"), "java.lang.NoSuchFieldException");
   private static final Set<String> IGNORE_ANNOTATIONS = ContainerUtil
     .immutableSet("org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
   protected final MethodMatcher myMethodMatcher;
