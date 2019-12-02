@@ -174,7 +174,7 @@ class StatusPanel extends JPanel {
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
       Project project = getActiveProject();
-      if (project != null) {
+      if (project != null && !project.isDisposed()) {
         myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
       }
     }
