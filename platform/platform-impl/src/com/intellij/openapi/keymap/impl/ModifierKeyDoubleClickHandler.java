@@ -42,6 +42,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public final class ModifierKeyDoubleClickHandler implements Disposable {
   private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
   private static final TIntIntHashMap KEY_CODE_TO_MODIFIER_MAP = new TIntIntHashMap();
+
   static {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_CONTROL, InputEvent.CTRL_MASK);
@@ -52,9 +53,9 @@ public final class ModifierKeyDoubleClickHandler implements Disposable {
   private final ConcurrentMap<String, MyDispatcher> myDispatchers = ContainerUtil.newConcurrentMap();
   private boolean myIsRunningAction;
 
-
   public ModifierKeyDoubleClickHandler() {
     int modifierKeyCode = getMultiCaretActionModifier();
+
     registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE, modifierKeyCode, KeyEvent.VK_UP);
     registerAction(IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW, modifierKeyCode, KeyEvent.VK_DOWN);
     registerAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_LEFT);
@@ -89,7 +90,7 @@ public final class ModifierKeyDoubleClickHandler implements Disposable {
                              int modifierKeyCode,
                              int actionKeyCode,
                              boolean skipIfActionHasShortcut) {
-    final MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, skipIfActionHasShortcut);
+    MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, skipIfActionHasShortcut);
     MyDispatcher oldDispatcher = myDispatchers.put(actionId, dispatcher);
     IdeEventQueue.getInstance().addDispatcher(dispatcher, dispatcher);
     ApplicationManager.getApplication().getMessageBus().connect(dispatcher).subscribe(AnActionListener.TOPIC, dispatcher);
@@ -98,14 +99,12 @@ public final class ModifierKeyDoubleClickHandler implements Disposable {
     }
   }
 
-/**
- * @param actionId Id of action to be triggered on modifier+modifier[+actionKey]
- * @param modifierKeyCode keyCode for modifier, e.g. KeyEvent.VK_SHIFT
- * @param actionKeyCode keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
- */
-  public void registerAction(@NotNull String actionId,
-                             int modifierKeyCode,
-                             int actionKeyCode) {
+  /**
+   * @param actionId        Id of action to be triggered on modifier+modifier[+actionKey]
+   * @param modifierKeyCode keyCode for modifier, e.g. KeyEvent.VK_SHIFT
+   * @param actionKeyCode   keyCode for actionKey, or -1 if action should be triggered on bare modifier double click
+   */
+  public void registerAction(@NotNull String actionId, int modifierKeyCode, int actionKeyCode) {
     registerAction(actionId, modifierKeyCode, actionKeyCode, true);
   }
 
@@ -120,7 +119,7 @@ public final class ModifierKeyDoubleClickHandler implements Disposable {
     return myIsRunningAction;
   }
 
-  private class MyDispatcher implements IdeEventQueue.EventDispatcher, Disposable, AnActionListener {
+  private final class MyDispatcher implements IdeEventQueue.EventDispatcher, Disposable, AnActionListener {
     private final String myActionId;
     private final int myModifierKeyCode;
     private final int myActionKeyCode;
