@@ -523,6 +523,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     String text = dialogIndicator.getText();
     myCurrentProgress.second.addStateDelegate(delegatingVisibleStateIndicator);
     dialogIndicator.setText(text);
+    dialogIndicator.setIndeterminate(delegatingVisibleStateIndicator.isIndeterminate());
   }
 
   @Override
