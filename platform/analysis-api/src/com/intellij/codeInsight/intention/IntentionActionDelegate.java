@@ -29,6 +29,6 @@ public interface IntentionActionDelegate {
   // optimization method: it's not necessary to build extension delegate to know its class
   @NotNull
   default String getImplementationClassName() {
-    return getDelegate().getClass().getName();
+    return unwrap(getDelegate()).getClass().getName();
   }
 }
