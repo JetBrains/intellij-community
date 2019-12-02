@@ -86,7 +86,7 @@ public class RecursionManager {
 
         if (stack.checkReentrancy(realKey)) {
           if (ourAssertOnPrevention) {
-            throw new StackOverflowPreventedException("Endless recursion prevention occurred");
+            throw new StackOverflowPreventedException("Endless recursion prevention occurred on " + key);
           }
           return null;
         }
@@ -350,18 +350,27 @@ public class RecursionManager {
 
   @TestOnly
   public static void assertOnRecursionPrevention(@NotNull Disposable parentDisposable) {
-    ourAssertOnPrevention = true;
+    setAssertOnRecursionPrevention(parentDisposable, true);
+  }
+
+  private static void setAssertOnRecursionPrevention(@NotNull Disposable parentDisposable, boolean toAssert) {
+    boolean prev = ourAssertOnPrevention;
+    if (toAssert == prev) return;
+
+    ourAssertOnPrevention = toAssert;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourAssertOnPrevention = false;
+        if (ourAssertOnPrevention == toAssert) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourAssertOnPrevention = prev;
+        }
       }
     });
   }
 
   @TestOnly
-  public static void disableAssertOnRecursionPrevention() {
-    ourAssertOnPrevention = false;
+  public static void disableAssertOnRecursionPrevention(@NotNull Disposable parentDisposable) {
+    setAssertOnRecursionPrevention(parentDisposable, false);
   }
 }

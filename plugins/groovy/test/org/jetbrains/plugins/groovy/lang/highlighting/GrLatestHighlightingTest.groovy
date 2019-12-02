@@ -391,7 +391,7 @@ class GoodCodeRed {
   }
 
   void 'test recursive generics'() {
-    RecursionManager.disableAssertOnRecursionPrevention()
+    RecursionManager.disableAssertOnRecursionPrevention(myFixture.testRootDisposable)
     testHighlighting '''
 import groovy.transform.CompileStatic
 
