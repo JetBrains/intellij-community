@@ -35,6 +35,9 @@ public class ExternalAnnotation {
   public ExternalAnnotation(@NotNull PsiModifierListOwner owner,
                             @NotNull String annotationFQName,
                             @Nullable PsiNameValuePair[] values) {
+    if (BaseExternalAnnotationsManager.getExternalName(owner) == null) {
+      throw new IllegalArgumentException("Unable to annotate externally element of type " + owner.getClass());
+    }
     this.owner = owner;
     this.annotationFQName = annotationFQName;
     this.values = values;
