@@ -4,10 +4,10 @@ package org.jetbrains.jps.builders.java.dependencyView;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.storage.JpsPersistentHashMap;
 
 import java.io.*;
 import java.util.Collection;
@@ -19,15 +19,15 @@ import java.util.Collections;
 public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMaplet<K, V>{
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
-  private final JpsPersistentHashMap<K, Collection<V>> myMap;
+  private final PersistentHashMap<K, Collection<V>> myMap;
   private final SLRUCache<K, Collection> myCache;
 
   public ObjectObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<K> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
-    myMap = new JpsPersistentHashMap<>(file, keyExternalizer,
-                                     new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<>(file, keyExternalizer,
+                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {
       @NotNull
       @Override
