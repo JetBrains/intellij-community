@@ -276,7 +276,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
             Map<String, String> valueMetadata = metadata == null ? null : metadata.get(StringUtil.unquoteString(variant));
             String description = valueMetadata == null ? null : valueMetadata.get("description");
             String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
-            addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : variant, null);
+            addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null, null);
           }
         }
       }
