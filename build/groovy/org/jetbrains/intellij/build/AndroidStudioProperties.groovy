@@ -444,6 +444,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
             exclude(name: "win/BUILD")
           }
         }
+
+        context.ant.copy(todir: "$targetDirectory/bin/clang/win") {
+          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/win")
+        }
       }
     }
   }
@@ -510,6 +514,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
             exclude(name: "linux/BUILD")
           }
         }
+
+        context.ant.copy(todir: "$targetDirectory/bin/clang/linux") {
+          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
+        }
+        extraExecutables.add("bin/clang/linux/clangd")
+        extraExecutables.add("bin/clang/linux/clang-tidy")
       }
     }
   }
@@ -565,6 +575,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           exclude(name: "mac/BUILD")
         }
       }
+
+      context.ant.copy(todir: "$targetDirectory/bin/clang/mac") {
+        fileset(dir: "$root/prebuilts/tools/clion/bin/clang/mac")
+      }
+      extraExecutables.add("bin/clang/mac/clangd")
+      extraExecutables.add("bin/clang/mac/clang-tidy")
     }
   }
 
