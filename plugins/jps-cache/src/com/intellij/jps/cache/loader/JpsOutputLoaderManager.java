@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -46,7 +47,7 @@ public class JpsOutputLoaderManager {
   private final AtomicBoolean hasRunningTask;
   private final ExecutorService ourThreadPool;
   private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
-  private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
+  private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
   private final JpsServerClient myServerClient;
   private final Project myProject;
@@ -195,20 +196,22 @@ public class JpsOutputLoaderManager {
     return true;
   }
 
-  private CompletableFuture<LoaderStatus> initLoaders(String commitId, ProgressIndicator indicator, int totalDownloads,
+  private <T> CompletableFuture<LoaderStatus> initLoaders(String commitId, ProgressIndicator indicator, int totalDownloads,
                                                       Map<String, Map<String, BuildTargetState>> commitSourcesState,
                                                       Map<String, Map<String, BuildTargetState>> currentSourcesState) {
-    List<JpsOutputLoader> loaders = getLoaders(myProject);
+    List<JpsOutputLoader<?>> loaders = getLoaders(myProject);
 
     // Create indicator with predefined segment size
     SegmentedProgressIndicatorManager downloadIndicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
     SegmentedProgressIndicatorManager extractIndicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
-    JpsLoaderContext loaderContext = JpsLoaderContext.createNewContext(commitId, downloadIndicatorManager, extractIndicatorManager,
-                                                                       commitSourcesState, currentSourcesState);
+    JpsLoaderContext loaderContext = JpsLoaderContext.createNewContext(commitId, downloadIndicatorManager, commitSourcesState, currentSourcesState);
 
     // Start loaders with own context
     List<CompletableFuture<LoaderStatus>> completableFutures = ContainerUtil.map(loaders, loader ->
-      CompletableFuture.supplyAsync(() -> loader.load(loaderContext), ourThreadPool));
+      CompletableFuture.supplyAsync(() -> {
+        Object loadResults = loader.load(loaderContext);
+        return loader.extract(loadResults, ourThreadPool, extractIndicatorManager);
+      }, ourThreadPool));
 
     // Reduce loaders statuses into the one
     CompletableFuture<LoaderStatus> initialFuture = completableFutures.get(0);
@@ -226,7 +229,7 @@ public class JpsOutputLoaderManager {
       indicator.setText("Rolling back");
       return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
     }
-    return CompletableFuture.runAsync(() -> loader.apply(indicatorManager), ourThreadPool);
+    return CompletableFuture.runAsync(() -> loader.apply(ourThreadPool, indicatorManager), ourThreadPool);
   }
 
   private void saveStateAndNotify(LoaderStatus loaderStatus, String commitId, long startTime) {
@@ -263,7 +266,7 @@ public class JpsOutputLoaderManager {
     return result;
   }
 
-  private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
+  private List<JpsOutputLoader<?>> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
     myJpsOutputLoadersLoaders = Arrays.asList(new JpsCompilationOutputLoader(myServerClient, project),
                                               new JpsCacheLoader(myServerClient, project));
@@ -276,7 +279,7 @@ public class JpsOutputLoaderManager {
   }
 
   private static int getThreadPoolSize() {
-    return (Runtime.getRuntime().availableProcessors()) > 3 ? 3 : 2;
+    return Runtime.getRuntime().availableProcessors() - 1;
   }
 
   private void onFail() {

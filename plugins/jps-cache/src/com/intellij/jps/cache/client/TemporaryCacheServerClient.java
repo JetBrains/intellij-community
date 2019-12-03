@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.jps.cache.JpsCachesUtils;
 import com.intellij.jps.cache.model.AffectedModule;
+import com.intellij.jps.cache.model.OutputLoadResult;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -18,7 +18,6 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,13 +81,12 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     }
   }
 
+  @Nullable
   @Override
-  public Pair<Boolean, File> downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
-                                               @NotNull SegmentedProgressIndicatorManager extractIndicatorManager,
-                                               @NotNull String cacheId, @NotNull File targetDir) {
+  public File downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager, @NotNull String cacheId,
+                                @NotNull File targetDir) {
     String downloadUrl = stringThree + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
-    File tmpFolder = new File(targetDir, "tmp");
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
     JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(Collections.singletonList(description), downloadIndicatorManager);
@@ -96,26 +94,13 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     LOG.debug("Downloading JPS caches from: " + downloadUrl);
     File zipFile = null;
     try {
-      ProgressIndicator indicator = downloadIndicatorManager.getProgressIndicator();
       List<Pair<File, DownloadableFileDescription>> pairs = outputsDownloader.download(targetDir);
       downloadIndicatorManager.finished(this);
 
-      // Start extracting after download
-      SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = extractIndicatorManager.createSubTaskIndicator();
-      indicator.checkCanceled();
-      extractIndicatorManager.setText(this, "Extracting downloaded results...");
-      subTaskIndicator.setText2("Extracting project caches");
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
       zipFile = first != null ? first.first : null;
-      if (zipFile == null) {
-        LOG.warn("Failed to download JPS caches");
-        return new Pair<>(false, tmpFolder);
-      }
-      ZipUtil.extract(zipFile, tmpFolder, null);
-      FileUtil.delete(zipFile);
-      subTaskIndicator.finished();
-      extractIndicatorManager.finished(this);
-      return new Pair<>(true, tmpFolder);
+      if (zipFile != null) return zipFile;
+      LOG.warn("Failed to download JPS caches");
     }
     catch (ProcessCanceledException | IOException e) {
       //noinspection InstanceofCatchParameter
@@ -123,15 +108,13 @@ public class TemporaryCacheServerClient implements JpsServerClient {
       if (zipFile != null && zipFile.exists()) {
         FileUtil.delete(zipFile);
       }
-      FileUtil.delete(tmpFolder);
-      return new Pair<>(false, tmpFolder);
     }
+    return null;
   }
 
   @Override
-  public Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
-                                                                  @NotNull SegmentedProgressIndicatorManager extractIndicatorManager,
-                                                                  @NotNull List<AffectedModule> affectedModules) {
+  public List<OutputLoadResult> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
+                                                        @NotNull List<AffectedModule> affectedModules) {
     File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesUtils.PLUGIN_NAME);
     if (!targetDir.exists()) targetDir.mkdirs();
 
@@ -145,41 +128,23 @@ public class TemporaryCacheServerClient implements JpsServerClient {
                                                                        entry.getValue().getOutPath().getName() + ".zip"));
     JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(descriptions, downloadIndicatorManager);
 
-    Map<File, String> result = new HashMap<>();
     List<File> downloadedFiles = new ArrayList<>();
     try {
       // Downloading process
-      ProgressIndicator indicator = downloadIndicatorManager.getProgressIndicator();
       List<Pair<File, DownloadableFileDescription>> download = outputsDownloader.download(targetDir);
       downloadIndicatorManager.finished(this);
 
-      // Extracting results
-      extractIndicatorManager.setText(this, "Extracting downloaded results...");
       downloadedFiles = ContainerUtil.map(download, pair -> pair.first);
-      for (Pair<File, DownloadableFileDescription> pair : download) {
-        indicator.checkCanceled();
-        SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = extractIndicatorManager.createSubTaskIndicator();
-        File zipFile = pair.first;
+      return ContainerUtil.map(download, pair -> {
         String downloadUrl = pair.second.getDownloadUrl();
-        AffectedModule affectedModule = urlToModuleNameMap.get(downloadUrl);
-        File outPath = affectedModule.getOutPath();
-        subTaskIndicator.setText2("Extracting compilation outputs for " + affectedModule.getName() + " module");
-        LOG.info("Downloaded JPS compiled module from: " + downloadUrl);
-        File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");
-        ZipUtil.extract(zipFile, tmpFolder, null);
-        FileUtil.delete(zipFile);
-        result.put(tmpFolder, affectedModule.getName());
-        subTaskIndicator.finished();
-      }
-      extractIndicatorManager.finished(this);
-      return new Pair<>(true, result);
+        return new OutputLoadResult(pair.first, downloadUrl, urlToModuleNameMap.get(downloadUrl));
+      });
     }
     catch (ProcessCanceledException | IOException e) {
       //noinspection InstanceofCatchParameter
       if (e instanceof IOException) LOG.warn("Failed to download JPS compilation outputs", e);
-      result.forEach((key, value) -> FileUtil.delete(key));
       downloadedFiles.forEach(zipFile -> FileUtil.delete(zipFile));
-      return new Pair<>(false, Collections.emptyMap());
+      return Collections.emptyList();
     }
   }
 
