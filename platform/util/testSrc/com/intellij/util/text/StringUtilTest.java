@@ -19,6 +19,7 @@ import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -300,16 +301,16 @@ public class StringUtilTest {
     assertEquals("\"foo", StringUtil.unquoteString("\"foo"));
     assertEquals("foo\"", StringUtil.unquoteString("foo\""));
     assertEquals("", StringUtil.unquoteString(""));
-    assertEquals("\'", StringUtil.unquoteString("\'"));
-    assertEquals("", StringUtil.unquoteString("\'\'"));
-    assertEquals("\'", StringUtil.unquoteString("\'\'\'"));
-    assertEquals("foo", StringUtil.unquoteString("\'foo\'"));
-    assertEquals("\'foo", StringUtil.unquoteString("\'foo"));
-    assertEquals("foo\'", StringUtil.unquoteString("foo\'"));
+    assertEquals("'", StringUtil.unquoteString("'"));
+    assertEquals("", StringUtil.unquoteString("''"));
+    assertEquals("'", StringUtil.unquoteString("'''"));
+    assertEquals("foo", StringUtil.unquoteString("'foo'"));
+    assertEquals("'foo", StringUtil.unquoteString("'foo"));
+    assertEquals("foo'", StringUtil.unquoteString("foo'"));
 
-    assertEquals("\'\"", StringUtil.unquoteString("\'\""));
-    assertEquals("\"\'", StringUtil.unquoteString("\"\'"));
-    assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
+    assertEquals("'\"", StringUtil.unquoteString("'\""));
+    assertEquals("\"'", StringUtil.unquoteString("\"'"));
+    assertEquals("\"foo'", StringUtil.unquoteString("\"foo'"));
   }
 
   @SuppressWarnings("SSBasedInspection")
@@ -537,27 +538,28 @@ public class StringUtilTest {
   public void testFormatFileSize() {
     assertEquals("0 B", StringUtil.formatFileSize(0));
     assertEquals("1 B", StringUtil.formatFileSize(1));
-    assertEquals("2.15 GB", StringUtil.formatFileSize(Integer.MAX_VALUE));
-    assertEquals("9.22 EB", StringUtil.formatFileSize(Long.MAX_VALUE));
+    char sep = new DecimalFormat("0.##").getDecimalFormatSymbols().getDecimalSeparator();
+    assertEquals("2.15 GB".replace('.', sep), StringUtil.formatFileSize(Integer.MAX_VALUE));
+    assertEquals("9.22 EB".replace('.', sep), StringUtil.formatFileSize(Long.MAX_VALUE));
 
-    assertEquals("60.1 kB", StringUtil.formatFileSize(60_100));
+    assertEquals("60.1 kB".replace('.', sep), StringUtil.formatFileSize(60_100));
 
-    assertEquals("1.23 kB", StringUtil.formatFileSize(1_234));
-    assertEquals("12.35 kB", StringUtil.formatFileSize(12_345));
-    assertEquals("123.46 kB", StringUtil.formatFileSize(123_456));
-    assertEquals("1.23 MB", StringUtil.formatFileSize(1234_567));
-    assertEquals("12.35 MB", StringUtil.formatFileSize(1_2345_678));
-    assertEquals("123.46 MB", StringUtil.formatFileSize(123_456_789));
-    assertEquals("1.23 GB", StringUtil.formatFileSize(1_234_567_890));
+    assertEquals("1.23 kB".replace('.', sep), StringUtil.formatFileSize(1_234));
+    assertEquals("12.35 kB".replace('.', sep), StringUtil.formatFileSize(12_345));
+    assertEquals("123.46 kB".replace('.', sep), StringUtil.formatFileSize(123_456));
+    assertEquals("1.23 MB".replace('.', sep), StringUtil.formatFileSize(1234_567));
+    assertEquals("12.35 MB".replace('.', sep), StringUtil.formatFileSize(1_2345_678));
+    assertEquals("123.46 MB".replace('.', sep), StringUtil.formatFileSize(123_456_789));
+    assertEquals("1.23 GB".replace('.', sep), StringUtil.formatFileSize(1_234_567_890));
 
-    assertEquals("999 B", StringUtil.formatFileSize(999));
-    assertEquals("1 kB", StringUtil.formatFileSize(1000));
-    assertEquals("999.99 kB", StringUtil.formatFileSize(999_994));
-    assertEquals("1 MB", StringUtil.formatFileSize(999_995));
-    assertEquals("999.99 MB", StringUtil.formatFileSize(999_994_999));
-    assertEquals("1 GB", StringUtil.formatFileSize(999_995_000));
-    assertEquals("999.99 GB", StringUtil.formatFileSize(999_994_999_999L));
-    assertEquals("1 TB", StringUtil.formatFileSize(999_995_000_000L));
+    assertEquals("999 B".replace('.', sep), StringUtil.formatFileSize(999));
+    assertEquals("1 kB".replace('.', sep), StringUtil.formatFileSize(1000));
+    assertEquals("999.99 kB".replace('.', sep), StringUtil.formatFileSize(999_994));
+    assertEquals("1 MB".replace('.', sep), StringUtil.formatFileSize(999_995));
+    assertEquals("999.99 MB".replace('.', sep), StringUtil.formatFileSize(999_994_999));
+    assertEquals("1 GB".replace('.', sep), StringUtil.formatFileSize(999_995_000));
+    assertEquals("999.99 GB".replace('.', sep), StringUtil.formatFileSize(999_994_999_999L));
+    assertEquals("1 TB".replace('.', sep), StringUtil.formatFileSize(999_995_000_000L));
   }
 
   @Test
