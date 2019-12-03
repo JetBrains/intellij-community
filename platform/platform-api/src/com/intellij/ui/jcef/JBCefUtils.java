@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.browser.CefMessageRouter;
@@ -22,7 +21,7 @@ import java.util.function.Function;
 public class JBCefUtils {
   private static final Map<String, CefMessageRouter> id2msgRouter = new HashMap<>();
 
-  public static void addJSHandler(@NotNull CefClient cefClient, @NotNull String jsRequestID, @NotNull Function<String, Boolean> handler) {
+  public static void addJSHandler(@NotNull JBCefClient cefClient, @NotNull String jsRequestID, @NotNull Function<String, Boolean> handler) {
     CefMessageRouter.CefMessageRouterConfig config = new CefMessageRouter.CefMessageRouterConfig();
     config.jsQueryFunction = jsRequestID;
     config.jsCancelFunction = jsRequestID;
@@ -39,14 +38,14 @@ public class JBCefUtils {
         return handler.apply(request);
       }
     }, true);
-    cefClient.addMessageRouter(msgRouter);
+    cefClient.getCefClient().addMessageRouter(msgRouter);
     id2msgRouter.put(jsRequestID, msgRouter);
   }
 
-  public static void removeJSHandler(@NotNull CefClient cefClient, @NotNull String jsRequestID) {
+  public static void removeJSHandler(@NotNull JBCefClient cefClient, @NotNull String jsRequestID) {
     CefMessageRouter r = id2msgRouter.get(jsRequestID);
     if (r != null) {
-      cefClient.removeMessageRouter(r);
+      cefClient.getCefClient().removeMessageRouter(r);
       id2msgRouter.remove(jsRequestID);
     }
   }

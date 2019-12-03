@@ -49,7 +49,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   public MarkdownJCEFHtmlPanel() {
     super();
 
-    JBCefUtils.addJSHandler(getCefBrowser().getClient(), JS_REQ_SET_SCROLL_Y,
+    JBCefUtils.addJSHandler(getJBCefClient(), JS_REQ_SET_SCROLL_Y,
                             (value) -> {
         try {
           myScrollPreservingListener.myScrollY = Integer.parseInt(value);
@@ -58,7 +58,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
       });
 
     if (Registry.is("markdown.open.link.in.external.browser")) {
-      JBCefUtils.addJSHandler(getCefBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
+      JBCefUtils.addJSHandler(getJBCefClient(), JS_REQ_OPEN_IN_BROWSER,
         (link) -> {
           MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
           return true;
@@ -124,8 +124,8 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   public void dispose() {
     super.dispose();
     getJBCefClient().removeLoadHandler(myCefLoadHandler, getCefBrowser());
-    JBCefUtils.removeJSHandler(getCefBrowser().getClient(), JS_REQ_SET_SCROLL_Y);
-    JBCefUtils.removeJSHandler(getCefBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER);
+    JBCefUtils.removeJSHandler(getJBCefClient(), JS_REQ_SET_SCROLL_Y);
+    JBCefUtils.removeJSHandler(getJBCefClient(), JS_REQ_OPEN_IN_BROWSER);
   }
 
   @NotNull
