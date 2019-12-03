@@ -61,6 +61,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testGrandParentTypeParams() { doTest(); }
   public void testDeepCallsChain() { doTest(); }
   public void testArrayPassedToVarargsMethod() { doTest(); }
+  public void testWrongNumberOfParametersWithLambdaOnUnexpectedPlace() { doTest(); }
   public void testIDEA121055() { doTest(); }
   public void testTargetTypeByAnonymousClass() { doTest(); }
   public void testStaticInheritorsAmbiguity() { doTest(); }
