@@ -23,6 +23,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -99,6 +100,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
 
+    override fun setForeground(fg: Color?) {
+      super.setForeground(fg)
+      label.foreground = fg
+    }
   }.apply {
     isOpaque = false
     add(label)
