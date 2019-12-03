@@ -157,7 +157,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   @CalledInAny
-  public void forceUpdateBranches() {
+  public void forceUpdateBranches(@Nullable Runnable runAfterUpdate) {
     if (!myIsUpdating.compareAndSet(false, true)) return;
     updateBranchesToPull(false);
     updateBranchesToPush();
@@ -183,6 +183,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       @Override
       public void onFinished() {
         myIsUpdating.set(false);
+        if (runAfterUpdate != null) {
+          runAfterUpdate.run();
+        }
       }
     }.queue();
   }

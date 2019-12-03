@@ -25,6 +25,7 @@ import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -141,7 +142,7 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
       @Override
       protected void onFetchFinished(@NotNull GitFetchResult result) {
-        GitBranchIncomingOutgoingManager.getInstance(project).forceUpdateBranches();
+        GitBranchIncomingOutgoingManager.getInstance(project).forceUpdateBranches(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
         showNotificationIfNeeded(result);
       }
 
