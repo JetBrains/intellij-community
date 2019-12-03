@@ -484,7 +484,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     private final IdeFrame myParent;
 
     private MyJDialog(FrameWrapper owner, IdeFrame parent) throws HeadlessException {
-      super((JFrame)parent);
+      super(UIUtil.getWindow(parent.getComponent()));
       myOwner = owner;
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
