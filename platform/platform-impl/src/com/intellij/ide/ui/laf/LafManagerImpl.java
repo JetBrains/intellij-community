@@ -36,8 +36,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.components.BasicOptionButtonUI;
-import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
@@ -798,11 +796,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixMenuIssues(@NotNull UIDefaults uiDefaults) {
-    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      // update ui for popup menu to get round corners
-      uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
-    }
-
     uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon());
     uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
   }

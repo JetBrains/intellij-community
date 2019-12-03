@@ -229,12 +229,12 @@ public class SearchTextField extends JPanel {
   protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
     if (SystemInfo.isMac) {
       try {
-        Class<?> uiClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI")
+        Class<?> uiClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.laf.macos.MacIntelliJTextFieldUI")
                                                        : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
         Method method = ReflectionUtil.getMethod(uiClass, "createUI", JComponent.class);
         if (method != null) {
           uiConsumer.consume((TextUI)method.invoke(uiClass, textField));
-          Class<?> borderClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder")
+          Class<?> borderClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.laf.macos.MacIntelliJTextBorder")
                                                              : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder");
           textField.setBorder((Border)ReflectionUtil.newInstance(borderClass));
           textField.setOpaque(false);

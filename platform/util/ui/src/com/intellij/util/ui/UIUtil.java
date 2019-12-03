@@ -1321,27 +1321,23 @@ public final class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    if (SystemInfo.isMac) {
-      LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-      if (lookAndFeel instanceof UserDataHolder) {
-        UserDataHolder dh = (UserDataHolder)lookAndFeel;
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (SystemInfo.isMac && lookAndFeel instanceof UserDataHolder) {
+      UserDataHolder dh = (UserDataHolder)lookAndFeel;
 
-        return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-               StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOs light");
-      }
+      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
+             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOs light");
     }
     return false;
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    if (SystemInfo.isWindows) {
-      LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-      if (lookAndFeel instanceof UserDataHolder) {
-        UserDataHolder dh = (UserDataHolder)lookAndFeel;
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (SystemInfo.isWindows && lookAndFeel instanceof UserDataHolder) {
+      UserDataHolder dh = (UserDataHolder)lookAndFeel;
 
-        return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-               StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
-      }
+      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
+             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
     }
     return false;
   }
@@ -1351,7 +1347,7 @@ public final class UIUtil {
   }
 
   public static boolean isUnderIntelliJLaF() {
-    return UIManager.getLookAndFeel().getName().contains("IntelliJ");
+    return UIManager.getLookAndFeel().getName().contains("IntelliJ") || isUnderDefaultMacTheme() || isUnderWin10LookAndFeel();
   }
 
   @Deprecated

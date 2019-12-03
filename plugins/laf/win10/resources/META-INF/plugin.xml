@@ -3,7 +3,7 @@
   <name>Windows 10 Light Theme</name>
   <vendor>JetBrains</vendor>
 
-  <description><![CDATA[Provides Windows 10 Look And Feel that mimics native Windows 10 look]]></description>
+  <description><![CDATA[Provides Windows 10 Look And Feel that mimics Windows 10 system UI]]></description>
 
   <depends>com.intellij.modules.platform</depends>
 
