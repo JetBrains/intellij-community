@@ -5,7 +5,7 @@ import com.google.common.hash.HashCode
 import com.google.common.hash.Hashing
 import com.intellij.index.PrebuiltIndexProvider
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeExtension
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtilRt
@@ -23,7 +23,7 @@ import java.nio.file.Files
 
 const val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
 
-object PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
+val prebuiltStubsProvider = FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
 interface PrebuiltStubsProvider {
   fun findStub(fileContent: FileContent): SerializedStubTree?
@@ -75,9 +75,9 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
   override val indexExternalizer: FullStubExternalizer get() = FullStubExternalizer()
 
   companion object {
-    const val PREBUILT_INDICES_PATH_PROPERTY: String = "prebuilt_indices_path"
-    const val SDK_STUBS_STORAGE_NAME: String = "sdk-stubs"
-    private val LOG = Logger.getInstance("#com.intellij.psi.stubs.PrebuiltStubsProviderBase")
+    const val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
+    const val SDK_STUBS_STORAGE_NAME = "sdk-stubs"
+    private val LOG = logger<PrebuiltStubsProviderBase>()
   }
 
   protected open fun getIndexVersion(): Int = -1
