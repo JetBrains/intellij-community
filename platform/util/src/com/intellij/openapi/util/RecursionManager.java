@@ -16,7 +16,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * A utility to prevent endless recursion and ensure the caching returns stable results if such endless recursion is prevented.<p></p>
+ * A utility to prevent endless recursion and ensure the caching returns stable results if such endless recursion is prevented.
+ * Should be used only as a last resort, when it's impossible to detect endless recursion without using thread-local state.<p></p>
  *
  * Imagine a method {@code A()} calls method {@code B()}, which in turn calls {@code C()},
  * which (unexpectedly) calls {@code A()} again (it's just an example; the loop could be shorter or longer).
