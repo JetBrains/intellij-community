@@ -489,7 +489,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     PreviewDiffVirtualFile previewDiffVirtualFile = new PreviewDiffVirtualFile(myDiffPreviewProvider);
     boolean wasOpen = FileEditorManager.getInstance(project).isFileOpen(previewDiffVirtualFile);
 
-    FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(previewDiffVirtualFile, true, true);
+    FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(previewDiffVirtualFile, false, true);
 
     if (!wasOpen) {
       DumbAwareAction action = new DumbAwareAction() {
