@@ -66,11 +66,10 @@ interface BreakpointManager {
 
   /**
    * Flushes the breakpoint parameter changes (set* methods) into the browser
-   * and invokes the callback once the operation has finished. This method must
+   * and returns a promise of an updated breakpoint. This method must
    * be called for the set* method invocations to take effect.
-
    */
-  fun flush(breakpoint: Breakpoint): Promise<*>
+  fun flush(breakpoint: Breakpoint): Promise<out Breakpoint>
 
   /**
    * Asynchronously enables or disables all breakpoints on remote. 'Enabled' means that
