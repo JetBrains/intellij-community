@@ -509,6 +509,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && type == JavaTokenType.TEXT_BLOCK_LITERAL) {
       myHolder.add(checkFeature(token, Feature.TEXT_BLOCKS));
     }
+    else if (!myHolder.hasErrorResults() && type == JavaTokenType.RECORD_KEYWORD) {
+      myHolder.add(checkFeature(token, Feature.RECORDS));
+    }
 
     if (!myHolder.hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
       PsiElement gParent = token.getParent().getParent();
