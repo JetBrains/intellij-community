@@ -69,6 +69,7 @@ public class ThrowableInterner {
   private static final int BACKTRACE_FIELD_OFFSET;
   private static final int UNKNOWN = -1;
   private static final int LUCKILY_NOT_NEEDED = -2;
+  private static final int BACKTRACE_INFO_LENGTH;
 
   static {
     BACKTRACE_FIELD = ReflectionUtil.getDeclaredField(Throwable.class, "backtrace");
@@ -88,6 +89,7 @@ public class ThrowableInterner {
     else {
       BACKTRACE_FIELD_OFFSET = UNKNOWN;
     }
+    BACKTRACE_INFO_LENGTH = SystemInfo.isJavaVersionAtLeast(14, 0, 0) ? 6 : 5;
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
@@ -102,7 +104,7 @@ public class ThrowableInterner {
       return null;
     }
     // obsolete jdk
-    return backtrace instanceof Object[] && ((Object[])backtrace).length == 5 ? (Object[])backtrace : null;
+    return backtrace instanceof Object[] && ((Object[])backtrace).length == BACKTRACE_INFO_LENGTH ? (Object[])backtrace : null;
   }
 
   @NotNull
