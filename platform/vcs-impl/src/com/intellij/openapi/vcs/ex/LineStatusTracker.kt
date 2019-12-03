@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -44,8 +43,6 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
   enum class Mode {
     DEFAULT, SMART, SILENT
   }
-
-  private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
