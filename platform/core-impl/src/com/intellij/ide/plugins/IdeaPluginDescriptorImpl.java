@@ -379,12 +379,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   String formatErrorMessage(@NotNull String message) {
     String path = myPath.toString();
     StringBuilder builder = new StringBuilder();
-    builder.append("Plugin ").append(myName).append(" (id=").append(myId).append(", path=");
+    builder.append("The ").append(myName).append(" (id=").append(myId).append(", path=");
     builder.append(FileUtil.getLocationRelativeToUserHome(path, false));
     if (myVersion != null && !isBundled() && !myVersion.equals(PluginManagerCore.getBuildNumber().asString())) {
       builder.append(", version=").append(myVersion);
     }
-    builder.append(") ").append(message);
+    builder.append(") plugin ").append(message);
     return builder.toString();
   }
 
