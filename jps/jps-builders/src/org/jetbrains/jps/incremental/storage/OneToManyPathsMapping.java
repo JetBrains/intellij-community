@@ -37,12 +37,12 @@ public class OneToManyPathsMapping extends AbstractStateStorage<String, Collecti
   }
 
   public final void appendData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
-    super.appendDataWithoutCache(normalizePath(keyPath), Collections.singleton(normalizePath(boundPath)));
+    super.appendData(normalizePath(keyPath), Collections.singleton(normalizePath(boundPath)));
   }
 
   @Override
   public void appendData(@NotNull String keyPath, @NotNull Collection<String> boundPaths) throws IOException {
-    super.appendDataWithoutCache(normalizePath(keyPath), normalizePaths(boundPaths));
+    super.appendData(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
   @Nullable
