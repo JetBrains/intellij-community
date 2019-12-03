@@ -505,7 +505,7 @@ private open class ChangeEntryStateAction(
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    if (table.selectedRowCount == 0) {
+    if (table.editingRow != -1 || table.selectedRowCount == 0) {
       e.presentation.isEnabled = false
     }
   }
