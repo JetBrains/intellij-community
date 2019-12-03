@@ -3,11 +3,8 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindow
 
 interface ChangesViewToolWindowManager {
-  fun setToolWindow(toolWindow: ToolWindow)
-
   fun shouldBeAvailable(): Boolean
 
   companion object {
