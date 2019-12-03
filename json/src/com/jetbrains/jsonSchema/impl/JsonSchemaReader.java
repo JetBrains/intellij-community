@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -171,22 +172,8 @@ public class JsonSchemaReader {
     // non-standard deprecation property used by VSCode
     READERS_MAP.put("deprecationMessage", createFromStringValue((object, s) -> object.setDeprecationMessage(s)));
     READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_HTML_DESCRIPTION, createFromStringValue((object, s) -> object.setHtmlDescription(s)));
-    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION,
-                    (element, object, queue, virtualFile) -> {
-                      if (element.isStringLiteral()) {
-                        object.setLanguageInjection(getString(element));
-                      }
-                      else if (element instanceof JsonObjectValueAdapter) {
-                        for (JsonPropertyAdapter adapter : ((JsonObjectValueAdapter)element).getPropertyList()) {
-                          String lang = readSingleProp(adapter, "language");
-                          if (lang != null) object.setLanguageInjection(lang);
-                          String prefix = readSingleProp(adapter, "prefix");
-                          if (prefix != null) object.setLanguageInjectionPrefix(prefix);
-                          String postfix = readSingleProp(adapter, "suffix");
-                          if (postfix != null) object.setLanguageInjectionPostfix(postfix);
-                        }
-                      }
-                    });
+    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION, (element, object, queue, virtualFile) -> readInjectionMetadata(element, object));
+    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_ENUM_METADATA, (element, object, queue, virtualFile) -> readEnumMetadata(element, object));
     READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_CASE_INSENSITIVE, (element, object, queue, virtualFile) -> {
       if (element.isBooleanLiteral()) object.setForceCaseInsensitive(getBoolean(element));
     });
@@ -247,12 +234,58 @@ public class JsonSchemaReader {
     READERS_MAP.put("typeof", ((element, object, queue, virtualFile) -> object.setShouldValidateAgainstJSType()));
   }
 
+  private static void readEnumMetadata(JsonValueAdapter element, JsonSchemaObject object) {
+    if (!(element instanceof JsonObjectValueAdapter)) return;
+    Map<String, Map<String, String>> metadataMap = new HashMap<>();
+    for (JsonPropertyAdapter adapter : ((JsonObjectValueAdapter)element).getPropertyList()) {
+      String name = adapter.getName();
+      if (name == null) continue;
+      Collection<JsonValueAdapter> values = adapter.getValues();
+      if (values.size() != 1) continue;
+      JsonValueAdapter valueAdapter = values.iterator().next();
+      if (valueAdapter.isStringLiteral()) {
+        metadataMap.put(name, Collections.singletonMap("description", getString(valueAdapter)));
+      }
+      else if (valueAdapter instanceof JsonObjectValueAdapter) {
+        Map<String, String> valueMap = new HashMap<>();
+        for (JsonPropertyAdapter propertyAdapter : ((JsonObjectValueAdapter)valueAdapter).getPropertyList()) {
+          String adapterName = propertyAdapter.getName();
+          if (adapterName == null) continue;
+          Collection<JsonValueAdapter> adapterValues = propertyAdapter.getValues();
+          if (adapterValues.size() != 1) continue;
+          JsonValueAdapter next = adapterValues.iterator().next();
+          if (next.isStringLiteral()) {
+            valueMap.put(adapterName, getString(next));
+          }
+        }
+        metadataMap.put(name, valueMap);
+      }
+    }
+    object.setEnumMetadata(metadataMap);
+  }
+
+  private static void readInjectionMetadata(JsonValueAdapter element, JsonSchemaObject object) {
+    if (element.isStringLiteral()) {
+      object.setLanguageInjection(getString(element));
+    }
+    else if (element instanceof JsonObjectValueAdapter) {
+      for (JsonPropertyAdapter adapter : ((JsonObjectValueAdapter)element).getPropertyList()) {
+        String lang = readSingleProp(adapter, "language", JsonSchemaReader::getString);
+        if (lang != null) object.setLanguageInjection(lang);
+        String prefix = readSingleProp(adapter, "prefix", JsonSchemaReader::getString);
+        if (prefix != null) object.setLanguageInjectionPrefix(prefix);
+        String postfix = readSingleProp(adapter, "suffix", JsonSchemaReader::getString);
+        if (postfix != null) object.setLanguageInjectionPostfix(postfix);
+      }
+    }
+  }
+
   @Nullable
-  private static String readSingleProp(JsonPropertyAdapter adapter, String propName) {
+  private static <T> T readSingleProp(JsonPropertyAdapter adapter, String propName, Function<JsonValueAdapter, T> getterFunc) {
     if (propName.equals(adapter.getName())) {
       Collection<JsonValueAdapter> values = adapter.getValues();
       if (values.size() == 1) {
-        return getString(values.iterator().next());
+        return getterFunc.apply(values.iterator().next());
       }
     }
     return null;

@@ -268,11 +268,15 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue);
 
       if (schema.getEnum() != null) {
+        Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
         for (Object o : schema.getEnum()) {
           if (myInsideStringLiteral && !(o instanceof String)) continue;
           String variant = o.toString();
           if (!filtered.contains(variant)) {
-            addValueVariant(variant, null);
+            Map<String, String> valueMetadata = metadata == null ? null : metadata.get(StringUtil.unquoteString(variant));
+            String description = valueMetadata == null ? null : valueMetadata.get("description");
+            String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
+            addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : variant, null);
           }
         }
       }

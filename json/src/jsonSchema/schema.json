@@ -78,6 +78,33 @@
       "type": "boolean",
       "description": "If 'true', enum options for this value will be checked case-insensitively"
     },
+    "x-intellij-enum-metadata": {
+      "type": "object",
+      "description": "Provides description and deprecation data for enum values",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Description for an enum value"
+              },
+              "deprecationMessage": {
+                "type": "string",
+                "description": "Deprecation message for an enum value"
+              }
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
     "default": {},
     "multipleOf": {
       "type": "number",

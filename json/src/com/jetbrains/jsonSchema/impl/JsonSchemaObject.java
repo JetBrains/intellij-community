@@ -46,6 +46,7 @@ public class JsonSchemaObject {
   @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
   @NonNls public static final String X_INTELLIJ_LANGUAGE_INJECTION = "x-intellij-language-injection";
   @NonNls public static final String X_INTELLIJ_CASE_INSENSITIVE = "x-intellij-case-insensitive";
+  @NonNls public static final String X_INTELLIJ_ENUM_METADATA = "x-intellij-enum-metadata";
   @Nullable private final String myFileUrl;
   @Nullable private JsonSchemaObject myBackRef;
   @NotNull private final String myPointer;
@@ -124,6 +125,8 @@ public class JsonSchemaObject {
 
   @Nullable private String myDeprecationMessage;
   @Nullable private Map<String, String> myIdsMap;
+
+  @Nullable private Map<String, Map<String, String>> myEnumMetadata;
 
   private boolean myForceCaseInsensitive = false;
 
@@ -364,6 +367,7 @@ public class JsonSchemaObject {
     }
     myPropertyDependencies = copyMap(myPropertyDependencies, other.myPropertyDependencies);
     mySchemaDependencies = copyMap(mySchemaDependencies, other.mySchemaDependencies);
+    myEnumMetadata = copyMap(myEnumMetadata, other.myEnumMetadata);
     if (other.myEnum != null) myEnum = other.myEnum;
     myAllOf = copyList(myAllOf, other.myAllOf);
     myAnyOf = copyList(myAnyOf, other.myAnyOf);
@@ -708,6 +712,15 @@ public class JsonSchemaObject {
 
   public void setSchemaDependencies(@Nullable Map<String, JsonSchemaObject> schemaDependencies) {
     mySchemaDependencies = schemaDependencies;
+  }
+
+  @Nullable
+  public Map<String, Map<String, String>> getEnumMetadata() {
+    return myEnumMetadata;
+  }
+
+  public void setEnumMetadata(@Nullable Map<String, Map<String, String>> enumMetadata) {
+    myEnumMetadata = enumMetadata;
   }
 
   @Nullable
