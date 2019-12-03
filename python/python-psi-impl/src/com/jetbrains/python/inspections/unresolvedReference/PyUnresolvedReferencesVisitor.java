@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.inspections.Wildcard.END;
+import static com.jetbrains.python.PyNames.END_WILDCARD;
 
 abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
   private final Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<>());
@@ -266,8 +266,8 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
     for (QualifiedName name : qualifiedNames) {
       final String canonicalName = name.toString();
       for (String ignored : myIgnoredIdentifiers) {
-        if (ignored.endsWith(END)) {
-          final String prefix = ignored.substring(0, ignored.length() - END.length());
+        if (ignored.endsWith(END_WILDCARD)) {
+          final String prefix = ignored.substring(0, ignored.length() - END_WILDCARD.length());
           if (canonicalName.startsWith(prefix)) {
             return;
           }

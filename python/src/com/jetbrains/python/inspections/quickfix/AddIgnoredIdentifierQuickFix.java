@@ -22,7 +22,7 @@ import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.inspections.Wildcard;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +69,7 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
         (PyUnresolvedReferencesInspection)model.getUnwrappedTool(PyUnresolvedReferencesInspection.class.getSimpleName(), context);
       String name = myIdentifier.toString();
       if (myIgnoreAllAttributes) {
-        name += Wildcard.END;
+        name += PyNames.END_WILDCARD;
       }
       assert inspection != null;
       if (!inspection.ignoredIdentifiers.contains(name)) {

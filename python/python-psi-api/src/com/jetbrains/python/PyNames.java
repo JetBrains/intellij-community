@@ -74,6 +74,7 @@ public class PyNames {
   @NonNls public static final String PYTHON_MODULE_ID = "PYTHON_MODULE";
   public static final String TESTCASE_SETUP_NAME = "setUp";
   public static final String PY_DOCSTRING_ID = "PyDocstring";
+  public static final String END_WILDCARD = ".*";
 
   private PyNames() {
   }
