@@ -10,12 +10,9 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -27,26 +24,15 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.project.ProjectKt;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -257,17 +243,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  // Runs in EDT
+  // runs in EDT
   public void runPostStartupActivities() {
     if (postStartupActivityPassed()) {
       return;
-    }
-
-    final Application app = ApplicationManager.getApplication();
-
-    if (!app.isHeadlessEnvironment()) {
-      checkFsSanity();
-      checkProjectRoots();
     }
 
     runActivities(myDumbAwarePostStartupActivities, Activities.PROJECT_DUMB_POST_STARTUP);
@@ -276,8 +255,6 @@ public class StartupManagerImpl extends StartupManagerEx {
     dumbService.runWhenSmart(new Runnable() {
       @Override
       public void run() {
-        app.assertIsDispatchThread();
-
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
         runActivities(myDumbAwarePostStartupActivities, Activities.PROJECT_DUMB_POST_STARTUP);
 
@@ -306,6 +283,11 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
       }
     });
+
+    //noinspection TestOnlyProblems
+    if (!myProject.isDisposed() && !ProjectManagerImpl.isLight(myProject)) {
+      scheduleBackgroundPostStartupActivities();
+    }
   }
 
   @NotNull
@@ -321,82 +303,11 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private void checkFsSanity() {
-    try {
-      String path = myProject.getProjectFilePath();
-      if (path == null || FileUtil.isAncestor(PathManager.getConfigPath(), path, true)) {
-        return;
-      }
-      if (ProjectKt.isDirectoryBased(myProject)) {
-        path = PathUtil.getParentPath(path);
-      }
-
-      boolean expected = SystemInfo.isFileSystemCaseSensitive;
-      boolean actual = FileUtil.isFileSystemCaseSensitive(path);
-      LOG.info(path + " case-sensitivity: expected=" + expected + " actual=" + actual);
-      if (actual != expected) {
-        int prefix = expected ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'
-        String title = ApplicationBundle.message("fs.case.sensitivity.mismatch.title");
-        String text = ApplicationBundle.message("fs.case.sensitivity.mismatch.message", prefix);
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, text, NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER),
-          myProject);
-      }
-
-      ProjectFsStatsCollector.caseSensitivity(myProject, actual);
-    }
-    catch (FileNotFoundException e) {
-      LOG.warn(e);
-    }
-  }
-
-  private void checkProjectRoots() {
-    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
-    if (roots.length == 0) return;
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    if (!(fs instanceof LocalFileSystemImpl)) return;
-    FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-    if (!watcher.isOperational()) {
-      ProjectFsStatsCollector.watchedRoots(myProject, -1);
+  private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String activityName) {
+    if (activities.isEmpty()) {
       return;
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      LOG.debug("FW/roots waiting started");
-      while (true) {
-        if (myProject.isDisposed()) return;
-        if (!watcher.isSettingRoots()) break;
-        TimeoutUtil.sleep(10);
-      }
-      LOG.debug("FW/roots waiting finished");
-
-      Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
-      int pctNonWatched = 0;
-      if (!manualWatchRoots.isEmpty()) {
-        List<String> nonWatched = new SmartList<>();
-        for (VirtualFile root : roots) {
-          if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
-          String rootPath = root.getPath();
-          for (String manualWatchRoot : manualWatchRoots) {
-            if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
-              nonWatched.add(rootPath);
-            }
-          }
-        }
-        if (!nonWatched.isEmpty()) {
-          String message = ApplicationBundle.message("watcher.non.watchable.project");
-          watcher.notifyOnFailure(message, null);
-          LOG.info("unwatched roots: " + nonWatched);
-          LOG.info("manual watches: " + manualWatchRoots);
-          pctNonWatched = (int)(100.0 * nonWatched.size() / roots.length);
-        }
-      }
-
-      ProjectFsStatsCollector.watchedRoots(myProject, pctNonWatched);
-    });
-  }
-
-  private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String activityName) {
     Activity activity = StartUpMeasurer.startMainActivity(activityName);
 
     while (true) {
@@ -424,7 +335,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     activity.end();
   }
 
-  public final void scheduleBackgroundPostStartupActivities() {
+  private void scheduleBackgroundPostStartupActivities() {
     if (myProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }

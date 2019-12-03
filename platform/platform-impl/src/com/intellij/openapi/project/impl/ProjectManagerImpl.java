@@ -461,11 +461,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }, ModalityState.NON_MODAL, project.getDisposed());
     ApplicationManager.getApplication().invokeLater(() -> {
       LoadingState phase = DumbService.isDumb(project)
-      ? LoadingState.PROJECT_OPENED
-      : LoadingState.INDEXING_FINISHED;
+                           ? LoadingState.PROJECT_OPENED
+                           : LoadingState.INDEXING_FINISHED;
       StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
-
-      startupManager.scheduleBackgroundPostStartupActivities();
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 

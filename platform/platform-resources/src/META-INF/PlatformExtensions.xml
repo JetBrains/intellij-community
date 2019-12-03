@@ -820,5 +820,7 @@
 
     <statistics.counterUsagesCollector groupId="startup" version="1"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
+
+    <postStartupActivity implementation="com.intellij.ide.startup.impl.CheckFsSanityAndProjectRootPostStartUpActivity"/>
   </extensions>
 </idea-plugin>
