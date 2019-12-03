@@ -71,11 +71,6 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
       // later to avoid saving inside document change event processing and deadlock with CLM.
       ApplicationManager.getApplication().invokeLater(Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
-        val isEmpty = documentTracker.readLock { blocks.isEmpty() }
-        if (isEmpty) {
-          // file was modified, and now it's not -> dirty local change
-          vcsDirtyScopeManager.fileDirty(virtualFile)
-        }
       }, project.disposed)
     }
   }
