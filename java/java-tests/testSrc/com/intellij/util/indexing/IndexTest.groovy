@@ -1266,7 +1266,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       found = fileBasedIndex.getContainingFiles(IdIndex.NAME, wordHash, scope).contains(file)
     }
     if (inDumbMode) {
-      fileBasedIndex.ignoreDumbMode(runnable, project)
+      fileBasedIndex.ignoreDumbMode(runnable, project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
     } else {
       runnable.run()
     }

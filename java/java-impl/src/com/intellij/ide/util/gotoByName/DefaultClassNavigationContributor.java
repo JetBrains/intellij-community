@@ -32,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
@@ -67,7 +68,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     Project project = scope.getProject();
     FileBasedIndex.getInstance().ignoreDumbMode(() -> {
       PsiShortNamesCache.getInstance(project).processAllClassNames(processor, scope, filter);
-    }, project);
+    }, project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
   }
 
   @Override
@@ -100,7 +101,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
           return processor.process(aClass);
         }
       }, parameters.getSearchScope(), parameters.getIdFilter());
-    }, parameters.getProject());
+    }, parameters.getProject(), DumbModeAccessType.RELIABLE_DATA_ONLY);
   }
 
   @Nullable

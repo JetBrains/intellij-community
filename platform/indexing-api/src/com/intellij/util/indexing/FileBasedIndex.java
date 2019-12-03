@@ -42,6 +42,12 @@ public abstract class FileBasedIndex {
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public DumbModeAccessType getCurrentDumbModeAccessType() {
+    throw new UnsupportedOperationException();
+  }
+
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
   public abstract void removeIndexableSet(@NotNull IndexableFileSet set);
@@ -132,7 +138,9 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public void ignoreDumbMode(@NotNull Runnable runnable, @NotNull Project project) {
+  public void ignoreDumbMode(@NotNull Runnable runnable,
+                             @NotNull Project project,
+                             @NotNull DumbModeAccessType dumbModeAccessType) {
     throw new UnsupportedOperationException();
   }
 
