@@ -3,6 +3,7 @@ package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -123,7 +124,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
         ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
         PsiClass psiClass = ((PsiField)element).getContainingClass();
-        if (psiClass != null && sameType(type.name(), psiClass)) {
+        if (psiClass != null && type.name().equals(JVMNameUtil.getClassVMName(psiClass))) {
           Field field = type.fieldByName(((PsiField)element).getName());
           if (field != null) {
             return wrap(((ObjectReference)qualifierValue).getValue(field));
@@ -163,7 +164,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         if (type instanceof ClassType) {
           for (Field field : type.allFields()) {
             if (field.isSynthetic() && field.isFinal() && !field.isStatic() &&
-                field.name().matches("this\\$\\d+") && sameType(field.typeName(), (PsiClass)psi)) {
+                field.name().matches("this\\$\\d+") && field.typeName().equals(JVMNameUtil.getClassVMName((PsiClass)psi))) {
               return thisRef.getValue(field);
             }
           }
@@ -209,10 +210,6 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
     }
     return null;
-  }
-
-  private static boolean sameType(String jdiName, PsiClass psiClass) {
-    return jdiName.replace('$', '.').equals(psiClass.getQualifiedName());
   }
 
   private void addToState(PsiElementFactory psiFactory,
