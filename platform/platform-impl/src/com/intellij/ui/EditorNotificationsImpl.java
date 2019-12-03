@@ -11,10 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -39,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -46,6 +45,7 @@ import java.util.List;
  */
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
+  private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final MergingUpdateQueue myUpdateMerger;
   @NotNull private final Project myProject;
@@ -59,6 +59,16 @@ public class EditorNotificationsImpl extends EditorNotifications {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateNotifications(file);
+      }
+
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        VirtualFile file = event.getNewFile();
+        FileEditor editor = event.getNewEditor();
+        if (file != null && editor != null && Boolean.TRUE.equals(editor.getUserData(PENDING_UPDATE))) {
+          editor.putUserData(PENDING_UPDATE, null);
+          updateEditors(file, Collections.singletonList(editor));
+        }
       }
     });
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -100,18 +110,30 @@ public class EditorNotificationsImpl extends EditorNotifications {
                AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
       });
 
-      ReadAction
-        .nonBlocking(() -> calcNotificationUpdates(file, editors))
-        .expireWith(myProject)
-        .expireWhen(() -> !file.isValid())
-        .coalesceBy(this, file)
-        .finishOnUiThread(ModalityState.any(), updates -> {
-          for (Runnable update : updates) {
-            update.run();
-          }
-        })
-        .submit(NonUrgentExecutor.getInstance());
+      Iterator<FileEditor> it = editors.iterator();
+      while (it.hasNext()) {
+        FileEditor e = it.next();
+        if (!e.getComponent().isShowing()) {
+          e.putUserData(PENDING_UPDATE, Boolean.TRUE);
+          it.remove();
+        }
+      }
+      if (!editors.isEmpty()) updateEditors(file, editors);
     });
+  }
+
+  private void updateEditors(@NotNull VirtualFile file, List<FileEditor> editors) {
+    ReadAction
+      .nonBlocking(() -> calcNotificationUpdates(file, editors))
+      .expireWith(myProject)
+      .expireWhen(() -> !file.isValid())
+      .coalesceBy(this, file)
+      .finishOnUiThread(ModalityState.any(), updates -> {
+        for (Runnable update : updates) {
+          update.run();
+        }
+      })
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   @NotNull
