@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
   companion object {
-    private const val CHECK_HASH_COLLISIONS_PROPERTY = "idea.index.generator.check.hash.collisions"
+    @Suppress("MemberVisibilityCanBePrivate") // used by GoLand
+    const val CHECK_HASH_COLLISIONS_PROPERTY = "idea.index.generator.check.hash.collisions"
     val CHECK_HASH_COLLISIONS: Boolean = SystemProperties.`is`(CHECK_HASH_COLLISIONS_PROPERTY)
   }
 
