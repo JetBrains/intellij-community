@@ -1,6 +1,6 @@
 class AdditionalParamTags {
 
-  <warning descr="'@param' tags are not in the right order">/**</warning>
+  /**
    * @param a
    * @param b
    * @param c
@@ -22,7 +22,7 @@ class AdditionalParamTags {
    */
   <X, Y, Z> Z foo2(X a, Y b, Z c) {return null;}
 
-  <warning descr="'@param' tags are not in the right order">/**</warning>
+  /**
    * @param a
    * @param b
    * @param c
@@ -34,7 +34,7 @@ class AdditionalParamTags {
   <X, Y, Z> Z foo3(X a, Y b, Z c) {return null;}
 }
 
-<warning descr="'@param' tags are not in the right order">/**</warning>
+/**
  * @param <X>
  * @param <Y>
  * @param <Z>

@@ -10,7 +10,7 @@ class DuplicatedParamTags {
    */
   <X, Y, Z> Z foo1(X a, Y b, Z c) {return null;}
 
-    <warning descr="'@param' tags are not in the right order">/**</warning>
+  <warning descr="'@param' tags are not in the right order">/**</warning>
    * @param a
    * @param b
    * @param c
@@ -20,6 +20,17 @@ class DuplicatedParamTags {
    * @param <Z>
    */
   <X, Y, Z> Z foo2(X a, Y b, Z c) {return null;}
+
+  /**
+   * @param a
+   * @param b
+   * @param c
+   * @param <X>
+   * @param <Y>
+   * @param <Z>
+   * @param <Z>
+   */
+  <X, Y, Z> Z foo3(X a, Y b, Z c) {return null;}
 }
 
 <warning descr="'@param' tags are not in the right order">/**</warning>
@@ -30,7 +41,7 @@ class DuplicatedParamTags {
  */
 class Foo1<X, Y, Z> {}
 
-<warning descr="'@param' tags are not in the right order">/**</warning>
+/**
  * @param <X>
  * @param <Y>
  * @param <Z>

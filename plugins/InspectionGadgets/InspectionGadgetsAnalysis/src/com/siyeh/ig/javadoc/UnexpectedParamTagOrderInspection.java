@@ -18,9 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Inspects the order of the @param tags mentioned in a javadoc comment. Only javadoc comments which belongs to a {@link PsiMethod} or
@@ -178,15 +176,17 @@ public class UnexpectedParamTagOrderInspection extends BaseInspection {
         return;
       }
 
-      if (expectedNameOrder.size() != paramTags.length) {
-        registerError(docComment.getFirstChild(), owner);
-        return;
-      }
-
+      // keep track of duplicates
+      final Set<String> checkedNames = new HashSet<>();
       for (int i = 0; i < paramTags.length; i++) {
         final String tagName = NameUtil.getName(paramTags[i]);
-        final String parameterName = expectedNameOrder.get(i);
-        if (!parameterName.equals(tagName)) {
+        // don't check duplicates
+        if(checkedNames.contains(tagName)) continue;
+        checkedNames.add(tagName);
+        final int declaredIndex = expectedNameOrder.indexOf(tagName);
+        // don't report non existing parameters
+        if(declaredIndex == -1) continue;
+        if (declaredIndex != i) {
           registerError(docComment.getFirstChild(), owner);
           return;
         }

@@ -31,4 +31,8 @@ public class UnexpectedParamTagOrderInspectionTest extends LightJavaInspectionTe
   public void testWrongOrderedParamTags() {
     doTest();
   }
+
+  public void testParamTagsForNonExistingParameters() {
+    doTest();
+  }
 }
