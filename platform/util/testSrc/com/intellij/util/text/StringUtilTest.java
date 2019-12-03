@@ -22,6 +22,7 @@ import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
@@ -564,7 +565,7 @@ public class StringUtilTest {
     assertEquals("0 ms", StringUtil.formatDuration(0));
     assertEquals("1 ms", StringUtil.formatDuration(1));
     assertEquals("24 d 20 h 31 m 23 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE));
-    assertEquals("29 ep 6533 ml 3 c 8 yr 9 mo 17 d 7 h 12 m 55 s 807 ms", StringUtil.formatDuration(Long.MAX_VALUE));
+    assertEquals("82 d 17 h 24 m 43 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE+5000000000L));
 
     assertEquals("1 m 0 s 100 ms", StringUtil.formatDuration(60100));
 
@@ -576,7 +577,7 @@ public class StringUtilTest {
     assertEquals("1 d 10 h 17 m 36 s 789 ms", StringUtil.formatDuration(123456789));
     assertEquals("14 d 6 h 56 m 7 s 890 ms", StringUtil.formatDuration(1234567890));
 
-    assertEquals("1 yr 1 mo 1 d 1 h 1 m 1 s 1 ms", StringUtil.formatDuration(33786061001L));
+    assertEquals("39 d 2 h 30 m 6 s 101 ms", StringUtil.formatDuration(3378606101L));
   }
 
   @Test
@@ -588,7 +589,18 @@ public class StringUtilTest {
     assertEquals("1 h 1 m", StringUtil.formatDurationApproximate(3659009));
     assertEquals("2 h", StringUtil.formatDurationApproximate(7199000));
     assertEquals("1 d", StringUtil.formatDurationApproximate((23 * 60 * 60 + 59 * 60 + 59) * 1000L));
-    assertEquals("1 yr 1 mo", StringUtil.formatDurationApproximate(33786061001L));
+    assertEquals("391 d 1 h", StringUtil.formatDurationApproximate(33786061001L));
+  }
+
+  @Test
+  public void testFormatDurationPadded() {
+    assertEquals("0 ms", StringUtil.formatDurationPadded(0, " "));
+    assertEquals("1 s 000 ms", StringUtil.formatDurationPadded(1000, " "));
+    assertEquals("1 s 001 ms", StringUtil.formatDurationPadded(1001, " "));
+    assertEquals("2 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.MINUTES.toMillis(2), " "));
+    assertEquals("2 h 00 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.HOURS.toMillis(2), " "));
+    assertEquals("2 d 00 h 00 m 00 s 000 ms", StringUtil.formatDurationPadded(TimeUnit.DAYS.toMillis(2), " "));
+    assertEquals("1434852 d 16 h 13 m 50 s 987 ms", StringUtil.formatDurationPadded(123971271230987L, " "));
   }
 
   @Test

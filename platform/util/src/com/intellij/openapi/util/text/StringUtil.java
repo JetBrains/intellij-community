@@ -1591,8 +1591,8 @@ public class StringUtil extends StringUtilRt {
     return formatDuration(duration, " ");
   }
 
-  private static final String[] TIME_UNITS = {"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"};
-  private static final long[] TIME_MULTIPLIERS = {1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000};
+  private static final String[] TIME_UNITS = {"ms", "s", "m", "h", "d"};
+  private static final long[] TIME_MULTIPLIERS = {1, 1000, 60, 60, 24};
 
   /** Formats given duration as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
   @NotNull
@@ -1647,6 +1647,36 @@ public class StringUtil extends StringUtilRt {
     return result.toString();
   }
 
+  private static final String[] PADDED_FORMATS = {"%03d", "%02d", "%02d", "%02d", "%d"};
+  /**
+   * Formats 234523598 like "2 d 03 h 11 min 04 sec 004 ms" padded accordingly with zeros except the most significant unit, e.g. "days" here.
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatDurationPadded(long millis, @NotNull String unitSeparator) {
+    StringBuilder result = new StringBuilder();
+
+    long millisIn = 1;
+    int i;
+    for (i=1; i < TIME_MULTIPLIERS.length; i++) {
+      long multiplier = TIME_MULTIPLIERS[i];
+      millisIn *= multiplier;
+      if (millis < millisIn) {
+        break;
+      }
+    }
+    long d = millis;
+    for (i-=1; i >= 0; i--) {
+      long multiplier = i==TIME_MULTIPLIERS.length-1 ? 1 : TIME_MULTIPLIERS[i+1];
+      millisIn /= multiplier;
+      long value = d / millisIn;
+      d = d % millisIn;
+      String format = result.length() == 0 ? "%d" : PADDED_FORMATS[i]; // do not pad the most significant unit
+      if (result.length() != 0) result.append(" ");
+      result.append(String.format(format, value)).append(unitSeparator).append(TIME_UNITS[i]);
+    }
+    return result.toString();
+  }
   /**
    * Formats given duration as a sum of time units with at most two units
    * (example: {@code formatDuration(123456, "") = "2m 3s"}).
