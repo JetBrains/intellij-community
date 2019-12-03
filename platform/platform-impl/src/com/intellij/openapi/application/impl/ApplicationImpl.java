@@ -337,7 +337,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     service.shutdownAppScheduledExecutorService();
 
     super.dispose();
-    Disposer.dispose(myLastDisposable); // dispose it last
+    Disposer.dispose(myLastDisposable);
 
     if (gatherStatistics) {
       //noinspection TestOnlyProblems
@@ -1130,6 +1130,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
+    @Nullable
     private String id() {
       Class<?> aClass = getClass();
       String name = aClass.getName();
