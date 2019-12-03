@@ -276,7 +276,7 @@ public class InferenceSession {
   }
 
   private static PsiType getParameterType(PsiParameter[] parameters, int i, @Nullable PsiSubstitutor substitutor, boolean varargs) {
-    if (substitutor == null) return null;
+    if (substitutor == null || !varargs && i >= parameters.length) return null;
     return substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
   }
 
@@ -391,6 +391,7 @@ public class InferenceSession {
       if (arg != null) {
         final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
+        if (parameterType == null) continue;
         if (!isPertinentToApplicability(arg, parentMethod)) {
           ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
           if (arg instanceof PsiFunctionalExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
