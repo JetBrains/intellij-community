@@ -5,10 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -94,12 +91,6 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   @SuppressWarnings("unused")
   private void log(Project project, @NonNls String msg, @Nullable CommitTask task, @NonNls Object... args) {
     //System.out.println(msg + "; task: "+task + "; args: "+StringUtil.first(java.util.Arrays.toString(args), 80, true));
-  }
-
-  @TestOnly
-  void clearQueue() {
-    WriteAction.run(() -> {}); // cancel executing tasks
-    ((BoundedTaskExecutor)executor).clearAndCancelAll();
   }
 
   @Override
