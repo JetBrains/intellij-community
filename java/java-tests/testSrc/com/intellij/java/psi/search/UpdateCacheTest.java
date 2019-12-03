@@ -36,18 +36,13 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
   protected void setUpProject() throws Exception {
-    myProjectManager = ProjectManagerEx.getInstanceEx();
-    LOG.assertTrue(myProjectManager != null, "Cannot instantiate ProjectManager component");
-
-    Path projectFile = getProjectDirOrFile();
-    loadAndSetupProject(projectFile.toString());
+    loadAndSetupProject(getProjectDirOrFile().toString());
   }
 
   private void loadAndSetupProject(String path) throws Exception {
@@ -62,7 +57,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     setUpJdk();
 
-    myProjectManager.openTestProject(myProject);
+    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     runStartupActivities();
   }
 

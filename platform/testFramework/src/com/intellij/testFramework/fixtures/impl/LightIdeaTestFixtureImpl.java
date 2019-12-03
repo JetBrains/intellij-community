@@ -4,6 +4,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.idea.IdeaTestApplicationKt;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -19,8 +20,6 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("TestOnlyProblems")
 public final class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
@@ -71,7 +70,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
       })
       .append(() -> {
         if (project != null) {
-          HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
+          IdeaTestApplicationKt.waitForProjectLeakingThreads(project);
         }
       })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open

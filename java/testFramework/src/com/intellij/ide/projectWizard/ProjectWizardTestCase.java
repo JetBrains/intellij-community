@@ -55,8 +55,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myOldLevel = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject()).getLanguageLevel();
-    myOldDefaultProjectSdk = ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).getProjectSdk();
+
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    myOldLevel = LanguageLevelProjectExtension.getInstance(defaultProject).getLanguageLevel();
+    myOldDefaultProjectSdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
     for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectSdk != jdk) {
@@ -82,7 +84,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
           LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
         extension.setDefault(null);
         extension.setLanguageLevel(myOldLevel);
-        ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+        ProjectRootManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
         JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
       });
       SelectTemplateSettings.getInstance().setLastTemplate(null, null);
@@ -103,14 +105,15 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
     }
     catch (Throwable e) {
-      myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(),
-                                            project -> myWizard.getProjectName().equals(project.getName()));
+      myCreatedProject = ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), project -> {
+        return myWizard.getProjectName().equals(project.getName());
+      });
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);
     UIUtil.dispatchAllInvocationEvents();
 
-    Project[] projects = myProjectManager.getOpenProjects();
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
     assertEquals(Arrays.asList(projects).toString(), 2, projects.length);
     return myCreatedProject;
   }

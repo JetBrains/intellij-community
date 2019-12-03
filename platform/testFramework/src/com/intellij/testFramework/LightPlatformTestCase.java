@@ -2,22 +2,15 @@
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.ide.structureView.StructureViewFactory;
-import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.idea.IdeaTestApplicationKt;
 import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -27,24 +20,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -54,12 +41,12 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -77,45 +64,26 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.ui.UiInterceptors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider;
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl;
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl;
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher;
-import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Objects;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -123,7 +91,7 @@ import static com.intellij.testFramework.RunAll.runAll;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static IdeaTestApplication ourApplication;
+  private static IdeaTestApplication ourTestAppManager;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static Project ourProject;
   private static Module ourModule;
@@ -170,20 +138,20 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @NotNull
   public static IdeaTestApplication initApplication() {
-    ourApplication = IdeaTestApplication.getInstance();
-    return ourApplication;
+    ourTestAppManager = IdeaTestApplication.getInstance();
+    return ourTestAppManager;
   }
 
   @TestOnly
   static void disposeApplication() {
-    if (ourApplication != null) {
-      ourApplication.disposeApp();
-      ourApplication = null;
+    if (ourTestAppManager != null) {
+      ourTestAppManager.disposeApp();
+      ourTestAppManager = null;
     }
   }
 
   public static IdeaTestApplication getApplication() {
-    return ourApplication;
+    return ourTestAppManager;
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -281,7 +249,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
 
-      ourApplication.setDataProvider(this);
+      ourTestAppManager.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
       doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
       InjectedLanguageManagerImpl.pushInjectors(getProject());
@@ -414,8 +382,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         InplaceRefactoring.checkCleared();
       },
       () -> {
-        if (project != null && ourApplication != null) {
-          doTearDown(project, ourApplication);
+        if (project != null && ourTestAppManager != null) {
+          doTearDown(project, ourTestAppManager);
         }
       },
       () -> {
@@ -453,160 +421,45 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     );
   }
 
-  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
-    // don't use method references here to make stack trace reading easier
-    //noinspection Convert2MethodRef
-    runAll(
-      () -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue(),
-      () -> CodeStyle.dropTemporarySettings(project),
-      () -> checkJavaSwingTimersAreDisposed(),
-      () -> UsefulTestCase.doPostponedFormatting(project),
-      () -> LookupManager.hideActiveLookup(project),
-      () -> {
-        if (ProjectManagerImpl.isLight(project)) {
-          StartupManagerImpl startupManager = (StartupManagerImpl)project.getServiceIfCreated(StartupManager.class);
-          if (startupManager != null) {
-            startupManager.prepareForNextTest();
+  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication testAppManager) {
+    try {
+      IdeaTestApplicationKt.tearDownProjectAndApp(project, testAppManager);
+    }
+    finally {
+      ourTestCase = null;
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void checkAssertions() throws Exception {
+    if (!ourAssertionsInTestDetected) {
+      if (IdeaLogger.ourErrorsOccurred != null) {
+        throw IdeaLogger.ourErrorsOccurred;
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void tearDownSourceRoot(@NotNull Project project) {
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      if (ourSourceRoot != null) {
+        try {
+          for (VirtualFile child : ourSourceRoot.getChildren()) {
+            child.delete(LightPlatformTestCase.class);
           }
         }
-      },
-      () -> {
-        WriteCommandAction.runWriteCommandAction(project, () -> {
-          if (ourSourceRoot != null) {
-            try {
-              for (VirtualFile child : ourSourceRoot.getChildren()) {
-                child.delete(LightPlatformTestCase.class);
-              }
-            }
-            catch (IOException e) {
-              //noinspection CallToPrintStackTrace
-              e.printStackTrace();
-            }
-          }
-
-          FileDocumentManager manager = ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
-          if (manager instanceof FileDocumentManagerImpl) {
-            ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
-          }
-        });
-      },
-      () -> {
-        EditorHistoryManager editorHistoryManager = project.getServiceIfCreated(EditorHistoryManager.class);
-        if (editorHistoryManager != null) {
-          editorHistoryManager.removeAllFiles();
+        catch (IOException e) {
+          //noinspection CallToPrintStackTrace
+          e.printStackTrace();
         }
-      },
-      () -> assertFalse(PsiManager.getInstance(project).isDisposed()),
-      () -> {
-        clearEncodingManagerDocumentQueue();
-
-        if (!ourAssertionsInTestDetected) {
-          if (IdeaLogger.ourErrorsOccurred != null) {
-            throw IdeaLogger.ourErrorsOccurred;
-          }
-        }
-      },
-      () -> clearUncommittedDocuments(project),
-      () -> {
-        HintManagerImpl hintManager = (HintManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(HintManager.class);
-        if (hintManager != null) {
-          hintManager.cleanup();
-        }
-      },
-      () -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests(),
-      () -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests(),
-      () -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest(),
-      () -> {
-        TemplateDataLanguageMappings templateDataLanguageMappings = project.getServiceIfCreated(TemplateDataLanguageMappings.class);
-        if (templateDataLanguageMappings != null) {
-          templateDataLanguageMappings.cleanupForNextTest();
-        }
-      },
-      () -> {
-        PsiManager psiManager = project.getServiceIfCreated(PsiManager.class);
-        if (psiManager != null) {
-          ((PsiManagerImpl)psiManager).cleanupForNextTest();
-        }
-      },
-      () -> {
-        StructureViewFactory structureViewFactory = project.getServiceIfCreated(StructureViewFactory.class);
-        if (structureViewFactory != null) {
-          ((StructureViewFactoryImpl)structureViewFactory).cleanupForNextTest();
-        }
-      },
-      () -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS),
-      () -> WriteAction.runAndWait(() -> {
-        if (LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(module)).disposeAndClearCaches();
-
-            for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-              if (orderEntry instanceof LibraryOrderEntry) {
-                LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
-                if (libraryOrderEntry.isModuleLevel()) {
-                  LegacyBridgeLibraryImpl libraryImpl = (LegacyBridgeLibraryImpl)Objects.requireNonNull(libraryOrderEntry.getLibrary());
-                  libraryImpl.getFilePointerProvider().disposeAndClearCaches();
-                }
-              }
-            }
-
-            ((LegacyBridgeModuleRootComponent)ModuleRootManager.getInstance(module)).dropCaches();
-          }
-
-          ((LegacyBridgeFilePointerProviderImpl)LegacyBridgeFilePointerProvider.getInstance(project)).disposeAndClearCaches();
-
-          for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
-            ((LegacyBridgeLibraryImpl)library).getFilePointerProvider().disposeAndClearCaches();
-          }
-
-          LegacyBridgeRootsWatcher.getInstance(project).clear();
-        }
-      }),
-      () -> ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, !ProjectManagerImpl.isLight(project)),
-      () -> application.setDataProvider(null),
-      () -> UiInterceptors.clear(),
-      () -> {
-        ourTestCase = null;
-      },
-      () -> CompletionProgressIndicator.cleanupForNextTest(),
-      () -> {
-        if (ourTestCount++ % 100 == 0) {
-          // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
-          // so let's clear the cache every now and then to ensure it doesn't grow too large
-          GCUtil.clearBeanInfoCache();
-        }
-      });
+      }
+    });
   }
 
   public static void clearEncodingManagerDocumentQueue() {
     EncodingManager encodingManager = ApplicationManager.getApplication().getServiceIfCreated(EncodingManager.class);
     if (encodingManager instanceof EncodingManagerImpl) {
       ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
-    }
-  }
-
-  private static int ourTestCount;
-
-  @ReviseWhenPortedToJDK("9")
-  private static void checkJavaSwingTimersAreDisposed() throws Exception {
-    Class<?> TimerQueueClass = Class.forName("javax.swing.TimerQueue");
-    Method sharedInstance = ReflectionUtil.getMethod(TimerQueueClass, "sharedInstance");
-
-    Object timerQueue = sharedInstance.invoke(null);
-    DelayQueue delayQueue = ReflectionUtil.getField(TimerQueueClass, timerQueue, DelayQueue.class, "queue");
-    Delayed timer = delayQueue.peek();
-    if (timer != null) {
-      long delay = timer.getDelay(TimeUnit.MILLISECONDS);
-      String text = "(delayed for " + delay + "ms)";
-      Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
-      Timer swingTimer = (Timer)getTimer.invoke(timer);
-      text = "Timer (listeners: "+Arrays.asList(swingTimer.getActionListeners()) + ") "+text;
-      try {
-        throw new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue);
-      }
-      finally {
-        swingTimer.stop();
-      }
     }
   }
 
@@ -624,26 +477,26 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void checkEditorsReleased() {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll(
+    runAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
         Application app = ApplicationManager.getApplication();
-        if (app == null) {
+        // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
+        EditorFactory editorFactory = app == null ? null : app.getServiceIfCreated(EditorFactory.class);
+        if (editorFactory == null) {
           return;
         }
 
-        // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
         RunAll runAll = new RunAll();
-        EditorFactory editorFactory = app.getServiceIfCreated(EditorFactory.class);
-        if (editorFactory != null) {
-          for (Editor editor : editorFactory.getAllEditors()) {
-            runAll = runAll
-              .append(() -> EditorFactoryImpl.throwNotReleasedError(editor))
-              .append(() -> editorFactory.releaseEditor(editor));
-          }
+        for (Editor editor : editorFactory.getAllEditors()) {
+          runAll = runAll
+            .append(
+              () -> EditorFactoryImpl.throwNotReleasedError(editor),
+              () -> editorFactory.releaseEditor(editor)
+            );
         }
         runAll.run();
-      }).run();
+      });
   }
 
   @Override

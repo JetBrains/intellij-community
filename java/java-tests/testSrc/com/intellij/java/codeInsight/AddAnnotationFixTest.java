@@ -173,7 +173,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   }
 
   public void testAnnotateLibrary() {
-
     addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
@@ -228,7 +227,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotAvailable("NotNull");
     assertNotAvailable("Nullable");
   }
-  
+
   public void testAvailableFixesOnReference() {
     myFixture.configureByText("Foo.java", "public class Foo {" +
                                           " {\"\".sub<caret>string(1);} " +

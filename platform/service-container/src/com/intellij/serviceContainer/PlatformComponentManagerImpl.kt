@@ -683,6 +683,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   final override fun beforeTreeDispose() {
+    stopServicePreloading()
+
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     if (!containerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)) {
@@ -698,6 +700,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
   @Internal
   fun startDispose() {
+    stopServicePreloading()
+
     Disposer.disposeChildren(this)
 
     val messageBus = messageBus
