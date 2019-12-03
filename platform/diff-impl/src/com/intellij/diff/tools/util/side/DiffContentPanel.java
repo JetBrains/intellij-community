@@ -15,29 +15,55 @@
  */
 package com.intellij.diff.tools.util.side;
 
+import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement;
 import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.InvisibleWrapper;
+import com.intellij.ui.components.panels.Wrapper;
+import net.miginfocom.layout.CC;
+import net.miginfocom.layout.LC;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 class DiffContentPanel extends JPanel {
+  @Nullable private DiffBreadcrumbsPanel myBreadcrumbs;
+
+  private final Wrapper myTitle = new Wrapper();
+  private final Wrapper myTopBreadcrumbs = new InvisibleWrapper();
+  private final Wrapper myBottomBreadcrumbs = new InvisibleWrapper();
+
   DiffContentPanel(@NotNull JComponent content) {
-    super(new BorderLayout(0, DiffUtil.TITLE_GAP));
-    add(content, BorderLayout.CENTER);
+    MigLayout mgr = new MigLayout(new LC().flowY().fill().hideMode(3)
+                                    .insets("0").gridGapY("0"));
+    setLayout(mgr);
+
+    add(myTitle, new CC().growX().minWidth("0").gapY("0", String.valueOf(DiffUtil.TITLE_GAP)));
+    add(myTopBreadcrumbs, new CC().growX().minWidth("0"));
+    add(content, new CC().grow().push());
+    add(myBottomBreadcrumbs, new CC().growX().minWidth("0"));
   }
 
   public void setTitle(@Nullable JComponent titles) {
-    if (titles != null) {
-      add(titles, BorderLayout.NORTH);
-    }
+    myTitle.setContent(titles);
   }
 
   public void setBreadcrumbs(@Nullable DiffBreadcrumbsPanel breadcrumbs) {
     if (breadcrumbs != null) {
-      add(breadcrumbs, BorderLayout.SOUTH);
+      myBreadcrumbs = breadcrumbs;
     }
+  }
+
+  public void updateBreadcrumbsPlacement(@NotNull BreadcrumbsPlacement placement) {
+    if (myBreadcrumbs == null) return;
+
+    myTopBreadcrumbs.setContent(placement == BreadcrumbsPlacement.TOP ? myBreadcrumbs : null);
+    myBottomBreadcrumbs.setContent(placement == BreadcrumbsPlacement.BOTTOM ? myBreadcrumbs : null);
+    myBreadcrumbs.setCrumbsShown(placement != BreadcrumbsPlacement.HIDDEN);
+
+    validate();
+    repaint();
   }
 }

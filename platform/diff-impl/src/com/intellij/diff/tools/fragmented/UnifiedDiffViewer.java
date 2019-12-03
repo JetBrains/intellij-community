@@ -120,7 +120,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
     contentPanel.setTitle(createTitles());
-    contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel());
+    contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
 
     myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
 
@@ -1398,18 +1398,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     private volatile FileBreadcrumbsCollector myBreadcrumbsCollector2;
 
     private UnifiedBreadcrumbsPanel() {
-      super(UnifiedDiffViewer.this.myEditor, UnifiedDiffViewer.this);
+      super(getEditor(), UnifiedDiffViewer.this);
 
       myFile1 = FileDocumentManager.getInstance().getFile(getDocument(Side.LEFT));
       myFile2 = FileDocumentManager.getInstance().getFile(getDocument(Side.RIGHT));
-
-      updateVisibility();
     }
 
     @Override
-    protected boolean updateCollectors() {
-      myBreadcrumbsCollector1 = findCollector(myFile1);
-      myBreadcrumbsCollector2 = findCollector(myFile2);
+    protected boolean updateCollectors(boolean enabled) {
+      myBreadcrumbsCollector1 = enabled ? findCollector(myFile1) : null;
+      myBreadcrumbsCollector2 = enabled ? findCollector(myFile2) : null;
       return myBreadcrumbsCollector1 != null || myBreadcrumbsCollector2 != null;
     }
 

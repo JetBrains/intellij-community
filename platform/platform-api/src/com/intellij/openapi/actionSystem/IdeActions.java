@@ -341,4 +341,9 @@ public interface IdeActions {
   @NonNls String ACTION_BRACE_OR_QUOTE_OUT = "BraceOrQuoteOut";
 
   @NonNls String GROUP_TOUCHBAR = "TouchBar";
+
+  @NonNls String BREADCRUMBS_OPTIONS_GROUP = "EditorBreadcrumbsSettings";
+  @NonNls String BREADCRUMBS_SHOW_ABOVE = "EditorBreadcrumbsShowAbove";
+  @NonNls String BREADCRUMBS_SHOW_BELOW = "EditorBreadcrumbsShowBelow";
+  @NonNls String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
 }

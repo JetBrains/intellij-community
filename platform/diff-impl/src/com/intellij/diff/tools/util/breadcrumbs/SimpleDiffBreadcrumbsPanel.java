@@ -19,13 +19,11 @@ public class SimpleDiffBreadcrumbsPanel extends DiffBreadcrumbsPanel {
     super(editor, disposable);
 
     myFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-
-    updateVisibility();
   }
 
   @Override
-  protected boolean updateCollectors() {
-    myBreadcrumbsCollector = findCollector(myFile);
+  protected boolean updateCollectors(boolean enabled) {
+    myBreadcrumbsCollector = enabled ? findCollector(myFile) : null;
     return myBreadcrumbsCollector != null;
   }
 

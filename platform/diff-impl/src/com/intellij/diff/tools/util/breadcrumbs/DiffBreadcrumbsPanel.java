@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
+  private boolean myCrumbsShown;
+
   public DiffBreadcrumbsPanel(@NotNull Editor editor, @NotNull Disposable disposable) {
     super(editor);
     Disposer.register(disposable, this);
@@ -37,15 +40,24 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> updateVisibility());
   }
 
-  protected void updateVisibility() {
+  public void setCrumbsShown(boolean value) {
+    myCrumbsShown = value;
+    updateVisibility();
+  }
+
+  private void updateVisibility() {
     GuiUtils.invokeLaterIfNeeded(() -> {
-      boolean hasCollectors = updateCollectors();
-      setVisible(hasCollectors);
+      boolean hasCollectors = updateCollectors(myCrumbsShown);
+      if (hasCollectors != isVisible()) {
+        setVisible(hasCollectors);
+        revalidate();
+        repaint();
+      }
       queueUpdate();
     }, ModalityState.stateForComponent(this));
   }
 
-  protected abstract boolean updateCollectors();
+  protected abstract boolean updateCollectors(boolean enabled);
 
   @Nullable
   protected FileBreadcrumbsCollector findCollector(@Nullable VirtualFile file) {
@@ -64,6 +76,9 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
 
   @Override
   protected int getLeftOffset() {
-    return 0;
+    if (((EditorEx)myEditor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT) {
+      return 0;
+    }
+    return super.getLeftOffset();
   }
 }
