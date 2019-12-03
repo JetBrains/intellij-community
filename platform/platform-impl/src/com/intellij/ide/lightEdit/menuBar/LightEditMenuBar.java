@@ -26,6 +26,23 @@ public class LightEditMenuBar extends JMenuBar {
                          Separator.create(),
                          new LightEditExitAction()
     ));
+    add(createActionMenu("&Edit",
+                         standardAction(IdeActions.ACTION_UNDO),
+                         standardAction(IdeActions.ACTION_REDO),
+                         Separator.create(),
+                         standardAction(IdeActions.ACTION_CUT),
+                         standardAction(IdeActions.ACTION_COPY),
+                         standardAction(IdeActions.ACTION_PASTE),
+                         standardAction(IdeActions.ACTION_DELETE),
+                         Separator.create(),
+                         standardAction("EditorSelectWord"),
+                         standardAction("EditorUnSelectWord"),
+                         standardAction(IdeActions.ACTION_SELECT_ALL)
+    ));
+    add(createActionMenu("&View",
+                         standardAction("EditorToggleShowWhitespaces"),
+                         standardAction("EditorToggleShowLineNumbers")
+    ));
     add(createActionMenu("&Help",
                          standardAction("HelpTopics"),
                          standardAction("About")));
