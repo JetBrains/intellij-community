@@ -6,7 +6,7 @@
 
     <description>
         <![CDATA[
-            Lets you connect your IDE to your organization in JetBrains Space.
+            Lets you connect your IDE to your organization in <a href="http://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.
         ]]>
     </description>
 
