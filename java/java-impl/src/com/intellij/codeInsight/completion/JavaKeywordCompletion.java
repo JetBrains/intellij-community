@@ -45,6 +45,17 @@ public class JavaKeywordCompletion {
       psiElement(PsiJavaCodeReferenceElement.class).insideStarting(
         psiElement().withTreeParent(
           psiElement(PsiParameterList.class).andNot(psiElement(PsiAnnotationParameterList.class)))));
+  private static final ElementPattern<PsiElement> INSIDE_RECORD_HEADER =
+    psiElement().withParent(
+      psiElement(PsiJavaCodeReferenceElement.class).insideStarting(
+        or(
+          psiElement().withTreeParent(
+            psiElement(PsiRecordComponent.class)),
+          psiElement().withTreeParent(
+            psiElement(PsiRecordHeader.class)
+          )
+        )
+      ));
   private static final InsertHandler<LookupElementDecorator<?>> ADJUST_LINE_OFFSET = (context, item) -> {
     item.getDelegate().handleInsert(context);
     context.commitDocument();
@@ -722,6 +733,7 @@ public class JavaKeywordCompletion {
   private static boolean isVariableTypePosition(PsiElement position) {
     return START_FOR.accepts(position) ||
            isInsideParameterList(position) ||
+           INSIDE_RECORD_HEADER.accepts(position) ||
            VARIABLE_AFTER_FINAL.accepts(position) ||
            isStatementPosition(position);
   }
