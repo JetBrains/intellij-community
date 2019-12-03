@@ -62,7 +62,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
     mappings = NewMappings(myProject, vcsManager)
     Disposer.register(testRootDisposable, mappings)
-    startupManager.runPostStartupActivities()
+    startupManager.runPostStartupActivitiesRegisteredDynamically()
     vcsManager.waitForInitialized()
   }
 

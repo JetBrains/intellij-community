@@ -12,6 +12,7 @@ import com.intellij.idea.ApplicationLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
@@ -23,7 +24,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
@@ -48,7 +48,6 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
@@ -153,17 +152,21 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void setProjectName(@NotNull String projectName) {
-    if (!projectName.equals(myName)) {
-      myName = projectName;
+    if (projectName.equals(myName)) {
+      return;
+    }
 
-      StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-        if (isDisposed()) return;
+    myName = projectName;
 
-        JFrame frame = WindowManager.getInstance().getFrame(this);
-        String title = FrameTitleBuilder.getInstance().getProjectTitle(this);
-        if (frame != null && title != null) {
-          frame.setTitle(title);
-        }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      StartupManager.getInstance(this).runAfterOpened(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          JFrame frame = WindowManager.getInstance().getFrame(this);
+          String title = FrameTitleBuilder.getInstance().getProjectTitle(this);
+          if (frame != null && title != null) {
+            frame.setTitle(title);
+          }
+        }, ModalityState.NON_MODAL, getDisposed());
       });
     }
   }
@@ -290,17 +293,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     // before components
     CompletableFuture<?> servicePreloadingFuture;
-    //noinspection TestOnlyProblems
-    if (isLight()) {
-      servicePreloadingFuture = CompletableFuture.completedFuture(null);
-    }
-    else {
-      //noinspection rawtypes
-      List plugins = PluginManagerCore.getLoadedPlugins();
-      Executor executor = ApplicationLoader.createExecutorToPreloadServices();
-      //noinspection unchecked
-      servicePreloadingFuture = ApplicationLoader.preloadServices(plugins, this, executor, /* activityPrefix = */ "project ");
-    }
+    //noinspection rawtypes
+    List plugins = PluginManagerCore.getLoadedPlugins();
+    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
+    //noinspection TestOnlyProblems,unchecked
+    servicePreloadingFuture = ApplicationLoader
+      .preloadServices(plugins, this, /* activityPrefix = */ "project ", /* onlyIfAwait = */ isLight());
 
     createComponents(indicator);
 

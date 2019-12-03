@@ -187,18 +187,17 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
    * If {@code toolWindowsPane} is {@code null} then the method just removes
    * the current tool windows pane.
    */
-  final void setToolWindowsPane(@Nullable final ToolWindowsPane toolWindowsPane) {
-    final JComponent contentPane = (JComponent)getContentPane();
+  final void setToolWindowsPane(@Nullable ToolWindowsPane toolWindowsPane) {
     if (myToolWindowsPane != null) {
-      contentPane.remove(myToolWindowsPane);
+      myContentPane.remove(myToolWindowsPane);
     }
 
     myToolWindowsPane = toolWindowsPane;
     if (myToolWindowsPane != null) {
-      contentPane.add(myToolWindowsPane, BorderLayout.CENTER);
+      myContentPane.add(myToolWindowsPane, BorderLayout.CENTER);
     }
 
-    contentPane.revalidate();
+    updateToolbar();
   }
 
   @Override

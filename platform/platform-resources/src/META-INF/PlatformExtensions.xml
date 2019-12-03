@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <!-- must be first - adds activity listener (to tack, when reporing should be stoi) -->
-    <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
+    <startupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.openapi.application.SaveStarter"/>
@@ -590,10 +590,10 @@
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
 
-    <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity" order="first"/>
+    <startupActivity implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
-    <postStartupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
+    <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
     <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
@@ -615,7 +615,6 @@
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
-    <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
@@ -657,7 +656,6 @@
 
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
-    <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
     <projectConfigurable groupId="tools" provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"
                          displayName="Startup Tasks"
                          id="preferences.startup.tasks" nonDefaultProject="true"/>
@@ -821,6 +819,6 @@
     <statistics.counterUsagesCollector groupId="startup" version="1"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
 
-    <postStartupActivity implementation="com.intellij.ide.startup.impl.CheckFsSanityAndProjectRootPostStartUpActivity"/>
+    <postStartupActivity implementation="com.intellij.ide.startup.impl.CheckFsSanityAndProjectRootPostStartUpActivity" order="last"/>
   </extensions>
 </idea-plugin>

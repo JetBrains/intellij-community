@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -87,6 +87,10 @@ public abstract class FileEditorManager {
    */
   @NotNull
   public abstract VirtualFile[] getOpenFiles();
+
+  public boolean hasOpenFiles() {
+    return getOpenFiles().length > 0;
+  }
 
   /**
    * @return files currently selected. The method returns empty array if there are no selected files.

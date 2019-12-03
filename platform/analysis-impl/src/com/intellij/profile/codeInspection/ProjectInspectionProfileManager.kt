@@ -8,7 +8,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.Project
@@ -50,7 +49,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
-  override val schemeManager: SchemeManager<InspectionProfileImpl> = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
+  override val schemeManager = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
                               attributeProvider: Function<in String, String?>,

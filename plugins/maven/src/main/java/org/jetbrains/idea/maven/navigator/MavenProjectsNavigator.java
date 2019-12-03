@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -159,7 +160,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     MavenProjectsManager.getInstance(myProject).addManagerListener(new MavenProjectsManager.Listener() {
       @Override
       public void activated() {
-        initToolWindow();
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> initToolWindow());
         listenForProjectsChanges();
         scheduleStructureUpdate();
       }

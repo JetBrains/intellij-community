@@ -141,7 +141,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       vcs = SvnVcs.getInstance(myProject);
       myGate = new MockChangeListManagerGate(changeListManager);
 
-      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
       refreshSvnMappingsSynchronously();
     });
 

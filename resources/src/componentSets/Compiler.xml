@@ -20,6 +20,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
+    <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
     <javaCompilerConfigurationProxy implementation="com.intellij.compiler.JavaCompilerConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration"/>

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -319,20 +320,22 @@ public final class GuiUtils {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
+      app.invokeLater(runnable, modalityState);
     }
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState, expired);
+      app.invokeLater(runnable, modalityState, expired);
     }
   }
 

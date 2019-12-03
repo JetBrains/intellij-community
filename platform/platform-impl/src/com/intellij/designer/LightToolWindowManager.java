@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +43,7 @@ public abstract class LightToolWindowManager implements Disposable {
     myProject = project;
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
       if (getEditorMode() == null) {
         initListeners();
         bindToDesigner(getActiveDesigner());

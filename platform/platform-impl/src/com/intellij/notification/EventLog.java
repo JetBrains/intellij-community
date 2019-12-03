@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -497,8 +496,8 @@ public final class EventLog {
     }
 
     private void doPrintNotification(@NotNull final Notification notification, @NotNull final EventLogConsole console) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-        if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
+      StartupManager.getInstance(myProject).runAfterOpened(() -> {
+        if (!ShutDownTracker.isShutdownHookRunning()) {
           ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
         }
       });

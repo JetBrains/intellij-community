@@ -150,7 +150,7 @@ private fun startApp(app: ApplicationImpl,
   // preload services only after icon activation
   val preloadSyncServiceFuture = registerRegistryAndInitStoreFuture
     .thenComposeAsync<Void?>(Function {
-      preloadServices(it, app, boundedExecutor, activityPrefix = "")
+      preloadServices(it, app, activityPrefix = "", executor = boundedExecutor)
     }, nonEdtExecutor)
 
   if (!headless) {
@@ -260,11 +260,16 @@ fun createExecutorToPreloadServices(): Executor {
 }
 
 @ApiStatus.Internal
-fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: PlatformComponentManagerImpl, executor: Executor = createExecutorToPreloadServices(), activityPrefix: String): CompletableFuture<Void?> {
+@JvmOverloads
+fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
+                    container: PlatformComponentManagerImpl,
+                    activityPrefix: String,
+                    onlyIfAwait: Boolean = false,
+                    executor: Executor = createExecutorToPreloadServices()): CompletableFuture<Void?> {
   val syncActivity = StartUpMeasurer.startActivity("${activityPrefix}service sync preloading")
   val asyncActivity = StartUpMeasurer.startActivity(" ${activityPrefix}service async preloading")
 
-  val result = container.preloadServices(plugins, executor)
+  val result = container.preloadServices(plugins, executor, onlyIfAwait)
 
   fun endActivityAndLogError(future: CompletableFuture<Void?>, activity: Activity): CompletableFuture<Void?> {
     return future

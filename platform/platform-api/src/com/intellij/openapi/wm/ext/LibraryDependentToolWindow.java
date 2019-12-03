@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.ext;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,10 +7,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-public class LibraryDependentToolWindow extends ToolWindowEP {
+public final class LibraryDependentToolWindow extends ToolWindowEP {
   private static final Logger LOG = Logger.getInstance(LibraryDependentToolWindow.class);
 
-  public static final ExtensionPointName<LibraryDependentToolWindow> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.library.toolWindow");
+  public static final ExtensionPointName<LibraryDependentToolWindow> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.library.toolWindow");
 
   private LibrarySearchHelper myLibrarySearchHelper;
 
@@ -19,7 +20,7 @@ public class LibraryDependentToolWindow extends ToolWindowEP {
   public LibrarySearchHelper getLibrarySearchHelper() {
     if (myLibrarySearchHelper == null) {
       try {
-        myLibrarySearchHelper = instantiateClass(getLibrarySearchClass(), ApplicationManager.getApplication().getPicoContainer());
+        myLibrarySearchHelper = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(librarySearchClass, pluginDescriptor);
       }
       catch(Exception e) {
         LOG.error(e);
@@ -27,9 +28,5 @@ public class LibraryDependentToolWindow extends ToolWindowEP {
       }
     }
     return myLibrarySearchHelper;
-  }
-
-  public String getLibrarySearchClass() {
-    return librarySearchClass;
   }
 }

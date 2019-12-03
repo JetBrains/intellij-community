@@ -78,7 +78,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     daemonCodeAnalyzer.prepareForTest();
     StartupManagerImpl startupManager = (StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject());
     startupManager.runStartupActivities();
-    startupManager.runPostStartupActivities();
+    startupManager.runPostStartupActivitiesRegisteredDynamically();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
     if (isStressTest()) {

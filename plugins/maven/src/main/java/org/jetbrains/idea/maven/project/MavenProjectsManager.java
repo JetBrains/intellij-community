@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -47,7 +46,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import com.intellij.workspace.api.TypedEntityStorageBuilder;
-import com.intellij.workspace.ide.WorkspaceModel;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -119,7 +117,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-  private BuildProgressListener myProgressListener;
+  private final BuildProgressListener myProgressListener;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
@@ -1050,7 +1048,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                            @Nullable AsyncResult<DownloadResult> result) {
     AsyncPromise<DownloadResult> promise = null;
     if (result != null) {
-      promise = (AsyncPromise<DownloadResult>)new AsyncPromise<DownloadResult>()
+      promise = new AsyncPromise<DownloadResult>()
         .onSuccess(it -> result.setDone(it))
         .onError(it -> result.reject(it.getMessage()));
     }

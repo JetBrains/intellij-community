@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -20,7 +20,7 @@ public class RenamePropertyTest extends MultiFileTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
   }
 
   public void testBundle() {

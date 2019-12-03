@@ -46,7 +46,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       return getInstance();
     }
 
-    return ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+    return project.getService(ProjectCodeStyleSettingsManager.class);
   }
 
   /**
@@ -54,7 +54,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    */
   @Deprecated
   public static CodeStyleSettingsManager getInstance() {
-    return ServiceManager.getService(AppCodeStyleSettingsManager.class);
+    return ApplicationManager.getApplication().getService(AppCodeStyleSettingsManager.class);
   }
 
   protected final void registerExtensionPointListeners(@NotNull Disposable disposable) {

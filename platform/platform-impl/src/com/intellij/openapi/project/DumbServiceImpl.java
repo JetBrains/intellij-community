@@ -94,27 +94,28 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
     ApplicationManager.getApplication().getMessageBus().connect(project)
-                      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
-                        @SuppressWarnings("UnnecessaryFullyQualifiedName") final // synchronized, can be accessed from different threads
-                        java.util.Stack<AccessToken> stack = new Stack<>();
+      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+        // synchronized, can be accessed from different threads
+        @SuppressWarnings("UnnecessaryFullyQualifiedName")
+        final java.util.Stack<AccessToken> stack = new Stack<>();
 
-                        @Override
-                        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
-                          if (project == myProject) {
-                            stack.push(heavyActivityStarted(activityName != null ? UIUtil.removeMnemonic(activityName) : "file system changes"));
-                          }
-                        }
+        @Override
+        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
+          if (project == myProject) {
+            stack.push(heavyActivityStarted(activityName != null ? UIUtil.removeMnemonic(activityName) : "file system changes"));
+          }
+        }
 
-                        @Override
-                        public void batchChangeCompleted(@NotNull Project project) {
-                          if (project != myProject) return;
+        @Override
+        public void batchChangeCompleted(@NotNull Project project) {
+          if (project != myProject) return;
 
-                          Stack<AccessToken> tokens = stack;
-                          if (!tokens.isEmpty()) { // just in case
-                            tokens.pop().finish();
-                          }
-                        }
-                      });
+          Stack<AccessToken> tokens = stack;
+          if (!tokens.isEmpty()) { // just in case
+            tokens.pop().finish();
+          }
+        }
+      });
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -247,16 +248,19 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-      synchronized (myRunWhenSmartQueue) {
-        if (isDumb()) {
-          myRunWhenSmartQueue.addLast(runnable);
-          return;
-        }
-      }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> unsafeRunWhenSmart(runnable));
+  }
 
-      runnable.run();
-    });
+  @Override
+  public void unsafeRunWhenSmart(@NotNull @Async.Schedule Runnable runnable) {
+    synchronized (myRunWhenSmartQueue) {
+      if (isDumb()) {
+        myRunWhenSmartQueue.addLast(runnable);
+        return;
+      }
+    }
+
+    runnable.run();
   }
 
   @Override

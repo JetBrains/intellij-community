@@ -97,6 +97,11 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
+  public void unsafeRunWhenSmart(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @Override
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     runnable.run();
   }

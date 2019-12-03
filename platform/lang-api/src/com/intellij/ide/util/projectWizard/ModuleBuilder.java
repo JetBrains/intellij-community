@@ -5,11 +5,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
@@ -290,8 +291,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     if (model == null) moduleModel.commit();
 
     if (runFromProjectWizard) {
-      StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(
-        (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module)));
+      StartupManager.getInstance(module.getProject()).runAfterOpened(() -> {
+        GuiUtils.invokeLaterIfNeeded(() -> {
+          ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module));
+        }, ModalityState.NON_MODAL, module.getDisposed());
+      });
     }
     else {
       onModuleInitialized(module);

@@ -293,7 +293,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     registerComponents(plugins, false);
     ApplicationLoader.initConfigurationStore(this, configPath);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();
-    preloadServices(plugins, executor).getSyncPreloadedServices().join();
+    preloadServices(plugins, executor, false).getSyncPreloadedServices().join();
     loadComponents(null);
     ApplicationLoader.callAppInitialized(this, executor).join();
   }

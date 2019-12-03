@@ -91,7 +91,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     setOpaque(false);
     myFrame = frame;
 
-    // Splitters
+    // splitters
     myVerticalSplitter = new ThreeComponentsSplitter(true, parentDisposable);
     RegistryValue registryValue = Registry.get("ide.mainSplitter.min.size");
     registryValue.addListener(new RegistryValueListener.Adapter() {
@@ -118,8 +118,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       myVerticalSplitter.setInnerComponent(myHorizontalSplitter);
     }
 
-    // Tool stripes
-
+    // tool stripes
     myTopStripe = new Stripe(SwingConstants.TOP, manager);
     myStripes.add(myTopStripe);
     myLeftStripe = new Stripe(SwingConstants.LEFT, manager);
@@ -131,12 +130,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     updateToolStripesVisibility();
 
-    // Layered pane
-
+    // layered pane
     myLayeredPane = new MyLayeredPane(myWidescreen ? myHorizontalSplitter : myVerticalSplitter);
 
-    // Compose layout
-
+    // compose layout
     add(myTopStripe, JLayeredPane.POPUP_LAYER);
     add(myLeftStripe, JLayeredPane.POPUP_LAYER);
     add(myBottomStripe, JLayeredPane.POPUP_LAYER);
@@ -306,7 +303,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    * @param component component to be set.
    */
   @NotNull
-  final FinalizableCommand createSetEditorComponentCmd(final JComponent component, @NotNull Runnable finishCallBack) {
+  final FinalizableCommand createSetEditorComponentCmd(@Nullable JComponent component, @NotNull Runnable finishCallBack) {
     return new SetEditorComponentCmd(component, finishCallBack);
   }
 
@@ -387,7 +384,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return null;
   }
 
-  private void setDocumentComponent(final JComponent component) {
+  private void setDocumentComponent(@Nullable JComponent component) {
     (myWidescreen ? myVerticalSplitter : myHorizontalSplitter).setInnerComponent(component);
   }
 
@@ -1170,8 +1167,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class SetEditorComponentCmd extends FinalizableCommand {
     private final JComponent myComponent;
 
-    SetEditorComponentCmd(final JComponent component, @NotNull Runnable finishCallBack) {
+    SetEditorComponentCmd(@Nullable JComponent component, @NotNull Runnable finishCallBack) {
       super(finishCallBack);
+
       myComponent = component;
     }
 

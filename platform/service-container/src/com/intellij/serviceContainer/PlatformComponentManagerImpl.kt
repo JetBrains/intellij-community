@@ -637,21 +637,34 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
                                      val syncPreloadedServices: CompletableFuture<Void?>)
 
   @ApiStatus.Internal
-  fun preloadServices(plugins: List<IdeaPluginDescriptor>, executor: Executor): ServicePreloadingResult {
-    @Suppress("UNCHECKED_CAST")
-    plugins as List<IdeaPluginDescriptorImpl>
-
+  fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, executor: Executor, onlyIfAwait: Boolean = false): ServicePreloadingResult {
     val asyncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
     val syncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
     for (plugin in plugins) {
+      serviceLoop@
       for (service in getContainerDescriptor(plugin).services) {
-        val preloadPolicy = service.preload
-        if (preloadPolicy == PreloadMode.FALSE) {
-          continue
-        }
-
-        if (preloadPolicy == PreloadMode.NOT_HEADLESS && getApplication()!!.isHeadlessEnvironment) {
-          continue
+        val list = when (service.preload) {
+          PreloadMode.TRUE -> {
+            if (onlyIfAwait) {
+              continue@serviceLoop
+            }
+            else {
+              asyncPreloadedServices
+            }
+          }
+          PreloadMode.NOT_HEADLESS -> {
+            if (onlyIfAwait || getApplication()!!.isHeadlessEnvironment) {
+              continue@serviceLoop
+            }
+            else {
+              asyncPreloadedServices
+            }
+          }
+          PreloadMode.AWAIT -> {
+            syncPreloadedServices
+          }
+          PreloadMode.FALSE -> continue@serviceLoop
+          else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
         }
 
         val future = CompletableFuture.runAsync(Runnable {
@@ -667,11 +680,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
           }
         }, executor)
 
-        when (preloadPolicy) {
-          PreloadMode.TRUE, PreloadMode.NOT_HEADLESS -> asyncPreloadedServices.add(future)
-          PreloadMode.AWAIT -> syncPreloadedServices.add(future)
-          else -> throw IllegalStateException("Unknown preload mode $preloadPolicy")
-        }
+        list.add(future)
       }
     }
     return ServicePreloadingResult(asyncPreloadedServices = CompletableFuture.allOf(*asyncPreloadedServices.toTypedArray()),

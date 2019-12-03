@@ -71,7 +71,7 @@ public final class PluginManagerCore {
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
   public static final String CORE_PLUGIN_ID = "com.intellij";
 
-  private static final PluginId JAVA_PLUGIN_ID = PluginId.getId("com.intellij.java");
+  public static final PluginId JAVA_PLUGIN_ID = PluginId.getId("com.intellij.java");
   private static final PluginId JAVA_MODULE_ID = PluginId.getId("com.intellij.modules.java");
 
   public static final String PLUGIN_XML = "plugin.xml";

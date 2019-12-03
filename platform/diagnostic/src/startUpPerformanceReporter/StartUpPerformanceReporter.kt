@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import kotlin.Comparator
 
-class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformanceService {
+class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   private var startUpFinishedCounter = AtomicInteger()
 
   private var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
@@ -41,7 +41,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "14"
+    internal const val VERSION = "15"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->

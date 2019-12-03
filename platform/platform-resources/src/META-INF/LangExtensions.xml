@@ -48,6 +48,8 @@
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
 
+    <preStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexProjectHandler$FileBasedIndexProjectHandlerPreStartupActivity"/>
+
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>

@@ -309,6 +309,7 @@
     <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
                  description="Allows to collect method usages for more precise type inference"/>
 
+    <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
@@ -1362,12 +1363,6 @@
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcPathMacros</implementation-class>
     </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
-    </component>
-  </project-components>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyUastPlugin"/>

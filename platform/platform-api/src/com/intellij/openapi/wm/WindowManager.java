@@ -90,7 +90,7 @@ public abstract class WindowManager {
 
   public abstract JFrame findVisibleFrame();
 
-  public abstract void addListener(WindowManagerListener listener);
+  public abstract void addListener(@NotNull WindowManagerListener listener);
 
   public abstract void removeListener(WindowManagerListener listener);
 

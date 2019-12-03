@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Allows registering activities that are run during project loading. Methods of StartupManager are typically
  * called from {@link com.intellij.openapi.components.ProjectComponent#projectOpened()}.
+ *
+ * @see StartupActivity
  */
 public abstract class StartupManager {
   /**
@@ -49,6 +51,14 @@ public abstract class StartupManager {
    * @see StartupActivity#POST_STARTUP_ACTIVITY
    */
   public abstract void registerPostStartupDumbAwareActivity(@NotNull Runnable runnable);
+
+  /**
+   * Registers activity that is executed after project loaded.
+   * The runnable will be executed in current thread if project is already opened.</p>
+   *
+   * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
+   */
+  public abstract void runAfterOpened(@NotNull Runnable runnable);
 
   public abstract boolean postStartupActivityPassed();
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -408,4 +409,7 @@ public abstract class DumbService {
      */
     default void exitDumbMode() {}
   }
+
+  @ApiStatus.Internal
+  public abstract void unsafeRunWhenSmart(@NotNull Runnable runnable);
 }

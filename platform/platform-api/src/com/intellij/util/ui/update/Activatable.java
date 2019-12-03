@@ -11,6 +11,10 @@ public interface Activatable {
   default void hideNotify() {
   }
 
+  /**
+   * @deprecated Use {@link Activatable} directly.
+   */
+  @Deprecated
   class Adapter implements Activatable {
   }
 }

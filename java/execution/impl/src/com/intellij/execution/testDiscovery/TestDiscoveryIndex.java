@@ -3,10 +3,12 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.indices.DiscoveredTestDataHolder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Couple;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.MultiMap;
@@ -15,36 +17,46 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TestDiscoveryIndex implements Disposable {
+@Service
+public final class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
 
   private volatile DiscoveredTestDataHolder myHolder;
   private final Object myLock = new Object();
-  private final Path myBasePath;
+  private final Path basePath;
 
 
-  public static TestDiscoveryIndex getInstance(Project project) {
-    return project.getComponent(TestDiscoveryIndex.class);
+  public static TestDiscoveryIndex getInstance(@NotNull Project project) {
+    return project.getService(TestDiscoveryIndex.class);
   }
 
-  public TestDiscoveryIndex(Project project) {
+  @SuppressWarnings("unused")
+  TestDiscoveryIndex(@NotNull Project project) {
     this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
   }
 
-  public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
-    myBasePath = basePath;
+  @NonInjectable
+  public TestDiscoveryIndex(@NotNull Project project, @NotNull Path basePath) {
+    this.basePath = basePath;
+  }
 
-    if (basePath.toFile().exists()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-        NonUrgentExecutor.getInstance().execute(() -> {
-          // proactively init with maybe io costly compact
-          getHolder();
-        });
+  final static class MyPostStartUpActivity implements StartupActivity.DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      NonUrgentExecutor.getInstance().execute(() -> {
+        TestDiscoveryIndex service = getInstance(project);
+        if (!Files.exists(service.basePath)) {
+          return;
+        }
+
+        // proactively init with maybe io costly compact
+        service.getHolder();
       });
     }
   }
@@ -121,8 +133,8 @@ public class TestDiscoveryIndex implements Disposable {
     if (holder == null) {
       synchronized (myLock) {
         holder = myHolder;
-        if (holder == null && myBasePath != null) {
-          myHolder = holder = new DiscoveredTestDataHolder(myBasePath);
+        if (holder == null && basePath != null) {
+          myHolder = holder = new DiscoveredTestDataHolder(basePath);
         }
       }
     }
@@ -139,7 +151,7 @@ public class TestDiscoveryIndex implements Disposable {
       catch (Throwable throwable) {
         LOG.error("Unexpected problem", throwable);
         holder.dispose();
-        PathKt.delete(myBasePath);
+        PathKt.delete(basePath);
         myHolder = null;
       }
       return null;

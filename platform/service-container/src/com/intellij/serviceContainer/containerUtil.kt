@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
+import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -8,14 +9,26 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
 import org.picocontainer.PicoContainer
+import java.util.function.BiConsumer
 
 @ApiStatus.Internal
 fun <T : Any> processComponentInstancesOfType(container: PicoContainer, baseClass: Class<T>, processor: (T) -> Unit) {
   // we must use instances only from our adapter (could be service or something else)
-  for (componentAdapter in container.componentAdapters) {
-    if (componentAdapter is MyComponentAdapter && baseClass.isAssignableFrom(componentAdapter.componentImplementation)) {
+  for (adapter in container.componentAdapters) {
+    if (adapter is MyComponentAdapter && baseClass.isAssignableFrom(adapter.componentImplementation)) {
       @Suppress("UNCHECKED_CAST")
-      processor((componentAdapter.getInitializedInstance() ?: continue) as T)
+      processor((adapter.getInitializedInstance() ?: continue) as T)
+    }
+  }
+}
+
+@ApiStatus.Internal
+fun processProjectComponents(container: PicoContainer, processor: BiConsumer<ProjectComponent, PluginDescriptor>) {
+  // we must use instances only from our adapter (could be service or something else)
+  for (adapter in container.componentAdapters) {
+    if (adapter is MyComponentAdapter) {
+      val instance = adapter.getInitializedInstance() as? ProjectComponent ?: continue
+      processor.accept(instance, adapter.pluginDescriptor)
     }
   }
 }

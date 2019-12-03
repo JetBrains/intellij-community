@@ -120,8 +120,7 @@ public final class ToolWindowCollector {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
         PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();
-        PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : getUnknownPlugin();
-        return new ToolWindowInfo(ep.id, info);
+        return new ToolWindowInfo(ep.id, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
       }
     }
     return null;

@@ -196,7 +196,7 @@ public final class TestWindowManager extends WindowManagerEx {
   public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) { }
 
   @Override
-  public void addListener(final WindowManagerListener listener) { }
+  public void addListener(@NotNull WindowManagerListener listener) { }
 
   @Override
   public void removeListener(final WindowManagerListener listener) { }

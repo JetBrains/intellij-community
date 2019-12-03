@@ -1196,7 +1196,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       ensureIndexesUpToDate(getProject());
-      ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
+      ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivitiesRegisteredDynamically();
       CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
 
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();

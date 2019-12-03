@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl
 
+import com.intellij.configurationStore.checkUnknownMacros
 import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector
-import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector.watchedRoots
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.PathUtil
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import java.io.IOException
 
 internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.DumbAware {
@@ -30,7 +31,7 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
   }
 
   init {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment || ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.INSTANCE
     }
   }
@@ -43,7 +44,10 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
       LOG.warn(e)
     }
 
-    checkProjectRoots(project)
+    NonUrgentExecutor.getInstance().execute {
+      checkProjectRoots(project)
+      checkUnknownMacros(project, true)
+    }
   }
 
   private fun checkFsSanity(project: Project) {
@@ -80,7 +84,7 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
 
     val watcher = (LocalFileSystem.getInstance() as? LocalFileSystemImpl ?: return).fileWatcher
     if (!watcher.isOperational) {
-      watchedRoots(project, -1)
+      ProjectFsStatsCollector.watchedRoots(project, -1)
       return
     }
 
@@ -126,7 +130,7 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
           pctNonWatched = (100.0 * nonWatched.size / roots.size).toInt()
         }
       }
-      watchedRoots(project, pctNonWatched)
+      ProjectFsStatsCollector.watchedRoots(project, pctNonWatched)
     }
   }
 }

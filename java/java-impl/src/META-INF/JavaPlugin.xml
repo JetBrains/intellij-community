@@ -51,13 +51,7 @@
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.execution.testDiscovery.TestDiscoveryIndex</implementation-class>
     </component>
 
     <component>
@@ -289,6 +283,12 @@
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.module.WebModuleTypeRegistrar" preload="true"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector" preload="notHeadless"/>
+    <startupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyStartUpActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyPostStartUpActivity"/>
+
+    <postStartupActivity implementation="com.intellij.execution.testDiscovery.TestDiscoveryIndex$MyPostStartUpActivity"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>

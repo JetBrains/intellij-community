@@ -1,38 +1,28 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class ToolWindowEP extends AbstractExtensionPointBean {
+public class ToolWindowEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(ToolWindowEP.class);
 
-  public static final ExtensionPointName<ToolWindowEP> EP_NAME = ExtensionPointName.create("com.intellij.toolWindow");
+  public static final ExtensionPointName<ToolWindowEP> EP_NAME = new ExtensionPointName<>("com.intellij.toolWindow");
+
+  protected PluginDescriptor pluginDescriptor;
 
   @Attribute("id")
   public String id;
@@ -67,12 +57,27 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   private Class<? extends ToolWindowFactory> myFactoryClass;
   private ToolWindowFactory myFactory;
 
+  @Transient
+  @NotNull
+  public final PluginDescriptor getPluginDescriptor() {
+    return pluginDescriptor;
+  }
+
+  @Override
+  public final void setPluginDescriptor(@NotNull PluginDescriptor value) {
+    pluginDescriptor = value;
+  }
+
   public ToolWindowFactory getToolWindowFactory() {
     if (myFactory == null) {
       try {
-        myFactory = instantiate(getFactoryClass(), ApplicationManager.getApplication().getPicoContainer());
+        if (factoryClass == null) {
+          LOG.error(new PluginException("No toolwindow factory specified for " + id, pluginDescriptor.getPluginId()));
+          return null;
+        }
+        myFactory = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(factoryClass, pluginDescriptor);
       }
-      catch(Exception e) {
+      catch (Exception e) {
         LOG.error(e);
         return null;
       }
@@ -80,14 +85,22 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
     return myFactory;
   }
 
+  @Nullable
   public Class<? extends ToolWindowFactory> getFactoryClass() {
     if (myFactoryClass == null) {
       if (factoryClass == null) {
-        LOG.error(new PluginException("No toolwindow factory specified for " + id, getPluginId()));
+        LOG.error(new PluginException("No toolwindow factory specified for " + id, pluginDescriptor.getPluginId()));
         return null;
       }
 
-      myFactoryClass = findClassNoExceptions(factoryClass);
+      ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
+      try {
+        //noinspection unchecked
+        myFactoryClass = (Class<? extends ToolWindowFactory>)Class.forName(factoryClass, true, classLoader == null ? ToolWindowEP.class.getClassLoader() : classLoader);
+      }
+      catch (ClassNotFoundException e) {
+        return null;
+      }
     }
     return myFactoryClass;
   }
@@ -96,7 +109,7 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   public Condition<Project> getCondition() {
     if (conditionClass != null) {
       try {
-        return instantiateClass(conditionClass, ApplicationManager.getApplication().getPicoContainer());
+        return ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(conditionClass, pluginDescriptor);
       }
       catch (Exception e) {
         LOG.error(e);

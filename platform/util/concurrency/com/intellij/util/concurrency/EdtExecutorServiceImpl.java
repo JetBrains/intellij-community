@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.*;
  * An {@link ExecutorService} implementation which
  * delegates tasks to the EDT for execution.
  */
-class EdtExecutorServiceImpl extends EdtExecutorService {
+final class EdtExecutorServiceImpl extends EdtExecutorService {
   private EdtExecutorServiceImpl() {
   }
 
@@ -33,7 +33,7 @@ class EdtExecutorServiceImpl extends EdtExecutorService {
     }
 
     if (application == null) {
-      SwingUtilities.invokeLater(command);
+      EventQueue.invokeLater(command);
     }
     else {
       application.invokeLater(command, modalityState);
@@ -50,7 +50,7 @@ class EdtExecutorServiceImpl extends EdtExecutorService {
     if (shouldManifestExceptionsImmediately()) {
       return new FlippantFuture<>(callable);
     }
-    return new FutureTask<T>(callable);
+    return new FutureTask<>(callable);
   }
 
   @NotNull
@@ -114,7 +114,7 @@ class EdtExecutorServiceImpl extends EdtExecutorService {
   }
 
   private static class FlippantFuture<T> extends FutureTask<T> {
-    public FlippantFuture(Callable<T> callable) {super(callable);}
+    private FlippantFuture(Callable<T> callable) {super(callable);}
 
     @Override
     public void run() {

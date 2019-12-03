@@ -41,6 +41,7 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
   @NotNull
+  @ApiStatus.Internal
   public abstract ProjectFrameHelper allocateFrame(@NotNull Project project);
 
   /**

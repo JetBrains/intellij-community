@@ -154,11 +154,11 @@ public class MavenUtil {
     }
   }
 
-  public static void invokeAndWait(Project p, Runnable r) {
+  public static void invokeAndWait(@NotNull Project p, @NotNull Runnable r) {
     invokeAndWait(p, ModalityState.defaultModalityState(), r);
   }
 
-  public static void invokeAndWait(final Project p, final ModalityState state, final Runnable r) {
+  public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
     if (isNoBackgroundMode()) {
       r.run();
     }
@@ -186,11 +186,11 @@ public class MavenUtil {
     }
   }
 
-  public static void invokeAndWaitWriteAction(Project p, final Runnable r) {
+  public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
     invokeAndWait(p, () -> ApplicationManager.getApplication().runWriteAction(r));
   }
 
-  public static void runDumbAware(final Project project, final Runnable r) {
+  public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {
     if (DumbService.isDumbAware(r)) {
       r.run();
     }
@@ -199,20 +199,20 @@ public class MavenUtil {
     }
   }
 
-  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable r) {
+  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
     if (project.isDisposed()) return;
 
     if (isNoBackgroundMode()) {
-      r.run();
+      runnable.run();
       return;
     }
 
     if (!project.isInitialized()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(DisposeAwareRunnable.create(r, project));
+      StartupManager.getInstance(project).runAfterOpened(runnable);
       return;
     }
 
-    runDumbAware(project, r);
+    runDumbAware(project, runnable);
   }
 
   public static boolean isNoBackgroundMode() {

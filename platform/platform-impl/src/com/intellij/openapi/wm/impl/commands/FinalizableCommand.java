@@ -15,12 +15,14 @@ public abstract class FinalizableCommand implements Runnable {
 
   protected ToolWindowManagerImpl myManager;
 
-  public FinalizableCommand(Runnable finishCallBack) {
+  public FinalizableCommand(@Nullable Runnable finishCallBack) {
     myFinishCallBack = finishCallBack;
   }
 
   public final void finish() {
-    myFinishCallBack.run();
+    if (myFinishCallBack != null) {
+      myFinishCallBack.run();
+    }
   }
 
   public void beforeExecute(@NotNull ToolWindowManagerImpl toolWindowManager) {

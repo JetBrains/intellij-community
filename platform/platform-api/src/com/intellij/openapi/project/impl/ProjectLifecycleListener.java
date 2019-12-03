@@ -25,7 +25,4 @@ public interface ProjectLifecycleListener {
   @Deprecated
   default void afterProjectClosed(@SuppressWarnings("unused") @NotNull Project project) {
   }
-
-  default void postStartupActivitiesPassed(@NotNull Project project) {
-  }
 }

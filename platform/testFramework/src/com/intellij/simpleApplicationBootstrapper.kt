@@ -48,7 +48,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
       .get(20, TimeUnit.SECONDS)
 
     val boundedExecutor = createExecutorToPreloadServices()
-    val preloadServiceFuture = preloadServices(plugins, app, boundedExecutor, "")
+    val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "", executor = boundedExecutor)
     app.loadComponents(null)
 
     preloadServiceFuture

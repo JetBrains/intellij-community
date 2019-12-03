@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
+import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
@@ -327,30 +328,34 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
                                 loadComponentState: Boolean = false,
                                 useDefaultProjectSettings: Boolean = true,
                                 task: suspend (Project) -> Unit) {
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-    val file = if (projectCreator == null) {
-      tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true)
-    }
-    else {
-      val dir = tempDirManager.newVirtualDirectory()
+  val file = if (projectCreator == null) {
+    tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true)
+  }
+  else {
+    val dir = tempDirManager.newVirtualDirectory()
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       runNonUndoableWriteAction(dir) {
         projectCreator(dir)
       }
     }
+  }
 
-    val project = when (projectCreator) {
-      null -> createHeavyProject(file, useDefaultProjectAsTemplate = useDefaultProjectSettings)
-      else -> ProjectManagerEx.getInstanceEx().loadProject(file, null)
+  val project = when (projectCreator) {
+    null -> createHeavyProject(file, useDefaultProjectAsTemplate = useDefaultProjectSettings)
+    else -> ProjectManagerImpl.loadProject(file, null) { project ->
+     if (loadComponentState) {
+       project.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
+     }
     }
+  }
 
-    if (loadComponentState) {
-      project.runInLoadComponentStateMode {
-        project.use(task)
-      }
-    }
-    else {
+  if (loadComponentState) {
+    project.runInLoadComponentStateMode {
       project.use(task)
     }
+  }
+  else {
+    project.use(task)
   }
 }
 

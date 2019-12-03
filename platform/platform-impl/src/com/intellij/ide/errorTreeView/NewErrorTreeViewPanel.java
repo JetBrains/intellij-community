@@ -56,7 +56,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   protected static final Logger LOG = Logger.getInstance(NewErrorTreeViewPanel.class);
   private volatile String myProgressText = "";
   private volatile float myFraction;
-  private final boolean myCreateExitAction;
   private final ErrorViewStructure myErrorViewStructure;
   private final StructureTreeModel<ErrorViewStructure> myStructureModel;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -99,7 +98,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar, @Nullable Runnable rerunAction) {
     myProject = project;
     myHelpId = helpId;
-    myCreateExitAction = createExitAction;
     myConfiguration = ErrorTreeViewConfiguration.getInstance(project);
     setLayout(new BorderLayout());
 

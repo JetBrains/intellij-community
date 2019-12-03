@@ -164,21 +164,23 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun projectLoaded(project: Project) {
     ApplicationManager.getApplication().invokeLater(Runnable {
-      val frame = frameHelper ?: return@Runnable
+      runActivity("project frame assigning") {
+        val frame = frameHelper ?: return@Runnable
 
-      val projectFrameBounds = ProjectFrameBounds.getInstance(project)
-      if (isFrameBoundsCorrect) {
-        // update to ensure that project stores correct frame bounds
-        projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frame.frame.extendedState)) null else frame.frame.bounds)
-      }
-      else {
-        val frameInfo = projectFrameBounds.getFrameInfoInDeviceSpace()
-        if (frameInfo?.bounds != null) {
-          restoreFrameState(frame, frameInfo)
+        val projectFrameBounds = ProjectFrameBounds.getInstance(project)
+        if (isFrameBoundsCorrect) {
+          // update to ensure that project stores correct frame bounds
+          projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frame.frame.extendedState)) null else frame.frame.bounds)
         }
-      }
+        else {
+          val frameInfo = projectFrameBounds.getFrameInfoInDeviceSpace()
+          if (frameInfo?.bounds != null) {
+            restoreFrameState(frame, frameInfo)
+          }
+        }
 
-      (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame, project)
+        (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame, project)
+      }
     }, project.disposed)
   }
 

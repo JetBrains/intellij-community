@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-final class OpenFilesActivity implements StartupActivity.DumbAware {
+final class OpenFilesActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull Project project) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
