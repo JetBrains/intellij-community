@@ -76,7 +76,26 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public void put(final int key, final TIntHashSet value) {
     try {
       myCache.remove(key);
-      myMap.appendDataWithoutCache(key, value);
+      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        @Override
+        public void append(final DataOutput out) throws IOException {
+          final Ref<IOException> exRef = new Ref<>();
+          value.forEach(value1 -> {
+            try {
+              DataInputOutputUtil.writeINT(out, value1);
+            }
+            catch (IOException e) {
+              exRef.set(e);
+              return false;
+            }
+            return true;
+          });
+          final IOException exception = exRef.get();
+          if (exception != null) {
+            throw exception;
+          }
+        }
+      });
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -87,7 +106,12 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public void put(final int key, final int value) {
     try {
       myCache.remove(key);
-      myMap.appendDataWithoutCache(key, new TIntHashSet(new int[]{value}));
+      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        @Override
+        public void append(final DataOutput out) throws IOException {
+          DataInputOutputUtil.writeINT(out, value);
+        }
+      });
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

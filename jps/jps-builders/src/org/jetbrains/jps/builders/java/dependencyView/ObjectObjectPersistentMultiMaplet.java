@@ -20,12 +20,14 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<K, Collection<V>> myMap;
+  private final DataExternalizer<V> myValueExternalizer;
   private final SLRUCache<K, Collection> myCache;
 
   public ObjectObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<K> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
+    myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer,
                                     new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {
@@ -80,7 +82,14 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   public void put(final K key, final Collection<V> value) {
     try {
       myCache.remove(key);
-      myMap.appendDataWithoutCache(key, value);
+      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        @Override
+        public void append(DataOutput out) throws IOException {
+          for (V v : value) {
+            myValueExternalizer.save(out, v);
+          }
+        }
+      });
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
