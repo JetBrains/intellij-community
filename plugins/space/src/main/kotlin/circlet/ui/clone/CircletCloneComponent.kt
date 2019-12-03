@@ -250,8 +250,8 @@ private class CloneView(
             }
         }
 
-        CircletUserAvatarProvider.getInstance().avatar.forEach(lifetime) { avatarIcon: Icon ->
-            accountLabel.icon = resizeIcon(avatarIcon, VcsCloneDialogUiSpec.Components.avatarSize)
+        CircletUserAvatarProvider.getInstance().avatars.forEach(lifetime) { avatars ->
+            accountLabel.icon = resizeIcon(avatars.circle, VcsCloneDialogUiSpec.Components.avatarSize)
         }
 
         cloneViewModel.isLoading.forEach(lifetime, list::setPaintBusy)
