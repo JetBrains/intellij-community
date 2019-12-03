@@ -69,7 +69,7 @@ public class RehighlightAllEditors implements MadTestingAction {
     try {
       Ref<List<HighlightInfo>> infos = Ref.create();
       MadTestingUtil.prohibitDocumentChanges(
-        () -> infos.set(CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false)));
+        () -> infos.set(CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], true)));
       return infos.get();
     }
     catch (Throwable e) {
