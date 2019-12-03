@@ -2,7 +2,6 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
@@ -29,13 +28,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.NONE_NOTIFICATION_GROUP;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
 
@@ -45,7 +44,7 @@ public class JpsOutputLoaderManager {
   private static final String PROGRESS_TITLE = "Updating Compiler Caches";
   private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;
-  private final ExecutorService ourThreadPool;
+  private final ExecutorService myExecutorService;
   private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
@@ -66,9 +65,9 @@ public class JpsOutputLoaderManager {
     // Configure build manager
     BuildManager buildManager = BuildManager.getInstance();
     if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
-    ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool",
-                                                                         ProcessIOExecutorService.INSTANCE,
-                                                                         getThreadPoolSize());
+    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool",
+                                                                             INSTANCE,
+                                                                             getThreadPoolSize());
   }
 
   public void load(boolean isForceUpdate) {
@@ -92,7 +91,7 @@ public class JpsOutputLoaderManager {
   }
 
   public void notifyAboutNearestCache() {
-    ourThreadPool.execute(() -> {
+    INSTANCE.execute(() -> {
       Pair<String, Integer> commitInfo = getNearestCommit(false);
       if (commitInfo == null) return;
 
@@ -208,10 +207,7 @@ public class JpsOutputLoaderManager {
 
     // Start loaders with own context
     List<CompletableFuture<LoaderStatus>> completableFutures = ContainerUtil.map(loaders, loader ->
-      CompletableFuture.supplyAsync(() -> {
-        Object loadResults = loader.load(loaderContext);
-        return loader.extract(loadResults, ourThreadPool, extractIndicatorManager);
-      }, ourThreadPool));
+      CompletableFuture.supplyAsync(() -> loader.extract(loader.load(loaderContext), extractIndicatorManager), INSTANCE));
 
     // Reduce loaders statuses into the one
     CompletableFuture<LoaderStatus> initialFuture = completableFutures.get(0);
@@ -223,13 +219,13 @@ public class JpsOutputLoaderManager {
     return initialFuture;
   }
 
-  private CompletableFuture<Void> applyChanges(LoaderStatus loaderStatus, JpsOutputLoader loader, ProgressIndicator indicator,
-                                               SegmentedProgressIndicatorManager indicatorManager) {
+  private static CompletableFuture<Void> applyChanges(LoaderStatus loaderStatus, JpsOutputLoader<?> loader, ProgressIndicator indicator,
+                                                      SegmentedProgressIndicatorManager indicatorManager) {
     if (loaderStatus == LoaderStatus.FAILED) {
       indicator.setText("Rolling back");
-      return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
+      return CompletableFuture.runAsync(() -> loader.rollback(), INSTANCE);
     }
-    return CompletableFuture.runAsync(() -> loader.apply(ourThreadPool, indicatorManager), ourThreadPool);
+    return CompletableFuture.runAsync(() -> loader.apply(indicatorManager), INSTANCE);
   }
 
   private void saveStateAndNotify(LoaderStatus loaderStatus, String commitId, long startTime) {
@@ -268,7 +264,7 @@ public class JpsOutputLoaderManager {
 
   private List<JpsOutputLoader<?>> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
-    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCompilationOutputLoader(myServerClient, project),
+    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCompilationOutputLoader(myServerClient, project, myExecutorService),
                                               new JpsCacheLoader(myServerClient, project));
     return myJpsOutputLoadersLoaders;
   }

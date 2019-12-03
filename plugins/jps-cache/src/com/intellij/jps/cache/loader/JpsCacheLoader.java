@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
 
 class JpsCacheLoader implements JpsOutputLoader<File> {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
@@ -45,8 +44,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
   }
 
   @Override
-  public LoaderStatus extract(@Nullable Object loadResults, @NotNull ExecutorService executorService,
-                              @NotNull SegmentedProgressIndicatorManager extractIndicatorManager) {
+  public LoaderStatus extract(@Nullable Object loadResults, @NotNull SegmentedProgressIndicatorManager extractIndicatorManager) {
     if (!(loadResults instanceof File)) return LoaderStatus.FAILED;
 
     File zipFile = (File) loadResults;
@@ -86,7 +84,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
   }
 
   @Override
-  public void apply(@NotNull ExecutorService executorService, @NotNull SegmentedProgressIndicatorManager indicatorManager) {
+  public void apply(@NotNull SegmentedProgressIndicatorManager indicatorManager) {
     if (myTmpCacheFolder == null) {
       LOG.warn("Nothing to apply, download results are empty");
       return;

@@ -38,15 +38,15 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
   private static final String PRODUCTION = "production";
   private static final String TEST = "test";
   private final JpsServerClient myClient;
-  private final Project myProject;
   private final String myProjectPath;
   private List<File> myOldModulesPaths;
+  private final ExecutorService myExecutorService;
   private Map<File, String> myTmpFolderToModuleName;
 
-  JpsCompilationOutputLoader(JpsServerClient client, Project project) {
+  JpsCompilationOutputLoader(@NotNull JpsServerClient client, Project project, @NotNull ExecutorService executorService) {
     myClient = client;
-    myProject = project;
-    myProjectPath = myProject.getBasePath();
+    myExecutorService = executorService;
+    myProjectPath = project.getBasePath();
   }
 
   @Override
@@ -77,8 +77,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
   }
 
   @Override
-  public LoaderStatus extract(@Nullable Object loadResults, @NotNull ExecutorService executorService,
-                              @NotNull SegmentedProgressIndicatorManager extractIndicatorManager) {
+  public LoaderStatus extract(@Nullable Object loadResults, @NotNull SegmentedProgressIndicatorManager extractIndicatorManager) {
     if (!(loadResults instanceof List)) return LoaderStatus.FAILED;
 
     //noinspection unchecked
@@ -89,7 +88,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       long start = System.currentTimeMillis();
       extractIndicatorManager.setText(this, "Extracting downloaded results...");
       List<Future<?>> futureList = ContainerUtil.map(outputLoadResults, loadResult ->
-        executorService.submit(new UnzipOutputTask(result, loadResult, extractIndicatorManager)));
+        myExecutorService.submit(new UnzipOutputTask(result, loadResult, extractIndicatorManager)));
       for (Future future : futureList) {
         future.get();
       }
@@ -116,7 +115,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
   }
 
   @Override
-  public void apply(@NotNull ExecutorService executorService, @NotNull SegmentedProgressIndicatorManager indicatorManager) {
+  public void apply(@NotNull SegmentedProgressIndicatorManager indicatorManager) {
     long start = System.currentTimeMillis();
     if (myOldModulesPaths != null) {
       LOG.info("Removing old compilation outputs " + myOldModulesPaths.size() + " counts");
@@ -131,7 +130,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
 
     indicatorManager.setText(this, "Applying changes...");
     ContainerUtil.map(myTmpFolderToModuleName.entrySet(),
-                      entry -> executorService.submit(() -> {
+                      entry -> myExecutorService.submit(() -> {
                         String moduleName = entry.getValue();
                         File tmpModuleFolder = entry.getKey();
                         SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator =

@@ -8,6 +8,7 @@ import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.BuildTargetState;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,8 @@ public class JpsCompilationOutputLoaderTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    compilationOutputLoader = new JpsCompilationOutputLoader(JpsServerClient.getServerClient(), getProject());
+    compilationOutputLoader = new JpsCompilationOutputLoader(JpsServerClient.getServerClient(), getProject(),
+                                                             ConcurrencyUtil.newSingleThreadExecutor("JpsCompilationOutputLoaderTest"));
     myGson = new Gson();
     myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType();
   }
