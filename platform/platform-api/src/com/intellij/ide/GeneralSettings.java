@@ -2,14 +2,12 @@
 package com.intellij.ide;
 
 import com.intellij.ide.ui.UINumericRange;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -90,15 +88,6 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
 
   public void setShowTipsOnStartup(boolean b) {
     myShowTipsOnStartup = b;
-  }
-
-  @Transient
-  public int getLastTip() {
-    return StringUtil.parseInt(PropertiesComponent.getInstance().getValue("lastTip"), 0);
-  }
-
-  public void setLastTip(int i) {
-    PropertiesComponent.getInstance().setValue("lastTip", Integer.toString(i), "0");
   }
 
   public boolean isReopenLastProject() {
