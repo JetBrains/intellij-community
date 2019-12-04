@@ -317,7 +317,7 @@ public class DeclarationParser {
       if (type == null) {
         pos.rollbackTo();
       }
-      else if (builder.getTokenType() == JavaTokenType.LPARENTH) {  // constructor
+      else if (builder.getTokenType() == JavaTokenType.LPARENTH || builder.getTokenType() == JavaTokenType.LBRACE) {  // constructor
         if (context == Context.CODE_BLOCK) {
           declaration.rollbackTo();
           return null;
@@ -338,6 +338,11 @@ public class DeclarationParser {
 
         if (builder.getTokenType() == JavaTokenType.LPARENTH) {
           return parseMethodFromLeftParenth(builder, declaration, false, true);
+        }
+        else if (builder.getTokenType() == JavaTokenType.LBRACE) { // compact constructor
+          emptyElement(builder, JavaElementType.PARAMETER_LIST);
+          emptyElement(builder, JavaElementType.THROWS_LIST);
+          return parseMethodBody(builder, declaration, false);
         }
         else {
           declaration.rollbackTo();
@@ -436,6 +441,11 @@ public class DeclarationParser {
       parseAnnotationValue(builder);
     }
 
+    return parseMethodBody(builder, declaration, anno);
+  }
+
+  @NotNull
+  private PsiBuilder.Marker parseMethodBody(PsiBuilder builder, PsiBuilder.Marker declaration, boolean anno) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType != JavaTokenType.SEMICOLON && tokenType != JavaTokenType.LBRACE) {
       PsiBuilder.Marker error = builder.mark();
