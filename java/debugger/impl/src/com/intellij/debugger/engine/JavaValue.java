@@ -59,6 +59,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                                                       PinToTopParentValue, PinToTopMemberValue {
   private static final Logger LOG = Logger.getInstance(JavaValue.class);
 
+  private final boolean myCanBePinned;
   private final JavaValue myParent;
   @NotNull
   private final ValueDescriptorImpl myValueDescriptor;
@@ -87,6 +88,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myEvaluationContext = evaluationContext;
     myNodeManager = nodeManager;
     myContextSet = contextSet;
+    myCanBePinned = doComputeCanBePinned();
   }
 
   @Nullable
@@ -97,6 +99,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public boolean canBePinned() {
+    return myCanBePinned;
+  }
+  private boolean doComputeCanBePinned() {
     if(myValueDescriptor instanceof ArrayElementDescriptor) {
       return false;
     }
