@@ -4,7 +4,6 @@ import circlet.client.api.*
 import circlet.platform.client.*
 import circlet.ui.*
 import circlet.utils.*
-import icons.*
 import kotlinx.coroutines.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
@@ -15,15 +14,14 @@ class CircletUserAvatarProvider {
 
     private val lifetime: LifetimeSource = LifetimeSource()
 
-    private val avatarPlaceholders: CircletAvatars = CircletAvatars(
-        CircletIcons.mainIcon,
-        CircletIcons.mainIcon,
-        CircletIcons.mainIcon
-    )
+    private val avatarPlaceholders: CircletAvatars = CircletAvatars.MainIcon
 
     val avatars: Property<CircletAvatars> = lifetime.mapInit(circletWorkspace.workspace, avatarPlaceholders) { ws ->
         ws ?: return@mapInit avatarPlaceholders
-        val avatarTID = ws.me.value.smallAvatar ?: return@mapInit CircletAvatarUtils.generateAvatars(ws.me.value.englishFullName())
+        val id = ws.me.value.username
+        val name = ws.me.value.englishFullName()
+
+        val avatarTID = ws.me.value.smallAvatar ?: return@mapInit CircletAvatarUtils.generateAvatars(id, name)
         val imageLoader = CircletImageLoader(ws.lifetime, ws.client)
 
         // await connected state before trying to load image.
@@ -33,7 +31,7 @@ class CircletUserAvatarProvider {
             log.info { "loading user avatar: $avatarTID" }
             val loadedImage = imageLoader.loadImageAsync(avatarTID).await()
             if (loadedImage == null) {
-                CircletAvatarUtils.generateAvatars(ws.me.value.englishFullName())
+                CircletAvatarUtils.generateAvatars(id, name)
             }
             else {
                 CircletAvatarUtils.createAvatars(loadedImage)

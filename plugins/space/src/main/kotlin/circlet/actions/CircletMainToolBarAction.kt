@@ -16,14 +16,12 @@ import circlet.workspaces.*
 import com.intellij.icons.*
 import com.intellij.ide.*
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
 import com.intellij.ui.awt.*
-import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
 import com.intellij.ui.popup.*
 import com.intellij.ui.popup.list.*
@@ -33,37 +31,19 @@ import libraries.coroutines.extra.*
 import runtime.*
 import runtime.reactive.*
 import java.awt.*
-import java.awt.event.*
 import java.util.concurrent.*
 import javax.swing.*
 
-class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
+class CircletMainToolBarAction : DumbAwareAction() {
+
 
     override fun update(e: AnActionEvent) {
         val isOnNavBar = e.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR
         e.presentation.isEnabledAndVisible = isOnNavBar
         if (!isOnNavBar) return
-
-        val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
-        if (component is JBLabel) {
-            val avatars = CircletUserAvatarProvider.getInstance().avatars.value
-            val avatar = if (circletWorkspace.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected)
-                avatars.online else avatars.offline
-            component.icon = resizeIcon(avatar, 16)
-        }
-    }
-
-    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-        return JBLabel(CircletUserAvatarProvider.getInstance().avatars.value.offline).apply {
-            text = " "
-            addMouseListener(object :MouseAdapter(){
-                override fun mouseClicked(e: MouseEvent?) {
-                    val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, this@apply)
-                    val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(this@apply)
-                    actionPerformed(AnActionEvent.createFromInputEvent(e, place, presentation, dataContext, true, true))
-                }
-            })
-        }
+        val avatars = CircletUserAvatarProvider.getInstance().avatars.value
+        val isConnected = circletWorkspace.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
+        e.presentation.icon = if (isConnected) avatars.online else avatars.offline
     }
 
     override fun actionPerformed(e: AnActionEvent) {

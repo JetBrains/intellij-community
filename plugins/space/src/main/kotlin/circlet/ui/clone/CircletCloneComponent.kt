@@ -270,7 +270,8 @@ private class CloneView(
                 val menuItems: MutableList<AccountMenuItem> = mutableListOf()
                 menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(),
                                                      serverUrl,
-                                                     resizeIcon(accountLabel.icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
+                                                     resizeIcon(CircletUserAvatarProvider.getInstance().avatars.value.circle,
+                                                                VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
                                                      listOf(AccountMenuItem.Action("Open $serverUrl",
                                                                                    { BrowserUtil.browse(st.server) },
                                                                                    AllIcons.Ide.External_link_arrow)))

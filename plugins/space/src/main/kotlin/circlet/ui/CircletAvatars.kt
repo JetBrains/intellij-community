@@ -1,8 +1,12 @@
+@file:Suppress("UndesirableClassUsage")
+
 package circlet.ui
 
 import com.intellij.openapi.util.*
 import com.intellij.ui.*
+import com.intellij.ui.scale.*
 import com.intellij.util.ui.*
+import icons.*
 import runtime.ui.*
 import java.awt.*
 import java.awt.geom.*
@@ -11,33 +15,42 @@ import javax.swing.*
 import kotlin.math.*
 
 object CircletAvatarUtils {
-    @Suppress("UndesirableClassUsage")
-    private fun buildCircleImage(image: BufferedImage): BufferedImage {
+    private fun createImageByMask(image: BufferedImage, area: Area): BufferedImage {
         val size: Int = min(image.width, image.height)
         val mask = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
         var g2 = mask.createGraphics()
         applyQualityRenderingHints(g2)
+        g2.fill(area)
 
-        val avatarOvalArea = Area(Ellipse2D.Double(0.0, 0.0, size.toDouble(), size.toDouble()))
-        g2.fill(avatarOvalArea)
-        g2.dispose()
-
-        val circleAvatar = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
-        g2 = circleAvatar.createGraphics()
+        val shapedImage = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+        g2 = shapedImage.createGraphics()
         applyQualityRenderingHints(g2)
         g2.drawImage(image, 0, 0, null)
         g2.composite = AlphaComposite.getInstance(AlphaComposite.DST_IN)
         g2.drawImage(mask, 0, 0, null)
         g2.dispose()
-        return circleAvatar
+
+        return shapedImage
     }
 
-    @Suppress("UndesirableClassUsage")
-    private fun buildImageWithStatus(image: BufferedImage, statusColor: Color): BufferedImage {
+    internal fun createCircleImage(image: BufferedImage): BufferedImage {
         val size: Int = min(image.width, image.height)
-        val mask = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
-        var g2 = mask.createGraphics()
-        applyQualityRenderingHints(g2)
+        val avatarOvalArea = Area(Ellipse2D.Double(0.0, 0.0, size.toDouble(), size.toDouble()))
+
+        return createImageByMask(image, avatarOvalArea)
+    }
+
+    @Suppress("unused")
+    internal fun createRoundedImage(image: BufferedImage): BufferedImage {
+        val size: Int = min(image.width, image.height)
+        val arc = size / 4.0
+        val avatarOvalArea = Area(RoundRectangle2D.Double(0.0, 0.0, size.toDouble(), size.toDouble(), arc, arc))
+
+        return createImageByMask(image, avatarOvalArea)
+    }
+
+    internal fun buildImageWithStatus(image: BufferedImage, statusColor: Color): BufferedImage {
+        val size: Int = min(image.width, image.height)
 
         val outerD = size / 2.5
         val innerD = size / 3.5
@@ -46,19 +59,10 @@ object CircletAvatarUtils {
         val avatarOvalArea = Area(Ellipse2D.Double(0.0, 0.0, size.toDouble(), size.toDouble()))
         val onlineOvalArea = Area(Ellipse2D.Double(greenSize.toDouble(), greenSize.toDouble(), outerD, outerD))
         avatarOvalArea.subtract(onlineOvalArea)
-        g2.fill(avatarOvalArea)
-        g2.dispose()
 
-        val circleAvatar = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
-        g2 = circleAvatar.createGraphics()
+        val circleAvatar = createImageByMask(image, avatarOvalArea)
+        val g2 = circleAvatar.createGraphics()
         applyQualityRenderingHints(g2)
-
-        g2.drawImage(image, 0, 0, null)
-        val composite = g2.composite
-        g2.composite = AlphaComposite.getInstance(AlphaComposite.DST_IN)
-        g2.drawImage(mask, 0, 0, null)
-        g2.composite = composite
-        g2.paint = JBColor.PanelBackground
         g2.paint = statusColor
         g2.fillOval(size - innerD.toInt(), size - innerD.toInt(), innerD.toInt(), innerD.toInt())
         g2.dispose()
@@ -69,16 +73,14 @@ object CircletAvatarUtils {
         g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY)
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY)
-        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE)
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-        g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
+        g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
     }
 
-    @Suppress("UndesirableClassUsage")
-    private fun generateColoredAvatar(name: String): BufferedImage {
-        val (colorInt1, colorInt2) = Avatars.gradientInt(name)
+    internal fun generateColoredAvatar(gradientSeed: String, name: String): BufferedImage {
+        val (colorInt1, colorInt2) = Avatars.gradientInt(gradientSeed)
         val (color1, color2) = Color(colorInt1) to Color(colorInt2)
 
         val shortName = Avatars.initials(name)
@@ -98,21 +100,43 @@ object CircletAvatarUtils {
     }
 
     fun createAvatars(image: BufferedImage): CircletAvatars {
-        return CircletAvatars(
-            JBImageIcon(buildCircleImage(image)),
-            JBImageIcon(buildImageWithStatus(image, Color(224, 85, 85))),
-            JBImageIcon(buildImageWithStatus(image, Color(98, 181, 67)))
-        )
+        return CircletAvatars.Image(image)
     }
 
-    fun generateAvatars(name: String): CircletAvatars {
-        val generatedImage = generateColoredAvatar(name)
+    fun generateAvatars(gradientSeed: String, name: String): CircletAvatars {
+        val generatedImage = generateColoredAvatar(gradientSeed, name)
         return createAvatars(generatedImage)
     }
 }
 
-data class CircletAvatars(
-    val circle: Icon,
-    val offline: Icon,
-    val online: Icon
-)
+sealed class CircletAvatars {
+    abstract val circle: Icon
+    abstract val offline: Icon
+    abstract val online: Icon
+
+    object MainIcon : CircletAvatars() {
+        override val circle: Icon = CircletIcons.mainIcon
+        override val offline: Icon = CircletIcons.mainIcon
+        override val online: Icon = CircletIcons.mainIcon
+    }
+
+    class Image(private val image: BufferedImage) : CircletAvatars() {
+        private val cache: MutableMap<kotlin.Pair<Color, Int>, JBImageIcon> = mutableMapOf()
+
+        override val circle: Icon by lazy { JBImageIcon(CircletAvatarUtils.createCircleImage(image)) }
+        override val offline: Icon
+            get() = createStatusIcon(Color(224, 85, 85))
+        override val online: Icon
+            get() = createStatusIcon(Color(98, 181, 67))
+
+        private fun createStatusIcon(color: Color): JBImageIcon {
+            val size = JBUI.scale(16)
+            return cache.getOrPut(color to size) {
+                val hiDpi = ImageUtil.ensureHiDPI(CircletAvatarUtils.buildImageWithStatus(image, color), ScaleContext.create())
+                JBImageIcon(ImageUtil.scaleImage(hiDpi, size, size))
+            }
+        }
+    }
+}
+
+
