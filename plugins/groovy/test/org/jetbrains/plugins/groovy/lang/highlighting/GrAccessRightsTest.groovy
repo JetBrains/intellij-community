@@ -21,8 +21,41 @@ class GrAccessRightsTest extends GroovyLatestTest implements HighlightingTest {
   }
 
   @Test
+  void 'private members'() {
+    fileHighlightingTest('accessPrivateMembers.groovy')
+  }
+
+  @Test
+  void 'private script members'() {
+    fileHighlightingTest('accessPrivateScriptMembers.groovy')
+  }
+
+  @Test
   void 'constructor'() {
+    fixture.addClass '''\
+package p1;
+public class MyClass {
+  public MyClass() {}
+  protected MyClass(int i) {}
+  MyClass(int i, int j) {}
+  private MyClass(int i, int j, int k) {}
+}
+'''
     fileHighlightingTest('accessConstructor.groovy')
+  }
+
+  @Test
+  void 'method'() {
+    fixture.addClass '''\
+package p1;
+public class MyClass {
+  public void publicMethod() {} 
+  protected void protectedMethod() {}
+  void packageLocalMethod() {}
+  private void privateMethod() {}
+}
+'''
+    fileHighlightingTest('accessMethod.groovy')
   }
 
   @Test
@@ -33,6 +66,21 @@ class GrAccessRightsTest extends GroovyLatestTest implements HighlightingTest {
   @Test
   void 'trait method'() {
     fileHighlightingTest('accessTraitMethod.groovy')
+  }
+
+  @Test
+  void 'nested class'() {
+    fixture.addClass '''\
+package p1;
+
+public class Outer {
+  public static class PublicClass {}
+  protected static class ProtectedClass {}
+  static class PackageLocalClass {}
+  private static class PrivateClass {}
+}
+'''
+    fileHighlightingTest('accessClass.groovy')
   }
 
   @Test
