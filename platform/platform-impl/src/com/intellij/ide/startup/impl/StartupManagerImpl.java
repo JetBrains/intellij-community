@@ -425,7 +425,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public final void scheduleBackgroundPostStartupActivities() {
-    if (myProject.isDisposed()) {
+    if (myProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 

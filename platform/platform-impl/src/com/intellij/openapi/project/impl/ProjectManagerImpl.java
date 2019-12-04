@@ -465,10 +465,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       : LoadingState.INDEXING_FINISHED;
       StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
 
-      //noinspection TestOnlyProblems
-      if (!project.isDisposed() && !isLight(project)) {
-        startupManager.scheduleBackgroundPostStartupActivities();
-      }
+      startupManager.scheduleBackgroundPostStartupActivities();
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
