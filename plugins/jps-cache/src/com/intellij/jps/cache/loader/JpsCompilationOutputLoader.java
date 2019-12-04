@@ -25,9 +25,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
 
 class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResult>> {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
@@ -40,12 +41,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
   private final JpsServerClient myClient;
   private final String myProjectPath;
   private List<File> myOldModulesPaths;
-  private final ExecutorService myExecutorService;
   private Map<File, String> myTmpFolderToModuleName;
 
-  JpsCompilationOutputLoader(@NotNull JpsServerClient client, Project project, @NotNull ExecutorService executorService) {
+  JpsCompilationOutputLoader(@NotNull JpsServerClient client, Project project) {
     myClient = client;
-    myExecutorService = executorService;
     myProjectPath = project.getBasePath();
   }
 
@@ -88,7 +87,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       long start = System.currentTimeMillis();
       extractIndicatorManager.setText(this, "Extracting downloaded results...");
       List<Future<?>> futureList = ContainerUtil.map(outputLoadResults, loadResult ->
-        myExecutorService.submit(new UnzipOutputTask(result, loadResult, extractIndicatorManager)));
+        EXECUTOR_SERVICE.submit(new UnzipOutputTask(result, loadResult, extractIndicatorManager)));
       for (Future<?> future : futureList) {
         future.get();
       }
@@ -130,7 +129,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
 
     indicatorManager.setText(this, "Applying changes...");
     ContainerUtil.map(myTmpFolderToModuleName.entrySet(),
-                      entry -> myExecutorService.submit(() -> {
+                      entry -> EXECUTOR_SERVICE.submit(() -> {
                         String moduleName = entry.getValue();
                         File tmpModuleFolder = entry.getKey();
                         SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator =

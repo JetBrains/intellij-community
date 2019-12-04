@@ -2,7 +2,7 @@ package com.intellij.jps.cache.client;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.intellij.jps.cache.JpsCachesUtils;
+import com.intellij.jps.cache.JpsCachesPluginUtil;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.OutputLoadResult;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
@@ -109,7 +109,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   @Override
   public List<OutputLoadResult> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
                                                         @NotNull List<AffectedModule> affectedModules) {
-    File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesUtils.PLUGIN_NAME);
+    File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesPluginUtil.PLUGIN_NAME);
     if (!targetDir.exists()) targetDir.mkdirs();
 
     Map<String, AffectedModule> urlToModuleNameMap = affectedModules.stream().collect(Collectors.toMap(

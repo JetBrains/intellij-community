@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +18,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
 
 class JpsOutputsDownloader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsOutputsDownloader");
@@ -41,14 +41,11 @@ class JpsOutputsDownloader {
 
     try {
       myProgressIndicatorManager.setText(this, IdeBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
-      int maxParallelDownloads = Runtime.getRuntime().availableProcessors() - 1;
-      LOG.debug("Downloading " + myFilesDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
-      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileDownloaderImpl Pool", maxParallelDownloads);
       List<Future<Void>> results = new ArrayList<>();
       final AtomicLong totalSize = new AtomicLong();
       for (final DownloadableFileDescription description : myFilesDescriptions) {
-        results.add(executor.submit(() -> {
+        results.add(EXECUTOR_SERVICE.submit(() -> {
           SegmentedProgressIndicatorManager.SubTaskProgressIndicator indicator = myProgressIndicatorManager.createSubTaskIndicator();
           indicator.checkCanceled();
 

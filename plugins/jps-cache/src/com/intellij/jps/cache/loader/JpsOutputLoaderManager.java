@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
@@ -44,7 +42,6 @@ public class JpsOutputLoaderManager {
   private static final String PROGRESS_TITLE = "Updating Compiler Caches";
   private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;
-  private final ExecutorService myExecutorService;
   private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
@@ -65,7 +62,6 @@ public class JpsOutputLoaderManager {
     // Configure build manager
     BuildManager buildManager = BuildManager.getInstance();
     if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
-    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool", INSTANCE, getThreadPoolSize());
   }
 
   public void load(boolean isForceUpdate) {
@@ -262,7 +258,7 @@ public class JpsOutputLoaderManager {
 
   private List<JpsOutputLoader<?>> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
-    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCompilationOutputLoader(myServerClient, project, myExecutorService),
+    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCompilationOutputLoader(myServerClient, project),
                                               new JpsCacheLoader(myServerClient, project));
     return myJpsOutputLoadersLoaders;
   }
@@ -270,10 +266,6 @@ public class JpsOutputLoaderManager {
   private static LoaderStatus combine(LoaderStatus firstStatus, LoaderStatus secondStatus) {
     if (firstStatus == LoaderStatus.FAILED || secondStatus == LoaderStatus.FAILED) return LoaderStatus.FAILED;
     return LoaderStatus.COMPLETE;
-  }
-
-  private static int getThreadPoolSize() {
-    return Runtime.getRuntime().availableProcessors() - 1;
   }
 
   private void onFail() {
