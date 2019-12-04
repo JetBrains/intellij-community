@@ -11,13 +11,6 @@ fragment prCommitInfo on PullRequestCommit {
     url
 }
 
-fragment prReviewerInfo on RequestedReviewer {
-    __typename
-    ... on User {
-        ...userInfo
-    }
-}
-
 fragment reviewDismissedEvent on ReviewDismissedEvent {
     actor {
         ...actorInfo
@@ -107,7 +100,7 @@ fragment reviewRequestedEvent on ReviewRequestedEvent {
     }
     createdAt
     requestedReviewer {
-        ...prReviewerInfo
+        ...pullRequestReviewerInfo
     }
 }
 
@@ -117,7 +110,7 @@ fragment reviewRequestRemovedEvent on ReviewRequestRemovedEvent {
     }
     createdAt
     requestedReviewer {
-        ...prReviewerInfo
+        ...pullRequestReviewerInfo
     }
 }
 

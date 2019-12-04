@@ -8,13 +8,11 @@ import org.jetbrains.plugins.github.api.data.GHUser
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "User", value = GHUser::class),
-  JsonSubTypes.Type(name = "Team", value = GHPullRequestRequestedReviewer.Team::class)
+  JsonSubTypes.Type(name = "Team", value = GHTeam::class)
 )
 interface GHPullRequestRequestedReviewer {
-  // because we need scopes to access teams
-  class Team : GHPullRequestRequestedReviewer {
-    override fun toString(): String {
-      return "Unknown Team"
-    }
-  }
+  val shortName: String
+  val url: String
+  val avatarUrl: String
+  val name: String?
 }

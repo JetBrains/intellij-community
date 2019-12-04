@@ -1,0 +1,8 @@
+fragment teamInfo on Team {
+    ...nodeInfo
+    slug
+    url
+    avatarUrl
+    name
+    combinedSlug
+}

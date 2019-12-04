@@ -109,21 +109,13 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
                               removed: Collection<GHPullRequestRequestedReviewer> = emptyList()): String {
       val builder = StringBuilder()
       if (added.isNotEmpty()) {
-        builder.append(added.joinToString(prefix = "requested a review from ") { "<b>${extractReviewerName(it)}</b>" })
+        builder.append(added.joinToString(prefix = "requested a review from ") { "<b>${it.shortName}</b>" })
       }
       if (removed.isNotEmpty()) {
         if (builder.isNotEmpty()) builder.append(" and ")
-        builder.append(removed.joinToString(prefix = "removed review request from ") { "<b>${extractReviewerName(it)}</b>" })
+        builder.append(removed.joinToString(prefix = "removed review request from ") { "<b>${it.shortName}</b>" })
       }
       return builder.toString()
-    }
-
-    private fun extractReviewerName(requestedReviewer: GHPullRequestRequestedReviewer): String {
-      return when (requestedReviewer) {
-        is GHUser -> requestedReviewer.login
-        is GHPullRequestRequestedReviewer.Team -> "team"
-        else -> throw IllegalArgumentException()
-      }
     }
 
     private fun labelsHTML(added: Collection<GHLabel> = emptyList(), removed: Collection<GHLabel> = emptyList()): String {

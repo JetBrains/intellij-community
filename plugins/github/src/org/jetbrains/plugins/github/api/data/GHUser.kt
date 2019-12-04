@@ -7,5 +7,7 @@ class GHUser(id: String,
              override val login: String,
              override val url: String,
              override val avatarUrl: String,
-             val name: String?)
-  : GHNode(id), GHActor, GHPullRequestRequestedReviewer
+             override val name: String?)
+  : GHNode(id), GHActor, GHPullRequestRequestedReviewer {
+  override val shortName: String = login
+}
