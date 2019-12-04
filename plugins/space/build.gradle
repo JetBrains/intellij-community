@@ -16,7 +16,7 @@ plugins {
 applyKotlinJVM()
 
 if (hasProperty("teamcity")) {
-    version = "2019-alpha.${teamcity["build.number"]}"
+    version = "2019.${teamcity["build.number"]}"
 }
 
 dependencies {
