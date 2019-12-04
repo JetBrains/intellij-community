@@ -291,7 +291,7 @@ public class InferenceSession {
                                            @NotNull PsiExpression[] args,
                                            @NotNull MethodCandidateInfo properties,
                                            @NotNull PsiSubstitutor psiSubstitutor) {
-    return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor);
+    return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor, false);
   }
 
   @NotNull
@@ -299,15 +299,21 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
                               @Nullable MethodCandidateInfo currentMethod) {
-    return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY);
+    return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY, false);
   }
 
   @NotNull
-  private PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
-                                                 @Nullable PsiExpression[] args,
-                                                 @Nullable PsiElement parent,
-                                                 @Nullable MethodCandidateInfo currentMethod,
-                                                 @NotNull PsiSubstitutor initialSubstitutor) {
+  PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
+                                         @Nullable PsiExpression[] args,
+                                         @Nullable PsiElement parent,
+                                         @Nullable MethodCandidateInfo currentMethod,
+                                         @NotNull PsiSubstitutor initialSubstitutor,
+                                         boolean prohibitCaching) {
+    if (!prohibitCaching) {
+      prohibitCaching = MethodCandidateInfo.isOverloadCheck() ||
+                        !(parent instanceof PsiMethodCallExpression &&
+                          ((PsiMethodCallExpression)parent).getMethodExpression().multiResolve(false).length == 1);
+    }
     return ThreadLocalTypes.performWithTypes(types -> {
       myTempTypes = types;
       try {
@@ -325,7 +331,7 @@ public class InferenceSession {
         }
         myTempTypes = null;
       }
-    });
+    }, prohibitCaching);
   }
 
   private void doInfer(@Nullable PsiParameter[] parameters,

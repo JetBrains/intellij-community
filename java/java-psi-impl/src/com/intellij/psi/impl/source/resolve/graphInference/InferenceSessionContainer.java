@@ -57,6 +57,16 @@ public class InferenceSessionContainer {
                               @NotNull ParameterTypeInferencePolicy policy, 
                               @Nullable MethodCandidateInfo currentMethod) {
     final PsiExpressionList argumentList = InferenceSession.getArgumentList(parent);
+    class NoContainer {
+      PsiSubstitutor infer(boolean prohibitCaching) {
+        final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
+        inferenceSession.initExpressionConstraints(parameters, arguments,
+                                                   currentMethod != null ? currentMethod.getElement() : null,
+                                                   currentMethod != null && currentMethod.isVarargs());
+        return inferenceSession.performGuardedInference(parameters, arguments, parent, currentMethod, PsiSubstitutor.EMPTY,
+                                                        prohibitCaching);
+      }
+    }
     if (parent instanceof PsiCall) {
       //overload resolution can't depend on outer call => should not traverse to top
       if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
@@ -103,6 +113,8 @@ public class InferenceSessionContainer {
           if (session != null) {
             final PsiSubstitutor childSubstitutor = inferNested(parameters, arguments, (PsiCall)parent, currentMethod, session);
             if (childSubstitutor != null) return childSubstitutor;
+
+            return new NoContainer().infer(true);
           }
           else if (topLevelCall instanceof PsiMethodCallExpression) {
             return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy).prepareSubstitution();
@@ -111,11 +123,7 @@ public class InferenceSessionContainer {
       }
     }
 
-    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
-    inferenceSession.initExpressionConstraints(parameters, arguments, 
-                                               currentMethod != null ? currentMethod.getElement() : null, 
-                                               currentMethod != null && currentMethod.isVarargs());
-    return inferenceSession.infer(parameters, arguments, parent, currentMethod);
+    return new NoContainer().infer(false);
   }
 
   private static PsiSubstitutor inferNested(@NotNull final PsiParameter[] parameters,
@@ -249,7 +257,7 @@ public class InferenceSessionContainer {
           new InferenceSession(method.getTypeParameters(), ((MethodCandidateInfo)result).getSiteSubstitutor(), topLevelCall.getManager(), topLevelCall, policy);
         topLevelSession.setCurrentMethod(currentMethod);
         topLevelSession.initExpressionConstraints(topLevelParameters, topLevelArguments, method, ((MethodCandidateInfo)result).isVarargs());
-        topLevelSession.infer(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result));
+        topLevelSession.performGuardedInference(topLevelParameters, topLevelArguments, topLevelCall, ((MethodCandidateInfo)result), PsiSubstitutor.EMPTY, false);
         return topLevelSession;
       });
     }

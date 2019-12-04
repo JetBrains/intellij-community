@@ -14,8 +14,11 @@ import java.util.function.Function;
 public class ThreadLocalTypes {
   private static final RecursionGuard<ThreadLocalTypes> ourGuard = RecursionManager.createGuard("ThreadLocalTypes");
   private final Map<PsiElement, PsiType> myMap = new HashMap<>();
+  private final boolean myProhibitCaching;
 
-  private ThreadLocalTypes() {}
+  private ThreadLocalTypes(boolean prohibitCaching) {
+    myProhibitCaching = prohibitCaching;
+  }
 
   @Nullable
   public static PsiType getElementType(@NotNull PsiElement psi) {
@@ -24,7 +27,9 @@ public class ThreadLocalTypes {
       ThreadLocalTypes types = stack.get(i);
       PsiType type = types.myMap.get(psi);
       if (type != null) {
-        ourGuard.prohibitResultCaching(types);
+        if (types.myProhibitCaching) {
+          ourGuard.prohibitResultCaching(types);
+        }
         return type;
       }
     }
@@ -36,7 +41,7 @@ public class ThreadLocalTypes {
     for (int i = stack.size() - 1; i >= 0; i--) {
       ThreadLocalTypes types = stack.get(i);
       if (types.myMap.containsKey(psi)) {
-        ourGuard.prohibitResultCaching(types);
+        if (types.myProhibitCaching) ourGuard.prohibitResultCaching(types);
         return true;
       }
     }
@@ -44,7 +49,12 @@ public class ThreadLocalTypes {
   }
 
   public static <T> T performWithTypes(@NotNull Function<ThreadLocalTypes, T> action) {
-    ThreadLocalTypes types = new ThreadLocalTypes();
+    return performWithTypes(action, true);
+  }
+
+  public static <T> T performWithTypes(@NotNull Function<ThreadLocalTypes, T> action,
+                                       boolean prohibitCaching) {
+    ThreadLocalTypes types = new ThreadLocalTypes(prohibitCaching);
     return ourGuard.doPreventingRecursion(types, false, () -> action.apply(types));
   }
 
