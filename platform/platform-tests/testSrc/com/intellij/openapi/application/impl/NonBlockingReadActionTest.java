@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -117,13 +118,18 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
   }
 
-  public void testDoNotLeakSecondCancelledCoalescedAction() {
+  public void testDoNotLeakSecondCancelledCoalescedAction() throws Exception {
+    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+
     Object leak = new Object(){};
-    CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(AppExecutorUtil.getAppExecutorService());
+    CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
     WriteAction.run(() -> {
-      ReadAction.nonBlocking(() -> "b").coalesceBy(leak).submit(AppExecutorUtil.getAppExecutorService()).cancel();
+      ReadAction.nonBlocking(() -> "b").coalesceBy(leak).submit(executor).cancel();
     });
     assertTrue(p.isDone());
+
+    ((BoundedTaskExecutor) executor).waitAllTasksExecuted(1, TimeUnit.SECONDS);
+
     LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), leak.getClass());
   }
 }
