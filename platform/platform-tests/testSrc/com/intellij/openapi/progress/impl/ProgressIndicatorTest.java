@@ -724,28 +724,20 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void test_runUnderDisposeAwareIndicator_DoesNotHang_ByCancelThreadProgress() {
-    final Disposable parent = Disposer.newDisposable();
-    try {
-      AtomicBoolean fail = new AtomicBoolean();
-      final EmptyProgressIndicator threadIndicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
-      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
+    final EmptyProgressIndicator threadIndicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+    ProgressIndicatorUtils.awaitWithCheckCanceled(
+      ApplicationManager.getApplication().executeOnPooledThread(
         () -> ProgressManager.getInstance().executeProcessUnderProgress(
-            () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(
-              parent,
-              () -> {
-                threadIndicator.cancel();
-                ProgressManager.checkCanceled();
-                fail.set(true);
-              }),
-            threadIndicator
+          () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(
+            getTestRootDisposable(),
+            () -> {
+              threadIndicator.cancel();
+              ProgressManager.checkCanceled();
+              fail();
+            }),
+          threadIndicator
         )
-      );
-      ProgressIndicatorUtils.awaitWithCheckCanceled(future);
-      assertFalse("action was not canceled by thread progress indicator", fail.get());
-    }
-    finally {
-      Disposer.dispose(parent);
-    }
+      ));
   }
 
   public void test_runInReadActionWithWriteActionPriority_DoesNotHang() {
