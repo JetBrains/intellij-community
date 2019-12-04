@@ -307,11 +307,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public boolean isMaxCountSupported() {
-    return true;
-  }
-
-  @Override
   @Nullable
   public Collection<FilePath> getIncomingFiles(@NotNull RepositoryLocation location) throws VcsException {
     FilePath root = null;
@@ -355,21 +350,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public boolean refreshCacheByNumber() {
-    return true;
-  }
-
-  @Override
   public String getChangelistTitle() {
     return message("changes.browser.revision.term");
-  }
-
-  @Override
-  public boolean isChangeLocallyAvailable(FilePath filePath,
-                                          @Nullable VcsRevisionNumber localRevision,
-                                          VcsRevisionNumber changeRevision,
-                                          SvnChangeList changeList) {
-    return localRevision != null && localRevision.compareTo(changeRevision) >= 0;
   }
 
   @Override

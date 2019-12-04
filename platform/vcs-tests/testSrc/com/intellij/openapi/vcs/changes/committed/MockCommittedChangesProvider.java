@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -21,9 +22,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author yole
- */
 public class MockCommittedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeListImpl, ChangeBrowserSettings> {
   private final List<CommittedChangeListImpl> myChangeLists = new ArrayList<>();
   private int myRefreshCount = 0;
@@ -93,13 +91,13 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   }
 
   public CommittedChangeList registerChangeList(final String name, final Change... changes) {
-    final CommittedChangeListImpl list = createList(name, "user",name, new Date().getTime(), 1, changes);
+    final CommittedChangeListImpl list = createList(name, "user", name, new Date().getTime(), 1, changes);
     myChangeLists.add(list);
     return list;
   }
 
-  private static CommittedChangeListImpl createList(final String name, final String author, final String comment,
-                                                    final long date, final long number, final Change... changes) {
+  @NotNull
+  private static CommittedChangeListImpl createList(String name, String author, String comment, long date, long number, Change... changes) {
     final Collection<Change> changeList = new ArrayList<>();
     Collections.addAll(changeList, changes);
     return new CommittedChangeListImpl(name, comment, author, number, new Date(date), changeList);
@@ -111,7 +109,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   }
 
   @Override
-  public void writeChangeList(final DataOutput stream, final CommittedChangeListImpl list) throws IOException {
+  public void writeChangeList(@NotNull DataOutput stream, @NotNull CommittedChangeListImpl list) throws IOException {
     stream.writeUTF(list.getName());
     stream.writeInt(list.getChanges().size());
     stream.writeUTF(list.getCommitterName());
@@ -134,8 +132,9 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
     }
   }
 
+  @NotNull
   @Override
-  public CommittedChangeListImpl readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
+  public CommittedChangeListImpl readChangeList(@NotNull RepositoryLocation location, @NotNull DataInput stream) throws IOException {
     final String name = stream.readUTF();
     int changeCount = stream.readInt();
     final String author = stream.readUTF();
@@ -144,32 +143,22 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
     final long number = stream.readLong();
 
     final Change[] changes = new Change[changeCount];
-    for(int i=0; i<changeCount; i++) {
+    for (int i = 0; i < changeCount; i++) {
       int changeType = stream.readByte();
       String path = stream.readUTF();
       int revision = stream.readInt();
-      switch(changeType) {
+      switch (changeType) {
         case 0:
-          changes [i] = createMockDeleteChange(path, revision);
+          changes[i] = createMockDeleteChange(path, revision);
           break;
         case 2:
-          changes [i] = createMockCreateChange(path, revision);
+          changes[i] = createMockCreateChange(path, revision);
           break;
         default:
-          changes [i] = createMockChange(path, revision);
+          changes[i] = createMockChange(path, revision);
       }
     }
     return createList(name, author, comment, date, number, changes);
-  }
-
-  @Override
-  public boolean isMaxCountSupported() {
-    return true;
-  }
-
-  @Override
-  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
-    return null;
   }
 
   @Override
@@ -180,13 +169,6 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   @Override
   public String getChangelistTitle() {
     return null;
-  }
-
-  @Override
-  public boolean isChangeLocallyAvailable(final FilePath filePath,
-                                          @Nullable final VcsRevisionNumber localRevision, final VcsRevisionNumber changeRevision,
-                                          final CommittedChangeListImpl changeList) {
-    return localRevision != null && localRevision.compareTo(changeRevision) >= 0;
   }
 
   @Override

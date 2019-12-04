@@ -38,9 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author yole
- */
 public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private static final Logger LOG = Logger.getInstance(CvsCommittedChangesProvider.class);
 
@@ -294,24 +291,20 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public void writeChangeList(final DataOutput stream, final CvsChangeList list) throws IOException {
+  public void writeChangeList(@NotNull DataOutput stream, @NotNull CvsChangeList list) throws IOException {
     list.writeToStream(stream);
   }
 
+  @NotNull
   @Override
-  public CvsChangeList readChangeList(final RepositoryLocation location, final DataInput stream) throws IOException {
-    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+  public CvsChangeList readChangeList(@NotNull RepositoryLocation location, @NotNull DataInput stream) throws IOException {
+    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation)location;
     return new CvsChangeList(myProject, cvsLocation.getEnvironment(), cvsLocation.getRootFile(), stream);
   }
 
   @Override
   public boolean isMaxCountSupported() {
     return false;
-  }
-
-  @Override
-  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
-    return null;
   }
 
   @Override
@@ -325,8 +318,10 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public boolean isChangeLocallyAvailable(final FilePath filePath, @Nullable VcsRevisionNumber localRevision,
-                                          VcsRevisionNumber changeRevision, final CvsChangeList changeList) {
+  public boolean isChangeLocallyAvailable(@NotNull FilePath filePath,
+                                          @Nullable VcsRevisionNumber localRevision,
+                                          @NotNull VcsRevisionNumber changeRevision,
+                                          @NotNull CvsChangeList changeList) {
     if (localRevision instanceof CvsRevisionNumber && changeRevision instanceof CvsRevisionNumber) {
       final CvsRevisionNumber cvsLocalRevision = (CvsRevisionNumber)localRevision;
       final CvsRevisionNumber cvsChangeRevision = (CvsRevisionNumber)changeRevision;
@@ -349,7 +344,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return isDifferentBranch(filePath, changeList) || (localRevision != null && localRevision.compareTo(changeRevision) >= 0);
   }
 
-  private static boolean isDifferentBranch(final FilePath filePath, final CvsChangeList changeList) {
+  private static boolean isDifferentBranch(@NotNull FilePath filePath, final CvsChangeList changeList) {
     final String localTag;
     final CvsEntriesManager cvsEntriesManager = CvsEntriesManager.getInstance();
     final VirtualFile parent = filePath.getVirtualFileParent();
