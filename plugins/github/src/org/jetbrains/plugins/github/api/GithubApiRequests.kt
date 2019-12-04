@@ -364,14 +364,16 @@ object GithubApiRequests {
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
-        fun add(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun add(server: GithubServerPath, username: String, repoName: String, number: Long,
+                reviewers: Collection<String>, teamReviewers: List<String>) =
           Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                          GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                          GithubReviewersCollectionRequest(reviewers, teamReviewers))
 
         @JvmStatic
-        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long,
+                   reviewers: Collection<String>, teamReviewers: List<String>) =
           Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                            GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                            GithubReviewersCollectionRequest(reviewers, teamReviewers))
       }
 
       object Commits : Entity("/commits") {

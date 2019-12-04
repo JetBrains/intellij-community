@@ -7,11 +7,15 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
 interface GithubPullRequestsMetadataService : Disposable {
   val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
+  val teams: CompletableFuture<List<GHTeam>>
+  val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
   val issuesAssignees: CompletableFuture<List<GHUser>>
   val labels: CompletableFuture<List<GHLabel>>
 
@@ -19,7 +23,7 @@ interface GithubPullRequestsMetadataService : Disposable {
   fun resetData()
 
   @CalledInBackground
-  fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHUser>)
+  fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
 
   @CalledInBackground
   fun adjustAssignees(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHUser>)

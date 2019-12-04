@@ -11,9 +11,29 @@ import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryRespo
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 
 object GHGQLRequests {
+  object Organization {
+
+    object Team {
+      fun findAll(server: GithubServerPath, organization: String,
+                  pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHTeam>> {
+
+        return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.findOrganizationTeams,
+                                        mapOf("organization" to organization,
+                                              "pageSize" to pagination?.pageSize,
+                                              "cursor" to pagination?.afterCursor),
+                                        TeamsConnection::class.java,
+                                        "organization", "teams")
+      }
+
+      private class TeamsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHTeam>)
+        : GHConnection<GHTeam>(pageInfo, nodes)
+    }
+  }
+
   object Repo {
     fun findPermission(repository: GHRepositoryCoordinates): GQLQuery<GHRepositoryPermission?> {
       return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findRepositoryPermission,

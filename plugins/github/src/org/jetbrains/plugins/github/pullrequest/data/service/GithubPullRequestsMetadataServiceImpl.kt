@@ -6,24 +6,27 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.CalledInBackground
-import org.jetbrains.plugins.github.api.GHRepositoryPath
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
+import java.util.function.BiFunction
 
 class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager: ProgressManager,
                                                                  private val messageBus: MessageBus,
                                                                  private val requestExecutor: GithubApiRequestExecutor,
                                                                  private val serverPath: GithubServerPath,
-                                                                 private val repoPath: GHRepositoryPath)
+                                                                 private val repoPath: GHRepositoryPath,
+                                                                 private val repoOwner: GHRepositoryOwnerName)
   : GithubPullRequestsMetadataService {
 
   init {
@@ -42,6 +45,26 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
 
   override val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { collaboratorsValue.value } }
+
+  private val teamsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
+    if (repoOwner !is GHRepositoryOwnerName.Organization) emptyList()
+    else SimpleGHGQLPagesLoader(requestExecutor, {
+      GHGQLRequests.Organization.Team.findAll(serverPath, repoOwner.login, it)
+    }).loadAll(indicator)
+  }
+
+  override val teams: CompletableFuture<List<GHTeam>>
+    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { teamsValue.value } }
+
+  override val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
+    get() = GithubAsyncUtil.futureOfMutable {
+      invokeAndWaitIfNeeded {
+        collaboratorsWithPushAccess.thenCombine(teams,
+                                                BiFunction<List<GHUser>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
+                                                  users + teams
+                                                })
+      }
+    }
 
   private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader
@@ -64,27 +87,32 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(progressManager
 
   override fun resetData() {
     collaboratorsValue.drop()
+    teamsValue.drop()
     assigneesValue.drop()
     labelsValue.drop()
   }
 
   @CalledInBackground
-  override fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHUser>) {
+  override fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHPullRequestRequestedReviewer>) {
     if (delta.isEmpty) return
 
-    if (delta.removedItems.isNotEmpty()) {
+    val removedItems = delta.removedItems
+    if (removedItems.isNotEmpty()) {
       indicator.text2 = "Removing reviewers"
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
                                 .remove(serverPath, repoPath.owner, repoPath.repository, pullRequest,
-                                        delta.removedItems.map { it.login }))
+                                        removedItems.filterIsInstance(GHUser::class.java).map { it.login },
+                                        removedItems.filterIsInstance(GHTeam::class.java).map { it.slug }))
     }
-    if (delta.newItems.isNotEmpty()) {
+    val newItems = delta.newItems
+    if (newItems.isNotEmpty()) {
       indicator.text2 = "Adding reviewers"
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
                                 .add(serverPath, repoPath.owner, repoPath.repository, pullRequest,
-                                     delta.newItems.map { it.login }))
+                                     newItems.filterIsInstance(GHUser::class.java).map { it.login },
+                                     newItems.filterIsInstance(GHTeam::class.java).map { it.slug }))
     }
     messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequest)
   }

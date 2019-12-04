@@ -88,12 +88,13 @@ internal class GHPRMetadataPanel(private val project: Project,
 
     override fun editList() {
       val details = model.value ?: return
-      val userReviewers = details.reviewRequests.map { it.requestedReviewer }.filterIsInstance<GHUser>()
+      val author = model.value?.author as? GHUser ?: return
+      val reviewers = details.reviewRequests.mapNotNull { it.requestedReviewer }
       GithubUIUtil
         .showChooserPopup("Reviewers", editButton, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-          GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-        }, userReviewers, metadataService.collaboratorsWithPushAccess)
+          GithubUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
+        }, reviewers, metadataService.potentialReviewers.thenApply { it - author })
         .handleOnEdt(getAdjustmentHandler(details.number, "reviewer") { indicator, delta ->
           metadataService.adjustReviewers(indicator, details.number, delta)
         })
