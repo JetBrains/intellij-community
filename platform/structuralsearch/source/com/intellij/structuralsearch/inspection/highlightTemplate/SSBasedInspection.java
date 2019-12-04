@@ -7,9 +7,13 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.Matcher;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
@@ -29,10 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -40,7 +41,7 @@ import java.util.Set;
 public class SSBasedInspection extends LocalInspectionTool {
   static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
 
-  static final String SHORT_NAME = "SSBasedInspection";
+  public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
   final Set<String> myProblemsReported = new HashSet<>(1);
 
@@ -78,17 +79,20 @@ public class SSBasedInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final Matcher matcher = new Matcher(holder.getManager().getProject());
+    final Project project = holder.getManager().getProject();
+    if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    if (Registry.is("ssr.separate.inspections")) return PsiElementVisitor.EMPTY_VISITOR;
+
+    final Matcher matcher = new Matcher(project);
     final Map<Configuration, MatchContext> compiledOptions =
       SSBasedInspectionCompiledPatternsCache.getCompiledOptions(myConfigurations, matcher);
-
-    if (compiledOptions.isEmpty()) return super.buildVisitor(holder, isOnTheFly);
+    if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new PsiElementVisitor() {
       final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
         final PsiElement element = matchResult.getMatch();
         final String name = configuration.getName();
-        final LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
+        final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
         holder.registerProblem(
           holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
         );
@@ -167,5 +171,9 @@ public class SSBasedInspection extends LocalInspectionTool {
   public void setConfigurations(@NotNull final List<? extends Configuration> configurations, @NotNull final Project project) {
     myConfigurations.clear();
     myConfigurations.addAll(configurations);
+  }
+
+  public List<Configuration> getConfigurations() {
+    return Collections.unmodifiableList(myConfigurations);
   }
 }

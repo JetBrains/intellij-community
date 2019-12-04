@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -12,17 +12,22 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+import java.util.UUID;
+
 public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
   @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
 
   public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String CREATED_ATTRIBUTE_NAME = "created";
+  @NonNls private static final String UUID_ATTRIBUTE_NAME = "uuid";
 
   private String name;
   private String category;
   private boolean predefined;
   private long created;
+  private UUID uuid;
 
   private transient String myCurrentVariableName = null;
 
@@ -43,6 +48,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     category = configuration.category;
     created = -1L; // receives timestamp when added to history
     predefined = false; // copy is never predefined
+    uuid = null;
   }
 
   public abstract Configuration copy();
@@ -78,15 +84,30 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.created = created;
   }
 
+  public void setUuid(UUID uuid) {
+    this.uuid = uuid;
+  }
+
+  public UUID getUuid() {
+    return uuid;
+  }
+
   @Override
   public void readExternal(Element element) {
     name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
-    final Attribute attribute = element.getAttribute(CREATED_ATTRIBUTE_NAME);
-    if (attribute != null) {
+    final Attribute createdAttribute = element.getAttribute(CREATED_ATTRIBUTE_NAME);
+    if (createdAttribute != null) {
       try {
-        created = attribute.getLongValue();
+        created = createdAttribute.getLongValue();
       }
       catch (DataConversionException ignore) {}
+    }
+    final Attribute uuidAttribute = element.getAttribute(UUID_ATTRIBUTE_NAME);
+    if (uuidAttribute != null) {
+      try {
+        uuid = UUID.fromString(uuidAttribute.getValue());
+      }
+      catch (IllegalArgumentException ignore) {}
     }
   }
 
@@ -95,6 +116,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     element.setAttribute(NAME_ATTRIBUTE_NAME,name);
     if (created > 0) {
       element.setAttribute(CREATED_ATTRIBUTE_NAME, String.valueOf(created));
+    }
+    if (uuid != null) {
+      element.setAttribute(UUID_ATTRIBUTE_NAME, uuid.toString());
     }
   }
 
@@ -126,17 +150,14 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
 
   @Override
   public int compareTo(Configuration other) {
-    int result = StringUtil.naturalCompare(getCategory(), other.getCategory());
+    final int result = StringUtil.naturalCompare(getCategory(), other.getCategory());
     return result != 0 ? result : StringUtil.naturalCompare(getName(), other.getName());
   }
 
   public boolean equals(Object configuration) {
     if (!(configuration instanceof Configuration)) return false;
-    Configuration other = (Configuration)configuration;
-    if (category != null ? !category.equals(other.category) : other.category != null) {
-      return false;
-    }
-    return name.equals(other.name);
+    final Configuration other = (Configuration)configuration;
+    return Objects.equals(category, other.category) && name.equals(other.name);
   }
 
   @Override
