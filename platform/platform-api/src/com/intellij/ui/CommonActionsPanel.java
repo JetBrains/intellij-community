@@ -316,7 +316,7 @@ public class CommonActionsPanel extends JPanel {
     @Override
     public void updateButton(@NotNull AnActionEvent e) {
       final JComponent c = getContextComponent();
-      if (c == null || !c.isShowing() || c.isEnabled()) {
+      if (c == null || !c.isShowing() || !c.isEnabled()) {
         e.getPresentation().setEnabled(false);
         return;
       }
