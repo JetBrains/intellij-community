@@ -87,13 +87,6 @@ public class SearchTextField extends JPanel {
       }
 
       @Override
-      public void setUI(TextUI ui) {
-        if (customSetupUIAndTextField(this, textUI -> super.setUI(textUI))) return;
-
-        super.setUI(ui);
-      }
-
-      @Override
       protected Rectangle getEmptyTextComponentBounds(Rectangle bounds) {
         Integer gap = (Integer)getClientProperty("JTextField.Search.GapEmptyText");
         if (gap != null) {
@@ -223,27 +216,6 @@ public class SearchTextField extends JPanel {
   @Deprecated
   @SuppressWarnings("unused")
   protected boolean hasIconsOutsideOfTextField() {
-    return false;
-  }
-
-  protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
-    if (SystemInfo.isMac) {
-      try {
-        Class<?> uiClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.laf.macos.MacIntelliJTextFieldUI")
-                                                       : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
-        Method method = ReflectionUtil.getMethod(uiClass, "createUI", JComponent.class);
-        if (method != null) {
-          uiConsumer.consume((TextUI)method.invoke(uiClass, textField));
-          Class<?> borderClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.laf.macos.MacIntelliJTextBorder")
-                                                             : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder");
-          textField.setBorder((Border)ReflectionUtil.newInstance(borderClass));
-          textField.setOpaque(false);
-        }
-        return true;
-      }
-      catch (Exception ignored) {
-      }
-    }
     return false;
   }
 
