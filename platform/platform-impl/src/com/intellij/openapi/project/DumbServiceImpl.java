@@ -439,8 +439,25 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       //here should be an assert that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
       return false;
     }
+    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogRequested, new FeatureUsageData().addProject(myProject));
+    long progressesStartTimestamp = System.currentTimeMillis();
+    int iteration = 0;
+    while (isDumb()) {
+      if (tryShowDialogTillSmartMode(actionNames, iteration)) return false;
+      iteration++;
+    }
+    FeatureUsageData data = new FeatureUsageData().addProject(myProject).
+      addData("duration_ms", System.currentTimeMillis() - progressesStartTimestamp);
+    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogProceededToActions, data);
+    return true;
+  }
+
+  /**
+   * @return true if the progress was cancelled
+   */
+  private boolean tryShowDialogTillSmartMode(@NotNull List<String> actionNames, int iteration) {
     long startTimestamp = System.currentTimeMillis();
-    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogShown, new FeatureUsageData().addProject(myProject));
+    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogShown, new FeatureUsageData().addProject(myProject).addCount(iteration));
     myDialogRequested = true;
     AtomicBoolean dialogCancelled = new AtomicBoolean(false);
     Semaphore semaphore = new Semaphore(1);
@@ -466,15 +483,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ProgressManager.getInstance().run(task);
     myDialogIndicator = null;
     myDialogRequested = false;
-    FeatureUsageData featureUsageData = new FeatureUsageData().addProject(myProject).
+    FeatureUsageData data = new FeatureUsageData().addProject(myProject).addCount(iteration).
       addData("duration_ms", System.currentTimeMillis() - startTimestamp);
-    if (dialogCancelled.get()) {
-      UIEventLogger.logUIEvent(UIEventId.DumbModeDialogCancelled, featureUsageData);
-      return false;
-    }
-    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogProceededToActions, featureUsageData);
-    LOG.assertTrue(!isDumb(myProject));
-    return true;
+    UIEventLogger.logUIEvent(dialogCancelled.get() ? UIEventId.DumbModeDialogCancelled : UIEventId.DumbModeDialogFinished, data);
+    return dialogCancelled.get();
   }
 
   @NotNull

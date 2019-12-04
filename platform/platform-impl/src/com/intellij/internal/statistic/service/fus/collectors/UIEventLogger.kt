@@ -18,9 +18,11 @@ enum class UIEventId {
   ProgressResumed,
   BreadcrumbShowTooltip,
   BreadcrumbNavigate,
-  DumbModeDialogShown,
   DumbModeDialogWasNotNeeded,
+  DumbModeDialogRequested,
+  DumbModeDialogShown,
   DumbModeDialogCancelled,
+  DumbModeDialogFinished,
   DumbModeDialogProceededToActions
 }
 
