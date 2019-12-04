@@ -124,7 +124,6 @@ public abstract class EditorActionHandler {
     }
     inCheck = true;
     try {
-      //noinspection deprecation
       return isEnabled(editor, dataContext);
     }
     finally {
@@ -137,7 +136,6 @@ public abstract class EditorActionHandler {
    * if {@code caret} is not {@code null}, checks whether it's enabled for specified caret.
    */
   public final boolean isEnabled(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    //noinspection deprecation
     return caret == null ? isEnabled(editor, dataContext) : isEnabledForCaret(editor, caret, dataContext);
   }
   /**
@@ -174,7 +172,6 @@ public abstract class EditorActionHandler {
     }
     try {
       inExecution = true;
-      //noinspection deprecation
       execute(editor, dataContext);
     }
     finally {

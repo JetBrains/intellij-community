@@ -305,7 +305,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES);
 
-    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+    actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext());
   }
 
   @NotNull

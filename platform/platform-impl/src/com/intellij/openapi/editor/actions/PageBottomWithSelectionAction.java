@@ -16,11 +16,13 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PageBottomWithSelectionAction extends EditorAction {
   public PageBottomWithSelectionAction() {
@@ -33,7 +35,7 @@ public class PageBottomWithSelectionAction extends EditorAction {
     }
 
     @Override
-    public void execute(@NotNull Editor editor, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       EditorActionUtil.moveCaretPageBottom(editor, true);
     }
   }

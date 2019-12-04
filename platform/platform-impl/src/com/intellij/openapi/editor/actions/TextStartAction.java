@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -35,7 +37,7 @@ public class TextStartAction extends TextComponentEditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(@NotNull Editor editor, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       editor.getCaretModel().removeSecondaryCarets();
       editor.getCaretModel().moveToOffset(0);
       editor.getSelectionModel().removeSelection();

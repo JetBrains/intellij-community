@@ -723,8 +723,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           private final SplitLineAction mySplitLineAction = new SplitLineAction();
 
           @Override
-          public boolean isEnabled(Editor editor, DataContext dataContext) {
-            return mySplitLineAction.getHandler().isEnabled(editor, dataContext);
+          public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+            return mySplitLineAction.getHandler().isEnabled(editor, caret, dataContext);
           }
 
           @Override

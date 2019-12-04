@@ -56,7 +56,7 @@ public class TabAction extends EditorAction {
     }
 
     @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return !editor.isOneLineMode() && !((EditorEx)editor).isEmbeddedIntoDialogWrapper() && !editor.isViewer();
     }
   }

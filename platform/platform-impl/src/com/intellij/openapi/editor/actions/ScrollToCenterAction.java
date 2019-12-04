@@ -17,10 +17,12 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ScrollToCenterAction extends InactiveEditorAction {
   public ScrollToCenterAction() {
@@ -29,7 +31,7 @@ public class ScrollToCenterAction extends InactiveEditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(@NotNull Editor editor, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
