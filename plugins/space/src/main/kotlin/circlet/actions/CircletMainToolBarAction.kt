@@ -6,8 +6,12 @@ import circlet.platform.api.oauth.*
 import circlet.platform.client.*
 import circlet.settings.*
 import circlet.ui.*
+import circlet.ui.AccountMenuItem
+import circlet.ui.AccountMenuPopupStep
+import circlet.ui.AccountsMenuListPopup
 import circlet.ui.clone.*
 import circlet.vcs.*
+import circlet.vcs.clone.*
 import circlet.workspaces.*
 import com.intellij.icons.*
 import com.intellij.ide.*
@@ -18,6 +22,7 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
+import com.intellij.ui.awt.*
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
 import com.intellij.ui.popup.*
@@ -91,7 +96,7 @@ class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
                     popup.pack(true, true)
                 }
             }
-            popup.showUnderneathOf(component)
+            popup.show(RelativePoint(component, Point(-wrapper.preferredSize.width + component.width, component.height)))
         }
     }
 
@@ -264,6 +269,10 @@ class AccountsMenuListPopup(
         step as AccountMenuPopupStep,
         parent,
         parentValue)
+
+    override fun showUnderneathOf(aComponent: Component) {
+        show(RelativePoint(aComponent, Point(-this.component.preferredSize.width+aComponent.width, aComponent.height)))
+    }
 }
 
 class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
