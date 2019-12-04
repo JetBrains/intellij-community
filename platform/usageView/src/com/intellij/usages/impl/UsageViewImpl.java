@@ -11,11 +11,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -1312,40 +1312,19 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty()) return;
-    addUpdateRequest(() -> {
-      for (Node node : toUpdate) {
-        try {
-          if (isDisposed()) break;
-          if (!runReadActionWithRetries(() -> node.update(this, edtNodeChangedQueue))) {
-            ApplicationManager.getApplication().invokeLater(() -> queueUpdateBulk(toUpdate, onCompletedInEdt));
-            return;
+    ReadAction
+      .nonBlocking(() -> {
+        for (Node node : toUpdate) {
+          try {
+            node.update(this, edtNodeChangedQueue);
+          }
+          catch (IndexNotReadyException ignore) {
           }
         }
-        catch (IndexNotReadyException ignore) {
-        }
-      }
-      ApplicationManager.getApplication().invokeLater(onCompletedInEdt);
-    });
-  }
-
-  private boolean runReadActionWithRetries(@NotNull Runnable r) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      r.run();
-      return true;
-    }
-
-    final int MAX_RETRIES = 5;
-    for (int i = 0; i < MAX_RETRIES; i++) {
-      if (isDisposed()) {
-        return true;
-      }
-
-      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(r)) {
-        return true;
-      }
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-    }
-    return false;
+      })
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.defaultModalityState(), __ -> onCompletedInEdt.run())
+      .submit(updateRequests);
   }
 
   private void updateImmediatelyNodesUpToRoot(@NotNull Collection<? extends Node> nodes) {
