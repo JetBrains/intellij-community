@@ -4,8 +4,6 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -28,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.function.Function;
 
 /**
  * @author Dmitry Avdeev
@@ -130,7 +126,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
-    String[] names = accessDiskWithCheckCanceled(ourListTasks, convertToIOFile(file), dir -> dir.list(DirectoryAccessChecker.getFileFilter(dir)));
+    String[] names = myChildrenGetter.accessDiskWithCheckCanceled(convertToIOFile(file));
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
 
@@ -724,33 +720,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
-    return accessDiskWithCheckCanceled(ourAttrTasks, FileUtil.toSystemDependentName(path), FileSystemUtil::getAttributes);
+    return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
   }
 
-  private static final Map<String, Future<FileAttributes>> ourAttrTasks = ContainerUtil.newConcurrentMap();
-  private static final Map<File, Future<String[]>> ourListTasks = ContainerUtil.newConcurrentMap();
-
-  private static <T, V> V accessDiskWithCheckCanceled(Map<T, Future<V>> store, T arg, Function<T, V> fun) {
-    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
-      return fun.apply(arg);
-    }
-
-    // We remember the submitted tasks in "store" map until they're finished, to avoid creating many-many similar threads
-    // in case the callee is interrupted by "checkCanceled", restarted, comes again with the same query, is interrupted again, and so on.
-    Future<V> future = store.computeIfAbsent(arg, path -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        return fun.apply(path);
-      }
-      finally {
-        store.remove(path);
-      }
-    }));
-    if (future.isDone()) {
-      // maybe it was very fast and completed before being put into a map
-      store.remove(arg, future);
-    }
-    return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
-  }
+  private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
+  private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list(DirectoryAccessChecker.getFileFilter(dir)));
 
   @Override
   public void refresh(boolean asynchronous) {
