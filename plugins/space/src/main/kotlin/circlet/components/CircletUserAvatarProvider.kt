@@ -1,8 +1,10 @@
 package circlet.components
 
+import circlet.client.api.*
 import circlet.platform.client.*
 import circlet.ui.*
 import circlet.utils.*
+import com.intellij.openapi.util.*
 import com.intellij.ui.*
 import com.intellij.util.ui.*
 import icons.*
@@ -10,6 +12,7 @@ import kotlinx.coroutines.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.reactive.*
+import runtime.ui.*
 import java.awt.*
 import java.awt.AlphaComposite
 import java.awt.geom.*
@@ -29,15 +32,9 @@ class CircletUserAvatarProvider {
         CircletIcons.mainIcon
     )
 
-    private val userAvatars = CircletAvatars(
-        CircletIcons.user,
-        CircletIcons.userOffline,
-        CircletIcons.userOnline
-    )
-
     val avatars: Property<CircletAvatars> = lifetime.mapInit(circletWorkspace.workspace, avatarPlaceholders) { ws ->
         ws ?: return@mapInit avatarPlaceholders
-        val avatarTID = ws.me.value.smallAvatar ?: return@mapInit userAvatars
+        val avatarTID = ws.me.value.smallAvatar ?: return@mapInit generateAvatars(ws.me.value.englishFullName())
         val imageLoader = CircletImageLoader(ws.lifetime, ws.client)
 
         // await connected state before trying to load image.
@@ -47,13 +44,10 @@ class CircletUserAvatarProvider {
             log.info { "loading user avatar: $avatarTID" }
             val loadedImage = imageLoader.loadImageAsync(avatarTID).await()
             if (loadedImage == null) {
-                userAvatars
-            } else {
-                CircletAvatars(
-                    JBImageIcon(buildCircleImage(loadedImage)),
-                    JBImageIcon(buildImageWithStatus(loadedImage, Color(224, 85, 85))),
-                    JBImageIcon(buildImageWithStatus(loadedImage, Color(98, 181, 67)))
-                )
+                generateAvatars(ws.me.value.englishFullName())
+            }
+            else {
+                createAvatars(loadedImage)
             }
         } catch (th: CancellationException) {
             throw th
@@ -137,4 +131,38 @@ private fun applyQualityRenderingHints(g2d: Graphics2D) {
     g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
     g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
+}
+
+@Suppress("UndesirableClassUsage")
+private fun generateColoredAvatar(name: String): BufferedImage {
+    val (colorInt1, colorInt2) = Avatars.gradientInt(name)
+    val (color1, color2) = Color(colorInt1) to Color(colorInt2)
+
+    val shortName = Avatars.initials(name)
+    val size = 128
+    val image = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+    val g2 = image.createGraphics()
+    applyQualityRenderingHints(g2)
+    g2.paint = GradientPaint(0.0f, 0.0f, color2,
+                             size.toFloat(), size.toFloat(), color1)
+    g2.fillRect(0, 0, size - 1, size - 1)
+    g2.paint = JBColor.WHITE
+    g2.font = JBFont.create(Font(if (SystemInfo.isWinVistaOrNewer) "Segoe UI" else "Tahoma", Font.PLAIN, (size / 2.2).toInt()))
+    UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, (size * 0.92).toInt()), shortName)
+    g2.dispose()
+
+    return image
+}
+
+private fun createAvatars(image: BufferedImage): CircletAvatars {
+    return CircletAvatars(
+        JBImageIcon(buildCircleImage(image)),
+        JBImageIcon(buildImageWithStatus(image, Color(224, 85, 85))),
+        JBImageIcon(buildImageWithStatus(image, Color(98, 181, 67)))
+    )
+}
+
+private fun generateAvatars(name: String): CircletAvatars {
+    val generatedImage = generateColoredAvatar(name)
+    return createAvatars(generatedImage)
 }
