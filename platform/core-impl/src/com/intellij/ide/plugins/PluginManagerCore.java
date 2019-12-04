@@ -1779,10 +1779,10 @@ public final class PluginManagerCore {
 
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
-        errors.add(descriptor.formatErrorMessage("requires " + toPresentableName(depId.getIdString()) + " plugin to be installed."));
+        errors.add(descriptor.formatErrorMessage("requires " + toPresentableName(depId.getIdString()) + " plugin to be installed"));
       }
       else {
-        errors.add(descriptor.formatErrorMessage("requires " + toPresentableName(depName) + " plugin to be enabled."));
+        errors.add(descriptor.formatErrorMessage("requires " + toPresentableName(depName) + " plugin to be enabled"));
       }
     }
     return result;

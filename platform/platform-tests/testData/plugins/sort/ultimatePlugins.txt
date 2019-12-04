@@ -178,15 +178,15 @@
 + -org-jetbrains-plugins-ruby-chef-
 + -org-jetbrains-settingsRepository-
 
-Plugin Concurrency Visualiser (id=-org-jetbrains-python-concurrency-visualiser-, path=file:/out/intellij.python.concurrencyVisualizer/META-INF/plugin.xml) requires missing "com.intellij.modules.pycharm.professional".
-Plugin Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave) (id=-org-jetbrains-plugins-python-gherkin-, path=file:/out/intellij.python.gherkin/META-INF/plugin.xml) requires missing "com.intellij.modules.pycharm.professional".
-Plugin Python pytest-bdd support (id=-org-jetbrains-plugins-pytest-bdd-, path=file:/out/intellij.python.pytestBdd/META-INF/plugin.xml) requires missing "com.intellij.modules.pycharm.professional".
-Plugin Python pytest-bdd support (id=-org-jetbrains-plugins-pytest-bdd-, path=file:/out/intellij.python.pytestBdd/META-INF/plugin.xml) requires disabled "Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)".
-Plugin Python SSH Interpreter (id=-org-jetbrains-plugins-python-remote-interpreter-, path=file:/out/intellij.python.remoteInterpreter/META-INF/plugin.xml) requires missing "com.intellij.modules.pycharm.professional".
-Plugin Python WSL Support (id=-org-jetbrains-plugins-python-wsl-, path=file:/out/intellij.python.wsl/META-INF/plugin.xml) requires missing "com.intellij.modules.pycharm.professional".
-Plugin Python WSL Support (id=-org-jetbrains-plugins-python-wsl-, path=file:/out/intellij.python.wsl/META-INF/plugin.xml) requires disabled "Python SSH Interpreter".
-Plugin Embedded Development Support (id=-com-intellij-clion-embedded-, path=file:/out/intellij.clion.embedded/META-INF/plugin.xml) requires missing "com.intellij.modules.clion.cmake".
-Plugin Jupyter Notebook (id=-org-jetbrains-plugins-notebooks-jupyter-, path=file:/out/intellij.python.jupyter/META-INF/plugin.xml) requires missing "com.intellij.modules.pycharm".
-Plugin Python Docker (id=-org-jetbrains-plugins-python-docker-, path=file:/out/intellij.python.docker/META-INF/plugin.xml) requires missing "com.intellij.modules.pycharm.professional".
+The Concurrency Visualiser (id=-org-jetbrains-python-concurrency-visualiser-, path=file:/out/intellij.python.concurrencyVisualizer/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+The Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave) (id=-org-jetbrains-plugins-python-gherkin-, path=file:/out/intellij.python.gherkin/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+The Python pytest-bdd support (id=-org-jetbrains-plugins-pytest-bdd-, path=file:/out/intellij.python.pytestBdd/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+The Python pytest-bdd support (id=-org-jetbrains-plugins-pytest-bdd-, path=file:/out/intellij.python.pytestBdd/META-INF/plugin.xml) plugin requires "Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)" plugin to be enabled.
+The Python SSH Interpreter (id=-org-jetbrains-plugins-python-remote-interpreter-, path=file:/out/intellij.python.remoteInterpreter/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+The Python WSL Support (id=-org-jetbrains-plugins-python-wsl-, path=file:/out/intellij.python.wsl/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+The Python WSL Support (id=-org-jetbrains-plugins-python-wsl-, path=file:/out/intellij.python.wsl/META-INF/plugin.xml) plugin requires "Python SSH Interpreter" plugin to be enabled.
+The Embedded Development Support (id=-com-intellij-clion-embedded-, path=file:/out/intellij.clion.embedded/META-INF/plugin.xml) plugin requires "com.intellij.modules.clion.cmake" plugin to be installed.
+The Jupyter Notebook (id=-org-jetbrains-plugins-notebooks-jupyter-, path=file:/out/intellij.python.jupyter/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm" plugin to be installed.
+The Python Docker (id=-org-jetbrains-plugins-python-docker-, path=file:/out/intellij.python.docker/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
 <br><a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>
