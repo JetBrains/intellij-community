@@ -30,8 +30,7 @@ public class JpsCompilationOutputLoaderTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    compilationOutputLoader = new JpsCompilationOutputLoader(JpsServerClient.getServerClient(), getProject(),
-                                                             ConcurrencyUtil.newSingleThreadExecutor("JpsCompilationOutputLoaderTest"));
+    compilationOutputLoader = new JpsCompilationOutputLoader(JpsServerClient.getServerClient(), getProject());
     myGson = new Gson();
     myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType();
   }
