@@ -52,7 +52,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   <K> Map<StubIndexKey, Map<Object, StubIdList>> doRead(@NotNull DataInput in, @Nullable StubIndexKey<K, ?> requestedIndex, @Nullable K requestedKey) throws IOException {
     if (!myEnsuredStubElementTypesLoaded) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        SerializationManager.getInstance().initSerializers();
+        SerializationManager.getInstance();
         StubIndexEx.initExtensions();
       });
       myEnsuredStubElementTypesLoaded = true;

@@ -40,6 +40,16 @@ class StubSerializationHelper {
   private final boolean myUnmodifiable;
   private final RecentStringInterner myStringInterner;
 
+  void dropRegisteredSerializers() {
+    LOG.assertTrue(!myUnmodifiable); // todo revise it for unmodifiable serialization helper
+    myIdToName.clear();
+    myNameToId.clear();
+    myNameToLazySerializer.clear();
+
+    myIdToSerializer.clear();
+    mySerializerToId.clear();
+  }
+
   StubSerializationHelper(@NotNull DataEnumeratorEx<String> nameStorage, boolean unmodifiable, @NotNull Disposable parentDisposable) {
     myNameStorage = nameStorage;
     myUnmodifiable = unmodifiable;
@@ -47,6 +57,8 @@ class StubSerializationHelper {
   }
 
   void assignId(@NotNull Computable<ObjectStubSerializer> serializer, String name) throws IOException {
+    LOG.info("QQQ register serializer for " + name);
+
     Computable<ObjectStubSerializer> old = myNameToLazySerializer.put(name, serializer);
     if (old != null) {
       ObjectStubSerializer existing = old.compute();

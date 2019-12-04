@@ -4,13 +4,17 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
@@ -25,6 +29,8 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
   private PersistentStringEnumerator myNameStorage;
   private StubSerializationHelper myStubSerializationHelper;
+
+  private volatile boolean mySerializersLoaded;
 
   @SuppressWarnings("unused") // used from componentSets/Lang.xml:14
   public SerializationManagerImpl() {
@@ -48,9 +54,15 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       nameStorageCrashed();
     }
     finally {
-      registerSerializer(PsiFileStubImpl.TYPE);
       ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     }
+
+    StubElementTypeHolderEP.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<StubElementTypeHolderEP>() {
+      @Override
+      public void extensionListChanged() {
+        dropSerializerData();
+      }
+    }, this);
   }
 
   @Override
@@ -172,5 +184,37 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     myStubSerializationHelper.reSerializeStub(new DataInputStream(inStub),
                                               new DataOutputStream(outStub),
                                               ((SerializationManagerImpl)newSerializationManager).myStubSerializationHelper);
+  }
+
+  @Override
+  protected void initSerializers() {
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      if (mySerializersLoaded) return;
+      registerSerializer(PsiFileStubImpl.TYPE);
+      List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
+      final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
+      for (IElementType type : stubElementTypes) {
+        if (type instanceof StubFileElementType &&
+            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
+          continue;
+        }
+
+        registerSerializer((StubSerializer)type);
+      }
+      for (StubFieldAccessor lazySerializer : lazySerializers) {
+        registerSerializer(lazySerializer.externalId, lazySerializer);
+      }
+      mySerializersLoaded = true;
+    }
+  }
+
+  private void dropSerializerData() {
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      IStubElementType.dropRegisteredTypes();
+      myStubSerializationHelper.dropRegisteredSerializers();
+      mySerializersLoaded = false;
+    }
   }
 }

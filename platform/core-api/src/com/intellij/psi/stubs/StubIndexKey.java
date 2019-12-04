@@ -31,6 +31,8 @@ public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
 
   @NotNull
   public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls @NotNull String name) {
+    ID<?, ?> existing = findByName(name);
+    if (existing != null) return (StubIndexKey<K, Psi>) existing;
     return new StubIndexKey<>(name);
   }
 

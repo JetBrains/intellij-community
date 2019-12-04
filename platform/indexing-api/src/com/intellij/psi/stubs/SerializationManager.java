@@ -9,8 +9,6 @@ import com.intellij.psi.tree.StubFileElementType;
 import java.util.List;
 
 public abstract class SerializationManager {
-  private volatile boolean mySerializersLoaded;
-
   public static SerializationManager getInstance() {
     return ApplicationManager.getApplication().getService(SerializationManager.class);
   }
@@ -21,27 +19,7 @@ public abstract class SerializationManager {
 
   protected abstract void registerSerializer(String externalId, Computable<ObjectStubSerializer> lazySerializer);
 
-  protected void initSerializers() {
-    if (mySerializersLoaded) return;
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      if (mySerializersLoaded) return;
-      List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
-      final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
-      for (IElementType type : stubElementTypes) {
-        if (type instanceof StubFileElementType &&
-            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
-          continue;
-        }
-
-        registerSerializer((StubSerializer)type);
-      }
-      for (StubFieldAccessor lazySerializer : lazySerializers) {
-        registerSerializer(lazySerializer.externalId, lazySerializer);
-      }
-      mySerializersLoaded = true;
-    }
-  }
+  protected abstract void initSerializers();
 
   public abstract String internString(String string);
 }
