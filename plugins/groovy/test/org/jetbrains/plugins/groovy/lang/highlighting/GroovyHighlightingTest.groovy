@@ -2037,24 +2037,6 @@ foo(<caret>)
     myFixture.getAvailableIntention("Static import method 'A.foo'")
   }
 
-  void testInaccessibleWithCompileStatic() {
-    addCompileStatic()
-    testHighlighting('''
-import groovy.transform.CompileStatic
-
-@CompileStatic
-class PrivateTest {
-    void doTest() {
-        Target.<error descr="Access to 'callMe' exceeds its access rights">callMe</error>()
-    }
-}
-
-class Target {
-    private static void callMe() {}
-}
-''')
-  }
-
   void 'test no SOE in index property assignment with generic function'() {
     testHighlighting '''
 class Main {
