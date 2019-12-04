@@ -5,6 +5,8 @@ using namespace std;
 #include <comdef.h>
 #include <Wbemidl.h>
 #include <string>
+#include <io.h>
+#include <fcntl.h>
 
 #pragma comment(lib, "wbemuuid.lib")
 
@@ -29,6 +31,8 @@ wstring escapeLineBreaks(const wstring& str)
 
 int main(int argc, char **argv)
 {
+    _setmode(_fileno(stdout), _O_U8TEXT);
+
     HRESULT hres;
 
     // Step 1: --------------------------------------------------
