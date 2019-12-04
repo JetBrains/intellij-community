@@ -283,7 +283,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       }
 
       HashMap<String, Object> darculaGlobalSettings = new HashMap<>();
-      final String prefix = getPrefix() + ".";
+      String prefix = getPrefix();
+      prefix = prefix.substring(prefix.lastIndexOf("/") + 1) + ".";
+
       for (String key : properties.stringPropertyNames()) {
         if (key.startsWith(prefix)) {
           Object value = parseValue(key, properties.getProperty(key));

@@ -8,13 +8,9 @@ class MacIntelliJLaf : IntelliJLaf() {
     return MacLafProvider.LAF_NAME
   }
 
-  override fun getPrefix(): String {
-    return "/macintellijlaf"
-  }
+  override fun getPrefix(): String = "/com/intellij/ide/ui/laf/intellijlaf"
 
-  override fun getSystemPrefix(): String? {
-    return null
-  }
+  override fun getSystemPrefix(): String? = "macintellijlaf"
 
   companion object {
     fun isMacLaf() = UIManager.getLookAndFeel() is MacIntelliJLaf
