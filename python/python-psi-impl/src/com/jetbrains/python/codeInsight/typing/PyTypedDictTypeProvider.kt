@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
 import com.jetbrains.python.psi.*
@@ -36,9 +37,23 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       val isTypingTD = { type: PyClassLikeType? ->
         type is PyTypedDictType || nameIsTypedDict(type?.classQName)
       }
+      if (checkIfClassIsDirectTypedDictInheritor(cls, context)) return true
       val ancestors = cls.getAncestorTypes(context)
 
       return ancestors.any(isTypingTD)
+    }
+
+    /**
+     * This method helps to avoid the situation when two processes try to get an element's type simultaneously
+     * and one of them ends up with null.
+     */
+    private fun checkIfClassIsDirectTypedDictInheritor(cls: PyClass, context: TypeEvalContext): Boolean {
+      if (context.maySwitchToAST(cls) || cls.stub == null) {
+        return cls.superClassExpressions.any { isTypedDict(it, context) }
+      }
+      else {
+        return cls.stub.superClassesText.any { isTypedDict(PyUtil.createExpressionFromFragment(it, cls) ?: return false, context) }
+      }
     }
 
     fun getTypedDictTypeForResolvedCallee(referenceTarget: PsiElement, context: TypeEvalContext): PyTypedDictType? {
@@ -122,7 +137,19 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     private fun collectFields(cls: PyClass, context: TypeEvalContext): TDFields {
       val fields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
       val ancestors = cls.getAncestorTypes(context)
-      ancestors.forEach { if (it is PyTypedDictType) fields.putAll(it.fields) }
+      val typedDictCustomTypeIndex = ancestors.indexOfFirst { it is PyCustomType && nameIsTypedDict(it.classQName) }
+      // When some ancestor is located in another file its type will be PyClassType because of difference in getting ancestor types.
+      // (see com.jetbrains.python.psi.impl.PyClassImpl.fillSuperClassesNoSwitchToAst)
+      // When AST is unavailable, the type of resolved element is returned, TypedDict reference is resolved to PyClass,
+      // therefore the type of that PyClass is PyClassType.
+      // That's why in case when AST for ancestors is unavailable we need to collect fields from PyClassType instances.
+      if (typedDictCustomTypeIndex > 0) {
+        ancestors.take(typedDictCustomTypeIndex)
+          .forEach { if (it is PyClassType) fields.putAll(collectTypingTDInheritorFields(it.pyClass, context)) }
+      }
+      else {
+        ancestors.forEach { if (it is PyTypedDictType) fields.putAll(it.fields) }
+      }
       fields.putAll(collectTypingTDInheritorFields(cls, context))
       return TDFields(fields)
     }
