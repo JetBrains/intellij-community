@@ -143,8 +143,9 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     catch (ProcessCanceledException | IOException e) {
       //noinspection InstanceofCatchParameter
       if (e instanceof IOException) LOG.warn("Failed to download JPS compilation outputs", e);
+      if (targetDir.exists()) FileUtil.delete(targetDir);
       downloadedFiles.forEach(zipFile -> FileUtil.delete(zipFile));
-      return Collections.emptyList();
+      return null;
     }
   }
 

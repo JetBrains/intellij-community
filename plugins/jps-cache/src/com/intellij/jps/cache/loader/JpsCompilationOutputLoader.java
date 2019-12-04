@@ -89,7 +89,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       extractIndicatorManager.setText(this, "Extracting downloaded results...");
       List<Future<?>> futureList = ContainerUtil.map(outputLoadResults, loadResult ->
         myExecutorService.submit(new UnzipOutputTask(result, loadResult, extractIndicatorManager)));
-      for (Future future : futureList) {
+      for (Future<?> future : futureList) {
         future.get();
       }
       extractIndicatorManager.finished(this);

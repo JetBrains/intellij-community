@@ -65,9 +65,7 @@ public class JpsOutputLoaderManager {
     // Configure build manager
     BuildManager buildManager = BuildManager.getInstance();
     if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
-    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool",
-                                                                             INSTANCE,
-                                                                             getThreadPoolSize());
+    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool", INSTANCE, getThreadPoolSize());
   }
 
   public void load(boolean isForceUpdate) {
