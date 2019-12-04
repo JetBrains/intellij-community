@@ -46,6 +46,20 @@ data class JdkProduct(
     return this.flavour.compareToIgnoreCase(other.flavour)
   }
 
+  fun matchesVendor(predicate: String) : Boolean {
+    val cases = sequence {
+      yield(vendor)
+      if (product == null) return@sequence
+      yield(product)
+      yield("$vendor-$product")
+      if (flavour == null) return@sequence
+      yield("$product-$flavour")
+      yield("$vendor-$product-$flavour")
+    }
+    val match = predicate.trim()
+    return cases.any { it.equals(match, ignoreCase = true) }
+  }
+
   val packagePresentationText: String
     get() = buildString {
       append(vendor)

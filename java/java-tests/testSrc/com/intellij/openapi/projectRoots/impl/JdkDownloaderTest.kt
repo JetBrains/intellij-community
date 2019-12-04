@@ -13,32 +13,33 @@ import org.junit.Test
 import java.io.File
 import java.lang.RuntimeException
 
+internal fun jdkItemForTest(url: String,
+                            packageType: JdkPackageType,
+                            size: Long,
+                            sha256: String,
+                            prefix: String = "") = JdkItem(
+  JdkProduct("Vendor", null, null),
+  false,
+  123,
+  "123.123",
+  null,
+  null,
+  "suggested",
+  "jetbrains-hardware",
+  packageType,
+  url,
+  sha256,
+  size,
+  10 * size,
+  prefix,
+  url.split("/").last(),
+  url.split("/").last().removeSuffix(".tar.gz").removeSuffix(".zip")
+)
+
 class JdkDownloaderTest {
   @get:Rule
   val fsRule = TempDirectory()
 
-  private fun jdkItemForTest(url: String,
-                             packageType: JdkPackageType,
-                             size: Long,
-                             sha256: String,
-                             prefix: String = "") = JdkItem(
-    JdkProduct("Vendor", null, null),
-    false,
-    123,
-    "123.123",
-    null,
-    null,
-    "suggested",
-    "jetbrains-hardware",
-    packageType,
-    url,
-    sha256,
-    size,
-    10 * size,
-    prefix,
-    url.split("/").last(),
-    url.split("/").last().removeSuffix(".tar.gz").removeSuffix(".zip")
-  )
 
   private val mockTarGZ = jdkItemForTest(packageType = JdkPackageType.TAR_GZ,
                                          url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.tar.gz",
