@@ -1558,4 +1558,21 @@ def foo() {
 }
 ''', JAVA_LANG_INTEGER
   }
+
+  void 'test safe navigation'() {
+    doTest '''
+class A {}
+class B extends A{}
+class C extends A{}
+
+static def foo(x) {
+    def a = new B()
+    1?.with {
+        a = new C()
+    }
+    <caret>a
+}
+
+''', "A"
+  }
 }
