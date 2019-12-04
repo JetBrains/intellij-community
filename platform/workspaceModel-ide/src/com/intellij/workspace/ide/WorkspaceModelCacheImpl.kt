@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.ide
 
+import com.google.common.base.Stopwatch
 import com.google.common.hash.Hashing
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -78,7 +79,12 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
       }
 
       LOG.info("Loading project model cache from $cacheFile")
-      return cacheFile.inputStream().use { serializer.deserializeCache(it) }
+
+      val stopWatch = Stopwatch.createStarted()
+      val builder = cacheFile.inputStream().use { serializer.deserializeCache(it) }
+      LOG.info("Loaded project model cache from $cacheFile in ${stopWatch.stop()}")
+
+      return builder
     } catch (t: Throwable) {
       LOG.warn("Could not deserialize project model cache from $cacheFile", t)
       return null
