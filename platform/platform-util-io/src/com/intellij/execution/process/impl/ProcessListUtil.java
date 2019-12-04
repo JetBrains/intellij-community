@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,9 +74,19 @@ public final class ProcessListUtil {
   @Nullable
   private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
                                                       @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser) {
+    return parseCommandOutput(command, parser, null);
+  }
+
+  @Nullable
+  private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
+                                                      @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser,
+                                                      @Nullable Charset charset) {
     String output;
     try {
-      ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));
+      GeneralCommandLine commandLine = new GeneralCommandLine(command);
+      if (charset != null)
+        commandLine.withCharset(charset);
+      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine);
       int exitCode = processOutput.getExitCode();
       if (exitCode != 0) {
         LOG.error("Cannot get process list, command '" + StringUtil.join(command, " ") +"' exited with code " + exitCode + ", stdout:\n"
@@ -265,7 +276,7 @@ public final class ProcessListUtil {
     if (exeFile == null) {
       return null;
     }
-    return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput);
+    return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput, StandardCharsets.UTF_8);
   }
 
   private static void logErrorTestSafe(String message) {
