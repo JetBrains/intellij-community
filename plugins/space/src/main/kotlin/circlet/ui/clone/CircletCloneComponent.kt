@@ -151,6 +151,7 @@ internal class CircletCloneComponent(val project: Project,
 
     override fun onComponentSelected() {
         val isConnected = loginState.value is CircletLoginState.Connected
+        dialogStateListener.onOkActionNameChanged("Clone")
         dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
     }
 
