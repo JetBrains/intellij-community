@@ -245,7 +245,8 @@ private class CloneView(
 
         cloneViewModel.repos.elements.forEach(lifetime) { allProjectsWithReposAndDetails ->
             launch(lifetime, Ui) {
-                val toAdd = allProjectsWithReposAndDetails.drop(listModel.items.count())
+                val allRepos =  allProjectsWithReposAndDetails.filterNotNull()
+                val toAdd = allRepos.drop(listModel.items.count())
                 val selection = circletProjectListWithSearch.list.selectedIndex
                 listModel.addAll(listModel.items.count(), toAdd)
                 circletProjectListWithSearch.list.selectedIndex = selection
