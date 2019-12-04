@@ -61,7 +61,8 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
 
     val securityService = GithubPullRequestsSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, repoWithPermissions)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor, repositoryCoordinates)
-    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor, repositoryCoordinates)
+    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
+                                                repositoryCoordinates)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
@@ -69,7 +70,11 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
                                         searchHolder)
 
     val dataLoader = GithubPullRequestsDataLoaderImpl {
-      GithubPullRequestDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor, gitRemoteCoordinates, repositoryCoordinates, it)
+      GithubPullRequestDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor, gitRemoteCoordinates,
+                                        repositoryCoordinates, it)
+    }
+    requestExecutor.addListener(dataLoader) {
+      dataLoader.invalidateAllData()
     }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(number: Long) {
