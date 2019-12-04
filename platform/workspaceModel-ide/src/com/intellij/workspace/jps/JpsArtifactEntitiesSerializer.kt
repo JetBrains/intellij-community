@@ -59,7 +59,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     val orderOfItems = ArrayList<String>()
     artifactListElement.getChildren("artifact").forEach {
       val state = XmlSerializer.deserialize(it, ArtifactState::class.java)
-      val outputUrl = VirtualFileUrlManager.fromUrl(JpsPathUtil.pathToUrl(state.outputPath))
+      val outputUrl = VirtualFileUrlManager.fromPath(state.outputPath)
       val rootElement = loadPackagingElement(state.rootElement, source, builder)
       val artifactEntity = builder.addArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, outputUrl,
                                                      rootElement as CompositePackagingElementEntity, source)
@@ -89,7 +89,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source, builder) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
-    fun getPathAttribute(name: String) = VirtualFileUrlManager.fromUrl(JpsPathUtil.pathToUrl(element.getAttributeValue(name)!!))
+    fun getPathAttribute(name: String) = VirtualFileUrlManager.fromPath(element.getAttributeValue(name)!!)
     return when (val typeId = getAttribute("id")) {
       "root" -> builder.addArtifactRootElementEntity(loadElementChildren(), source)
       "directory" -> builder.addDirectoryPackagingElementEntity(getAttribute("name"), loadElementChildren(), source)

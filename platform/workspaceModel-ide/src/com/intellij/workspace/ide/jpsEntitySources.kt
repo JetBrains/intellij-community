@@ -80,14 +80,9 @@ object IdeUiEntitySource : EntitySource
  * Returns `null` for the default project
  */
 val Project.storagePlace: JpsProjectStoragePlace?
-  get() {
-    if (isDirectoryBased) {
-      if (basePath != null) {
-        return JpsProjectStoragePlace.DirectoryBased(VirtualFileUrlManager.fromUrl(JpsPathUtil.pathToUrl(basePath)))
-      }
-    }
-    else if (projectFilePath != null) {
-      return JpsProjectStoragePlace.FileBased(VirtualFileUrlManager.fromUrl(JpsPathUtil.pathToUrl(projectFilePath)))
-    }
-    return null
+  get() = if (isDirectoryBased) {
+    basePath?.let { JpsProjectStoragePlace.DirectoryBased(VirtualFileUrlManager.fromPath(it)) }
+  }
+  else {
+    projectFilePath?.let { JpsProjectStoragePlace.FileBased(VirtualFileUrlManager.fromPath(it)) }
   }

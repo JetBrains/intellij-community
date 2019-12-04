@@ -1,5 +1,6 @@
 package com.intellij.workspace.api
 
+import com.intellij.openapi.vfs.VfsUtil
 import org.junit.Assert
 import org.junit.Test
 
@@ -40,6 +41,20 @@ class VirtualFileUrlTest {
     assertFilePath("/main/a.jar", "jar:///main/a.jar")
     assertFilePath("/main/a.jar", "file:///main/a.jar")
     assertFilePath(null, "")
+  }
+
+  @Test
+  fun testFromPath() {
+    Assert.assertEquals("", VirtualFileUrlManager.fromPath("").url)
+
+    fun assertUrlFromPath(path: String) {
+      Assert.assertEquals(VfsUtil.pathToUrl(path), VirtualFileUrlManager.fromPath(path).url)
+    }
+
+    assertUrlFromPath("/main/a.jar")
+    assertUrlFromPath("C:\\main\\a.jar")
+    assertUrlFromPath("/main/a.jar!/")
+    assertUrlFromPath("/main/a.jar!/a.class")
   }
 
   @Test

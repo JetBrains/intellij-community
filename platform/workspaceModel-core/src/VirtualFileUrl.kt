@@ -1,5 +1,6 @@
 package com.intellij.workspace.api
 
+import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -21,6 +22,11 @@ object VirtualFileUrlManager {
     return VirtualFileUrl(
       url.split('/', '\\').fold(0) { parentId, segmentName -> getOrCreateId(parentId, segmentName) }
     )
+  }
+
+  fun fromPath(path: String): VirtualFileUrl {
+    if (path.isEmpty()) return VirtualFileUrl(0)
+    return fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
   }
 
   private fun getOrCreateId(parent: Int, segmentName: String): Int {
@@ -124,7 +130,5 @@ data class VirtualFileUrl(internal val id: Int)
 }
 
 // TODO It's possible to write it without additional string allocations besides absolutePath
-fun File.toVirtualFileUrl(): VirtualFileUrl =
-  VirtualFileUrlManager.fromUrl("file://${absolutePath.replace('\\', '/')}")
-
+fun File.toVirtualFileUrl(): VirtualFileUrl = VirtualFileUrlManager.fromPath(absolutePath)
 fun Path.toVirtualFileUrl(): VirtualFileUrl = toFile().toVirtualFileUrl()

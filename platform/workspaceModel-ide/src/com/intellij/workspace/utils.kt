@@ -36,14 +36,10 @@ internal fun executeOrQueueOnDispatchThread(block: () -> Unit) {
   }
 }
 
-fun VirtualFileUrlManager.fromVirtualFile(virtualFile: VirtualFile): VirtualFileUrl {
-  // TODO: use segment names from virtualFiles?
-  return VirtualFileUrlManager.fromUrl(virtualFile.url)
-}
-
 // TODO In the future it may be optimised by caching virtualFile in every trie node
 val VirtualFileUrl.virtualFile
   get() = VirtualFileManager.getInstance().findFileByUrl(url)
 
+// TODO: use segment names from virtualFiles?
 val VirtualFile.virtualFileUrl
-  get() = VirtualFileUrlManager.fromVirtualFile(this)
+  get() = VirtualFileUrlManager.fromUrl(this.url)
