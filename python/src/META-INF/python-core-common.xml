@@ -6,8 +6,8 @@
 
   <module value="com.intellij.modules.python"/>
 
-  <xi:include href="/META-INF/python-psi-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/python-psi-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PythonPsi.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PythonPsiImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>

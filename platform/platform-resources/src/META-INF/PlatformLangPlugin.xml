@@ -14,15 +14,15 @@
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="/META-INF/core-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/core-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/analysis-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/analysis-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/projectModel-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/projectModel-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/indexing-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/editor-ui-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/editor-ui-ex.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/CoreImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Analysis.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/AnalysisImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/ProjectModel.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/ProjectModelImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Indexing.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/EditorEx.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
