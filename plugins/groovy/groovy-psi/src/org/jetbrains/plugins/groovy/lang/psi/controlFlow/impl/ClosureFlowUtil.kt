@@ -5,14 +5,15 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
+import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 enum class InvocationKind {
   EXACTLY_ONCE,
-  UNDETERMINED,
+  INVOKED_INPLACE,
   UNKNOWN
 }
 
@@ -69,20 +70,14 @@ private val trustedMethodsForExecutingManyTimes: Set<String> = setOf(
 private val knownMethods = trustedMethodsForExecutingManyTimes union trustedMethodsForExecutingOnce
 
 fun getInvocationKind(block: GrFunctionalExpression?): InvocationKind {
-  block ?: return InvocationKind.UNKNOWN
-  when (val statement = skipParentheses(block, true)?.parentOfType<GrStatement>()) {
-    is GrMethodCall -> {
-      if (statement.invokedExpression.lastChild.text !in knownMethods) {
-        return InvocationKind.UNKNOWN
-      }
-      val resolvedStatement = statement.multiResolve(false).firstOrNull()?.element as? GrGdkMethod
-      return when (resolvedStatement?.name) {
-        in trustedMethodsForExecutingOnce -> InvocationKind.EXACTLY_ONCE
-        in trustedMethodsForExecutingManyTimes -> InvocationKind.UNDETERMINED
-        else -> return InvocationKind.UNKNOWN
-      }
-
-    }
+  val call = block?.parentOfType<GrMethodCall>()?.takeIf { call ->
+    call.invokedExpression.lastChild.text in knownMethods &&
+    call.getArguments()?.any { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } ?: false
+  } ?: return InvocationKind.UNKNOWN
+  val method = call.multiResolve(false).firstOrNull()?.element as? GrGdkMethod
+  return when (method?.name) {
+    in trustedMethodsForExecutingOnce -> InvocationKind.EXACTLY_ONCE
+    in trustedMethodsForExecutingManyTimes -> InvocationKind.INVOKED_INPLACE
     else -> return InvocationKind.UNKNOWN
   }
 }

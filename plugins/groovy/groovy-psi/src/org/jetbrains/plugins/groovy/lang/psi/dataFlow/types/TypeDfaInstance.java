@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -45,12 +45,12 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
                   @NotNull GrControlFlowOwner owner,
                   @NotNull DfaComputationState state) {
     myFlow = flow;
-    myDfaComputationState = state;
     myOwner = owner;
     myInteresting = interesting.first;
     myAcyclicInstructions = interesting.second;
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
+    myDfaComputationState = state;
   }
 
   @Override
@@ -71,17 +71,20 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       handleClosureBlock(state, instruction);
     }
     else if (instruction.getElement() == null) {
-      handleInitialInstruction(state, instruction);
+      handleNullInstruction(state, instruction);
     }
   }
 
-  private void handleInitialInstruction(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
+  private void handleNullInstruction(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
     if (instruction.num() == 0) {
       TypeDfaState currentEntranceState = myDfaComputationState.getEntranceState(myOwner);
       if (currentEntranceState == null) {
         return;
       }
       currentEntranceState.getVarTypes().forEach(state::putType);
+    }
+    else if (instruction.num() == myFlow.length - 1) {
+      myDfaComputationState.putExitState(myOwner, state);
     }
   }
 
@@ -195,23 +198,14 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     InvocationKind kind = ClosureFlowUtil.getInvocationKind(element);
     switch (kind) {
       case EXACTLY_ONCE:
-        collectClosureBlockResults(state, instruction, (nestedState) -> {
-          for (Map.Entry<VariableDescriptor, DFAType> entry : nestedState.getVarTypes().entrySet()) {
-            VariableDescriptor descriptor = myCache.findDescriptor(entry.getKey().getName());
-            DFAType inferredType = entry.getValue();
-            state.putType(descriptor, inferredType);
-          }
-        });
+        handleClosureDFAResult(state, instruction, state::putType);
         break;
-      case UNDETERMINED:
-        collectClosureBlockResults(state, instruction, (nestedState) -> {
-          for (Map.Entry<VariableDescriptor, DFAType> entry : nestedState.getVarTypes().entrySet()) {
-            VariableDescriptor descriptor = myCache.findDescriptor(entry.getKey().getName());
-            DFAType inferredType = entry.getValue();
-            DFAType existingType = state.getVariableType(descriptor);
-            if (existingType != null) {
-              state.putType(descriptor, DFAType.create(inferredType, existingType, element.getManager()));
-            }
+      case INVOKED_INPLACE:
+        handleClosureDFAResult(state, instruction, (descriptor, dfaType) -> {
+          DFAType existingType = state.getVariableType(descriptor);
+          if (existingType != null) {
+            DFAType mergedType = DFAType.create(dfaType, existingType, element.getManager());
+            state.putType(descriptor, mergedType);
           }
         });
         break;
@@ -220,24 +214,28 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
   }
 
-  private void collectClosureBlockResults(@NotNull TypeDfaState state,
-                                          @NotNull Instruction instruction,
-                                          @NotNull Consumer<? super TypeDfaState> typeProducer) {
+  private void handleClosureDFAResult(@NotNull TypeDfaState state,
+                                      @NotNull Instruction instruction,
+                                      @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
     GrClosableBlock block = Objects.requireNonNull((GrClosableBlock)instruction.getElement());
-    InferenceCache nestedCache = TypeInferenceHelper.getInferenceCache(block);
+    InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
     VariableDescriptor targetDescriptor = myDfaComputationState.getTargetDescriptor();
-    VariableDescriptor nestedDescriptor = nestedCache.findDescriptor(targetDescriptor.getName());
-    if (nestedDescriptor == null) {
+    VariableDescriptor blockDescriptor = blockCache.findDescriptor(targetDescriptor.getName());
+    if (blockDescriptor == null) {
       return;
     }
-    if (instruction.num() <= myInteresting.stream().mapToInt(Instruction::num).max().orElse(Integer.MAX_VALUE)) {
-      Instruction[] nestedFlow = block.getControlFlow();
-      Instruction lastNestedInstruction = nestedFlow[nestedFlow.length - 1];
+    int lastInterestingInstruction = myInteresting.stream().mapToInt(Instruction::num).max().orElse(Integer.MAX_VALUE);
+    if (instruction.num() <= lastInterestingInstruction) {
+      Instruction[] blockFlow = block.getControlFlow();
       myDfaComputationState.putEntranceState(block, state);
-      nestedCache.getInferredType(nestedDescriptor, lastNestedInstruction, false, myDfaComputationState);
-      TypeDfaState lastState = myDfaComputationState.getExitState(block);
-      if (lastState != null) {
-        typeProducer.accept(lastState);
+      Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
+      blockCache.getInferredType(blockDescriptor, lastBlockInstruction, false, myDfaComputationState);
+      TypeDfaState blockExitState = myDfaComputationState.getExitState(block);
+      if (blockExitState != null) {
+        for (Map.Entry<VariableDescriptor, DFAType> entry : blockExitState.getVarTypes().entrySet()) {
+          VariableDescriptor descriptor = myCache.findDescriptor(entry.getKey().getName());
+          typeConsumer.accept(descriptor, entry.getValue());
+        }
       }
     }
     else if (myDfaComputationState.isVisited(block)) {

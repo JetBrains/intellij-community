@@ -14,19 +14,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class DfaComputationState {
-  private final VariableDescriptor descriptor;
+  private final VariableDescriptor mainDescriptor;
   private final Set<GrControlFlowOwner> visitedFlowOwners = new HashSet<>();
   private final Map<GrControlFlowOwner, TypeDfaState> entranceStates = new HashMap<>();
   private final Map<GrControlFlowOwner, TypeDfaState> exitStates = new HashMap<>();
 
-  DfaComputationState(VariableDescriptor descriptor) {
-    this.descriptor = descriptor;
+  DfaComputationState(@NotNull VariableDescriptor descriptor) {
+    this.mainDescriptor = descriptor;
   }
 
   public void markOwnerAsVisited(@NotNull GrControlFlowOwner owner) {
     visitedFlowOwners.add(owner);
   }
-
 
   public void putEntranceState(@NotNull GrControlFlowOwner owner, @NotNull TypeDfaState entranceState) {
     entranceStates.put(owner, entranceState);
@@ -38,7 +37,7 @@ public class DfaComputationState {
 
   @NotNull
   public VariableDescriptor getTargetDescriptor() {
-    return descriptor;
+    return mainDescriptor;
   }
 
   @Nullable

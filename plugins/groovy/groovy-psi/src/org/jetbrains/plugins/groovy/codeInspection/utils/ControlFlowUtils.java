@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -412,15 +411,6 @@ public final class ControlFlowUtils {
   }
 
   @Nullable
-  public static GrStatement getContainingNonTrivialStatement(@NotNull GroovyPsiElement element) {
-    do {
-      element = getContainingStatement(element);
-    }
-    while (element instanceof GrParenthesizedExpression);
-    return element == null ? null : (GrStatement)element;
-  }
-
-  @Nullable
   private static GroovyPsiElement getContainingStatementOrBlock(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class, GrCodeBlock.class);
   }
@@ -778,26 +768,26 @@ public final class ControlFlowUtils {
     return result;
   }
 
-  public static boolean mayUseResolvedVariable(@NotNull PsiElement expression, @NotNull PsiVariable resolved) {
-    if (resolved.hasModifier(JvmModifier.FINAL)) {
+  public static boolean mayUseDefinition(@NotNull PsiElement expression, @NotNull PsiVariable definition) {
+    if (definition.hasModifier(JvmModifier.FINAL)) {
       return true;
     }
     else {
-      PsiElement firstOpenBlock = findScope(expression);
-      PsiElement secondOpenBlock = findScope(resolved);
+      GrControlFlowOwner firstOpenBlock = getNearestControlFlowScope(expression);
+      GrControlFlowOwner secondOpenBlock = getNearestControlFlowScope(definition);
       return Objects.equals(firstOpenBlock, secondOpenBlock);
     }
   }
 
   @Nullable
-  private static PsiElement findScope(@NotNull PsiElement element) {
+  private static GrControlFlowOwner getNearestControlFlowScope(@NotNull PsiElement element) {
     if (element instanceof ClosureSyntheticParameter) {
       return ((ClosureSyntheticParameter)element).getClosure();
     }
-    while (element != null && !(element instanceof GrClosableBlock)) {
+    while (element != null && !(element instanceof GrControlFlowOwner)) {
       element = element.getParent();
     }
-    return element;
+    return (GrControlFlowOwner)element;
   }
 
   @Nullable

@@ -59,7 +59,7 @@ import java.util.Map;
 import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
 import static kotlin.LazyKt.lazy;
-import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.mayUseResolvedVariable;
+import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.mayUseDefinition;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
@@ -342,7 +342,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
       }
     }
-    else if (resolved instanceof GrVariable && mayUseResolvedVariable(refExpr, (PsiVariable)resolved)) {
+    else if (resolved instanceof GrVariable && mayUseDefinition(refExpr, (PsiVariable)resolved)) {
       ensureValid(resolved);
       PsiType typeGroovy = SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
       if (typeGroovy == null && PsiUtil.isCompileStatic(refExpr)) {

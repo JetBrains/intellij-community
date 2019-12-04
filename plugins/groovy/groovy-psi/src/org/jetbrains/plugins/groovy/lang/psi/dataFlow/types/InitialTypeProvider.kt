@@ -56,8 +56,7 @@ class InitialTypeProvider(val start: GrControlFlowOwner) {
   private fun runParentDfa(computationState: DfaComputationState,
                            parentCache: InferenceCache,
                            defaultDescriptor: VariableDescriptor) {
-    val currentTargetDescriptor = computationState.targetDescriptor
-    val resolvedDescriptor = currentTargetDescriptor.run {
+    val resolvedDescriptor = computationState.targetDescriptor.run {
       if (this is ResolvedVariableDescriptor) this
       else parentCache.findDescriptor(getName())
     } ?: defaultDescriptor

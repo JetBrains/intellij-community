@@ -87,7 +87,6 @@ class InferenceCache {
         myTooComplexInstructions.addAll(interesting.first);
       }
       else {
-        state.putExitState(myScope, dfaResult.get(dfaResult.size() - 1));
         Set<Instruction> stored = interesting.first;
         stored.add(instruction);
         cacheDfaResult(dfaResult, stored);
