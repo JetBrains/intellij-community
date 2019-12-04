@@ -8,29 +8,29 @@ import org.jetbrains.plugins.groovy.util.HighlightingTest
 @CompileStatic
 abstract class GroovyVersionBasedTest extends LightGroovyTestCase implements HighlightingTest {
 
-  void 'test identity operators'() { highlightingTest() }
+  void 'test identity operators'() { fileHighlightingTest() }
 
-  void 'test elvis assignment'() { highlightingTest() }
+  void 'test elvis assignment'() { fileHighlightingTest() }
 
-  void 'test safe index access'() { highlightingTest() }
+  void 'test safe index access'() { fileHighlightingTest() }
 
-  void 'test negated in'() { highlightingTest() }
+  void 'test negated in'() { fileHighlightingTest() }
 
-  void 'test negated instanceof'() { highlightingTest() }
+  void 'test negated instanceof'() { fileHighlightingTest() }
 
-  void 'test method reference'() { highlightingTest() }
+  void 'test method reference'() { fileHighlightingTest() }
 
-  void 'test do while'() { highlightingTest() }
+  void 'test do while'() { fileHighlightingTest() }
 
-  void 'test for'() { highlightingTest() }
+  void 'test for'() { fileHighlightingTest() }
 
-  void 'test try resources'() { highlightingTest() }
+  void 'test try resources'() { fileHighlightingTest() }
 
-  void 'test array initializers'() { highlightingTest() }
+  void 'test array initializers'() { fileHighlightingTest() }
 
-  void 'test lambdas'() { highlightingTest() }
+  void 'test lambdas'() { fileHighlightingTest() }
 
-  void 'test ambiguous code block'() { highlightingTest() }
+  void 'test ambiguous code block'() { fileHighlightingTest() }
 
-  void 'test type annotations'() { highlightingTest()}
+  void 'test type annotations'() { fileHighlightingTest()}
 }

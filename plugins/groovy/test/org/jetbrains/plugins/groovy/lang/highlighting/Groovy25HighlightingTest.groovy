@@ -16,30 +16,30 @@ class Groovy25HighlightingTest extends LightGroovyTestCase implements Highlighti
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_5
   final String basePath = TestUtils.testDataPath + 'highlighting/v25/'
 
-  void 'test duplicating named params'() { highlightingTest() }
-  void 'test duplicating named params with setter'() { highlightingTest() }
-  void 'test two identical named delegates'() { highlightingTest() }
-  void 'test duplicating named delegates with usual parameter'() { highlightingTest() }
+  void 'test duplicating named params'() { fileHighlightingTest() }
+  void 'test duplicating named params with setter'() { fileHighlightingTest() }
+  void 'test two identical named delegates'() { fileHighlightingTest() }
+  void 'test duplicating named delegates with usual parameter'() { fileHighlightingTest() }
 
-  void 'test named params type check'() { highlightingTest() }
-  void 'test named params type check with setter'() { highlightingTest() }
+  void 'test named params type check'() { fileHighlightingTest() }
+  void 'test named params type check with setter'() { fileHighlightingTest() }
 
   void 'test named params unused check'() {
     fixture.enableInspections(new GroovyUnusedDeclarationInspection())
-    highlightingTest()
+    fileHighlightingTest()
   }
 
-  void 'test named params required'() { highlightingTest() }
+  void 'test named params required'() { fileHighlightingTest() }
 
-  void 'test several absent required named params'() { highlightingTest() }
+  void 'test several absent required named params'() { fileHighlightingTest() }
 
-  void 'test required named param in named variant'() { highlightingTest() }
+  void 'test required named param in named variant'() { fileHighlightingTest() }
 
-  void 'test named delegate without properties'() { highlightingTest() }
+  void 'test named delegate without properties'() { fileHighlightingTest() }
 
-  void 'test immutable fields'() { highlightingTest() }
+  void 'test immutable fields'() { fileHighlightingTest() }
 
-  void 'test immutable options absent field'() { highlightingTest() }
+  void 'test immutable options absent field'() { fileHighlightingTest() }
 
   void 'test immutable constructor'() {
     highlightingTest '''
