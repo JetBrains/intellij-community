@@ -12,6 +12,8 @@ class GHPRListSelectionActionDataContext internal constructor(private val dataCo
                                                               override val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GHPRActionDataContext {
 
+  override val account = dataContext.account
+
   override val gitRepositoryCoordinates = dataContext.gitRepositoryCoordinates
   override val repositoryCoordinates = dataContext.repositoryCoordinates
 

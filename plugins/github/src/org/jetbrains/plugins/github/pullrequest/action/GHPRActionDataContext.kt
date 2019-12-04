@@ -5,6 +5,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
@@ -15,6 +16,8 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsS
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
 interface GHPRActionDataContext {
+
+  val account: GithubAccount
 
   val securityService: GithubPullRequestsSecurityService
   val busyStateTracker: GithubPullRequestsBusyStateTracker

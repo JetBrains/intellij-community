@@ -9,6 +9,8 @@ class GHPRFixedActionDataContext internal constructor(private val delegate: GHPR
                                                       details: GHPullRequestShort? = null)
   : GHPRActionDataContext {
 
+  override val account = delegate.account
+
   override val securityService = delegate.securityService
   override val busyStateTracker = delegate.busyStateTracker
   override val stateService = delegate.stateService

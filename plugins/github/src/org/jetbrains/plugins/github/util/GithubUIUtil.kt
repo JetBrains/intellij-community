@@ -279,3 +279,5 @@ object GithubUIUtil {
     }
   }
 }
+
+fun Action.getName(): String = (getValue(Action.NAME) as? String).orEmpty()

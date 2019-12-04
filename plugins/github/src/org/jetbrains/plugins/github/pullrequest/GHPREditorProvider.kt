@@ -41,6 +41,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
@@ -144,6 +145,12 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
 
     val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, timelinePanel, true) {
+      init {
+        errorHandler = GHLoadingErrorHandlerImpl(project, context.account) {
+          loader.reset()
+        }
+      }
+
       override val loadingText
         get() = ""
 

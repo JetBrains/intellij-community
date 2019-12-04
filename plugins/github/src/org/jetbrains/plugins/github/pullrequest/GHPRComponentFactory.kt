@@ -46,7 +46,6 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.event.ActionListener
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import javax.swing.JComponent
@@ -111,7 +110,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     return GHLoadingPanel(loadingModel, contentContainer, uiDisposable,
                           GHLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from GitHub")).apply {
-      resetHandler = ActionListener {
+      errorHandler = GHLoadingErrorHandlerImpl(project, account) {
         contextValue.drop()
         loadingModel.future = contextValue.value
       }
@@ -182,7 +181,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
                                                                                    "Can't load details")).apply {
-      resetHandler = ActionListener { dataProviderModel.value?.reloadDetails() }
+      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProviderModel.value?.reloadDetails() }
     }
 
     val changesModel = GHPRChangesModelImpl(project)
@@ -196,7 +195,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
                                                                                    "Can't load changes",
                                                                                    "Pull request does not contain any changes")).apply {
-      resetHandler = ActionListener { dataProviderModel.value?.reloadChanges() }
+      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProviderModel.value?.reloadChanges() }
     }
 
     return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
@@ -250,7 +249,11 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     val listReloadAction = actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction
-    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).also {
+    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).apply {
+      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
+        dataContext.listLoader.reset()
+      }
+    }.also {
       listReloadAction.registerCustomShortcutSet(it, disposable)
     }
 
