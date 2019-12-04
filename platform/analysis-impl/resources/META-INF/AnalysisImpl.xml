@@ -16,5 +16,6 @@
                             order="last"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManager"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
   </extensions>
 </idea-plugin>

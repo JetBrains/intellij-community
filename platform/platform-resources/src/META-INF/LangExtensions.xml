@@ -131,7 +131,6 @@
     <projectService serviceInterface="com.intellij.find.FindInProjectSettings" serviceImplementation="com.intellij.find.impl.FindInProjectRecents"/>
     <pathMacroFilter implementation="com.intellij.find.impl.FindInProjectSettingsBase$FindInProjectPathMacroFilter"/>
 
-    <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
     <projectService serviceImplementation="com.intellij.codeInsight.CodeInsightWorkspaceSettings"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"

@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +38,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
     this(prefix, caseSensitive, false);
   }
 
-  CamelHumpMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
+  @ApiStatus.Internal
+  public CamelHumpMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
     super(prefix);
     myCaseSensitive = caseSensitive;
     myTypoTolerant = typoTolerant;
