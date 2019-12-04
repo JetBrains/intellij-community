@@ -57,8 +57,6 @@ class StubSerializationHelper {
   }
 
   void assignId(@NotNull Computable<ObjectStubSerializer> serializer, String name) throws IOException {
-    LOG.info("QQQ register serializer for " + name);
-
     Computable<ObjectStubSerializer> old = myNameToLazySerializer.put(name, serializer);
     if (old != null) {
       ObjectStubSerializer existing = old.compute();
