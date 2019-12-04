@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -237,9 +238,10 @@ public final class BackgroundTaskUtil {
 
   @CalledInAny
   public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
-    ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
-    indicator.start();
-
+    final ProgressIndicator threadProgress = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = threadProgress == null
+                                        ? new EmptyProgressIndicator(ModalityState.defaultModalityState())
+                                        : new SensitiveProgressWrapper(threadProgress);
     Disposable disposable = () -> {
       if (indicator.isRunning()) {
         indicator.cancel();

@@ -139,7 +139,9 @@ public class ProgressIndicatorUtils {
   }
 
   private static void cancelProcess(ProgressIndicator progressIndicator) {
-    if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+    if (!progressIndicator.isCanceled()) {
+      progressIndicator.cancel();
+    }
   }
 
   private static boolean isWriting(ApplicationEx application) {

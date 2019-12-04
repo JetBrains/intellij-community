@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.util.DelegatingProgressIndicator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -28,6 +29,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.BombedProgressIndicator;
@@ -49,9 +51,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author yole
- */
 public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void testCheckCanceledHasStackFrame() {
     ProgressIndicator pib = new ProgressIndicatorBase();
@@ -724,7 +723,32 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
   }
 
-  public void test_runInReadActionWithWriteActionPriority_DoesNotHang() throws Exception {
+  public void test_runUnderDisposeAwareIndicator_DoesNotHang_ByCancelThreadProgress() {
+    final Disposable parent = Disposer.newDisposable();
+    try {
+      AtomicBoolean fail = new AtomicBoolean();
+      final EmptyProgressIndicator threadIndicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
+        () -> ProgressManager.getInstance().executeProcessUnderProgress(
+            () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(
+              parent,
+              () -> {
+                threadIndicator.cancel();
+                ProgressManager.checkCanceled();
+                fail.set(true);
+              }),
+            threadIndicator
+        )
+      );
+      ProgressIndicatorUtils.awaitWithCheckCanceled(future);
+      assertFalse("action was not canceled by thread progress indicator", fail.get());
+    }
+    finally {
+      Disposer.dispose(parent);
+    }
+  }
+
+  public void test_runInReadActionWithWriteActionPriority_DoesNotHang() {
     AtomicBoolean finished = new AtomicBoolean();
     Runnable action = () -> {
       TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
