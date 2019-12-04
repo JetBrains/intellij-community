@@ -8,7 +8,6 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTargetPsiElement;
@@ -28,7 +27,7 @@ import java.util.Set;
  * @author nik
  */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
-  private static final Logger LOG = Logger.getInstance(PropertyReferenceBase.class);
+
   protected final String myKey;
   protected final PsiElement myElement;
   protected boolean mySoft;
